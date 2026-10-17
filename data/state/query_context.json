@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-10-16T23:34:44Z",
-  "generated_at_beijing": "2026-10-17T07:34:44+08:00",
+  "generated_at": "2026-10-17T00:21:32Z",
+  "generated_at_beijing": "2026-10-17T08:21:32+08:00",
   "market_date": "2026-10-16",
   "latest_valid_node": "close",
   "rules_version": "V2.2.34",
@@ -678,7 +678,7 @@
       "boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
       "timing": {}
     },
-    "generated_at": "2026-10-16T23:34:43Z",
+    "generated_at": "2026-10-17T00:21:31Z",
     "rules_version": "V2.2.34",
     "market_date": "2026-10-16",
     "latest_node": "close",
@@ -2130,7 +2130,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 13.114,
-      "age_seconds": 59544
+      "age_seconds": 62352
     },
     "freshness_at_context_build": {
       "status": "STALE",
@@ -2146,7 +2146,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 13.114,
-      "age_seconds": 59544
+      "age_seconds": 62352
     },
     "data_quality_summary": {
       "pass_count": 17,
@@ -2232,7 +2232,7 @@
       "account_fact_time": "2026-10-16T15:00:00+08:00",
       "market_snapshot_time": "2026-10-16T15:02:19+08:00",
       "market_phase": "POST_CLOSE_GRACE",
-      "context_generated_time": "2026-10-16T23:34:43Z",
+      "context_generated_time": "2026-10-17T00:21:31Z",
       "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
       "read_only": true
     },
@@ -2270,26 +2270,17 @@
       "read_only": true
     },
     "market_quote_router": {
-      "generated_at_beijing": "2026-10-17T07:34:34+08:00",
-      "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
-      "refresh_failures": [
-        {
-          "symbol": "NDX",
-          "error": "NDX active-market immediate refresh rejected non-FRESH provider result: SESSION_REFERENCE"
-        },
-        {
-          "symbol": "SOX",
-          "error": "SOX active-market immediate refresh rejected non-FRESH provider result: SESSION_REFERENCE"
-        }
-      ],
+      "generated_at_beijing": "2026-10-17T08:21:24+08:00",
+      "refresh_mode": "CACHED_STATE",
+      "refresh_failures": [],
       "decision_freshness": {
         "status": "DIRECT",
         "quality_status": "UNKNOWN",
         "captured_at": "2026-10-16T07:02:19+00:00",
         "provider_as_of": "2026-10-16T07:02:11+00:00",
         "effective_as_of": "2026-10-16T07:02:11+00:00",
-        "request_time": "2026-10-16T23:33:55+00:00",
-        "age_seconds": 59543,
+        "request_time": "2026-10-17T00:20:57+00:00",
+        "age_seconds": 62353,
         "post_request": false,
         "preferred_max_age_seconds": 300,
         "fallback_max_age_seconds": 900,
@@ -2300,60 +2291,11 @@
         "resolved_post_request": true,
         "request_scoped_resolution_mode": "CLOSED_SESSION_CANONICAL_REUSE",
         "request_scoped_resolution_reason": "closed A-share session legally reuses latest canonical close",
-        "a_share_market_phase": "OFF_SESSION",
-        "resolved_as_of": "2026-10-16T23:34:23+00:00"
+        "a_share_market_phase": "OFF_SESSION"
       },
       "route_version": "V1.1",
       "query_entry": "market_quote_router",
       "quotes": [
-        {
-          "market": "US",
-          "market_name": "美国",
-          "symbol": "QQQ",
-          "name": "QQQ",
-          "latest_price": 707.95,
-          "open": 707.95,
-          "high": 707.95,
-          "low": 707.95,
-          "prev_close": 728.0,
-          "volume": 0,
-          "amount": null,
-          "turnover": null,
-          "data_time_beijing": "2026-10-17T07:34:23+08:00",
-          "data_time_local": "2026-10-16T19:34:23-04:00",
-          "market_phase": "POST_MARKET",
-          "market_status_cn": "美股盘后",
-          "data_nature_cn": "盘后行情（附当日正式收盘）",
-          "source": "yahoo_chart_api",
-          "freshness": "FRESH",
-          "quality_status": "PASS",
-          "direct_quote": true,
-          "refresh_source": "QUERY_TIME_PROVIDER"
-        },
-        {
-          "market": "US",
-          "market_name": "美国",
-          "symbol": "SOXX",
-          "name": "SOXX",
-          "latest_price": 492.07,
-          "open": 492.07,
-          "high": 492.07,
-          "low": 492.07,
-          "prev_close": 514.71,
-          "volume": 0,
-          "amount": null,
-          "turnover": null,
-          "data_time_beijing": "2026-10-17T07:33:35+08:00",
-          "data_time_local": "2026-10-16T19:33:35-04:00",
-          "market_phase": "POST_MARKET",
-          "market_status_cn": "美股盘后",
-          "data_nature_cn": "盘后行情（附当日正式收盘）",
-          "source": "yahoo_chart_api",
-          "freshness": "FRESH",
-          "quality_status": "PASS",
-          "direct_quote": true,
-          "refresh_source": "QUERY_TIME_PROVIDER"
-        },
         {
           "market": "CN",
           "market_name": "中国大陆",
@@ -2799,9 +2741,9 @@
         {
           "market": "US",
           "market_name": "美国",
-          "symbol": "NDX",
+          "symbol": "^NDX",
           "name": "纳斯达克100指数",
-          "latest_price": 708.0154,
+          "latest_price": 29187.548828125,
           "open": null,
           "high": null,
           "low": null,
@@ -2809,25 +2751,25 @@
           "volume": null,
           "amount": null,
           "turnover": null,
-          "data_time_beijing": "2026-10-17T07:28:00+08:00",
+          "data_time_beijing": "2026-10-17T04:00:00+08:00",
           "data_time_local": "",
-          "market_phase": "POST_MARKET",
-          "market_status_cn": "美股盘后",
-          "data_nature_cn": "盘后行情（附当日正式收盘）",
+          "market_phase": "OFF_SESSION",
+          "market_status_cn": "美股休市中",
+          "data_nature_cn": "最近正式收盘行情",
           "source": "yahoo_chart_api",
-          "freshness": "FRESH",
-          "freshness_cn": "时点正常",
-          "quality_status": "FRESH",
-          "quality_status_cn": "状态待确认",
-          "direct_quote": false,
-          "route_rule": "返回扩展时段行情，并保留最近正式收盘作为基准"
+          "freshness": "STALE",
+          "freshness_cn": "时点过旧",
+          "quality_status": "PASS",
+          "quality_status_cn": "数据可用",
+          "direct_quote": true,
+          "route_rule": "返回最近正式收盘行情"
         },
         {
           "market": "US",
           "market_name": "美国",
-          "symbol": "SOX",
+          "symbol": "^SOX",
           "name": "费城半导体指数",
-          "latest_price": 492.09,
+          "latest_price": 11137.287109375,
           "open": null,
           "high": null,
           "low": null,
@@ -2835,18 +2777,18 @@
           "volume": null,
           "amount": null,
           "turnover": null,
-          "data_time_beijing": "2026-10-17T07:27:09+08:00",
+          "data_time_beijing": "2026-10-17T04:00:00+08:00",
           "data_time_local": "",
-          "market_phase": "POST_MARKET",
-          "market_status_cn": "美股盘后",
-          "data_nature_cn": "盘后行情（附当日正式收盘）",
+          "market_phase": "OFF_SESSION",
+          "market_status_cn": "美股休市中",
+          "data_nature_cn": "最近正式收盘行情",
           "source": "yahoo_chart_api",
-          "freshness": "FRESH",
-          "freshness_cn": "时点正常",
-          "quality_status": "FRESH",
-          "quality_status_cn": "状态待确认",
-          "direct_quote": false,
-          "route_rule": "返回扩展时段行情，并保留最近正式收盘作为基准"
+          "freshness": "STALE",
+          "freshness_cn": "时点过旧",
+          "quality_status": "PASS",
+          "quality_status_cn": "数据可用",
+          "direct_quote": true,
+          "route_rule": "返回最近正式收盘行情"
         },
         {
           "market": "JP",
@@ -3307,8 +3249,8 @@
           "market_status_cn": "台股收盘"
         },
         "US": {
-          "phase": "POST_MARKET",
-          "market_status_cn": "美股盘后"
+          "phase": "OFF_SESSION",
+          "market_status_cn": "美股休市中"
         },
         "JP": {
           "phase": "OFF_SESSION",
@@ -3466,7 +3408,7 @@
     },
     "decision_trigger": {
       "schema_version": "1.2",
-      "generated_at": "2026-10-17T00:31:41+08:00",
+      "generated_at": "2026-10-17T07:35:05+08:00",
       "status": "NO_NEW_TRIGGER",
       "trigger_type": "",
       "triggered_at": "",
@@ -3487,7 +3429,7 @@
     },
     "capital_efficiency_ranking": {
       "schema_version": "1.2",
-      "generated_at": "2026-10-17T00:31:41+08:00",
+      "generated_at": "2026-10-17T07:35:05+08:00",
       "as_of": "2026-10-16T15:02:19+08:00",
       "e2e_status": "READY",
       "risk_zone": "RISK_OBSERVATION",
@@ -5404,7 +5346,7 @@
       ]
     },
     "intraday_path_features": {
-      "generated_at": "2026-10-16T16:31:35Z",
+      "generated_at": "2026-10-16T23:34:57Z",
       "market_date": "2026-10-16",
       "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
       "read_only": true,
@@ -7065,8 +7007,8 @@
         "prefilter_elapsed_seconds": 0.007,
         "history_validation_elapsed_seconds": 0.003,
         "measurement_role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE",
-        "candidate_formal_quote_elapsed_seconds": 8.647,
-        "discovery_pipeline_elapsed_seconds": 8.665,
+        "candidate_formal_quote_elapsed_seconds": 6.807,
+        "discovery_pipeline_elapsed_seconds": 6.837,
         "reuse_mode": "SAME_MARKET_NODE_LEGAL_DISCOVERY_EVIDENCE_REUSE"
       },
       "coverage_status": "COMPLETE",
@@ -8381,7 +8323,7 @@
     "account_fact_time": "2026-10-16T15:00:00+08:00",
     "market_snapshot_time": "2026-10-16T15:02:19+08:00",
     "market_phase": "POST_CLOSE_GRACE",
-    "context_generated_time": "2026-10-16T23:34:43Z",
+    "context_generated_time": "2026-10-17T00:21:31Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
@@ -8482,7 +8424,7 @@
       "runtime_policy": "config/runtime_policy.json",
       "freshness_at_context_build": {
         "status": "STALE",
-        "age_seconds": 59536,
+        "age_seconds": 62345,
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500
       },
@@ -8500,7 +8442,7 @@
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500,
         "acquisition_seconds": 13.114,
-        "age_seconds": 59536
+        "age_seconds": 62345
       },
       "query_time_rule": "行情获取固定顺序为：查询时立即补采 → 最近一次有效快照 → 明确降级/缺失。最近快照只有在即时补采失败或不可执行时才作为第二顺位；使用前必须按查询时刻重新判断为“时点正常／存在延迟／时点过旧”。",
       "partial_refresh_rule": "逐对象采用最新有效证据：补采成功对象使用新数据，失败对象才回退最近有效快照；不得为了统一时点把成功补采对象整体退回旧快照。",
@@ -8534,10 +8476,10 @@
       "formal_decision_persist_allowed": true,
       "fallback_allowed": false,
       "query_intent": "FORMAL_INTRADAY_ANALYSIS",
-      "request_file": "requests/live_snapshot/formal_20261017_073355_conversation_7c2e9a.json",
-      "request_id": "formal_20261017_073355_conversation_7c2e9a",
-      "requested_at_beijing": "2026-10-17T07:33:55+08:00",
-      "requested_market_time": "2026-10-17T07:33:55+08:00",
+      "request_file": "requests/live_snapshot/conversation_20261017_082057_fd.json",
+      "request_id": "conversation_20261017_082057_fd",
+      "requested_at_beijing": "2026-10-17T08:20:57+08:00",
+      "requested_market_time": "2026-10-17T08:20:57+08:00",
       "current_snapshot_time": "2026-10-16T15:02:19+08:00",
       "resolved_snapshot_time": "2026-10-16T15:02:19+08:00",
       "latest_snapshot": "data/market/snapshots/2026-10-16_150219.json",
@@ -8551,26 +8493,17 @@
     }
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-10-17T07:34:34+08:00",
-    "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
-    "refresh_failures": [
-      {
-        "symbol": "NDX",
-        "error": "NDX active-market immediate refresh rejected non-FRESH provider result: SESSION_REFERENCE"
-      },
-      {
-        "symbol": "SOX",
-        "error": "SOX active-market immediate refresh rejected non-FRESH provider result: SESSION_REFERENCE"
-      }
-    ],
+    "generated_at_beijing": "2026-10-17T08:21:24+08:00",
+    "refresh_mode": "CACHED_STATE",
+    "refresh_failures": [],
     "decision_freshness": {
       "status": "DIRECT",
       "quality_status": "UNKNOWN",
       "captured_at": "2026-10-16T07:02:19+00:00",
       "provider_as_of": "2026-10-16T07:02:11+00:00",
       "effective_as_of": "2026-10-16T07:02:11+00:00",
-      "request_time": "2026-10-16T23:33:55+00:00",
-      "age_seconds": 59543,
+      "request_time": "2026-10-17T00:20:57+00:00",
+      "age_seconds": 62353,
       "post_request": false,
       "preferred_max_age_seconds": 300,
       "fallback_max_age_seconds": 900,
@@ -8581,60 +8514,11 @@
       "resolved_post_request": true,
       "request_scoped_resolution_mode": "CLOSED_SESSION_CANONICAL_REUSE",
       "request_scoped_resolution_reason": "closed A-share session legally reuses latest canonical close",
-      "a_share_market_phase": "OFF_SESSION",
-      "resolved_as_of": "2026-10-16T23:34:23+00:00"
+      "a_share_market_phase": "OFF_SESSION"
     },
     "route_version": "V1.1",
     "query_entry": "market_quote_router",
     "quotes": [
-      {
-        "market": "US",
-        "market_name": "美国",
-        "symbol": "QQQ",
-        "name": "QQQ",
-        "latest_price": 707.95,
-        "open": 707.95,
-        "high": 707.95,
-        "low": 707.95,
-        "prev_close": 728.0,
-        "volume": 0,
-        "amount": null,
-        "turnover": null,
-        "data_time_beijing": "2026-10-17T07:34:23+08:00",
-        "data_time_local": "2026-10-16T19:34:23-04:00",
-        "market_phase": "POST_MARKET",
-        "market_status_cn": "美股盘后",
-        "data_nature_cn": "盘后行情（附当日正式收盘）",
-        "source": "yahoo_chart_api",
-        "freshness": "FRESH",
-        "quality_status": "PASS",
-        "direct_quote": true,
-        "refresh_source": "QUERY_TIME_PROVIDER"
-      },
-      {
-        "market": "US",
-        "market_name": "美国",
-        "symbol": "SOXX",
-        "name": "SOXX",
-        "latest_price": 492.07,
-        "open": 492.07,
-        "high": 492.07,
-        "low": 492.07,
-        "prev_close": 514.71,
-        "volume": 0,
-        "amount": null,
-        "turnover": null,
-        "data_time_beijing": "2026-10-17T07:33:35+08:00",
-        "data_time_local": "2026-10-16T19:33:35-04:00",
-        "market_phase": "POST_MARKET",
-        "market_status_cn": "美股盘后",
-        "data_nature_cn": "盘后行情（附当日正式收盘）",
-        "source": "yahoo_chart_api",
-        "freshness": "FRESH",
-        "quality_status": "PASS",
-        "direct_quote": true,
-        "refresh_source": "QUERY_TIME_PROVIDER"
-      },
       {
         "market": "CN",
         "market_name": "中国大陆",
@@ -9080,9 +8964,9 @@
       {
         "market": "US",
         "market_name": "美国",
-        "symbol": "NDX",
+        "symbol": "^NDX",
         "name": "纳斯达克100指数",
-        "latest_price": 708.0154,
+        "latest_price": 29187.548828125,
         "open": null,
         "high": null,
         "low": null,
@@ -9090,25 +8974,25 @@
         "volume": null,
         "amount": null,
         "turnover": null,
-        "data_time_beijing": "2026-10-17T07:28:00+08:00",
+        "data_time_beijing": "2026-10-17T04:00:00+08:00",
         "data_time_local": "",
-        "market_phase": "POST_MARKET",
-        "market_status_cn": "美股盘后",
-        "data_nature_cn": "盘后行情（附当日正式收盘）",
+        "market_phase": "OFF_SESSION",
+        "market_status_cn": "美股休市中",
+        "data_nature_cn": "最近正式收盘行情",
         "source": "yahoo_chart_api",
-        "freshness": "FRESH",
-        "freshness_cn": "时点正常",
-        "quality_status": "FRESH",
-        "quality_status_cn": "状态待确认",
-        "direct_quote": false,
-        "route_rule": "返回扩展时段行情，并保留最近正式收盘作为基准"
+        "freshness": "STALE",
+        "freshness_cn": "时点过旧",
+        "quality_status": "PASS",
+        "quality_status_cn": "数据可用",
+        "direct_quote": true,
+        "route_rule": "返回最近正式收盘行情"
       },
       {
         "market": "US",
         "market_name": "美国",
-        "symbol": "SOX",
+        "symbol": "^SOX",
         "name": "费城半导体指数",
-        "latest_price": 492.09,
+        "latest_price": 11137.287109375,
         "open": null,
         "high": null,
         "low": null,
@@ -9116,18 +9000,18 @@
         "volume": null,
         "amount": null,
         "turnover": null,
-        "data_time_beijing": "2026-10-17T07:27:09+08:00",
+        "data_time_beijing": "2026-10-17T04:00:00+08:00",
         "data_time_local": "",
-        "market_phase": "POST_MARKET",
-        "market_status_cn": "美股盘后",
-        "data_nature_cn": "盘后行情（附当日正式收盘）",
+        "market_phase": "OFF_SESSION",
+        "market_status_cn": "美股休市中",
+        "data_nature_cn": "最近正式收盘行情",
         "source": "yahoo_chart_api",
-        "freshness": "FRESH",
-        "freshness_cn": "时点正常",
-        "quality_status": "FRESH",
-        "quality_status_cn": "状态待确认",
-        "direct_quote": false,
-        "route_rule": "返回扩展时段行情，并保留最近正式收盘作为基准"
+        "freshness": "STALE",
+        "freshness_cn": "时点过旧",
+        "quality_status": "PASS",
+        "quality_status_cn": "数据可用",
+        "direct_quote": true,
+        "route_rule": "返回最近正式收盘行情"
       },
       {
         "market": "JP",
@@ -9588,8 +9472,8 @@
         "market_status_cn": "台股收盘"
       },
       "US": {
-        "phase": "POST_MARKET",
-        "market_status_cn": "美股盘后"
+        "phase": "OFF_SESSION",
+        "market_status_cn": "美股休市中"
       },
       "JP": {
         "phase": "OFF_SESSION",
@@ -9967,8 +9851,8 @@
       "prefilter_elapsed_seconds": 0.007,
       "history_validation_elapsed_seconds": 0.003,
       "measurement_role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE",
-      "candidate_formal_quote_elapsed_seconds": 8.647,
-      "discovery_pipeline_elapsed_seconds": 8.665,
+      "candidate_formal_quote_elapsed_seconds": 6.807,
+      "discovery_pipeline_elapsed_seconds": 6.837,
       "reuse_mode": "SAME_MARKET_NODE_LEGAL_DISCOVERY_EVIDENCE_REUSE"
     },
     "coverage_status": "COMPLETE",
@@ -11098,6 +10982,7 @@
     "account_fact": "data/state/account_fact.json",
     "asset_roles": "data/state/asset_roles.json",
     "etf_monitor_universe": "config/market/etf_monitor_universe.json",
+    "observation_thesis_registry": "config/market/etf_observation_thesis_registry.json",
     "trading_calendar": "config/market/a_share_trading_calendar_2026.json",
     "stock_context": "data/state/stock_context.json",
     "stock_market_context": "data/state/stock_market_context.json",
@@ -11125,11 +11010,11 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 13.114,
-    "age_seconds": 59536
+    "age_seconds": 62345
   },
   "freshness_at_context_build": {
     "status": "STALE",
-    "age_seconds": 59536,
+    "age_seconds": 62345,
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500
   },
@@ -11139,8 +11024,8 @@
     "captured_at": "2026-10-16T07:02:19+00:00",
     "provider_as_of": "2026-10-16T07:02:11+00:00",
     "effective_as_of": "2026-10-16T07:02:11+00:00",
-    "request_time": "2026-10-16T23:33:55+00:00",
-    "age_seconds": 59543,
+    "request_time": "2026-10-17T00:20:57+00:00",
+    "age_seconds": 62353,
     "post_request": false,
     "preferred_max_age_seconds": 300,
     "fallback_max_age_seconds": 900,
@@ -11151,8 +11036,7 @@
     "resolved_post_request": true,
     "request_scoped_resolution_mode": "CLOSED_SESSION_CANONICAL_REUSE",
     "request_scoped_resolution_reason": "closed A-share session legally reuses latest canonical close",
-    "a_share_market_phase": "OFF_SESSION",
-    "resolved_as_of": "2026-10-16T23:34:23+00:00"
+    "a_share_market_phase": "OFF_SESSION"
   },
   "trading_day_status": {
     "market_date": "2026-10-17",
@@ -11245,13 +11129,13 @@
     "role": "PREFERRED_MINIMUM_SUFFICIENT_FORMAL_REASONING_INPUT",
     "trigger": {
       "source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
-      "request_id": "formal_20261017_073355_conversation_7c2e9a",
-      "requested_at_beijing": "2026-10-17T07:33:55+08:00",
+      "request_id": "conversation_20261017_082057_fd",
+      "requested_at_beijing": "2026-10-17T08:20:57+08:00",
       "entry_mode": "MANUAL_CONVERSATION",
       "task_id": "ETF正式决策",
-      "task_run_id": "formal_20261017_073355_conversation_7c2e9a__run",
-      "occurrence_id": "conversation_20261017_073355_7c2e9a",
-      "market_date": "2026-10-16"
+      "task_run_id": "conversation_20261017_082057_fd__run",
+      "occurrence_id": "conversation_20261017_082057_fd",
+      "market_date": "2026-10-17"
     },
     "master": {
       "version": "V2.2.34",
@@ -11299,26 +11183,6 @@
       "provider": "tencent_qq"
     },
     "qualified_market_facts": [
-      {
-        "code": "QQQ",
-        "name": "QQQ",
-        "price": null,
-        "change_pct": null,
-        "market_phase": "POST_MARKET",
-        "as_of_beijing": "2026-10-17T07:34:23+08:00",
-        "quality_status": "PASS",
-        "provider": ""
-      },
-      {
-        "code": "SOXX",
-        "name": "SOXX",
-        "price": null,
-        "change_pct": null,
-        "market_phase": "POST_MARKET",
-        "as_of_beijing": "2026-10-17T07:33:35+08:00",
-        "quality_status": "PASS",
-        "provider": ""
-      },
       {
         "code": "000001",
         "name": "",
@@ -11490,23 +11354,23 @@
         "provider": ""
       },
       {
-        "code": "NDX",
+        "code": "^NDX",
         "name": "纳斯达克100指数",
         "price": null,
         "change_pct": null,
-        "market_phase": "POST_MARKET",
-        "as_of_beijing": "2026-10-17T07:28:00+08:00",
-        "quality_status": "FRESH",
+        "market_phase": "OFF_SESSION",
+        "as_of_beijing": "2026-10-17T04:00:00+08:00",
+        "quality_status": "PASS",
         "provider": ""
       },
       {
-        "code": "SOX",
+        "code": "^SOX",
         "name": "费城半导体指数",
         "price": null,
         "change_pct": null,
-        "market_phase": "POST_MARKET",
-        "as_of_beijing": "2026-10-17T07:27:09+08:00",
-        "quality_status": "FRESH",
+        "market_phase": "OFF_SESSION",
+        "as_of_beijing": "2026-10-17T04:00:00+08:00",
+        "quality_status": "PASS",
         "provider": ""
       },
       {
@@ -11651,7 +11515,7 @@
       }
     ],
     "decision_context": {
-      "generated_at_beijing": "2026-10-16T23:34:43Z",
+      "generated_at_beijing": "2026-10-17T00:21:31Z",
       "source": "scripts/state_manager.py::build_decision_context",
       "analysis_coverage": {
         "indices_total": 3,
@@ -11834,15 +11698,15 @@
       }
     },
     "market_quote": {
-      "mode": "QUERY_TIME_IMMEDIATE_REFRESH",
+      "mode": "CACHED_STATE",
       "decision_freshness": {
         "status": "DIRECT",
         "quality_status": "UNKNOWN",
         "captured_at": "2026-10-16T07:02:19+00:00",
         "provider_as_of": "2026-10-16T07:02:11+00:00",
         "effective_as_of": "2026-10-16T07:02:11+00:00",
-        "request_time": "2026-10-16T23:33:55+00:00",
-        "age_seconds": 59543,
+        "request_time": "2026-10-17T00:20:57+00:00",
+        "age_seconds": 62353,
         "post_request": false,
         "preferred_max_age_seconds": 300,
         "fallback_max_age_seconds": 900,
@@ -11853,8 +11717,7 @@
         "resolved_post_request": true,
         "request_scoped_resolution_mode": "CLOSED_SESSION_CANONICAL_REUSE",
         "request_scoped_resolution_reason": "closed A-share session legally reuses latest canonical close",
-        "a_share_market_phase": "OFF_SESSION",
-        "resolved_as_of": "2026-10-16T23:34:23+00:00"
+        "a_share_market_phase": "OFF_SESSION"
       },
       "quotes_as_of_beijing": [
         "2026-10-16T13:30:00+08:00",
@@ -11884,10 +11747,7 @@
         "2026-10-16T16:14:52+08:00",
         "2026-10-16T16:14:57+08:00",
         "2026-10-16T16:15:00+08:00",
-        "2026-10-17T07:27:09+08:00",
-        "2026-10-17T07:28:00+08:00",
-        "2026-10-17T07:33:35+08:00",
-        "2026-10-17T07:34:23+08:00"
+        "2026-10-17T04:00:00+08:00"
       ],
       "source": "scripts/market_quote_router.py"
     },
@@ -11904,7 +11764,7 @@
       "source_ingress": {
         "manual_formal_request": true,
         "qualified": true,
-        "path": "requests/live_snapshot/formal_20261017_073355_conversation_7c2e9a.json",
+        "path": "requests/live_snapshot/conversation_20261017_082057_fd.json",
         "rule": "Manual formal analysis is request-scoped only when bound to the existing canonical requests/live_snapshot ingress. Derived state alone cannot impersonate a new manual formal request."
       },
       "rule": "Missing market/account/discovery facts localize their impact and do not suppress independent legal analysis. Missing canonical request identity/time or an unqualified manual source ingress globally blocks this request-scoped formal-analysis packet.",
@@ -11912,7 +11772,7 @@
         "status": "READY",
         "reply_freezable": true,
         "blockers": [],
-        "request_id": "formal_20261017_073355_conversation_7c2e9a",
+        "request_id": "conversation_20261017_082057_fd",
         "post_request_pit_resolved": true,
         "discovery_status": "READY",
         "rule": "Manual formal replies wait only for same-request action-determinative facts that are still legally forming. Once those facts resolve (including explicit terminal degradation), complete analysis and the first user-visible decision reply must proceed without waiting for Decision Fact persistence/post-write acceptance or any downstream Dashboard/account/E2E/notification/research projection. Persistence failure is disclosed as '正式决策尚未持久化' and repaired separately; it does not suppress an otherwise valid business decision reply."
@@ -11922,7 +11782,7 @@
       "status": "READY",
       "reply_freezable": true,
       "blockers": [],
-      "request_id": "formal_20261017_073355_conversation_7c2e9a",
+      "request_id": "conversation_20261017_082057_fd",
       "post_request_pit_resolved": true,
       "discovery_status": "READY",
       "rule": "Manual formal replies wait only for same-request action-determinative facts that are still legally forming. Once those facts resolve (including explicit terminal degradation), complete analysis and the first user-visible decision reply must proceed without waiting for Decision Fact persistence/post-write acceptance or any downstream Dashboard/account/E2E/notification/research projection. Persistence failure is disclosed as '正式决策尚未持久化' and repaired separately; it does not suppress an otherwise valid business decision reply."
@@ -12142,7 +12002,14 @@
           "decision_object": "588000",
           "security": "科创50ETF",
           "thscode": "588000.SH",
-          "existing_thesis_state": {},
+          "existing_thesis_state": {
+            "name": "科创50ETF",
+            "thscode": "588000.SH",
+            "thesis": "持续观察科创50代表的中国科技创新大盘成长与风险偏好状态，并将其作为A股科创方向的跨节点比较基准。",
+            "falsifier": "科创50连续节点无法提供独立、可复核的方向与结构信息，或其信息已被更有效且覆盖相同风险暴露的观察对象充分替代。",
+            "next_decision_information": "下一合法节点复核科创50相对上证、创业板及其他科技成长观察对象的方向、宽度、承接和持续性，判断其信息功能是否仍独立。",
+            "information_value_reason": "提供科创大盘成长与科技风险偏好的独立跨节点基准，不能由单一持仓或全市场Discovery结果替代。"
+          },
           "role_contract": "CONTINUOUS_INFORMATION_V1",
           "required_business_judgment": "先判断持续信息功能是否仍独立、可证伪且不可被更有效对象充分替代，再判断当前机会状态；RETAIN不要求当前接近Trial/Confirm，EXIT必须说明信息功能失效/被替代及退出后的信息连续性成本。观察ETF若当前形成机会可同时作为节点级候选参与资本比较"
         },
@@ -12151,7 +12018,14 @@
           "decision_object": "159781",
           "security": "科创创业ETF",
           "thscode": "159781.SZ",
-          "existing_thesis_state": {},
+          "existing_thesis_state": {
+            "name": "科创创业ETF",
+            "thscode": "159781.SZ",
+            "thesis": "持续观察科创与创业成长风格的联合表现、内部扩散和风险承接，并作为A股成长风格相对科创50的补充比较对象。",
+            "falsifier": "科创与创业成长联合表现连续失去独立可复核的信息增量，或其信息功能已被更有效且覆盖相同成长风格的观察对象充分替代。",
+            "next_decision_information": "下一合法节点复核科创创业相对科创50、创业板指及其他成长观察对象的方向、宽度、承接和持续性，判断其补充信息价值是否仍成立。",
+            "information_value_reason": "补充观察科创与创业成长风格的联合及相对表现，提供区别于科创50单一大盘基准的持续信息。"
+          },
           "role_contract": "CONTINUOUS_INFORMATION_V1",
           "required_business_judgment": "先判断持续信息功能是否仍独立、可证伪且不可被更有效对象充分替代，再判断当前机会状态；RETAIN不要求当前接近Trial/Confirm，EXIT必须说明信息功能失效/被替代及退出后的信息连续性成本。观察ETF若当前形成机会可同时作为节点级候选参与资本比较"
         },
@@ -18853,26 +18727,6 @@
       ],
       "current_evidence": [
         {
-          "code": "QQQ",
-          "name": "QQQ",
-          "price": null,
-          "change_pct": null,
-          "market_phase": "POST_MARKET",
-          "as_of_beijing": "2026-10-17T07:34:23+08:00",
-          "quality_status": "PASS",
-          "provider": ""
-        },
-        {
-          "code": "SOXX",
-          "name": "SOXX",
-          "price": null,
-          "change_pct": null,
-          "market_phase": "POST_MARKET",
-          "as_of_beijing": "2026-10-17T07:33:35+08:00",
-          "quality_status": "PASS",
-          "provider": ""
-        },
-        {
           "code": "000001",
           "name": "",
           "price": null,
@@ -19043,23 +18897,23 @@
           "provider": ""
         },
         {
-          "code": "NDX",
+          "code": "^NDX",
           "name": "纳斯达克100指数",
           "price": null,
           "change_pct": null,
-          "market_phase": "POST_MARKET",
-          "as_of_beijing": "2026-10-17T07:28:00+08:00",
-          "quality_status": "FRESH",
+          "market_phase": "OFF_SESSION",
+          "as_of_beijing": "2026-10-17T04:00:00+08:00",
+          "quality_status": "PASS",
           "provider": ""
         },
         {
-          "code": "SOX",
+          "code": "^SOX",
           "name": "费城半导体指数",
           "price": null,
           "change_pct": null,
-          "market_phase": "POST_MARKET",
-          "as_of_beijing": "2026-10-17T07:27:09+08:00",
-          "quality_status": "FRESH",
+          "market_phase": "OFF_SESSION",
+          "as_of_beijing": "2026-10-17T04:00:00+08:00",
+          "quality_status": "PASS",
           "provider": ""
         },
         {
@@ -21026,7 +20880,7 @@
           },
           "market_structure_context": {
             "schema_version": "1.4",
-            "generated_at": "2026-10-16T16:31:41Z",
+            "generated_at": "2026-10-16T23:35:05Z",
             "market_date": "2026-10-16",
             "as_of_beijing": "2026-10-16T15:02:19+08:00",
             "source_snapshot": "data/market/snapshots/2026-10-16_150219.json",
@@ -23138,13 +22992,27 @@
               "code": "588000",
               "name": "科创50ETF",
               "thscode": "588000.SH",
-              "existing_thesis_state": {}
+              "existing_thesis_state": {
+                "name": "科创50ETF",
+                "thscode": "588000.SH",
+                "thesis": "持续观察科创50代表的中国科技创新大盘成长与风险偏好状态，并将其作为A股科创方向的跨节点比较基准。",
+                "falsifier": "科创50连续节点无法提供独立、可复核的方向与结构信息，或其信息已被更有效且覆盖相同风险暴露的观察对象充分替代。",
+                "next_decision_information": "下一合法节点复核科创50相对上证、创业板及其他科技成长观察对象的方向、宽度、承接和持续性，判断其信息功能是否仍独立。",
+                "information_value_reason": "提供科创大盘成长与科技风险偏好的独立跨节点基准，不能由单一持仓或全市场Discovery结果替代。"
+              }
             },
             {
               "code": "159781",
               "name": "科创创业ETF",
               "thscode": "159781.SZ",
-              "existing_thesis_state": {}
+              "existing_thesis_state": {
+                "name": "科创创业ETF",
+                "thscode": "159781.SZ",
+                "thesis": "持续观察科创与创业成长风格的联合表现、内部扩散和风险承接，并作为A股成长风格相对科创50的补充比较对象。",
+                "falsifier": "科创与创业成长联合表现连续失去独立可复核的信息增量，或其信息功能已被更有效且覆盖相同成长风格的观察对象充分替代。",
+                "next_decision_information": "下一合法节点复核科创创业相对科创50、创业板指及其他成长观察对象的方向、宽度、承接和持续性，判断其补充信息价值是否仍成立。",
+                "information_value_reason": "补充观察科创与创业成长风格的联合及相对表现，提供区别于科创50单一大盘基准的持续信息。"
+              }
             },
             {
               "code": "513180",
@@ -24306,7 +24174,7 @@
         },
         "market_structure_context": {
           "schema_version": "1.4",
-          "generated_at": "2026-10-16T16:31:41Z",
+          "generated_at": "2026-10-16T23:35:05Z",
           "market_date": "2026-10-16",
           "as_of_beijing": "2026-10-16T15:02:19+08:00",
           "source_snapshot": "data/market/snapshots/2026-10-16_150219.json",
@@ -26418,13 +26286,27 @@
             "code": "588000",
             "name": "科创50ETF",
             "thscode": "588000.SH",
-            "existing_thesis_state": {}
+            "existing_thesis_state": {
+              "name": "科创50ETF",
+              "thscode": "588000.SH",
+              "thesis": "持续观察科创50代表的中国科技创新大盘成长与风险偏好状态，并将其作为A股科创方向的跨节点比较基准。",
+              "falsifier": "科创50连续节点无法提供独立、可复核的方向与结构信息，或其信息已被更有效且覆盖相同风险暴露的观察对象充分替代。",
+              "next_decision_information": "下一合法节点复核科创50相对上证、创业板及其他科技成长观察对象的方向、宽度、承接和持续性，判断其信息功能是否仍独立。",
+              "information_value_reason": "提供科创大盘成长与科技风险偏好的独立跨节点基准，不能由单一持仓或全市场Discovery结果替代。"
+            }
           },
           {
             "code": "159781",
             "name": "科创创业ETF",
             "thscode": "159781.SZ",
-            "existing_thesis_state": {}
+            "existing_thesis_state": {
+              "name": "科创创业ETF",
+              "thscode": "159781.SZ",
+              "thesis": "持续观察科创与创业成长风格的联合表现、内部扩散和风险承接，并作为A股成长风格相对科创50的补充比较对象。",
+              "falsifier": "科创与创业成长联合表现连续失去独立可复核的信息增量，或其信息功能已被更有效且覆盖相同成长风格的观察对象充分替代。",
+              "next_decision_information": "下一合法节点复核科创创业相对科创50、创业板指及其他成长观察对象的方向、宽度、承接和持续性，判断其补充信息价值是否仍成立。",
+              "information_value_reason": "补充观察科创与创业成长风格的联合及相对表现，提供区别于科创50单一大盘基准的持续信息。"
+            }
           },
           {
             "code": "513180",
@@ -26659,7 +26541,14 @@
         "decision_object": "588000",
         "security": "科创50ETF",
         "thscode": "588000.SH",
-        "existing_thesis_state": {},
+        "existing_thesis_state": {
+          "name": "科创50ETF",
+          "thscode": "588000.SH",
+          "thesis": "持续观察科创50代表的中国科技创新大盘成长与风险偏好状态，并将其作为A股科创方向的跨节点比较基准。",
+          "falsifier": "科创50连续节点无法提供独立、可复核的方向与结构信息，或其信息已被更有效且覆盖相同风险暴露的观察对象充分替代。",
+          "next_decision_information": "下一合法节点复核科创50相对上证、创业板及其他科技成长观察对象的方向、宽度、承接和持续性，判断其信息功能是否仍独立。",
+          "information_value_reason": "提供科创大盘成长与科技风险偏好的独立跨节点基准，不能由单一持仓或全市场Discovery结果替代。"
+        },
         "role_contract": "CONTINUOUS_INFORMATION_V1",
         "required_business_judgment": "先判断持续信息功能是否仍独立、可证伪且不可被更有效对象充分替代，再判断当前机会状态；RETAIN不要求当前接近Trial/Confirm，EXIT必须说明信息功能失效/被替代及退出后的信息连续性成本。观察ETF若当前形成机会可同时作为节点级候选参与资本比较"
       },
@@ -26668,7 +26557,14 @@
         "decision_object": "159781",
         "security": "科创创业ETF",
         "thscode": "159781.SZ",
-        "existing_thesis_state": {},
+        "existing_thesis_state": {
+          "name": "科创创业ETF",
+          "thscode": "159781.SZ",
+          "thesis": "持续观察科创与创业成长风格的联合表现、内部扩散和风险承接，并作为A股成长风格相对科创50的补充比较对象。",
+          "falsifier": "科创与创业成长联合表现连续失去独立可复核的信息增量，或其信息功能已被更有效且覆盖相同成长风格的观察对象充分替代。",
+          "next_decision_information": "下一合法节点复核科创创业相对科创50、创业板指及其他成长观察对象的方向、宽度、承接和持续性，判断其补充信息价值是否仍成立。",
+          "information_value_reason": "补充观察科创与创业成长风格的联合及相对表现，提供区别于科创50单一大盘基准的持续信息。"
+        },
         "role_contract": "CONTINUOUS_INFORMATION_V1",
         "required_business_judgment": "先判断持续信息功能是否仍独立、可证伪且不可被更有效对象充分替代，再判断当前机会状态；RETAIN不要求当前接近Trial/Confirm，EXIT必须说明信息功能失效/被替代及退出后的信息连续性成本。观察ETF若当前形成机会可同时作为节点级候选参与资本比较"
       },
@@ -33507,7 +33403,7 @@
     "pit_rule": "Formal reasoning may continue when formal_analysis_availability is AVAILABLE or DEGRADED, honoring local limitations. Exact amount/share/action canonical completion requires formal_action_readiness=READY. Downstream projections cannot mutate the same PIT decision.",
     "decision_evidence_consumption_contract": {
       "required_in_business_decision_source": true,
-      "request_id": "formal_20261017_073355_conversation_7c2e9a",
+      "request_id": "conversation_20261017_082057_fd",
       "required_domains": [
         "layer_1_external_cross_market",
         "layer_2_a_share_internal",
@@ -33527,40 +33423,40 @@
     "status": "READY",
     "reply_freezable": true,
     "blockers": [],
-    "request_id": "formal_20261017_073355_conversation_7c2e9a",
+    "request_id": "conversation_20261017_082057_fd",
     "post_request_pit_resolved": true,
     "discovery_status": "READY",
     "rule": "Manual formal replies wait only for same-request action-determinative facts that are still legally forming. Once those facts resolve (including explicit terminal degradation), complete analysis and the first user-visible decision reply must proceed without waiting for Decision Fact persistence/post-write acceptance or any downstream Dashboard/account/E2E/notification/research projection. Persistence failure is disclosed as '正式决策尚未持久化' and repaired separately; it does not suppress an otherwise valid business decision reply."
   },
   "freshness_assurance": {
     "status": "DIRECT",
-    "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
-    "decision_request_time": "2026-10-16T23:33:55+00:00",
+    "refresh_mode": "CACHED_STATE",
+    "decision_request_time": "2026-10-17T00:20:57+00:00",
     "decision_request_post_current": false,
     "rule": "freshness assurance precedes full decision-context construction; post-refresh CURRENT is re-read before formal decision context construction."
   },
   "fast_path_latency": {
-    "t0": "2026-10-17T07:33:55+08:00",
-    "manual_request_identity": "formal_20261017_073355_conversation_7c2e9a",
+    "t0": "2026-10-17T08:20:57+08:00",
+    "manual_request_identity": "conversation_20261017_082057_fd",
     "latency_observation_role": "DOWNSTREAM_COMPLETION_NOT_DECISION_REQUEST",
-    "original_decision_request_identity": "formal_20261017_073355_conversation_7c2e9a",
+    "original_decision_request_identity": "conversation_20261017_082057_fd",
     "may_measure_original_decision_latency": false,
-    "manual_request_received_at": "2026-10-17T07:33:55+08:00",
-    "user_request_received": "2026-10-17T07:33:55+08:00",
+    "manual_request_received_at": "2026-10-17T08:20:57+08:00",
+    "user_request_received": "2026-10-17T08:20:57+08:00",
     "screenshot_account_fact_available": "UNKNOWN",
     "screenshot_account_fact_available_at": "UNKNOWN",
     "t_refresh_start_or_reuse": "",
     "market_refresh_identity": "UNKNOWN",
-    "first_qualified_market_fact_identity": "QQQ",
-    "first_qualified_market_fact_as_of": "2026-10-17T07:34:23+08:00",
+    "first_qualified_market_fact_identity": "000001",
+    "first_qualified_market_fact_as_of": "2026-10-16T15:02:00+08:00",
     "first_qualified_market_fact_quality": "PASS",
     "t_new_current": "2026-10-16T15:02:19+08:00",
-    "t_minimum_legal_inputs_ready": "2026-10-17T07:34:44+08:00",
-    "minimum_legal_inputs_ready_at": "2026-10-17T07:34:44+08:00",
-    "t_decision_ready": "2026-10-16T23:34:43Z",
-    "final_answer_identity": "2026-10-17T07:34:44+08:00",
-    "final_analysis_identity": "2026-10-17T07:34:44+08:00",
-    "t_reply_or_output_ready": "2026-10-17T07:34:44+08:00",
+    "t_minimum_legal_inputs_ready": "2026-10-17T08:21:31+08:00",
+    "minimum_legal_inputs_ready_at": "2026-10-17T08:21:31+08:00",
+    "t_decision_ready": "2026-10-17T00:21:31Z",
+    "final_answer_identity": "2026-10-17T08:21:31+08:00",
+    "final_analysis_identity": "2026-10-17T08:21:31+08:00",
+    "t_reply_or_output_ready": "2026-10-17T08:21:31+08:00",
     "minimum_legal_inputs_ready_role": "NON_TERMINAL_READINESS_MARKER",
     "minimum_legal_inputs_ready_is_stop_boundary": false,
     "canonical_chain_status": "FORMAL_COMPLETION_PENDING",
@@ -33568,8 +33464,8 @@
     "required_account_persistence_identity": "UNKNOWN",
     "refresh_start_latency": null,
     "refresh_duration": null,
-    "post_current_decision_latency": 59544.0,
-    "total_fast_path_latency": 49.0,
+    "post_current_decision_latency": 62352.0,
+    "total_fast_path_latency": 34.0,
     "measurement_status": "OBSERVED_FIELDS_ONLY; MISSING_TIMESTAMPS_REMAIN_EXPLICIT",
     "trace_metadata_is_non_authoritative": true,
     "trace_metadata_is_decision_gate": false,
@@ -33579,10 +33475,10 @@
       "screenshot_decode_started_at",
       "final_answer_delivered_at"
     ],
-    "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
-    "request_bound_at": "2026-10-17T07:33:55+08:00",
+    "refresh_mode": "CACHED_STATE",
+    "request_bound_at": "2026-10-17T08:20:57+08:00",
     "pit_ready_at": "2026-10-16T15:02:19+08:00",
-    "core_result_at": "2026-10-16T23:34:43Z",
+    "core_result_at": "2026-10-17T00:21:31Z",
     "request_to_core_result_latency": null,
     "request_to_canonical_ingress_latency": null,
     "canonical_ingress_to_decision_latency": null,
@@ -33590,11 +33486,11 @@
     "latency_status": "DOWNSTREAM_NOT_DECISION_LATENCY",
     "latency_contract": "Only the original Formal Decision Request may measure REQUEST_RECEIVED_TO_CORE_RESULT; downstream completion/projection rebuilds must not redefine or masquerade as original decision latency.",
     "user_visible_decision_waterfall": {
-      "request_received_at_beijing": "2026-10-17T07:33:55+08:00",
+      "request_received_at_beijing": "2026-10-17T08:20:57+08:00",
       "canonical_ingress_at_beijing": "UNKNOWN",
-      "first_qualified_market_fact_as_of_beijing": "2026-10-17T07:34:23+08:00",
-      "minimum_legal_inputs_ready_at_beijing": "2026-10-17T07:34:44+08:00",
-      "business_decision_ready_at_beijing": "2026-10-16T23:34:43Z",
+      "first_qualified_market_fact_as_of_beijing": "2026-10-16T15:02:00+08:00",
+      "minimum_legal_inputs_ready_at_beijing": "2026-10-17T08:21:31+08:00",
+      "business_decision_ready_at_beijing": "2026-10-17T00:21:31Z",
       "business_decision_source": {
         "status": "NOT_APPLICABLE",
         "requested_at_beijing": "UNKNOWN",
@@ -33613,16 +33509,16 @@
       "role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE"
     },
     "in_process_stage_durations_seconds": {
-      "freshness_assurance_and_quote_context": 0.446,
-      "discovery_pipeline": 8.665,
-      "decision_context_build": 0.725,
+      "freshness_assurance_and_quote_context": 0.032,
+      "discovery_pipeline": 6.837,
+      "decision_context_build": 0.735,
       "decision_fact_pack_build": 0.26,
-      "query_context_build_total": 10.099
+      "query_context_build_total": 7.87
     },
     "workflow_runtime_observation": {
       "run_started_at_beijing": "UNKNOWN",
       "core_snapshot_finished_at_beijing": "UNKNOWN",
-      "workflow_run_id": "38982135224",
+      "workflow_run_id": "38985961913",
       "runtime_health_workflow_run_id": "38900024784",
       "correlation_status": "RUNTIME_HEALTH_NOT_CURRENT_RUN",
       "role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE"
@@ -33640,10 +33536,10 @@
     "formal_decision_persist_allowed": true,
     "fallback_allowed": false,
     "query_intent": "FORMAL_INTRADAY_ANALYSIS",
-    "request_file": "requests/live_snapshot/formal_20261017_073355_conversation_7c2e9a.json",
-    "request_id": "formal_20261017_073355_conversation_7c2e9a",
-    "requested_at_beijing": "2026-10-17T07:33:55+08:00",
-    "requested_market_time": "2026-10-17T07:33:55+08:00",
+    "request_file": "requests/live_snapshot/conversation_20261017_082057_fd.json",
+    "request_id": "conversation_20261017_082057_fd",
+    "requested_at_beijing": "2026-10-17T08:20:57+08:00",
+    "requested_market_time": "2026-10-17T08:20:57+08:00",
     "current_snapshot_time": "2026-10-16T15:02:19+08:00",
     "resolved_snapshot_time": "2026-10-16T15:02:19+08:00",
     "latest_snapshot": "data/market/snapshots/2026-10-16_150219.json",
