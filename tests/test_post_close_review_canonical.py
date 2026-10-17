@@ -458,7 +458,7 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
         self.assertEqual(e2e["status"], "DEGRADED")
         self.assertEqual(e2e["market_date"], "2026-09-14")
         self.assertEqual(e2e["formal_review_market_date"], "2026-09-14")
-        self.assertEqual(e2e["market_trigger_market_date"], "2026-09-13")
+        self.assertNotIn("market_trigger_market_date", e2e)
         self.assertNotIn("market_close", e2e)
         self.assertNotIn("VERIFIED_SESSION_CLOSE", json.dumps(e2e))
         self.assertNotIn("15:00", json.dumps(e2e))
