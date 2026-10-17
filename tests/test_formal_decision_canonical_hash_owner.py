@@ -49,13 +49,15 @@ class FormalDecisionCanonicalHashOwnerTests(unittest.TestCase):
         self.assertEqual(event["presentation_binding"]["content_hash"], expected)
         self.assertEqual(event["presentation_binding"]["content_hash_source"], "canonical_owner")
 
-    def test_owner_rejects_mismatching_supplied_hash(self):
+    def test_owner_accepts_mismatching_supplied_hash_as_audit_metadata(self):
         bds = self.bds("frozen formal decision")
         bds["content_hash"] = "0" * 64
-        with self.assertRaisesRegex(ValueError, "content_hash mismatch"):
-            state_sync.record_formal_decision_report_event(
-                {"parent_request_id": "parent-1"}, bds
-            )
+        ok, replay, path = state_sync.record_formal_decision_report_event(
+            {"parent_request_id": "parent-1"}, bds
+        )
+        self.assertTrue(ok)
+        self.assertFalse(replay)
+        self.assertTrue(path.endswith(".json"))
 
 
 if __name__ == "__main__":

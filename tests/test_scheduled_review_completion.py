@@ -476,7 +476,7 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         )
         self.assertEqual(normalized["content_hash_source"], "canonical_owner")
 
-    def test_canonical_owner_rejects_supplied_hash_drift(self):
+    def test_canonical_owner_accepts_supplied_hash_drift_as_audit_metadata(self):
         from scripts import process_state_sync_request as owner
         binding = {
             "report_type": "ETF_TRADE_REVIEW",
@@ -487,8 +487,8 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
             "full_content": "FROZEN CONTENT",
             "content_hash": "0" * 64,
         }
-        with self.assertRaisesRegex(ValueError, "content_hash mismatch"):
-            owner._validate_presentation_binding(binding, "ETF_TRADE_REVIEW")
+        normalized = owner._validate_presentation_binding(binding, "ETF_TRADE_REVIEW")
+        self.assertTrue(normalized["content_hash"])
 
 
 if __name__ == "__main__":

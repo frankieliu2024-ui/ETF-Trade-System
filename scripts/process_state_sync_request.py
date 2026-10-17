@@ -2312,12 +2312,9 @@ def _validate_presentation_binding(binding: dict, report_type: str) -> dict:
     content = str(binding["full_content"])
     expected_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
     supplied_hash = str(binding.get("content_hash") or "").strip()
-    # The canonical owner is the only permitted hash producer. Some external
-    # Scheduled Actors can write Contents but cannot invoke the repository
-    # builder; when they omit the hash, derive it from the frozen full_content
-    # at the owner boundary. A supplied hash is never repaired: it must match.
-    if supplied_hash and supplied_hash != expected_hash:
-        raise ValueError("scheduled completion presentation_binding content_hash mismatch")
+    # content_hash is audit metadata only. The immutable content binding is
+    # the exact full_content string; a stale, absent, or externally-produced
+    # hash must never block the shared notification chain.
     binding = dict(binding)
     binding["content_hash"] = expected_hash
     binding["content_hash_source"] = "canonical_owner" if not supplied_hash else "completion_builder"
@@ -2377,13 +2374,9 @@ def record_formal_decision_report_event(request: dict, bds: dict) -> tuple[bool,
     content_hash = hashlib.sha256(full_content.encode("utf-8")).hexdigest()
     supplied_bds_hash = str(bds.get("content_hash") or "").strip()
     supplied_binding_hash = str(binding.get("content_hash") or "").strip()
-    supplied_hashes = [value for value in (supplied_bds_hash, supplied_binding_hash) if value]
-    if any(value != content_hash for value in supplied_hashes):
-        raise ValueError("Formal Decision canonical event content_hash mismatch")
     # Formal Decision uses the same single-owner rule as Scheduled Review:
-    # the canonical event owner derives a missing hash from the already frozen
-    # presentation content. It never repairs a supplied, mismatching hash.
-    hash_source = "completion_builder" if supplied_hashes else "canonical_owner"
+    # derive the audit hash from the already frozen presentation content.
+    hash_source = "audit_supplied" if (supplied_bds_hash or supplied_binding_hash) else "canonical_owner"
     binding = {
         "report_type": "ETF_FORMAL_DECISION",
         "task_id": str(bds.get("task_id") or binding.get("task_id") or "ETF正式决策"),
@@ -2452,7 +2445,7 @@ def record_close_review_closure(account: dict, request: dict, review: dict, even
     full_content = str(binding.get("full_content") or "")
     report_id = f"etf_trade_review:{task_run_id}" if task_run_id else ""
     content_hash = hashlib.sha256(full_content.encode("utf-8")).hexdigest() if full_content else ""
-    if task_run_id and full_content and str(binding.get("content_hash") or "") == content_hash:
+    if task_run_id and full_content:
         report_path = ROOT / "requests" / "report_delivery" / f"{report_id.replace(':', '__')}.json"
         report = {
             "schema_version": "1.0",
@@ -3549,8 +3542,11 @@ def main() -> int:
             raise ValueError("Formal Decision completion parent does not match BDS")
         if str(bds.get("decision_id") or "").strip() != str(request.get("decision_id") or "").strip():
             raise ValueError("Formal Decision completion decision_id does not match BDS")
-        content = str(bds.get("presentation_content") or "").strip()
-        if not content or str(request.get("content_hash") or "").strip() != hashlib.sha256(content.encode("utf-8")).hexdigest():
+        content = bds.get("presentation_content")
+        if not isinstance(content, str) or not content:
+            raise ValueError("Formal Decision completion content binding is invalid")
+        binding = bds.get("presentation_binding") if isinstance(bds.get("presentation_binding"), dict) else {}
+        if str(binding.get("full_content") or "") != content:
             raise ValueError("Formal Decision completion content binding is invalid")
         request.update({key: value for key, value in bds.items() if key not in {"request_id", "request_type", "source"}})
         request["request_type"] = BUSINESS_DECISION_SOURCE

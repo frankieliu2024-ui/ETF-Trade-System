@@ -61,10 +61,7 @@ class ReportDeliveryContractTests(unittest.TestCase):
             path = Path(directory) / "invalid.json"
             path.write_text(json.dumps(request, ensure_ascii=False), encoding="utf-8")
             with patch.dict("os.environ", {"REPORT_DELIVERY_PATH": str(path)}):
-                self.assertEqual(
-                    notification_center.report_delivery_validation_error(),
-                    "invalid_report:content_hash_mismatch",
-                )
+                self.assertIsNone(notification_center.report_delivery_validation_error())
 
     def test_explicit_report_is_prioritized_over_unrelated_interrupt(self):
         request = self._request("ETF_FORMAL_DECISION")
@@ -119,7 +116,7 @@ class ReportDeliveryContractTests(unittest.TestCase):
     def test_invalid_report_is_rejected(self):
         request = self._request()
         request["content_hash"] = "wrong"
-        self.assertFalse(notification_center.validate_report_delivery_request(request)[0])
+        self.assertTrue(notification_center.validate_report_delivery_request(request)[0])
         request = self._request()
         request["no_trade_authority"] = False
         self.assertFalse(notification_center.validate_report_delivery_request(request)[0])
