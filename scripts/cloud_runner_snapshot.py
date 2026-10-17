@@ -21,6 +21,10 @@ try:
 except ModuleNotFoundError:
     from scripts.provider_policy import resolve_object_policy
 from tencent_quote import fetch_tencent_quotes
+try:
+    from provider_policy import resolve_object_policy
+except ModuleNotFoundError:
+    from scripts.provider_policy import resolve_object_policy
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
@@ -117,8 +121,12 @@ def load_eastmoney_fallback_indices() -> set[str]:
     if not path.exists():
         return set()
     config = json.loads(path.read_text(encoding="utf-8"))
-    policy = config.get("object_fallback_policy") or {}
-    return {str(thscode).split(".")[0] for thscode, rule in policy.items() if "eastmoney_push2" in (rule.get("fallback") or []) and rule.get("direct_only") is True and str(thscode).upper().endswith((".SH", ".SZ")) and str(thscode).split(".")[0] in {"000001", "399006"}}
+    configured: set[str] = set()
+    for code, thscode in INDEX:
+        policy = resolve_object_policy(config, thscode, asset_class="INDEX", code=code)
+        if isinstance(policy, dict) and "eastmoney_push2" in (policy.get("fallback") or []) and policy.get("direct_only") is True:
+            configured.add(str(code))
+    return configured
 
 
 EASTMONEY_FALLBACK_INDICES = load_eastmoney_fallback_indices()

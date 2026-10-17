@@ -13,10 +13,12 @@ try:
     from state_manager import atomic_json_write, now_utc, read_json
     from market_data_guard import classify_provider_failure, validate_market_row
     from tencent_quote import fetch_tencent_quotes
+    from provider_policy import resolve_object_policy
 except ModuleNotFoundError:
     from scripts.state_manager import atomic_json_write, now_utc, read_json
     from scripts.market_data_guard import classify_provider_failure, validate_market_row
     from scripts.tencent_quote import fetch_tencent_quotes
+    from scripts.provider_policy import resolve_object_policy
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 STOCK_CONTEXT = ROOT / "data" / "state" / "stock_context.json"
@@ -29,8 +31,13 @@ def load_stock_fallback_codes() -> set[str]:
     if not path.exists():
         return set()
     config = json.loads(path.read_text(encoding="utf-8"))
-    policy = config.get("object_fallback_policy") or {}
-    return {str(key).split(".")[0] for key, rule in policy.items() if str(rule.get("primary")) == "tencent_qq" and "eastmoney_push2" in (rule.get("fallback") or []) and rule.get("direct_only") is True}
+    result: set[str] = set()
+    for key in (config.get("object_fallback_policy") or {}):
+        code = str(key).split(".")[0]
+        policy = resolve_object_policy(config, key, asset_class="STOCK", code=code)
+        if isinstance(policy, dict) and str(policy.get("primary")) == "tencent_qq" and "eastmoney_push2" in (policy.get("fallback") or []) and policy.get("direct_only") is True:
+            result.add(code)
+    return result
 
 
 STOCK_FALLBACK_CODES = load_stock_fallback_codes()
