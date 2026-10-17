@@ -1,0 +1,49 @@
+{
+  "request_id": "scheduled-system-review-20261017T0937-6f02b1",
+  "request_type": "SCHEDULED_REVIEW_COMPLETION",
+  "formal_fact_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW",
+  "source": "CHATGPT_SCHEDULED_SYSTEM_REVIEW_ACTOR",
+  "interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
+  "requested_at_beijing": "2026-10-17T09:37:08+08:00",
+  "system_review": {
+    "report_type": "ETF_SYSTEM_REVIEW",
+    "review_scope": "MANUAL_MORNING_SYSTEM_REVIEW",
+    "review_date": "2026-10-17",
+    "latest_formal_market_date": "2026-10-16",
+    "a_share_latest_formal_market_date": "2026-10-16",
+    "e2e_status": "READY",
+    "system_consistency_status": "PASS",
+    "system_consistency_as_of": "2026-09-29T14:31:00+08:00",
+    "account_fact_updated_at": "2026-10-16T15:00:00+08:00",
+    "account_reconciled_at": "2026-10-16T17:34:33+08:00",
+    "risk_status": "READY_WITH_AS_OF_MISMATCH",
+    "risk_metric_pct": -7.2959,
+    "observation_count": 11,
+    "discovery_evaluated_count": 11,
+    "opportunity_count": 0,
+    "actual_holding_codes": [
+      "159941",
+      "159981",
+      "159992"
+    ],
+    "execution_reconciliation": "NOT_APPLICABLE",
+    "user_attribution_requirement": "NONE",
+    "fact_cutoff_at_beijing": "2026-10-17T09:37:08+08:00",
+    "source_facts_as_of": {
+      "market_close": "2026-10-16T15:00:00+08:00",
+      "account_reconciliation": "2026-10-16T17:34:33+08:00",
+      "system_status": "2026-10-17T08:21:41+08:00",
+      "system_consistency": "2026-09-29T14:31:00+08:00",
+      "full_day_trade_review": "2026-10-16T20:58:00+08:00"
+    }
+  },
+  "presentation_binding": {
+    "report_type": "ETF_SYSTEM_REVIEW",
+    "task_id": "ETF系统复核",
+    "task_run_id": "system-review-manual-20261017T0937-6f02b1",
+    "occurrence_id": "system-review-manual-20261017T0937-6f02b1",
+    "request_id": "scheduled-system-review-20261017T0937-6f02b1",
+    "report_id": "etf_system_review:system-review-manual-20261017T0937-6f02b1",
+    "full_content": "【ETF系统复核】2026-10-17 09:37 早间复核\n\n【复核时点（北京时间）】\n\n本次为2026年10月17日09:37手动早间复核。今天是周六，A股休市；本次读取的行情、账户和运行状态分别以其记录时点为准。\n\n【早间复核结论】\n\n系统汇总状态在08:21为READY，足以支持后续分析准备；这不代表所有风险、运行和通知事实均已重新验证。最新收盘行情、已对账账户和生命周期状态可读，但策略风险日期口径不一致、完整一致性检查较旧，海外运行状态为DEGRADED。今天没有A股交易节点，本次不形成买卖结论、金额或份额。\n\n【今日市场阶段与开门条件】\n\nA股今日休市，最近正式行情为10月16日15:00收盘，快照于15:02:19生成。下一交易日为10月19日；届时需按当日正式日历、市场阶段和新行情质量确认开门条件，不能将周五收盘价当作周一可执行价格。\n\n【关键事实与数据可用性】\n\n1. 行情快照覆盖3个指数和14只监测ETF，共17项，质量PASS；它是最近收盘事实，不是今天的实时行情。\n\n2. 账户于10月16日17:34:33完成对账，总资产171,697.67元，证券市值50,500.80元，现金及可部署现金121,196.87元。实际持仓为纳指ETF（159941）12,200份、能源化工ETF（159981）8,500份、创新药ETF（159992）17,200份；记录未列待处理委托，且不覆盖对账后的账户变化。\n\n3. 系统总状态08:21为READY，生命周期组件显示没有到期的强制处理事项。最近完整系统一致性检查为9月29日PASS，不能证明此后所有变更已重新全量验证。\n\n4. 策略风险率约为-7.2959%；Dashboard标注估值日期为9月23日，运行汇总则称重建结果对10月16日有效，底层记录更新时间为9月29日。有效截止日尚未统一核实，海外运行健康状态为DEGRADED，包含部分亚洲行情时点较早及自动运行身份不明确。\n\n【今日决策链准备度】\n\n1. 10月16日完整日复盘记录当节点机会ETF为0、新增部署为0元，现金是资本比较中的主用途；这不是新的买卖许可。\n\n2. 该复盘列出11个Discovery评估对象；Dashboard另列11只正式观察ETF。两组对象不能仅凭数量视为相同。发现、观察、机会和实际持仓身份彼此独立，发现或观察本身不产生交易许可。\n\n3. Dashboard最近正式决策展示时点为10月13日；复盘记录中出现的创新药ETF（159992）退出建议仍需由独立正式判断链按届时事实复核，不是订单，也不是本次复核结论。\n\n【需要用户处理】\n\n目前无需补交已确认的账户资料，也无需因本次复核执行交易。若10月16日17:34之后发生新的成交、转账或其他账户变化，应在下一次正式分析前按既有账户事实入口更新。\n\n【今日重点关注】\n\n下一交易日前，重点核实策略风险估值截止日、完整一致性检查时效，以及海外运行状态是否恢复或仍需降级。当前可读的系统READY标签不应替代对这些事实时点的确认。\n\n【下一阶段】\n\n下一交易日先核对正式行情和账户事实，再确认风险估值日期、运行状态及正式决策记录；比较时继续区分Discovery、观察ETF、机会ETF、实际持仓、现金和可释放资本，不沿用本次系统复核形成交易授权。\n\n【执行状态】\n\n本次事实复核已形成；未创建Formal Decision请求，未形成新的买卖结论、金额或份额，也未修改规则、权限、数据源、监控范围、代码或调度。完成记录、复核事件、报告、通知发送和用户实际收到分别核验。\n\n【置信度】\n\n中。收盘行情、账户对账、10月16日复盘及08:21运行状态均有对应记录；风险估值有效日期、全量一致性时效和海外调度状态仍有未核实处。\n\n【最可能出错的地方】\n\n把08:21系统READY理解为所有关键事实都已及时验证；把11个Discovery评估对象视作11只观察ETF或机会ETF；或把创新药ETF（159992）的既有退出建议当成可直接执行的交易指令。"
+  }
+}
