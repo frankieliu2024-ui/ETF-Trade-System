@@ -1154,14 +1154,14 @@ jobs:
         # Full decision preparation is request/state-sync bound. Scheduled
         # snapshots keep canonical market facts and reusable Discovery current;
         # formal requests/recovery rebuild the canonical decision context.
-        if: ${{ steps.query_context.outcome == 'success' && steps.state_sync.outputs.formal_completion != 'true' && steps.triggering_request.outputs.formal_completion != 'true' && (github.event_name == 'push' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
+        if: ${{ steps.query_context.outcome == 'success' && steps.state_sync.outputs.formal_completion != 'true' && steps.triggering_request.outputs.formal_completion != 'true' && (github.event_name == 'push' || steps.state_sync.outputs.processed == 'true' || github.event.inputs.formal_context_recovery_request != '') && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_state_context.py --decision-ready-only
 
       - name: Build E2E usability state
         # Decision usability is request/state-sync qualification, not a scheduled
         # market-fact producer responsibility. Scheduled pulses may refresh
         # reusable Discovery evidence without rebuilding request-bound E2E state.
-        if: ${{ steps.query_context.outcome == 'success' && steps.state_sync.outputs.formal_completion != 'true' && steps.triggering_request.outputs.formal_completion != 'true' && (github.event_name == 'push' || steps.state_sync.outputs.processed == 'true') && github.event.inputs.probe_only != 'true' }}
+        if: ${{ steps.query_context.outcome == 'success' && steps.state_sync.outputs.formal_completion != 'true' && steps.triggering_request.outputs.formal_completion != 'true' && (github.event_name == 'push' || steps.state_sync.outputs.processed == 'true' || github.event.inputs.formal_context_recovery_request != '') && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_e2e_status.py
       - name: Build post-market review context
         # Review is a close/state-sync consumer, not a generic intraday pulse
