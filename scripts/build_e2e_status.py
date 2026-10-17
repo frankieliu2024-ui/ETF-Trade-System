@@ -25,6 +25,7 @@ FILES = {
     "current": STATE / "CURRENT.json",
     "account": STATE / "account_fact.json",
     "equity": STATE / "etf_strategy_equity.json",
+    "risk_evidence": STATE / "skfolio_risk_evidence.json",
     "query": STATE / "query_context.json",
     "decision": STATE / "decision_context.json",
     "maintenance": STATE / "maintenance_health.json",
@@ -272,7 +273,21 @@ def latest_formal_review_risk() -> dict:
     return max(candidates, key=lambda x: x[0])[1] if candidates else {}
 
 
-def risk_component(equity: dict, current: dict) -> dict:
+def risk_component(equity: dict, current: dict, risk_evidence: dict | None = None) -> dict:
+    risk_evidence = risk_evidence or {}
+    evidence_status = str(risk_evidence.get("status") or "").upper()
+    evidence_alignment = str(risk_evidence.get("data_alignment") or "").upper()
+    if evidence_status == "DEGRADED" and evidence_alignment != "ALIGNED_WITH_CURRENT_MARKET_DATE":
+        return {
+            "status": "DEGRADED",
+            "reason": risk_evidence.get("decision_block_reason") or "canonical risk evidence is not aligned to current market date",
+            "etf_strategy_risk_pct": None,
+            "source": "data/state/skfolio_risk_evidence.json",
+            "risk_data_end": risk_evidence.get("risk_data_end"),
+            "current_market_date": risk_evidence.get("current_market_date"),
+            "data_alignment": risk_evidence.get("data_alignment"),
+            "decision_eligible": False,
+        }
     summary = equity.get("summary") or {}
     reconstruction_pct = summary.get("current_strategy_return_pct_gross", summary.get("known_net_current_strategy_return_pct"))
     reconstruction_generated = equity.get("generated_at")
@@ -705,7 +720,7 @@ def main() -> int:
     components = {
         "market": market_component(data["current"]),
         "account": account_component(data["account"], data["current"]),
-        "risk": risk_component(data["equity"], data["current"]),
+        "risk": risk_component(data["equity"], data["current"], data["risk_evidence"]),
         "close_review": close_review_component(data["current"]),
         "decision_context": context_component(data["query"], data["decision"]),
         "lifecycle": lifecycle_component(data["current"]),
