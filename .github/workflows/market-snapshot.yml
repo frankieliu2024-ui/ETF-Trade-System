@@ -1169,7 +1169,7 @@ jobs:
         # The close-review producer must publish before the E2E consumer reads
         # closure/evidence/business-completion state; otherwise stale or future
         # close_review data can survive in e2e_status.
-        if: ${{ always() && steps.query_context.outcome == 'success' && (steps.state_sync.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (steps.triggering_request.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (github.event_name == 'push' || steps.state_sync.outputs.processed == 'true' || github.event.inputs.formal_context_recovery_request != '' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && github.event.inputs.probe_only != 'true' }}
+        if: ${{ always() && (steps.query_context.outcome == 'success' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && (steps.state_sync.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (steps.triggering_request.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (github.event_name == 'push' || steps.state_sync.outputs.processed == 'true' || github.event.inputs.formal_context_recovery_request != '' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_e2e_status.py
       - name: Commit downstream runtime/data artifacts
         # A failed close-derived refresh must not publish a mixed generation
