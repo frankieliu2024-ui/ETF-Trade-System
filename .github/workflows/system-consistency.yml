@@ -159,6 +159,11 @@ jobs:
           else
             echo "No changed production Python files."
           fi
+      - name: Run legacy production boundary contract tests
+        shell: bash
+        run: |
+          PYTHONPATH=scripts python -m unittest tests.test_legacy_production_boundaries
+
       - name: Run full system consistency check
         shell: bash
         env:
