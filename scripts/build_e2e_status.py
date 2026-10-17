@@ -566,6 +566,12 @@ def _valid_close_review_completion(current: dict) -> dict:
     if not isinstance(reference, dict):
         return {}
     market_date = str(reference.get("market_date") or "")
+    current_market_date = str((current or {}).get("market_date") or "")
+    # A derived close-review closure may never advance beyond the canonical
+    # CURRENT fact. Future-dated projections must not mask a stale/current
+    # market fact or downgrade the system based on an unaccepted date.
+    if current_market_date and market_date and market_date > current_market_date:
+        return {}
     if not market_date or str(reference.get("status") or "").upper() != "CLOSED":
         return {}
     expected_review_path = f"events/reviews/{market_date}.json"
