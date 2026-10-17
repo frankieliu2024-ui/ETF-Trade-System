@@ -120,3 +120,14 @@ System Review和Trade Review均属于Scheduled Review投影场景。正文冻结
 本协议只登记稳定的自动运行边界。具体节点、provider、监测全集、交易规则和通知资格必须分别读取其唯一规范或机器事实。新增场景必须先查重、确定owner和净复杂度，再通过生产变更协议实施；不得通过本协议偷偷新增workflow、state、writer或业务链。
 
 协议更新必须保留旧版本、变更原因、哈希和回滚位置，并通过独立分支、测试、PR、CI和merged-main验收。
+
+
+## 8.2 生产者—消费者成对验收与观察期
+
+自动维护的“成功”必须按完整用户结果验收。producer 成功、workflow/job success、artifact 上传成功或 provider 返回成功，只能作为该层证据；维护链还必须确认对应 consumer 实际执行，使用同一 request identity、事实时点和 canonical 输入，并回读其声明的持久状态与投影。缺少 consumer 运行或逐层回读时，状态必须保持未闭环，不能通过重放旧对象、补发历史正文或创建第二对象来填空。
+
+审计 artifact 与 canonical 持久化状态分离：只读一致性/可靠性审计可以生成临时 artifact，但不得写入或伪装成 canonical state；canonical state 仍只由登记的 owner 维护。provider result 也不等于用户收到；用户可见结果必须单独记录。
+
+当同一 failure domain 的相邻失败再次出现，先回到既有 owner 和完整链审计，复核入口身份、事实、状态生产、对象转换和所有 consumer，再决定最小根因完整修复。没有新的可复现用户结果缺口时，进入观察期并停止新增 workflow、state、writer、checker 或旁路重试链；已有定时任务继续按既有合同运行，不因观察期改写三类ETF任务的身份、PIT、正文或通知边界。
+
+自动维护事项只有在原始用户结果、相邻边界、下游回读、merged-main/运行证据和失败归因达到其场景矩阵要求后，才可表述为闭环；合并或单个 job 成功不构成闭环。上述要求复用本协议既有 owner、回执和失败分类，不新增规则域或状态副本。
