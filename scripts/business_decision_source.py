@@ -1052,7 +1052,13 @@ def _validate_request_bound_identity(source: dict[str, Any]) -> None:
     parent_id = str(source.get("parent_request_id") or request_id).strip()
     decision_id = str(source.get("decision_id") or "").strip()
     if parent_id and parent_id != request_id:
-        raise ValueError("business source parent_request_id must match request_id")
+        # A BDS envelope is a child handoff of the unique parent request.  Its
+        # request_id is intentionally parent_id + "__business_decision_source";
+        # rejecting that bound child identity made every valid handoff fail
+        # before the formal-entry identity fields could be validated.
+        expected_bds_id = f"{parent_id}__business_decision_source"
+        if str(source.get("request_type") or "").strip().upper() != "BUSINESS_DECISION_SOURCE" or request_id != expected_bds_id:
+            raise ValueError("business source parent_request_id binding is invalid")
     nested = source.get("decision_response")
     if isinstance(nested, dict):
         nested_id = str(nested.get("decision_id") or "").strip()
