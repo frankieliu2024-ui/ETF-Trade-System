@@ -107,6 +107,16 @@ def _time_presentation_errors(text: str) -> list[str]:
     return errors
 
 
+def _internal_presentation_terms(text: str) -> list[str]:
+    terms = (
+        "workflow", "completion", "notification_center", "PushPlus",
+        "provider", "content_hash", "BDS", "DWP", "PIT",
+        "query_context", "decision_work_package", "系统时钟", "执行环境",
+        "UTC+08:00", "DEGRADED", "FULL_REPORT", "STATE_SYNC_ONLY",
+    )
+    return [term for term in terms if re.search(re.escape(term), text, re.IGNORECASE)]
+
+
 def validate_user_visible_content(
     content: str,
     *,
@@ -123,6 +133,9 @@ def validate_user_visible_content(
     errors = _security_identity_errors(text, mapping)
     errors.extend(_presentation_structure_errors(text))
     errors.extend(_time_presentation_errors(text))
+        if not technical_audit_mode:
+            for term in _internal_presentation_terms(text):
+                errors.append(f"internal execution term is forbidden in normal business presentation: {term}")
     if not canonical_closure_confirmed:
         for phrase in CLOSURE_PHRASES:
             if phrase in text:
