@@ -1,5 +1,5 @@
 {
-  "version": "V1.11",
+  "version": "V1.12",
   "policy": "质量优先；正式对象按对象级primary→verified direct fallback处理；单点风险明确告警；失败对象不得静默省略；获取成功不等于自动采用；所有源先经过质量审计并保留市场时点信息",
   "providers": {
     "tencent_qq": {
@@ -546,5 +546,15 @@
       "timestamp_field": "localTradedAt",
       "session_field": "marketSessionType"
     }
+  },
+  "default_object_fallback_policy": {
+    "primary": "tencent_qq",
+    "fallback": [
+      "hithink_finance",
+      "eastmoney_push2"
+    ],
+    "direct_only": true,
+    "applies_to": "A_SHARE_ETF",
+    "rule": "所有已纳入正式持仓或观察集合、且具备六位代码和.SH/.SZ身份的A股ETF自动解析此链；经验证的特殊对象可由object_fallback_policy显式覆盖。"
   }
 }
