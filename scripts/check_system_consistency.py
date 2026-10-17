@@ -373,12 +373,12 @@ def _validate_post_close_review_contract(report: dict, now=None) -> None:
     binding = review.get("presentation_binding") if isinstance(review.get("presentation_binding"), dict) else {}
     report_id = str(binding.get("report_id") or review.get("report_id") or "").strip()
     report_path = ROOT / "requests" / "report_delivery" / f"{report_id.replace(':', '__')}.json" if report_id else None
-    report = _read_json(str(report_path.relative_to(ROOT)).replace("\\", "/")) if report_path and report_path.exists() else {}
+    delivery_report = _read_json(str(report_path.relative_to(ROOT)).replace("\\", "/")) if report_path and report_path.exists() else {}
     if (not report_path or not report_path.exists()
-            or report.get("event_type") != "REPORT_DELIVERY_REQUEST"
-            or report.get("report_id") != report_id
-            or report.get("request_id") != review.get("request_id")
-            or report.get("full_content") != binding.get("full_content")):
+            or delivery_report.get("event_type") != "REPORT_DELIVERY_REQUEST"
+            or delivery_report.get("report_id") != report_id
+            or delivery_report.get("request_id") != review.get("request_id")
+            or delivery_report.get("full_content") != binding.get("full_content")):
         errors.append("missing_or_mismatched_report_delivery_projection")
     review_payload = review.get("review") if isinstance(review.get("review"), dict) else {}
     discovery_status = str(review_payload.get("discovery_close_status") or "").upper()
