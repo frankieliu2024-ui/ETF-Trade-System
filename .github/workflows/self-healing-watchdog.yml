@@ -330,7 +330,37 @@ jobs:
               python scripts/runtime_self_heal.py --assess
             fi
 
-            git add -A -- data/state/self_healing_status.json
+            # checked_at and age counters are observations, not state transitions.
+            # Do not turn every watchdog wake into a main commit. Persist the
+            # status only when its stable classification/decision evidence changes.
+            status_changed="$(python - <<'PY'
+          import json, subprocess
+          from pathlib import Path
+          def stable(raw):
+              try:
+                  value=json.loads(raw)
+              except Exception:
+                  return None
+              for key in ("checked_at", "current_capture_age_seconds"):
+                  value.pop(key, None)
+              return value
+          current=stable(Path("data/state/self_healing_status.json").read_text(encoding="utf-8"))
+          try:
+              previous_raw=subprocess.check_output(
+                  ["git","show","origin/main:data/state/self_healing_status.json"],
+                  text=True, stderr=subprocess.DEVNULL
+              )
+              previous=stable(previous_raw)
+          except Exception:
+              previous=None
+          print("true" if current != previous else "false")
+          PY
+            )"
+            if [ "$status_changed" = "true" ]; then
+              git add -A -- data/state/self_healing_status.json
+            else
+              git restore --worktree -- data/state/self_healing_status.json
+            fi
             if [ "$action" != "NONE" ]; then
               git add -A -- data/state/CURRENT.json data/state/query_context.json data/state/decision_context.json data/state/review_context.json data/state/intraday_path_features.json data/state/decision_trigger.json data/state/capital_efficiency_ranking.json post_market_review/post_market_review_event.json
             fi
