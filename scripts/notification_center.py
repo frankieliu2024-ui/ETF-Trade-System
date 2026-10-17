@@ -355,7 +355,8 @@ def canonical_scheduled_report_events(event_path: str | None = None) -> list[dic
         if report_type not in ACTIVE_REPORT_TYPES or not content:
             continue
         expected = hashlib.sha256(content.encode("utf-8")).hexdigest()
-        if str(binding["content_hash"]) != expected:
+        supplied_hash = str(binding.get("content_hash") or "").strip()
+        if supplied_hash and supplied_hash != expected:
             continue
         task_run_id = str(binding["task_run_id"])
         task_id = str(binding["task_id"])
