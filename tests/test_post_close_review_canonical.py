@@ -370,10 +370,10 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
                     "discovery_close_status": "COMPLETED",
                     "review_evidence_status": "COMPLETE",
                     "business_completion_status": "COMPLETE",
-                    "presentation_binding": {
-                        "request_id": f"review-{market_date}",
-                        "report_id": f"ETF_SYSTEM_REVIEW:{market_date}",
-                    },
+                },
+                "presentation_binding": {
+                    "request_id": f"review-{market_date}",
+                    "report_id": f"ETF_SYSTEM_REVIEW:{market_date}",
                 },
             }),
             encoding="utf-8",
