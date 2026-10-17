@@ -3483,6 +3483,28 @@ def main() -> int:
     request = load_json(req_path)
     request["_ingress_path"] = str(req_path.relative_to(ROOT)).replace("\\\\", "/")
 
+    # Scheduled Review actors may omit the derived scenario field even though
+    # the canonical request type and formal fact type identify it
+    # deterministically. Normalize only this registered ingress; do not infer
+    # identity from task names, timestamps, or historical objects.
+    if (
+        str(request.get("request_type") or "").strip().upper()
+        == "SCHEDULED_REVIEW_COMPLETION"
+        and not str(request.get("interaction_scenario") or "").strip()
+    ):
+        scenario_by_fact_type = {
+            "FORMAL_POST_CLOSE_REVIEW": "POST_CLOSE_REVIEW",
+            "FORMAL_SCHEDULED_SYSTEM_REVIEW": "SCHEDULED_SYSTEM_REVIEW",
+            "FORMAL_MIDDAY_REVIEW": "MIDDAY_REVIEW",
+        }
+        fact_type = str(request.get("formal_fact_type") or "").strip().upper()
+        scenario = scenario_by_fact_type.get(fact_type)
+        if not scenario:
+            raise ValueError(
+                "scheduled review completion requires a registered interaction_scenario"
+            )
+        request["interaction_scenario"] = scenario
+
     # New Formal Decision identities must not bypass the structured Business
     # Decision Source ingress. Historical legacy completion artifacts remain
     # readable/replayable, but a legacy envelope whose parent request was
@@ -3685,11 +3707,39 @@ def main() -> int:
             if not isinstance(decision_response, dict):
                 raise ValueError("business decision source requires actor-only structured decision_response")
             source_payload = project_decision_response(source_payload, decision_response, decision_work_package, forensic_historical_replay=forensic_historical_replay)
+        # Resolve and validate the exact request-bound PIT snapshot before
+        # projecting the Business Decision Source. This path previously used
+        # snapshot_rel/snapshot without selecting them, so a valid manual
+        # Formal Decision could fail with NameError before canonical writing.
+        decision_time = str(
+            source_payload.get("requested_at_beijing")
+            or parent_request.get("requested_at_beijing")
+            or parent_request.get("request_time_beijing")
+            or ""
+        ).strip()
+        availability_time = str(
+            query_context.get("generated_at_beijing")
+            or source_payload.get("data_as_of_beijing")
+            or decision_time
+            or ""
+        ).strip()
+        snapshot_rel, snapshot, pit_status = select_point_in_time_snapshot(
+            str(source_payload.get("market_date") or "").strip(),
+            decision_time,
+            availability_time=availability_time,
+            consumed_snapshot=str(source_payload.get("consumed_snapshot") or "").strip(),
+        )
+        if not snapshot_rel:
+            raise ValueError(
+                "business decision source requires a legal request-bound PIT snapshot: "
+                + pit_status
+            )
         source_payload["request_bound_fact_binding"] = {
-            "snapshot_id": str(snapshot_rel or "").strip(),
+            "snapshot_id": snapshot_rel,
             "market_date": str(snapshot.get("market_date") or market_date or "").strip(),
             "market_phase": str(snapshot.get("market_phase") or "").strip(),
             "captured_at": str(snapshot.get("captured_at_beijing") or snapshot.get("captured_at") or "").strip(),
+            "pit_status": pit_status,
         }
         source = validate_source(
             source_payload,
