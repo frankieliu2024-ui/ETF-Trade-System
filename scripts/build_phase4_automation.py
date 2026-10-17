@@ -109,8 +109,6 @@ def _build_trigger(current: dict, account: dict, e2e: dict, equity: dict, prior:
     now = _now()
     e2e_status = str(e2e.get("status") or "BLOCKED").upper()
     risk = ((((e2e.get("components") or {}).get("risk") or {}).get("etf_strategy_risk_pct")))
-    if risk is None:
-        risk = ((equity.get("summary") or {}).get("known_net_current_strategy_return_pct"))
     zone = _risk_zone(risk)
     prior_zone = str(prior.get("risk_zone") or "")
     event_type = ""
@@ -204,8 +202,6 @@ def _build_ranking(current: dict, account: dict, e2e: dict, equity: dict, prior:
     now = _now()
     e2e_status = str(e2e.get("status") or "BLOCKED").upper()
     risk = ((((e2e.get("components") or {}).get("risk") or {}).get("etf_strategy_risk_pct")))
-    if risk is None:
-        risk = ((equity.get("summary") or {}).get("known_net_current_strategy_return_pct"))
     risk_zone = _risk_zone(risk)
     enhanced_review = _enhanced_risk_review(risk)
     constraints = _execution_constraints(e2e_status)
