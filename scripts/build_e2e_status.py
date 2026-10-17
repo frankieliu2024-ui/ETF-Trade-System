@@ -650,7 +650,23 @@ def close_review_component(current: dict, now=None) -> dict:
 
     if not event or not event.get("market_close"):
         return {"status": "READY", "reason": "no formal close review is currently required"}
-    market_date = str(event.get("market_date") or current.get("market_date") or "")
+    event_market_date = str(event.get("market_date") or "")
+    current_market_date = str(current.get("market_date") or "")
+    # A stale/future post-market event is not a valid trigger for the current
+    # market date. Reject it at the consumer boundary so an old task completion
+    # cannot downgrade or satisfy the current close-review state.
+    if (
+        event_market_date
+        and current_market_date
+        and event_market_date > current_market_date
+    ):
+        return {
+            "status": "DEGRADED",
+            "reason": "future close review projection ignored; current market date has no valid close-review completion",
+            "market_date": current_market_date,
+            "invalid_projection_market_date": event_market_date,
+        }
+    market_date = event_market_date or current_market_date
     try:
         from post_close_review_due import configured_review_due_time, review_due_state
     except ModuleNotFoundError:
