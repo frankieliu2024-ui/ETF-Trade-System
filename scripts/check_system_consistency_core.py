@@ -509,7 +509,7 @@ def main() -> int:
     universe = read_json("config/market/etf_monitor_universe.json")
     etf_codes = {str(item.get("code")) for item in (universe.get("objects") or []) if item.get("code")}
     etf_missing_fallback = sorted(code for code in etf_codes if not isinstance(fallback_policy.get(code + (".SH" if code.startswith(("5", "6")) else ".SZ")), dict))
-    check("providers:etf_fallback_policy", not etf_missing_fallback, f"missing object fallback entries={etf_missing_fallback}", warning=True)
+    check("providers:etf_fallback_policy", not etf_missing_fallback, f"missing object fallback entries={etf_missing_fallback}")
     invalid_direct = []
     for object_id, rule in fallback_policy.items():
         if rule.get("direct_only") is True and any(str(x).startswith("ETF_PROXY") for x in (rule.get("fallback") or [])):

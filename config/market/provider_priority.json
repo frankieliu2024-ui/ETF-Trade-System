@@ -1,5 +1,5 @@
 {
-  "version": "V1.10",
+  "version": "V1.11",
   "policy": "质量优先；正式对象按对象级primary→verified direct fallback处理；单点风险明确告警；失败对象不得静默省略；获取成功不等于自动采用；所有源先经过质量审计并保留市场时点信息",
   "providers": {
     "tencent_qq": {
@@ -257,6 +257,16 @@
     ],
     "000660": [
       "naver_finance:000660"
+    ],
+    "159981.SZ": [
+      "tencent_qq",
+      "hithink_finance",
+      "eastmoney_push2"
+    ],
+    "515080.SH": [
+      "tencent_qq",
+      "hithink_finance",
+      "eastmoney_push2"
     ]
   },
   "object_fallback_policy": {
@@ -442,6 +452,22 @@
         "eastmoney_push2delay:100.TWII",
         "eastmoney_push2:100.TWII",
         "yahoo_chart_api"
+      ],
+      "direct_only": true
+    },
+    "159981.SZ": {
+      "primary": "tencent_qq",
+      "fallback": [
+        "hithink_finance",
+        "eastmoney_push2"
+      ],
+      "direct_only": true
+    },
+    "515080.SH": {
+      "primary": "tencent_qq",
+      "fallback": [
+        "hithink_finance",
+        "eastmoney_push2"
       ],
       "direct_only": true
     }

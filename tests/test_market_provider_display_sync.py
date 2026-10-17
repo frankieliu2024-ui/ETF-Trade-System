@@ -112,13 +112,16 @@ class ProviderPolicyConsistencyTest(unittest.TestCase):
             self.assertIn((code, thscode), cloud_runner_snapshot.ETF, f"ETF missing runtime universe identity: {thscode}")
             self.assertIn(code, cloud_runner_snapshot.EASTMONEY_FALLBACK_ETFS, f"ETF missing generic A-share fallback chain: {thscode}")
 
-    def test_dynamic_positive_holding_reuses_established_a_share_etf_chain(self):
-        """A new held A-share ETF must not require an object-level provider entry."""
+    def test_monitored_etfs_have_explicit_object_level_fallback_policies(self):
+        """Every monitored ETF has an auditable object-level fallback contract."""
         from scripts import cloud_runner_snapshot
 
-        self.assertIn(("159981", "159981.SZ"), cloud_runner_snapshot.ETF)
-        self.assertIn("159981", cloud_runner_snapshot.EASTMONEY_FALLBACK_ETFS)
-        self.assertNotIn("159981.SZ", self.priority.get("object_fallback_policy") or {})
+        policies = self.priority.get("object_fallback_policy") or {}
+        for object_id in ("159981.SZ", "515080.SH"):
+            self.assertIn(object_id, policies)
+            self.assertEqual(policies[object_id]["primary"], "tencent_qq")
+            self.assertEqual(policies[object_id]["fallback"], ["hithink_finance", "eastmoney_push2"])
+            self.assertTrue(policies[object_id]["direct_only"])
 
     def test_production_scope_declarations_do_not_drift(self):
         """Production scope labels duplicated for display must match the provider authority exactly."""
