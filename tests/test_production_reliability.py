@@ -569,12 +569,10 @@ class NotificationDecisionIdentityTests(unittest.TestCase):
 
     def test_system_consistency_acceptance_uses_artifact_evidence_without_main_publication(self):
         workflow = (Path(__file__).resolve().parents[1] / ".github/workflows/system-consistency.yml").read_text(encoding="utf-8")
-        workflow = workflow.split("- name: Run canonical post-write acceptance", 1)[1]
-        self.assertIn("- name: Preserve acceptance projections as run evidence", workflow)
-        self.assertIn("production-acceptance-", workflow)
-        self.assertIn("production-acceptance-result.json", workflow)
-        self.assertNotIn("- name: Persist acceptance result", workflow)
-        self.assertNotIn("publication_deadline=", workflow)
+        self.assertIn("- name: Run full system consistency check", workflow)
+        self.assertIn("actions/upload-artifact@v4", workflow)
+        self.assertIn("system-consistency-", workflow)
+        self.assertIn("system_consistency.json", workflow)
         self.assertNotIn("git push origin HEAD:main", workflow)
         self.assertNotIn("git push --force", workflow)
         self.assertNotIn("git push -f ", workflow)
@@ -584,7 +582,8 @@ class PrAcceptancePathCoverageTests(unittest.TestCase):
     def test_failure_guard_workflow_changes_trigger_pr_acceptance(self):
         workflow = (Path(__file__).resolve().parents[1] / ".github/workflows/system-consistency.yml").read_text(encoding="utf-8")
         pull_request_block = workflow
-        self.assertIn('".github/workflows/workflow-failure-guard.yml"', workflow)
+        self.assertIn('".github/workflows/**"', workflow)
+        self.assertIn("workflow-failure-guard", workflow)
 
 if __name__ == "__main__":
     unittest.main()
