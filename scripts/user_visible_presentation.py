@@ -133,9 +133,9 @@ def validate_user_visible_content(
     errors = _security_identity_errors(text, mapping)
     errors.extend(_presentation_structure_errors(text))
     errors.extend(_time_presentation_errors(text))
-        if not technical_audit_mode:
-            for term in _internal_presentation_terms(text):
-                errors.append(f"internal execution term is forbidden in normal business presentation: {term}")
+    if not technical_audit_mode:
+        for term in _internal_presentation_terms(text):
+            errors.append(f"internal execution term is forbidden in normal business presentation: {term}")
     if not canonical_closure_confirmed:
         for phrase in CLOSURE_PHRASES:
             if phrase in text:
