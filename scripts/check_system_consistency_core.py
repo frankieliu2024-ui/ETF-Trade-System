@@ -303,19 +303,19 @@ def main() -> int:
     test_env = os.environ.copy()
     test_env["PYTHONPATH"] = os.pathsep.join(filter(None, [str(ROOT / "scripts"), str(ROOT), test_env.get("PYTHONPATH", "")]))
     test_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "discover", "-s", "tests", "-p", "test_market*.py"], cwd=ROOT, env=test_env, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
-    check("tests:market_data_and_quote_router", test_proc.returncode == 0, (test_proc.stdout + test_proc.stderr)[-1000:])
+    check("tests:market_data_and_quote_router", test_proc.returncode == 0, (test_proc.stdout + test_proc.stderr)[-20000:])
     opening_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "tests.test_opening_current_self_healing"], cwd=ROOT, env=test_env, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
-    check("tests:opening_current_self_healing", opening_proc.returncode == 0, (opening_proc.stdout + opening_proc.stderr)[-1000:])
+    check("tests:opening_current_self_healing", opening_proc.returncode == 0, (opening_proc.stdout + opening_proc.stderr)[-20000:])
     semantic_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "tests.test_semantic_latest_main"], cwd=ROOT, env=test_env, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
-    check("tests:semantic_latest_main", semantic_proc.returncode == 0, (semantic_proc.stdout + semantic_proc.stderr)[-1000:])
+    check("tests:semantic_latest_main", semantic_proc.returncode == 0, (semantic_proc.stdout + semantic_proc.stderr)[-20000:])
     research_contract_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "tests.test_research_artifact_contract"], cwd=ROOT, env=test_env, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
-    check("tests:research_artifact_contract", research_contract_proc.returncode == 0, (research_contract_proc.stdout + research_contract_proc.stderr)[-1000:])
+    check("tests:research_artifact_contract", research_contract_proc.returncode == 0, (research_contract_proc.stdout + research_contract_proc.stderr)[-20000:])
     historical_stop_gate_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "tests.test_research_historical_stop_gate"], cwd=ROOT, env=test_env, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
-    check("tests:research_historical_stop_gate", historical_stop_gate_proc.returncode == 0, (historical_stop_gate_proc.stdout + historical_stop_gate_proc.stderr)[-1000:])
+    check("tests:research_historical_stop_gate", historical_stop_gate_proc.returncode == 0, (historical_stop_gate_proc.stdout + historical_stop_gate_proc.stderr)[-20000:])
     lifecycle_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "tests.test_lifecycle_state"], cwd=ROOT, env=test_env, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
-    check("tests:lifecycle_state", lifecycle_proc.returncode == 0, (lifecycle_proc.stdout + lifecycle_proc.stderr)[-1000:])
+    check("tests:lifecycle_state", lifecycle_proc.returncode == 0, (lifecycle_proc.stdout + lifecycle_proc.stderr)[-20000:])
     historical_recovery_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "tests.test_historical_market_fact_recovery"], cwd=ROOT, env=test_env, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
-    check("tests:historical_market_fact_recovery", historical_recovery_proc.returncode == 0, (historical_recovery_proc.stdout + historical_recovery_proc.stderr)[-1000:])
+    check("tests:historical_market_fact_recovery", historical_recovery_proc.returncode == 0, (historical_recovery_proc.stdout + historical_recovery_proc.stderr)[-20000:])
     for module, label in (
         ("tests.test_executed_trade_case_lifecycle", "executed_trade_case_lifecycle"),
         ("tests.test_settlement_obligations", "settlement_obligations"),
@@ -326,10 +326,10 @@ def main() -> int:
         ("tests.test_workflow_sha_snapshot", "workflow_sha_snapshot"),
     ):
         contract_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", module], cwd=ROOT, env=test_env, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
-        check(f"tests:{label}", contract_proc.returncode == 0, (contract_proc.stdout + contract_proc.stderr)[-1000:])
+        check(f"tests:{label}", contract_proc.returncode == 0, (contract_proc.stdout + contract_proc.stderr)[-20000:])
 
     compile_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "py_compile", "scripts/rules_version.py", "scripts/market_data_guard.py", "scripts/market_quote_router.py", "scripts/cloud_runner_snapshot.py", "scripts/build_account_stock_market.py", "scripts/build_overseas_context.py", "scripts/build_overseas_runtime_health.py", "scripts/build_low_cost_alpha_evidence.py", "scripts/build_query_context.py", "scripts/build_post_market_review.py", "scripts/state_manager.py", "scripts/process_state_sync_request.py", "scripts/review_prerequisite_lifecycle.py", "scripts/historical_market_fact_recovery.py", "scripts/sync_formal_files.py", "scripts/formal_file_mutation_gateway.py", "scripts/research_artifact_contract.py", "scripts/market_notification_common.py", "scripts/merge_notification_state.py", "scripts/notification_center.py", "scripts/query_market_object.py", "scripts/historical_market_fact_recovery.py", "scripts/review_prerequisite_lifecycle.py"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
-    check("tests:runtime_modules_compile", compile_proc.returncode == 0, (compile_proc.stdout + compile_proc.stderr)[-1000:])
+    check("tests:runtime_modules_compile", compile_proc.returncode == 0, (compile_proc.stdout + compile_proc.stderr)[-20000:])
 
     for path in FORMAL_FILES:
         check(f"formal_file:{path}", (ROOT / path).exists(), "exists" if (ROOT / path).exists() else "missing")
