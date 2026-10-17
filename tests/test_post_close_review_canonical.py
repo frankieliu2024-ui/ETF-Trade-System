@@ -69,6 +69,17 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
         self.assertEqual(report["content_hash"], binding["content_hash"])
         self.assertEqual(report["full_content"], final_content)
 
+    def test_future_dated_current_closure_is_not_a_valid_completion(self):
+        current = {
+            "market_date": "2026-10-16",
+            "close_review_closure": {
+                "status": "CLOSED",
+                "market_date": "2026-10-17",
+                "formal_review_path": "events/reviews/2026-10-17.json",
+            },
+        }
+        self.assertEqual(sync._valid_current_close_review_completion(current), {})
+
     def test_idempotent_and_closure(self):
         account = {"status": "VALID", "updated_at": "2026-08-31T15:12:00+08:00"}
         self.assertEqual(sync.record_post_close_review(account, self.request()), (True, False))

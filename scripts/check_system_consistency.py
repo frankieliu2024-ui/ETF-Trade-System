@@ -279,6 +279,11 @@ def _valid_current_close_review_completion(current: dict) -> dict:
     if not isinstance(pointer, dict):
         return {}
     market_date = str(pointer.get("market_date") or "")
+    current_market_date = str((current or {}).get("market_date") or "")
+    # The current close-review pointer is a projection of CURRENT, never a
+    # source that may advance the canonical market clock.
+    if current_market_date and market_date and market_date > current_market_date:
+        return {}
     if not market_date or str(pointer.get("status") or "").upper() != "CLOSED":
         return {}
     expected_review_path = f"events/reviews/{market_date}.json"
