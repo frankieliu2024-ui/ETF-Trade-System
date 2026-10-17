@@ -17,6 +17,7 @@ BEIJING = timezone(timedelta(hours=8))
 
 # GitHub Actions cron is UTC; these are the only four automatic Beijing nodes.
 SLOTS = {
+    "0 1 * * 1-5": (9, 0),
     "0 2 * * 1-5": (10, 0),
     "0 3 * * 1-5": (11, 0),
     "30 5 * * 1-5": (13, 30),
