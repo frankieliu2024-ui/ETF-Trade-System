@@ -405,18 +405,12 @@ def sync_current_account_reference(root: Path, account: dict) -> bool:
 
 def sync_formal_files(root: Path = ROOT, account: dict | None = None) -> dict:
     account = account or load_json(root / "data/state/account_fact.json")
+    dashboard_result = sync_dashboard_projection(root, account)
+    dash_changed = dashboard_result["dashboard_changed"]
     equity_path = root / "data/state/etf_strategy_equity.json"
     equity = load_json(equity_path) if equity_path.exists() else {"summary": {}}
-    dash_path = root / "ETF当前状态_DASHBOARD.md"
     archive_path = root / "ETF市场行情档案_2026.md"
     experience_path = root / "ETF交易复盘与经验库_2026.md"
-
-    existing_dash = dash_path.read_text(encoding="utf-8")
-    new_dash = replace_block(existing_dash, START_DASH, END_DASH, build_dashboard_block(account, equity, existing_dash, root), after_heading=True)
-    new_dash = normalize_dashboard_projection(new_dash, root, account)
-    dash_changed = new_dash != existing_dash
-    if dash_changed:
-        write_formal_text_if_changed(root, dash_path.name, new_dash)
 
     existing_archive = archive_path.read_text(encoding="utf-8")
     new_archive = replace_block(existing_archive, START_ARCHIVE, END_ARCHIVE, build_archive_fact_block(account), before_heading="## 6. 历史Excel与专项数据来源")
@@ -440,6 +434,21 @@ def sync_formal_files(root: Path = ROOT, account: dict | None = None) -> dict:
         "current_account_reference_changed": current_changed,
         "completed_research_archive_changed": research_archive_changed,
     }
+
+
+def sync_dashboard_projection(root: Path = ROOT, account: dict | None = None) -> dict:
+    """Maintain factual Dashboard projection without creating business actions."""
+    account = account or load_json(root / "data/state/account_fact.json")
+    equity_path = root / "data/state/etf_strategy_equity.json"
+    equity = load_json(equity_path) if equity_path.exists() else {"summary": {}}
+    dash_path = root / "ETF当前状态_DASHBOARD.md"
+    existing_dash = dash_path.read_text(encoding="utf-8")
+    new_dash = replace_block(existing_dash, START_DASH, END_DASH, build_dashboard_block(account, equity, existing_dash, root), after_heading=True)
+    new_dash = normalize_dashboard_projection(new_dash, root, account)
+    changed = new_dash != existing_dash
+    if changed:
+        write_formal_text_if_changed(root, dash_path.name, new_dash)
+    return {"dashboard_changed": changed, "projection_scope": "FACTUAL_STATE_ONLY", "trade_authority": False}
 
 
 def main() -> int:

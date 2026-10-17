@@ -21,6 +21,7 @@ from build_research_execution_bridge import build as build_research_execution_br
 from build_phase4_automation import build as build_phase4_automation
 from build_stock_context import build_managed_position_projection
 from state_manager import atomic_json_write, build_dashboard_candidate, build_decision_context, build_decision_trace, now_utc, read_current
+from sync_formal_files import sync_dashboard_projection
 
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
@@ -494,6 +495,9 @@ def main() -> None:
         "trade_authority": False,
     }
     atomic_json_write(ROOT / "data" / "state" / "dashboard_update_candidate.json", candidate)
+    # Factual Dashboard fields are a maintained projection of canonical state.
+    # This does not promote permissions, lifecycle decisions, amounts or orders.
+    sync_dashboard_projection(ROOT)
     context["observability"]["timing"]["decision_context_written_at"] = now_utc()
     atomic_json_write(ROOT / "data" / "state" / "decision_context.json", context)
     if decision_ready_only:
