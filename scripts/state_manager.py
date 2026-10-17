@@ -409,6 +409,30 @@ def build_etf_strategy_risk_metrics(root: Path) -> dict[str, Any]:
     reconstruction_as_of = str(equity.get("as_of_transaction_date") or summary.get("as_of_transaction_date") or "")
     current = read_json(root / "data" / "state" / "CURRENT.json", {})
     current_market_date = str(current.get("market_date") or "")
+    canonical_risk = read_json(root / "data" / "state" / "skfolio_risk_evidence.json", {})
+    canonical_risk_status = str(canonical_risk.get("status") or "").upper()
+    canonical_alignment = str(canonical_risk.get("data_alignment") or "").upper()
+    if canonical_risk_status == "DEGRADED" and canonical_alignment != "ALIGNED_WITH_CURRENT_MARKET_DATE":
+        return {
+            "etf_strategy_risk_pct": None,
+            "risk_source": "data/state/skfolio_risk_evidence.json",
+            "risk_source_updated_at": canonical_risk.get("generated_at"),
+            "reconstruction_risk_pct": reconstruction_risk,
+            "reconstruction_as_of_transaction_date": reconstruction_as_of,
+            "reconstruction_fresh_for_market_date": False,
+            "risk_data_end": canonical_risk.get("risk_data_end"),
+            "current_market_date": canonical_risk.get("current_market_date") or current_market_date,
+            "data_alignment": canonical_risk.get("data_alignment"),
+            "decision_block_reason": canonical_risk.get("decision_block_reason") or "risk_history_not_aligned_to_current_market_date",
+            "etf_holding_unrealized_pct": round(etf_float / capital * 100.0, 2),
+            "etf_drawdown_from_high_pct": summary.get("known_net_current_drawdown_pct"),
+            "equity_data_quality": "RISK_EVIDENCE_STALE_FOR_CURRENT_MARKET_DATE",
+            "strategy_equity_known_net": summary.get("known_net_current_strategy_equity"),
+            "high_watermark": summary.get("known_net_high_watermark", capital),
+            "fee_status": summary.get("fee_status", ""),
+            "interpretation": "当前风险历史未覆盖当前市场日期；Dashboard只显示降级状态，不投影陈旧风险率。",
+            "read_only": True,
+        }
     reconstruction_fresh = bool(
         reconstruction_risk is not None
         and reconstruction_as_of
