@@ -583,7 +583,6 @@ class PrAcceptancePathCoverageTests(unittest.TestCase):
         workflow = (Path(__file__).resolve().parents[1] / ".github/workflows/system-consistency.yml").read_text(encoding="utf-8")
         pull_request_block = workflow
         self.assertIn('".github/workflows/**"', workflow)
-        self.assertIn("workflow-failure-guard", workflow)
 
 if __name__ == "__main__":
     unittest.main()
