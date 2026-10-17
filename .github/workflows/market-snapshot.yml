@@ -340,7 +340,7 @@ jobs:
               'data_commit': '',
               'provider_as_of': '',
               'latest_snapshot': current.get('latest_snapshot', health.get('latest_snapshot', '')),
-              'market_date': os.environ.get('SESSION_MARKET_DATE', current.get('market_date', '')),
+              'market_date': current.get('market_date') or os.environ.get('SESSION_MARKET_DATE', ''),
               'market_phase': os.environ.get('SESSION_MARKET_PHASE', 'OUTSIDE_SESSION'),
           })
           health_path.write_text(json.dumps(health, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
