@@ -49,7 +49,7 @@ System Review、Trade Review 和 Formal Decision 的运行身份必须在进入 
 ## 4. Owner与写入边界
 
 1. workflow只负责触发、准备环境、调用owner、提交owner生成的结果和暴露回执。
-2. workflow不得直接推导交易结论，不得直接写正式经验、Dashboard、通知、REPORT或PushPlus。
+2. workflow不得直接推导交易结论。事实型Dashboard字段可由既有formal mutation gateway自动维护；workflow不得绕过gateway，不得写入风险许可、生命周期决定、金额、买卖动作、订单、正式经验、通知、REPORT或PushPlus。
 3. 业务脚本只能在已登记的canonical owner职责内写入；三份人类可读正式事实文件必须经过formal_file_mutation_gateway.py。
 4. ETF规则_MASTER.md永远不可由自动维护链写入。
 5. 自动维护不得修改交易权限、provider priority、正式监测范围或用户人工下单边界。

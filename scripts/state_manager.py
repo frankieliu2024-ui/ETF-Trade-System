@@ -205,10 +205,10 @@ def build_dashboard_candidate(root: Path | None = None) -> dict[str, Any]:
     current = read_current(root)
     account = read_account_fact(root)
     return {
-        "generated_at": now_utc(), "source": "Codex state layer", "current_risk_state": "REQUIRES_MANUAL_CONFIRMATION",
+        "generated_at": now_utc(), "source": "Codex state layer", "current_risk_state": "FACTUAL_PROJECTION_READY",
         "current_node": current.get("latest_valid_node", ""), "node_status": current.get("node_status", "NON_TRADING_DAY"),
         "current_candidate": None, "data_status": current.get("data_freshness", {}), "account_fact_status": account["status"],
-        "needs_account_update": account["status"] != "VALID", "manual_confirmation_required": True, "write_target": "candidate_only",
+        "needs_account_update": account["status"] != "VALID", "manual_confirmation_required": False, "write_target": "dashboard_projection",
         "prohibited_outputs": ["trade_amount", "buy_action", "sell_action", "order"],
     }
 
