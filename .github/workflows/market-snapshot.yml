@@ -1300,6 +1300,11 @@ jobs:
             # handoff after the latest-main reset, before final validation.
             if [ -n "${FORMAL_REPLAY_DWP_COMMIT:-}" ]; then
               git show "${FORMAL_REPLAY_DWP_COMMIT}:data/state/query_context.json" > data/state/query_context.json
+            elif [ -n "${FORMAL_CONTEXT_RECOVERY_REQUEST:-}" ] && [ -s "/tmp/etf-downstream-publish/data/state/query_context.json" ]; then
+              # Context recovery has no historical DWP commit. Preserve the
+              # same request-bound handoff produced earlier in this run;
+              # Phase4 rebuilding must not replace it with an empty context.
+              cp "/tmp/etf-downstream-publish/data/state/query_context.json" data/state/query_context.json
             fi
             git add -f -- data/state/query_context.json
             git add -A -- data/market/snapshots data/market/discovery_history data/state post_market_review events config/market/etf_monitor_universe.json ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md
