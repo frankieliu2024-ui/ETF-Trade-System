@@ -277,3 +277,27 @@ class ReportDeliveryContractTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+    def test_canonical_review_event_without_hash_is_still_deliverable(self):
+        body = "FROZEN FINAL_CONTENT without audit hash"
+        event = {
+            "event_type": "FORMAL_POST_CLOSE_REVIEW",
+            "request_id": "request-no-hash",
+            "presentation_binding": {
+                "report_type": "ETF_TRADE_REVIEW",
+                "task_id": "ETF交易复盘",
+                "task_run_id": "run-no-hash",
+                "request_id": "request-no-hash",
+                "report_id": "ETF_TRADE_REVIEW:run-no-hash",
+                "full_content": body,
+            },
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "review.json"
+            path.write_text(json.dumps(event, ensure_ascii=False), encoding="utf-8")
+            with patch.object(notification_center, "REVIEW_EVENT_DIR", Path(directory)):
+                projected = notification_center.report_delivery_event()
+        self.assertIsNotNone(projected)
+        self.assertEqual(projected["content"], body)
+        self.assertEqual(projected["report_type"], "ETF_TRADE_REVIEW")

@@ -49,7 +49,7 @@ def validate_report_delivery_request(request: dict) -> tuple[bool, str]:
     """Validate a completed active formal report before shared delivery."""
     required = ("schema_version", "channel", "report_type", "report_id", "task_id", "task_run_id",
                 "generated_at", "effective_market_date", "source_actor", "source_reference",
-                "title", "summary", "full_content", "content_hash", "idempotency_key")
+                "title", "summary", "full_content", "idempotency_key")
     missing = [key for key in required if not str(request.get(key) or "").strip()]
     if missing: return False, "missing:" + ",".join(missing)
     if request.get("channel") != "REPORT": return False, "channel_must_be_REPORT"
@@ -347,7 +347,7 @@ def canonical_scheduled_report_events(event_path: str | None = None) -> list[dic
         binding = event.get("presentation_binding")
         if not isinstance(binding, dict):
             continue
-        required = ("report_type", "task_id", "task_run_id", "full_content", "content_hash")
+        required = ("report_type", "task_id", "task_run_id", "full_content")
         if any(not str(binding.get(key) or "").strip() for key in required):
             continue
         report_type = str(binding["report_type"])
