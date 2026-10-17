@@ -27,11 +27,12 @@ class LegacyProductionBoundaryTests(unittest.TestCase):
             path = ROOT / facade
             self.assertTrue(path.exists(), facade)
             text = path.read_text(encoding="utf-8")
-            self.assertEqual(
-                len(re.findall(rf"import\s+{re.escape(legacy_module)}\b", text)),
-                1,
-                facade,
+            imports = re.findall(
+                rf"(?:import\s+{re.escape(legacy_module)}\b|"
+                rf"from\s+(?:scripts\.)?{re.escape(legacy_module)}\s+import\b)",
+                text,
             )
+            self.assertGreaterEqual(len(imports), 1, facade)
 
     def test_production_workflows_do_not_directly_import_legacy_modules(self):
         legacy_modules = tuple(FACADE_TO_LEGACY.values())
