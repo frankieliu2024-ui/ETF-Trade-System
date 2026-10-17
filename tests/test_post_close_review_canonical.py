@@ -78,7 +78,7 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
                 "formal_review_path": "events/reviews/2026-10-17.json",
             },
         }
-        self.assertEqual(sync._valid_current_close_review_completion(current), {})
+        self.assertEqual(check_system_consistency._valid_current_close_review_completion(current), {})
 
     def test_idempotent_and_closure(self):
         account = {"status": "VALID", "updated_at": "2026-08-31T15:12:00+08:00"}
