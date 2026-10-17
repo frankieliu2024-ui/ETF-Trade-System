@@ -44,6 +44,18 @@ class LegacyProductionBoundaryTests(unittest.TestCase):
                     offenders.append(f"{path.relative_to(ROOT)}:{module}")
         self.assertEqual(offenders, [])
 
+    def test_production_scripts_do_not_directly_import_legacy_modules(self):
+        allowed_facades = {ROOT / facade for facade in FACADE_TO_LEGACY}
+        offenders = []
+        for path in sorted((ROOT / "scripts").glob("*.py")):
+            if path in allowed_facades:
+                continue
+            text = path.read_text(encoding="utf-8")
+            for module in FACADE_TO_LEGACY.values():
+                if re.search(rf"(?:import\\s+{re.escape(module)}\\b|from\\s+(?:scripts\\.)?{re.escape(module)}\\s+import\\b)", text):
+                    offenders.append(f"{path.relative_to(ROOT)}:{module}")
+        self.assertEqual(offenders, [])
+
     def test_production_workflows_call_facades_not_legacy_files(self):
         offenders = []
         for path in sorted(WORKFLOWS.glob("*.yml")) + sorted(WORKFLOWS.glob("*.yaml")):
