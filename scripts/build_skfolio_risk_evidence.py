@@ -174,6 +174,12 @@ def display_component(comp: list[str], names: dict[str, str], account_weights: d
     return result
 
 
+def risk_history_alignment(risk_data_end: str, current_market_date: str) -> tuple[bool, str]:
+    """Return whether the risk history is eligible for the current market date."""
+    aligned = bool(current_market_date and risk_data_end == current_market_date)
+    return aligned, "ALIGNED_WITH_CURRENT_MARKET_DATE" if aligned else "LATEST_AVAILABLE_RESEARCH_DATE"
+
+
 def build(root: Path = ROOT) -> dict:
     validation = read_json(root / VALIDATION_STATUS, {})
     validation_ok = (
@@ -233,9 +239,9 @@ def build(root: Path = ROOT) -> dict:
 
     risk_data_end = dates[-1]
     current_market_date = str(current.get("market_date") or "")
-    alignment = "ALIGNED_WITH_CURRENT_MARKET_DATE" if risk_data_end == current_market_date else "LATEST_AVAILABLE_RESEARCH_DATE"
+    aligned, alignment = risk_history_alignment(risk_data_end, current_market_date)
     account_status = account.get("status", "MISSING")
-    use_now = bool(validation_ok and account_status == "VALID" and release_items)
+    use_now = bool(validation_ok and aligned and account_status == "VALID" and release_items)
 
     return {
         "schema_version": "1.0",
@@ -257,6 +263,7 @@ def build(root: Path = ROOT) -> dict:
         "risk_data_end": risk_data_end,
         "current_market_date": current_market_date,
         "data_alignment": alignment,
+        "decision_block_reason": "" if use_now else ("risk_history_not_aligned_to_current_market_date" if not aligned else "risk_evidence_inputs_incomplete"),
         "account_fact_status": account_status,
         "account_fact_updated_at": account.get("updated_at"),
         "eligible_etf_count": len(eligible),
