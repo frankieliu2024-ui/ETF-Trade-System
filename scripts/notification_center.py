@@ -57,9 +57,8 @@ def validate_report_delivery_request(request: dict) -> tuple[bool, str]:
     if request.get("delivery_mode", "FULL_REPORT") != "FULL_REPORT": return False, "delivery_mode_must_be_FULL_REPORT"
     if request.get("no_trade_authority") is not True: return False, "no_trade_authority_must_be_true"
     # content_hash is optional audit metadata; closure is based on exact frozen-body equality.
-    supplied_hash = str(request.get("content_hash") or "").strip()
-    if supplied_hash and supplied_hash != hashlib.sha256(str(request.get("full_content")).encode("utf-8")).hexdigest():
-        return False, "content_hash_mismatch"
+    # content_hash is an audit field, never a delivery gate. Exact frozen-body
+    # equality and identity binding remain the delivery gates.
     return True, ""
 
 def build_report_delivery_request(*, task_id: str, task_run_id: str, report_id: str,
@@ -354,10 +353,16 @@ def canonical_scheduled_report_events(event_path: str | None = None) -> list[dic
         content = str(binding["full_content"])
         if report_type not in ACTIVE_REPORT_TYPES or not content:
             continue
-        expected = hashlib.sha256(content.encode("utf-8")).hexdigest()
-        supplied_hash = str(binding.get("content_hash") or "").strip()
-        if supplied_hash and supplied_hash != expected:
+        event_type = str(event.get("event_type") or "")
+        expected_event_type = {
+            "ETF_TRADE_REVIEW": "FORMAL_POST_CLOSE_REVIEW",
+            "ETF_SYSTEM_REVIEW": "FORMAL_SCHEDULED_SYSTEM_REVIEW",
+            "ETF_FORMAL_DECISION": "FORMAL_DECISION_REPORT",
+        }[report_type]
+        if event_type != expected_event_type:
             continue
+        expected = hashlib.sha256(content.encode("utf-8")).hexdigest()
+        # A supplied hash may be stale or absent; it is audit metadata only.
         task_run_id = str(binding["task_run_id"])
         task_id = str(binding["task_id"])
         event_occurrence = str(event.get("occurrence_id") or event.get("task_run_id") or "")
@@ -1066,6 +1071,7 @@ def find_existing_notification(items: list[dict], event: dict) -> dict | None:
             "parent_request_id": str(event.get("parent_request_id") or ""),
             "related_decision_id": str(event.get("related_decision_id") or ""),
             "content_hash": str(event.get("content_hash") or ""),
+            "content": str(event.get("content") or ""),
         }
         if not all(current.values()):
             return None
@@ -1075,7 +1081,7 @@ def find_existing_notification(items: list[dict], event: dict) -> dict | None:
                 and str(item.get("request_id") or "") == current["request_id"]
                 and str(item.get("parent_request_id") or "") == current["parent_request_id"]
                 and str(item.get("related_decision_id") or "") == current["related_decision_id"]
-                and str(item.get("content_hash") or "") == current["content_hash"]
+                and (not current["content"] or str(item.get("content") or "") == current["content"])
             ):
                 return item
         return None
@@ -1120,7 +1126,7 @@ def formal_content_event(source_path: Path) -> dict | None:
         binding = event.get("presentation_binding")
         if not isinstance(binding, dict):
             return None
-        content = str(event.get("presentation_content") or "").strip()
+        content = event.get("presentation_content")
         request_id = str(event.get("request_id") or "").strip()
         parent_request_id = str(event.get("parent_request_id") or "").strip()
         decision_id = str(event.get("decision_id") or "").strip()
@@ -1128,13 +1134,11 @@ def formal_content_event(source_path: Path) -> dict | None:
         content_hash = str(event.get("content_hash") or event.get("content_sha256") or "").strip()
         if not content or not request_id or not parent_request_id or not decision_id or not report_id:
             return None
-        if content_hash != hashlib.sha256(content.encode("utf-8")).hexdigest():
+        if not isinstance(content, str) or not content:
             return None
         if str(binding.get("request_id") or "") != request_id or str(binding.get("parent_request_id") or "") != parent_request_id:
             return None
         if str(binding.get("decision_id") or "") != decision_id or str(binding.get("full_content") or "") != content:
-            return None
-        if str(binding.get("content_hash") or "") != content_hash:
             return None
         expected_request = str(os.environ.get("EXPECTED_FORMAL_REQUEST_ID") or "").strip()
         if expected_request and expected_request not in {request_id, parent_request_id}:
@@ -1168,14 +1172,14 @@ def formal_content_event(source_path: Path) -> dict | None:
     binding = event.get("presentation_binding")
     if not isinstance(binding, dict):
         return None
-    content = str(binding.get("full_content") or binding.get("content") or "").strip()
+    content = binding.get("full_content") or binding.get("content")
     request_id = str(binding.get("request_id") or event.get("parent_request_id") or "").strip()
     decision_id = str(binding.get("decision_id") or event.get("decision_id") or "").strip()
     report_id = str(binding.get("report_id") or event.get("report_id") or "").strip()
     content_hash = str(binding.get("content_hash") or binding.get("content_sha256") or "").strip()
     if not content or not request_id or not decision_id or not report_id:
         return None
-    if content_hash != hashlib.sha256(content.encode("utf-8")).hexdigest():
+    if not isinstance(content, str) or not content:
         return None
     expected_request = str(os.environ.get("EXPECTED_FORMAL_REQUEST_ID") or "").strip()
     if expected_request and expected_request != request_id:
