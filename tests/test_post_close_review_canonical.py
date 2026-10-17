@@ -368,6 +368,12 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
                     "market_date": market_date,
                     "data_time": {"close_snapshot": close_snapshot},
                     "discovery_close_status": "COMPLETED",
+                    "review_evidence_status": "COMPLETE",
+                    "business_completion_status": "COMPLETE",
+                    "presentation_binding": {
+                        "request_id": f"review-{market_date}",
+                        "report_id": f"ETF_SYSTEM_REVIEW:{market_date}",
+                    },
                 },
             }),
             encoding="utf-8",

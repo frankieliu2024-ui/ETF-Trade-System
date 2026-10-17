@@ -53,6 +53,7 @@ class PushPlusNotificationClosureTests(unittest.TestCase):
                 return self
             def __exit__(self, *args):
                 return False
+            status = 200
             def read(self):
                 return b'{"code":200,"msg":"SUCCESS"}'
 
