@@ -16,6 +16,7 @@ from pathlib import Path
 
 from state_manager import atomic_json_write, read_current, update_current
 from market_data_guard import classify_provider_failure, validate_market_row
+from tencent_quote import fetch_tencent_quotes
 try:
     from provider_policy import resolve_object_policy
 except ModuleNotFoundError:
