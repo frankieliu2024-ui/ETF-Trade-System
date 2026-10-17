@@ -136,6 +136,15 @@ def build_structured_completion_request(
         raise ValueError("new formal decision completion requires a decision identity")
 
 
+    source_mode = str(source_request.get("source") or "").strip().upper()
+    entry_mode = {
+        "CHATGPT_MANUAL_FORMAL_ANALYSIS": "MANUAL_CONVERSATION",
+        "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS": "MANUAL_SCHEDULED_TASK",
+        "CHATGPT_SCHEDULED_FORMAL_ANALYSIS": "AUTOMATIC_SCHEDULED_TASK",
+    }.get(source_mode)
+    if not entry_mode:
+        raise ValueError("unsupported Formal Decision source identity")
+
     # Preflight with the exact child-envelope identity and ingress metadata
     # that will be persisted below.  The old preflight omitted the entry
     # fields and used a parent/child pair that the canonical validator
