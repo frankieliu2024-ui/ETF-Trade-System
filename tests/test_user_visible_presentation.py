@@ -146,5 +146,23 @@ class UserVisiblePresentationContractTests(unittest.TestCase):
         self.assertFalse(binding["presentation_valid"])
 
 
+    def test_rejects_global_primary_numbering_across_sections(self):
+        content = "【第一节】\n\n1. 第一项\n\n【第二节】\n\n2. 第二项\n\n【第三节】\n\n3. 第三项"
+        with self.assertRaisesRegex(ValueError, "globally across sections"):
+            validate_user_visible_content(content, security_map=SECURITIES)
+
+    def test_rejects_missing_numbering_space(self):
+        with self.assertRaisesRegex(ValueError, "requires a space"):
+            validate_user_visible_content("【结论】\n\n1.结论", security_map=SECURITIES)
+
+    def test_rejects_verbose_beijing_time_statement(self):
+        content = "【复核时点（北京时间）】\n\n本次判断时间为北京时间2026-10-17 10:55，系统时钟记录为10:55:35（UTC+08:00），并按照执行环境和启动后事实边界完成多层转换与核对。"
+        with self.assertRaisesRegex(ValueError, "too verbose"):
+            validate_user_visible_content(content, security_map=SECURITIES)
+
+    def test_rejects_internal_execution_terms(self):
+        with self.assertRaisesRegex(ValueError, "internal execution term"):
+            validate_user_visible_content("【状态】\n\nworkflow已完成，PushPlus已发送。", security_map=SECURITIES)
+
 if __name__ == "__main__":
     unittest.main()
