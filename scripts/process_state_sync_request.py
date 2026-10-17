@@ -3618,8 +3618,29 @@ def main() -> int:
         packet = query_context.get("decision_fact_pack") or {}
         trigger = packet.get("trigger") or {}
         if str(trigger.get("request_id") or "").strip() != parent_id:
-            qualifier = "historical" if replay_source_commit else "current"
-            raise ValueError(f"business decision source requires {qualifier} request-bound Decision Work Package")
+            # BUSINESS_DECISION_SOURCE is itself the durable actor handoff.  The
+            # workflow may reset the workspace to latest main after the
+            # request-bound query_context was produced; in that case the
+            # execution-time projection must recover the same DWP from this
+            # immutable BDS instead of accepting a later/empty DWP or failing
+            # on a workspace-handoff artifact.  This is not a new request,
+            # refresh, fact producer, or decision identity.
+            bds_dwp = request.get("decision_work_package")
+            request_type = str(request.get("request_type") or "").upper()
+            if request_type == BUSINESS_DECISION_SOURCE and isinstance(bds_dwp, dict) and bds_dwp.get("problem_graph"):
+                recovered_packet = dict(packet) if isinstance(packet, dict) else {}
+                recovered_trigger = dict(trigger) if isinstance(trigger, dict) else {}
+                recovered_trigger["request_id"] = parent_id
+                recovered_packet["trigger"] = recovered_trigger
+                recovered_packet["decision_work_package"] = json.loads(json.dumps(bds_dwp))
+                query_context = dict(query_context) if isinstance(query_context, dict) else {}
+                query_context["decision_fact_pack"] = recovered_packet
+                packet = recovered_packet
+                trigger = recovered_trigger
+                request["_dwp_recovered_from_durable_bds"] = True
+            else:
+                qualifier = "historical" if replay_source_commit else "current"
+                raise ValueError(f"business decision source requires {qualifier} request-bound Decision Work Package")
         if forensic_historical_replay:
             emit_formal_replay_forensic_fingerprint("A_HISTORICAL_PACKET", obj=packet, dwp=packet.get("decision_work_package"), object_type="query_context.decision_fact_pack", provenance=f"historical_query_context:{replay_dwp_commit}", historical=True)
             emit_formal_replay_forensic_fingerprint("B_PACKET_DWP", obj=packet, dwp=packet.get("decision_work_package"), object_type="packet.decision_work_package", provenance=f"historical_query_context:{replay_dwp_commit}", historical=True)
