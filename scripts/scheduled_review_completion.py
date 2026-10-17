@@ -176,8 +176,14 @@ def build_completion_request(
         payload["parent_request_id"] = _safe_id(parent_request_id)
     if not payload["requested_at_beijing"]:
         raise ValueError("scheduled review completion requires requested_at_beijing")
+    # This is the public Scheduled Review completion contract. The ingress
+    # classifier may route it internally to the existing state-sync owner, but
+    # the request itself must never be downgraded to the legacy
+    # request_type=STATE_SYNC_ONLY contract.
+    if str(payload.get("request_type") or "").upper() != "SCHEDULED_REVIEW_COMPLETION":
+        raise ValueError("scheduled review completion must use request_type=SCHEDULED_REVIEW_COMPLETION")
     if classify_live_snapshot_request(payload) != "STATE_SYNC_ONLY":
-        raise ValueError("scheduled review completion must remain STATE_SYNC_ONLY")
+        raise ValueError("scheduled review completion cannot reach the canonical state-sync owner")
     return payload
 
 
