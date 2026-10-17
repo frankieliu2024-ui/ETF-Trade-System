@@ -94,6 +94,7 @@ def load_etf_universe() -> list[tuple[str, str]]:
 
 POLICY = load_runtime_policy()
 ETF = load_etf_universe()
+INDEX = [("000001", "000001.SH"), ("399006", "399006.SZ"), ("000688", "000688.SH")]
 
 
 def load_eastmoney_fallback_etfs() -> set[str]:
@@ -132,7 +133,6 @@ MAX_WORKERS = int(os.environ.get("HITHINK_MAX_WORKERS", POLICY["provider_max_wor
 PRIMARY_RUN_BYPASS = threading.Event()
 CLOSE_GRACE_SECONDS = int(POLICY.get("close_grace_seconds", 900))
 
-INDEX = [("000001", "000001.SH"), ("399006", "399006.SZ"), ("000688", "000688.SH")]
 NODES = {"auction", "0925", "1030", "1130", "1330", "1430", "close", "live", "manual", "scheduled"}
 PLANNED_TIMES = {"auction": "09:15-09:25", "0925": "09:25", "1030": "10:30", "1130": "11:30", "1330": "13:30", "1430": "14:30", "close": "15:00"}
 
