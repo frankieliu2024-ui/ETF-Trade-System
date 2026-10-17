@@ -7,6 +7,10 @@ import re
 import subprocess
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+try:
+    from provider_policy import effective_etf_policies
+except ModuleNotFoundError:
+    from scripts.provider_policy import effective_etf_policies
 from zoneinfo import ZoneInfo
 
 try:
@@ -503,13 +507,29 @@ def main() -> int:
     expected_hstech_registered = {"hithink-finance:HS2083", "yahoo_chart_api:HSTECH.HK", "eastmoney_push2:124.HSTECH", "ETF_PROXY_513180"}
     check("providers:hstech_sources_registered", set(hstech_registered) == expected_hstech_registered, f"registered={hstech_registered}")
     fallback_policy = provider_cfg.get("object_fallback_policy") or {}
+    default_etf_policy = provider_cfg.get("default_object_fallback_policy") or {}
+    check(
+        "providers:default_etf_fallback_policy",
+        default_etf_policy.get("primary") == "tencent_qq"
+        and default_etf_policy.get("fallback") == ["hithink_finance", "eastmoney_push2"]
+        and default_etf_policy.get("direct_only") is True,
+        f"default_etf_policy={default_etf_policy}",
+    )
     hstech_rule = fallback_policy.get("HSTECH") or {}
     expected_hstech_fallback = ["yahoo_chart_api:HSTECH.HK", "hithink-finance:HS2083", "ETF_PROXY_513180"]
     check("providers:hstech_primary_fallback_policy", hstech_rule.get("primary") == "eastmoney_push2:124.HSTECH" and hstech_rule.get("fallback") == expected_hstech_fallback, f"primary={hstech_rule.get('primary')} fallback={hstech_rule.get('fallback')}")
     universe = read_json("config/market/etf_monitor_universe.json")
     etf_codes = {str(item.get("code")) for item in (universe.get("objects") or []) if item.get("code")}
-    etf_missing_fallback = sorted(code for code in etf_codes if not isinstance(fallback_policy.get(code + (".SH" if code.startswith(("5", "6")) else ".SZ")), dict))
-    check("providers:etf_fallback_policy", not etf_missing_fallback, f"missing object fallback entries={etf_missing_fallback}")
+    effective_policies = effective_etf_policies(provider_cfg, universe.get("objects") or [])
+    etf_missing_fallback = sorted(
+        code for code in etf_codes
+        if (str(code) + (".SH" if str(code).startswith(("5", "6")) else ".SZ")) not in effective_policies
+    )
+    check(
+        "providers:etf_fallback_policy",
+        not etf_missing_fallback,
+        f"missing effective object fallback entries={etf_missing_fallback}",
+    )
     invalid_direct = []
     for object_id, rule in fallback_policy.items():
         if rule.get("direct_only") is True and any(str(x).startswith("ETF_PROXY") for x in (rule.get("fallback") or [])):

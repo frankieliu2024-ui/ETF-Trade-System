@@ -16,6 +16,10 @@ from pathlib import Path
 
 from state_manager import atomic_json_write, read_current, update_current
 from market_data_guard import classify_provider_failure, validate_market_row
+try:
+    from provider_policy import resolve_object_policy
+except ModuleNotFoundError:
+    from scripts.provider_policy import resolve_object_policy
 from tencent_quote import fetch_tencent_quotes
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
@@ -93,31 +97,16 @@ ETF = load_etf_universe()
 
 
 def load_eastmoney_fallback_etfs() -> set[str]:
-    """Return all active A-share ETF codes eligible for the existing direct fallback.
-
-    The ETF universe is dynamic: positive account holdings are overlaid by
-    load_etf_universe and must reuse the established A-share ETF chain.
-    Object-level policy remains an optional override for verified special cases;
-    a new held ETF must not require a new provider_priority entry.
-    """
+    """Return A-share ETF codes with an effective direct fallback policy."""
     configured: set[str] = set()
     path = ROOT / "config" / "market" / "provider_priority.json"
     if path.exists():
         config = json.loads(path.read_text(encoding="utf-8"))
-        policy = config.get("object_fallback_policy") or {}
-        configured = {
-            str(thscode).split(".")[0]
-            for thscode, rule in policy.items()
-            if str(rule.get("primary", "")) == "tencent_qq"
-            and "eastmoney_push2" in (rule.get("fallback") or [])
-            and rule.get("direct_only") is True
-            and str(thscode).upper().endswith((".SH", ".SZ"))
-        }
-    runtime_etfs = {
-        code for code, thscode in ETF
-        if str(thscode).upper().endswith((".SH", ".SZ"))
-    }
-    return configured | runtime_etfs
+        for code, thscode in ETF:
+            policy = resolve_object_policy(config, thscode, asset_class="ETF", code=code)
+            if isinstance(policy, dict) and str(policy.get("primary") or "") == "tencent_qq" and "eastmoney_push2" in (policy.get("fallback") or []) and policy.get("direct_only") is True:
+                configured.add(str(code))
+    return configured
 
 
 EASTMONEY_FALLBACK_ETFS = load_eastmoney_fallback_etfs()
