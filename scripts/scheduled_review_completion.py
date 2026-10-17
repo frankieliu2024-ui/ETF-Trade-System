@@ -141,6 +141,9 @@ def build_completion_request(
     """Wrap a frozen Scheduled Review for the existing state-sync owner."""
     scope = str((formal_review or {}).get("review_scope") or "").strip().upper()
     is_midday = scope == "MORNING_SESSION_STAGE_ONLY"
+    review_version = str((formal_review or {}).get("review_version") or "").upper()
+    case_mode = str((formal_review or {}).get("case_mode") or "").upper()
+    is_weekly = "WEEKLY_REVIEW" in review_version or "WEEKLY_REVIEW" in case_mode
     if is_midday:
         validate_midday_review(formal_review, account)
     else:
@@ -155,7 +158,7 @@ def build_completion_request(
         "request_type": "SCHEDULED_REVIEW_COMPLETION",
         "formal_fact_type": "FORMAL_POST_CLOSE_REVIEW",
         "source": "CHATGPT_SCHEDULED_REVIEW_ACTOR",
-        "interaction_scenario": "MIDDAY_REVIEW" if is_midday else "POST_CLOSE_REVIEW",
+        "interaction_scenario": ("MIDDAY_REVIEW" if is_midday else "WEEKLY_REVIEW" if is_weekly else "POST_CLOSE_REVIEW"),
         "market_phase": str(formal_review.get("market_phase") or ("MIDDAY_BREAK" if is_midday else "POST_CLOSE")),
         "requested_at_beijing": str(requested_at_beijing or "").strip(),
         "market_date": effective_market_date,

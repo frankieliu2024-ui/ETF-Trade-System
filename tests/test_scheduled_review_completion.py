@@ -110,6 +110,15 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         self.assertEqual(payload["formal_review"]["review_scope"], "MORNING_SESSION_STAGE_ONLY")
         self.assertNotIn("close_snapshot", payload["formal_review"]["data_time"])
 
+    def test_weekly_review_uses_weekly_interaction_scenario(self):
+        review = full_review()
+        review["review_version"] = "V2.2.33_WEEKLY_REVIEW"
+        payload = completion.build_completion_request(
+            review, "weekly-run", "2026-09-27T20:30:00+08:00",
+            final_content="FROZEN WEEKLY REPORT", task_id="ETF交易复盘", task_run_id="weekly-run",
+        )
+        self.assertEqual(payload["interaction_scenario"], "WEEKLY_REVIEW")
+
     def test_market_date_mismatch_fails_closed(self):
         with self.assertRaisesRegex(ValueError, "market_date must match"):
             completion.build_completion_request(
