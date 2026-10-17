@@ -236,7 +236,21 @@ def canonical_etf_trade_facts(root: Path, reconstructed_trades: list[dict]) -> l
         if str(trade.get("replay_semantics") or "").upper() == "FACT_ENRICHMENT_ONLY":
             continue
         signature = trade_signature(trade)
-        if signature in adoption_shadows or signature in seen:
+        if signature in adoption_shadows:
+            continue
+        if signature in seen:
+            # Keep one economic trade, but let the canonical event enrich the
+            # reconstructed row with later broker-confirmed facts.
+            for existing in facts:
+                if trade_signature(existing) != signature:
+                    continue
+                if str(trade.get("fee_status") or "").upper() == "CONFIRMED":
+                    existing["fee_amount"] = round(confirmed_fee_amount(trade), 2)
+                    existing["fee_status"] = "CONFIRMED"
+                    for field in ("fee_confirmed_at_beijing", "fee_source", "fact_updated_at_beijing", "net_cash_effect", "cash_flow_amount"):
+                        if field in trade:
+                            existing[field] = trade[field]
+                break
             continue
         seen.add(signature)
         facts.append(trade)
