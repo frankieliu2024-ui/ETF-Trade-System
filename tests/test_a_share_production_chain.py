@@ -24,7 +24,7 @@ class AShareProductionChainTests(unittest.TestCase):
         workflow = (ROOT / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
         self.assertIn('formal_fact_type == "FORMAL_POST_CLOSE_REVIEW"', workflow)
         self.assertIn('interaction_scenario == "POST_CLOSE_REVIEW"', workflow)
-        self.assertIn('trade-bearing STATE_SYNC_ONLY replay must contain a trade_event', workflow)
+        self.assertIn('trade-bearing STATE_SYNC_ONLY replay must contain trade_event or related_trade_event_ids', workflow)
         self.assertIn('replay_request embedded trade_event is not EXECUTED', workflow)
         self.assertIn('replay_request trade_event.event_id is invalid', workflow)
         self.assertIn('replay_request trade_event is missing execution time', workflow)
@@ -38,7 +38,7 @@ class AShareProductionChainTests(unittest.TestCase):
             for item in json.loads((ROOT / "config/market/etf_monitor_universe.json").read_text(encoding="utf-8"))["objects"]
         }
         self.assertEqual(codes, configured)
-        self.assertEqual(len(codes), 13)
+        self.assertEqual(len(codes), 14)
         self.assertTrue({"515220", "513350"}.issubset(codes))
 
     def test_observation_additions_use_verified_direct_provider_contract(self):
@@ -196,8 +196,8 @@ class AShareProductionChainTests(unittest.TestCase):
         backstop = resolve_scheduled_pulse("2,22,42 8-23 * * 1-5", datetime.fromisoformat("2026-09-08T17:05:00+08:00"))
         self.assertEqual(primary["latest_candidate_slot_at"], "2026-09-08T17:00:00+08:00")
         self.assertEqual(backstop["latest_candidate_slot_at"], "2026-09-08T17:02:00+08:00")
-        self.assertEqual(primary["schedule_delay_class"], "BOUNDED_DELAY")
-        self.assertEqual(backstop["schedule_delay_class"], "BOUNDED_DELAY")
+        self.assertEqual(primary["schedule_delay_class"], "AMBIGUOUS")\n        self.assertEqual(primary["candidate_delay_class"], "BOUNDED_DELAY")
+        self.assertEqual(backstop["schedule_delay_class"], "AMBIGUOUS")\n        self.assertEqual(backstop["candidate_delay_class"], "BOUNDED_DELAY")
         self.assertTrue(primary["eligible"])
         self.assertTrue(backstop["eligible"])
         workflow = (ROOT / ".github/workflows/us-extended-hours-pulse.yml").read_text(encoding="utf-8")
