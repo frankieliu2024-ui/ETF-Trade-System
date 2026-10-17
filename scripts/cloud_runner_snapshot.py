@@ -20,11 +20,6 @@ try:
     from provider_policy import resolve_object_policy
 except ModuleNotFoundError:
     from scripts.provider_policy import resolve_object_policy
-from tencent_quote import fetch_tencent_quotes
-try:
-    from provider_policy import resolve_object_policy
-except ModuleNotFoundError:
-    from scripts.provider_policy import resolve_object_policy
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
