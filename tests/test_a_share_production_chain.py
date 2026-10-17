@@ -165,7 +165,7 @@ class AShareProductionChainTests(unittest.TestCase):
         on_demand = (ROOT / ".github/workflows/on-demand-market-data.yml").read_text(encoding="utf-8")
         self.assertIn("workflow_dispatch", production)
         self.assertIn("if: ${{ steps.session_gate.outputs.should_capture == 'true' }}", production)
-        self.assertIn("github.event_name != 'push'", production)
+        self.assertNotIn("github.event_name != 'push'", production)
         self.assertIn("steps.snapshot_result.outputs.snapshot_written", production)
         self.assertIn("git add -A -- data/market/snapshots data/state", production)
         self.assertNotIn("run_full_snapshot_recovery.py", on_demand)
