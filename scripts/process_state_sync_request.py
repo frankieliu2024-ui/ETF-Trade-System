@@ -2164,6 +2164,14 @@ def _persist_post_close_review_projections(account: dict, request: dict, review:
             upsert_formal_line(ROOT, EXPERIENCE.name, REVIEW_EXPERIENCE_START, REVIEW_EXPERIENCE_END, market_date, experience_entry, before_heading="## 5. 研究与经验转化")
     _persist_existing_case_detail_projections(review)
     sync_experience_case_mapping_index(review)
+    # Post-close review is the canonical boundary for execution attribution too.
+    # Rebuild the read-only projection from canonical trade events after the
+    # review has normalized CASE eligibility; never mutate trade facts here.
+    try:
+        from build_execution_quality import build as build_execution_quality
+    except ModuleNotFoundError:
+        from scripts.build_execution_quality import build as build_execution_quality
+    atomic_json_write(ROOT / "data/state/execution_quality.json", build_execution_quality(ROOT))
     record_close_review_closure(account, request, review, event)
 
 
