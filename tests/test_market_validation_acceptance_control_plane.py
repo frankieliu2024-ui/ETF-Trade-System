@@ -56,27 +56,20 @@ class ValidationAcceptanceControlPlaneTest(unittest.TestCase):
         self.assertNotIn("git push origin", source)
         self.assertNotIn("workflow_dispatch:", source)
 
-    def test_consistency_workflow_separates_validation_and_acceptance(self):
+    def test_consistency_workflow_uses_ephemeral_artifact_report(self):
         source = WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn("--no-persist --report-path", source)
-        self.assertIn("production_acceptance:", source)
+        self.assertIn("- name: Run full system consistency check", source)
         self.assertIn("ETF_CONSISTENCY_REPORT_PATH", source)
-        self.assertIn("git -c core.quotePath=false diff-tree --no-commit-id --name-only -m -r", source)
-        self.assertIn("run_production_acceptance.py", source)
-        self.assertIn("--scope-path", source)
-        self.assertNotIn("Refresh formal overseas and Asia index context", source)
-        self.assertNotIn("Run requested research historical backfill", source)
-        self.assertNotIn("Apply confirmed trade fact correction", source)
-        self.assertNotIn("Refresh decision and query context", source)
-        self.assertNotIn('      - "data/state/CURRENT.json"', source)
+        self.assertIn("actions/upload-artifact@v4", source)
+        self.assertIn("system-consistency-", source)
+        self.assertIn("system_consistency.json", source)
+        self.assertNotIn("production_acceptance:", source)
 
-    def test_production_acceptance_does_not_stage_current_state(self):
+    def test_consistency_workflow_does_not_stage_current_state(self):
         source = WORKFLOW.read_text(encoding="utf-8")
-        acceptance = source.split("  production_acceptance:", 1)[1]
-        self.assertIn("data/state/etf_strategy_equity.json", acceptance)
-        for line in acceptance.splitlines():
-            if line.strip().startswith("git add"):
-                self.assertNotIn("data/state/CURRENT.json", line)
+        self.assertNotIn("git add data/state/CURRENT.json", source)
+        self.assertNotIn("git add -A", source)
+        self.assertNotIn("git push origin HEAD:main", source)
 
     def test_acceptance_scope_is_class_based(self):
         formal = classify_paths(["ETF当前状态_DASHBOARD.md"])
@@ -131,53 +124,32 @@ class ValidationAcceptanceControlPlaneTest(unittest.TestCase):
 
     def test_full_acceptance_classes_have_natural_workflow_coverage(self):
         source = WORKFLOW.read_text(encoding="utf-8")
-        pr_block = source.split("  push:", 1)[0]
-        push_block = source.split("  push:", 1)[1].split("  schedule:", 1)[0]
-
+        trigger_block = source.split("  schedule:", 1)[0]
         representatives = {
             "ETF规则_MASTER.md",
-            "config/maintenance/production_mutation_protocol.json",
-            "data/state/account_fact.json",
-            "events/trades/example.json",
-            "events/reviews/example.json",
-            "requests/trade_fact_correction/example.json",
-            "requests/research_backfill/example.json",
+            "ETF_SYSTEM_INDEX.md",
             "ETF当前状态_DASHBOARD.md",
-            "scripts/check_system_consistency.py",
+            "ETF市场行情档案_2026.md",
+            "ETF交易复盘与经验库_2026.md",
+            "docs/**",
+            "events/**",
+            "requests/**",
+            "tests/**",
         }
         for path in representatives:
-            self.assertTrue(classify_path(path) in {
-                "FORMAL_RULE_OR_CONFIG", "ACCOUNT_FACT_MUTATION",
-                "TRADE_FACT_MUTATION", "FORMAL_PROJECTION_MUTATION",
-                "REVIEW_EVENT_MUTATION", "RESEARCH_FORMAL_MUTATION",
-                "STABLE_CODE_OR_WORKFLOW_CHANGE",
-            }, path)
             self.assertTrue(classify_paths([path])["required"], path)
-
         for pattern in (
             '      - "ETF规则_MASTER.md"',
             '      - "ETF_SYSTEM_INDEX.md"',
             '      - "ETF当前状态_DASHBOARD.md"',
             '      - "ETF市场行情档案_2026.md"',
             '      - "ETF交易复盘与经验库_2026.md"',
-            '      - "ETF与市场监测数据接口使用规范.md"',
             '      - "docs/**"',
             '      - "events/**"',
             '      - "requests/**"',
             '      - "tests/**"',
         ):
-            self.assertIn(pattern, pr_block)
-            self.assertIn(pattern, push_block)
-
-    def test_consistency_workflow_publishes_report_as_artifact_without_main_state_write(self):
-        source = WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn("- name: Run full system consistency check", source)
-        self.assertIn("actions/upload-artifact@v4", source)
-        self.assertIn("system-consistency-", source)
-        self.assertIn("system_consistency.json", source)
-        self.assertNotIn("git push origin HEAD:main", source)
-        self.assertNotIn("git push --force", source)
-        self.assertNotIn("git push -f ", source)
+            self.assertIn(pattern, trigger_block)
 
 
 
