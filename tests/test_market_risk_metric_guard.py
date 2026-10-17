@@ -157,6 +157,57 @@ class TestMarketRiskMetricGuard(unittest.TestCase):
         self.assertIsNone(result["etf_strategy_risk_pct"])
         self.assertNotEqual(result["source"], "ETF当前状态_DASHBOARD.md")
 
+    def test_e2e_risk_keeps_historical_formal_known_net_as_degraded(self):
+        equity = {
+            "generated_at": "2026-09-29T01:15:02+00:00",
+            "as_of_transaction_date": "2026-09-29",
+            "summary": {"known_net_current_strategy_return_pct": -7.29},
+        }
+        formal = {
+            "risk_pct": -7.29,
+            "source": "events/reviews/2026-09-29.json",
+            "updated_at": "2026-09-29T09:15:02+08:00",
+            "market_date": "2026-09-29",
+        }
+        with patch("scripts.build_e2e_status.latest_formal_review_risk", return_value=formal):
+            result = risk_component(equity, {"market_date": "2026-10-16"})
+        self.assertEqual(result["status"], "DEGRADED")
+        self.assertIsNone(result["etf_strategy_risk_pct"])
+        self.assertEqual(result["data_quality"], "HISTORICAL_KNOWN_NET_COMPATIBILITY_ONLY")
+        self.assertEqual(result["historical_risk_source"], "events/reviews/2026-09-29.json")
+
+    def test_close_review_with_degraded_evidence_is_not_ready(self):
+        import scripts.build_e2e_status as e2e_status
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            state = root / "data" / "state"
+            reviews = root / "events" / "reviews"
+            state.mkdir(parents=True)
+            reviews.mkdir(parents=True)
+            market_date = "2026-10-16"
+            closure = {
+                "market_date": market_date,
+                "status": "CLOSED",
+                "formal_review_path": f"events/reviews/{market_date}.json",
+                "review_evidence_status": "DEGRADED",
+                "business_completion_status": "DEGRADED",
+            }
+            current = {"market_date": market_date, "close_review_closure": closure}
+            (state / f"close_review_closure_{market_date}.json").write_text(json.dumps(closure), encoding="utf-8")
+            (reviews / f"{market_date}.json").write_text(
+                json.dumps({"event_type": "FORMAL_POST_CLOSE_REVIEW", "market_date": market_date, "review": {}}),
+                encoding="utf-8",
+            )
+            trigger = {"market_date": market_date, "market_close": True, "status": "READY_FOR_REVIEW"}
+            trigger_path = root / "post_market_review_event.json"
+            trigger_path.write_text(json.dumps(trigger), encoding="utf-8")
+            with patch.object(e2e_status, "STATE", state), patch.object(e2e_status, "REVIEW_DIR", reviews), patch.object(e2e_status, "POST_MARKET_REVIEW", trigger_path):
+                result = e2e_status.close_review_component(current)
+        self.assertEqual(result["status"], "DEGRADED")
+        self.assertEqual(result["review_evidence_status"], "DEGRADED")
+        self.assertEqual(result["business_completion_status"], "DEGRADED")
+
     def test_e2e_risk_blocks_when_all_machine_sources_missing(self):
         with patch("scripts.build_e2e_status.latest_formal_review_risk", return_value={}):
             result = risk_component({"summary": {}}, {"market_date": "2026-08-28"})

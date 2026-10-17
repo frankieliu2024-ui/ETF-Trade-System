@@ -285,28 +285,20 @@ def risk_component(equity: dict, current: dict) -> dict:
     formal_review = latest_formal_review_risk()
     formal_review_pct = formal_review.get("risk_pct")
     if "current_strategy_return_pct_gross" not in summary and formal_review_pct is not None:
+        # Historical Known-net evidence cannot upgrade a stale or missing
+        # current Gross reconstruction. It remains audit context only.
         return {
-            "status": "READY",
-            "reason": "latest formal post-close risk fact is authoritative; Dashboard is projection-only",
-            "etf_strategy_risk_pct": round(float(formal_review_pct), 2),
-            "source": formal_review.get("source"),
-            "source_updated_at": formal_review.get("updated_at"),
+            "status": "DEGRADED",
+            "reason": "current Gross reconstruction is unavailable; historical formal risk evidence is audit-only",
+            "etf_strategy_risk_pct": None,
+            "source": "data/state/etf_strategy_equity.json",
+            "historical_risk_pct": round(float(formal_review_pct), 2),
+            "historical_risk_source": formal_review.get("source"),
+            "historical_risk_updated_at": formal_review.get("updated_at"),
             "formal_review_market_date": formal_review.get("market_date"),
             "reconstruction_risk_pct": reconstruction_pct,
             "reconstruction_generated_at": reconstruction_generated,
             "reconstruction_as_of_transaction_date": reconstruction_as_of,
-            "reconstruction_fresh_for_market_date": reconstruction_fresh_for_market,
-            "data_quality": "FORMAL_REVIEW_PRIMARY; DASHBOARD_PROJECTION_ONLY",
-        }
-    if "current_strategy_return_pct_gross" not in summary and formal_review.get("risk_pct") is not None:
-        return {
-            "status": "READY",
-            "reason": "historical formal Known-net PIT compatibility evidence; current Gross reconstruction unavailable",
-            "etf_strategy_risk_pct": round(float(formal_review["risk_pct"]), 2),
-            "source": formal_review.get("source"),
-            "source_updated_at": formal_review.get("updated_at"),
-            "formal_review_market_date": formal_review.get("market_date"),
-            "reconstruction_risk_pct": reconstruction_pct,
             "reconstruction_fresh_for_market_date": reconstruction_fresh_for_market,
             "data_quality": "HISTORICAL_KNOWN_NET_COMPATIBILITY_ONLY",
         }
@@ -606,6 +598,20 @@ def close_review_component(current: dict, now=None) -> dict:
     completion = _valid_close_review_completion(current)
     event_date = str(event.get("market_date") or "") if event else ""
     if completion and (not event_date or completion["market_date"] >= event_date):
+        closure = read_json(STATE / f"close_review_closure_{completion['market_date']}.json")
+        evidence_status = str(closure.get("review_evidence_status") or "").upper()
+        business_status = str(closure.get("business_completion_status") or "").upper()
+        if evidence_status not in {"SUFFICIENT", "PASS", "VERIFIED"} or business_status not in {"COMPLETE", "PASS", "VERIFIED"}:
+            return {
+                "status": "DEGRADED",
+                "reason": "close review closure exists but evidence or business completion is not sufficient",
+                "market_date": completion["market_date"],
+                "formal_review_market_date": completion["market_date"],
+                "formal_review_path": completion["formal_review_path"],
+                "closure_path": completion["closure_path"],
+                "review_evidence_status": evidence_status or "UNKNOWN",
+                "business_completion_status": business_status or "UNKNOWN",
+            }
         result = {
             "status": "READY",
             "reason": "canonical close review completion chain is complete",
