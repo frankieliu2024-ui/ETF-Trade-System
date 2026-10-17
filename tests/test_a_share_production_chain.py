@@ -28,7 +28,7 @@ class AShareProductionChainTests(unittest.TestCase):
         self.assertIn('replay_request embedded trade_event is not EXECUTED', workflow)
         self.assertIn('replay_request trade_event.event_id is invalid', workflow)
         self.assertIn('replay_request trade_event is missing execution time', workflow)
-        self.assertIn('formal_review replay has invalid request/market temporal identity', workflow)
+        self.assertIn('FORMAL_POST_CLOSE_REVIEW replay has invalid request/market temporal identity', workflow)
         self.assertIn('python scripts/process_state_sync_request.py "$request_files"', workflow)
 
     def test_stock_classifier_reads_canonical_etf_universe(self):
