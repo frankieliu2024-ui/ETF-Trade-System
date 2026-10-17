@@ -116,12 +116,12 @@ class ProviderPolicyConsistencyTest(unittest.TestCase):
         """Every monitored ETF has an auditable object-level fallback contract."""
         from scripts import cloud_runner_snapshot
 
-        policies = self.priority.get("object_fallback_policy") or {}
-        for object_id in ("159981.SZ", "515080.SH"):
-            self.assertIn(object_id, policies)
-            self.assertEqual(policies[object_id]["primary"], "tencent_qq")
-            self.assertEqual(policies[object_id]["fallback"], ["hithink_finance", "eastmoney_push2"])
-            self.assertTrue(policies[object_id]["direct_only"])
+        from scripts.provider_policy import resolve_object_policy
+        for object_id, code in (("159981.SZ", "159981"), ("515080.SH", "515080"), ("512999.SH", "512999")):
+            policy = resolve_object_policy(self.priority, object_id, asset_class="ETF", code=code)
+            self.assertEqual(policy["primary"], "tencent_qq")
+            self.assertEqual(policy["fallback"], ["hithink_finance", "eastmoney_push2"])
+            self.assertTrue(policy["direct_only"])
 
     def test_production_scope_declarations_do_not_drift(self):
         """Production scope labels duplicated for display must match the provider authority exactly."""
