@@ -375,6 +375,7 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
     def _write_formal_review_completion(self, market_date: str, event_type="FORMAL_POST_CLOSE_REVIEW", closure_review_path=None, close_snapshot=""):
         review_dir = self.root / "events/reviews"
         review_dir.mkdir(parents=True, exist_ok=True)
+        body = f"【ETF系统复核】{market_date}测试正文"
         review_dir.joinpath(f"{market_date}.json").write_text(
             json.dumps({
                 "event_type": event_type,
