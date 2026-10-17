@@ -392,12 +392,12 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
                     "task_run_id": f"review-{market_date}",
                     "request_id": f"review-{market_date}",
                     "report_id": f"ETF_SYSTEM_REVIEW:{market_date}",
-                    "full_content": f"【ETF系统复核】{market_date}测试正文",
+                    "full_content": body,
                 },
             }),
             encoding="utf-8",
         )
-        closure_dir = self.root / "data/state"
+        report_dir = self.root / "requests/report_delivery"\n        report_dir.mkdir(parents=True, exist_ok=True)\n        report_dir.joinpath(f"ETF_SYSTEM_REVIEW__{market_date}.json").write_text(\n            json.dumps({\n                "event_type": "REPORT_DELIVERY_REQUEST",\n                "report_id": f"ETF_SYSTEM_REVIEW:{market_date}",\n                "request_id": f"review-{market_date}",\n                "full_content": body,\n            }),\n            encoding="utf-8",\n        )\n        closure_dir = self.root / "data/state"
         closure_dir.mkdir(parents=True, exist_ok=True)
         formal_review_path = closure_review_path or f"events/reviews/{market_date}.json"
         closure_dir.joinpath(f"close_review_closure_{market_date}.json").write_text(
