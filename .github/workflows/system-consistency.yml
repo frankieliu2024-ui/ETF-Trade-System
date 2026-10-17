@@ -44,6 +44,10 @@ on:
       - "requests/research_backfill/*.json"
       - "requests/trade_fact_correction/*.json"
       - "data/state/account_fact.json"
+      # Canonical runtime state changes must re-run the global consistency gate;
+      # otherwise a repaired producer can land without any post-merge acceptance.
+      - "data/state/CURRENT.json"
+      - "data/state/runtime_health.json"
       # Runtime health files are owned by their canonical producer/watchdog
       # chains and are not source facts for full-system validation. Abnormal
       # A-share runtime is handled by the self-healing watchdog; overseas pulse
