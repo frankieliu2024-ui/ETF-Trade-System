@@ -52,7 +52,7 @@ class LegacyProductionBoundaryTests(unittest.TestCase):
                 continue
             text = path.read_text(encoding="utf-8")
             for module in FACADE_TO_LEGACY.values():
-                if re.search(rf"(?:import\\s+{re.escape(module)}\\b|from\\s+(?:scripts\\.)?{re.escape(module)}\\s+import\\b)", text):
+                if re.search(rf"(?:import\s+{re.escape(module)}\\b|from\s+(?:scripts\.)?{re.escape(module)}\\s+import\b)", text):
                     offenders.append(f"{path.relative_to(ROOT)}:{module}")
         self.assertEqual(offenders, [])
 
