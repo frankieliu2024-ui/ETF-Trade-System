@@ -1138,7 +1138,7 @@ jobs:
         # A close review may not consume a stale derived-risk snapshot. Build the
         # date-aligned feature, replay valuation and risk evidence from the same
         # canonical close before the downstream decision-ready context reuses it.
-        if: ${{ steps.query_context.outcome == 'success' && steps.state_sync.outputs.formal_completion != 'true' && steps.triggering_request.outputs.formal_completion != 'true' && (steps.session_gate.outputs.close_intent == 'true' || github.event.inputs.node == 'close') && github.event.inputs.probe_only != 'true' }}
+        if: ${{ steps.query_context.outcome == 'success' && steps.state_sync.outputs.formal_completion != 'true' && steps.triggering_request.outputs.formal_completion != 'true' && (steps.session_gate.outputs.close_intent == 'true' || github.event.inputs.node == 'close' || github.event.inputs.formal_context_recovery_request != '') && github.event.inputs.probe_only != 'true' }}
         run: |
           python scripts/build_research_features.py
           python scripts/rebuild_etf_strategy_equity.py --output data/state/etf_strategy_equity.json
