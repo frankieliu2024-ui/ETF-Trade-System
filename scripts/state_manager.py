@@ -406,7 +406,7 @@ def build_etf_strategy_risk_metrics(root: Path) -> dict[str, Any]:
     )
     capital = float(summary.get("starting_etf_strategy_capital") or 200000)
     reconstruction_risk = summary.get("current_strategy_return_pct_gross", summary.get("known_net_current_strategy_return_pct"))
-    reconstruction_as_of = str(equity.get("as_of_transaction_date") or summary.get("as_of_transaction_date") or "")
+    reconstruction_as_of = str(equity.get("as_of_transaction_date") or summary.get("as_of_transaction_date") or equity.get("replay_cutoff") or "")
     current = read_json(root / "data" / "state" / "CURRENT.json", {})
     current_market_date = str(current.get("market_date") or "")
     canonical_risk = read_json(root / "data" / "state" / "skfolio_risk_evidence.json", {})
