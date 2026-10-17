@@ -1,0 +1,58 @@
+{
+  "request_id": "scheduled-system-review-20261017T0857-4c81d2",
+  "request_type": "SCHEDULED_REVIEW_COMPLETION",
+  "formal_fact_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW",
+  "source": "CHATGPT_SCHEDULED_SYSTEM_REVIEW_ACTOR",
+  "interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
+  "entry_mode": "MANUAL_CONVERSATION",
+  "task_id": "ETF系统复核",
+  "task_run_id": "system-review-manual-20261017T0857-4c81d2",
+  "occurrence_id": "system-review-manual-20261017T0857-4c81d2",
+  "parent_request_id": "system-review-parent-20261017T0857-4c81d2",
+  "market_date": "2026-10-16",
+  "market_phase": "OUTSIDE_SESSION",
+  "requested_at_beijing": "2026-10-17T08:57:44+08:00",
+  "system_review": {
+    "report_type": "ETF_SYSTEM_REVIEW",
+    "review_scope": "MANUAL_MORNING_SYSTEM_REVIEW",
+    "review_date": "2026-10-17",
+    "latest_formal_market_date": "2026-10-16",
+    "a_share_latest_formal_market_date": "2026-10-16",
+    "e2e_status": "READY",
+    "system_consistency_status": "PASS",
+    "system_consistency_as_of": "2026-09-29T14:31:00+08:00",
+    "account_fact_updated_at": "2026-10-16T15:00:00+08:00",
+    "account_reconciled_at": "2026-10-16T17:34:33+08:00",
+    "risk_status": "READY_WITH_AS_OF_MISMATCH",
+    "risk_metric_pct": -7.2959,
+    "observation_count": 11,
+    "discovery_evaluated_count": 11,
+    "opportunity_count": 0,
+    "actual_holding_codes": [
+      "159941",
+      "159981",
+      "159992"
+    ],
+    "execution_reconciliation": "NOT_APPLICABLE",
+    "user_attribution_requirement": "NONE",
+    "fact_cutoff_at_beijing": "2026-10-17T08:57:44+08:00",
+    "source_facts_as_of": {
+      "market_close": "2026-10-16T15:00:00+08:00",
+      "account_reconciliation": "2026-10-16T17:34:33+08:00",
+      "system_status": "2026-10-17T08:21:41+08:00",
+      "system_consistency": "2026-09-29T14:31:00+08:00",
+      "full_day_trade_review": "2026-10-16T20:58:00+08:00",
+      "overseas_runtime": "2026-10-17T06:52:12+08:00"
+    }
+  },
+  "presentation_binding": {
+    "report_type": "ETF_SYSTEM_REVIEW",
+    "task_id": "ETF系统复核",
+    "task_run_id": "system-review-manual-20261017T0857-4c81d2",
+    "occurrence_id": "system-review-manual-20261017T0857-4c81d2",
+    "parent_request_id": "system-review-parent-20261017T0857-4c81d2",
+    "request_id": "scheduled-system-review-20261017T0857-4c81d2",
+    "report_id": "etf_system_review:system-review-manual-20261017T0857-4c81d2",
+    "full_content": "【ETF系统复核】2026-10-17 08:57 早间复核\n\n【复核时点（北京时间）】\n\n本次为2026年10月17日08:57的手动早间复核。时间取自执行环境UTC系统时钟（00:57:44Z）并转换为Asia/Shanghai（UTC+08:00）。本次按启动时可取得的最新合法事实复核；今日为周六，A股休市。\n\n【早间复核结论】\n\n系统汇总可用性在08:21为READY，行情、账户、生命周期和决策上下文均可读取，足以支持下一交易日重新核验。近期完整一致性检查停留在9月29日；策略风险日期口径不一致，海外扩展时段状态受限，收盘复盘虽已落库但其证据与业务完成标记为DEGRADED。整体可用但存在需在下个交易节点前确认的事实差异；本次不形成买卖结论、金额或份额。\n\n【今日市场阶段与开门条件】\n\n今日A股休市。最近正式行情是10月16日15:00收盘，快照于15:02:19生成，覆盖3个指数及14只监测ETF且质量合格。下一交易日为10月19日；届时须以当日正式日历、市场阶段及新鲜合格行情重新确认开门条件，周五收盘行情不能作为周一可执行价格。\n\n【关键事实与数据可用性】\n\n1. 账户事实于10月16日17:34:33完成对账，账户时点为15:00：总资产171,697.67元，证券市值50,500.80元，现金及可部署现金121,196.87元，待结算锁定资金为0。实际持仓为纳指ETF（159941）12,200份、能源化工ETF（159981）8,500份、创新药ETF（159992）17,200份；未列待处理委托。\n\n2. 风险率记录为约-7.2959%，但Dashboard的估值日期为9月23日，底层策略权益记录截止9月23日，运行汇总同时称该重建对10月16日有效。日期口径尚未统一，不能把它视为已核实的最新风险事实。\n\n3. 全市场Discovery最近一次于10月16日完成：覆盖约1,753只ETF，经过230只历史预筛，12只历史验证成功，形成11只节点级评估输入。它们只是Discovery评估对象，不自动成为观察、机会或交易许可。观察ETF为11只；最近完整收盘复核认定机会ETF为0。\n\n4. 最近完整一致性检查为9月29日PASS，不能证明之后的变更已完成全量复核。10月16日收盘复盘事件已登记，但其复核证据和业务完成状态标为DEGRADED；系统汇总中的收盘复盘组件为READY，两个状态需要在后续状态链中核对。\n\n【今日决策链准备度】\n\n账户、最新收盘行情、观察池、Discovery结果、决策上下文与生命周期投影均可读取。最近收盘复核记录为没有对象取得新增资本资格、现金继续参与资本竞争；这只是既有正式记录，不是本次新判断。持仓、观察ETF、Discovery输入和机会ETF身份保持分离。\n\n【需要用户处理】\n\n当前没有需要立即处理的账户或交易事项。若10月16日对账之后发生了成交、资金变动或持仓变化，下一交易日正式判断前需提供最新账户事实；否则可按已确认账户事实继续。\n\n【今日重点关注】\n\n重点留意风险率截止日差异、一致性检查日期偏旧、收盘复盘证据状态不一致，以及海外扩展时段运行受限。以上问题影响下一交易日的数据确认和复核可信度，不构成新的交易许可。\n\n【下一阶段】\n\n下一交易日先确认A股最新行情与账户是否发生变化，再核验风险口径、收盘复盘闭环和海外数据时点；之后沿现有正式判断链处理。不会因Discovery或观察身份直接转成机会或交易动作。\n\n【执行状态】\n\n本次手动复核已按周六休市事实降级使用最新合法收盘数据，没有将其冒充实时行情。复核正文与记录、报告及通知使用同一版本；完成记录、报告生成、通知发送和用户实际收到分别核验，未确认用户收到前不作已收到表述。\n\n【置信度】\n\n中等偏高。收盘行情和已对账账户事实明确；风险日期、完整一致性时效及收盘复盘证据状态之间仍有未消除差异。\n\n【最可能出错的地方】\n\n最可能出错的是把系统汇总READY或风险重建“对10月16日有效”的描述，当作近期一致性已验证且风险截止日已统一；其次是把11只Discovery评估输入或观察ETF误解为机会ETF。"
+  }
+}
