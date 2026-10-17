@@ -169,18 +169,15 @@ class ValidationAcceptanceControlPlaneTest(unittest.TestCase):
             self.assertIn(pattern, pr_block)
             self.assertIn(pattern, push_block)
 
-    def test_acceptance_completion_does_not_require_main_projection_publication(self):
+    def test_consistency_workflow_publishes_report_as_artifact_without_main_state_write(self):
         source = WORKFLOW.read_text(encoding="utf-8")
-        acceptance = source.split("- name: Run canonical post-write acceptance", 1)[1]
-        self.assertNotIn("- name: Persist acceptance result", acceptance)
-        self.assertIn("- name: Preserve acceptance projections as run evidence", acceptance)
-        self.assertIn("uses: actions/upload-artifact@v4", acceptance)
-        self.assertIn("data/state/system_consistency.json", acceptance)
-        self.assertIn("data/state/maintenance_health.json", acceptance)
-        self.assertIn("data/state/e2e_status.json", acceptance)
-        self.assertIn("data/state/execution_quality.json", acceptance)
-        self.assertNotIn("git push origin HEAD:main", acceptance)
-        self.assertNotIn("publication_deadline=", acceptance)
+        self.assertIn("- name: Run full system consistency check", source)
+        self.assertIn("actions/upload-artifact@v4", source)
+        self.assertIn("system-consistency-", source)
+        self.assertIn("system_consistency.json", source)
+        self.assertNotIn("git push origin HEAD:main", source)
+        self.assertNotIn("git push --force", source)
+        self.assertNotIn("git push -f ", source)
 
 
 
