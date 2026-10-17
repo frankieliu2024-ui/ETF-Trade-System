@@ -239,8 +239,6 @@ def build_formal_decision_completion_request(
         raise ValueError("Formal Decision completion requires a safe BDS path")
     decision_id = _safe_id(decision_id)
     content_hash = str(content_hash or "").strip()
-    if len(content_hash) != 64:
-        raise ValueError("Formal Decision completion requires the FINAL_CONTENT hash")
     request_id = _safe_id(completion_request_id or f"{parent_id}__formal_decision_completion")
     if request_id == parent_id:
         raise ValueError("Formal Decision completion identity must differ from its parent")
