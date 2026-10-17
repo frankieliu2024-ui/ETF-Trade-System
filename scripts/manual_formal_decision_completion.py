@@ -135,14 +135,21 @@ def build_structured_completion_request(
     if not decision_id:
         raise ValueError("new formal decision completion requires a decision identity")
 
-    # Preflight the actor response with the same side-effect-free canonical
-    # projector used by the downstream consumer.  This is deliberately before
-    # constructing a durable request, so malformed BDS cannot enter the
-    # production ingress and the actor receives the exact missing-field error.
+
+    # Preflight with the exact child-envelope identity and ingress metadata
+    # that will be persisted below.  The old preflight omitted the entry
+    # fields and used a parent/child pair that the canonical validator
+    # correctly rejected.
     preflight_source = {
         "request_type": "BUSINESS_DECISION_SOURCE",
         "request_id": envelope_id,
         "parent_request_id": parent_id,
+        "formal_entry_source": source_mode,
+        "entry_mode": entry_mode,
+        "task_id": source_request.get("task_id", ""),
+        "task_run_id": source_request.get("task_run_id", ""),
+        "occurrence_id": source_request.get("occurrence_id", ""),
+        "market_date": source_request.get("market_date", ""),
         "decision_id": decision_id,
         "consumed_snapshot": snapshot,
     }
