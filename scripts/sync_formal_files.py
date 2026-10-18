@@ -13,6 +13,7 @@ published.
 import argparse
 import json
 import os
+import re
 from datetime import timezone, timedelta
 from pathlib import Path
 
@@ -53,7 +54,7 @@ def display_name(position: dict) -> str:
 
 
 def latest_canonical_formal_decision(root: Path = ROOT) -> dict:
-    """Return the latest canonical FORMAL_DECISION, never a review/stage artifact."""
+    """Return the newest canonical decision, explicitly marked when no longer current."""
     candidates = []
     for path in (root / "events" / "decisions").glob("*.json"):
         try:
@@ -76,7 +77,30 @@ def latest_canonical_formal_decision(root: Path = ROOT) -> dict:
         candidates.append((parsed, str(path), decision))
     if not candidates:
         return {}
-    decision = max(candidates, key=lambda item: (item[0], item[1]))[2]
+    parsed, event_path, decision = max(candidates, key=lambda item: (item[0], item[1]))
+    decision = dict(decision)
+    decision["_decision_path"] = event_path
+    decision["_decision_stamp"] = parsed.isoformat()
+
+    # A past execution remains historical when later confirmed account facts
+    # invalidate its lifecycle. This is a validity guard, not a new state source.
+    try:
+        account = load_json(root / "data" / "state" / "account_fact.json")
+    except (OSError, json.JSONDecodeError, TypeError):
+        account = {}
+    current_codes = {str(p.get("code") or "").strip() for p in account.get("positions") or [] if str(p.get("code") or "").strip()}
+    lifecycle = decision.get("lifecycle")
+    lifecycle_text = json.dumps(lifecycle, ensure_ascii=False) if isinstance(lifecycle, (dict, list)) else str(lifecycle or "")
+    lifecycle_codes = set(re.findall(r"(?<!\\d)(\\d{6})(?!\\d)", lifecycle_text))
+    account_time = str(account.get("updated_at") or "")
+    stale_reasons = []
+    if current_codes and lifecycle_codes and not lifecycle_codes.issubset(current_codes):
+        stale_reasons.append("正式决策生命周期包含当前账户已退出标的")
+    if account_time and parsed.isoformat() < account_time:
+        if lifecycle_codes and current_codes and lifecycle_codes != current_codes:
+            stale_reasons.append("正式决策早于最新账户事实且持仓集合已变化")
+    decision["_current_applicability"] = "HISTORICAL" if stale_reasons else "CURRENT"
+    decision["_stale_reason"] = "；".join(dict.fromkeys(stale_reasons))
     lifecycle = decision.get("lifecycle")
     if isinstance(lifecycle, dict):
         lifecycle = "；".join(f"{key}：{value}" for key, value in lifecycle.items())
@@ -113,9 +137,15 @@ def latest_canonical_formal_decision(root: Path = ROOT) -> dict:
 
 
 def render_decision_projection(decision: dict) -> str:
-    """Render the selector result using the existing Dashboard markdown contract."""
-    return "\n".join([
-        "### 最近一次正式决策", "",
+    """Render current or historical decision without presenting stale facts as current."""
+    applicability = str(decision.get("_current_applicability") or "CURRENT")
+    lines = ["### 最近一次正式决策", ""]
+    if applicability != "CURRENT":
+        lines.extend([
+            "- 当前有效性：历史正式决策（不作为当前权限或当前持仓状态）",
+            f"- 历史原因：{decision.get('_stale_reason') or '已被更新账户或成交事实覆盖'}",
+        ])
+    lines.extend([
         f"- 风险许可：{decision.get('risk_permission', '未提供')}",
         f"- 生命周期：{decision.get('lifecycle', '未提供')}",
         f"- 唯一主候选：{decision.get('main_candidate', '无新的主候选。')}",
@@ -123,6 +153,7 @@ def render_decision_projection(decision: dict) -> str:
         f"- 最大风险或0元主因：{decision.get('decisive_reason', '未提供')}",
         f"- 决策数据时点：{decision.get('data_as_of_beijing', '未提供')}",
     ])
+    return "\n".join(lines)
 
 
 def format_position_pnl(position: dict) -> str:
