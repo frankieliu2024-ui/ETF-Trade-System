@@ -2487,7 +2487,8 @@ def record_close_review_closure(account: dict, request: dict, review: dict, even
             raise RuntimeError("current review REPORT_DELIVERY_REQUEST identity/content mismatch")
         if not report_path.exists():
             atomic_json_write(report_path, report)
-    canonical_equity = load_json(ROOT / "data" / "state" / "etf_strategy_equity.json")
+    canonical_equity_path = ROOT / "data" / "state" / "etf_strategy_equity.json"
+    canonical_equity = load_json(canonical_equity_path) if canonical_equity_path.exists() else {}
     canonical_summary = canonical_equity.get("summary") if isinstance(canonical_equity.get("summary"), dict) else {}
     canonical_risk = (
         canonical_summary.get("current_strategy_return_pct_gross")
