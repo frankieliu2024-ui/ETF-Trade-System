@@ -6,9 +6,11 @@
 
 `docs/archive/formal-decision-scheduled-task-rebuild-v2.md`
 
-当前三个定时任务的冻结指令、节点、身份和回退基线，请读取：
+当前三个定时任务的冻结、封存、版本追踪和回退关系，请读取唯一注册表：
 
-`docs/automation_prompt_history/ETF三个定时任务冻结封存_2026-10-16.md`
+`docs/automation_prompt_history/ETF三类任务冻结注册表.json`
+
+完整历史快照已归档至 `docs/archive/automation_prompt_history/`，仅用于审计和回退，不作为当前规则源。
 
 当前生产规则、执行协议、通知链和生产治理规则，仍以`ETF_SYSTEM_INDEX.md`路由到的正式文件及current main机器事实为准。
 
