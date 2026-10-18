@@ -643,7 +643,15 @@ def close_review_component(current: dict, now=None) -> dict:
     review_status = review_file.get("review") or {}
     evidence_status = str(closure_file.get("review_evidence_status") or current_closure.get("review_evidence_status") or review_status.get("review_evidence_status") or "").upper()
     business_status = str(closure_file.get("business_completion_status") or current_closure.get("business_completion_status") or review_status.get("business_completion_status") or "").upper()
-    if evidence_status in {"DEGRADED", "FAIL", "FAILED", "INSUFFICIENT"} or business_status in {"DEGRADED", "FAIL", "FAILED", "INCOMPLETE", "INSUFFICIENT"}:
+    if (
+        evidence_status in {"DEGRADED", "FAIL", "FAILED", "INSUFFICIENT"}
+        or business_status in {"DEGRADED", "FAIL", "FAILED", "INCOMPLETE", "INSUFFICIENT"}
+        or (
+            str(current_closure.get("status") or "").upper() == "CLOSED"
+            and not closure_file.get("review_evidence_status")
+            and not closure_file.get("business_completion_status")
+        )
+    ):
         return {
             "status": "DEGRADED",
             "reason": "close review closure exists but evidence or business completion is not sufficient",
