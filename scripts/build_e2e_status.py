@@ -630,7 +630,7 @@ def close_review_component(current: dict, now=None) -> dict:
         closure = read_json(STATE / f"close_review_closure_{completion['market_date']}.json")
         evidence_status = str(closure.get("review_evidence_status") or "").upper()
         business_status = str(closure.get("business_completion_status") or "").upper()
-        if evidence_status not in {"SUFFICIENT", "PASS", "VERIFIED"} or business_status not in {"COMPLETE", "PASS", "VERIFIED"}:
+        if evidence_status in {"DEGRADED", "FAIL", "FAILED", "INSUFFICIENT"} or business_status in {"DEGRADED", "FAIL", "FAILED", "INCOMPLETE", "INSUFFICIENT"}:
             return {
                 "status": "DEGRADED",
                 "reason": "close review closure exists but evidence or business completion is not sufficient",
