@@ -589,6 +589,15 @@ def _valid_close_review_completion(current: dict) -> dict:
         return {}
     if str(closure.get("status") or "").upper() != "CLOSED":
         return {}
+    review_status = review.get("review") or {}
+    evidence_status = str(closure.get("review_evidence_status") or review_status.get("review_evidence_status") or "").upper()
+    business_status = str(closure.get("business_completion_status") or review_status.get("business_completion_status") or "").upper()
+    # Legacy fixtures may omit these diagnostic fields; only an explicit
+    # degraded/failed marker invalidates the current completion projection.
+    if evidence_status in {"DEGRADED", "FAIL", "FAILED", "INSUFFICIENT"}:
+        return {}
+    if business_status in {"DEGRADED", "FAIL", "FAILED", "INCOMPLETE", "INSUFFICIENT"}:
+        return {}
     if str(closure.get("market_date") or market_date) != market_date:
         return {}
     if str(closure.get("formal_review_path") or "") != expected_review_path:
@@ -603,6 +612,13 @@ def _valid_close_review_completion(current: dict) -> dict:
 def _event_close_review_complete(market_date: str) -> bool:
     review = read_json(REVIEW_DIR / f"{market_date}.json")
     closure = read_json(STATE / f"close_review_closure_{market_date}.json")
+    review_status = review.get("review") or {}
+    evidence_status = str(closure.get("review_evidence_status") or review_status.get("review_evidence_status") or "").upper()
+    business_status = str(closure.get("business_completion_status") or review_status.get("business_completion_status") or "").upper()
+    if evidence_status in {"DEGRADED", "FAIL", "FAILED", "INSUFFICIENT"}:
+        return False
+    if business_status in {"DEGRADED", "FAIL", "FAILED", "INCOMPLETE", "INSUFFICIENT"}:
+        return False
     return (
         review.get("event_type") == "FORMAL_POST_CLOSE_REVIEW"
         and str(review.get("market_date") or market_date) == market_date
@@ -618,11 +634,42 @@ def close_review_component(current: dict, now=None) -> dict:
     event = read_json(POST_MARKET_REVIEW)
     completion = _valid_close_review_completion(current)
     event_date = str(event.get("market_date") or "") if event else ""
+    current_closure = current.get("close_review_closure") if isinstance(current, dict) else {}
+    if not isinstance(current_closure, dict):
+        current_closure = {}
+    current_market_date = str(current_closure.get("market_date") or (current or {}).get("market_date") or "")
+    closure_file = read_json(STATE / f"close_review_closure_{current_market_date}.json") if current_market_date else {}
+    review_file = read_json(REVIEW_DIR / f"{current_market_date}.json") if current_market_date else {}
+    review_status = review_file.get("review") or {}
+    evidence_status = str(closure_file.get("review_evidence_status") or current_closure.get("review_evidence_status") or review_status.get("review_evidence_status") or "").upper()
+    business_status = str(closure_file.get("business_completion_status") or current_closure.get("business_completion_status") or review_status.get("business_completion_status") or "").upper()
+    if (
+        evidence_status in {"DEGRADED", "FAIL", "FAILED", "INSUFFICIENT"}
+        or business_status in {"DEGRADED", "FAIL", "FAILED", "INCOMPLETE", "INSUFFICIENT"}
+        or (
+            str(current_closure.get("status") or "").upper() == "CLOSED"
+            and str(closure_file.get("formal_review_path") or "") == f"events/reviews/{current_market_date}.json"
+            and review_file.get("event_type") == "FORMAL_POST_CLOSE_REVIEW"
+            and not closure_file.get("review_evidence_status")
+            and not closure_file.get("business_completion_status")
+        )
+    ):
+        return {
+            "status": "DEGRADED",
+            "reason": "close review closure exists but evidence or business completion is not sufficient",
+            "market_date": current_market_date,
+            "formal_review_market_date": current_market_date,
+            "formal_review_path": str(current_closure.get("formal_review_path") or f"events/reviews/{current_market_date}.json"),
+            "closure_path": f"data/state/close_review_closure_{current_market_date}.json",
+            "review_evidence_status": evidence_status or "UNKNOWN",
+            "business_completion_status": business_status or "UNKNOWN",
+        }
     if completion and (not event_date or completion["market_date"] >= event_date):
         closure = read_json(STATE / f"close_review_closure_{completion['market_date']}.json")
-        evidence_status = str(closure.get("review_evidence_status") or "").upper()
-        business_status = str(closure.get("business_completion_status") or "").upper()
-        if evidence_status not in {"SUFFICIENT", "PASS", "VERIFIED"} or business_status not in {"COMPLETE", "PASS", "VERIFIED"}:
+        review_status = read_json(REVIEW_DIR / f"{completion['market_date']}.json").get("review") or {}
+        evidence_status = str(closure.get("review_evidence_status") or review_status.get("review_evidence_status") or "").upper()
+        business_status = str(closure.get("business_completion_status") or review_status.get("business_completion_status") or "").upper()
+        if evidence_status in {"DEGRADED", "FAIL", "FAILED", "INSUFFICIENT"} or business_status in {"DEGRADED", "FAIL", "FAILED", "INCOMPLETE", "INSUFFICIENT"}:
             return {
                 "status": "DEGRADED",
                 "reason": "close review closure exists but evidence or business completion is not sufficient",

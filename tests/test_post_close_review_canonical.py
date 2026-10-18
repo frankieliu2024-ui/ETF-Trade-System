@@ -581,6 +581,34 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
         self.assertIn("missing_or_invalid_review", consistency["checks"][-1]["detail"])
 
 
+    def test_degraded_closure_is_not_a_valid_current_completion(self):
+        current = {
+            "market_date": "2026-10-16",
+            "close_review_closure": {
+                "status": "CLOSED",
+                "market_date": "2026-10-16",
+                "formal_review_path": "events/reviews/2026-10-16.json",
+            },
+        }
+        (self.root / "events/reviews/2026-10-16.json").write_text(json.dumps({
+            "event_type": "FORMAL_POST_CLOSE_REVIEW",
+            "market_date": "2026-10-16",
+            "review": {},
+        }), encoding="utf-8")
+        (self.root / "data/state/close_review_closure_2026-10-16.json").write_text(json.dumps({
+            "status": "CLOSED",
+            "market_date": "2026-10-16",
+            "formal_review_path": "events/reviews/2026-10-16.json",
+            "review_evidence_status": "DEGRADED",
+            "business_completion_status": "DEGRADED",
+            "risk_rate_pct": None,
+        }), encoding="utf-8")
+        self.assertEqual(
+            build_e2e_status._valid_close_review_completion(current),
+            {},
+            "CLOSED with degraded evidence/business completion must not be projected as complete",
+        )
+
 if __name__ == "__main__":
     unittest.main()
 
