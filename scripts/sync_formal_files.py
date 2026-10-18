@@ -54,19 +54,58 @@ def display_name(position: dict) -> str:
 
 
 def latest_canonical_formal_decision(root: Path = ROOT) -> dict:
-    """Return the newest canonical decision, explicitly marked when no longer current."""
+    """Return the newest canonical decision/report, explicitly marked when stale.
+
+    Formal Decision's canonical completed report is persisted under
+    ``events/reviews/formal_*.json``.  Older decision facts remain under
+    ``events/decisions``.  The Dashboard must select across both existing
+    canonical representations; otherwise a newer completed report is invisible
+    and an older decision is projected as the latest one.
+    """
     candidates = []
-    for path in (root / "events" / "decisions").glob("*.json"):
+    paths = list((root / "events" / "decisions").glob("*.json"))
+    paths += list((root / "events" / "reviews").glob("formal_*.json"))
+    for path in paths:
         try:
             event = load_json(path)
         except (OSError, json.JSONDecodeError, TypeError):
             continue
-        if str(event.get("event_type") or "").upper() != "FORMAL_DECISION":
+        event_type = str(event.get("event_type") or "").upper()
+        if event_type not in {"FORMAL_DECISION", "FORMAL_DECISION_REPORT"}:
             continue
         decision = event.get("formal_decision") or event.get("decision") or {}
+        if event_type == "FORMAL_DECISION_REPORT" and not decision:
+            # The completed report carries the same decision fields in the
+            # presentation binding; the bound full content is intentionally
+            # not used as a replacement source for structured projection.
+            decision = event.get("decision_response") or {}
         if not isinstance(decision, dict):
             continue
-        stamp = event.get("decision_time_beijing") or event.get("decision_effective_at_beijing") or decision.get("decision_time") or decision.get("decision_effective_at_beijing") or event.get("recorded_at_beijing")
+        if event_type == "FORMAL_DECISION_REPORT" and isinstance(decision.get("answers"), dict):
+            answers = decision["answers"]
+            risk = answers.get("RISK_PERMISSION") or {}
+            candidate = answers.get("MAIN_CANDIDATE") or {}
+            capital = answers.get("NEXT_UNIT_CAPITAL_USE") or {}
+            lifecycle = []
+            for key, value in answers.items():
+                if not str(key).startswith("HOLDING:"):
+                    continue
+                code = str(key).split(":", 1)[1]
+                action = value.get("final_action") if isinstance(value, dict) else value
+                lifecycle.append(f"{code}：{action}")
+            decision = {
+                "risk_permission": risk.get("final_action"),
+                "main_candidate": candidate.get("candidate_name") or candidate.get("final_action"),
+                "capital_competition": {
+                    "new_amount_yuan": capital.get("new_amount_yuan"),
+                    "next_unit_capital_use": capital.get("final_action"),
+                    "selected_state_reason": capital.get("selected_state_reason"),
+                    "zero_amount_decisive_reason": capital.get("zero_amount_decisive_reason_if_zero"),
+                },
+                "lifecycle": "；".join(lifecycle),
+                "data_as_of_beijing": event.get("reviewed_at_beijing") or event.get("market_date"),
+            }
+        stamp = event.get("decision_time_beijing") or event.get("decision_effective_at_beijing") or decision.get("decision_time") or decision.get("decision_effective_at_beijing") or event.get("reviewed_at_beijing") or event.get("recorded_at_beijing")
         try:
             from datetime import datetime
             parsed = datetime.fromisoformat(str(stamp).replace("Z", "+00:00"))
@@ -91,7 +130,7 @@ def latest_canonical_formal_decision(root: Path = ROOT) -> dict:
     current_codes = {str(p.get("code") or "").strip() for p in account.get("positions") or [] if str(p.get("code") or "").strip()}
     lifecycle = decision.get("lifecycle")
     lifecycle_text = json.dumps(lifecycle, ensure_ascii=False) if isinstance(lifecycle, (dict, list)) else str(lifecycle or "")
-    lifecycle_codes = set(re.findall(r"(?<!\\d)(\\d{6})(?!\\d)", lifecycle_text))
+    lifecycle_codes = set(re.findall(r"(?<!\d)(\d{6})(?!\d)", lifecycle_text))
     account_time = str(account.get("updated_at") or "")
     stale_reasons = []
     if current_codes and lifecycle_codes and not lifecycle_codes.issubset(current_codes):
@@ -133,6 +172,10 @@ def latest_canonical_formal_decision(root: Path = ROOT) -> dict:
         "amount_action": amount_action,
         "decisive_reason": decisive_reason,
         "data_as_of_beijing": decision.get("data_as_of_beijing") or decision.get("data_as_of") or "未提供",
+        "_current_applicability": decision.get("_current_applicability", "CURRENT"),
+        "_stale_reason": decision.get("_stale_reason", ""),
+        "_decision_stamp": decision.get("_decision_stamp", ""),
+        "_decision_path": decision.get("_decision_path", ""),
     }
 
 
