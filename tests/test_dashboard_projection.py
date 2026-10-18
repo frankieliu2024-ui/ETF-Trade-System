@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from sync_formal_files import normalize_dashboard_projection, latest_canonical_formal_decision, format_position_pnl, build_dashboard_block
+from sync_formal_files import normalize_dashboard_projection, latest_canonical_formal_decision, format_position_pnl, build_dashboard_block, render_decision_projection
 from process_state_sync_request import latest_formal_review_decision
 
 
@@ -170,6 +170,36 @@ class DashboardProjectionTests(unittest.TestCase):
         self.assertNotIn("\\\\n", dashboard)
         self.assertIn("# ETF当前状态_DASHBOARD", dashboard.splitlines())
         self.assertIn("## 云端实时状态（自动同步）", dashboard.splitlines())
+
+    def test_old_decision_is_historical_when_account_positions_changed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            decision_dir = root / "events/decisions"
+            state_dir = root / "data/state"
+            decision_dir.mkdir(parents=True)
+            state_dir.mkdir(parents=True)
+            (decision_dir / "formal.json").write_text(json.dumps({
+                "event_type": "FORMAL_DECISION",
+                "decision_time_beijing": "2026-10-13T07:59:54+08:00",
+                "formal_decision": {
+                    "risk_permission": "禁止新增",
+                    "lifecycle": {
+                        "宁德时代（300750）": "持有管理",
+                        "纳指ETF（159941）": "持有管理",
+                    },
+                    "data_as_of_beijing": "2026-10-13T07:59:54+08:00",
+                },
+            }, ensure_ascii=False), encoding="utf-8")
+            (state_dir / "account_fact.json").write_text(json.dumps({
+                "updated_at": "2026-10-16T15:00:00+08:00",
+                "positions": [{"code": "159941", "name": "纳指ETF"}],
+            }, ensure_ascii=False), encoding="utf-8")
+            result = latest_canonical_formal_decision(root)
+            self.assertEqual(result["_current_applicability"], "HISTORICAL")
+            rendered = render_decision_projection(result)
+            self.assertIn("历史正式决策", rendered)
+            self.assertIn("不作为当前权限或当前持仓状态", rendered)
+
 
 if __name__ == "__main__":
     unittest.main()
