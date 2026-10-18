@@ -2487,6 +2487,14 @@ def record_close_review_closure(account: dict, request: dict, review: dict, even
             raise RuntimeError("current review REPORT_DELIVERY_REQUEST identity/content mismatch")
         if not report_path.exists():
             atomic_json_write(report_path, report)
+    canonical_equity = load_json(ROOT / "data" / "state" / "etf_strategy_equity.json")
+    canonical_summary = canonical_equity.get("summary") if isinstance(canonical_equity.get("summary"), dict) else {}
+    canonical_risk = (
+        canonical_summary.get("current_strategy_return_pct_gross")
+        if str(canonical_equity.get("replay_cutoff") or canonical_equity.get("as_of_transaction_date") or "") == market_date
+        else None
+    )
+    review_known_net = review.get("etf_strategy_known_net") or {}
     closure = {
         "schema_version": "1.0", "market_date": market_date,
         "chain": ["market_close", "account", "formal_review", "archive", "experience", "dashboard", "risk"],
@@ -2496,8 +2504,8 @@ def record_close_review_closure(account: dict, request: dict, review: dict, even
         "dashboard_path": "ETF当前状态_DASHBOARD.md", "archive_path": "ETF市场行情档案_2026.md",
         "experience_path": "ETF交易复盘与经验库_2026.md",
         "case_id": review.get("case_id") or "", "case_mode": review.get("case_mode") or "CONTINUATION_NO_NEW_CASE",
-        "known_net_equity": (review.get("etf_strategy_known_net") or {}).get("known_net_strategy_equity"),
-        "risk_rate_pct": (review.get("etf_strategy_known_net") or {}).get("etf_strategy_risk_rate_pct"),
+        "known_net_equity": review_known_net.get("known_net_strategy_equity") or canonical_summary.get("current_gross_strategy_equity"),
+        "risk_rate_pct": review_known_net.get("etf_strategy_risk_rate_pct") if review_known_net.get("etf_strategy_risk_rate_pct") is not None else canonical_risk,
         # CLOSED means the canonical closure event was persisted.  Keep the
         # substantive evidence state separate so degraded discovery/evidence
         # cannot be mistaken for a complete business review.
