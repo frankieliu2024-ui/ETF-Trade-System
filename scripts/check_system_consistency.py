@@ -828,6 +828,36 @@ def _validate_readme_front_door(report: dict) -> None:
     _recount(report)
 
 
+def _validate_current_formal_decision_projection(report: dict) -> None:
+    """Reject a stale formal decision being presented as current account state."""
+    try:
+        from sync_formal_files import latest_canonical_formal_decision
+        decision = latest_canonical_formal_decision(ROOT)
+    except Exception as exc:
+        report.setdefault("errors", []).append("formal_projection_selector_unreadable:" + type(exc).__name__)
+        _recount(report)
+        return
+    if not decision:
+        return
+    if str(decision.get("_current_applicability") or "CURRENT") != "CURRENT":
+        reason = str(decision.get("_stale_reason") or "current account facts supersede the selected decision")
+        message = "formal_projection_stale_current_decision:" + reason
+        if message not in report.setdefault("errors", []):
+            report["errors"].append(message)
+        report.setdefault("checks", []).append({
+            "name": "formal_projection:current_applicability",
+            "status": "FAIL",
+            "detail": reason,
+        })
+    else:
+        report.setdefault("checks", []).append({
+            "name": "formal_projection:current_applicability",
+            "status": "PASS",
+            "detail": "selected formal decision is compatible with current account facts",
+        })
+    _recount(report)
+
+
 def _validate_production_mutation_protocol(report: dict) -> None:
     result = run_mutation_protocol(ROOT)
     for item in result.get("checks") or []:
@@ -938,6 +968,7 @@ def main() -> int:
     _validate_formal_completion_decision_readback(report)
     _validate_semantic_formal_structure(report)
     _validate_execution_quality_projection(report)
+    _validate_current_formal_decision_projection(report)
     _validate_readme_front_door(report)
     _validate_production_mutation_protocol(report)
     REPORT.parent.mkdir(parents=True, exist_ok=True)
