@@ -78,6 +78,47 @@
     "历史快照只用于审计和回退，不得作为当前任务运行依据。",
     "每次新冻结必须同时登记live Prompt和Schedule完整文本及hash。",
     "归档不改变任务Prompt、workflow、state、入口、场景、调度或通知链。",
-    "当前live快照未完成逐项回读前，不得宣称三任务已完成最终冻结。"
-  ]
+    "当前live快照未完成逐项回读前，不得宣称三任务已完成最终冻结。",
+    "live配置回读未取得可验证hash前，必须保持RECONCILIATION_REQUIRED，不得将历史Prompt hash冒充当前live hash。"
+  ],
+  "registry_revision": "2026-10-18-live-readback",
+  "live_readback": {
+    "captured_at_beijing": "2026-10-18 12:46",
+    "source": "ChatGPT Scheduled Tasks live configuration via authorized browser readback",
+    "result": "READBACK_CONFIRMED_HASH_REGISTRATION_PENDING",
+    "authority_note": "本次只登记实际回读结果；平台页面未提供可直接回读的Prompt/Schedule blob hash，因此不填充或推算hash。",
+    "freeze_boundary": "本次登记不是最终冻结；在获得可验证的完整live Prompt、完整Schedule及对应hash前，保持RECONCILIATION_REQUIRED。",
+    "verified_common_contracts": [
+      "三个任务仍为ETF系统复核、ETF交易复盘、ETF正式决策，未新增任务",
+      "任务均以current main和ETF_SYSTEM_INDEX.md为唯一规则入口",
+      "三类任务保持独立，不跨任务复用请求、正文、completion、event、REPORT或notification",
+      "归档记录不改变live任务运行配置"
+    ],
+    "task_observations": {
+      "ETF系统复核": {
+        "automation_id": "6accb02805ec8191aca29791a72636bd",
+        "conversation_id": "6accb04b-9d30-83ec-9e9f-f632d3815e92",
+        "observed": "当前live Prompt要求每次自动或手动进入System Review后，在FINAL_CONTENT生成前执行一次current main全量一致性验收；必须回读本次run_id、提交SHA、状态、结论、失败检查和警告；结果必须进入正文和同一通知正文。",
+        "canonical_interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
+        "prompt_hash": "PENDING_PLATFORM_VERIFIABLE_HASH",
+        "schedule_hash": "PENDING_PLATFORM_VERIFIABLE_HASH"
+      },
+      "ETF交易复盘": {
+        "automation_id": "6ab78aab49988191818abf8660c65362",
+        "conversation_id": "6ab89c94-e798-83e8-90e6-0b57c60905c5",
+        "observed": "当前live Prompt要求唯一SCHEDULED_REVIEW_COMPLETION硬门；completion写入回读后继续canonical event、REPORT、notification_center和PushPlus交接；所有运行统一使用interaction_scenario=SCHEDULED_TRADE_REVIEW，早间、完整日和周复盘不生成平行场景值。",
+        "canonical_interaction_scenario": "SCHEDULED_TRADE_REVIEW",
+        "prompt_hash": "PENDING_PLATFORM_VERIFIABLE_HASH",
+        "schedule_hash": "PENDING_PLATFORM_VERIFIABLE_HASH"
+      },
+      "ETF正式决策": {
+        "automation_id": "6ad1d7b4c05c819180eb6af2c8086cb8",
+        "conversation_id": "6ad0aef0-7718-83ee-b901-d24316ce92b6",
+        "observed": "当前live Prompt仍要求Formal Decision按唯一父请求、request-bound事实、唯一FINAL_CONTENT、BDS、FORMAL_DECISION_COMPLETION及既有decision-notification主链执行；不生成平行任务或平行场景。",
+        "canonical_interaction_scenario": "FORMAL_DECISION_CANONICAL_SCENARIO_PER_CURRENT_MAIN",
+        "prompt_hash": "PENDING_PLATFORM_VERIFIABLE_HASH",
+        "schedule_hash": "PENDING_PLATFORM_VERIFIABLE_HASH"
+      }
+    }
+  }
 }
