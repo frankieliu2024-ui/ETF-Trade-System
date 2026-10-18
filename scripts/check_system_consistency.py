@@ -384,11 +384,26 @@ def _validate_post_close_review_contract(report: dict, now=None) -> None:
     discovery_status = str(review_payload.get("discovery_close_status") or "").upper()
     evidence_status = str(closure.get("review_evidence_status") or "").upper()
     business_status = str(closure.get("business_completion_status") or "").upper()
-    expected_status = "COMPLETE" if discovery_status == "COMPLETED" else "DEGRADED"
-    if evidence_status != expected_status or business_status != expected_status:
+    expected_evidence_status = "COMPLETE" if discovery_status == "COMPLETED" else "DEGRADED"
+    # Discovery coverage is evidence quality, not the definition of whether
+    # the requested business review was completed.
+    business_complete = (
+        str((review_payload.get("data_time") or {}).get("close_data_status") or "").upper()
+        == "VERIFIED_SESSION_CLOSE"
+        and bool(str((review_payload.get("data_time") or {}).get("close_snapshot") or "").strip())
+        and isinstance(review_payload.get("account_close"), dict)
+        and bool(str(review_payload.get("risk_permission") or "").strip())
+        and bool(str(review_payload.get("opportunity_status") or "").strip())
+        and isinstance(review_payload.get("holding_actions"), dict)
+        and bool(str(review_payload.get("capital_efficiency") or "").strip())
+        and bool(str(review_payload.get("action") or review_payload.get("amount_action") or "").strip())
+    )
+    expected_business_status = "COMPLETE" if business_complete else "DEGRADED"
+    if evidence_status != expected_evidence_status or business_status != expected_business_status:
         errors.append(
             "closure_review_status_mismatch="
-            f"expected={expected_status},evidence={evidence_status or 'MISSING'},business={business_status or 'MISSING'}"
+            f"expected_evidence={expected_evidence_status},expected_business={expected_business_status},"
+            f"evidence={evidence_status or 'MISSING'},business={business_status or 'MISSING'}"
         )
     if due_state == "NOT_DUE_TODAY":
         report.setdefault("checks", []).append({

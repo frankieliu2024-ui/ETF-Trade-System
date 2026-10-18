@@ -2520,12 +2520,20 @@ def record_close_review_closure(account: dict, request: dict, review: dict, even
             )
             else "DEGRADED"
         ),
+        # Business completion is independent from discovery coverage.  A
+        # review can be a complete business handoff while its market-wide
+        # evidence remains degraded or source-limited.
         "business_completion_status": (
             "COMPLETE"
             if (
                 str(data_time.get("close_data_status") or "").upper() == "VERIFIED_SESSION_CLOSE"
                 and bool(str(data_time.get("close_snapshot") or "").strip())
-                and str(review.get("discovery_close_status") or "").upper() == "COMPLETED"
+                and isinstance(review.get("account_close"), dict)
+                and str(review.get("risk_permission") or "").strip()
+                and str(review.get("opportunity_status") or "").strip()
+                and isinstance(review.get("holding_actions"), dict)
+                and str(review.get("capital_efficiency") or "").strip()
+                and str(review.get("action") or review.get("amount_action") or "").strip()
             )
             else "DEGRADED"
         ),
