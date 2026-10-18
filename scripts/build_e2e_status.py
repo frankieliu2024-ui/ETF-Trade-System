@@ -635,6 +635,8 @@ def close_review_component(current: dict, now=None) -> dict:
     completion = _valid_close_review_completion(current)
     event_date = str(event.get("market_date") or "") if event else ""
     current_closure = current.get("close_review_closure") if isinstance(current, dict) else {}
+    if not isinstance(current_closure, dict):
+        current_closure = {}
     current_market_date = str(current_closure.get("market_date") or (current or {}).get("market_date") or "")
     closure_file = read_json(STATE / f"close_review_closure_{current_market_date}.json") if current_market_date else {}
     review_file = read_json(REVIEW_DIR / f"{current_market_date}.json") if current_market_date else {}
