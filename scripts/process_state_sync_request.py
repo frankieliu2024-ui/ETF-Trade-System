@@ -2178,7 +2178,7 @@ def _persist_post_close_review_projections(account: dict, request: dict, review:
 def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     review = request.get("formal_review")
     interaction_scenario = str(request.get("interaction_scenario") or "").strip().upper()
-    if interaction_scenario not in {"POST_CLOSE_REVIEW", "MIDDAY_REVIEW", "WEEKLY_REVIEW"} or not review:
+    if interaction_scenario not in {"SCHEDULED_TRADE_REVIEW", "POST_CLOSE_REVIEW", "MIDDAY_REVIEW", "WEEKLY_REVIEW"} or not review:
         return False, False
     review_scope = str(review.get("review_scope") or "").strip().upper()
     request_phase = str(request.get("market_phase") or request.get("session_stage") or "").strip().upper()
