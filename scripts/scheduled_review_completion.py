@@ -158,7 +158,7 @@ def build_completion_request(
         "request_type": "SCHEDULED_REVIEW_COMPLETION",
         "formal_fact_type": "FORMAL_POST_CLOSE_REVIEW",
         "source": "CHATGPT_SCHEDULED_REVIEW_ACTOR",
-        "interaction_scenario": ("MIDDAY_REVIEW" if is_midday else "WEEKLY_REVIEW" if is_weekly else "POST_CLOSE_REVIEW"),
+        "interaction_scenario": "SCHEDULED_TRADE_REVIEW",
         "market_phase": str(formal_review.get("market_phase") or ("MIDDAY_BREAK" if is_midday else "POST_CLOSE")),
         "requested_at_beijing": str(requested_at_beijing or "").strip(),
         "market_date": effective_market_date,
