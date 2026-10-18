@@ -589,6 +589,12 @@ def _valid_close_review_completion(current: dict) -> dict:
         return {}
     if str(closure.get("status") or "").upper() != "CLOSED":
         return {}
+    evidence_status = str(closure.get("review_evidence_status") or "").upper()
+    business_status = str(closure.get("business_completion_status") or "").upper()
+    if evidence_status not in {"SUFFICIENT", "PASS", "VERIFIED", "COMPLETE"}:
+        return {}
+    if business_status not in {"COMPLETE", "PASS", "VERIFIED"}:
+        return {}
     if str(closure.get("market_date") or market_date) != market_date:
         return {}
     if str(closure.get("formal_review_path") or "") != expected_review_path:
