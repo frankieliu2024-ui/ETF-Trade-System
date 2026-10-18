@@ -648,6 +648,8 @@ def close_review_component(current: dict, now=None) -> dict:
         or business_status in {"DEGRADED", "FAIL", "FAILED", "INCOMPLETE", "INSUFFICIENT"}
         or (
             str(current_closure.get("status") or "").upper() == "CLOSED"
+            and str(closure_file.get("formal_review_path") or "") == f"events/reviews/{current_market_date}.json"
+            and review_file.get("event_type") == "FORMAL_POST_CLOSE_REVIEW"
             and not closure_file.get("review_evidence_status")
             and not closure_file.get("business_completion_status")
         )
