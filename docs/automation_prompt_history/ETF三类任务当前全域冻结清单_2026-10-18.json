@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0",
+  "snapshot_type": "ETF_THREE_TASKS_CURRENT_MAIN_FREEZE",
+  "frozen_at_beijing": "2026-10-18T12:30:00+08:00",
+  "main_commit": "bb8e55f943877820d7f81d8f84b15cbdf6aa7cf2",
+  "freeze_branch": "freeze/etf-three-tasks-20261018",
+  "main_ssot": "ETF_SYSTEM_INDEX.md",
+  "task_prompt_source": "ChatGPT scheduled task live configuration; read-only snapshot captured before freeze",
+  "tasks": [
+    {
+      "task_id": "ETF系统复核",
+      "automation_id": "6accb02805ec8191aca29791a72636bd",
+      "conversation_id": "6accb04b-9d30-83ec-9e9f-f632d3815e92",
+      "enabled": true,
+      "timezone": "Asia/Shanghai",
+      "timing_mode": "exact_schedule",
+      "automatic_schedule": ["08:30", "19:30"],
+      "sunday_rule": "19:30周复核",
+      "manual_allowed": true,
+      "route": "SYSTEM_REVIEW",
+      "interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
+      "report_type": "ETF_SYSTEM_REVIEW",
+      "completion_request_type": "SCHEDULED_REVIEW_COMPLETION"
+    },
+    {
+      "task_id": "ETF交易复盘",
+      "automation_id": "6ab78aab49988191818abf8660c65362",
+      "conversation_id": "6ab89c94-e798-83e8-90e6-0b57c60905c5",
+      "enabled": true,
+      "timezone": "Asia/Shanghai",
+      "timing_mode": "exact_schedule",
+      "automatic_schedule": ["12:30", "20:30"],
+      "sunday_rule": "20:30周复盘",
+      "manual_allowed": true,
+      "route": "TRADE_REVIEW",
+      "interaction_scenario": "SCHEDULED_TRADE_REVIEW",
+      "report_type": "ETF_TRADE_REVIEW",
+      "completion_request_type": "SCHEDULED_REVIEW_COMPLETION"
+    },
+    {
+      "task_id": "ETF正式决策",
+      "automation_id": "6ad1d7b4c05c819180eb6af2c8086cb8",
+      "conversation_id": "6ad0aef0-7718-83ee-b901-d24316ce92b6",
+      "enabled": true,
+      "timezone": "Asia/Shanghai",
+      "timing_mode": "exact_schedule",
+      "automatic_schedule": ["09:00", "10:00", "11:00", "13:30", "14:30"],
+      "manual_allowed": true,
+      "route": "FORMAL_DECISION",
+      "entry_modes": ["MANUAL_CONVERSATION", "MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"],
+      "report_type": "ETF_FORMAL_DECISION",
+      "completion_request_type": "FORMAL_DECISION_COMPLETION"
+    }
+  ],
+  "repository_contracts": {
+    "index": "ETF_SYSTEM_INDEX.md",
+    "task_protocol": "docs/ETF任务入口与调度治理协议_V1.0.md",
+    "maintenance_protocol": "docs/ETF自动维护与运行保障协议_V1.0.md",
+    "notification_protocol": "docs/ETF主动通知体系.md",
+    "runtime_policy": "config/runtime_policy.json",
+    "market_snapshot_workflow": ".github/workflows/market-snapshot.yml",
+    "system_consistency_workflow": ".github/workflows/system-consistency.yml",
+    "formal_notification_workflow": ".github/workflows/decision-notification.yml"
+  },
+  "freeze_boundary": [
+    "No new task",
+    "No new workflow",
+    "No new state",
+    "No new producer/writer/checker",
+    "No cross-task request/content/completion/event/REPORT/notification reuse",
+    "No trade authority",
+    "No notification-chain modification"
+  ],
+  "note": "This manifest is an audit/rollback marker only and is not a second rule source or business state."
+}
