@@ -634,6 +634,24 @@ def close_review_component(current: dict, now=None) -> dict:
     event = read_json(POST_MARKET_REVIEW)
     completion = _valid_close_review_completion(current)
     event_date = str(event.get("market_date") or "") if event else ""
+    current_closure = current.get("close_review_closure") if isinstance(current, dict) else {}
+    current_market_date = str(current_closure.get("market_date") or (current or {}).get("market_date") or "")
+    closure_file = read_json(STATE / f"close_review_closure_{current_market_date}.json") if current_market_date else {}
+    review_file = read_json(REVIEW_DIR / f"{current_market_date}.json") if current_market_date else {}
+    review_status = review_file.get("review") or {}
+    evidence_status = str(closure_file.get("review_evidence_status") or current_closure.get("review_evidence_status") or review_status.get("review_evidence_status") or "").upper()
+    business_status = str(closure_file.get("business_completion_status") or current_closure.get("business_completion_status") or review_status.get("business_completion_status") or "").upper()
+    if evidence_status in {"DEGRADED", "FAIL", "FAILED", "INSUFFICIENT"} or business_status in {"DEGRADED", "FAIL", "FAILED", "INCOMPLETE", "INSUFFICIENT"}:
+        return {
+            "status": "DEGRADED",
+            "reason": "close review closure exists but evidence or business completion is not sufficient",
+            "market_date": current_market_date,
+            "formal_review_market_date": current_market_date,
+            "formal_review_path": str(current_closure.get("formal_review_path") or f"events/reviews/{current_market_date}.json"),
+            "closure_path": f"data/state/close_review_closure_{current_market_date}.json",
+            "review_evidence_status": evidence_status or "UNKNOWN",
+            "business_completion_status": business_status or "UNKNOWN",
+        }
     if completion and (not event_date or completion["market_date"] >= event_date):
         closure = read_json(STATE / f"close_review_closure_{completion['market_date']}.json")
         review_status = read_json(REVIEW_DIR / f"{completion['market_date']}.json").get("review") or {}
