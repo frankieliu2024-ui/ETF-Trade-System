@@ -200,6 +200,52 @@ class DashboardProjectionTests(unittest.TestCase):
             self.assertIn("历史正式决策", rendered)
             self.assertIn("不作为当前权限或当前持仓状态", rendered)
 
+    def test_newest_completed_formal_report_supersedes_old_decision_fact(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            decision_dir = root / "events/decisions"
+            review_dir = root / "events/reviews"
+            state_dir = root / "data/state"
+            decision_dir.mkdir(parents=True)
+            review_dir.mkdir(parents=True)
+            state_dir.mkdir(parents=True)
+            (decision_dir / "old.json").write_text(json.dumps({
+                "event_type": "FORMAL_DECISION",
+                "decision_time_beijing": "2026-10-13T07:59:54+08:00",
+                "formal_decision": {
+                    "risk_permission": "禁止新增",
+                    "main_candidate": "旧现金",
+                    "lifecycle": {"宁德时代（300750）": "持有管理"},
+                },
+            }, ensure_ascii=False), encoding="utf-8")
+            (review_dir / "formal_new.json").write_text(json.dumps({
+                "event_type": "FORMAL_DECISION_REPORT",
+                "reviewed_at_beijing": "2026-10-18T09:52:07+08:00",
+                "formal_decision": {"answers": {
+                    "RISK_PERMISSION": {"final_action": "禁止新增"},
+                    "MAIN_CANDIDATE": {"candidate_name": "现金"},
+                    "NEXT_UNIT_CAPITAL_USE": {
+                        "final_action": "现金",
+                        "new_amount_yuan": 0,
+                        "selected_state_reason": "现金优先",
+                    },
+                    "HOLDING:159941": {"final_action": "HOLD"},
+                    "HOLDING:159981": {"final_action": "HOLD"},
+                    "HOLDING:159992": {"final_action": "EXIT"},
+                }},
+            }, ensure_ascii=False), encoding="utf-8")
+            (state_dir / "account_fact.json").write_text(json.dumps({
+                "updated_at": "2026-10-16T15:00:00+08:00",
+                "positions": [
+                    {"code": "159941"}, {"code": "159981"}, {"code": "159992"}
+                ],
+            }), encoding="utf-8")
+            result = latest_canonical_formal_decision(root)
+            self.assertTrue(result["_decision_path"].endswith("events/reviews/formal_new.json"))
+            self.assertEqual(result["_current_applicability"], "CURRENT")
+            self.assertEqual(result["main_candidate"], "现金")
+            self.assertIn("159992：EXIT", result["lifecycle"])
+
 
 if __name__ == "__main__":
     unittest.main()
