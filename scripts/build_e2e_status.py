@@ -589,8 +589,9 @@ def _valid_close_review_completion(current: dict) -> dict:
         return {}
     if str(closure.get("status") or "").upper() != "CLOSED":
         return {}
-    evidence_status = str(closure.get("review_evidence_status") or "").upper()
-    business_status = str(closure.get("business_completion_status") or "").upper()
+    review_status = review.get("review") or {}
+    evidence_status = str(closure.get("review_evidence_status") or review_status.get("review_evidence_status") or "").upper()
+    business_status = str(closure.get("business_completion_status") or review_status.get("business_completion_status") or "").upper()
     # Legacy fixtures may omit these diagnostic fields; only an explicit
     # degraded/failed marker invalidates the current completion projection.
     if evidence_status in {"DEGRADED", "FAIL", "FAILED", "INSUFFICIENT"}:
@@ -611,8 +612,9 @@ def _valid_close_review_completion(current: dict) -> dict:
 def _event_close_review_complete(market_date: str) -> bool:
     review = read_json(REVIEW_DIR / f"{market_date}.json")
     closure = read_json(STATE / f"close_review_closure_{market_date}.json")
-    evidence_status = str(closure.get("review_evidence_status") or "").upper()
-    business_status = str(closure.get("business_completion_status") or "").upper()
+    review_status = review.get("review") or {}
+    evidence_status = str(closure.get("review_evidence_status") or review_status.get("review_evidence_status") or "").upper()
+    business_status = str(closure.get("business_completion_status") or review_status.get("business_completion_status") or "").upper()
     if evidence_status in {"DEGRADED", "FAIL", "FAILED", "INSUFFICIENT"}:
         return False
     if business_status in {"DEGRADED", "FAIL", "FAILED", "INCOMPLETE", "INSUFFICIENT"}:
@@ -634,8 +636,9 @@ def close_review_component(current: dict, now=None) -> dict:
     event_date = str(event.get("market_date") or "") if event else ""
     if completion and (not event_date or completion["market_date"] >= event_date):
         closure = read_json(STATE / f"close_review_closure_{completion['market_date']}.json")
-        evidence_status = str(closure.get("review_evidence_status") or "").upper()
-        business_status = str(closure.get("business_completion_status") or "").upper()
+        review_status = read_json(REVIEW_DIR / f"{completion['market_date']}.json").get("review") or {}
+        evidence_status = str(closure.get("review_evidence_status") or review_status.get("review_evidence_status") or "").upper()
+        business_status = str(closure.get("business_completion_status") or review_status.get("business_completion_status") or "").upper()
         if evidence_status in {"DEGRADED", "FAIL", "FAILED", "INSUFFICIENT"} or business_status in {"DEGRADED", "FAIL", "FAILED", "INCOMPLETE", "INSUFFICIENT"}:
             return {
                 "status": "DEGRADED",
