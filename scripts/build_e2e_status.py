@@ -611,6 +611,12 @@ def _valid_close_review_completion(current: dict) -> dict:
 def _event_close_review_complete(market_date: str) -> bool:
     review = read_json(REVIEW_DIR / f"{market_date}.json")
     closure = read_json(STATE / f"close_review_closure_{market_date}.json")
+    evidence_status = str(closure.get("review_evidence_status") or "").upper()
+    business_status = str(closure.get("business_completion_status") or "").upper()
+    if evidence_status in {"DEGRADED", "FAIL", "FAILED", "INSUFFICIENT"}:
+        return False
+    if business_status in {"DEGRADED", "FAIL", "FAILED", "INCOMPLETE", "INSUFFICIENT"}:
+        return False
     return (
         review.get("event_type") == "FORMAL_POST_CLOSE_REVIEW"
         and str(review.get("market_date") or market_date) == market_date
