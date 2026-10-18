@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0",
+  "registry_type": "ETF_THREE_TASK_FREEZE_REGISTRY",
+  "authority": "current_main",
+  "canonical_status": "HISTORICAL_ARCHIVES_CONSOLIDATED_LIVE_SNAPSHOT_RECONCILIATION_REQUIRED",
+  "purpose": "统一登记三个ETF任务的冻结、历史归档、版本追踪和回滚关系；不复制业务规则，不构成第二任务、第二workflow、第二状态或第二业务链。",
+  "current_main_only": true,
+  "index_path": "ETF_SYSTEM_INDEX.md",
+  "formal_protocol_path": "docs/ETF任务入口与调度治理协议_V1.0.md",
+  "freeze_source_authority": "ChatGPT scheduled task live configuration",
+  "required_before_new_freeze": [
+    "读取current main INDEX及所属正式协议",
+    "读取三个live task完整Prompt和Schedule",
+    "登记每个Prompt与Schedule的完整文本及hash",
+    "登记automation_id、conversation_id、task_id、timezone、timing_mode、enabled、canonical interaction_scenario",
+    "登记last_verified_version与rollback_location",
+    "完成CI、merged-main和真实运行验收"
+  ],
+  "tasks": [
+    {
+      "task_id": "ETF系统复核",
+      "automation_id": "6accb02805ec8191aca29791a72636bd",
+      "conversation_id": "6accb04b-9d30-83ec-9e9f-f632d3815e92",
+      "canonical_interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
+      "live_snapshot_status": "RECONCILIATION_REQUIRED",
+      "historical_versions": [
+        "2026-10-16-v1",
+        "2026-10-16-v2"
+      ]
+    },
+    {
+      "task_id": "ETF交易复盘",
+      "automation_id": "6ab78aab49988191818abf8660c65362",
+      "conversation_id": "6ab89c94-e798-83e8-90e6-0b57c60905c5",
+      "canonical_interaction_scenario": "SCHEDULED_TRADE_REVIEW",
+      "live_snapshot_status": "RECONCILIATION_REQUIRED",
+      "historical_versions": [
+        "2026-10-16-v1",
+        "2026-10-16-v2"
+      ]
+    },
+    {
+      "task_id": "ETF正式决策",
+      "automation_id": "6ad1d7b4c05c819180eb6af2c8086cb8",
+      "conversation_id": "6ad0aef0-7718-83ee-b901-d24316ce92b6",
+      "canonical_interaction_scenario": "FORMAL_DECISION_CANONICAL_SCENARIO_PER_CURRENT_MAIN",
+      "live_snapshot_status": "RECONCILIATION_REQUIRED",
+      "historical_versions": [
+        "2026-10-16-v1",
+        "2026-10-16-v2"
+      ]
+    }
+  ],
+  "historical_archive_map": [
+    {
+      "source": "docs/automation_prompt_history/ETF三个定时任务冻结封存_2026-10-16.md",
+      "archive": "docs/archive/automation_prompt_history/ETF三个定时任务冻结封存_2026-10-16.md",
+      "status": "HISTORICAL_ARCHIVE"
+    },
+    {
+      "source": "docs/automation_prompt_history/ETF三个定时任务冻结封存_2026-10-16-v2.md",
+      "archive": "docs/archive/automation_prompt_history/ETF三个定时任务冻结封存_2026-10-16-v2.md",
+      "status": "HISTORICAL_ARCHIVE"
+    },
+    {
+      "source": "docs/formal-decision-scheduled-task-rebuild-v2.md",
+      "archive": "docs/archive/formal-decision-scheduled-task-rebuild-v2.md",
+      "status": "RETIRED_HISTORICAL_POINTER"
+    },
+    {
+      "source": "freeze/etf-three-tasks-20261018",
+      "archive": null,
+      "status": "BRANCH_ONLY_AUDIT_MATERIAL_NOT_CURRENT_MAIN"
+    }
+  ],
+  "rules": [
+    "本注册表是唯一冻结登记入口，不是业务规则源。",
+    "历史快照只用于审计和回退，不得作为当前任务运行依据。",
+    "每次新冻结必须同时登记live Prompt和Schedule完整文本及hash。",
+    "归档不改变任务Prompt、workflow、state、入口、场景、调度或通知链。",
+    "当前live快照未完成逐项回读前，不得宣称三任务已完成最终冻结。"
+  ]
+}
