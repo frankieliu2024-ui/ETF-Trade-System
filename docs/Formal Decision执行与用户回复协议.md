@@ -102,7 +102,7 @@
 - `reuse_inflight_refresh=true`
 - `duplicate_equivalent_refresh_forbidden=true`
 
-READY 后，必须先冻结唯一 `FINAL_CONTENT`；在用户窗口返回前，先执行后置交接，再输出此前冻结的同一份 `FINAL_CONTENT`：
+READY 后，必须先完成业务判断并冻结唯一 `FINAL_CONTENT`，立即向用户窗口输出此前冻结的同一份完整正文；随后在同一运行中继续执行后置交接。后置交接不得阻塞、缩短、改写或撤回已冻结的正文：
 
 1. 使用同一父请求、同一DWP、同一request-bound snapshot和同一`decision_id`，形成 `BUSINESS_DECISION_SOURCE` envelope；
 2. 将BDS写入并回读 `requests/live_snapshot/<parent_request_id>__business_decision_source.json`；
@@ -166,7 +166,7 @@ READY 后，必须先冻结唯一 `FINAL_CONTENT`；在用户窗口返回前，�
 
 ## 七、后置交接和通知
 
-FINAL_CONTENT 冻结后、用户窗口输出前，后置交接只能沿当前父请求继续；完成 BDS 写入/回读和 Formal Decision completion ingress 提交后，用户窗口才输出此前冻结的同一份 `FINAL_CONTENT`：
+FINAL_CONTENT 冻结并输出后，后置交接只能沿当前父请求继续；BDS、Formal Decision completion、canonical event、REPORT 和通知均复用此前冻结的同一份 `FINAL_CONTENT`。后置交接失败不得阻塞、改写或撤回用户已经看到的正文：
 
 1. BDS写入并回读；
 2. Formal Decision completion写入并回读；
