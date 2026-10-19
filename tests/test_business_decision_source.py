@@ -7,6 +7,7 @@ from scripts.business_decision_source import (
     classify_request,
     validate_source,
     _normalize_formal_presentation_layout,
+    _validate_formal_presentation_layout,
     _validate_formal_presentation_contract,
 )
 
@@ -195,6 +196,29 @@ class BusinessDecisionSourceTests(unittest.TestCase):
                 "decision_response": {"presentation_content": content},
                 "presentation_binding": {"full_content": content},
             })
+
+    def test_single_item_sections_are_not_numbered(self):
+        content = (
+            "【ETF正式决策】\n\n【业务结论】\n\n1. 只有一段的结论。\n\n"
+            "【数据时点与必要依据】\n\n1. 事实。\n\n"
+            "【三层监测】\n\n1. 第一层。\n\n2. 第二层。\n\n"
+            "【持仓动作】\n\n【资本用途】\n\n【全市场机会发现】\n\n"
+            "【观察ETF】\n\n【关键风险】\n\n【后续安排】\n\n"
+            "【置信度】\n\n【最可能出错的地方】"
+        )
+        with self.assertRaisesRegex(ValueError, "single-item sections"):
+            _validate_formal_presentation_layout(content)
+
+    def test_normalizer_removes_singleton_markers_and_promotes_real_lists(self):
+        normalized = _normalize_formal_presentation_layout(
+            "【置信度】\n\n1. 中等偏低。\n\n"
+            "【全市场机会发现】\n\n1. 下面是候选。\n\n"
+            "1） 候选A。\n\n2） 候选B。"
+        )
+        self.assertIn("【置信度】\n\n中等偏低。", normalized)
+        self.assertIn("【全市场机会发现】\n\n下面是候选。", normalized)
+        self.assertIn("1. 候选A。\n\n2. 候选B。", normalized)
+        self.assertNotIn("1. 中等偏低", normalized)
 
     def test_projection_is_deterministic_and_does_not_redecide(self):
         projected = build_formal_completion_from_source(self.base())
