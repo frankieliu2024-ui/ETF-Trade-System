@@ -293,11 +293,12 @@ class FormalReadyHandoffContractTests(unittest.TestCase):
         self.assertIn('"post_reply_async": False', text)
         self.assertIn('"provider_success_async": True', text)
 
-    def test_protocol_has_no_pre_reply_bds_notification_contract(self):
+    def test_protocol_outputs_before_post_reply_handoff(self):
         protocol = (Path(__file__).parents[1] / "docs/Formal Decision执行与用户回复协议.md").read_text(encoding="utf-8")
-        self.assertIn("FINAL_CONTENT 冻结后、用户窗口输出前", protocol)
-        self.assertIn("在用户窗口返回前", protocol)
-        self.assertNotIn("用户窗口输出唯一 `FINAL_CONTENT` 后，后置交接只能沿当前父请求继续", protocol)
+        self.assertIn("READY 后，必须先完成业务判断并冻结唯一", protocol)
+        self.assertIn("立即向用户窗口输出此前冻结的同一份完整正文", protocol)
+        self.assertIn("随后在同一运行中继续执行后置交接", protocol)
+        self.assertNotIn("在用户窗口返回前，先执行后置交接，再输出", protocol)
         self.assertIn("通知失败不撤回用户已经看到的正文", protocol)
 
     def test_ready_handoff_does_not_create_a_second_notification_path(self):
