@@ -211,6 +211,31 @@ jobs:
           echo "request_id=$request_id" >> "$GITHUB_OUTPUT"
           echo "triggering request: file=$REQUEST_FILE id=$request_id expected=$REQUEST_EXPECTED formal_completion=$FORMAL_COMPLETION"
 
+      - name: Validate Formal Decision task identity before runtime work
+        if: ${{ env.TRIGGERING_REQUEST_EXPECTED == 'true' && env.FORMAL_COMPLETION != 'true' }}
+        shell: bash
+        run: |
+          python - "$TRIGGERING_REQUEST_FILE" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          path = Path(sys.argv[1])
+          request = json.loads(path.read_text(encoding="utf-8"))
+          formal_sources = {
+              "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+              "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
+              "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
+          }
+          if str(request.get("source") or "").strip() in formal_sources:
+              task_id = str(request.get("task_id") or "").strip()
+              if task_id != "ETF正式决策":
+                  raise SystemExit(
+                      "OWNER_REJECTED: Formal Decision task_id must be exactly ETF正式决策; "
+                      f"got {task_id or '<missing>'}"
+                  )
+          PY
+
       - name: Bind explicit existing Formal Decision replay
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.formal_replay_request != '' }}
         shell: bash
