@@ -352,11 +352,11 @@ jobs:
           health_path.write_text(json.dumps(health, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
           PY
       - uses: actions/setup-node@v4
-        if: ${{ steps.session_gate.outputs.should_capture == 'true' || (github.event_name == 'push' && steps.session_gate.outputs.request_class not in ['STATE_SYNC_ONLY', 'BUSINESS_DECISION_SOURCE']) }}
+        if: ${{ steps.session_gate.outputs.should_capture == 'true' || (github.event_name == 'push' && steps.session_gate.outputs.request_class != 'STATE_SYNC_ONLY' && steps.session_gate.outputs.request_class != 'BUSINESS_DECISION_SOURCE') }}
         with:
           node-version: "22"
       - name: Start optional Hithink fallback CLI bootstrap
-        if: ${{ steps.session_gate.outputs.should_capture == 'true' || (github.event_name == 'push' && steps.session_gate.outputs.request_class not in ['STATE_SYNC_ONLY', 'BUSINESS_DECISION_SOURCE']) }}
+        if: ${{ steps.session_gate.outputs.should_capture == 'true' || (github.event_name == 'push' && steps.session_gate.outputs.request_class != 'STATE_SYNC_ONLY' && steps.session_gate.outputs.request_class != 'BUSINESS_DECISION_SOURCE') }}
         shell: bash
         run: |
           # Tencent is the primary A-share provider. Start the optional
@@ -366,7 +366,7 @@ jobs:
           npm install --global @hithink-tech/hithink-finance-cli >/tmp/hithink-finance-install.log 2>&1 &
           echo "HITHINK_CLI_INSTALL_PID=$!" >> "$GITHUB_ENV"
       - name: Load unified provider concurrency policy
-        if: ${{ steps.session_gate.outputs.should_capture == 'true' || (github.event_name == 'push' && steps.session_gate.outputs.request_class not in ['STATE_SYNC_ONLY', 'BUSINESS_DECISION_SOURCE']) }}
+        if: ${{ steps.session_gate.outputs.should_capture == 'true' || (github.event_name == 'push' && steps.session_gate.outputs.request_class != 'STATE_SYNC_ONLY' && steps.session_gate.outputs.request_class != 'BUSINESS_DECISION_SOURCE') }}
         shell: bash
         run: |
           python - <<'PY'
