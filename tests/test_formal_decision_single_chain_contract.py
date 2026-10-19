@@ -1,1 +1,102 @@
-aW1wb3J0IHVuaXR0ZXN0CmZyb20gZGF0ZXRpbWUgaW1wb3J0IGRhdGV0aW1lLCB0aW1lem9uZSwgdGltZWRlbHRhCgpmcm9tIHNjcmlwdHMuY3JlYXRlX3NjaGVkdWxlZF9mb3JtYWxfcmVxdWVzdCBpbXBvcnQgYnVpbGRfc2NoZWR1bGVkX3JlcXVlc3QKZnJvbSBzY3JpcHRzLmZvcm1hbF9lbnRyeV9jb250cmFjdCBpbXBvcnQgKAogICAgdmFsaWRhdGVfZm9ybWFsX2NvbXBsZXRpb25fcmVxdWVzdCwKICAgIHZhbGlkYXRlX2Zvcm1hbF9wYXJlbnRfcmVxdWVzdCwKKQoKCmNsYXNzIEZvcm1hbERlY2lzaW9uU2luZ2xlQ2hhaW5Db250cmFjdFRlc3RzKHVuaXR0ZXN0LlRlc3RDYXNlKToKICAgIGRlZiBfcGFyZW50KHNlbGYsIG1vZGUsIHNvdXJjZSwgcHJlZml4KToKICAgICAgICBub3cgPSBkYXRldGltZSgyMDI2LCAxMCwgMTYsIDEyLCAwLCB0emluZm89dGltZXpvbmUodGltZWRlbHRhKGhvdXJzPTgpKSkKICAgICAgICBvY2N1cnJlbmNlID0gZiJ7cHJlZml4fS0yMDI2MTAxNlQxMjAwMDArMDgwMC1hYjEyY2QzNCIKICAgICAgICBwYXlsb2FkID0gYnVpbGRfc2NoZWR1bGVkX3JlcXVlc3QoCiAgICAgICAgICAgIG5vdz1ub3csCiAgICAgICAgICAgIHRhc2tfaWQ9IkVURuato+W8j+WGs+etliIsCiAgICAgICAgICAgIHRhc2tfcnVuX2lkPW9jY3VycmVuY2UsCiAgICAgICAgICAgIG9jY3VycmVuY2VfaWQ9b2NjdXJyZW5jZSwKICAgICAgICAgICAgZW50cnlfbW9kZT1tb2RlLAogICAgICAgICkKICAgICAgICBwYXlsb2FkWyJ0cmlnZ2VyX3NvdXJjZSJdID0gc291cmNlCiAgICAgICAgcmV0dXJuIHBheWxvYWQKCiAgICBkZWYgdGVzdF9hbGxfdGhyZWVfZW50cmllc19zaGFyZV9vbmVfY2Fub25pY2FsX3BhcmVudF9jb250cmFjdChzZWxmKToKICAgICAgICBjYXNlcyA9ICgKICAgICAgICAgICAgKCJNQU5VQUxfQ09OVkVSU0FUSU9OIiwgIkNIQVRHUFRfTUFOVUFMX0ZPUk1BTF9BTkFMWVNJUyIsICJjb252ZXJzYXRpb24iKSwKICAgICAgICAgICAgKAogICAgICAgICAgICAgICAgIk1BTlVBTF9TQ0hFRFVMRURfVEFTSyIsCiAgICAgICAgICAgICAgICAiQ0hBVEdQVF9NQU5VQUxfU0NIRURVTEVEX0ZPUk1BTF9BTkFMWVNJUyIsCiAgICAgICAgICAgICAgICAibWFudWFsLXNjaGVkdWxlZCIsCiAgICAgICAgICAgICksCiAgICAgICAgICAgICgKICAgICAgICAgICAgICAgICJBVVRPTUFUSUNfU0NIRURVTEVEX1RBU0siLAogICAgICAgICAgICAgICAgIkNIQVRHUFRfU0NIRURVTEVEX0ZPUk1BTF9BTkFMWVNJUyIsCiAgICAgICAgICAgICAgICAic2NoZWR1bGVkXyIsCiAgICAgICAgICAgICksCiAgICAgICAgKQogICAgICAgIGZvciBtb2RlLCBzb3VyY2UsIHByZWZpeCBpbiBjYXNlczoKICAgICAgICAgICAgdmFsaWQsIHJlYXNvbiA9IHZhbGlkYXRlX2Zvcm1hbF9wYXJlbnRfcmVxdWVzdCgKICAgICAgICAgICAgICAgIHNlbGYuX3BhcmVudChtb2RlLCBzb3VyY2UsIHByZWZpeCkKICAgICAgICAgICAgKQogICAgICAgICAgICBzZWxmLmFzc2VydFRydWUodmFsaWQsIChtb2RlLCByZWFzb24pKQoKICAgIGRlZiB0ZXN0X3BhcmVudF9yZXF1ZXN0X2lzX25vdF9jb21wbGV0aW9uKHNlbGYpOgogICAgICAgIHBheWxvYWQgPSBzZWxmLl9wYXJlbnQoCiAgICAgICAgICAgICJNQU5VQUxfQ09OVkVSU0FUSU9OIiwKICAgICAgICAgICAgIkNIQVRHUFRfTUFOVUFMX0ZPUk1BTF9BTkFMWVNJUyIsCiAgICAgICAgICAgICJjb252ZXJzYXRpb24iLAogICAgICAgICkKICAgICAgICB2YWxpZCwgcmVhc29uID0gdmFsaWRhdGVfZm9ybWFsX2NvbXBsZXRpb25fcmVxdWVzdChwYXlsb2FkKQogICAgICAgIHNlbGYuYXNzZXJ0RmFsc2UodmFsaWQpCiAgICAgICAgc2VsZi5hc3NlcnRFcXVhbCgKICAgICAgICAgICAgcmVhc29uLCAiZm9ybWFsX2NvbXBsZXRpb25fcmVxdWVzdF90eXBlX211c3RfYmVfU0NIRURVTEVEX1JFVklFV19DT01QTEVUSU9OIgogICAgICAgICkKCiAgICBkZWYgdGVzdF9jb21wbGV0aW9uX2NvbnRyYWN0X2lzX2Rpc3RpbmN0X2FuZF9ib3VuZF90b19wYXJlbnRfaWRlbnRpdHkoc2VsZik6CiAgICAgICAgcGFyZW50ID0gc2VsZi5fcGFyZW50KAogICAgICAgICAgICAiTUFOVUFMX0NPTlZFUlNBVElPTiIsCiAgICAgICAgICAgICJDSEFUR1BUX01BTlVBTF9GT1JNQUxfQU5BTFlTSVMiLAogICAgICAgICAgICAiY29udmVyc2F0aW9uIiwKICAgICAgICApCiAgICAgICAgY29tcGxldGlvbiA9IHsKICAgICAgICAgICAgInJlcXVlc3RfaWQiOiBwYXJlbnRbInJlcXVlc3RfaWQiXSArICJfX2Zvcm1hbF9kZWNpc2lvbl9jb21wbGV0aW9uIiwKICAgICAgICAgICAgInBhcmVudF9yZXF1ZXN0X2lkIjogcGFyZW50WyJyZXF1ZXN0X2lkIl0sCiAgICAgICAgICAgICJyZXF1ZXN0X3R5cGUiOiAiU0NIRURVTEVEX1JFVklFV19DT01QTEVUSU9OIiwKICAgICAgICAgICAgInNvdXJjZSI6ICJDSEFUR1BUX1NDSEVEVUxFRF9SRVZJRVdfQUNUT1IiLAogICAgICAgICAgICAiZm9ybWFsX2VudHJ5X3NvdXJjZSI6ICJDSEFUR1BUX01BTlVBTF9GT1JNQUxfQU5BTFlTSVMiLAogICAgICAgICAgICAiZm9ybWFsX2ZhY3RfdHlwZSI6ICJGT1JNQUxfUE9TVF9DTE9TRV9SRVZJRVciLAogICAgICAgICAgICAiZW50cnlfbW9kZSI6IHBhcmVudFsiZW50cnlfbW9kZSJdLAogICAgICAgICAgICAidGFza19pZCI6IHBhcmVudFsidGFza19pZCJdLAogICAgICAgICAgICAidGFza19ydW5faWQiOiBwYXJlbnRbInRhc2tfcnVuX2lkIl0sCiAgICAgICAgICAgICJvY2N1cnJlbmNlIjogcGFyZW50WyJvY2N1cnJlbmNlIl0sCiAgICAgICAgICAgICJvY2N1cnJlbmNlX2lkIjogcGFyZW50WyJvY2N1cnJlbmNlX2lkIl0sCiAgICAgICAgICAgICJtYXJrZXRfZGF0ZSI6IHBhcmVudFsibWFya2V0X2RhdGUiXSwKICAgICAgICAgICAgImJkc19wYXRoIjogInJlcXVlc3RzL2xpdmVfc25hcHNob3QvcGFyZW50X19idXNpbmVzc19kZWNpc2lvbl9zb3VyY2UuanNvbiIsCiAgICAgICAgICAgICJkZWNpc2lvbl9pZCI6ICJwYXJlbnRfX2RlY2lzaW9uIiwKICAgICAgICAgICAgImNvbnRlbnRfaGFzaCI6ICJhIiAqIDY0LAogICAgICAgIH0KICAgICAgICB2YWxpZCwgcmVhc29uID0gdmFsaWRhdGVfZm9ybWFsX2NvbXBsZXRpb25fcmVxdWVzdChjb21wbGV0aW9uKQogICAgICAgIHNlbGYuYXNzZXJ0VHJ1ZSh2YWxpZCwgcmVhc29uKQogICAgICAgIHNlbGYuYXNzZXJ0Tm90RXF1YWwoY29tcGxldGlvblsicmVxdWVzdF9pZCJdLCBjb21wbGV0aW9uWyJwYXJlbnRfcmVxdWVzdF9pZCJdKQogICAgICAgIHNlbGYuYXNzZXJ0RXF1YWwoY29tcGxldGlvblsidGFza19ydW5faWQiXSwgcGFyZW50WyJ0YXNrX3J1bl9pZCJdKQogICAgICAgIHNlbGYuYXNzZXJ0RXF1YWwoY29tcGxldGlvblsib2NjdXJyZW5jZV9pZCJdLCBwYXJlbnRbIm9jY3VycmVuY2VfaWQiXSkKCiAgICBkZWYgdGVzdF9jb21wbGV0aW9uX3JlamVjdHNfcGFyZW50X3JlcXVlc3RfdHlwZShzZWxmKToKICAgICAgICBwYXJlbnQgPSBzZWxmLl9wYXJlbnQoCiAgICAgICAgICAgICJNQU5VQUxfQ09OVkVSU0FUSU9OIiwKICAgICAgICAgICAgIkNIQVRHUFRfTUFOVUFMX0ZPUk1BTF9BTkFMWVNJUyIsCiAgICAgICAgICAgICJjb252ZXJzYXRpb24iLAogICAgICAgICkKICAgICAgICBwYXJlbnRbImZvcm1hbF9mYWN0X3R5cGUiXSA9ICJGT1JNQUxfUE9TVF9DTE9TRV9SRVZJRVciCiAgICAgICAgcGFyZW50WyJzb3VyY2UiXSA9ICJDSEFUR1BUX1NDSEVEVUxFRF9SRVZJRVdfQUNUT1IiCiAgICAgICAgdmFsaWQsIHJlYXNvbiA9IHZhbGlkYXRlX2Zvcm1hbF9jb21wbGV0aW9uX3JlcXVlc3QocGFyZW50KQogICAgICAgIHNlbGYuYXNzZXJ0RmFsc2UodmFsaWQpCiAgICAgICAgc2VsZi5hc3NlcnRFcXVhbCgKICAgICAgICAgICAgcmVhc29uLCAiZm9ybWFsX2NvbXBsZXRpb25fcmVxdWVzdF90eXBlX211c3RfYmVfU0NIRURVTEVEX1JFVklFV19DT01QTEVUSU9OIgogICAgICAgICkKCgppZiBfX25hbWVfXyA9PSAiX19tYWluX18iOgogICAgdW5pdHRlc3QubWFpbigpCg==
+import unittest
+from datetime import datetime, timezone, timedelta
+
+from scripts.create_scheduled_formal_request import build_scheduled_request
+from scripts.formal_entry_contract import (
+    validate_formal_completion_request,
+    validate_formal_parent_request,
+)
+
+
+class FormalDecisionSingleChainContractTests(unittest.TestCase):
+    def _parent(self, mode, source, prefix):
+        now = datetime(2026, 10, 16, 12, 0, tzinfo=timezone(timedelta(hours=8)))
+        occurrence = f"{prefix}-20261016T120000+0800-ab12cd34"
+        payload = build_scheduled_request(
+            now=now,
+            task_id="ETF正式决策",
+            task_run_id=occurrence,
+            occurrence_id=occurrence,
+            entry_mode=mode,
+        )
+        payload["trigger_source"] = source
+        return payload
+
+    def test_all_three_entries_share_one_canonical_parent_contract(self):
+        cases = (
+            ("MANUAL_CONVERSATION", "CHATGPT_MANUAL_FORMAL_ANALYSIS", "conversation"),
+            (
+                "MANUAL_SCHEDULED_TASK",
+                "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
+                "manual-scheduled",
+            ),
+            (
+                "AUTOMATIC_SCHEDULED_TASK",
+                "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
+                "scheduled_",
+            ),
+        )
+        for mode, source, prefix in cases:
+            valid, reason = validate_formal_parent_request(
+                self._parent(mode, source, prefix)
+            )
+            self.assertTrue(valid, (mode, reason))
+
+    def test_parent_request_is_not_completion(self):
+        payload = self._parent(
+            "MANUAL_CONVERSATION",
+            "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+            "conversation",
+        )
+        valid, reason = validate_formal_completion_request(payload)
+        self.assertFalse(valid)
+        self.assertEqual(
+            reason, "formal_completion_request_type_must_be_SCHEDULED_REVIEW_COMPLETION"
+        )
+
+    def test_completion_contract_is_distinct_and_bound_to_parent_identity(self):
+        parent = self._parent(
+            "MANUAL_CONVERSATION",
+            "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+            "conversation",
+        )
+        completion = {
+            "request_id": parent["request_id"] + "__formal_decision_completion",
+            "parent_request_id": parent["request_id"],
+            "request_type": "SCHEDULED_REVIEW_COMPLETION",
+            "source": "CHATGPT_SCHEDULED_REVIEW_ACTOR",
+            "formal_entry_source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+            "formal_fact_type": "FORMAL_POST_CLOSE_REVIEW",
+            "entry_mode": parent["entry_mode"],
+            "task_id": parent["task_id"],
+            "task_run_id": parent["task_run_id"],
+            "occurrence": parent["occurrence"],
+            "occurrence_id": parent["occurrence_id"],
+            "market_date": parent["market_date"],
+            "bds_path": "requests/live_snapshot/parent__business_decision_source.json",
+            "decision_id": "parent__decision",
+            "content_hash": "a" * 64,
+        }
+        valid, reason = validate_formal_completion_request(completion)
+        self.assertTrue(valid, reason)
+        self.assertNotEqual(completion["request_id"], completion["parent_request_id"])
+        self.assertEqual(completion["task_run_id"], parent["task_run_id"])
+        self.assertEqual(completion["occurrence_id"], parent["occurrence_id"])
+
+    def test_completion_rejects_parent_request_type(self):
+        parent = self._parent(
+            "MANUAL_CONVERSATION",
+            "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+            "conversation",
+        )
+        parent["formal_fact_type"] = "FORMAL_POST_CLOSE_REVIEW"
+        parent["source"] = "CHATGPT_SCHEDULED_REVIEW_ACTOR"
+        valid, reason = validate_formal_completion_request(parent)
+        self.assertFalse(valid)
+        self.assertEqual(
+            reason, "formal_completion_request_type_must_be_SCHEDULED_REVIEW_COMPLETION"
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()
