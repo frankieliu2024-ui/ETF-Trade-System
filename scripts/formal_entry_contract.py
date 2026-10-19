@@ -27,9 +27,9 @@ FORMAL_REQUEST_SOURCES = {
 
 CANONICAL_PARENT_REQUEST_TYPE = "MARKET_QUOTE_REFRESH"
 CANONICAL_PARENT_QUERY_INTENT = "FORMAL_INTRADAY_ANALYSIS"
-CANONICAL_COMPLETION_REQUEST_TYPE = "STATE_SYNC_ONLY"
-CANONICAL_COMPLETION_FACT_TYPE = "FORMAL_DECISION_COMPLETION"
-CANONICAL_COMPLETION_SOURCE = "CHATGPT_FORMAL_DECISION_COMPLETION"
+CANONICAL_COMPLETION_REQUEST_TYPE = "SCHEDULED_REVIEW_COMPLETION"
+CANONICAL_COMPLETION_FACT_TYPE = "FORMAL_POST_CLOSE_REVIEW"
+CANONICAL_COMPLETION_SOURCE = "CHATGPT_SCHEDULED_REVIEW_ACTOR"
 CANONICAL_SCENARIO = "FORMAL_DECISION"
 CANONICAL_REPORT_TYPE = "ETF_FORMAL_DECISION"
 CANONICAL_TASK_ID = "ETF正式决策"
@@ -60,12 +60,15 @@ def validate_formal_completion_request(payload: dict) -> tuple[bool, str]:
     if not isinstance(payload, dict):
         return False, "payload_must_be_object"
     if str(payload.get("request_type") or "").strip().upper() != CANONICAL_COMPLETION_REQUEST_TYPE:
-        return False, "formal_completion_request_type_must_be_STATE_SYNC_ONLY"
+        return False, "formal_completion_request_type_must_be_SCHEDULED_REVIEW_COMPLETION"
     if str(payload.get("formal_fact_type") or "").strip().upper() != CANONICAL_COMPLETION_FACT_TYPE:
-        return False, "formal_fact_type_must_be_FORMAL_DECISION_COMPLETION"
+        return False, "formal_fact_type_must_be_FORMAL_POST_CLOSE_REVIEW"
     if str(payload.get("source") or "").strip().upper() != CANONICAL_COMPLETION_SOURCE:
-        return False, "formal_source_must_be_CHATGPT_FORMAL_DECISION_COMPLETION"
-    valid, reason = validate_formal_entry_identity(payload)
+        return False, "formal_source_must_be_CHATGPT_SCHEDULED_REVIEW_ACTOR"
+    identity_payload = dict(payload)
+    if payload.get("formal_entry_source"):
+        identity_payload["source"] = payload.get("formal_entry_source")
+    valid, reason = validate_formal_entry_identity(identity_payload)
     if not valid:
         return False, reason
     if not str(payload.get("parent_request_id") or "").strip():

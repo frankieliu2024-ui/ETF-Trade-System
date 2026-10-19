@@ -44,16 +44,16 @@ class FormalHandoffSelfHealGuardTests(unittest.TestCase):
                     "parent_request_id": "formal-current",
                 },
                 "formal-current__formal_decision_completion.json": {
-                    "request_type": "STATE_SYNC_ONLY",
-                    "source": "CHATGPT_FORMAL_DECISION_COMPLETION",
-                    "formal_fact_type": "FORMAL_DECISION_COMPLETION",
+                    "request_type": "SCHEDULED_REVIEW_COMPLETION",
+                    "source": "CHATGPT_SCHEDULED_REVIEW_ACTOR",
+                    "formal_fact_type": "FORMAL_POST_CLOSE_REVIEW",
                     "parent_request_id": "formal-current",
                 },
             }.items():
                 (temp / "requests" / "live_snapshot" / name).write_text(
                     json.dumps(payload), encoding="utf-8"
                 )
-            (temp / "events" / "reviews" / "formal-occurrence.json").write_text(
+            (temp / "events" / "reviews" / "formal_occurrence.json").write_text(
                 json.dumps({"parent_request_id": "formal-current"}), encoding="utf-8"
             )
         return temp

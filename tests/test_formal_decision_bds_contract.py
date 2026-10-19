@@ -35,9 +35,9 @@ class FormalDecisionBdsContractTests(unittest.TestCase):
             completion = {
                 "request_id": parent_id + "__formal_decision_completion",
                 "parent_request_id": parent_id,
-                "request_type": "STATE_SYNC_ONLY",
-                "source": "CHATGPT_FORMAL_DECISION_COMPLETION",
-                "formal_fact_type": "FORMAL_DECISION_COMPLETION",
+                "request_type": "SCHEDULED_REVIEW_COMPLETION",
+                "source": "CHATGPT_SCHEDULED_REVIEW_ACTOR",
+                "formal_fact_type": "FORMAL_POST_CLOSE_REVIEW",
                 "bds_path": "requests/live_snapshot/" + bds_name,
                 "decision_id": decision_id,
                 "content_hash": bds["content_hash"],

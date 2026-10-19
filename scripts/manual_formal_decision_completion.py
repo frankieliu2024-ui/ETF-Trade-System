@@ -258,10 +258,10 @@ def build_formal_decision_completion_request(
     payload = {
         "request_id": request_id,
         "parent_request_id": parent_id,
-        "request_type": "STATE_SYNC_ONLY",
-        "source": "CHATGPT_FORMAL_DECISION_COMPLETION",
-        "formal_fact_type": "FORMAL_DECISION_COMPLETION",
-        "interaction_scenario": "FORMAL_INTRADAY_ANALYSIS",
+        "request_type": "SCHEDULED_REVIEW_COMPLETION",
+        "source": "CHATGPT_SCHEDULED_REVIEW_ACTOR",
+        "formal_fact_type": "FORMAL_POST_CLOSE_REVIEW",
+        "interaction_scenario": "POST_CLOSE_REVIEW",
         "formal_entry_source": source_mode,
         "entry_mode": entry_mode,
         "task_id": task_id,
@@ -275,7 +275,7 @@ def build_formal_decision_completion_request(
     }
     payload = {key: value for key, value in payload.items() if value not in (None, "")}
     if classify_live_snapshot_request(payload) != "STATE_SYNC_ONLY":
-        raise ValueError("Formal Decision completion must remain STATE_SYNC_ONLY")
+        raise ValueError("Formal Decision completion must use the shared Scheduled Review ingress")
     return payload
 
 

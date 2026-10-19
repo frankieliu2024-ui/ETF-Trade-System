@@ -8,7 +8,7 @@ class FormalDecisionCanonicalChainTests(unittest.TestCase):
         index = Path("ETF_SYSTEM_INDEX.md").read_text(encoding="utf-8")
         for text in (protocol, index):
             self.assertIn("BUSINESS_DECISION_SOURCE", text)
-            self.assertIn("FORMAL_DECISION_COMPLETION", text)
+            self.assertIn("SCHEDULED_REVIEW_COMPLETION", text)
             self.assertIn("formal_completion_path", text)
         self.assertNotIn("STATE_SYNC_ONLY + FORMAL_SCHEDULED_REVIEW", protocol)
 

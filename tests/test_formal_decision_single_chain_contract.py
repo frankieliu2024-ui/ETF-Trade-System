@@ -51,7 +51,7 @@ class FormalDecisionSingleChainContractTests(unittest.TestCase):
         valid, reason = validate_formal_completion_request(payload)
         self.assertFalse(valid)
         self.assertEqual(
-            reason, "formal_completion_request_type_must_be_STATE_SYNC_ONLY"
+            reason, "formal_completion_request_type_must_be_SCHEDULED_REVIEW_COMPLETION"
         )
 
     def test_completion_contract_is_distinct_and_bound_to_parent_identity(self):
@@ -63,9 +63,10 @@ class FormalDecisionSingleChainContractTests(unittest.TestCase):
         completion = {
             "request_id": parent["request_id"] + "__formal_decision_completion",
             "parent_request_id": parent["request_id"],
-            "request_type": "STATE_SYNC_ONLY",
-            "source": "CHATGPT_FORMAL_DECISION_COMPLETION",
-            "formal_fact_type": "FORMAL_DECISION_COMPLETION",
+            "request_type": "SCHEDULED_REVIEW_COMPLETION",
+            "source": "CHATGPT_SCHEDULED_REVIEW_ACTOR",
+            "formal_entry_source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+            "formal_fact_type": "FORMAL_POST_CLOSE_REVIEW",
             "entry_mode": parent["entry_mode"],
             "task_id": parent["task_id"],
             "task_run_id": parent["task_run_id"],
@@ -88,12 +89,12 @@ class FormalDecisionSingleChainContractTests(unittest.TestCase):
             "CHATGPT_MANUAL_FORMAL_ANALYSIS",
             "conversation",
         )
-        parent["formal_fact_type"] = "FORMAL_DECISION_COMPLETION"
-        parent["source"] = "CHATGPT_FORMAL_DECISION_COMPLETION"
+        parent["formal_fact_type"] = "FORMAL_POST_CLOSE_REVIEW"
+        parent["source"] = "CHATGPT_SCHEDULED_REVIEW_ACTOR"
         valid, reason = validate_formal_completion_request(parent)
         self.assertFalse(valid)
         self.assertEqual(
-            reason, "formal_completion_request_type_must_be_STATE_SYNC_ONLY"
+            reason, "formal_completion_request_type_must_be_SCHEDULED_REVIEW_COMPLETION"
         )
 
 

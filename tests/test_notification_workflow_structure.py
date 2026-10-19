@@ -166,7 +166,7 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
         self.assertIn("随后在同一运行中继续执行后置交接", protocol)
         self.assertNotIn("在用户窗口返回前，先执行后置交接，再输出", protocol)
         self.assertIn("BUSINESS_DECISION_SOURCE", protocol)
-        self.assertIn("FORMAL_DECISION_COMPLETION", protocol)
+        self.assertIn("SCHEDULED_REVIEW_COMPLETION", protocol)
         self.assertIn("formal_completion_path", protocol)
         self.assertIn("def formal_decision_report_event", center)
         self.assertIn("return None", center[center.index("def formal_decision_report_event"):center.index("def formal_decision_report_event")+220])

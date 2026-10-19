@@ -1038,9 +1038,10 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
             "new Formal Decision production source cannot use legacy events/decisions writer"
         )
     if (
-        str(request.get("request_type") or "").strip().upper() == "STATE_SYNC_ONLY"
-        and str(request.get("source") or "").strip().upper() == "CHATGPT_FORMAL_DECISION_COMPLETION"
-        and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_DECISION_COMPLETION"
+        str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION"
+        and str(request.get("source") or "").strip().upper() == "CHATGPT_SCHEDULED_REVIEW_ACTOR"
+        and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_POST_CLOSE_REVIEW"
+        and str(request.get("task_id") or "").strip() == "ETF正式决策"
     ):
         raise ValueError(
             "Formal Decision completion must use events/reviews/formal_<occurrence_id>.json owner"
@@ -3557,9 +3558,10 @@ def main() -> int:
     # same canonical owner but never lets the BDS push itself create a Decision event.
     original_source_dispatch = str(request.get("request_type") or "").strip().upper() == BUSINESS_DECISION_SOURCE
     completion_dispatch = (
-        str(request.get("request_type") or "").strip().upper() == "STATE_SYNC_ONLY"
-        and str(request.get("source") or "").strip().upper() == "CHATGPT_FORMAL_DECISION_COMPLETION"
-        and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_DECISION_COMPLETION"
+        str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION"
+        and str(request.get("source") or "").strip().upper() == "CHATGPT_SCHEDULED_REVIEW_ACTOR"
+        and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_POST_CLOSE_REVIEW"
+        and str(request.get("task_id") or "").strip() == "ETF正式决策"
     )
     if completion_dispatch:
         bds_path = str(request.get("bds_path") or "").strip()

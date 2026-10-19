@@ -66,15 +66,14 @@
 → `唯一FINAL_CONTENT`
 → `用户窗口输出FINAL_CONTENT`
 → `BUSINESS_DECISION_SOURCE/BDS`
-→ `FORMAL_DECISION_COMPLETION`
+→ `SCHEDULED_REVIEW_COMPLETION`
 → `canonical owner`
 → `唯一events/reviews/formal_<occurrence_id>.json`
 → `既有decision-notification`
 → `notification_center`
 → `PushPlus/微信原文投递`
 
-三个入口的业务语义统一，但入口身份必须原样保留。正式决策不得再使用旧的
-`STATE_SYNC_ONLY + FORMAL_SCHEDULED_REVIEW` 作为生产主链，也不得让系统复核或交易复盘的请求类型冒充正式决策。
+三个入口的业务语义统一，但入口身份必须原样保留。正式决策不得使用旧的独立 Formal completion；不得再使用旧的独立 Formal completion 生产链。它必须使用统一 Scheduled Review completion，但不得让系统复核或交易复盘的业务事实冒充正式决策。
 
 正式决策必须依次形成并绑定：
 
@@ -83,12 +82,12 @@
 - 唯一 `decision_id`；
 - 唯一冻结 `FINAL_CONTENT`；
 - 唯一 BDS；
-- 唯一 Formal Decision completion；
+- 唯一 Scheduled Review completion（`report_type=ETF_FORMAL_DECISION`）；
 - 唯一 `occurrence_id` 和 review event；
 - 唯一 REPORT、notification_id和provider result。
 
 `BUSINESS_DECISION_SOURCE` 只承载本次业务判断及正文冻结，不直接写入review event、REPORT或notification。
-`FORMAL_DECISION_COMPLETION` 只承载同一父请求的后置交接，不重新生产判断，不重新生成正文，不读取历史BDS或历史completion。
+`SCHEDULED_REVIEW_COMPLETION` 只承载同一父请求的后置交接，不重新生产判断，不重新生成正文，不读取历史BDS或历史completion；Formal Decision 通过 `formal_fact_type=FORMAL_POST_CLOSE_REVIEW` 和 `report_type=ETF_FORMAL_DECISION` 保留业务身份。
 
 ## 四、正式决策请求与后置交接合同
 
@@ -106,7 +105,7 @@ READY 后，必须先完成业务判断并冻结唯一 `FINAL_CONTENT`，立即�
 
 1. 使用同一父请求、同一DWP、同一request-bound snapshot和同一`decision_id`，形成 `BUSINESS_DECISION_SOURCE` envelope；
 2. 将BDS写入并回读 `requests/live_snapshot/<parent_request_id>__business_decision_source.json`；
-3. 使用该BDS路径、同一`decision_id`和同一`content_hash`，形成 `FORMAL_DECISION_COMPLETION` envelope；
+3. 使用该BDS路径、同一`decision_id`和同一`content_hash`，形成统一的 `SCHEDULED_REVIEW_COMPLETION` envelope；
 4. 将completion写入并回读，文件名必须精确等于completion自身`request_id`;
 5. 在同一handoff中显式调用既有 `decision-notification.workflow_dispatch(formal_completion_path=<当前completion路径>)`；
 6. 回读当前 `events/reviews/formal_<occurrence_id>.json`、REPORT、notification_id和provider result。
@@ -117,9 +116,9 @@ READY 后，必须先完成业务判断并冻结唯一 `FINAL_CONTENT`，立即�
 
 以下路径不得作为正式决策生产链：
 
-`STATE_SYNC_ONLY + FORMAL_SCHEDULED_REVIEW`
-→ `旧Scheduled Review owner`
-→ `Formal Decision event`
+旧 `STATE_SYNC_ONLY + FORMAL_SCHEDULED_REVIEW` 或独立 `FORMAL_DECISION_COMPLETION`
+→ 第二个 Formal owner
+→ Formal Decision event
 
 也不得：
 
@@ -187,7 +186,7 @@ Actor不得直接写event、REPORT、notification或PushPlus。通知只能由�
 - 完整业务判断已形成；
 - 唯一FINAL_CONTENT已冻结并输出；
 - 当前BDS已写入并回读；
-- 当前FORMAL_DECISION_COMPLETION已写入并回读；
+- 当前SCHEDULED_REVIEW_COMPLETION已写入并回读，且 `report_type=ETF_FORMAL_DECISION`；
 - 当前review event已形成；
 - 当前REPORT已形成；
 - 当前notification_id已形成；

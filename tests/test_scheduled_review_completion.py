@@ -153,8 +153,11 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
                 "full_content": "FROZEN FORMAL REPORT",
             }
         }
-        with self.assertRaisesRegex(ValueError, "unsupported Scheduled Review report_type"):
-            completion.build_report_delivery_from_completion(payload)
+        report = completion.build_report_delivery_from_completion({
+            "market_date": "2026-09-26",
+            **payload,
+        })
+        self.assertEqual(report["report_type"], "ETF_FORMAL_DECISION")
 
 
     def test_system_review_completion_is_business_completion_not_report_handoff(self):
