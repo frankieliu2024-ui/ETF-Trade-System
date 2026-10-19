@@ -331,7 +331,7 @@ class FormalRequestConsumerLifecycleTests(unittest.TestCase):
         self.assertFalse(state["analysis_eligible"])
         self.assertEqual(state["user_visible_output"], "TERMINAL_FAILURE")
         self.assertEqual(state["actor_action"], "TERMINATE_ON_EXPLICIT_FAILURE")
-        self.assertFalse(state["user_output_allowed"])
+        self.assertTrue(state["user_output_allowed"])
 
 
     def test_ready_facts_allow_reply_before_async_canonical_persistence(self):
