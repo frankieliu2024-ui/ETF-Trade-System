@@ -4,7 +4,7 @@ from scripts.build_e2e_status import risk_component
 
 
 class E2ERiskGateTests(unittest.TestCase):
-    def test_stale_canonical_risk_evidence_blocks_projection(self):
+    def test_stale_auxiliary_risk_evidence_does_not_clear_current_gross(self):
         result = risk_component(
             {"summary": {"current_strategy_return_pct_gross": -1.0}, "generated_at": "2026-10-17T17:00:00+08:00"},
             {"market_date": "2026-10-17"},
@@ -16,8 +16,9 @@ class E2ERiskGateTests(unittest.TestCase):
                 "decision_block_reason": "risk_history_not_aligned_to_current_market_date",
             },
         )
-        self.assertEqual(result["status"], "DEGRADED")
-        self.assertIsNone(result["etf_strategy_risk_pct"])
+        self.assertEqual(result["status"], "READY")
+        self.assertEqual(result["etf_strategy_risk_pct"], -1.0)
+        self.assertEqual(result["source"], "data/state/etf_strategy_equity.json")
 
 
 if __name__ == "__main__":
