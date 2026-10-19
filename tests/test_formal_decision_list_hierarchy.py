@@ -17,6 +17,6 @@ def test_formal_secondary_marker_requires_whitespace():
 
 
 def test_formal_secondary_item_keeps_hierarchy_after_primary():
-    body = "【ETF正式决策】\n\n【业务结论】\n\n1. 一级项目\n\n1） 二级项目"
+    body = "【ETF正式决策】\n\n【业务结论】\n\n1. 一级项目\n\n1） 二级项目\n\n2. 另一个一级项目"
     _validate_formal_presentation_layout(body)
     assert validate_notification_layout(body) == ""
