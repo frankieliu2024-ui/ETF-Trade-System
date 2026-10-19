@@ -277,24 +277,22 @@ def risk_component(equity: dict, current: dict, risk_evidence: dict | None = Non
     risk_evidence = risk_evidence or {}
     evidence_status = str(risk_evidence.get("status") or "").upper()
     evidence_alignment = str(risk_evidence.get("data_alignment") or "").upper()
-    if evidence_status == "DEGRADED" and evidence_alignment != "ALIGNED_WITH_CURRENT_MARKET_DATE":
-        return {
-            "status": "DEGRADED",
-            "reason": risk_evidence.get("decision_block_reason") or "canonical risk evidence is not aligned to current market date",
-            "etf_strategy_risk_pct": None,
-            "source": "data/state/skfolio_risk_evidence.json",
-            "risk_data_end": risk_evidence.get("risk_data_end"),
-            "current_market_date": risk_evidence.get("current_market_date"),
-            "data_alignment": risk_evidence.get("data_alignment"),
-            "decision_eligible": False,
-        }
     summary = equity.get("summary") or {}
+    # Auxiliary risk-side research may lag today's market date without
+    # invalidating the Gross strategy risk fact.
+    risk_fact_date = str(
+        current.get("last_confirmed_market_date")
+        or equity.get("as_of_transaction_date")
+        or summary.get("as_of_transaction_date")
+        or equity.get("replay_cutoff")
+        or ""
+    )
     reconstruction_pct = summary.get("current_strategy_return_pct_gross", summary.get("known_net_current_strategy_return_pct"))
     reconstruction_generated = equity.get("generated_at")
     reconstruction_as_of = str(equity.get("as_of_transaction_date") or summary.get("as_of_transaction_date") or equity.get("replay_cutoff") or "")
     market_date = str(current.get("market_date") or "")
     reconstruction_fresh_for_market = bool(
-        reconstruction_as_of and market_date and reconstruction_as_of >= market_date
+        reconstruction_as_of and risk_fact_date and reconstruction_as_of >= risk_fact_date
     )
 
     formal_review = latest_formal_review_risk()
