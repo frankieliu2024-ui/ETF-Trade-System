@@ -331,6 +331,80 @@ def build_system_review_completion_request(
     }
 
 
+
+def build_formal_decision_scheduled_completion_request(
+    *,
+    request_id: str,
+    parent_request_id: str,
+    task_id: str,
+    task_run_id: str,
+    occurrence_id: str,
+    market_date: str,
+    decision_id: str,
+    requested_at_beijing: str,
+    decision_response: dict,
+    final_content: str,
+    request_bound_snapshot: str = "",
+    decision_work_package: dict | None = None,
+    problem_graph: list | None = None,
+) -> dict:
+    """Build the shared Scheduled Review completion for a task-context Formal Decision.
+
+    The task actor owns reasoning and freezes FINAL_CONTENT.  This envelope only
+    carries that frozen result and its request-bound identities into the existing
+    completion/canonical review-event owner; it does not create a second decision
+    or a second notification path.
+    """
+    for value, label in ((request_id, "request_id"), (parent_request_id, "parent_request_id"),
+                         (task_run_id, "task_run_id"), (occurrence_id, "occurrence_id"),
+                         (decision_id, "decision_id"), (market_date, "market_date")):
+        _safe_id(value)
+        if not str(value).strip():
+            raise ValueError(f"formal scheduled completion requires {label}")
+    if str(task_id or "") != "ETF正式决策":
+        raise ValueError("formal scheduled completion task_id must be ETF正式决策")
+    if not str(requested_at_beijing or "").strip():
+        raise ValueError("formal scheduled completion requires requested_at_beijing")
+    if not isinstance(decision_response, dict) or not decision_response:
+        raise ValueError("formal scheduled completion requires decision_response")
+    if not str(final_content or "").strip():
+        raise ValueError("formal scheduled completion requires frozen FINAL_CONTENT")
+    # Strictly validate before the completion can be submitted.  The shared
+    # validator is intentionally fail-closed; no later projection may repair prose.
+    validate_user_visible_content(str(final_content), canonical_closure_confirmed=False)
+    graph = problem_graph if problem_graph is not None else ((decision_work_package or {}).get("problem_graph") or [])
+    if not isinstance(graph, list) or not graph:
+        raise ValueError("formal scheduled completion requires request-bound problem_graph")
+    payload = {
+        "request_id": _safe_id(request_id),
+        "parent_request_id": _safe_id(parent_request_id),
+        "request_type": "SCHEDULED_REVIEW_COMPLETION",
+        "formal_fact_type": "FORMAL_DECISION_REPORT",
+        "source": "CHATGPT_SCHEDULED_REVIEW_ACTOR",
+        "interaction_scenario": "FORMAL_DECISION",
+        "task_id": "ETF正式决策",
+        "task_run_id": _safe_id(task_run_id),
+        "occurrence_id": _safe_id(occurrence_id),
+        "decision_id": _safe_id(decision_id),
+        "market_date": str(market_date),
+        "requested_at_beijing": str(requested_at_beijing),
+        "decision_response": json.loads(json.dumps(decision_response)),
+        "decision_work_package": json.loads(json.dumps(decision_work_package or {"problem_graph": graph})),
+        "request_bound_snapshot": str(request_bound_snapshot or ""),
+        "presentation_binding": {
+            "report_type": "ETF_FORMAL_DECISION",
+            "task_id": "ETF正式决策",
+            "task_run_id": _safe_id(task_run_id),
+            "occurrence_id": _safe_id(occurrence_id),
+            "request_id": _safe_id(request_id),
+            "parent_request_id": _safe_id(parent_request_id),
+            "decision_id": _safe_id(decision_id),
+            "report_id": f"ETF_FORMAL_DECISION:{_safe_id(task_run_id)}",
+            "full_content": str(final_content),
+        },
+    }
+    return payload
+
 def build_report_delivery_from_completion(completion: dict) -> dict:
     """Project the frozen Scheduled Review presentation into the existing REPORT contract."""
     binding = completion.get("presentation_binding") or {}
