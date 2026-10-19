@@ -39,6 +39,8 @@ on:
       - "config/market/provider_priority.json"
   schedule:
     # Market data pulses.
+    # Deterministic Formal Decision ingress: Beijing 09:00.
+    - cron: "0 1 * * 1-5"
     - cron: "15,20,25,30,40,50 1 * * 1-5"
     - cron: "9,19,29,39,49,59 2-3,5-6 * * 1-5"
     - cron: "9,19 7 * * 1-5"
@@ -115,6 +117,9 @@ jobs:
         if: ${{ github.event_name == 'schedule' }}
         env:
           SCHEDULED_CRON: ${{ github.event.schedule }}
+          TASK_ID: "ETF正式决策"
+          TASK_RUN_ID: scheduled-${{ github.run_id }}
+          OCCURRENCE_ID: scheduled_${{ github.run_id }}_${{ github.run_attempt }}
         shell: bash
         run: |
           python scripts/create_scheduled_formal_request.py
