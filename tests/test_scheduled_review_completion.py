@@ -181,6 +181,26 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
             )
 
 
+    def test_formal_scheduled_completion_owner_writes_formal_review_event(self):
+        from scripts import process_state_sync_request as state_sync
+        payload = completion.build_formal_decision_scheduled_completion_request(
+            request_id="formal-request", parent_request_id="formal-parent",
+            task_id="ETF正式决策", task_run_id="formal-run",
+            occurrence_id="formal-occurrence", market_date="2026-09-23",
+            decision_id="formal-decision",
+            requested_at_beijing="2026-09-23T15:30:00+08:00",
+            decision_response={"answers": [{"problem_id": "RISK", "answer": "禁止新增"}]},
+            final_content="【ETF正式决策】\\n\\n【业务结论】\\n\\n1. 本次不新增。",
+            decision_work_package={"problem_graph": [{"problem_id": "RISK"}]},
+        )
+        with TemporaryDirectory() as directory:
+            with patch.object(state_sync, "ROOT", Path(directory)):
+                recorded, replay, event_path = state_sync.record_scheduled_formal_decision(payload)
+            self.assertTrue(recorded)
+            self.assertFalse(replay)
+            self.assertEqual(event_path, "events/reviews/formal_formal-occurrence.json")
+
+
     def test_system_review_completion_is_business_completion_not_report_handoff(self):
         payload = completion.build_system_review_completion_request(
             {"status": "PASS"}, "system-request", "2026-09-26T19:30:00+08:00",
