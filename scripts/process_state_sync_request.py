@@ -2222,26 +2222,20 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
         # today's account, or rewrite the event/closure/current state.
         _persist_existing_case_detail_projections(prior_review)
         return True, True
-    # Normalize every Scheduled Review binding at the canonical owner.
+    # Normalize scheduled trade-review bindings at the canonical owner.
     # Legacy/recovery requests without a presentation binding remain compatible;
-    # a present binding must satisfy the report-specific delivery contract.
+    # a present binding must satisfy the exact scheduled-delivery contract.
     raw_presentation_binding = request.get("presentation_binding")
-    presentation_binding = {}
-    if raw_presentation_binding is not None:
-        requested_report_type = str(raw_presentation_binding.get("report_type") or "").strip()
-        if requested_report_type not in {"ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW", "ETF_FORMAL_DECISION"}:
-            raise ValueError("scheduled completion presentation_binding report_type is unsupported")
-        presentation_binding = _validate_presentation_binding(raw_presentation_binding, requested_report_type)
+    presentation_binding = (
+        _validate_presentation_binding(raw_presentation_binding, "ETF_TRADE_REVIEW")
+        if raw_presentation_binding is not None
+        else {}
+    )
     if presentation_binding:
         presentation_binding["request_id"] = str(request.get("request_id") or "")
-        if presentation_binding["report_type"] == "ETF_TRADE_REVIEW":
-            presentation_binding["report_id"] = f"etf_trade_review:{presentation_binding['task_run_id']}"
-        elif presentation_binding["report_type"] == "ETF_SYSTEM_REVIEW":
-            presentation_binding["report_id"] = f"etf_system_review:{presentation_binding['task_run_id']}"
-        else:
-            presentation_binding["report_id"] = str(
-                presentation_binding.get("report_id") or f"etf_formal_decision:{presentation_binding['task_run_id']}"
-            )
+        presentation_binding["report_id"] = (
+            f"etf_trade_review:{presentation_binding['task_run_id']}"
+        )
     data_time = dict(review.get("data_time")) if isinstance(review.get("data_time"), dict) else {}
     if is_midday_review:
         # Midday Scheduled Review is a valid stage review, not a 15:00 close review.
@@ -2466,12 +2460,7 @@ def record_close_review_closure(account: dict, request: dict, review: dict, even
     # the only sender; this projection only records the immutable handoff.
     task_run_id = str(binding.get("task_run_id") or "").strip()
     full_content = str(binding.get("full_content") or "")
-    report_type = str(binding.get("report_type") or "ETF_TRADE_REVIEW")
-    report_id = (
-        f"etf_trade_review:{task_run_id}" if report_type == "ETF_TRADE_REVIEW" else
-        f"etf_system_review:{task_run_id}" if report_type == "ETF_SYSTEM_REVIEW" else
-        f"etf_formal_decision:{task_run_id}" if report_type == "ETF_FORMAL_DECISION" else ""
-    ) if task_run_id else ""
+    report_id = f"etf_trade_review:{task_run_id}" if task_run_id else ""
     content_hash = hashlib.sha256(full_content.encode("utf-8")).hexdigest() if full_content else ""
     if task_run_id and full_content:
         report_path = ROOT / "requests" / "report_delivery" / f"{report_id.replace(':', '__')}.json"
@@ -2479,20 +2468,20 @@ def record_close_review_closure(account: dict, request: dict, review: dict, even
             "schema_version": "1.0",
             "event_type": "REPORT_DELIVERY_REQUEST",
             "channel": "REPORT",
-            "report_type": report_type,
+            "report_type": str(binding.get("report_type") or "ETF_TRADE_REVIEW"),
             "report_id": report_id,
             "request_id": str(event.get("request_id") or request.get("request_id") or ""),
-            "task_id": str(binding.get("task_id") or ("ETF系统复核" if report_type == "ETF_SYSTEM_REVIEW" else "ETF正式决策" if report_type == "ETF_FORMAL_DECISION" else "ETF交易复盘")),
+            "task_id": str(binding.get("task_id") or "ETF交易复盘"),
             "task_run_id": task_run_id,
             "generated_at": str(event.get("reviewed_at_beijing") or event.get("updated_at_beijing") or ""),
             "effective_market_date": market_date,
             "source_actor": str(event.get("source") or "CHATGPT_SCHEDULED_REVIEW_ACTOR"),
             "source_reference": f"canonical-review-completion:events/reviews/{market_date}.json",
-            "title": {"ETF_TRADE_REVIEW": "【ETF交易复盘】", "ETF_SYSTEM_REVIEW": "【ETF系统复核】", "ETF_FORMAL_DECISION": "【ETF正式决策】"}.get(report_type, "【ETF交易复盘】"),
+            "title": "【ETF交易复盘】",
             "summary": "Canonical review completion; deliver the frozen report unchanged.",
             "full_content": full_content,
             "content_hash": content_hash,
-            "idempotency_key": f"{report_type}:{task_run_id}",
+            "idempotency_key": f"ETF_TRADE_REVIEW:{task_run_id}",
             "delivery_mode": "FULL_REPORT",
             "no_trade_authority": True,
         }
