@@ -5,9 +5,10 @@ WORKFLOW = Path(__file__).parents[1] / ".github" / "workflows" / "market-snapsho
 SCRIPT = Path(__file__).parents[1] / "scripts" / "create_scheduled_formal_request.py"
 
 
-def test_formal_schedule_has_exact_four_beijing_slots():
+def test_formal_schedule_has_exact_five_beijing_slots():
     text = WORKFLOW.read_text(encoding="utf-8")
     for cron in (
+        'cron: "0 1 * * 1-5"',
         'cron: "0 2 * * 1-5"',
         'cron: "0 3 * * 1-5"',
         'cron: "30 5 * * 1-5"',
