@@ -23,7 +23,9 @@
 
 ### ETF交易复盘
 
-自动入口和用户手动入口均进入既有Trade Review链。Trade Review不得创建或冒充Formal Decision父请求、BDS或Formal Decision事件。
+自动入口和用户手动入口均进入既有Trade Review链。
+
+Trade Review completion必须显式携带并回读真实入口身份：自动节点使用 `entry_mode=AUTOMATIC_SCHEDULED_TASK`，任务界面手动启动使用 `entry_mode=MANUAL_SCHEDULED_TASK`；两者均使用 `source=CHATGPT_SCHEDULED_REVIEW_ACTOR`、`interaction_scenario=SCHEDULED_TRADE_REVIEW`和同一completion owner。不得按时间、标题或缺失字段推断入口；缺失或冲突时必须在completion ingress fail-closed。Trade Review不得创建或冒充Formal Decision父请求、BDS或Formal Decision事件。
 
 ### ETF正式决策
 
