@@ -81,8 +81,9 @@ def validate_formal_completion_request(payload: dict) -> tuple[bool, str]:
     ):
         if not str(payload.get(field) or "").strip():
             return False, reason
-    # content_hash is an optional non-blocking audit field. Body equality and
-    # canonical single-writer identity are the business closure contract.
+    content_hash = str(payload.get("content_hash") or "").strip().lower()
+    if len(content_hash) != 64 or any(ch not in "0123456789abcdef" for ch in content_hash):
+        return False, "formal_completion_content_hash_required"
     return True, ""
 
 

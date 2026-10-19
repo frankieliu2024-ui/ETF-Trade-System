@@ -124,10 +124,15 @@ def classify_formal_request_consumer_state(
             "status": "BUSINESS_DECISION_READY",
             "continue_same_request": False,
             "analysis_eligible": True,
+            # READY authorizes the task context to complete the full business
+            # answer and freeze FINAL_CONTENT. It does not authorize exposing
+            # that content until the required BDS/completion handoff succeeds.
             "reply_eligible": True,
+            "business_decision_allowed": True,
+            "final_content_generation_allowed": True,
             "user_visible_output": BUSINESS_REPLY_OUTPUT,
             "actor_action": ACTOR_DECIDE,
-            "user_output_allowed": True,
+            "user_output_allowed": False,
             "pre_reply_processing": PRE_REPLY_HANDOFF,
             "required_problem_ids": required_problem_ids,
             "required_problem_count": len(required_problem_ids),
@@ -183,7 +188,12 @@ def classify_formal_request_consumer_state(
                     "completion_and_report_not_required_for_formal_decision_notification": False,
                     "bds_must_be_written_and_read_back_before_user_reply": True,
                 },
-                "user_reply_precondition": False,
+                # The task may continue generating the complete report now;
+                # user-visible output is gated until BDS and completion are
+                # written and read back. Provider delivery remains async.
+                "business_decision_allowed": True,
+                "final_content_generation_allowed": True,
+                "user_reply_precondition": True,
                 "notification_attempt_precondition": True,
                 "provider_success_not_required_for_user_reply": True,
                 "user_reply_contract": {

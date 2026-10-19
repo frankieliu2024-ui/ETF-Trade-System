@@ -489,6 +489,8 @@ def context_component(query: dict, decision: dict) -> dict:
             **formal_reply_gate,
             "actor_action": consumer_state["actor_action"],
             "user_output_allowed": consumer_state["user_output_allowed"],
+            "business_decision_allowed": consumer_state.get("business_decision_allowed", False),
+            "final_content_generation_allowed": consumer_state.get("final_content_generation_allowed", False),
             "consumer_status": consumer_state["status"],
             "required_problem_ids": list(consumer_state.get("required_problem_ids") or []),
             "required_problem_count": int(consumer_state.get("required_problem_count") or 0),

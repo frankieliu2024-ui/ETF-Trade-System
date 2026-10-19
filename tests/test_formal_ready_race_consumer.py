@@ -32,6 +32,9 @@ class FormalReadyRaceConsumerTests(unittest.TestCase):
         result = classify_formal_request_consumer_state(parent, context)
         self.assertEqual(result["status"], "BUSINESS_DECISION_READY")
         self.assertTrue(result["reply_eligible"])
+        self.assertTrue(result["business_decision_allowed"])
+        self.assertTrue(result["final_content_generation_allowed"])
+        self.assertFalse(result["user_output_allowed"])
         self.assertEqual(result["actor_action"], "COMPLETE_BUSINESS_DECISION_NOW")
 
     def test_unbound_or_empty_context_remains_silent_wait(self):

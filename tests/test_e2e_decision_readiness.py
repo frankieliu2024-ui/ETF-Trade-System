@@ -269,7 +269,9 @@ class E2EDecisionReadinessTests(unittest.TestCase):
         gate = result["formal_reply_gate"]
         self.assertEqual(gate["consumer_status"], "BUSINESS_DECISION_READY")
         self.assertEqual(gate["actor_action"], "COMPLETE_BUSINESS_DECISION_NOW")
-        self.assertTrue(gate["user_output_allowed"])
+        self.assertFalse(gate["user_output_allowed"])
+        self.assertTrue(gate["business_decision_allowed"])
+        self.assertTrue(gate["final_content_generation_allowed"])
         self.assertEqual(
             gate["required_problem_ids"],
             ["DISCOVERY:159029", "HOLDING:510300"],
@@ -295,7 +297,7 @@ class E2EDecisionReadinessTests(unittest.TestCase):
             handoff["target_path"],
             "requests/live_snapshot/ready-parent__business_decision_source.json",
         )
-        self.assertFalse(handoff["user_reply_precondition"])
+        self.assertTrue(handoff["user_reply_precondition"])
         self.assertTrue(handoff["post_reply_async"])
         self.assertTrue(handoff["must_read_back_before_reply"])
         self.assertTrue(handoff["historical_fallback_forbidden"])
