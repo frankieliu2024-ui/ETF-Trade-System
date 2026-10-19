@@ -101,7 +101,7 @@
 - `reuse_inflight_refresh=true`
 - `duplicate_equivalent_refresh_forbidden=true`
 
-READY 后，必须先完成业务判断并冻结唯一 `FINAL_CONTENT`；在返回用户最终消息前，必须在同一运行中完成 BDS 写入/回读和统一 `SCHEDULED_REVIEW_COMPLETION` ingress 提交，再向用户窗口输出此前冻结的同一份完整正文。后续 event、REPORT、notification 和 provider 投影不得阻塞、缩短、改写或撤回已冻结的正文：
+READY 后，必须先完成业务判断并冻结唯一 `FINAL_CONTENT`；在返回用户最终消息前，必须在同一运行中完成 BDS 写入/回读和统一 `SCHEDULED_REVIEW_COMPLETION` ingress 提交，再向用户窗口输出此前冻结的同一份完整正文；完成上述 ingress 后，必须立即向用户窗口输出此前冻结的同一份完整正文。后续 event、REPORT、notification 和 provider 投影不得阻塞、缩短、改写或撤回已冻结的正文：
 
 1. 使用同一父请求、同一DWP、同一request-bound snapshot和同一`decision_id`，形成 `BUSINESS_DECISION_SOURCE` envelope；
 2. 将BDS写入并回读 `requests/live_snapshot/<parent_request_id>__business_decision_source.json`；
