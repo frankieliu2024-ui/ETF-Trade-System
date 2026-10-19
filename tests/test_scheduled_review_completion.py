@@ -139,10 +139,25 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
     def test_trade_completion_binds_frozen_final_content(self):
         payload = completion.build_completion_request(
             full_review(), "trade-run", "2026-09-23T20:30:00+08:00",
-            final_content="FROZEN TRADE REPORT", task_id="ETF交易复盘", task_run_id="trade-run",
+            final_content="FROZEN TRADE REPORT", task_id="ETF交易复盘",
+            task_run_id="trade-run", occurrence_id="occurrence-001",
         )
-        self.assertEqual(payload["presentation_binding"]["report_type"], "ETF_TRADE_REVIEW")
-        self.assertEqual(payload["presentation_binding"]["full_content"], "FROZEN TRADE REPORT")
+        binding = payload["presentation_binding"]
+        self.assertEqual(binding["report_type"], "ETF_TRADE_REVIEW")
+        self.assertEqual(binding["full_content"], "FROZEN TRADE REPORT")
+        self.assertEqual(payload["occurrence_id"], "occurrence-001")
+        self.assertEqual(binding["occurrence_id"], "occurrence-001")
+        self.assertEqual(binding["report_id"], "etf_trade_review:trade-run")
+        self.assertEqual(binding["content_hash"], hashlib.sha256(b"FROZEN TRADE REPORT").hexdigest())
+        self.assertEqual(binding["content_hash_source"], "completion_builder")
+
+    def test_trade_completion_defaults_occurrence_to_task_run_for_recovery_compatibility(self):
+        payload = completion.build_completion_request(
+            full_review(), "trade-run-default", "2026-09-23T20:30:00+08:00",
+            final_content="FROZEN TRADE REPORT", task_id="ETF交易复盘", task_run_id="trade-run-default",
+        )
+        self.assertEqual(payload["occurrence_id"], "trade-run-default")
+        self.assertEqual(payload["presentation_binding"]["occurrence_id"], "trade-run-default")
 
     def test_scheduled_review_projection_rejects_formal_decision(self):
         payload = {
