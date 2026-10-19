@@ -201,6 +201,10 @@ Actor不得直接写event、REPORT、notification或PushPlus。通知只能由�
 
 本协议不新增workflow、producer、checker、state、writer、provider、交易权限或第三个ETF任务；只将三个Formal入口收敛到当前已有的BDS、Formal Decision completion、canonical event、REPORT、notification_center和PushPlus生产链。
 
+### Formal正文排版合同
+
+FINAL_CONTENT冻结前必须通过统一的Formal正文结构校验：一级章节标题独占一行；单独只有一段的说明、置信度或“最可能出错的地方”不得机械添加“1.”；存在两个及以上并列项目时，一级编号必须从1开始连续递增，并在项目之间保留空行；二级对象列表只能在明确的一级项目下使用，编号同样从1开始连续递增。全市场发现和观察ETF的概述段不属于候选对象，不得占用候选编号；证券名称、代码和候选数量必须与正文实际列举数量一致。BDS、completion、canonical event、REPORT和PushPlus必须逐字复用通过该校验的同一份冻结正文，不得在后置链重新排版或重新编号。
+
 
 ## 八、 大型 request-bound 事实的统一读取合同
 

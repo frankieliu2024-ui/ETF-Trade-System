@@ -26,6 +26,17 @@ class FormalDecisionWorkflowSeparationTests(unittest.TestCase):
         self.assertNotIn("DECISION_EVENT_PATH", workflow)
         self.assertNotIn("events/decisions/*.json", workflow)
 
+    def test_notification_workflow_matches_the_unified_completion_filename(self):
+        workflow = (self.root / ".github/workflows/decision-notification.yml").read_text(encoding="utf-8")
+        self.assertIn('requests/live_snapshot/*__scheduled_review_completion.json', workflow)
+        self.assertIn(r"^requests/live_snapshot/[^/]+__scheduled_review_completion\\.json$", workflow)
+        self.assertNotIn("__formal_decision_completion.json", workflow)
+
+    def test_market_snapshot_does_not_reconsume_scheduled_review_completion(self):
+        workflow = (self.root / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
+        self.assertIn("__scheduled_review_completion", workflow)
+        self.assertIn("grep -vE", workflow)
+
 
 if __name__ == "__main__":
     unittest.main()

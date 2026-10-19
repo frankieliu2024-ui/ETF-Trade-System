@@ -163,7 +163,7 @@ jobs:
         shell: bash
         run: |
           ALL_REQUEST_FILES=$(git show --format= --name-only "$GITHUB_SHA" -- 'requests/live_snapshot/*.json' | sed '/^$/d' || true)
-          REQUEST_FILE=$(printf '%s\n' "$ALL_REQUEST_FILES" | grep -vE '(__business_decision_source|__formal_completion)' | head -n 1 || true)
+          REQUEST_FILE=$(printf '%s\n' "$ALL_REQUEST_FILES" | grep -vE '(__business_decision_source|__formal_completion|__scheduled_review_completion)' | head -n 1 || true)
           REQUEST_EXPECTED=false
           if [ -n "$REQUEST_FILE" ]; then
             REQUEST_EXPECTED=true

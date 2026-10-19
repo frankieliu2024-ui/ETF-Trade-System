@@ -45,6 +45,11 @@ class FormalDecisionCanonicalChainTests(unittest.TestCase):
         self.assertIn("Project Formal Decision completion to canonical review event", workflow)
         self.assertIn("No current shared completion/report binding; fail closed without PushPlus.", workflow)
 
+    def test_protocol_defines_semantic_formal_numbering(self):
+        protocol = Path("docs/Formal Decision执行与用户回复协议.md").read_text(encoding="utf-8")
+        self.assertIn("单独只有一段的说明、置信度或“最可能出错的地方”不得机械添加“1.”", protocol)
+        self.assertIn("全市场发现和观察ETF的概述段不属于候选对象", protocol)
+
 
 if __name__ == "__main__":
     unittest.main()
