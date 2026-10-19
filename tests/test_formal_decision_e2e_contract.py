@@ -260,6 +260,12 @@ class FormalDecisionLessonsProtocolTests(unittest.TestCase):
         self.assertIn("MARKET_QUOTE_REFRESH", text)
         self.assertIn("PushPlus/微信原文投递", text)
         self.assertIn("不得产生不同的业务判断、正文、completion、event、REPORT 或通知链", text)
+        index_text = (root / "ETF_SYSTEM_INDEX.md").read_text(encoding="utf-8")
+        self.assertIn("request_type=SCHEDULED_REVIEW_COMPLETION", index_text)
+        self.assertIn("source=CHATGPT_SCHEDULED_REVIEW_ACTOR", index_text)
+        self.assertNotIn("CHATGPT_FORMAL_DECISION_COMPLETION", index_text)
+        self.assertNotIn("FORMAL_DECISION_COMPLETION` completion ingress", index_text)
+        self.assertLess(index_text.index("BUSINESS_DECISION_SOURCE写入并回读"), index_text.index("最终消息只能输出"))
 
     def test_protocol_keeps_health_out_of_business_pr_gate(self):
         root = Path(__file__).parents[1]
