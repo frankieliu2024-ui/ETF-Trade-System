@@ -1,1 +1,82 @@
-ZnJvbSBfX2Z1dHVyZV9fIGltcG9ydCBhbm5vdGF0aW9ucwoKaW1wb3J0IGpzb24KaW1wb3J0IHN5cwppbXBvcnQgdGVtcGZpbGUKaW1wb3J0IHVuaXR0ZXN0CmZyb20gcGF0aGxpYiBpbXBvcnQgUGF0aApmcm9tIHVuaXR0ZXN0IGltcG9ydCBtb2NrCgpST09UID0gUGF0aChfX2ZpbGVfXykucmVzb2x2ZSgpLnBhcmVudHNbMV0Kc3lzLnBhdGguaW5zZXJ0KDAsIHN0cihST09UIC8gInNjcmlwdHMiKSkKaW1wb3J0IHJ1bnRpbWVfc2VsZl9oZWFsICAjIG5vcWE6IEU0MDIKCgpjbGFzcyBGb3JtYWxIYW5kb2ZmU2VsZkhlYWxHdWFyZFRlc3RzKHVuaXR0ZXN0LlRlc3RDYXNlKToKICAgIGRlZiBfZml4dHVyZShzZWxmLCBjb21wbGV0ZTogYm9vbCk6CiAgICAgICAgdGVtcCA9IFBhdGgodGVtcGZpbGUubWtkdGVtcCgpKQogICAgICAgICh0ZW1wIC8gInJlcXVlc3RzIiAvICJsaXZlX3NuYXBzaG90IikubWtkaXIocGFyZW50cz1UcnVlKQogICAgICAgICh0ZW1wIC8gImV2ZW50cyIgLyAicmV2aWV3cyIpLm1rZGlyKHBhcmVudHM9VHJ1ZSkKICAgICAgICBwYXJlbnQgPSB7CiAgICAgICAgICAgICJyZXF1ZXN0X3R5cGUiOiAiTUFSS0VUX1FVT1RFX1JFRlJFU0giLAogICAgICAgICAgICAic291cmNlIjogIkNIQVRHUFRfU0NIRURVTEVEX0ZPUk1BTF9BTkFMWVNJUyIsCiAgICAgICAgICAgICJyZXF1ZXN0X2lkIjogImZvcm1hbC1jdXJyZW50IiwKICAgICAgICAgICAgInJlcXVlc3RlZF9hdF9iZWlqaW5nIjogIjIwMjYtMTAtMTVUMTk6NTM6MTgrMDg6MDAiLAogICAgICAgIH0KICAgICAgICAodGVtcCAvICJyZXF1ZXN0cyIgLyAibGl2ZV9zbmFwc2hvdCIgLyAiZm9ybWFsLWN1cnJlbnQuanNvbiIpLndyaXRlX3RleHQoCiAgICAgICAgICAgIGpzb24uZHVtcHMocGFyZW50KSwgZW5jb2Rpbmc9InV0Zi04IgogICAgICAgICkKICAgICAgICBlMmUgPSB7CiAgICAgICAgICAgICJjb21wb25lbnRzIjogewogICAgICAgICAgICAgICAgImRlY2lzaW9uX2NvbnRleHQiOiB7CiAgICAgICAgICAgICAgICAgICAgImZvcm1hbF9yZXBseV9nYXRlIjogewogICAgICAgICAgICAgICAgICAgICAgICAicmVxdWVzdF9pZCI6ICJmb3JtYWwtY3VycmVudCIsCiAgICAgICAgICAgICAgICAgICAgICAgICJyZXBseV9mcmVlemFibGUiOiBUcnVlLAogICAgICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgfQogICAgICAgIH0KICAgICAgICAodGVtcCAvICJlMmVfc3RhdHVzLmpzb24iKS53cml0ZV90ZXh0KGpzb24uZHVtcHMoZTJlKSwgZW5jb2Rpbmc9InV0Zi04IikKICAgICAgICBpZiBjb21wbGV0ZToKICAgICAgICAgICAgZm9yIG5hbWUsIHBheWxvYWQgaW4gewogICAgICAgICAgICAgICAgImZvcm1hbC1jdXJyZW50X19idXNpbmVzcy5qc29uIjogewogICAgICAgICAgICAgICAgICAgICJyZXF1ZXN0X3R5cGUiOiAiQlVTSU5FU1NfREVDSVNJT05fU09VUkNFIiwKICAgICAgICAgICAgICAgICAgICAicGFyZW50X3JlcXVlc3RfaWQiOiAiZm9ybWFsLWN1cnJlbnQiLAogICAgICAgICAgICAgICAgfSwKICAgICAgICAgICAgICAgICJmb3JtYWwtY3VycmVudF9fZm9ybWFsX2RlY2lzaW9uX2NvbXBsZXRpb24uanNvbiI6IHsKICAgICAgICAgICAgICAgICAgICAicmVxdWVzdF90eXBlIjogIlNDSEVEVUxFRF9SRVZJRVdfQ09NUExFVElPTiIsCiAgICAgICAgICAgICAgICAgICAgInNvdXJjZSI6ICJDSEFUR1BUX1NDSEVEVUxFRF9SRVZJRVdfQUNUT1IiLAogICAgICAgICAgICAgICAgICAgICJmb3JtYWxfZmFjdF90eXBlIjogIkZPUk1BTF9QT1NUX0NMT1NFX1JFVklFVyIsCiAgICAgICAgICAgICAgICAgICAgInBhcmVudF9yZXF1ZXN0X2lkIjogImZvcm1hbC1jdXJyZW50IiwKICAgICAgICAgICAgICAgIH0sCiAgICAgICAgICAgIH0uaXRlbXMoKToKICAgICAgICAgICAgICAgICh0ZW1wIC8gInJlcXVlc3RzIiAvICJsaXZlX3NuYXBzaG90IiAvIG5hbWUpLndyaXRlX3RleHQoCiAgICAgICAgICAgICAgICAgICAganNvbi5kdW1wcyhwYXlsb2FkKSwgZW5jb2Rpbmc9InV0Zi04IgogICAgICAgICAgICAgICAgKQogICAgICAgICAgICAodGVtcCAvICJldmVudHMiIC8gInJldmlld3MiIC8gImZvcm1hbF9vY2N1cnJlbmNlLmpzb24iKS53cml0ZV90ZXh0KAogICAgICAgICAgICAgICAganNvbi5kdW1wcyh7InBhcmVudF9yZXF1ZXN0X2lkIjogImZvcm1hbC1jdXJyZW50In0pLCBlbmNvZGluZz0idXRmLTgiCiAgICAgICAgICAgICkKICAgICAgICByZXR1cm4gdGVtcAoKICAgIGRlZiB0ZXN0X3JlYWR5X3BhcmVudF93aXRob3V0X3Byb2plY3Rpb25faXNfZXNjYWxhdGVkX3dpdGhvdXRfcmVwbGF5KHNlbGYpOgogICAgICAgIHRlbXAgPSBzZWxmLl9maXh0dXJlKGNvbXBsZXRlPUZhbHNlKQogICAgICAgIHdpdGggKAogICAgICAgICAgICBtb2NrLnBhdGNoLm9iamVjdChydW50aW1lX3NlbGZfaGVhbCwgIlJPT1QiLCB0ZW1wKSwKICAgICAgICAgICAgbW9jay5wYXRjaC5vYmplY3QocnVudGltZV9zZWxmX2hlYWwsICJFMkVfU1RBVFVTX1BBVEgiLCB0ZW1wIC8gImUyZV9zdGF0dXMuanNvbiIpLAogICAgICAgICk6CiAgICAgICAgICAgIHBhdGgsIHBhcmVudF9pZCwgbWlzc2luZyA9IHJ1bnRpbWVfc2VsZl9oZWFsLmZvcm1hbF9wYXJlbnRfaGFuZG9mZl9nYXAoKQogICAgICAgIHNlbGYuYXNzZXJ0RXF1YWwocGFyZW50X2lkLCAiZm9ybWFsLWN1cnJlbnQiKQogICAgICAgIHNlbGYuYXNzZXJ0RXF1YWwocGF0aCwgInJlcXVlc3RzL2xpdmVfc25hcHNob3QvZm9ybWFsLWN1cnJlbnQuanNvbiIpCiAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChtaXNzaW5nLCAiQkRTLENPTVBMRVRJT04sRk9STUFMX0VWRU5UIikKCiAgICBkZWYgdGVzdF9jb21wbGV0ZV9wYXJlbnRfaGFzX25vX2hhbmRvZmZfZ2FwKHNlbGYpOgogICAgICAgIHRlbXAgPSBzZWxmLl9maXh0dXJlKGNvbXBsZXRlPVRydWUpCiAgICAgICAgd2l0aCAoCiAgICAgICAgICAgIG1vY2sucGF0Y2gub2JqZWN0KHJ1bnRpbWVfc2VsZl9oZWFsLCAiUk9PVCIsIHRlbXApLAogICAgICAgICAgICBtb2NrLnBhdGNoLm9iamVjdChydW50aW1lX3NlbGZfaGVhbCwgIkUyRV9TVEFUVVNfUEFUSCIsIHRlbXAgLyAiZTJlX3N0YXR1cy5qc29uIiksCiAgICAgICAgKToKICAgICAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChydW50aW1lX3NlbGZfaGVhbC5mb3JtYWxfcGFyZW50X2hhbmRvZmZfZ2FwKCksIChOb25lLCBOb25lLCBOb25lKSkKCgppZiBfX25hbWVfXyA9PSAiX19tYWluX18iOgogICAgdW5pdHRlc3QubWFpbigpCg==
+from __future__ import annotations
+
+import json
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+from unittest import mock
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+import runtime_self_heal  # noqa: E402
+
+
+class FormalHandoffSelfHealGuardTests(unittest.TestCase):
+    def _fixture(self, complete: bool):
+        temp = Path(tempfile.mkdtemp())
+        (temp / "requests" / "live_snapshot").mkdir(parents=True)
+        (temp / "events" / "reviews").mkdir(parents=True)
+        parent = {
+            "request_type": "MARKET_QUOTE_REFRESH",
+            "source": "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
+            "request_id": "formal-current",
+            "requested_at_beijing": "2026-10-15T19:53:18+08:00",
+        }
+        (temp / "requests" / "live_snapshot" / "formal-current.json").write_text(
+            json.dumps(parent), encoding="utf-8"
+        )
+        e2e = {
+            "components": {
+                "decision_context": {
+                    "formal_reply_gate": {
+                        "request_id": "formal-current",
+                        "reply_freezable": True,
+                    }
+                }
+            }
+        }
+        (temp / "e2e_status.json").write_text(json.dumps(e2e), encoding="utf-8")
+        if complete:
+            for name, payload in {
+                "formal-current__business.json": {
+                    "request_type": "BUSINESS_DECISION_SOURCE",
+                    "parent_request_id": "formal-current",
+                },
+                "formal-current__formal_decision_completion.json": {
+                    "request_type": "SCHEDULED_REVIEW_COMPLETION",
+                    "source": "CHATGPT_SCHEDULED_REVIEW_ACTOR",
+                    "formal_fact_type": "FORMAL_POST_CLOSE_REVIEW",
+                    "parent_request_id": "formal-current",
+                },
+            }.items():
+                (temp / "requests" / "live_snapshot" / name).write_text(
+                    json.dumps(payload), encoding="utf-8"
+                )
+            (temp / "events" / "reviews" / "formal_occurrence.json").write_text(
+                json.dumps({"parent_request_id": "formal-current"}), encoding="utf-8"
+            )
+        return temp
+
+    def test_ready_parent_without_projection_is_escalated_without_replay(self):
+        temp = self._fixture(complete=False)
+        with (
+            mock.patch.object(runtime_self_heal, "ROOT", temp),
+            mock.patch.object(runtime_self_heal, "E2E_STATUS_PATH", temp / "e2e_status.json"),
+        ):
+            path, parent_id, missing = runtime_self_heal.formal_parent_handoff_gap()
+        self.assertEqual(parent_id, "formal-current")
+        self.assertEqual(path, "requests/live_snapshot/formal-current.json")
+        self.assertEqual(missing, "BDS,COMPLETION,FORMAL_EVENT")
+
+    def test_complete_parent_has_no_handoff_gap(self):
+        temp = self._fixture(complete=True)
+        with (
+            mock.patch.object(runtime_self_heal, "ROOT", temp),
+            mock.patch.object(runtime_self_heal, "E2E_STATUS_PATH", temp / "e2e_status.json"),
+        ):
+            self.assertEqual(runtime_self_heal.formal_parent_handoff_gap(), (None, None, None))
+
+
+if __name__ == "__main__":
+    unittest.main()
