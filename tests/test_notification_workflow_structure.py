@@ -161,7 +161,7 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
         self.assertNotIn("BDS写入、回读和通知尝试先于用户窗口输出", notice)
         self.assertNotIn("完成这些不阻塞正文的后置交接提交后，向用户输出", index)
         self.assertNotIn("1. ChatGPT完成业务判断后，必须先提交唯一 BUSINESS_DECISION_SOURCE", protocol)
-        self.assertIn("用户窗口输出唯一 `FINAL_CONTENT` 后", protocol)
+        self.assertIn("FINAL_CONTENT 冻结后、用户窗口输出前", protocol)
         self.assertIn("BUSINESS_DECISION_SOURCE", protocol)
         self.assertIn("FORMAL_DECISION_COMPLETION", protocol)
         self.assertIn("formal_completion_path", protocol)
