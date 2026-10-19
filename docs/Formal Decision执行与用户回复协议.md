@@ -73,7 +73,7 @@
 → `notification_center`
 → `PushPlus/微信原文投递`
 
-三个入口的业务语义统一，但入口身份必须原样保留。正式决策不得使用旧的独立 Formal completion；它必须使用统一 Scheduled Review completion，但不得让系统复核或交易复盘的业务事实冒充正式决策。
+三个入口的业务语义统一，但入口身份必须原样保留。正式决策不得使用旧的独立 Formal completion；不得再使用旧的独立 Formal completion 生产链。它必须使用统一 Scheduled Review completion，但不得让系统复核或交易复盘的业务事实冒充正式决策。
 
 正式决策必须依次形成并绑定：
 
