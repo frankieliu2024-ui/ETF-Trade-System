@@ -7,15 +7,15 @@
     "snapshot_commit": "46fdba57435b191fb58522069525997c30668e56",
     "boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
     "timing": {
-      "state_builder_started_at": "2026-10-19T04:10:57Z",
+      "state_builder_started_at": "2026-10-19T04:30:46Z",
       "current_published_at": "2026-10-19T12:10:08+08:00",
-      "market_regime_ready_at": "2026-10-19T04:11:03Z",
-      "market_structure_ready_at": "2026-10-19T04:11:03Z",
-      "full_state_context_observation_at": "2026-10-19T04:11:03Z",
-      "decision_context_written_at": "2026-10-19T04:11:07Z"
+      "market_regime_ready_at": "2026-10-19T04:30:54Z",
+      "market_structure_ready_at": "2026-10-19T04:30:54Z",
+      "full_state_context_observation_at": "2026-10-19T04:30:54Z",
+      "decision_context_written_at": "2026-10-19T04:30:59Z"
     }
   },
-  "generated_at": "2026-10-19T04:11:03Z",
+  "generated_at": "2026-10-19T04:30:54Z",
   "rules_version": "V2.2.34",
   "market_date": "2026-10-19",
   "latest_node": "1130",
@@ -661,7 +661,7 @@
     "last_trade_event_id": "broker-screenshot-20261015-141944-exits_5_5084098f663b90e4",
     "rules_version": "V2.2.34",
     "generated_at": "2026-10-19T04:10:08Z",
-    "account_fact_reference_synced_at": "2026-10-18T20:38:24+08:00",
+    "account_fact_reference_synced_at": "2026-10-19T12:30:14+08:00",
     "account_fact_path": "data/state/account_fact.json",
     "account_fact_updated_at": "2026-10-16T15:00:00+08:00",
     "account_fact_status": "VALID",
@@ -1464,7 +1464,7 @@
     ]
   },
   "data_status": {
-    "status": "FRESH",
+    "status": "DEGRADED",
     "provider": "tencent_qq",
     "count": 17,
     "etf_universe_count": 14,
@@ -1477,10 +1477,10 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 7.622,
-    "age_seconds": 55
+    "age_seconds": 1246
   },
   "freshness_at_context_build": {
-    "status": "FRESH",
+    "status": "DEGRADED",
     "provider": "tencent_qq",
     "count": 17,
     "etf_universe_count": 14,
@@ -1493,7 +1493,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 7.622,
-    "age_seconds": 55
+    "age_seconds": 1246
   },
   "data_quality_summary": {
     "pass_count": 17,
@@ -1533,16 +1533,16 @@
     "read_only": true
   },
   "etf_strategy_risk_metrics": {
-    "etf_strategy_risk_pct": -12.75,
+    "etf_strategy_risk_pct": -12.98,
     "risk_source": "data/state/etf_strategy_equity.json",
     "risk_source_updated_at": null,
-    "reconstruction_risk_pct": -12.7534,
-    "reconstruction_as_of_transaction_date": "2026-10-16",
+    "reconstruction_risk_pct": -12.9789,
+    "reconstruction_as_of_transaction_date": "2026-10-19",
     "reconstruction_fresh_for_market_date": true,
     "etf_holding_unrealized_pct": 0.46,
     "etf_drawdown_from_high_pct": null,
     "equity_data_quality": null,
-    "strategy_equity_known_net": 174493.3,
+    "strategy_equity_known_net": 174042.3,
     "high_watermark": 200000.0,
     "fee_status": "ALL_RECORDED_TRADE_FEES_CONFIRMED",
     "interpretation": "唯一ETF策略风险率决定风险区间；正式review优先，合格且新鲜的canonical reconstruction仅在无正式review时使用；Dashboard仅作人类projection。持仓浮盈亏率与高水位回撤率只解释持仓压力和近期改善/恶化。",
@@ -1570,16 +1570,16 @@
     "missing_account_stocks": [],
     "coverage_status": "COMPLETE",
     "read_only": true,
-    "discovered_etfs_total": 6,
-    "discovered_etfs_available": 6,
-    "formal_discovery_status": "READY",
+    "discovered_etfs_total": 0,
+    "discovered_etfs_available": 0,
+    "formal_discovery_status": "NOT_REQUESTED",
     "formal_discovery_boundary": "节点临时正式评估对象；不改变持仓/观察管理身份。"
   },
   "point_in_time": {
     "account_fact_time": "2026-10-16T15:00:00+08:00",
     "market_snapshot_time": "2026-10-19T12:10:08+08:00",
     "market_phase": "MIDDAY_BREAK",
-    "context_generated_time": "2026-10-19T04:11:03Z",
+    "context_generated_time": "2026-10-19T04:30:54Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
@@ -1619,76 +1619,51 @@
     "read_only": true
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-10-19T12:11:04+08:00",
+    "generated_at_beijing": "2026-10-19T12:30:54+08:00",
     "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
-    "refresh_failures": [],
+    "refresh_failures": [
+      {
+        "symbol": "N225",
+        "error": "N225 query-time direct chain has no fresh usable quote; eastmoney_push2delay:100.N225: HTTP Error 502: Bad Gateway | eastmoney_push2:100.N225: HTTP Error 502: Bad Gateway | yahoo_chart_api: freshness=DELAYED quality=PASS"
+      }
+    ],
     "decision_freshness": {
       "status": "DIRECT",
       "quality_status": "UNKNOWN",
       "captured_at": "2026-10-19T04:10:08+00:00",
       "provider_as_of": "2026-10-19T04:05:58+00:00",
       "effective_as_of": "2026-10-19T04:05:58+00:00",
-      "request_time": "2026-10-19T04:09:39+00:00",
-      "age_seconds": 306,
+      "request_time": "2026-10-19T04:27:48+00:00",
+      "age_seconds": 1496,
       "post_request": false,
       "preferred_max_age_seconds": 300,
       "fallback_max_age_seconds": 900,
       "formal_decision_allowed": true,
-      "refresh_required": false,
+      "refresh_required": true,
       "fallback_allowed": false,
       "reason": "CURRENT quality PASS does not override decision freshness; query-time refresh required",
-      "resolved_post_request": true,
-      "request_scoped_resolution_mode": "MIDDAY_REQUEST_BOUND_REFERENCE",
-      "request_scoped_resolution_reason": "11:30 canonical reference re-observed after request",
-      "a_share_market_phase": "MIDDAY_BREAK",
-      "resolved_as_of": "2026-10-19T04:11:05+00:00"
+      "resolved_as_of": "2026-10-19T04:30:57+00:00",
+      "resolved_post_request": true
     },
     "route_version": "V1.1",
     "query_entry": "market_quote_router",
     "quotes": [
-      {
-        "market": "JP",
-        "market_name": "日本",
-        "symbol": "N225",
-        "canonical_object": "N225",
-        "name": "日经225指数",
-        "latest_price": 64754.05,
-        "open": 64819.56,
-        "high": 64845.88,
-        "low": 63831.78,
-        "prev_close": 65324.29,
-        "volume": 0,
-        "amount": "-",
-        "turnover": "-",
-        "data_time_beijing": "2026-10-19T12:10:33+08:00",
-        "data_time_local": "2026-10-19T13:10:33+09:00",
-        "market_phase": "REGULAR",
-        "market_status_cn": "日股交易中",
-        "data_nature_cn": "实时交易行情",
-        "source": "eastmoney_push2delay:100.N225",
-        "freshness": "FRESH",
-        "quality_status": "PASS",
-        "direct_quote": true,
-        "refresh_source": "QUERY_TIME_FORMAL_PROVIDER_CHAIN",
-        "provider_timestamp_field": "f86",
-        "refresh_contract": "ACTIVE_MARKET_REQUIRES_FRESH_PROVIDER_TIMESTAMP"
-      },
       {
         "market": "KR",
         "market_name": "韩国",
         "symbol": "KOSPI",
         "canonical_object": "KOSPI",
         "name": "韩国综合指数",
-        "latest_price": 5712.49,
+        "latest_price": 5704.22,
         "open": 5488.41,
         "high": 5730.64,
         "low": 5488.41,
         "prev_close": 5668.05,
-        "volume": 187638000.0,
-        "amount": 11125799000000.0,
-        "turnover": 11125799000000.0,
-        "data_time_beijing": "2026-10-19T12:11:05+08:00",
-        "data_time_local": "2026-10-19T13:11:05+09:00",
+        "volume": 195197000.0,
+        "amount": 11699690000000.0,
+        "turnover": 11699690000000.0,
+        "data_time_beijing": "2026-10-19T12:30:57+08:00",
+        "data_time_local": "2026-10-19T13:30:57+09:00",
         "market_phase": "REGULAR",
         "market_status_cn": "韩股交易中",
         "data_nature_cn": "实时交易行情",
@@ -1706,7 +1681,7 @@
         "symbol": "TWII",
         "canonical_object": "TWII",
         "name": "台湾加权指数",
-        "latest_price": 46662.43,
+        "latest_price": 46633.62,
         "open": 46844.64,
         "high": 46844.64,
         "low": 46170.0,
@@ -1714,8 +1689,8 @@
         "volume": null,
         "amount": null,
         "turnover": null,
-        "data_time_beijing": "2026-10-19T12:10:00+08:00",
-        "data_time_local": "2026-10-19T12:10:00+08:00",
+        "data_time_beijing": "2026-10-19T12:30:00+08:00",
+        "data_time_local": "2026-10-19T12:30:00+08:00",
         "market_phase": "REGULAR",
         "market_status_cn": "台股交易中",
         "data_nature_cn": "实时交易行情",
@@ -1746,8 +1721,8 @@
         "market_status_cn": "A股午间休市",
         "data_nature_cn": "午间休市期间的上午最新有效行情",
         "source": "tencent_qq",
-        "freshness": "FRESH",
-        "freshness_cn": "时点正常",
+        "freshness": "STALE",
+        "freshness_cn": "时点过旧",
         "quality_status": "PASS",
         "quality_status_cn": "数据可用",
         "direct_quote": true,
@@ -1772,8 +1747,8 @@
         "market_status_cn": "A股午间休市",
         "data_nature_cn": "午间休市期间的上午最新有效行情",
         "source": "tencent_qq",
-        "freshness": "FRESH",
-        "freshness_cn": "时点正常",
+        "freshness": "STALE",
+        "freshness_cn": "时点过旧",
         "quality_status": "PASS",
         "quality_status_cn": "数据可用",
         "direct_quote": true,
@@ -1798,8 +1773,8 @@
         "market_status_cn": "A股午间休市",
         "data_nature_cn": "午间休市期间的上午最新有效行情",
         "source": "tencent_qq",
-        "freshness": "FRESH",
-        "freshness_cn": "时点正常",
+        "freshness": "STALE",
+        "freshness_cn": "时点过旧",
         "quality_status": "PASS",
         "quality_status_cn": "数据可用",
         "direct_quote": true,
@@ -1824,8 +1799,8 @@
         "market_status_cn": "A股午间休市",
         "data_nature_cn": "午间休市期间的上午最新有效行情",
         "source": "tencent_qq",
-        "freshness": "FRESH",
-        "freshness_cn": "时点正常",
+        "freshness": "STALE",
+        "freshness_cn": "时点过旧",
         "quality_status": "PASS",
         "quality_status_cn": "数据可用",
         "direct_quote": true,
@@ -1850,8 +1825,8 @@
         "market_status_cn": "A股午间休市",
         "data_nature_cn": "午间休市期间的上午最新有效行情",
         "source": "tencent_qq",
-        "freshness": "FRESH",
-        "freshness_cn": "时点正常",
+        "freshness": "STALE",
+        "freshness_cn": "时点过旧",
         "quality_status": "PASS",
         "quality_status_cn": "数据可用",
         "direct_quote": true,
@@ -1876,8 +1851,8 @@
         "market_status_cn": "A股午间休市",
         "data_nature_cn": "午间休市期间的上午最新有效行情",
         "source": "tencent_qq",
-        "freshness": "FRESH",
-        "freshness_cn": "时点正常",
+        "freshness": "STALE",
+        "freshness_cn": "时点过旧",
         "quality_status": "PASS",
         "quality_status_cn": "数据可用",
         "direct_quote": true,
@@ -1902,8 +1877,8 @@
         "market_status_cn": "A股午间休市",
         "data_nature_cn": "午间休市期间的上午最新有效行情",
         "source": "tencent_qq",
-        "freshness": "FRESH",
-        "freshness_cn": "时点正常",
+        "freshness": "STALE",
+        "freshness_cn": "时点过旧",
         "quality_status": "PASS",
         "quality_status_cn": "数据可用",
         "direct_quote": true,
@@ -1928,8 +1903,8 @@
         "market_status_cn": "A股午间休市",
         "data_nature_cn": "午间休市期间的上午最新有效行情",
         "source": "tencent_qq",
-        "freshness": "FRESH",
-        "freshness_cn": "时点正常",
+        "freshness": "STALE",
+        "freshness_cn": "时点过旧",
         "quality_status": "PASS",
         "quality_status_cn": "数据可用",
         "direct_quote": true,
@@ -1954,8 +1929,8 @@
         "market_status_cn": "A股午间休市",
         "data_nature_cn": "午间休市期间的上午最新有效行情",
         "source": "tencent_qq",
-        "freshness": "FRESH",
-        "freshness_cn": "时点正常",
+        "freshness": "STALE",
+        "freshness_cn": "时点过旧",
         "quality_status": "PASS",
         "quality_status_cn": "数据可用",
         "direct_quote": true,
@@ -1980,8 +1955,8 @@
         "market_status_cn": "A股午间休市",
         "data_nature_cn": "午间休市期间的上午最新有效行情",
         "source": "tencent_qq",
-        "freshness": "FRESH",
-        "freshness_cn": "时点正常",
+        "freshness": "DEGRADED",
+        "freshness_cn": "存在延迟",
         "quality_status": "PASS",
         "quality_status_cn": "数据可用",
         "direct_quote": true,
@@ -2006,8 +1981,8 @@
         "market_status_cn": "A股午间休市",
         "data_nature_cn": "午间休市期间的上午最新有效行情",
         "source": "tencent_qq",
-        "freshness": "FRESH",
-        "freshness_cn": "时点正常",
+        "freshness": "STALE",
+        "freshness_cn": "时点过旧",
         "quality_status": "PASS",
         "quality_status_cn": "数据可用",
         "direct_quote": true,
@@ -2032,8 +2007,8 @@
         "market_status_cn": "A股午间休市",
         "data_nature_cn": "午间休市期间的上午最新有效行情",
         "source": "tencent_qq",
-        "freshness": "FRESH",
-        "freshness_cn": "时点正常",
+        "freshness": "STALE",
+        "freshness_cn": "时点过旧",
         "quality_status": "PASS",
         "quality_status_cn": "数据可用",
         "direct_quote": true,
@@ -2058,8 +2033,8 @@
         "market_status_cn": "A股午间休市",
         "data_nature_cn": "午间休市期间的上午最新有效行情",
         "source": "tencent_qq",
-        "freshness": "FRESH",
-        "freshness_cn": "时点正常",
+        "freshness": "STALE",
+        "freshness_cn": "时点过旧",
         "quality_status": "PASS",
         "quality_status_cn": "数据可用",
         "direct_quote": true,
@@ -2084,8 +2059,8 @@
         "market_status_cn": "A股午间休市",
         "data_nature_cn": "午间休市期间的上午最新有效行情",
         "source": "tencent_qq",
-        "freshness": "FRESH",
-        "freshness_cn": "时点正常",
+        "freshness": "STALE",
+        "freshness_cn": "时点过旧",
         "quality_status": "PASS",
         "quality_status_cn": "数据可用",
         "direct_quote": true,
@@ -2110,8 +2085,8 @@
         "market_status_cn": "A股午间休市",
         "data_nature_cn": "午间休市期间的上午最新有效行情",
         "source": "tencent_qq",
-        "freshness": "FRESH",
-        "freshness_cn": "时点正常",
+        "freshness": "STALE",
+        "freshness_cn": "时点过旧",
         "quality_status": "PASS",
         "quality_status_cn": "数据可用",
         "direct_quote": true,
@@ -2136,8 +2111,8 @@
         "market_status_cn": "A股午间休市",
         "data_nature_cn": "午间休市期间的上午最新有效行情",
         "source": "tencent_qq",
-        "freshness": "FRESH",
-        "freshness_cn": "时点正常",
+        "freshness": "STALE",
+        "freshness_cn": "时点过旧",
         "quality_status": "PASS",
         "quality_status_cn": "数据可用",
         "direct_quote": true,
@@ -2162,8 +2137,8 @@
         "market_status_cn": "A股午间休市",
         "data_nature_cn": "午间休市期间的上午最新有效行情",
         "source": "tencent_qq",
-        "freshness": "FRESH",
-        "freshness_cn": "时点正常",
+        "freshness": "STALE",
+        "freshness_cn": "时点过旧",
         "quality_status": "PASS",
         "quality_status_cn": "数据可用",
         "direct_quote": true,
@@ -2220,6 +2195,32 @@
         "quality_status_cn": "数据可用",
         "direct_quote": true,
         "route_rule": "返回最近正式收盘行情"
+      },
+      {
+        "market": "JP",
+        "market_name": "日本",
+        "symbol": "100.N225",
+        "name": "日经225指数",
+        "latest_price": 64746.4,
+        "open": null,
+        "high": null,
+        "low": null,
+        "prev_close": null,
+        "volume": null,
+        "amount": null,
+        "turnover": null,
+        "data_time_beijing": "2026-10-19T12:05:52+08:00",
+        "data_time_local": "",
+        "market_phase": "REGULAR",
+        "market_status_cn": "日股交易中",
+        "data_nature_cn": "实时交易行情",
+        "source": "eastmoney_push2",
+        "freshness": "STALE",
+        "freshness_cn": "时点过旧",
+        "quality_status": "PASS",
+        "quality_status_cn": "数据可用",
+        "direct_quote": true,
+        "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
       },
       {
         "market": "HK",
@@ -2421,34 +2422,38 @@
   },
   "decision_trigger": {
     "schema_version": "1.2",
-    "generated_at": "2026-10-19T12:11:03+08:00",
-    "status": "NO_NEW_TRIGGER",
-    "trigger_type": "",
-    "triggered_at": "",
+    "generated_at": "2026-10-19T12:30:54+08:00",
+    "status": "TRIGGERED",
+    "trigger_type": "RISK_BOUNDARY_CROSSED",
+    "triggered_at": "2026-10-19T12:30:54+08:00",
     "applicable_object": "",
     "previous_decision_id": "fd-20261015-133750-manual-conversation-7f3c9a_decision",
-    "evidence_change": "",
+    "evidence_change": "UNKNOWN→RISK_CONTROL; review intensity changed only, formal permission must be re-decided by MASTER",
     "evidence_time": "2026-10-19T12:10:08+08:00",
     "e2e_status": "DEGRADED",
-    "requires_formal_reassessment": false,
-    "pending_trigger": false,
-    "idempotency_key": "",
-    "risk_zone": "UNKNOWN",
-    "enhanced_risk_review_required": false,
+    "requires_formal_reassessment": true,
+    "pending_trigger": true,
+    "idempotency_key": "RISK_BOUNDARY_CROSSED||2026-10-19T12:10|fd-20261015-133750-manual-conversation-7f3c9a_decision|broker-screenshot-20261015-141944-exits_5_5084098f663b90e4",
+    "risk_zone": "RISK_CONTROL",
+    "enhanced_risk_review_required": true,
     "risk_zone_semantics": "REVIEW_CONTEXT_ONLY_NOT_TRADING_PERMISSION",
     "last_trade_event_id": "broker-screenshot-20261015-141944-exits_5_5084098f663b90e4",
+    "cooldown_rule": "同一事件类型、对象、证据窗口、上一正式决策不重复生成；普通10分钟行情变化不触发。",
     "safety_boundary": "确定性识别仅生成重评请求，不生成风险许可、金额、份额或交易动作。",
     "read_only": true
   },
   "capital_efficiency_ranking": {
     "schema_version": "1.2",
-    "generated_at": "2026-10-19T12:11:03+08:00",
+    "generated_at": "2026-10-19T12:30:54+08:00",
     "as_of": "2026-10-19T12:10:08+08:00",
     "e2e_status": "DEGRADED",
-    "risk_zone": "UNKNOWN",
+    "risk_zone": "RISK_CONTROL",
     "risk_zone_semantics": "REVIEW_CONTEXT_ONLY_NOT_TRADING_PERMISSION",
-    "enhanced_risk_review_required": false,
-    "risk_review_context": [],
+    "enhanced_risk_review_required": true,
+    "risk_review_context": [
+      "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
+      "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
+    ],
     "top_candidate": null,
     "candidate_selection_status": "REQUIRES_MASTER_DECISION",
     "next_unit_capital_use": "由ChatGPT按MASTER对现金、全部持仓、本节点ADMIT/RETAIN后的合法Observation及可释放资本完成最终比较；Discovery临时对象不直接进入最终资本竞争。",
@@ -2461,7 +2466,10 @@
         "data_availability": "READY",
         "reason": "等待价值与风险缓冲属于合法资本用途；是否优于其他用途由MASTER完整判断决定。",
         "execution_constraints": [],
-        "risk_review_context": [],
+        "risk_review_context": [
+          "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
+          "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
+        ],
         "action_boundary": "不自动成为唯一主候选或0元结论"
       },
       {
@@ -2483,7 +2491,10 @@
           "资本占用效率"
         ],
         "execution_constraints": [],
-        "risk_review_context": [],
+        "risk_review_context": [
+          "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
+          "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
+        ],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
       {
@@ -2505,7 +2516,10 @@
           "资本占用效率"
         ],
         "execution_constraints": [],
-        "risk_review_context": [],
+        "risk_review_context": [
+          "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
+          "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
+        ],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
       {
@@ -2527,7 +2541,10 @@
           "资本占用效率"
         ],
         "execution_constraints": [],
-        "risk_review_context": [],
+        "risk_review_context": [
+          "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
+          "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
+        ],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
       {
@@ -2549,7 +2566,10 @@
           "资本占用效率"
         ],
         "execution_constraints": [],
-        "risk_review_context": [],
+        "risk_review_context": [
+          "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
+          "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
+        ],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
       {
@@ -2571,7 +2591,10 @@
           "资本占用效率"
         ],
         "execution_constraints": [],
-        "risk_review_context": [],
+        "risk_review_context": [
+          "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
+          "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
+        ],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
       {
@@ -2593,7 +2616,10 @@
           "资本占用效率"
         ],
         "execution_constraints": [],
-        "risk_review_context": [],
+        "risk_review_context": [
+          "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
+          "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
+        ],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
       {
@@ -2615,7 +2641,10 @@
           "资本占用效率"
         ],
         "execution_constraints": [],
-        "risk_review_context": [],
+        "risk_review_context": [
+          "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
+          "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
+        ],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
       {
@@ -2637,7 +2666,10 @@
           "资本占用效率"
         ],
         "execution_constraints": [],
-        "risk_review_context": [],
+        "risk_review_context": [
+          "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
+          "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
+        ],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
       {
@@ -2659,7 +2691,10 @@
           "资本占用效率"
         ],
         "execution_constraints": [],
-        "risk_review_context": [],
+        "risk_review_context": [
+          "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
+          "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
+        ],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
       {
@@ -2681,7 +2716,10 @@
           "资本占用效率"
         ],
         "execution_constraints": [],
-        "risk_review_context": [],
+        "risk_review_context": [
+          "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
+          "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
+        ],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
       {
@@ -2703,7 +2741,10 @@
           "资本占用效率"
         ],
         "execution_constraints": [],
-        "risk_review_context": [],
+        "risk_review_context": [
+          "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
+          "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
+        ],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
       {
@@ -2725,7 +2766,10 @@
           "资本占用效率"
         ],
         "execution_constraints": [],
-        "risk_review_context": [],
+        "risk_review_context": [
+          "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
+          "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
+        ],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
       {
@@ -2747,7 +2791,10 @@
           "资本占用效率"
         ],
         "execution_constraints": [],
-        "risk_review_context": [],
+        "risk_review_context": [
+          "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
+          "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
+        ],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
       {
@@ -2769,7 +2816,10 @@
           "资本占用效率"
         ],
         "execution_constraints": [],
-        "risk_review_context": [],
+        "risk_review_context": [
+          "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
+          "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
+        ],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       }
     ],
@@ -2782,7 +2832,10 @@
         "data_availability": "READY",
         "reason": "等待价值与风险缓冲属于合法资本用途；是否优于其他用途由MASTER完整判断决定。",
         "execution_constraints": [],
-        "risk_review_context": [],
+        "risk_review_context": [
+          "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
+          "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
+        ],
         "action_boundary": "不自动成为唯一主候选或0元结论"
       },
       {
@@ -2804,7 +2857,10 @@
           "资本占用效率"
         ],
         "execution_constraints": [],
-        "risk_review_context": [],
+        "risk_review_context": [
+          "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
+          "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
+        ],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
       {
@@ -2826,7 +2882,10 @@
           "资本占用效率"
         ],
         "execution_constraints": [],
-        "risk_review_context": [],
+        "risk_review_context": [
+          "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
+          "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
+        ],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
       {
@@ -2848,7 +2907,10 @@
           "资本占用效率"
         ],
         "execution_constraints": [],
-        "risk_review_context": [],
+        "risk_review_context": [
+          "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
+          "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
+        ],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
       {
@@ -2870,7 +2932,10 @@
           "资本占用效率"
         ],
         "execution_constraints": [],
-        "risk_review_context": [],
+        "risk_review_context": [
+          "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
+          "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
+        ],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
       {
@@ -2892,7 +2957,10 @@
           "资本占用效率"
         ],
         "execution_constraints": [],
-        "risk_review_context": [],
+        "risk_review_context": [
+          "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
+          "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
+        ],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
       {
@@ -2914,7 +2982,10 @@
           "资本占用效率"
         ],
         "execution_constraints": [],
-        "risk_review_context": [],
+        "risk_review_context": [
+          "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
+          "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
+        ],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
       {
@@ -2936,7 +3007,10 @@
           "资本占用效率"
         ],
         "execution_constraints": [],
-        "risk_review_context": [],
+        "risk_review_context": [
+          "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
+          "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
+        ],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
       {
@@ -2958,7 +3032,10 @@
           "资本占用效率"
         ],
         "execution_constraints": [],
-        "risk_review_context": [],
+        "risk_review_context": [
+          "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
+          "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
+        ],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
       {
@@ -2980,7 +3057,10 @@
           "资本占用效率"
         ],
         "execution_constraints": [],
-        "risk_review_context": [],
+        "risk_review_context": [
+          "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
+          "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
+        ],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
       {
@@ -3002,7 +3082,10 @@
           "资本占用效率"
         ],
         "execution_constraints": [],
-        "risk_review_context": [],
+        "risk_review_context": [
+          "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
+          "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
+        ],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
       {
@@ -3024,7 +3107,10 @@
           "资本占用效率"
         ],
         "execution_constraints": [],
-        "risk_review_context": [],
+        "risk_review_context": [
+          "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
+          "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
+        ],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
       {
@@ -3046,7 +3132,10 @@
           "资本占用效率"
         ],
         "execution_constraints": [],
-        "risk_review_context": [],
+        "risk_review_context": [
+          "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
+          "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
+        ],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
       {
@@ -3068,7 +3157,10 @@
           "资本占用效率"
         ],
         "execution_constraints": [],
-        "risk_review_context": [],
+        "risk_review_context": [
+          "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
+          "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
+        ],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
       {
@@ -3090,7 +3182,10 @@
           "资本占用效率"
         ],
         "execution_constraints": [],
-        "risk_review_context": [],
+        "risk_review_context": [
+          "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
+          "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
+        ],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       }
     ],
@@ -3102,696 +3197,13 @@
     "read_only": true,
     "safety_boundary": "资本比较不替代唯一主候选；风险区间不自动生成风险许可；本状态不自动生成Trial、Confirm、金额、卖出份额或订单。",
     "formal_discovery_included": false,
-    "formal_discovery_candidate_count": 6,
+    "formal_discovery_candidate_count": 0,
     "formal_discovery_ingress_status": "ELIGIBILITY_ONLY",
-    "formal_discovery_coverage_status": "COMPLETE",
-    "observation_eligibility_inputs": [
-      {
-        "display_name": "巴西ETF华夏（159100）",
-        "code": "159100",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "data_availability": "DEGRADED",
-        "formal_quote_status": "SESSION_REFERENCE_READY",
-        "discovery_evidence": {
-          "code": "159100",
-          "name": "巴西ETF华夏",
-          "display_name": "巴西ETF华夏（159100）",
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "management_identity": null,
-          "auto_promote_to_observation": false,
-          "trial_confirm_permission": false,
-          "trade_signal": null,
-          "decision_output_generated": false,
-          "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
-          "entered_states": [],
-          "surfaced_states": [
-            {
-              "state": "PERSISTENT_TREND",
-              "evidence": {
-                "window_returns": {
-                  "20": 0.099061,
-                  "40": 0.215297,
-                  "60": 0.152193
-                },
-                "positive_windows": [
-                  20,
-                  40,
-                  60
-                ],
-                "max_drawdown_60": 0.083922
-              }
-            },
-            {
-              "state": "TREND_CHANGE",
-              "evidence": {
-                "direction": "STRENGTHENING",
-                "return_10": 0.125984,
-                "return_40": 0.215297,
-                "short_vs_long_normalized_gap": 0.07216
-              }
-            }
-          ],
-          "information_classes": [
-            "NEW_RELATIVE_DIVERGENCE",
-            "STRUCTURAL_CHANGE",
-            "SHORT_HISTORY_CURRENT_CHANGE"
-          ],
-          "discovery_spot": {
-            "price": 1.31,
-            "change_pct": 1.787101787101797,
-            "amount": 67520000.0,
-            "amplitude_pct": null,
-            "turnover_pct": null,
-            "volume_ratio": null,
-            "high": 1.311,
-            "low": 1.298,
-            "open": 1.3,
-            "prev_close": 1.287,
-            "return_60d_pct": null,
-            "return_ytd_pct": null,
-            "provider_timestamp": 1792382718000
-          },
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-10-16",
-            "sample_count": 90,
-            "avg_amount_20": 102654824.8
-          },
-          "comparison_basis": [
-            "历史趋势/状态变化",
-            "当前相对结构",
-            "成交与可执行性",
-            "风险收益",
-            "资本效率"
-          ],
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "history_source": "DISCOVERY_NODE_HISTORY",
-          "formal_quote": {
-            "market": "CN",
-            "market_name": "中国大陆",
-            "symbol": "159100",
-            "name": "巴西ETF华夏",
-            "latest_price": 1.31,
-            "open": 1.3,
-            "high": 1.311,
-            "low": 1.298,
-            "prev_close": 1.287,
-            "volume": 51690400.0,
-            "amount": 67520000.0,
-            "turnover": 67520000.0,
-            "data_time_beijing": "2026-10-19T12:05:18+08:00",
-            "data_time_local": "2026-10-19T12:05:18+08:00",
-            "market_phase": "MIDDAY_BREAK",
-            "market_status_cn": "A股午间休市",
-            "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
-            "source": "tencent_qq",
-            "freshness": "SESSION_REFERENCE",
-            "quality_status": "PASS",
-            "direct_quote": true,
-            "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
-            "provider_symbol": "sz159100",
-            "provider_timestamp_ms": 1792382718000,
-            "evidence_fitness": {
-              "object_fact": true,
-              "observation_evaluation": true,
-              "capital_candidate_evaluation": true,
-              "executable_price": false,
-              "trade_amount_or_shares": false
-            },
-            "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission."
-          },
-          "formal_quote_status": "SESSION_REFERENCE_READY",
-          "formal_quote_evidence_fitness": {
-            "object_fact": true,
-            "observation_evaluation": true,
-            "capital_candidate_evaluation": true,
-            "executable_price": false,
-            "trade_amount_or_shares": false
-          },
-          "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。"
-        },
-        "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
-      },
-      {
-        "display_name": "电网设备ETF广发（159320）",
-        "code": "159320",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "data_availability": "DEGRADED",
-        "formal_quote_status": "SESSION_REFERENCE_READY",
-        "discovery_evidence": {
-          "code": "159320",
-          "name": "电网设备ETF广发",
-          "display_name": "电网设备ETF广发（159320）",
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "management_identity": null,
-          "auto_promote_to_observation": false,
-          "trial_confirm_permission": false,
-          "trade_signal": null,
-          "decision_output_generated": false,
-          "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
-          "entered_states": [],
-          "surfaced_states": [],
-          "information_classes": [
-            "NEW_RELATIVE_DIVERGENCE",
-            "STRUCTURAL_CHANGE",
-            "SHORT_HISTORY_CURRENT_CHANGE"
-          ],
-          "discovery_spot": {
-            "price": 0.538,
-            "change_pct": 1.8939393939394034,
-            "amount": 21830000.0,
-            "amplitude_pct": null,
-            "turnover_pct": null,
-            "volume_ratio": null,
-            "high": 0.543,
-            "low": 0.52,
-            "open": 0.528,
-            "prev_close": 0.528,
-            "return_60d_pct": null,
-            "return_ytd_pct": null,
-            "provider_timestamp": 1792382709000
-          },
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-10-16",
-            "sample_count": 90,
-            "avg_amount_20": 29992404.8
-          },
-          "comparison_basis": [
-            "历史趋势/状态变化",
-            "当前相对结构",
-            "成交与可执行性",
-            "风险收益",
-            "资本效率"
-          ],
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "history_source": "DISCOVERY_NODE_HISTORY",
-          "formal_quote": {
-            "market": "CN",
-            "market_name": "中国大陆",
-            "symbol": "159320",
-            "name": "电网设备ETF广发",
-            "latest_price": 0.538,
-            "open": 0.528,
-            "high": 0.543,
-            "low": 0.52,
-            "prev_close": 0.528,
-            "volume": 40714900.0,
-            "amount": 21830000.0,
-            "turnover": 21830000.0,
-            "data_time_beijing": "2026-10-19T12:05:09+08:00",
-            "data_time_local": "2026-10-19T12:05:09+08:00",
-            "market_phase": "MIDDAY_BREAK",
-            "market_status_cn": "A股午间休市",
-            "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
-            "source": "tencent_qq",
-            "freshness": "SESSION_REFERENCE",
-            "quality_status": "PASS",
-            "direct_quote": true,
-            "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
-            "provider_symbol": "sz159320",
-            "provider_timestamp_ms": 1792382709000,
-            "evidence_fitness": {
-              "object_fact": true,
-              "observation_evaluation": true,
-              "capital_candidate_evaluation": true,
-              "executable_price": false,
-              "trade_amount_or_shares": false
-            },
-            "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission."
-          },
-          "formal_quote_status": "SESSION_REFERENCE_READY",
-          "formal_quote_evidence_fitness": {
-            "object_fact": true,
-            "observation_evaluation": true,
-            "capital_candidate_evaluation": true,
-            "executable_price": false,
-            "trade_amount_or_shares": false
-          },
-          "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。"
-        },
-        "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
-      },
-      {
-        "display_name": "标普油气ETF嘉实（159518）",
-        "code": "159518",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "data_availability": "DEGRADED",
-        "formal_quote_status": "SESSION_REFERENCE_READY",
-        "discovery_evidence": {
-          "code": "159518",
-          "name": "标普油气ETF嘉实",
-          "display_name": "标普油气ETF嘉实（159518）",
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "management_identity": null,
-          "auto_promote_to_observation": false,
-          "trial_confirm_permission": false,
-          "trade_signal": null,
-          "decision_output_generated": false,
-          "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
-          "entered_states": [],
-          "surfaced_states": [
-            {
-              "state": "PERSISTENT_TREND",
-              "evidence": {
-                "window_returns": {
-                  "20": -0.017177,
-                  "40": 0.093023,
-                  "60": 0.188799
-                },
-                "positive_windows": [
-                  40,
-                  60
-                ],
-                "max_drawdown_60": 0.115413
-              }
-            }
-          ],
-          "information_classes": [
-            "NEW_RELATIVE_DIVERGENCE",
-            "STRUCTURAL_CHANGE",
-            "SHORT_HISTORY_CURRENT_CHANGE"
-          ],
-          "discovery_spot": {
-            "price": 1.352,
-            "change_pct": 2.735562310030404,
-            "amount": 258590000.0,
-            "amplitude_pct": null,
-            "turnover_pct": null,
-            "volume_ratio": null,
-            "high": 1.356,
-            "low": 1.342,
-            "open": 1.348,
-            "prev_close": 1.316,
-            "return_60d_pct": null,
-            "return_ytd_pct": null,
-            "provider_timestamp": 1792382727000
-          },
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-10-16",
-            "sample_count": 90,
-            "avg_amount_20": 626764927.5
-          },
-          "comparison_basis": [
-            "历史趋势/状态变化",
-            "当前相对结构",
-            "成交与可执行性",
-            "风险收益",
-            "资本效率"
-          ],
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "history_source": "DISCOVERY_NODE_HISTORY",
-          "formal_quote": {
-            "market": "CN",
-            "market_name": "中国大陆",
-            "symbol": "159518",
-            "name": "标普油气ETF嘉实",
-            "latest_price": 1.352,
-            "open": 1.348,
-            "high": 1.356,
-            "low": 1.342,
-            "prev_close": 1.316,
-            "volume": 191709400.0,
-            "amount": 258590000.0,
-            "turnover": 258590000.0,
-            "data_time_beijing": "2026-10-19T12:05:27+08:00",
-            "data_time_local": "2026-10-19T12:05:27+08:00",
-            "market_phase": "MIDDAY_BREAK",
-            "market_status_cn": "A股午间休市",
-            "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
-            "source": "tencent_qq",
-            "freshness": "SESSION_REFERENCE",
-            "quality_status": "PASS",
-            "direct_quote": true,
-            "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
-            "provider_symbol": "sz159518",
-            "provider_timestamp_ms": 1792382727000,
-            "evidence_fitness": {
-              "object_fact": true,
-              "observation_evaluation": true,
-              "capital_candidate_evaluation": true,
-              "executable_price": false,
-              "trade_amount_or_shares": false
-            },
-            "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission."
-          },
-          "formal_quote_status": "SESSION_REFERENCE_READY",
-          "formal_quote_evidence_fitness": {
-            "object_fact": true,
-            "observation_evaluation": true,
-            "capital_candidate_evaluation": true,
-            "executable_price": false,
-            "trade_amount_or_shares": false
-          },
-          "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。"
-        },
-        "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
-      },
-      {
-        "display_name": "标普消费ETF景顺（159529）",
-        "code": "159529",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "data_availability": "DEGRADED",
-        "formal_quote_status": "SESSION_REFERENCE_READY",
-        "discovery_evidence": {
-          "code": "159529",
-          "name": "标普消费ETF景顺",
-          "display_name": "标普消费ETF景顺（159529）",
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "management_identity": null,
-          "auto_promote_to_observation": false,
-          "trial_confirm_permission": false,
-          "trade_signal": null,
-          "decision_output_generated": false,
-          "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
-          "entered_states": [
-            "TREND_CHANGE"
-          ],
-          "surfaced_states": [
-            {
-              "state": "PERSISTENT_TREND",
-              "evidence": {
-                "window_returns": {
-                  "20": 0.072727,
-                  "40": 0.049497,
-                  "60": 0.05439
-                },
-                "positive_windows": [
-                  20,
-                  40,
-                  60
-                ],
-                "max_drawdown_60": 0.053747
-              }
-            },
-            {
-              "state": "TREND_CHANGE",
-              "evidence": {
-                "direction": "STRENGTHENING",
-                "return_10": 0.076984,
-                "return_40": 0.049497,
-                "short_vs_long_normalized_gap": 0.06461
-              }
-            }
-          ],
-          "information_classes": [
-            "NEW_RELATIVE_DIVERGENCE",
-            "STRUCTURAL_CHANGE",
-            "SHORT_HISTORY_CURRENT_CHANGE"
-          ],
-          "discovery_spot": {
-            "price": 1.386,
-            "change_pct": 2.1370670596904784,
-            "amount": 1073580000.0,
-            "amplitude_pct": null,
-            "turnover_pct": null,
-            "volume_ratio": null,
-            "high": 1.415,
-            "low": 1.344,
-            "open": 1.349,
-            "prev_close": 1.357,
-            "return_60d_pct": null,
-            "return_ytd_pct": null,
-            "provider_timestamp": 1792382745000
-          },
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-10-16",
-            "sample_count": 90,
-            "avg_amount_20": 170507432.78
-          },
-          "comparison_basis": [
-            "历史趋势/状态变化",
-            "当前相对结构",
-            "成交与可执行性",
-            "风险收益",
-            "资本效率"
-          ],
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "history_source": "DISCOVERY_NODE_HISTORY",
-          "formal_quote": {
-            "market": "CN",
-            "market_name": "中国大陆",
-            "symbol": "159529",
-            "name": "标普消费ETF景顺",
-            "latest_price": 1.386,
-            "open": 1.349,
-            "high": 1.415,
-            "low": 1.344,
-            "prev_close": 1.357,
-            "volume": 770186400.0,
-            "amount": 1073580000.0,
-            "turnover": 1073580000.0,
-            "data_time_beijing": "2026-10-19T12:05:45+08:00",
-            "data_time_local": "2026-10-19T12:05:45+08:00",
-            "market_phase": "MIDDAY_BREAK",
-            "market_status_cn": "A股午间休市",
-            "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
-            "source": "tencent_qq",
-            "freshness": "SESSION_REFERENCE",
-            "quality_status": "PASS",
-            "direct_quote": true,
-            "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
-            "provider_symbol": "sz159529",
-            "provider_timestamp_ms": 1792382745000,
-            "evidence_fitness": {
-              "object_fact": true,
-              "observation_evaluation": true,
-              "capital_candidate_evaluation": true,
-              "executable_price": false,
-              "trade_amount_or_shares": false
-            },
-            "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission."
-          },
-          "formal_quote_status": "SESSION_REFERENCE_READY",
-          "formal_quote_evidence_fitness": {
-            "object_fact": true,
-            "observation_evaluation": true,
-            "capital_candidate_evaluation": true,
-            "executable_price": false,
-            "trade_amount_or_shares": false
-          },
-          "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。"
-        },
-        "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
-      },
-      {
-        "display_name": "中药ETF鹏华（159647）",
-        "code": "159647",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "data_availability": "DEGRADED",
-        "formal_quote_status": "SESSION_REFERENCE_READY",
-        "discovery_evidence": {
-          "code": "159647",
-          "name": "中药ETF鹏华",
-          "display_name": "中药ETF鹏华（159647）",
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "management_identity": null,
-          "auto_promote_to_observation": false,
-          "trial_confirm_permission": false,
-          "trade_signal": null,
-          "decision_output_generated": false,
-          "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
-          "entered_states": [],
-          "surfaced_states": [],
-          "information_classes": [
-            "NEW_RELATIVE_DIVERGENCE",
-            "STRUCTURAL_CHANGE",
-            "SHORT_HISTORY_CURRENT_CHANGE"
-          ],
-          "discovery_spot": {
-            "price": 0.906,
-            "change_pct": 1.912260967379087,
-            "amount": 19270000.0,
-            "amplitude_pct": null,
-            "turnover_pct": null,
-            "volume_ratio": null,
-            "high": 0.909,
-            "low": 0.884,
-            "open": 0.884,
-            "prev_close": 0.889,
-            "return_60d_pct": null,
-            "return_ytd_pct": null,
-            "provider_timestamp": 1792382712000
-          },
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-10-16",
-            "sample_count": 90,
-            "avg_amount_20": 12305673.15
-          },
-          "comparison_basis": [
-            "历史趋势/状态变化",
-            "当前相对结构",
-            "成交与可执行性",
-            "风险收益",
-            "资本效率"
-          ],
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "history_source": "DISCOVERY_NODE_HISTORY",
-          "formal_quote": {
-            "market": "CN",
-            "market_name": "中国大陆",
-            "symbol": "159647",
-            "name": "中药ETF鹏华",
-            "latest_price": 0.906,
-            "open": 0.884,
-            "high": 0.909,
-            "low": 0.884,
-            "prev_close": 0.889,
-            "volume": 21316200.0,
-            "amount": 19270000.0,
-            "turnover": 19270000.0,
-            "data_time_beijing": "2026-10-19T12:05:12+08:00",
-            "data_time_local": "2026-10-19T12:05:12+08:00",
-            "market_phase": "MIDDAY_BREAK",
-            "market_status_cn": "A股午间休市",
-            "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
-            "source": "tencent_qq",
-            "freshness": "SESSION_REFERENCE",
-            "quality_status": "PASS",
-            "direct_quote": true,
-            "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
-            "provider_symbol": "sz159647",
-            "provider_timestamp_ms": 1792382712000,
-            "evidence_fitness": {
-              "object_fact": true,
-              "observation_evaluation": true,
-              "capital_candidate_evaluation": true,
-              "executable_price": false,
-              "trade_amount_or_shares": false
-            },
-            "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission."
-          },
-          "formal_quote_status": "SESSION_REFERENCE_READY",
-          "formal_quote_evidence_fitness": {
-            "object_fact": true,
-            "observation_evaluation": true,
-            "capital_candidate_evaluation": true,
-            "executable_price": false,
-            "trade_amount_or_shares": false
-          },
-          "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。"
-        },
-        "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
-      },
-      {
-        "display_name": "恒生生物科技ETF摩根（520760）",
-        "code": "520760",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "data_availability": "DEGRADED",
-        "formal_quote_status": "SESSION_REFERENCE_READY",
-        "discovery_evidence": {
-          "code": "520760",
-          "name": "恒生生物科技ETF摩根",
-          "display_name": "恒生生物科技ETF摩根（520760）",
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "management_identity": null,
-          "auto_promote_to_observation": false,
-          "trial_confirm_permission": false,
-          "trade_signal": null,
-          "decision_output_generated": false,
-          "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
-          "entered_states": [],
-          "surfaced_states": [],
-          "information_classes": [
-            "NEW_RELATIVE_DIVERGENCE",
-            "STRUCTURAL_CHANGE",
-            "SHORT_HISTORY_CURRENT_CHANGE"
-          ],
-          "discovery_spot": {
-            "price": 0.952,
-            "change_pct": 3.365906623235615,
-            "amount": 46040000.0,
-            "amplitude_pct": null,
-            "turnover_pct": null,
-            "volume_ratio": null,
-            "high": 0.968,
-            "low": 0.93,
-            "open": 0.93,
-            "prev_close": 0.921,
-            "return_60d_pct": null,
-            "return_ytd_pct": null,
-            "provider_timestamp": 1792382740000
-          },
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-10-16",
-            "sample_count": 90,
-            "avg_amount_20": 12615386.0
-          },
-          "comparison_basis": [
-            "历史趋势/状态变化",
-            "当前相对结构",
-            "成交与可执行性",
-            "风险收益",
-            "资本效率"
-          ],
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "history_source": "DISCOVERY_NODE_HISTORY",
-          "formal_quote": {
-            "market": "CN",
-            "market_name": "中国大陆",
-            "symbol": "520760",
-            "name": "恒生生物科技ETF摩根",
-            "latest_price": 0.952,
-            "open": 0.93,
-            "high": 0.968,
-            "low": 0.93,
-            "prev_close": 0.921,
-            "volume": 48173500.0,
-            "amount": 46040000.0,
-            "turnover": 46040000.0,
-            "data_time_beijing": "2026-10-19T12:05:40+08:00",
-            "data_time_local": "2026-10-19T12:05:40+08:00",
-            "market_phase": "MIDDAY_BREAK",
-            "market_status_cn": "A股午间休市",
-            "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
-            "source": "tencent_qq",
-            "freshness": "SESSION_REFERENCE",
-            "quality_status": "PASS",
-            "direct_quote": true,
-            "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
-            "provider_symbol": "sh520760",
-            "provider_timestamp_ms": 1792382740000,
-            "evidence_fitness": {
-              "object_fact": true,
-              "observation_evaluation": true,
-              "capital_candidate_evaluation": true,
-              "executable_price": false,
-              "trade_amount_or_shares": false
-            },
-            "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission."
-          },
-          "formal_quote_status": "SESSION_REFERENCE_READY",
-          "formal_quote_evidence_fitness": {
-            "object_fact": true,
-            "observation_evaluation": true,
-            "capital_candidate_evaluation": true,
-            "executable_price": false,
-            "trade_amount_or_shares": false
-          },
-          "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。"
-        },
-        "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
-      }
-    ]
+    "formal_discovery_coverage_status": "NOT_REQUESTED",
+    "observation_eligibility_inputs": []
   },
   "intraday_path_features": {
-    "generated_at": "2026-10-19T04:10:57Z",
+    "generated_at": "2026-10-19T04:30:46Z",
     "market_date": "2026-10-19",
     "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
     "read_only": true,
@@ -4878,334 +4290,22 @@
   },
   "research_evidence": {
     "status": "READY",
-    "market_date": "2026-10-16",
-    "as_of_beijing": "2026-10-16T15:02:19+08:00",
+    "market_date": "2026-10-19",
+    "as_of_beijing": "2026-10-19T12:10:08+08:00",
     "evidence_time_semantics": "CURRENT_DATE_LATEST",
     "prior_research_as_of_beijing": "2026-09-24T13:27:47+08:00",
     "etf_evidence": [
       {
-        "display_name": "德国ETF（159561）",
-        "code": "159561",
-        "name": "德国ETF",
-        "close_return_pct": 1.7378,
-        "descriptive_daily_return_rank": 1,
-        "vs_universe_median_pct_points": 0.9935,
-        "vs_shanghai_pct_points": 1.5004,
-        "vs_chinext_pct_points": 2.1254,
-        "vs_star50_pct_points": 1.8017,
-        "recent_slope_pct_per_10m": 0.0229,
-        "sampling_coverage": "LOW",
-        "evidence_delta": {
-          "rank_improvement_places": 0,
-          "vs_universe_median_delta_pct_points": -0.1885,
-          "vs_chinext_delta_pct_points": -0.2705,
-          "recent_slope_delta_pct_per_10m": 0.0,
-          "direction": "WEAKENED"
-        },
-        "comparison_dimensions": [
-          "相对ETF全集中位数",
-          "相对上证指数",
-          "相对创业板指",
-          "近期路径斜率",
-          "描述性当日收益排名"
-        ],
-        "capital_efficiency_score": null
-      },
-      {
-        "display_name": "纳指ETF（159941）",
-        "code": "159941",
-        "name": "纳指ETF",
-        "close_return_pct": 1.578,
-        "descriptive_daily_return_rank": 2,
-        "vs_universe_median_pct_points": 0.8338,
-        "vs_shanghai_pct_points": 1.3407,
-        "vs_chinext_pct_points": 1.9657,
-        "vs_star50_pct_points": 1.642,
-        "recent_slope_pct_per_10m": -0.0168,
-        "sampling_coverage": "LOW",
-        "evidence_delta": {
-          "rank_improvement_places": -1,
-          "vs_universe_median_delta_pct_points": 0.0018,
-          "vs_chinext_delta_pct_points": -0.0802,
-          "recent_slope_delta_pct_per_10m": 0.1168,
-          "direction": "UNCHANGED"
-        },
-        "comparison_dimensions": [
-          "相对ETF全集中位数",
-          "相对上证指数",
-          "相对创业板指",
-          "近期路径斜率",
-          "描述性当日收益排名"
-        ],
-        "capital_efficiency_score": null
-      },
-      {
-        "display_name": "煤炭ETF（515220）",
-        "code": "515220",
-        "name": "煤炭ETF",
-        "close_return_pct": 1.2,
-        "descriptive_daily_return_rank": 3,
-        "vs_universe_median_pct_points": 0.4557,
-        "vs_shanghai_pct_points": 0.9626,
-        "vs_chinext_pct_points": 1.5877,
-        "vs_star50_pct_points": 1.264,
-        "recent_slope_pct_per_10m": 0.0581,
-        "sampling_coverage": "LOW",
-        "evidence_delta": {
-          "rank_improvement_places": 0,
-          "vs_universe_median_delta_pct_points": -0.0347,
-          "vs_chinext_delta_pct_points": -0.1166,
-          "recent_slope_delta_pct_per_10m": -0.1581,
-          "direction": "WEAKENED"
-        },
-        "comparison_dimensions": [
-          "相对ETF全集中位数",
-          "相对上证指数",
-          "相对创业板指",
-          "近期路径斜率",
-          "描述性当日收益排名"
-        ],
-        "capital_efficiency_score": null
-      },
-      {
-        "display_name": "电网设备ETF（159326）",
-        "code": "159326",
-        "name": "电网设备ETF",
-        "close_return_pct": 1.1872,
-        "descriptive_daily_return_rank": 4,
-        "vs_universe_median_pct_points": 0.4429,
-        "vs_shanghai_pct_points": 0.9498,
-        "vs_chinext_pct_points": 1.5748,
-        "vs_star50_pct_points": 1.2511,
-        "recent_slope_pct_per_10m": -0.0602,
-        "sampling_coverage": "LOW",
-        "evidence_delta": {
-          "rank_improvement_places": 0,
-          "vs_universe_median_delta_pct_points": 0.0065,
-          "vs_chinext_delta_pct_points": -0.0754,
-          "recent_slope_delta_pct_per_10m": 0.0,
-          "direction": "UNCHANGED"
-        },
-        "comparison_dimensions": [
-          "相对ETF全集中位数",
-          "相对上证指数",
-          "相对创业板指",
-          "近期路径斜率",
-          "描述性当日收益排名"
-        ],
-        "capital_efficiency_score": null
-      },
-      {
-        "display_name": "日经ETF（513520）",
-        "code": "513520",
-        "name": "日经ETF",
-        "close_return_pct": 1.0277,
-        "descriptive_daily_return_rank": 5,
-        "vs_universe_median_pct_points": 0.2834,
-        "vs_shanghai_pct_points": 0.7903,
-        "vs_chinext_pct_points": 1.4154,
-        "vs_star50_pct_points": 1.0917,
-        "recent_slope_pct_per_10m": -0.0578,
-        "sampling_coverage": "LOW",
-        "evidence_delta": {
-          "rank_improvement_places": 0,
-          "vs_universe_median_delta_pct_points": -0.0713,
-          "vs_chinext_delta_pct_points": -0.1532,
-          "recent_slope_delta_pct_per_10m": 0.131,
-          "direction": "UNCHANGED"
-        },
-        "comparison_dimensions": [
-          "相对ETF全集中位数",
-          "相对上证指数",
-          "相对创业板指",
-          "近期路径斜率",
-          "描述性当日收益排名"
-        ],
-        "capital_efficiency_score": null
-      },
-      {
-        "display_name": "黄金ETF（518880）",
-        "code": "518880",
-        "name": "黄金ETF",
-        "close_return_pct": 0.9679,
-        "descriptive_daily_return_rank": 6,
-        "vs_universe_median_pct_points": 0.2236,
-        "vs_shanghai_pct_points": 0.7305,
-        "vs_chinext_pct_points": 1.3556,
-        "vs_star50_pct_points": 1.0319,
-        "recent_slope_pct_per_10m": 0.0068,
-        "sampling_coverage": "LOW",
-        "evidence_delta": {
-          "rank_improvement_places": -1,
-          "vs_universe_median_delta_pct_points": -0.0802,
-          "vs_chinext_delta_pct_points": -0.1622,
-          "recent_slope_delta_pct_per_10m": 0.0113,
-          "direction": "WEAKENED"
-        },
-        "comparison_dimensions": [
-          "相对ETF全集中位数",
-          "相对上证指数",
-          "相对创业板指",
-          "近期路径斜率",
-          "描述性当日收益排名"
-        ],
-        "capital_efficiency_score": null
-      },
-      {
-        "display_name": "恒生科技ETF（513180）",
-        "code": "513180",
-        "name": "恒生科技ETF",
-        "close_return_pct": 0.7843,
-        "descriptive_daily_return_rank": 7,
-        "vs_universe_median_pct_points": 0.04,
-        "vs_shanghai_pct_points": 0.547,
-        "vs_chinext_pct_points": 1.172,
-        "vs_star50_pct_points": 0.8483,
-        "recent_slope_pct_per_10m": -0.1128,
-        "sampling_coverage": "LOW",
-        "evidence_delta": {
-          "rank_improvement_places": 2,
-          "vs_universe_median_delta_pct_points": 0.2483,
-          "vs_chinext_delta_pct_points": 0.1665,
-          "recent_slope_delta_pct_per_10m": 0.3663,
-          "direction": "IMPROVED"
-        },
-        "comparison_dimensions": [
-          "相对ETF全集中位数",
-          "相对上证指数",
-          "相对创业板指",
-          "近期路径斜率",
-          "描述性当日收益排名"
-        ],
-        "capital_efficiency_score": null
-      },
-      {
-        "display_name": "中证红利ETF招商（515080）",
-        "code": "515080",
-        "name": "中证红利ETF招商",
-        "close_return_pct": 0.7042,
-        "descriptive_daily_return_rank": 8,
-        "vs_universe_median_pct_points": -0.04,
-        "vs_shanghai_pct_points": 0.4669,
-        "vs_chinext_pct_points": 1.0919,
-        "vs_star50_pct_points": 0.7682,
-        "recent_slope_pct_per_10m": 0.0278,
-        "sampling_coverage": "LOW",
-        "evidence_delta": {},
-        "comparison_dimensions": [],
-        "capital_efficiency_score": null
-      },
-      {
-        "display_name": "能源化工ETF（159981）",
-        "code": "159981",
-        "name": "能源化工ETF",
-        "close_return_pct": 0.2731,
-        "descriptive_daily_return_rank": 9,
-        "vs_universe_median_pct_points": -0.4712,
-        "vs_shanghai_pct_points": 0.0357,
-        "vs_chinext_pct_points": 0.6608,
-        "vs_star50_pct_points": 0.3371,
-        "recent_slope_pct_per_10m": 0.016,
-        "sampling_coverage": "LOW",
-        "evidence_delta": {},
-        "comparison_dimensions": [],
-        "capital_efficiency_score": null
-      },
-      {
-        "display_name": "通信ETF（515880）",
-        "code": "515880",
-        "name": "通信ETF",
-        "close_return_pct": 0.1919,
-        "descriptive_daily_return_rank": 10,
-        "vs_universe_median_pct_points": -0.5523,
-        "vs_shanghai_pct_points": -0.0454,
-        "vs_chinext_pct_points": 0.5796,
-        "vs_star50_pct_points": 0.2559,
-        "recent_slope_pct_per_10m": -0.0556,
-        "sampling_coverage": "LOW",
-        "evidence_delta": {
-          "rank_improvement_places": -1,
-          "vs_universe_median_delta_pct_points": 0.0286,
-          "vs_chinext_delta_pct_points": -0.0532,
-          "recent_slope_delta_pct_per_10m": 0.0,
-          "direction": "UNCHANGED"
-        },
-        "comparison_dimensions": [
-          "相对ETF全集中位数",
-          "相对上证指数",
-          "相对创业板指",
-          "近期路径斜率",
-          "描述性当日收益排名"
-        ],
-        "capital_efficiency_score": null
-      },
-      {
-        "display_name": "科创创业ETF（159781）",
-        "code": "159781",
-        "name": "科创创业ETF",
-        "close_return_pct": -0.2339,
-        "descriptive_daily_return_rank": 11,
-        "vs_universe_median_pct_points": -0.9782,
-        "vs_shanghai_pct_points": -0.4713,
-        "vs_chinext_pct_points": 0.1538,
-        "vs_star50_pct_points": -0.1699,
-        "recent_slope_pct_per_10m": -0.0686,
-        "sampling_coverage": "LOW",
-        "evidence_delta": {
-          "rank_improvement_places": 0,
-          "vs_universe_median_delta_pct_points": -0.1139,
-          "vs_chinext_delta_pct_points": -0.1959,
-          "recent_slope_delta_pct_per_10m": 0.2857,
-          "direction": "UNCHANGED"
-        },
-        "comparison_dimensions": [
-          "相对ETF全集中位数",
-          "相对上证指数",
-          "相对创业板指",
-          "近期路径斜率",
-          "描述性当日收益排名"
-        ],
-        "capital_efficiency_score": null
-      },
-      {
-        "display_name": "科创50ETF（588000）",
-        "code": "588000",
-        "name": "科创50ETF",
-        "close_return_pct": -0.5563,
-        "descriptive_daily_return_rank": 12,
-        "vs_universe_median_pct_points": -1.3006,
-        "vs_shanghai_pct_points": -0.7937,
-        "vs_chinext_pct_points": -0.1686,
-        "vs_star50_pct_points": -0.4923,
-        "recent_slope_pct_per_10m": -0.1411,
-        "sampling_coverage": "LOW",
-        "evidence_delta": {
-          "rank_improvement_places": 0,
-          "vs_universe_median_delta_pct_points": 0.0,
-          "vs_chinext_delta_pct_points": -0.082,
-          "recent_slope_delta_pct_per_10m": 0.1737,
-          "direction": "UNCHANGED"
-        },
-        "comparison_dimensions": [
-          "相对ETF全集中位数",
-          "相对上证指数",
-          "相对创业板指",
-          "近期路径斜率",
-          "描述性当日收益排名"
-        ],
-        "capital_efficiency_score": null
-      },
-      {
         "display_name": "标普油气ETF（513350）",
         "code": "513350",
         "name": "标普油气ETF",
-        "close_return_pct": -1.4841,
-        "descriptive_daily_return_rank": 13,
-        "vs_universe_median_pct_points": -2.2284,
-        "vs_shanghai_pct_points": -1.7215,
-        "vs_chinext_pct_points": -1.0964,
-        "vs_star50_pct_points": -1.4201,
-        "recent_slope_pct_per_10m": -0.0209,
+        "close_return_pct": 2.726,
+        "descriptive_daily_return_rank": 1,
+        "vs_universe_median_pct_points": 2.9474,
+        "vs_shanghai_pct_points": 2.5667,
+        "vs_chinext_pct_points": 3.7965,
+        "vs_star50_pct_points": 4.4085,
+        "recent_slope_pct_per_10m": 0.0,
         "sampling_coverage": "LOW",
         "evidence_delta": {
           "rank_improvement_places": 0,
@@ -5224,16 +4324,172 @@
         "capital_efficiency_score": null
       },
       {
+        "display_name": "电网设备ETF（159326）",
+        "code": "159326",
+        "name": "电网设备ETF",
+        "close_return_pct": 1.6563,
+        "descriptive_daily_return_rank": 2,
+        "vs_universe_median_pct_points": 1.8777,
+        "vs_shanghai_pct_points": 1.497,
+        "vs_chinext_pct_points": 2.7269,
+        "vs_star50_pct_points": 3.3389,
+        "recent_slope_pct_per_10m": 0.0,
+        "sampling_coverage": "LOW",
+        "evidence_delta": {
+          "rank_improvement_places": 0,
+          "vs_universe_median_delta_pct_points": 0.0065,
+          "vs_chinext_delta_pct_points": -0.0754,
+          "recent_slope_delta_pct_per_10m": 0.0,
+          "direction": "UNCHANGED"
+        },
+        "comparison_dimensions": [
+          "相对ETF全集中位数",
+          "相对上证指数",
+          "相对创业板指",
+          "近期路径斜率",
+          "描述性当日收益排名"
+        ],
+        "capital_efficiency_score": null
+      },
+      {
+        "display_name": "煤炭ETF（515220）",
+        "code": "515220",
+        "name": "煤炭ETF",
+        "close_return_pct": 1.3439,
+        "descriptive_daily_return_rank": 3,
+        "vs_universe_median_pct_points": 1.5653,
+        "vs_shanghai_pct_points": 1.1846,
+        "vs_chinext_pct_points": 2.4144,
+        "vs_star50_pct_points": 3.0264,
+        "recent_slope_pct_per_10m": 0.0,
+        "sampling_coverage": "LOW",
+        "evidence_delta": {
+          "rank_improvement_places": 0,
+          "vs_universe_median_delta_pct_points": -0.0347,
+          "vs_chinext_delta_pct_points": -0.1166,
+          "recent_slope_delta_pct_per_10m": -0.1581,
+          "direction": "WEAKENED"
+        },
+        "comparison_dimensions": [
+          "相对ETF全集中位数",
+          "相对上证指数",
+          "相对创业板指",
+          "近期路径斜率",
+          "描述性当日收益排名"
+        ],
+        "capital_efficiency_score": null
+      },
+      {
+        "display_name": "中证红利ETF招商（515080）",
+        "code": "515080",
+        "name": "中证红利ETF招商",
+        "close_return_pct": 0.89,
+        "descriptive_daily_return_rank": 4,
+        "vs_universe_median_pct_points": 1.1114,
+        "vs_shanghai_pct_points": 0.7307,
+        "vs_chinext_pct_points": 1.9606,
+        "vs_star50_pct_points": 2.5726,
+        "recent_slope_pct_per_10m": 0.0,
+        "sampling_coverage": "LOW",
+        "evidence_delta": {},
+        "comparison_dimensions": [],
+        "capital_efficiency_score": null
+      },
+      {
+        "display_name": "德国ETF（159561）",
+        "code": "159561",
+        "name": "德国ETF",
+        "close_return_pct": 0.0776,
+        "descriptive_daily_return_rank": 5,
+        "vs_universe_median_pct_points": 0.2991,
+        "vs_shanghai_pct_points": -0.0817,
+        "vs_chinext_pct_points": 1.1482,
+        "vs_star50_pct_points": 1.7602,
+        "recent_slope_pct_per_10m": 0.0,
+        "sampling_coverage": "LOW",
+        "evidence_delta": {
+          "rank_improvement_places": 0,
+          "vs_universe_median_delta_pct_points": -0.1885,
+          "vs_chinext_delta_pct_points": -0.2705,
+          "recent_slope_delta_pct_per_10m": 0.0,
+          "direction": "WEAKENED"
+        },
+        "comparison_dimensions": [
+          "相对ETF全集中位数",
+          "相对上证指数",
+          "相对创业板指",
+          "近期路径斜率",
+          "描述性当日收益排名"
+        ],
+        "capital_efficiency_score": null
+      },
+      {
+        "display_name": "黄金ETF（518880）",
+        "code": "518880",
+        "name": "黄金ETF",
+        "close_return_pct": -0.0351,
+        "descriptive_daily_return_rank": 6,
+        "vs_universe_median_pct_points": 0.1863,
+        "vs_shanghai_pct_points": -0.1944,
+        "vs_chinext_pct_points": 1.0355,
+        "vs_star50_pct_points": 1.6475,
+        "recent_slope_pct_per_10m": 0.0,
+        "sampling_coverage": "LOW",
+        "evidence_delta": {
+          "rank_improvement_places": -1,
+          "vs_universe_median_delta_pct_points": -0.0802,
+          "vs_chinext_delta_pct_points": -0.1622,
+          "recent_slope_delta_pct_per_10m": 0.0113,
+          "direction": "WEAKENED"
+        },
+        "comparison_dimensions": [
+          "相对ETF全集中位数",
+          "相对上证指数",
+          "相对创业板指",
+          "近期路径斜率",
+          "描述性当日收益排名"
+        ],
+        "capital_efficiency_score": null
+      },
+      {
+        "display_name": "通信ETF（515880）",
+        "code": "515880",
+        "name": "通信ETF",
+        "close_return_pct": -0.1916,
+        "descriptive_daily_return_rank": 7,
+        "vs_universe_median_pct_points": 0.0298,
+        "vs_shanghai_pct_points": -0.3509,
+        "vs_chinext_pct_points": 0.879,
+        "vs_star50_pct_points": 1.491,
+        "recent_slope_pct_per_10m": 0.0,
+        "sampling_coverage": "LOW",
+        "evidence_delta": {
+          "rank_improvement_places": -1,
+          "vs_universe_median_delta_pct_points": 0.0286,
+          "vs_chinext_delta_pct_points": -0.0532,
+          "recent_slope_delta_pct_per_10m": 0.0,
+          "direction": "UNCHANGED"
+        },
+        "comparison_dimensions": [
+          "相对ETF全集中位数",
+          "相对上证指数",
+          "相对创业板指",
+          "近期路径斜率",
+          "描述性当日收益排名"
+        ],
+        "capital_efficiency_score": null
+      },
+      {
         "display_name": "创新药ETF（159992）",
         "code": "159992",
         "name": "创新药ETF",
-        "close_return_pct": -1.7284,
-        "descriptive_daily_return_rank": 14,
-        "vs_universe_median_pct_points": -2.4727,
-        "vs_shanghai_pct_points": -1.9658,
-        "vs_chinext_pct_points": -1.3407,
-        "vs_star50_pct_points": -1.6644,
-        "recent_slope_pct_per_10m": -0.3591,
+        "close_return_pct": -0.2513,
+        "descriptive_daily_return_rank": 8,
+        "vs_universe_median_pct_points": -0.0298,
+        "vs_shanghai_pct_points": -0.4106,
+        "vs_chinext_pct_points": 0.8193,
+        "vs_star50_pct_points": 1.4313,
+        "recent_slope_pct_per_10m": 0.0,
         "sampling_coverage": "LOW",
         "evidence_delta": {
           "rank_improvement_places": 1,
@@ -5250,12 +4506,168 @@
           "描述性当日收益排名"
         ],
         "capital_efficiency_score": null
+      },
+      {
+        "display_name": "恒生科技ETF（513180）",
+        "code": "513180",
+        "name": "恒生科技ETF",
+        "close_return_pct": -0.3891,
+        "descriptive_daily_return_rank": 9,
+        "vs_universe_median_pct_points": -0.1677,
+        "vs_shanghai_pct_points": -0.5484,
+        "vs_chinext_pct_points": 0.6815,
+        "vs_star50_pct_points": 1.2934,
+        "recent_slope_pct_per_10m": 0.0,
+        "sampling_coverage": "LOW",
+        "evidence_delta": {
+          "rank_improvement_places": 2,
+          "vs_universe_median_delta_pct_points": 0.2483,
+          "vs_chinext_delta_pct_points": 0.1665,
+          "recent_slope_delta_pct_per_10m": 0.3663,
+          "direction": "IMPROVED"
+        },
+        "comparison_dimensions": [
+          "相对ETF全集中位数",
+          "相对上证指数",
+          "相对创业板指",
+          "近期路径斜率",
+          "描述性当日收益排名"
+        ],
+        "capital_efficiency_score": null
+      },
+      {
+        "display_name": "日经ETF（513520）",
+        "code": "513520",
+        "name": "日经ETF",
+        "close_return_pct": -0.6192,
+        "descriptive_daily_return_rank": 10,
+        "vs_universe_median_pct_points": -0.3978,
+        "vs_shanghai_pct_points": -0.7785,
+        "vs_chinext_pct_points": 0.4514,
+        "vs_star50_pct_points": 1.0634,
+        "recent_slope_pct_per_10m": 0.0,
+        "sampling_coverage": "LOW",
+        "evidence_delta": {
+          "rank_improvement_places": 0,
+          "vs_universe_median_delta_pct_points": -0.0713,
+          "vs_chinext_delta_pct_points": -0.1532,
+          "recent_slope_delta_pct_per_10m": 0.131,
+          "direction": "UNCHANGED"
+        },
+        "comparison_dimensions": [
+          "相对ETF全集中位数",
+          "相对上证指数",
+          "相对创业板指",
+          "近期路径斜率",
+          "描述性当日收益排名"
+        ],
+        "capital_efficiency_score": null
+      },
+      {
+        "display_name": "能源化工ETF（159981）",
+        "code": "159981",
+        "name": "能源化工ETF",
+        "close_return_pct": -0.8715,
+        "descriptive_daily_return_rank": 11,
+        "vs_universe_median_pct_points": -0.65,
+        "vs_shanghai_pct_points": -1.0308,
+        "vs_chinext_pct_points": 0.1991,
+        "vs_star50_pct_points": 0.8111,
+        "recent_slope_pct_per_10m": 0.0,
+        "sampling_coverage": "LOW",
+        "evidence_delta": {},
+        "comparison_dimensions": [],
+        "capital_efficiency_score": null
+      },
+      {
+        "display_name": "科创50ETF（588000）",
+        "code": "588000",
+        "name": "科创50ETF",
+        "close_return_pct": -1.1888,
+        "descriptive_daily_return_rank": 12,
+        "vs_universe_median_pct_points": -0.9674,
+        "vs_shanghai_pct_points": -1.3481,
+        "vs_chinext_pct_points": -0.1183,
+        "vs_star50_pct_points": 0.4937,
+        "recent_slope_pct_per_10m": 0.0,
+        "sampling_coverage": "LOW",
+        "evidence_delta": {
+          "rank_improvement_places": 0,
+          "vs_universe_median_delta_pct_points": 0.0,
+          "vs_chinext_delta_pct_points": -0.082,
+          "recent_slope_delta_pct_per_10m": 0.1737,
+          "direction": "UNCHANGED"
+        },
+        "comparison_dimensions": [
+          "相对ETF全集中位数",
+          "相对上证指数",
+          "相对创业板指",
+          "近期路径斜率",
+          "描述性当日收益排名"
+        ],
+        "capital_efficiency_score": null
+      },
+      {
+        "display_name": "科创创业ETF（159781）",
+        "code": "159781",
+        "name": "科创创业ETF",
+        "close_return_pct": -1.2896,
+        "descriptive_daily_return_rank": 13,
+        "vs_universe_median_pct_points": -1.0682,
+        "vs_shanghai_pct_points": -1.4489,
+        "vs_chinext_pct_points": -0.219,
+        "vs_star50_pct_points": 0.393,
+        "recent_slope_pct_per_10m": 0.0,
+        "sampling_coverage": "LOW",
+        "evidence_delta": {
+          "rank_improvement_places": 0,
+          "vs_universe_median_delta_pct_points": -0.1139,
+          "vs_chinext_delta_pct_points": -0.1959,
+          "recent_slope_delta_pct_per_10m": 0.2857,
+          "direction": "UNCHANGED"
+        },
+        "comparison_dimensions": [
+          "相对ETF全集中位数",
+          "相对上证指数",
+          "相对创业板指",
+          "近期路径斜率",
+          "描述性当日收益排名"
+        ],
+        "capital_efficiency_score": null
+      },
+      {
+        "display_name": "纳指ETF（159941）",
+        "code": "159941",
+        "name": "纳指ETF",
+        "close_return_pct": -1.3234,
+        "descriptive_daily_return_rank": 14,
+        "vs_universe_median_pct_points": -1.1019,
+        "vs_shanghai_pct_points": -1.4827,
+        "vs_chinext_pct_points": -0.2528,
+        "vs_star50_pct_points": 0.3592,
+        "recent_slope_pct_per_10m": 0.0,
+        "sampling_coverage": "LOW",
+        "evidence_delta": {
+          "rank_improvement_places": -1,
+          "vs_universe_median_delta_pct_points": 0.0018,
+          "vs_chinext_delta_pct_points": -0.0802,
+          "recent_slope_delta_pct_per_10m": 0.1168,
+          "direction": "UNCHANGED"
+        },
+        "comparison_dimensions": [
+          "相对ETF全集中位数",
+          "相对上证指数",
+          "相对创业板指",
+          "近期路径斜率",
+          "描述性当日收益排名"
+        ],
+        "capital_efficiency_score": null
       }
     ],
     "skfolio_risk_evidence": {
       "status": "READY",
       "mode": "SKFOLIO_VALIDATED_RISK_EVIDENCE",
-      "risk_data_end": "2026-10-16",
+      "risk_data_end": "2026-10-19",
       "data_alignment": "ALIGNED_WITH_CURRENT_MARKET_DATE",
       "decision_block_reason": "",
       "use_in_current_decision": true,
@@ -5263,12 +4675,12 @@
       "risk_side_release_efficiency": [
         {
           "display_name": "创新药ETF（159992）",
-          "risk_side_release_efficiency": 0.2825,
+          "risk_side_release_efficiency": 0.2821,
           "account_etf_weight": 0.3924
         },
         {
           "display_name": "纳指ETF（159941）",
-          "risk_side_release_efficiency": 0.2303,
+          "risk_side_release_efficiency": 0.2312,
           "account_etf_weight": 0.6076
         }
       ],
@@ -5383,7 +4795,7 @@
     },
     "market_structure_context": {
       "schema_version": "1.4",
-      "generated_at": "2026-10-19T04:11:03Z",
+      "generated_at": "2026-10-19T04:30:54Z",
       "market_date": "2026-10-19",
       "as_of_beijing": "2026-10-19T12:10:08+08:00",
       "source_snapshot": "data/market/snapshots/2026-10-19_121008.json",
@@ -5518,7 +4930,7 @@
             "evidence_id": "participation_expansion_with_positive_structure",
             "display_name": "成交参与扩大 × 有效价格结构确认",
             "decision_market_date": "2026-10-19",
-            "completed_bar_date": "2026-10-16",
+            "completed_bar_date": "2026-10-19",
             "use_as_decision_evidence": true,
             "can_generate_decision_independently": false,
             "automatic_trade": false,
@@ -5528,10 +4940,10 @@
             "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。放量上涨后的弱收盘位置本身不得机械解释为派发或应快速减仓。",
             "failure_contract": "输入不足或不可验证时降级并省略增强方向，不沿用无法重新构造的旧active状态。",
             "status": "READY",
-            "amount": 8936650000.0,
-            "prior_20d_average_amount": 5464621575.0,
-            "participation_ratio_vs_prior_20d": 1.6354,
-            "research_group_participation_expanded": true,
+            "amount": 5035980000.0,
+            "prior_20d_average_amount": 5666301075.0,
+            "participation_ratio_vs_prior_20d": 0.8888,
+            "research_group_participation_expanded": false,
             "breakout_20d": false,
             "true_ma20_recovery": false,
             "positive_structure": false,
@@ -5660,7 +5072,7 @@
             "evidence_id": "participation_expansion_with_positive_structure",
             "display_name": "成交参与扩大 × 有效价格结构确认",
             "decision_market_date": "2026-10-19",
-            "completed_bar_date": "2026-10-16",
+            "completed_bar_date": "2026-10-19",
             "use_as_decision_evidence": true,
             "can_generate_decision_independently": false,
             "automatic_trade": false,
@@ -5670,10 +5082,10 @@
             "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。放量上涨后的弱收盘位置本身不得机械解释为派发或应快速减仓。",
             "failure_contract": "输入不足或不可验证时降级并省略增强方向，不沿用无法重新构造的旧active状态。",
             "status": "READY",
-            "amount": 474610000.0,
-            "prior_20d_average_amount": 359006698.0,
-            "participation_ratio_vs_prior_20d": 1.322,
-            "research_group_participation_expanded": true,
+            "amount": 212510000.0,
+            "prior_20d_average_amount": 360385698.0,
+            "participation_ratio_vs_prior_20d": 0.5897,
+            "research_group_participation_expanded": false,
             "breakout_20d": false,
             "true_ma20_recovery": false,
             "positive_structure": false,
@@ -5799,7 +5211,7 @@
             "evidence_id": "participation_expansion_with_positive_structure",
             "display_name": "成交参与扩大 × 有效价格结构确认",
             "decision_market_date": "2026-10-19",
-            "completed_bar_date": "2026-10-16",
+            "completed_bar_date": "2026-10-19",
             "use_as_decision_evidence": true,
             "can_generate_decision_independently": false,
             "automatic_trade": false,
@@ -5809,17 +5221,17 @@
             "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。放量上涨后的弱收盘位置本身不得机械解释为派发或应快速减仓。",
             "failure_contract": "输入不足或不可验证时降级并省略增强方向，不沿用无法重新构造的旧active状态。",
             "status": "READY",
-            "amount": 1051810000.0,
-            "prior_20d_average_amount": 736226184.5,
-            "participation_ratio_vs_prior_20d": 1.4287,
-            "research_group_participation_expanded": true,
-            "breakout_20d": true,
+            "amount": 487490000.0,
+            "prior_20d_average_amount": 761053684.5,
+            "participation_ratio_vs_prior_20d": 0.6405,
+            "research_group_participation_expanded": false,
+            "breakout_20d": false,
             "true_ma20_recovery": false,
-            "positive_structure": true,
-            "structure_type": "20D_BREAKOUT",
-            "enhancement_active": true,
-            "direction": "ENHANCE",
-            "interpretation_cn": "最近完整收盘的成交参与扩大且已有突破／真实修复结构，作为结构确认增强证据；若当日上涨但收盘位置偏弱，不得仅据此解释为派发或机械减仓。",
+            "positive_structure": false,
+            "structure_type": "NONE",
+            "enhancement_active": false,
+            "direction": "NOT_ACTIVE",
+            "interpretation_cn": "最近完整收盘未同时满足成交参与扩大与有效结构确认，不激活该增强证据；不形成反向看空。",
             "source": "events/research/daily_features + market_structure_context"
           },
           "intraday_path_risk_review": {
@@ -5938,7 +5350,7 @@
             "evidence_id": "participation_expansion_with_positive_structure",
             "display_name": "成交参与扩大 × 有效价格结构确认",
             "decision_market_date": "2026-10-19",
-            "completed_bar_date": "2026-10-16",
+            "completed_bar_date": "2026-10-19",
             "use_as_decision_evidence": true,
             "can_generate_decision_independently": false,
             "automatic_trade": false,
@@ -5948,9 +5360,9 @@
             "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。放量上涨后的弱收盘位置本身不得机械解释为派发或应快速减仓。",
             "failure_contract": "输入不足或不可验证时降级并省略增强方向，不沿用无法重新构造的旧active状态。",
             "status": "READY",
-            "amount": 1821980000.0,
-            "prior_20d_average_amount": 1559918690.0,
-            "participation_ratio_vs_prior_20d": 1.168,
+            "amount": 492580000.0,
+            "prior_20d_average_amount": 1576814190.0,
+            "participation_ratio_vs_prior_20d": 0.3124,
             "research_group_participation_expanded": false,
             "breakout_20d": false,
             "true_ma20_recovery": false,
@@ -6077,7 +5489,7 @@
             "evidence_id": "participation_expansion_with_positive_structure",
             "display_name": "成交参与扩大 × 有效价格结构确认",
             "decision_market_date": "2026-10-19",
-            "completed_bar_date": "2026-10-16",
+            "completed_bar_date": "2026-10-19",
             "use_as_decision_evidence": true,
             "can_generate_decision_independently": false,
             "automatic_trade": false,
@@ -6087,9 +5499,9 @@
             "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。放量上涨后的弱收盘位置本身不得机械解释为派发或应快速减仓。",
             "failure_contract": "输入不足或不可验证时降级并省略增强方向，不沿用无法重新构造的旧active状态。",
             "status": "READY",
-            "amount": 76720000.0,
-            "prior_20d_average_amount": 66315478.95,
-            "participation_ratio_vs_prior_20d": 1.1569,
+            "amount": 26130000.0,
+            "prior_20d_average_amount": 67120478.95,
+            "participation_ratio_vs_prior_20d": 0.3893,
             "research_group_participation_expanded": false,
             "breakout_20d": false,
             "true_ma20_recovery": false,
@@ -6216,7 +5628,7 @@
             "evidence_id": "participation_expansion_with_positive_structure",
             "display_name": "成交参与扩大 × 有效价格结构确认",
             "decision_market_date": "2026-10-19",
-            "completed_bar_date": "2026-10-16",
+            "completed_bar_date": "2026-10-19",
             "use_as_decision_evidence": true,
             "can_generate_decision_independently": false,
             "automatic_trade": false,
@@ -6226,10 +5638,10 @@
             "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。放量上涨后的弱收盘位置本身不得机械解释为派发或应快速减仓。",
             "failure_contract": "输入不足或不可验证时降级并省略增强方向，不沿用无法重新构造的旧active状态。",
             "status": "READY",
-            "amount": 288070000.0,
-            "prior_20d_average_amount": 203086101.0,
-            "participation_ratio_vs_prior_20d": 1.4185,
-            "research_group_participation_expanded": true,
+            "amount": 102430000.0,
+            "prior_20d_average_amount": 204532101.0,
+            "participation_ratio_vs_prior_20d": 0.5008,
+            "research_group_participation_expanded": false,
             "breakout_20d": false,
             "true_ma20_recovery": false,
             "positive_structure": false,
@@ -6355,7 +5767,7 @@
             "evidence_id": "participation_expansion_with_positive_structure",
             "display_name": "成交参与扩大 × 有效价格结构确认",
             "decision_market_date": "2026-10-19",
-            "completed_bar_date": "2026-10-16",
+            "completed_bar_date": "2026-10-19",
             "use_as_decision_evidence": true,
             "can_generate_decision_independently": false,
             "automatic_trade": false,
@@ -6365,9 +5777,9 @@
             "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。放量上涨后的弱收盘位置本身不得机械解释为派发或应快速减仓。",
             "failure_contract": "输入不足或不可验证时降级并省略增强方向，不沿用无法重新构造的旧active状态。",
             "status": "READY",
-            "amount": 2847790000.0,
-            "prior_20d_average_amount": 4576004540.0,
-            "participation_ratio_vs_prior_20d": 0.6223,
+            "amount": 1327220000.0,
+            "prior_20d_average_amount": 4495259040.0,
+            "participation_ratio_vs_prior_20d": 0.2952,
             "research_group_participation_expanded": false,
             "breakout_20d": false,
             "true_ma20_recovery": false,
@@ -6496,7 +5908,7 @@
             "evidence_id": "participation_expansion_with_positive_structure",
             "display_name": "成交参与扩大 × 有效价格结构确认",
             "decision_market_date": "2026-10-19",
-            "completed_bar_date": "2026-10-16",
+            "completed_bar_date": "2026-10-19",
             "use_as_decision_evidence": true,
             "can_generate_decision_independently": false,
             "automatic_trade": false,
@@ -6506,10 +5918,10 @@
             "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。放量上涨后的弱收盘位置本身不得机械解释为派发或应快速减仓。",
             "failure_contract": "输入不足或不可验证时降级并省略增强方向，不沿用无法重新构造的旧active状态。",
             "status": "READY",
-            "amount": 972200000.0,
-            "prior_20d_average_amount": 658787886.0,
-            "participation_ratio_vs_prior_20d": 1.4757,
-            "research_group_participation_expanded": true,
+            "amount": 388320000.0,
+            "prior_20d_average_amount": 676435386.0,
+            "participation_ratio_vs_prior_20d": 0.5741,
+            "research_group_participation_expanded": false,
             "breakout_20d": false,
             "true_ma20_recovery": false,
             "positive_structure": false,
@@ -6638,7 +6050,7 @@
             "evidence_id": "participation_expansion_with_positive_structure",
             "display_name": "成交参与扩大 × 有效价格结构确认",
             "decision_market_date": "2026-10-19",
-            "completed_bar_date": "2026-10-16",
+            "completed_bar_date": "2026-10-19",
             "use_as_decision_evidence": true,
             "can_generate_decision_independently": false,
             "automatic_trade": false,
@@ -6648,9 +6060,9 @@
             "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。放量上涨后的弱收盘位置本身不得机械解释为派发或应快速减仓。",
             "failure_contract": "输入不足或不可验证时降级并省略增强方向，不沿用无法重新构造的旧active状态。",
             "status": "READY",
-            "amount": 2331120000.0,
-            "prior_20d_average_amount": 2805532845.0,
-            "participation_ratio_vs_prior_20d": 0.8309,
+            "amount": 1783400000.0,
+            "prior_20d_average_amount": 2762612345.0,
+            "participation_ratio_vs_prior_20d": 0.6455,
             "research_group_participation_expanded": false,
             "breakout_20d": false,
             "true_ma20_recovery": false,
@@ -6780,7 +6192,7 @@
             "evidence_id": "participation_expansion_with_positive_structure",
             "display_name": "成交参与扩大 × 有效价格结构确认",
             "decision_market_date": "2026-10-19",
-            "completed_bar_date": "2026-10-16",
+            "completed_bar_date": "2026-10-19",
             "use_as_decision_evidence": true,
             "can_generate_decision_independently": false,
             "automatic_trade": false,
@@ -6790,9 +6202,9 @@
             "calibration_boundary": "1.2倍仅为已审查研究粗分组，不是独立机械交易阈值；正式判断优先解释成交参与是否相对自身常态扩大。放量上涨后的弱收盘位置本身不得机械解释为派发或应快速减仓。",
             "failure_contract": "输入不足或不可验证时降级并省略增强方向，不沿用无法重新构造的旧active状态。",
             "status": "READY",
-            "amount": 393640000.0,
-            "prior_20d_average_amount": 374338664.0,
-            "participation_ratio_vs_prior_20d": 1.0516,
+            "amount": 315570000.0,
+            "prior_20d_average_amount": 363980664.0,
+            "participation_ratio_vs_prior_20d": 0.867,
             "research_group_participation_expanded": false,
             "breakout_20d": false,
             "true_ma20_recovery": false,
@@ -7334,7 +6746,7 @@
         "display_name": "成交参与扩大 × 有效价格结构确认",
         "status": "DEGRADED_WITH_OBJECT_FALLBACK",
         "decision_market_date": "2026-10-19",
-        "latest_completed_bar_date": "2026-10-16",
+        "latest_completed_bar_date": "2026-10-19",
         "ready_codes": [
           "588000",
           "159781",
@@ -7353,9 +6765,7 @@
           "159981",
           "515080"
         ],
-        "active_codes": [
-          "159941"
-        ],
+        "active_codes": [],
         "use_in_current_decision": true,
         "use_as_decision_evidence": true,
         "can_generate_decision_independently": false,
@@ -7918,707 +7328,8 @@
   "account_fact_status": "VALID",
   "needs_account_screenshot": false,
   "formal_etf_discovery": {
-    "schema_version": "1.0",
-    "status": "READY",
-    "generated_at_beijing": "2026-10-19T12:10:15+08:00",
-    "market_date": "2026-10-19",
-    "required_history_end_date": "2026-10-16",
-    "source": "EASTMONEY_HITHINK_DUAL_SOURCE_UNIVERSE_PLUS_BOUNDED_HISTORY_REPAIR",
-    "broad_source_reconciliation": {
-      "requested_identity_count": 1752,
-      "tencent_quote_count": 1752,
-      "tencent_failed_batch_count": 0,
-      "tencent_failures": [],
-      "tencent_hydration_batch_count": 30,
-      "tencent_hydration_workers": 6,
-      "universe_mode": "HITHINK_ONLY",
-      "eastmoney_count": 0,
-      "hithink_identity_count": 1752,
-      "eastmoney_error": "HTTP Error 502: Bad Gateway",
-      "hithink_error": null,
-      "hithink_only_identity_count": 1752,
-      "fallback_used": true,
-      "fallback_source": "HITHINK_ETF_MASTER_PLUS_TENCENT",
-      "reconciled_count": 1752,
-      "source_elapsed_seconds": {
-        "hithink": 4.513,
-        "eastmoney": 15.807
-      },
-      "source_join_elapsed_seconds": 15.807
-    },
-    "source_role": "DISCOVERY_ONLY; formal trade decision remains MASTER-owned",
-    "broad_universe_count": 1752,
-    "managed_identity_count": 14,
-    "held_identity_count": 3,
-    "managed_excluded_count": 0,
-    "history_prefilter_count": 132,
-    "candidate_count": 6,
-    "history_success_budget": 12,
-    "history_attempt_cap": 36,
-    "history_fetch_workers": 2,
-    "history_attempted_count": 12,
-    "history_succeeded_count": 12,
-    "history_reused_count": 11,
-    "history_repair_attempted_count": 1,
-    "history_failure_count": 0,
-    "history_elapsed_seconds": 1.956,
-    "latency_observability": {
-      "broad_acquisition_elapsed_seconds": 20.198,
-      "prefilter_elapsed_seconds": 0.006,
-      "history_validation_elapsed_seconds": 1.956,
-      "measurement_role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE",
-      "candidate_formal_quote_elapsed_seconds": 4.053,
-      "discovery_pipeline_elapsed_seconds": 26.231,
-      "reuse_mode": "FRESH_DISCOVERY"
-    },
-    "coverage_status": "COMPLETE",
-    "history_failures": [],
-    "candidates": [
-      {
-        "code": "159100",
-        "name": "巴西ETF华夏",
-        "display_name": "巴西ETF华夏（159100）",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "management_identity": null,
-        "auto_promote_to_observation": false,
-        "trial_confirm_permission": false,
-        "trade_signal": null,
-        "decision_output_generated": false,
-        "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
-        "entered_states": [],
-        "surfaced_states": [
-          {
-            "state": "PERSISTENT_TREND",
-            "evidence": {
-              "window_returns": {
-                "20": 0.099061,
-                "40": 0.215297,
-                "60": 0.152193
-              },
-              "positive_windows": [
-                20,
-                40,
-                60
-              ],
-              "max_drawdown_60": 0.083922
-            }
-          },
-          {
-            "state": "TREND_CHANGE",
-            "evidence": {
-              "direction": "STRENGTHENING",
-              "return_10": 0.125984,
-              "return_40": 0.215297,
-              "short_vs_long_normalized_gap": 0.07216
-            }
-          }
-        ],
-        "information_classes": [
-          "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE",
-          "SHORT_HISTORY_CURRENT_CHANGE"
-        ],
-        "discovery_spot": {
-          "price": 1.31,
-          "change_pct": 1.787101787101797,
-          "amount": 67520000.0,
-          "amplitude_pct": null,
-          "turnover_pct": null,
-          "volume_ratio": null,
-          "high": 1.311,
-          "low": 1.298,
-          "open": 1.3,
-          "prev_close": 1.287,
-          "return_60d_pct": null,
-          "return_ytd_pct": null,
-          "provider_timestamp": 1792382718000
-        },
-        "historical_context": {
-          "status": "READY",
-          "as_of": "2026-10-16",
-          "sample_count": 90,
-          "avg_amount_20": 102654824.8
-        },
-        "comparison_basis": [
-          "历史趋势/状态变化",
-          "当前相对结构",
-          "成交与可执行性",
-          "风险收益",
-          "资本效率"
-        ],
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "history_source": "DISCOVERY_NODE_HISTORY",
-        "formal_quote": {
-          "market": "CN",
-          "market_name": "中国大陆",
-          "symbol": "159100",
-          "name": "巴西ETF华夏",
-          "latest_price": 1.31,
-          "open": 1.3,
-          "high": 1.311,
-          "low": 1.298,
-          "prev_close": 1.287,
-          "volume": 51690400.0,
-          "amount": 67520000.0,
-          "turnover": 67520000.0,
-          "data_time_beijing": "2026-10-19T12:05:18+08:00",
-          "data_time_local": "2026-10-19T12:05:18+08:00",
-          "market_phase": "MIDDAY_BREAK",
-          "market_status_cn": "A股午间休市",
-          "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
-          "source": "tencent_qq",
-          "freshness": "SESSION_REFERENCE",
-          "quality_status": "PASS",
-          "direct_quote": true,
-          "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
-          "provider_symbol": "sz159100",
-          "provider_timestamp_ms": 1792382718000,
-          "evidence_fitness": {
-            "object_fact": true,
-            "observation_evaluation": true,
-            "capital_candidate_evaluation": true,
-            "executable_price": false,
-            "trade_amount_or_shares": false
-          },
-          "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission."
-        },
-        "formal_quote_status": "SESSION_REFERENCE_READY",
-        "formal_quote_evidence_fitness": {
-          "object_fact": true,
-          "observation_evaluation": true,
-          "capital_candidate_evaluation": true,
-          "executable_price": false,
-          "trade_amount_or_shares": false
-        },
-        "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。"
-      },
-      {
-        "code": "159320",
-        "name": "电网设备ETF广发",
-        "display_name": "电网设备ETF广发（159320）",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "management_identity": null,
-        "auto_promote_to_observation": false,
-        "trial_confirm_permission": false,
-        "trade_signal": null,
-        "decision_output_generated": false,
-        "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
-        "entered_states": [],
-        "surfaced_states": [],
-        "information_classes": [
-          "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE",
-          "SHORT_HISTORY_CURRENT_CHANGE"
-        ],
-        "discovery_spot": {
-          "price": 0.538,
-          "change_pct": 1.8939393939394034,
-          "amount": 21830000.0,
-          "amplitude_pct": null,
-          "turnover_pct": null,
-          "volume_ratio": null,
-          "high": 0.543,
-          "low": 0.52,
-          "open": 0.528,
-          "prev_close": 0.528,
-          "return_60d_pct": null,
-          "return_ytd_pct": null,
-          "provider_timestamp": 1792382709000
-        },
-        "historical_context": {
-          "status": "READY",
-          "as_of": "2026-10-16",
-          "sample_count": 90,
-          "avg_amount_20": 29992404.8
-        },
-        "comparison_basis": [
-          "历史趋势/状态变化",
-          "当前相对结构",
-          "成交与可执行性",
-          "风险收益",
-          "资本效率"
-        ],
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "history_source": "DISCOVERY_NODE_HISTORY",
-        "formal_quote": {
-          "market": "CN",
-          "market_name": "中国大陆",
-          "symbol": "159320",
-          "name": "电网设备ETF广发",
-          "latest_price": 0.538,
-          "open": 0.528,
-          "high": 0.543,
-          "low": 0.52,
-          "prev_close": 0.528,
-          "volume": 40714900.0,
-          "amount": 21830000.0,
-          "turnover": 21830000.0,
-          "data_time_beijing": "2026-10-19T12:05:09+08:00",
-          "data_time_local": "2026-10-19T12:05:09+08:00",
-          "market_phase": "MIDDAY_BREAK",
-          "market_status_cn": "A股午间休市",
-          "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
-          "source": "tencent_qq",
-          "freshness": "SESSION_REFERENCE",
-          "quality_status": "PASS",
-          "direct_quote": true,
-          "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
-          "provider_symbol": "sz159320",
-          "provider_timestamp_ms": 1792382709000,
-          "evidence_fitness": {
-            "object_fact": true,
-            "observation_evaluation": true,
-            "capital_candidate_evaluation": true,
-            "executable_price": false,
-            "trade_amount_or_shares": false
-          },
-          "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission."
-        },
-        "formal_quote_status": "SESSION_REFERENCE_READY",
-        "formal_quote_evidence_fitness": {
-          "object_fact": true,
-          "observation_evaluation": true,
-          "capital_candidate_evaluation": true,
-          "executable_price": false,
-          "trade_amount_or_shares": false
-        },
-        "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。"
-      },
-      {
-        "code": "159518",
-        "name": "标普油气ETF嘉实",
-        "display_name": "标普油气ETF嘉实（159518）",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "management_identity": null,
-        "auto_promote_to_observation": false,
-        "trial_confirm_permission": false,
-        "trade_signal": null,
-        "decision_output_generated": false,
-        "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
-        "entered_states": [],
-        "surfaced_states": [
-          {
-            "state": "PERSISTENT_TREND",
-            "evidence": {
-              "window_returns": {
-                "20": -0.017177,
-                "40": 0.093023,
-                "60": 0.188799
-              },
-              "positive_windows": [
-                40,
-                60
-              ],
-              "max_drawdown_60": 0.115413
-            }
-          }
-        ],
-        "information_classes": [
-          "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE",
-          "SHORT_HISTORY_CURRENT_CHANGE"
-        ],
-        "discovery_spot": {
-          "price": 1.352,
-          "change_pct": 2.735562310030404,
-          "amount": 258590000.0,
-          "amplitude_pct": null,
-          "turnover_pct": null,
-          "volume_ratio": null,
-          "high": 1.356,
-          "low": 1.342,
-          "open": 1.348,
-          "prev_close": 1.316,
-          "return_60d_pct": null,
-          "return_ytd_pct": null,
-          "provider_timestamp": 1792382727000
-        },
-        "historical_context": {
-          "status": "READY",
-          "as_of": "2026-10-16",
-          "sample_count": 90,
-          "avg_amount_20": 626764927.5
-        },
-        "comparison_basis": [
-          "历史趋势/状态变化",
-          "当前相对结构",
-          "成交与可执行性",
-          "风险收益",
-          "资本效率"
-        ],
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "history_source": "DISCOVERY_NODE_HISTORY",
-        "formal_quote": {
-          "market": "CN",
-          "market_name": "中国大陆",
-          "symbol": "159518",
-          "name": "标普油气ETF嘉实",
-          "latest_price": 1.352,
-          "open": 1.348,
-          "high": 1.356,
-          "low": 1.342,
-          "prev_close": 1.316,
-          "volume": 191709400.0,
-          "amount": 258590000.0,
-          "turnover": 258590000.0,
-          "data_time_beijing": "2026-10-19T12:05:27+08:00",
-          "data_time_local": "2026-10-19T12:05:27+08:00",
-          "market_phase": "MIDDAY_BREAK",
-          "market_status_cn": "A股午间休市",
-          "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
-          "source": "tencent_qq",
-          "freshness": "SESSION_REFERENCE",
-          "quality_status": "PASS",
-          "direct_quote": true,
-          "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
-          "provider_symbol": "sz159518",
-          "provider_timestamp_ms": 1792382727000,
-          "evidence_fitness": {
-            "object_fact": true,
-            "observation_evaluation": true,
-            "capital_candidate_evaluation": true,
-            "executable_price": false,
-            "trade_amount_or_shares": false
-          },
-          "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission."
-        },
-        "formal_quote_status": "SESSION_REFERENCE_READY",
-        "formal_quote_evidence_fitness": {
-          "object_fact": true,
-          "observation_evaluation": true,
-          "capital_candidate_evaluation": true,
-          "executable_price": false,
-          "trade_amount_or_shares": false
-        },
-        "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。"
-      },
-      {
-        "code": "159529",
-        "name": "标普消费ETF景顺",
-        "display_name": "标普消费ETF景顺（159529）",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "management_identity": null,
-        "auto_promote_to_observation": false,
-        "trial_confirm_permission": false,
-        "trade_signal": null,
-        "decision_output_generated": false,
-        "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
-        "entered_states": [
-          "TREND_CHANGE"
-        ],
-        "surfaced_states": [
-          {
-            "state": "PERSISTENT_TREND",
-            "evidence": {
-              "window_returns": {
-                "20": 0.072727,
-                "40": 0.049497,
-                "60": 0.05439
-              },
-              "positive_windows": [
-                20,
-                40,
-                60
-              ],
-              "max_drawdown_60": 0.053747
-            }
-          },
-          {
-            "state": "TREND_CHANGE",
-            "evidence": {
-              "direction": "STRENGTHENING",
-              "return_10": 0.076984,
-              "return_40": 0.049497,
-              "short_vs_long_normalized_gap": 0.06461
-            }
-          }
-        ],
-        "information_classes": [
-          "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE",
-          "SHORT_HISTORY_CURRENT_CHANGE"
-        ],
-        "discovery_spot": {
-          "price": 1.386,
-          "change_pct": 2.1370670596904784,
-          "amount": 1073580000.0,
-          "amplitude_pct": null,
-          "turnover_pct": null,
-          "volume_ratio": null,
-          "high": 1.415,
-          "low": 1.344,
-          "open": 1.349,
-          "prev_close": 1.357,
-          "return_60d_pct": null,
-          "return_ytd_pct": null,
-          "provider_timestamp": 1792382745000
-        },
-        "historical_context": {
-          "status": "READY",
-          "as_of": "2026-10-16",
-          "sample_count": 90,
-          "avg_amount_20": 170507432.78
-        },
-        "comparison_basis": [
-          "历史趋势/状态变化",
-          "当前相对结构",
-          "成交与可执行性",
-          "风险收益",
-          "资本效率"
-        ],
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "history_source": "DISCOVERY_NODE_HISTORY",
-        "formal_quote": {
-          "market": "CN",
-          "market_name": "中国大陆",
-          "symbol": "159529",
-          "name": "标普消费ETF景顺",
-          "latest_price": 1.386,
-          "open": 1.349,
-          "high": 1.415,
-          "low": 1.344,
-          "prev_close": 1.357,
-          "volume": 770186400.0,
-          "amount": 1073580000.0,
-          "turnover": 1073580000.0,
-          "data_time_beijing": "2026-10-19T12:05:45+08:00",
-          "data_time_local": "2026-10-19T12:05:45+08:00",
-          "market_phase": "MIDDAY_BREAK",
-          "market_status_cn": "A股午间休市",
-          "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
-          "source": "tencent_qq",
-          "freshness": "SESSION_REFERENCE",
-          "quality_status": "PASS",
-          "direct_quote": true,
-          "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
-          "provider_symbol": "sz159529",
-          "provider_timestamp_ms": 1792382745000,
-          "evidence_fitness": {
-            "object_fact": true,
-            "observation_evaluation": true,
-            "capital_candidate_evaluation": true,
-            "executable_price": false,
-            "trade_amount_or_shares": false
-          },
-          "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission."
-        },
-        "formal_quote_status": "SESSION_REFERENCE_READY",
-        "formal_quote_evidence_fitness": {
-          "object_fact": true,
-          "observation_evaluation": true,
-          "capital_candidate_evaluation": true,
-          "executable_price": false,
-          "trade_amount_or_shares": false
-        },
-        "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。"
-      },
-      {
-        "code": "159647",
-        "name": "中药ETF鹏华",
-        "display_name": "中药ETF鹏华（159647）",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "management_identity": null,
-        "auto_promote_to_observation": false,
-        "trial_confirm_permission": false,
-        "trade_signal": null,
-        "decision_output_generated": false,
-        "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
-        "entered_states": [],
-        "surfaced_states": [],
-        "information_classes": [
-          "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE",
-          "SHORT_HISTORY_CURRENT_CHANGE"
-        ],
-        "discovery_spot": {
-          "price": 0.906,
-          "change_pct": 1.912260967379087,
-          "amount": 19270000.0,
-          "amplitude_pct": null,
-          "turnover_pct": null,
-          "volume_ratio": null,
-          "high": 0.909,
-          "low": 0.884,
-          "open": 0.884,
-          "prev_close": 0.889,
-          "return_60d_pct": null,
-          "return_ytd_pct": null,
-          "provider_timestamp": 1792382712000
-        },
-        "historical_context": {
-          "status": "READY",
-          "as_of": "2026-10-16",
-          "sample_count": 90,
-          "avg_amount_20": 12305673.15
-        },
-        "comparison_basis": [
-          "历史趋势/状态变化",
-          "当前相对结构",
-          "成交与可执行性",
-          "风险收益",
-          "资本效率"
-        ],
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "history_source": "DISCOVERY_NODE_HISTORY",
-        "formal_quote": {
-          "market": "CN",
-          "market_name": "中国大陆",
-          "symbol": "159647",
-          "name": "中药ETF鹏华",
-          "latest_price": 0.906,
-          "open": 0.884,
-          "high": 0.909,
-          "low": 0.884,
-          "prev_close": 0.889,
-          "volume": 21316200.0,
-          "amount": 19270000.0,
-          "turnover": 19270000.0,
-          "data_time_beijing": "2026-10-19T12:05:12+08:00",
-          "data_time_local": "2026-10-19T12:05:12+08:00",
-          "market_phase": "MIDDAY_BREAK",
-          "market_status_cn": "A股午间休市",
-          "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
-          "source": "tencent_qq",
-          "freshness": "SESSION_REFERENCE",
-          "quality_status": "PASS",
-          "direct_quote": true,
-          "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
-          "provider_symbol": "sz159647",
-          "provider_timestamp_ms": 1792382712000,
-          "evidence_fitness": {
-            "object_fact": true,
-            "observation_evaluation": true,
-            "capital_candidate_evaluation": true,
-            "executable_price": false,
-            "trade_amount_or_shares": false
-          },
-          "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission."
-        },
-        "formal_quote_status": "SESSION_REFERENCE_READY",
-        "formal_quote_evidence_fitness": {
-          "object_fact": true,
-          "observation_evaluation": true,
-          "capital_candidate_evaluation": true,
-          "executable_price": false,
-          "trade_amount_or_shares": false
-        },
-        "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。"
-      },
-      {
-        "code": "520760",
-        "name": "恒生生物科技ETF摩根",
-        "display_name": "恒生生物科技ETF摩根（520760）",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "management_identity": null,
-        "auto_promote_to_observation": false,
-        "trial_confirm_permission": false,
-        "trade_signal": null,
-        "decision_output_generated": false,
-        "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
-        "entered_states": [],
-        "surfaced_states": [],
-        "information_classes": [
-          "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE",
-          "SHORT_HISTORY_CURRENT_CHANGE"
-        ],
-        "discovery_spot": {
-          "price": 0.952,
-          "change_pct": 3.365906623235615,
-          "amount": 46040000.0,
-          "amplitude_pct": null,
-          "turnover_pct": null,
-          "volume_ratio": null,
-          "high": 0.968,
-          "low": 0.93,
-          "open": 0.93,
-          "prev_close": 0.921,
-          "return_60d_pct": null,
-          "return_ytd_pct": null,
-          "provider_timestamp": 1792382740000
-        },
-        "historical_context": {
-          "status": "READY",
-          "as_of": "2026-10-16",
-          "sample_count": 90,
-          "avg_amount_20": 12615386.0
-        },
-        "comparison_basis": [
-          "历史趋势/状态变化",
-          "当前相对结构",
-          "成交与可执行性",
-          "风险收益",
-          "资本效率"
-        ],
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "history_source": "DISCOVERY_NODE_HISTORY",
-        "formal_quote": {
-          "market": "CN",
-          "market_name": "中国大陆",
-          "symbol": "520760",
-          "name": "恒生生物科技ETF摩根",
-          "latest_price": 0.952,
-          "open": 0.93,
-          "high": 0.968,
-          "low": 0.93,
-          "prev_close": 0.921,
-          "volume": 48173500.0,
-          "amount": 46040000.0,
-          "turnover": 46040000.0,
-          "data_time_beijing": "2026-10-19T12:05:40+08:00",
-          "data_time_local": "2026-10-19T12:05:40+08:00",
-          "market_phase": "MIDDAY_BREAK",
-          "market_status_cn": "A股午间休市",
-          "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
-          "source": "tencent_qq",
-          "freshness": "SESSION_REFERENCE",
-          "quality_status": "PASS",
-          "direct_quote": true,
-          "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
-          "provider_symbol": "sh520760",
-          "provider_timestamp_ms": 1792382740000,
-          "evidence_fitness": {
-            "object_fact": true,
-            "observation_evaluation": true,
-            "capital_candidate_evaluation": true,
-            "executable_price": false,
-            "trade_amount_or_shares": false
-          },
-          "session_reference_rule": "Provider timestamp must equal the latest legally completed A-share session; SESSION_REFERENCE never grants executable-price permission."
-        },
-        "formal_quote_status": "SESSION_REFERENCE_READY",
-        "formal_quote_evidence_fitness": {
-          "object_fact": true,
-          "observation_evaluation": true,
-          "capital_candidate_evaluation": true,
-          "executable_price": false,
-          "trade_amount_or_shares": false
-        },
-        "formal_quote_rule": "发现源只负责缩小评估对象；对象级正式行情由既有market_quote_router补采。SESSION_REFERENCE可支持Observation/候选资本评估，但不得冒充当前可执行价格、金额或份额依据。"
-      }
-    ],
-    "observation_capacity": {
-      "target_typical": "5-10",
-      "allowed_min": 0,
-      "resource_protection_max": 12
-    },
-    "selection_contract": {
-      "all_market_boundary": true,
-      "no_gain_ranking": true,
-      "no_hidden_score": true,
-      "prefilter": "single broad cross-section; minimum executability; explicit information-acquisition classes for relative divergence, structural change, short-history current change and persistent structure; exact cheap-label clone control; no return ranking; date hash is tie-break only within equivalent information class/exposure",
-      "final_ingress": "history budget counts successful evidence acquisition, with a bounded attempt cap; provider failure is explicit, does not consume a successful-evidence seat, and does not convert successful peers into legal capital competitors"
-    },
-    "decision_boundary": "发现对象是本节点临时正式评估输入，不是第三种ETF身份；不得自动写观察池、生成Trial/Confirm或交易动作。",
-    "universe_identity": "7c96b55c397e7c8c",
-    "discovery_delta_identity": "84b02e4f03305bfa",
-    "formal_quote_coverage": 6
+    "status": "NOT_REQUESTED",
+    "candidates": []
   },
   "interaction_boundary": "ChatGPT聊天负责账户截图与正式交易判断；本文件不生成交易动作。正式机会比较完整覆盖全部持仓/观察ETF，并在本节点存在合格池外发现对象时把其作为临时正式评估输入加入同一次MASTER与全资本竞争；发现本身不产生管理身份或交易权限。",
   "managed_position_sell_review": {
@@ -8840,7 +7551,7 @@
   },
   "execution_quality": {
     "schema_version": "1.1",
-    "generated_at": "2026-10-18T12:38:29Z",
+    "generated_at": "2026-10-19T04:30:19Z",
     "mode": "DECISION_EXECUTION_ATTRIBUTION",
     "read_only": true,
     "trade_event_count": 51,
