@@ -137,6 +137,7 @@ def build_completion_request(
     final_content: str = "",
     task_id: str = "",
     task_run_id: str = "",
+    occurrence_id: str = "",
 ) -> dict:
     """Wrap a frozen Scheduled Review for the existing state-sync owner."""
     scope = str((formal_review or {}).get("review_scope") or "").strip().upper()
@@ -149,6 +150,10 @@ def build_completion_request(
     else:
         validate_full_day_review(formal_review, account)
     validate_user_visible_content(str(final_content or ""), canonical_closure_confirmed=False)
+    effective_task_run_id = _safe_id(task_run_id or request_id)
+    effective_occurrence_id = _safe_id(occurrence_id or effective_task_run_id)
+    frozen_content = str(final_content or "")
+    frozen_content_hash = hashlib.sha256(frozen_content.encode("utf-8")).hexdigest()
     review_market_date = str(formal_review.get("market_date") or "").strip()
     effective_market_date = str(market_date or review_market_date).strip()
     if not effective_market_date or effective_market_date != review_market_date:
@@ -166,10 +171,13 @@ def build_completion_request(
         "presentation_binding": {
             "report_type": "ETF_TRADE_REVIEW",
             "task_id": str(task_id or "ETF交易复盘"),
-            "task_run_id": str(task_run_id or request_id),
+            "task_run_id": effective_task_run_id,
+            "occurrence_id": effective_occurrence_id,
             "request_id": str(request_id),
-            "report_id": f"ETF_TRADE_REVIEW:{str(task_run_id or request_id)}",
-            "full_content": str(final_content or ""),
+            "report_id": f"etf_trade_review:{effective_task_run_id}",
+            "full_content": frozen_content,
+            "content_hash": frozen_content_hash,
+            "content_hash_source": "completion_builder",
         },
     }
     if parent_request_id:
@@ -386,6 +394,7 @@ def write_completion_request(
     final_content: str = "",
     task_id: str = "",
     task_run_id: str = "",
+    occurrence_id: str = "",
 ) -> Path:
     source = (ROOT / review_path).resolve()
     if ROOT not in source.parents:
@@ -395,7 +404,7 @@ def write_completion_request(
     account = json.loads(account_path.read_text(encoding="utf-8")) if account_path.exists() else None
     payload = build_completion_request(
         review, request_id, requested_at_beijing, market_date, parent_request_id, account,
-        final_content, task_id, task_run_id
+        final_content, task_id, task_run_id, occurrence_id
     )
     target = (ROOT / output_path).resolve() if output_path else REQUEST_DIR / f"{payload['request_id']}.json"
     if ROOT not in target.parents or target.suffix != ".json":
