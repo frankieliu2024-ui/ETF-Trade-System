@@ -109,6 +109,7 @@ class FormalDecisionSingleChainContractTests(unittest.TestCase):
             "task_id": "ETF正式决策",
             "task_run_id": "run_hash",
             "occurrence_id": "occ_hash",
+            "occurrence": "occ_hash",
             "market_date": "2026-10-19",
             "bds_path": "requests/live_snapshot/parent_hash__business_decision_source.json",
             "decision_id": "decision_hash",
