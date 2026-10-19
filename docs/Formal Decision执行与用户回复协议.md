@@ -102,7 +102,7 @@
 - `reuse_inflight_refresh=true`
 - `duplicate_equivalent_refresh_forbidden=true`
 
-READY 后，必须先冻结并输出唯一 `FINAL_CONTENT`，然后才执行后置写入：
+READY 后，必须先冻结唯一 `FINAL_CONTENT`；在用户窗口返回前，先执行后置交接，再输出此前冻结的同一份 `FINAL_CONTENT`：
 
 1. 使用同一父请求、同一DWP、同一request-bound snapshot和同一`decision_id`，形成 `BUSINESS_DECISION_SOURCE` envelope；
 2. 将BDS写入并回读 `requests/live_snapshot/<parent_request_id>__business_decision_source.json`；
@@ -111,7 +111,7 @@ READY 后，必须先冻结并输出唯一 `FINAL_CONTENT`，然后才执行后�
 5. 在同一handoff中显式调用既有 `decision-notification.workflow_dispatch(formal_completion_path=<当前completion路径>)`；
 6. 回读当前 `events/reviews/formal_<occurrence_id>.json`、REPORT、notification_id和provider result。
 
-任何后置阶段都不得反向阻塞、缩短、改写或撤回已输出的正文。没有当前completion对应的event，不得声称正式决策事件已形成；没有当前notification_id和provider结果，不得声称主动通知成功。
+任何后置阶段都不得反向阻塞、缩短、改写或撤回已冻结的正文；后置交接失败不得重写正文或创建第二请求，但在完成必要的写入/回读尝试前不得结束本次运行。没有当前completion对应的event，不得声称正式决策事件已形成；没有当前notification_id和provider结果，不得声称主动通知成功。
 
 ## 五、已删除的旧生产链
 
@@ -166,7 +166,7 @@ READY 后，必须先冻结并输出唯一 `FINAL_CONTENT`，然后才执行后�
 
 ## 七、后置交接和通知
 
-用户窗口输出唯一 `FINAL_CONTENT` 后，后置交接只能沿当前父请求继续：
+FINAL_CONTENT 冻结后、用户窗口输出前，后置交接只能沿当前父请求继续；完成 BDS 写入/回读和 Formal Decision completion ingress 提交后，用户窗口才输出此前冻结的同一份 `FINAL_CONTENT`：
 
 1. BDS写入并回读；
 2. Formal Decision completion写入并回读；
