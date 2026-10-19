@@ -282,9 +282,7 @@ def risk_component(equity: dict, current: dict, risk_evidence: dict | None = Non
     # invalidating the Gross strategy risk fact.
     risk_fact_date = str(
         current.get("last_confirmed_market_date")
-        or equity.get("as_of_transaction_date")
-        or summary.get("as_of_transaction_date")
-        or equity.get("replay_cutoff")
+        or current.get("market_date")
         or ""
     )
     reconstruction_pct = summary.get("current_strategy_return_pct_gross", summary.get("known_net_current_strategy_return_pct"))
