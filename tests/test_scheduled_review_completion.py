@@ -144,17 +144,41 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         self.assertEqual(payload["presentation_binding"]["report_type"], "ETF_TRADE_REVIEW")
         self.assertEqual(payload["presentation_binding"]["full_content"], "FROZEN TRADE REPORT")
 
-    def test_scheduled_review_projection_rejects_formal_decision(self):
-        payload = {
-            "presentation_binding": {
-                "report_type": "ETF_FORMAL_DECISION",
-                "task_id": "ETF正式决策",
-                "task_run_id": "formal-run",
-                "full_content": "FROZEN FORMAL REPORT",
-            }
-        }
-        with self.assertRaisesRegex(ValueError, "unsupported Scheduled Review report_type"):
-            completion.build_report_delivery_from_completion(payload)
+    def test_formal_decision_uses_shared_scheduled_review_completion_and_report_projection(self):
+        payload = completion.build_formal_decision_scheduled_completion_request(
+            request_id="formal-request",
+            parent_request_id="formal-parent",
+            task_id="ETF正式决策",
+            task_run_id="formal-run",
+            occurrence_id="formal-occurrence",
+            market_date="2026-09-23",
+            decision_id="formal-decision",
+            requested_at_beijing="2026-09-23T15:30:00+08:00",
+            decision_response={"answers": [{"problem_id": "RISK", "answer": "禁止新增"}]},
+            final_content="【ETF正式决策】\\n\\n【业务结论】\\n\\n1. 本次不新增。",
+            decision_work_package={"problem_graph": [{"problem_id": "RISK"}]},
+        )
+        self.assertEqual(payload["request_type"], "SCHEDULED_REVIEW_COMPLETION")
+        self.assertEqual(payload["formal_fact_type"], "FORMAL_DECISION_REPORT")
+        self.assertEqual(payload["source"], "CHATGPT_SCHEDULED_REVIEW_ACTOR")
+        self.assertEqual(payload["presentation_binding"]["report_type"], "ETF_FORMAL_DECISION")
+        report = completion.build_report_delivery_from_completion(payload)
+        self.assertEqual(report["report_type"], "ETF_FORMAL_DECISION")
+        self.assertEqual(report["full_content"], payload["presentation_binding"]["full_content"])
+        self.assertTrue(report["no_trade_authority"])
+
+    def test_formal_decision_completion_rejects_unvalidated_body_before_projection(self):
+        with self.assertRaisesRegex(ValueError, "user-visible presentation contract failed"):
+            completion.build_formal_decision_scheduled_completion_request(
+                request_id="formal-request", parent_request_id="formal-parent",
+                task_id="ETF正式决策", task_run_id="formal-run",
+                occurrence_id="formal-occurrence", market_date="2026-09-23",
+                decision_id="formal-decision",
+                requested_at_beijing="2026-09-23T15:30:00+08:00",
+                decision_response={"answers": [{"problem_id": "RISK", "answer": "禁止新增"}]},
+                final_content="READY request-bound workflow content",
+                decision_work_package={"problem_graph": [{"problem_id": "RISK"}]},
+            )
 
 
     def test_system_review_completion_is_business_completion_not_report_handoff(self):
