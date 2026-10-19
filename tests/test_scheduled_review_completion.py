@@ -186,7 +186,7 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
             "full_content": "FROZEN TRADE REPORT",
         }
         with self.assertRaisesRegex(ValueError, "requires content_hash"):
-            completion._validate_presentation_binding(binding, "ETF_TRADE_REVIEW", strict_production=True)
+            state_sync._validate_presentation_binding(binding, "ETF_TRADE_REVIEW", strict_production=True)
 
     def test_trade_review_production_requires_builder_hash_contract(self):
         content_text = "FROZEN TRADE REPORT"
