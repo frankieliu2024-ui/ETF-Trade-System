@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-10-19T15:47:24+08:00",
+  "generated_at": "2026-10-19T15:59:34+08:00",
   "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -53,15 +53,15 @@
       "observability_boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
       "request_bound": true,
       "formal_reply_gate": {
-        "request_id": "formal-parent-20261019T154600+0800",
-        "requested_at_beijing": "2026-10-19T15:46:00+08:00",
+        "request_id": "formal-parent-20261019T155832+0800",
+        "requested_at_beijing": "2026-10-19T15:58:32+08:00",
         "status": "READY",
         "reply_freezable": true,
         "blockers": [],
         "source": "decision_fact_pack.formal_reply_freeze",
         "consumer_manifest": {
-          "request_id": "formal-parent-20261019T154600+0800",
-          "requested_at_beijing": "2026-10-19T15:46:00+08:00",
+          "request_id": "formal-parent-20261019T155832+0800",
+          "requested_at_beijing": "2026-10-19T15:58:32+08:00",
           "query_context_path": "data/state/query_context.json",
           "decision_context_path": "data/state/decision_context.json",
           "decision_work_package_present": true,
@@ -76,8 +76,8 @@
           "large_payload_source_url": "https://api.github.com/repos/{owner}/{repo}/contents/data/state/query_context.json?ref=main"
         },
         "projection_scope": "FORMAL_DECISION_REQUEST",
-        "parent_request_source": "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
-        "parent_request_entry_mode": "MANUAL_SCHEDULED_TASK",
+        "parent_request_source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+        "parent_request_entry_mode": "MANUAL_CONVERSATION",
         "actor_action": "COMPLETE_BUSINESS_DECISION_NOW",
         "user_output_allowed": true,
         "consumer_status": "BUSINESS_DECISION_READY",
@@ -121,7 +121,7 @@
           "required": true,
           "submission_type": "BUSINESS_DECISION_SOURCE",
           "source": "CHATGPT_BUSINESS_DECISION_RESPONSE",
-          "parent_request_id": "formal-parent-20261019T154600+0800",
+          "parent_request_id": "formal-parent-20261019T155832+0800",
           "required_payload_fields": [
             "request_id",
             "parent_request_id",
@@ -138,9 +138,9 @@
             "content_hash",
             "target_path"
           ],
-          "target_path": "requests/live_snapshot/formal-parent-20261019T154600+0800__business_decision_source.json",
+          "target_path": "requests/live_snapshot/formal-parent-20261019T155832+0800__business_decision_source.json",
           "binding_rules": {
-            "parent_request_id": "formal-parent-20261019T154600+0800",
+            "parent_request_id": "formal-parent-20261019T155832+0800",
             "allowed_sources": [
               "CHATGPT_BUSINESS_DECISION_RESPONSE"
             ],
@@ -171,15 +171,15 @@
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 1502075,
-          "sha256": "1d3963c3f40813e6e3a5dfd2f524642a1831b87540e347689b3cee80bd6e3176",
+          "byte_count": 1502168,
+          "sha256": "e64562e31f4c2d45bbebba2c9664375c1c3853a8f1bbaf4ffe14653fa53b4117",
           "parsed_object": true
         },
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 484378,
-          "sha256": "0a81097f8b69f42b3df907f382ff7cad7644ca925ec9c78788b4064e973d338b",
+          "byte_count": 484374,
+          "sha256": "26a406e4fee64ff46ecd35fc173fdb11d9f5b94896033c48a16c6be6f3a4c576",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -208,15 +208,15 @@
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 1502075,
-      "sha256": "1d3963c3f40813e6e3a5dfd2f524642a1831b87540e347689b3cee80bd6e3176",
+      "byte_count": 1502168,
+      "sha256": "e64562e31f4c2d45bbebba2c9664375c1c3853a8f1bbaf4ffe14653fa53b4117",
       "parsed_object": true
     },
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 484378,
-      "sha256": "0a81097f8b69f42b3df907f382ff7cad7644ca925ec9c78788b4064e973d338b",
+      "byte_count": 484374,
+      "sha256": "26a406e4fee64ff46ecd35fc173fdb11d9f5b94896033c48a16c6be6f3a4c576",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"
