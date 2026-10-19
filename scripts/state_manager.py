@@ -433,11 +433,19 @@ def build_etf_strategy_risk_metrics(root: Path) -> dict[str, Any]:
             "interpretation": "当前风险历史未覆盖当前市场日期；Dashboard只显示降级状态，不投影陈旧风险率。",
             "read_only": True,
         }
+    # Strategy risk is dated to the latest confirmed account/trade fact.
+    # A newer intraday market date alone does not invalidate the last valid
+    # gross reconstruction when no new account or transaction fact exists.
+    risk_fact_date = str(
+        account.get("last_confirmed_market_date")
+        or current_market_date
+        or ""
+    )
     reconstruction_fresh = bool(
         reconstruction_risk is not None
         and reconstruction_as_of
-        and current_market_date
-        and reconstruction_as_of >= current_market_date
+        and risk_fact_date
+        and reconstruction_as_of >= risk_fact_date
     )
     formal = _latest_formal_review_risk(root)
     if "current_strategy_return_pct_gross" not in summary and formal.get("risk_pct") is not None:

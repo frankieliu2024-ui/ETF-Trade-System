@@ -214,6 +214,44 @@ class TestMarketRiskMetricGuard(unittest.TestCase):
         self.assertEqual(result["status"], "BLOCKED")
         self.assertIsNone(result["etf_strategy_risk_pct"])
 
+    def test_new_market_day_without_new_account_fact_keeps_gross_risk_valid(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            state = root / "data" / "state"
+            state.mkdir(parents=True)
+            (state / "CURRENT.json").write_text(
+                json.dumps({"market_date": "2026-10-19"}), encoding="utf-8"
+            )
+            (state / "account_fact.json").write_text(
+                json.dumps({
+                    "status": "VALID",
+                    "last_confirmed_market_date": "2026-10-16",
+                    "updated_at": "2026-10-16T15:00:00+08:00",
+                    "positions": [],
+                }), encoding="utf-8"
+            )
+            (state / "etf_strategy_equity.json").write_text(
+                json.dumps({
+                    "as_of_transaction_date": "2026-10-16",
+                    "summary": {
+                        "starting_etf_strategy_capital": 200000,
+                        "current_strategy_return_pct_gross": -12.7534,
+                        "current_gross_strategy_equity": 174493.30,
+                    },
+                }), encoding="utf-8"
+            )
+            (state / "skfolio_risk_evidence.json").write_text(
+                json.dumps({
+                    "status": "READY",
+                    "data_alignment": "ALIGNED_WITH_CURRENT_MARKET_DATE",
+                    "current_market_date": "2026-10-16",
+                    "risk_data_end": "2026-10-16",
+                }), encoding="utf-8"
+            )
+            result = build_etf_strategy_risk_metrics(root)
+            self.assertEqual(result["etf_strategy_risk_pct"], -12.75)
+            self.assertTrue(result["reconstruction_fresh_for_market_date"])
+
     def test_live_decision_and_query_context_match_latest_formal_risk(self):
         formal_risk, formal_source = latest_formal_review_risk(REPO_ROOT)
         from scripts.state_manager import build_decision_context
