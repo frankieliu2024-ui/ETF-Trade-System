@@ -400,12 +400,24 @@ def context_component(query: dict, decision: dict) -> dict:
         "large_payload_empty_read": "REVERIFY_SAME_GITHUB_SOURCE_BEFORE_MISSING",
     }
     reply_freeze = decision_fact_pack.get("formal_reply_freeze") or {}
+    # READY is consumable only when the same request carries a real DWP.
+    # Prevent a stale gate from surviving an empty or replaced query_context.
+    dwp_problem_graph_ready = (
+        isinstance(decision_work_package, dict)
+        and bool(decision_work_package.get("problem_graph"))
+    )
+    gate_blockers = list(reply_freeze.get("blockers") or [])
+    if request_bound and not dwp_problem_graph_ready:
+        gate_blockers.append("DECISION_WORK_PACKAGE_NOT_CONSUMABLE")
     formal_reply_gate = {
         "request_id": request_id,
         "requested_at_beijing": requested_at_beijing,
-        "status": str(reply_freeze.get("status") or "UNKNOWN").strip().upper(),
-        "reply_freezable": bool(reply_freeze.get("reply_freezable")),
-        "blockers": list(reply_freeze.get("blockers") or []),
+        "status": (
+            str(reply_freeze.get("status") or "UNKNOWN").strip().upper()
+            if dwp_problem_graph_ready else "IN_FLIGHT"
+        ),
+        "reply_freezable": bool(reply_freeze.get("reply_freezable")) and dwp_problem_graph_ready,
+        "blockers": gate_blockers,
         "source": "decision_fact_pack.formal_reply_freeze",
         "consumer_manifest": consumer_manifest,
         "projection_scope": "FORMAL_DECISION_REQUEST",
