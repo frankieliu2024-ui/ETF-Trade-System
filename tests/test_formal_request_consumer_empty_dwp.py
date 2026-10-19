@@ -28,7 +28,9 @@ def test_empty_request_bound_pack_cannot_be_business_ready():
 def test_populated_request_bound_pack_is_business_ready():
     state = classify_formal_request_consumer_state("req-1", _context())
     assert state["status"] == "BUSINESS_DECISION_READY"
-    assert state["user_output_allowed"] is True
+    assert state["user_output_allowed"] is False
+    assert state["business_decision_allowed"] is True
+    assert state["final_content_generation_allowed"] is True
     assert state["reply_eligible"] is True
 
 
