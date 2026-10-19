@@ -136,11 +136,15 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
                 review, "20260923_2030_scheduled_trade_review", "2026-09-23T20:30:00+08:00"
             )
 
+    def test_trade_review_requires_observed_entry_mode(self):
+        with self.assertRaisesRegex(ValueError, "requires entry_mode"):
+            completion.build_completion_request(full_review(), "trade-run", "2026-09-23T20:30:00+08:00", final_content="FROZEN TRADE REPORT", task_id="ETF交易复盘", task_run_id="trade-run")
+
     def test_trade_completion_binds_frozen_final_content(self):
         payload = completion.build_completion_request(
             full_review(), "trade-run", "2026-09-23T20:30:00+08:00",
             final_content="FROZEN TRADE REPORT", task_id="ETF交易复盘",
-            task_run_id="trade-run", occurrence_id="occurrence-001",
+            task_run_id="trade-run", occurrence_id="occurrence-001", entry_mode="MANUAL_SCHEDULED_TASK",
         )
         binding = payload["presentation_binding"]
         self.assertEqual(binding["report_type"], "ETF_TRADE_REVIEW")
@@ -154,7 +158,7 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
     def test_trade_completion_defaults_occurrence_to_task_run_for_recovery_compatibility(self):
         payload = completion.build_completion_request(
             full_review(), "trade-run-default", "2026-09-23T20:30:00+08:00",
-            final_content="FROZEN TRADE REPORT", task_id="ETF交易复盘", task_run_id="trade-run-default",
+            final_content="FROZEN TRADE REPORT", task_id="ETF交易复盘", task_run_id="trade-run-default", entry_mode="MANUAL_SCHEDULED_TASK",
         )
         self.assertEqual(payload["occurrence_id"], "trade-run-default")
         self.assertEqual(payload["presentation_binding"]["occurrence_id"], "trade-run-default")
