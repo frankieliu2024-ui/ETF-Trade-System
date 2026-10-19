@@ -2337,33 +2337,6 @@ def _validate_presentation_binding(binding: dict, report_type: str) -> dict:
 
 
 
-def record_scheduled_formal_decision(request: dict) -> tuple[bool, bool, str]:
-    """Canonical owner for task-context Formal Decision Scheduled Review completion."""
-    if str(request.get("formal_fact_type") or "").upper() != "FORMAL_DECISION_REPORT":
-        return False, False, ""
-    binding = _validate_presentation_binding(request.get("presentation_binding"), "ETF_FORMAL_DECISION")
-    if str(binding.get("task_id") or "") != "ETF正式决策":
-        raise ValueError("Formal Decision Scheduled Review task identity mismatch")
-    for key in ("request_id", "parent_request_id", "decision_id"):
-        if str(request.get(key) or "").strip() != str(binding.get(key) or "").strip():
-            raise ValueError(f"Formal Decision Scheduled Review {key} mismatch")
-    bds = {
-        "request_id": request.get("request_id"),
-        "parent_request_id": request.get("parent_request_id"),
-        "decision_id": request.get("decision_id"),
-        "task_id": request.get("task_id") or binding.get("task_id"),
-        "task_run_id": request.get("task_run_id") or binding.get("task_run_id"),
-        "occurrence_id": request.get("occurrence_id") or binding.get("occurrence_id"),
-        "requested_at_beijing": request.get("requested_at_beijing"),
-        "decision_response": request.get("decision_response") or {},
-        "presentation_content": binding.get("full_content"),
-        "presentation_binding": binding,
-        "content_hash": binding.get("content_hash"),
-        "target_path": "requests/live_snapshot/" + str(request.get("request_id")) + ".json",
-    }
-    recorded, replay, path = record_formal_decision_report_event(request, bds)
-    return recorded, replay, path
-
 def record_scheduled_system_review(request: dict) -> tuple[bool, bool]:
     if str(request.get("formal_fact_type") or "") != "FORMAL_SCHEDULED_SYSTEM_REVIEW":
         return False, False
@@ -3847,11 +3820,6 @@ def main() -> int:
         request["formal_decision"] = projected
     if original_source_dispatch:
         print(json.dumps({"ok": True, "request_id": request.get("request_id"), "business_decision_source_persisted": True, "completion_required": True}, ensure_ascii=False))
-        return 0
-    formal_report_recorded, formal_report_idempotent, formal_report_path = record_scheduled_formal_decision(request)
-    if formal_report_recorded:
-        result = {"ok": True, "request_id": request.get("request_id"), "formal_decision_report_completion": True, "idempotent_replay": formal_report_idempotent, "canonical_publication": formal_report_path}
-        print(json.dumps(result, ensure_ascii=False))
         return 0
     system_review_recorded, system_review_idempotent = record_scheduled_system_review(request)
     if system_review_recorded:
