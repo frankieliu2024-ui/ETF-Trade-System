@@ -297,7 +297,7 @@ class E2EDecisionReadinessTests(unittest.TestCase):
         )
         self.assertFalse(handoff["user_reply_precondition"])
         self.assertTrue(handoff["post_reply_async"])
-        self.assertTrue(handoff["must_read_back_after_reply"])
+        self.assertTrue(handoff["must_read_back_before_reply"])
         self.assertTrue(handoff["historical_fallback_forbidden"])
 
     def test_true_incomplete_formal_context_remains_not_ready(self):
@@ -333,3 +333,4 @@ class E2EDecisionReadinessTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

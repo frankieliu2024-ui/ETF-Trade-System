@@ -7,7 +7,7 @@ INFLIGHT_STATUSES = {"BUILDING", "PENDING", "QUEUED", "RUNNING", "IN_PROGRESS", 
 READY_STATUSES = {"READY", "RESOLVED_DEGRADED"}
 TERMINAL_FAILURE_STATUSES = {"FAILED", "TERMINAL_FAILURE", "BLOCKED_TERMINAL"}
 BUSINESS_REPLY_OUTPUT = "COMPLETE_BUSINESS_DECISION_ONLY"
-POST_REPLY_HANDOFF = "BDS_AND_COMPLETION_AFTER_USER_REPLY"
+PRE_REPLY_HANDOFF = "BDS_AND_COMPLETION_BEFORE_USER_REPLY"
 ACTOR_CONTINUE = "CONTINUE_SAME_REQUEST_SILENTLY"
 ACTOR_DECIDE = "COMPLETE_BUSINESS_DECISION_NOW"
 ACTOR_TERMINATE = "TERMINATE_ON_EXPLICIT_FAILURE"
@@ -25,7 +25,7 @@ def classify_formal_request_consumer_state(
 
     The request-bound formal_reply_freeze is the reply decision boundary.
     Global e2e_status and close-review projections are observability or
-    post-decision state and must not override a same-request READY gate. The actor must output the frozen FINAL_CONTENT, then continue the BDS readback and completion ingress along the same parent request.
+    post-decision state and must not override a same-request READY gate. The actor must freeze FINAL_CONTENT, complete the BDS readback and completion ingress, then output that exact frozen content.
     This helper is read-only and interprets the existing request-bound
     query_context/formal_reply_freeze contract for interactive consumers.
     """
@@ -117,10 +117,9 @@ def classify_formal_request_consumer_state(
         # state/checker and does not wait for persistence.
         response_contract = dwp.get("response_contract") if isinstance(dwp, dict) else {}
         response_contract = response_contract if isinstance(response_contract, dict) else {}
-        # Request-bound facts authorize business analysis. FINAL_CONTENT is frozen
-        # once and returned to the user first. BDS, completion, event, REPORT,
-        # notification and provider delivery reuse that exact frozen content
-        # and remain downstream projections.
+        # Request-bound facts authorize business analysis. FINAL_CONTENT is
+        # frozen once; BDS, completion, event, REPORT, notification and
+        # provider delivery reuse that exact frozen content.
         return {
             "status": "BUSINESS_DECISION_READY",
             "continue_same_request": False,
@@ -129,14 +128,14 @@ def classify_formal_request_consumer_state(
             "user_visible_output": BUSINESS_REPLY_OUTPUT,
             "actor_action": ACTOR_DECIDE,
             "user_output_allowed": True,
-            "post_reply_processing": POST_REPLY_HANDOFF,
+            "pre_reply_processing": PRE_REPLY_HANDOFF,
             "required_problem_ids": required_problem_ids,
             "required_problem_count": len(required_problem_ids),
             "business_answer_contract": "DWP_EXACT_COVERAGE_BEFORE_PRESENTATION",
             "actor_response_contract": response_contract,
             "control_plane_in_user_reply": False,
             "reason": (
-                "SAME_REQUEST_FACTS_READY_REPLY_FIRST_COMPLETION_HANDOFF_"
+                "SAME_REQUEST_FACTS_READY_COMPLETION_HANDOFF_BEFORE_REPLY_"
                 "BDS_AUDIT_AND_PROVIDER_ASYNC"
             ),
             "canonical_persistence_status": (
@@ -182,7 +181,7 @@ def classify_formal_request_consumer_state(
                     "read_back_required": True,
                     "formal_decision_notification_chain_starts_at_bds": False,
                     "completion_and_report_not_required_for_formal_decision_notification": False,
-                    "bds_must_be_written_and_read_back_after_user_reply": True,
+                    "bds_must_be_written_and_read_back_before_user_reply": True,
                 },
                 "user_reply_precondition": False,
                 "notification_attempt_precondition": True,
@@ -196,9 +195,8 @@ def classify_formal_request_consumer_state(
                 },
                 "post_reply_async": True,
                 "provider_success_async": True,
-                "must_read_back_before_reply": False,
+                "must_read_back_before_reply": True,
                 "historical_fallback_forbidden": True,
-                "must_read_back_after_reply": True,
             },
         }
 
@@ -236,3 +234,4 @@ def classify_formal_request_consumer_state(
         "user_output_allowed": False,
         "reason": "NO_EXPLICIT_TERMINAL_FAILURE_AND_REPLY_NOT_YET_READY",
     }
+

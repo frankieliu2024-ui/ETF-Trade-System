@@ -24,7 +24,12 @@ class FormalDecisionCanonicalChainTests(unittest.TestCase):
         ):
             self.assertIn(value, protocol)
 
-    def test_bds_top_level_formal_entry_identity_is_projected_into_source(self):\n        source = Path("scripts/process_state_sync_request.py").read_text(encoding="utf-8")\n        self.assertIn('"formal_entry_source"', source)\n        self.assertIn("source_payload.setdefault(identity_field, request.get(identity_field))", source)\n\n    def test_completion_builder_binds_registered_entry_identity(self):
+    def test_bds_top_level_formal_entry_identity_is_projected_into_source(self):
+        source = Path("scripts/process_state_sync_request.py").read_text(encoding="utf-8")
+        self.assertIn('"formal_entry_source"', source)
+        self.assertIn("source_payload.setdefault(identity_field, request.get(identity_field))", source)
+
+    def test_completion_builder_binds_registered_entry_identity(self):
         text = Path("scripts/manual_formal_decision_completion.py").read_text(encoding="utf-8")
         self.assertIn("Formal Decision completion requires one of the three registered entry identities", text)
         self.assertIn('"formal_entry_source": source_mode', text)
@@ -42,3 +47,4 @@ class FormalDecisionCanonicalChainTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

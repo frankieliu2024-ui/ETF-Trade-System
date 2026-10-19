@@ -117,8 +117,8 @@ class FormalRequestConsumerLifecycleTests(unittest.TestCase):
         self.assertEqual(state["user_visible_output"], "COMPLETE_BUSINESS_DECISION_ONLY")
         self.assertEqual(state["actor_action"], "COMPLETE_BUSINESS_DECISION_NOW")
         self.assertTrue(state["user_output_allowed"])
-        self.assertTrue(state["ready_handoff"]["user_reply_precondition"])
-        self.assertFalse(state["ready_handoff"]["post_reply_async"])
+        self.assertFalse(state["ready_handoff"]["user_reply_precondition"])
+        self.assertTrue(state["ready_handoff"]["post_reply_async"])
 
 
     def test_ready_exposes_exact_dwp_problem_checklist_before_presentation(self):
@@ -267,7 +267,7 @@ class FormalRequestConsumerLifecycleTests(unittest.TestCase):
         self.assertTrue(state["reply_eligible"])
         self.assertFalse(state["continue_same_request"])
         self.assertEqual(state["user_visible_output"], "COMPLETE_BUSINESS_DECISION_ONLY")
-        self.assertEqual(state["post_reply_processing"], "CANONICAL_AUDIT_NOTIFICATION_ASYNC")
+        self.assertEqual(state["pre_reply_processing"], "BDS_AND_COMPLETION_BEFORE_USER_REPLY")
         self.assertFalse(state["control_plane_in_user_reply"])
 
     def test_downstream_persistence_failure_does_not_revoke_ready_reply(self):
@@ -401,3 +401,4 @@ class FormalRequestConsumerLifecycleTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

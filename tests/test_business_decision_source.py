@@ -232,5 +232,6 @@ class BusinessDecisionSourceTests(unittest.TestCase):
         })
         with self.assertRaisesRegex(ValueError, "current request timestamp"):
             validate_source(source)
-\nif __name__ == "__main__":
+if __name__ == "__main__":
     unittest.main()
+
