@@ -175,6 +175,53 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         self.assertEqual(report["report_type"], "ETF_FORMAL_DECISION")
 
 
+    def test_trade_review_production_rejects_legacy_missing_hash_source(self):
+        binding = {
+            "report_type": "ETF_TRADE_REVIEW",
+            "task_id": "ETF交易复盘",
+            "task_run_id": "run-legacy",
+            "occurrence_id": "run-legacy",
+            "request_id": "run-legacy",
+            "report_id": "ETF_TRADE_REVIEW:run-legacy",
+            "full_content": "FROZEN TRADE REPORT",
+        }
+        with self.assertRaisesRegex(ValueError, "requires content_hash"):
+            state_sync._validate_presentation_binding(binding, "ETF_TRADE_REVIEW", strict_production=True)
+
+    def test_trade_review_production_requires_builder_hash_contract(self):
+        content_text = "FROZEN TRADE REPORT"
+        binding = {
+            "report_type": "ETF_TRADE_REVIEW",
+            "task_id": "ETF交易复盘",
+            "task_run_id": "run-current",
+            "occurrence_id": "occ-current",
+            "request_id": "run-current",
+            "report_id": "etf_trade_review:run-current",
+            "full_content": content_text,
+            "content_hash": hashlib.sha256(content_text.encode("utf-8")).hexdigest(),
+            "content_hash_source": "completion_builder",
+        }
+        normalized = completion._validate_presentation_binding(
+            binding, "ETF_TRADE_REVIEW", strict_production=True
+        )
+        self.assertEqual(normalized["content_hash"], binding["content_hash"])
+        self.assertEqual(normalized["content_hash_source"], "completion_builder")
+
+    def test_trade_review_historical_compatibility_still_allows_missing_hash_source(self):
+        binding = {
+            "report_type": "ETF_TRADE_REVIEW",
+            "task_id": "ETF交易复盘",
+            "task_run_id": "run-history",
+            "occurrence_id": "run-history",
+            "request_id": "run-history",
+            "report_id": "ETF_TRADE_REVIEW:run-history",
+            "full_content": "HISTORICAL TRADE REPORT",
+        }
+        normalized = completion._validate_presentation_binding(
+            binding, "ETF_TRADE_REVIEW", strict_production=False
+        )
+        self.assertEqual(normalized["content_hash_source"], "canonical_owner")
+
     def test_system_review_completion_is_business_completion_not_report_handoff(self):
         payload = completion.build_system_review_completion_request(
             {"status": "PASS"}, "system-request", "2026-09-26T19:30:00+08:00",
