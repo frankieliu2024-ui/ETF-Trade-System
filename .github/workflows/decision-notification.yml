@@ -36,7 +36,7 @@ on:
   push:
     paths:
       # Formal Decision notifications are authorized only by events/reviews/formal_*.json.
-      - "requests/live_snapshot/*__formal_decision_completion.json"
+      - "requests/live_snapshot/*.json"
       - "events/trades/*.json"
       - "events/reviews/*.json"
       - "data/state/account_fact.json"
@@ -109,7 +109,22 @@ jobs:
           git cat-file -e "$PUSH_BEFORE^{commit}" 2>/dev/null || git fetch --no-tags origin "$PUSH_BEFORE"
           git cat-file -e "$PUSH_AFTER^{commit}" 2>/dev/null || git fetch --no-tags origin "$PUSH_AFTER"
           git diff --name-only "$PUSH_BEFORE" "$PUSH_AFTER" > /tmp/changed_files.txt
-          mapfile -t formal_completion_paths < <(grep -E '^requests/live_snapshot/[^/]+__formal_decision_completion\\.json$' /tmp/changed_files.txt || true)
+          mapfile -t formal_completion_paths < <(while IFS= read -r candidate; do
+            [ -z "$candidate" ] && continue
+            python - "$candidate" <<'PY' 2>/dev/null && echo "$candidate"
+          import json, sys
+          from pathlib import Path
+          request = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          binding = request.get("presentation_binding") or {}
+          if (
+              str(request.get("request_type") or "").upper() == "SCHEDULED_REVIEW_COMPLETION"
+              and str(request.get("formal_fact_type") or "").upper() == "FORMAL_POST_CLOSE_REVIEW"
+              and str(binding.get("report_type") or "").upper() == "ETF_FORMAL_DECISION"
+          ):
+              raise SystemExit(0)
+          raise SystemExit(1)
+          PY
+          done < <(grep -E '^requests/live_snapshot/[^/]+\\.json$' /tmp/changed_files.txt || true))
           if [ "${#formal_completion_paths[@]}" -eq 1 ]; then
             echo "formal_completion=true" >> "$GITHUB_OUTPUT"
             echo "formal_completion_path=${formal_completion_paths[0]}" >> "$GITHUB_OUTPUT"

@@ -61,7 +61,7 @@ class FormalDecisionSingleChainContractTests(unittest.TestCase):
             "conversation",
         )
         completion = {
-            "request_id": parent["request_id"] + "__formal_decision_completion",
+            "request_id": parent["request_id"] + "__scheduled_review_completion",
             "parent_request_id": parent["request_id"],
             "request_type": "SCHEDULED_REVIEW_COMPLETION",
             "source": "CHATGPT_SCHEDULED_REVIEW_ACTOR",

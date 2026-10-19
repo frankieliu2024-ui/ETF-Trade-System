@@ -6,7 +6,7 @@ WORKFLOW = Path(".github/workflows/decision-notification.yml")
 
 def test_formal_decision_bds_is_not_a_direct_notification_wake():
     text = WORKFLOW.read_text(encoding="utf-8")
-    assert "requests/live_snapshot/*__formal_decision_completion.json" in text
+    assert "requests/live_snapshot/*.json" in text
     assert "events/reviews/formal_*.json" in text
     assert "formal-content-file" not in text
 

@@ -863,7 +863,7 @@ class RequestBoundOpportunityIdentityTests(unittest.TestCase):
 
     def test_formal_completion_projects_directly_to_shared_review_event(self):
         workflow = (ROOT / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
-        self.assertIn("requests/live_snapshot/*__formal_decision_completion.json", workflow)
+        self.assertIn("requests/live_snapshot/*.json", workflow)
         self.assertIn("Project Formal Decision completion to canonical review event", workflow)
         self.assertIn("events/reviews/formal_*.json", workflow)
         self.assertNotIn("market-snapshot.yml", workflow.split("Project Formal Decision completion to canonical review event", 1)[1].split("Send material user-action notification", 1)[0])

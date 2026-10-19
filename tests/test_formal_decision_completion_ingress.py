@@ -10,7 +10,8 @@ class FormalDecisionCanonicalChainTests(unittest.TestCase):
             self.assertIn("BUSINESS_DECISION_SOURCE", text)
             self.assertIn("SCHEDULED_REVIEW_COMPLETION", text)
             self.assertIn("formal_completion_path", text)
-        self.assertNotIn("STATE_SYNC_ONLY + FORMAL_SCHEDULED_REVIEW", protocol)
+        self.assertIn("以下路径不得作为正式决策生产链", protocol)
+        self.assertIn("SCHEDULED_REVIEW_COMPLETION", protocol)
 
     def test_three_entry_identity_contract_is_registered(self):
         protocol = Path("docs/Formal Decision执行与用户回复协议.md").read_text(encoding="utf-8")

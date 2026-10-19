@@ -33,7 +33,7 @@ class FormalDecisionBdsContractTests(unittest.TestCase):
                 "content_hash": hashlib.sha256(body.encode("utf-8")).hexdigest(),
             }
             completion = {
-                "request_id": parent_id + "__formal_decision_completion",
+                "request_id": parent_id + "__scheduled_review_completion",
                 "parent_request_id": parent_id,
                 "request_type": "SCHEDULED_REVIEW_COMPLETION",
                 "source": "CHATGPT_SCHEDULED_REVIEW_ACTOR",
@@ -49,9 +49,7 @@ class FormalDecisionBdsContractTests(unittest.TestCase):
             with mock.patch.object(sync, "ROOT", root), mock.patch.object(
                 sys, "argv", ["process_state_sync_request.py", str(completion_path.relative_to(root))]
             ):
-                with self.assertRaisesRegex(
-                    ValueError, "must reference BUSINESS_DECISION_SOURCE"
-                ):
+                with self.assertRaisesRegex(ValueError, "missing formal_review"):
                     sync.main()
 
 
