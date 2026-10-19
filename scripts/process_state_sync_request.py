@@ -2226,8 +2226,18 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     # Legacy/recovery requests without a presentation binding remain compatible;
     # a present binding must satisfy the exact scheduled-delivery contract.
     raw_presentation_binding = request.get("presentation_binding")
+    is_trade_review_production = (
+        str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION"
+        and str(request.get("source") or "").strip().upper() == "CHATGPT_SCHEDULED_REVIEW_ACTOR"
+        and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_POST_CLOSE_REVIEW"
+        and str((raw_presentation_binding or {}).get("task_id") or "").strip() == "ETF交易复盘"
+    )
     presentation_binding = (
-        _validate_presentation_binding(raw_presentation_binding, "ETF_TRADE_REVIEW")
+        _validate_presentation_binding(
+            raw_presentation_binding,
+            "ETF_TRADE_REVIEW",
+            strict_production=is_trade_review_production,
+        )
         if raw_presentation_binding is not None
         else {}
     )
@@ -2316,7 +2326,7 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     return True, False
 
 
-def _validate_presentation_binding(binding: dict, report_type: str) -> dict:
+def _validate_presentation_binding(binding: dict, report_type: str, strict_production: bool = False) -> dict:
     if not isinstance(binding, dict):
         raise ValueError("scheduled completion presentation_binding must be an object")
     required = ("task_id", "task_run_id", "request_id", "report_id", "full_content")
@@ -2328,12 +2338,22 @@ def _validate_presentation_binding(binding: dict, report_type: str) -> dict:
     content = str(binding["full_content"])
     expected_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
     supplied_hash = str(binding.get("content_hash") or "").strip()
-    # content_hash is audit metadata only. The immutable content binding is
-    # the exact full_content string; a stale, absent, or externally-produced
-    # hash must never block the shared notification chain.
+    supplied_hash_source = str(binding.get("content_hash_source") or "").strip()
+    if strict_production:
+        if not str(binding.get("occurrence_id") or "").strip():
+            raise ValueError("scheduled trade review production binding requires occurrence_id")
+        if not supplied_hash:
+            raise ValueError("scheduled trade review production binding requires content_hash")
+        if supplied_hash != expected_hash:
+            raise ValueError("scheduled trade review production binding content_hash mismatch")
+        if supplied_hash_source != "completion_builder":
+            raise ValueError("scheduled trade review production binding requires content_hash_source=completion_builder")
+    # Historical/recovery compatibility remains available when strict_production
+    # is false. Current Trade Review production must use the builder-produced
+    # immutable hash and source contract above.
     binding = dict(binding)
     binding["content_hash"] = expected_hash
-    binding["content_hash_source"] = "canonical_owner" if not supplied_hash else "completion_builder"
+    binding["content_hash_source"] = "completion_builder" if supplied_hash else "canonical_owner"
     return binding
 
 
