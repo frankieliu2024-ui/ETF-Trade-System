@@ -97,6 +97,25 @@ class FormalDecisionSingleChainContractTests(unittest.TestCase):
             reason, "formal_completion_request_type_must_be_SCHEDULED_REVIEW_COMPLETION"
         )
 
+    def test_completion_rejects_missing_content_hash(self):
+        completion = {
+            "request_id": "parent_hash__scheduled_review_completion",
+            "parent_request_id": "parent_hash",
+            "request_type": "SCHEDULED_REVIEW_COMPLETION",
+            "source": "CHATGPT_SCHEDULED_REVIEW_ACTOR",
+            "formal_fact_type": "FORMAL_POST_CLOSE_REVIEW",
+            "formal_entry_source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+            "entry_mode": "MANUAL_CONVERSATION",
+            "task_id": "ETF正式决策",
+            "task_run_id": "run_hash",
+            "occurrence_id": "occ_hash",
+            "market_date": "2026-10-19",
+            "bds_path": "requests/live_snapshot/parent_hash__business_decision_source.json",
+            "decision_id": "decision_hash",
+        }
+        valid, reason = validate_formal_completion_request(completion)
+        self.assertFalse(valid)
+        self.assertEqual(reason, "formal_completion_content_hash_required")
 
 if __name__ == "__main__":
     unittest.main()
