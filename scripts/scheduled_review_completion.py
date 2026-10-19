@@ -432,6 +432,7 @@ def main() -> int:
         args.final_content,
         args.task_id,
         args.task_run_id,
+        args.occurrence_id,
     )
     print(json.dumps({"ok": True, "request": str(target.relative_to(ROOT)).replace("\\", "/")}, ensure_ascii=False))
     return 0
