@@ -239,7 +239,7 @@ def build_formal_decision_completion_request(
         raise ValueError("Formal Decision completion requires a safe BDS path")
     decision_id = _safe_id(decision_id)
     content_hash = str(content_hash or "").strip()
-    request_id = _safe_id(completion_request_id or f"{parent_id}__formal_decision_completion")
+    request_id = _safe_id(completion_request_id or f"{parent_id}__scheduled_review_completion")
     if request_id == parent_id:
         raise ValueError("Formal Decision completion identity must differ from its parent")
     source_mode = str(source_request.get("source") or "").strip().upper()
