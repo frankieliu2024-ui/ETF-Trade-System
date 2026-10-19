@@ -91,6 +91,7 @@ def build_scheduled_request(
         "request_id": request_id,
         "request_type": "MARKET_QUOTE_REFRESH",
         "source": trigger_source,
+        "entry_mode": mode,
         "intent": {
             "query_intent": "FORMAL_INTRADAY_ANALYSIS",
             "interaction_scenario": "FORMAL_DECISION",
