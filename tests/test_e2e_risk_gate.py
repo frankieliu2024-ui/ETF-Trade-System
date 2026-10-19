@@ -7,7 +7,7 @@ class E2ERiskGateTests(unittest.TestCase):
     def test_stale_auxiliary_risk_evidence_does_not_clear_current_gross(self):
         result = risk_component(
             {"summary": {"current_strategy_return_pct_gross": -1.0}, "generated_at": "2026-10-17T17:00:00+08:00"},
-            {"market_date": "2026-10-17"},
+            {"market_date": "2026-10-19", "last_confirmed_market_date": "2026-10-16"},
             {
                 "status": "DEGRADED",
                 "data_alignment": "LATEST_AVAILABLE_RESEARCH_DATE",
