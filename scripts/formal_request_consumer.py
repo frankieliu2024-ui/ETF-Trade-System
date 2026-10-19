@@ -117,10 +117,11 @@ def classify_formal_request_consumer_state(
         # state/checker and does not wait for persistence.
         response_contract = dwp.get("response_contract") if isinstance(dwp, dict) else {}
         response_contract = response_contract if isinstance(response_contract, dict) else {}
-        # Request-bound facts authorize business analysis. FINAL_CONTENT is
-        # frozen once and returned as the first user-visible action. BDS,
-        # completion, REPORT, notification and provider delivery are
-        # post-reply projections and must not block the full answer.
+        # Request-bound facts authorize business analysis. FINAL_CONTENT is frozen
+        # once, then the same execution turn must complete the pre-reply BDS
+        # readback and completion ingress before returning any user-visible
+        # content. Event, REPORT, notification and provider delivery remain
+        # downstream projections and must not rewrite the frozen content.
         return {
             "status": "BUSINESS_DECISION_READY",
             "continue_same_request": False,
@@ -142,10 +143,11 @@ def classify_formal_request_consumer_state(
             "canonical_persistence_status": (
                 "CONFIRMED" if canonical_persisted else "PENDING_ASYNC"
             ),
-            # This is the single post-reply completion handoff contract, not a new
-            # state or producer. The Actor freezes FINAL_CONTENT and returns it
-            # first; BDS is a bound business-fact projection, then the existing
-            # Formal Decision completion ingress drives REPORT/notification.
+            # This is the single pre-reply completion handoff contract, not a new
+            # state or producer. The Actor freezes FINAL_CONTENT, writes and
+            # reads back BDS, submits the existing completion ingress, and only
+            # then returns the exact frozen content. Downstream event,
+            # REPORT/notification/provider delivery remains asynchronous.
             "ready_handoff": {
                 "required": True,
                 "submission_type": "BUSINESS_DECISION_SOURCE",
@@ -183,7 +185,7 @@ def classify_formal_request_consumer_state(
                     "completion_and_report_not_required_for_formal_decision_notification": False,
                     "bds_must_be_written_and_read_back_before_user_reply": True,
                 },
-                "user_reply_precondition": False,
+                "user_reply_precondition": True,
                 "notification_attempt_precondition": True,
                 "provider_success_not_required_for_user_reply": True,
                 "user_reply_contract": {

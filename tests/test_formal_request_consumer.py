@@ -117,6 +117,8 @@ class FormalRequestConsumerLifecycleTests(unittest.TestCase):
         self.assertEqual(state["user_visible_output"], "COMPLETE_BUSINESS_DECISION_ONLY")
         self.assertEqual(state["actor_action"], "COMPLETE_BUSINESS_DECISION_NOW")
         self.assertTrue(state["user_output_allowed"])
+        self.assertTrue(state["ready_handoff"]["user_reply_precondition"])
+        self.assertFalse(state["ready_handoff"]["post_reply_async"])
 
 
     def test_ready_exposes_exact_dwp_problem_checklist_before_presentation(self):
