@@ -148,6 +148,9 @@ class E2EDecisionReadinessTests(unittest.TestCase):
                         "reply_freezable": True,
                         "blockers": [],
                     },
+                    "decision_work_package": {
+                        "problem_graph": [{"problem_id": "DISCOVERY:159029"}]
+                    },
                 },
                 "fast_path_latency": {"latency_status": "OBSERVED"},
             },
@@ -213,6 +216,29 @@ class E2EDecisionReadinessTests(unittest.TestCase):
         self.assertFalse(gate["user_output_allowed"])
         self.assertEqual(gate["required_problem_ids"], [])
         self.assertEqual(gate["required_problem_count"], 0)
+
+    def test_ready_gate_is_not_reply_freezable_without_same_request_dwp(self):
+        result = context_component(
+            {
+                "decision_fact_pack": {
+                    "trigger": {
+                        "request_id": "empty-dwp-parent",
+                        "requested_at_beijing": "2026-10-19T11:00:00+08:00",
+                    },
+                    "formal_reply_freeze": {
+                        "status": "READY",
+                        "reply_freezable": True,
+                        "blockers": [],
+                    },
+                },
+                "fast_path_latency": {"latency_status": "OBSERVED"},
+            },
+            {"formal_intraday_context_completeness": {"status": "READY"}},
+        )
+        gate = result["formal_reply_gate"]
+        self.assertEqual(gate["status"], "IN_FLIGHT")
+        self.assertFalse(gate["reply_freezable"])
+        self.assertIn("DECISION_WORK_PACKAGE_NOT_CONSUMABLE", gate["blockers"])
 
     def test_actor_gate_projects_ready_contract_and_exact_dwp_checklist(self):
         result = context_component(
