@@ -287,17 +287,17 @@ class FormalReadyHandoffContractTests(unittest.TestCase):
         self.assertIn('"presentation_content"', text)
         self.assertIn('"notification_attempt_precondition": True', text)
         self.assertIn('"provider_success_not_required_for_user_reply": True', text)
-        self.assertIn('"must_read_back_before_reply": False', text)
+        self.assertIn('"must_read_back_before_reply": True', text)
         self.assertIn('"historical_fallback_forbidden": True', text)
         self.assertIn('"formal_decision_notification_chain_starts_at_bds": False', text)
-        self.assertIn('"post_reply_async": True', text)
+        self.assertIn('"post_reply_async": False', text)
         self.assertIn('"provider_success_async": True', text)
 
     def test_protocol_has_no_pre_reply_bds_notification_contract(self):
         protocol = (Path(__file__).parents[1] / "docs/Formal Decision执行与用户回复协议.md").read_text(encoding="utf-8")
-        self.assertNotIn("通知尝试应先于用户窗口输出", protocol)
-        self.assertNotIn("Actor必须先完成BDS写入/回读和通知尝试，再输出完整FINAL_CONTENT", protocol)
-        self.assertIn("用户窗口输出唯一 `FINAL_CONTENT` 后", protocol)
+        self.assertIn("FINAL_CONTENT 冻结后、用户窗口输出前", protocol)
+        self.assertIn("在用户窗口返回前", protocol)
+        self.assertNotIn("用户窗口输出唯一 `FINAL_CONTENT` 后，后置交接只能沿当前父请求继续", protocol)
         self.assertIn("通知失败不撤回用户已经看到的正文", protocol)
 
     def test_ready_handoff_does_not_create_a_second_notification_path(self):
