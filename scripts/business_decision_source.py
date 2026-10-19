@@ -877,7 +877,47 @@ def _normalize_formal_presentation_layout(value: Any) -> Any:
     if not isinstance(value, str):
         return value
     import re
-    return re.sub(r"[ \t]+([（(][0-9]{1,2}[）)])", r"\n\n\1", value)
+
+    text = re.sub(r"[ \t]+([（(][0-9]{1,2}[）)])", r"\n\n\1", value)
+    lines = text.splitlines()
+    heading = re.compile(r"^【[^】]+】$")
+    primary = re.compile(r"^(\d{1,2})\.\s+(.*)$")
+    secondary = re.compile(r"^(?:[（(](\d{1,2})[）)]|(\d{1,2})）)\s+(.*)$")
+    output: list[str] = []
+    section: list[str] = []
+
+    def flush_section(items: list[str]) -> None:
+        if not items:
+            return
+        primary_positions = [i for i, line in enumerate(items) if primary.match(line.strip())]
+        secondary_positions = [i for i, line in enumerate(items) if secondary.match(line.strip())]
+        # A single top-level marker is prose, not a list item.  When it is the
+        # parent of a real secondary list (the common discovery/observation
+        # shape), remove the prose marker and promote that list to the section's
+        # primary level so the frozen report has one unambiguous hierarchy.
+        if len(primary_positions) == 1:
+            pos = primary_positions[0]
+            match = primary.match(items[pos].strip())
+            assert match is not None
+            items[pos] = match.group(2)
+            if secondary_positions:
+                next_number = 1
+                for index in secondary_positions:
+                    match = secondary.match(items[index].strip())
+                    assert match is not None
+                    items[index] = f"{next_number}. {match.group(3)}"
+                    next_number += 1
+        output.extend(items)
+
+    for line in lines:
+        if heading.fullmatch(line.strip()):
+            flush_section(section)
+            section = []
+            output.append(line)
+        else:
+            section.append(line)
+    flush_section(section)
+    return "\n".join(output)
 
 def _normalize_formal_presentation_source(source: dict[str, Any]) -> None:
     source["presentation_content"] = _normalize_formal_presentation_layout(
@@ -927,9 +967,23 @@ def _validate_formal_presentation_layout(content: str) -> None:
         raise ValueError("formal presentation title must be the first line")
     heading_pattern = re.compile(r"^【[^】]+】$")
     primary_seen = False
+    section_primary_numbers: list[int] = []
+    section_secondary_numbers: list[int] = []
+
+    def finish_section() -> None:
+        if len(section_primary_numbers) == 1:
+            raise ValueError("formal presentation single-item sections must not be numbered")
+        if section_primary_numbers and section_primary_numbers != list(range(1, len(section_primary_numbers) + 1)):
+            raise ValueError("formal presentation primary numbering must restart at 1 and be sequential")
+        if section_secondary_numbers and section_secondary_numbers != list(range(1, len(section_secondary_numbers) + 1)):
+            raise ValueError("formal presentation secondary numbering must restart at 1 and be sequential")
+
     for index, line in enumerate(lines):
         stripped = line.strip()
         if stripped.startswith("【") and stripped.endswith("】"):
+            finish_section()
+            section_primary_numbers.clear()
+            section_secondary_numbers.clear()
             if not heading_pattern.fullmatch(stripped):
                 raise ValueError("formal presentation heading must occupy its own line")
             primary_seen = False
@@ -938,14 +992,17 @@ def _validate_formal_presentation_layout(content: str) -> None:
             raise ValueError("formal presentation secondary numbering must start a new paragraph")
         if re.match(r"^[0-9]{1,2}\.[^ \t\n]", stripped):
             raise ValueError("formal presentation primary numbering requires whitespace after marker")
-        if re.match(r"^[（(][0-9]{1,2}[）)][^ \t\n]", stripped):
+        if re.match(r"^(?:[（(][0-9]{1,2}[）)]|[0-9]{1,2}）)[^ \t\n]", stripped):
             raise ValueError("formal presentation secondary numbering requires whitespace after marker")
-        if re.match(r"^[（(][0-9]{1,2}[）)]\s+", stripped):
+        secondary_marker = re.match(r"^(?:[（(]([0-9]{1,2})[）)]|([0-9]{1,2})）)\s+", stripped)
+        if secondary_marker:
+            section_secondary_numbers.append(int(secondary_marker.group(1) or secondary_marker.group(2)))
             if not primary_seen:
                 raise ValueError("formal presentation secondary numbering requires a preceding primary item")
             if index == 0 or lines[index - 1].strip() != "":
                 raise ValueError("formal presentation secondary items require a blank line")
         if re.match(r"^[0-9]{1,2}\.\s+", stripped):
+            section_primary_numbers.append(int(re.match(r"^([0-9]{1,2})\.", stripped).group(1)))
             primary_seen = True
             if index == 0 or lines[index - 1].strip() != "":
                 raise ValueError("formal presentation primary items require a blank line")
@@ -953,6 +1010,7 @@ def _validate_formal_presentation_layout(content: str) -> None:
         raise ValueError("formal presentation primary items must be separate paragraphs")
     if re.search(r"(?m)^\s*[（(][0-9]{1,2}[）)]\s+[^\n]+\n\s*[（(][0-9]{1,2}[）)]\s+", content):
         raise ValueError("formal presentation secondary items must be separate paragraphs")
+    finish_section()
 
 
 def _validate_formal_presentation_contract(source: dict[str, Any]) -> None:
