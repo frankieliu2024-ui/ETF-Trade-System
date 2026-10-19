@@ -201,3 +201,8 @@ Actor不得直接写event、REPORT、notification或PushPlus。通知只能由�
 - 用户正文已输出不等于后置通知已闭环。
 
 本协议不新增workflow、producer、checker、state、writer、provider、交易权限或第三个ETF任务；只将三个Formal入口收敛到当前已有的BDS、Formal Decision completion、canonical event、REPORT、notification_center和PushPlus生产链。
+
+
+## 八、 大型 request-bound 事实的统一读取合同
+
+当 `data/state/query_context.json` 等 request-bound 事实文件超过 1 MB 时，Formal Decision 消费侧必须使用 GitHub API Contents 或 blob 读取；不得使用会返回空载荷的普通文件或 raw 读取路径。读取后必须在同一 current main 提交上校验实际字节数、SHA-256、JSON 可解析性、`decision_fact_pack.trigger.request_id`、请求绑定快照以及 `decision_work_package.problem_graph`。大型文件的连接器空载荷只能归类为读取通道不适配，不能归类为文件缺失、请求终止或新的 Formal Decision 失败。READY 只有在上述 request-bound 内容实际可消费时才成立；读取通道切换不得创建第二请求、第二状态或平行生产链。
