@@ -167,6 +167,8 @@ def build_completion_request(
         "market_phase": str(formal_review.get("market_phase") or ("MIDDAY_BREAK" if is_midday else "POST_CLOSE")),
         "requested_at_beijing": str(requested_at_beijing or "").strip(),
         "market_date": effective_market_date,
+        "task_run_id": effective_task_run_id,
+        "occurrence_id": effective_occurrence_id,
         "formal_review": formal_review,
         "presentation_binding": {
             "report_type": "ETF_TRADE_REVIEW",
