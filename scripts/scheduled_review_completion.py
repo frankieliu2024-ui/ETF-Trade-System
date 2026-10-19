@@ -70,6 +70,10 @@ REQUIRED_FULL_DAY_FIELDS = (
     "case_mode",
     "review_boundary",
 )
+TRADE_REVIEW_ENTRY_MODES = {
+    "MANUAL_SCHEDULED_TASK",
+    "AUTOMATIC_SCHEDULED_TASK",
+}
 
 
 def _safe_id(value: object) -> str:
@@ -138,6 +142,7 @@ def build_completion_request(
     task_id: str = "",
     task_run_id: str = "",
     occurrence_id: str = "",
+    entry_mode: str = "",
 ) -> dict:
     """Wrap a frozen Scheduled Review for the existing state-sync owner."""
     scope = str((formal_review or {}).get("review_scope") or "").strip().upper()
@@ -152,6 +157,12 @@ def build_completion_request(
     validate_user_visible_content(str(final_content or ""), canonical_closure_confirmed=False)
     effective_task_run_id = _safe_id(task_run_id or request_id)
     effective_occurrence_id = _safe_id(occurrence_id or effective_task_run_id)
+    effective_entry_mode = str(entry_mode or "").strip().upper()
+    if effective_entry_mode not in TRADE_REVIEW_ENTRY_MODES:
+        raise ValueError(
+            "scheduled trade review completion requires entry_mode="
+            "MANUAL_SCHEDULED_TASK or AUTOMATIC_SCHEDULED_TASK"
+        )
     frozen_content = str(final_content or "")
     frozen_content_hash = hashlib.sha256(frozen_content.encode("utf-8")).hexdigest()
     review_market_date = str(formal_review.get("market_date") or "").strip()
@@ -167,6 +178,7 @@ def build_completion_request(
         "market_phase": str(formal_review.get("market_phase") or ("MIDDAY_BREAK" if is_midday else "POST_CLOSE")),
         "requested_at_beijing": str(requested_at_beijing or "").strip(),
         "market_date": effective_market_date,
+        "entry_mode": effective_entry_mode,
         "task_run_id": effective_task_run_id,
         "occurrence_id": effective_occurrence_id,
         "formal_review": formal_review,
@@ -397,6 +409,7 @@ def write_completion_request(
     task_id: str = "",
     task_run_id: str = "",
     occurrence_id: str = "",
+    entry_mode: str = "",
 ) -> Path:
     source = (ROOT / review_path).resolve()
     if ROOT not in source.parents:
@@ -406,7 +419,7 @@ def write_completion_request(
     account = json.loads(account_path.read_text(encoding="utf-8")) if account_path.exists() else None
     payload = build_completion_request(
         review, request_id, requested_at_beijing, market_date, parent_request_id, account,
-        final_content, task_id, task_run_id, occurrence_id
+        final_content, task_id, task_run_id, occurrence_id, entry_mode
     )
     target = (ROOT / output_path).resolve() if output_path else REQUEST_DIR / f"{payload['request_id']}.json"
     if ROOT not in target.parents or target.suffix != ".json":
@@ -432,6 +445,7 @@ def main() -> int:
     parser.add_argument("--final-content", default="")
     parser.add_argument("--task-id", default="")
     parser.add_argument("--task-run-id", default="")
+    parser.add_argument("--entry-mode", required=True, choices=sorted(TRADE_REVIEW_ENTRY_MODES))
     args = parser.parse_args()
     target = write_completion_request(
         args.formal_review,
@@ -444,6 +458,7 @@ def main() -> int:
         args.task_id,
         args.task_run_id,
         args.occurrence_id,
+        args.entry_mode,
     )
     print(json.dumps({"ok": True, "request": str(target.relative_to(ROOT)).replace("\\", "/")}, ensure_ascii=False))
     return 0

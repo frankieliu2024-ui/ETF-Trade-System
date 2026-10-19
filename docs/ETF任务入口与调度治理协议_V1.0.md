@@ -25,6 +25,13 @@
 
 自动入口和用户手动入口均进入既有Trade Review链。Trade Review不得创建或冒充Formal Decision父请求、BDS或Formal Decision事件。
 
+Trade Review completion必须显式携带并回读本次真实入口身份：自动节点使用
+`entry_mode=AUTOMATIC_SCHEDULED_TASK`，任务界面手动启动使用
+`entry_mode=MANUAL_SCHEDULED_TASK`。两者均使用既有
+`source=CHATGPT_SCHEDULED_REVIEW_ACTOR`、`interaction_scenario=SCHEDULED_TRADE_REVIEW`
+和同一Scheduled Review completion owner；不得根据任务时间、正文标题或缺失字段推断
+`entry_mode`。缺失、冲突或与本次运行不一致时必须在completion ingress fail-closed。
+
 ### ETF正式决策
 
 对话窗口入口固定为：

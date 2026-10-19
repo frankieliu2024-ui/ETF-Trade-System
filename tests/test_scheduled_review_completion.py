@@ -53,11 +53,13 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
             full_review(),
             "20260923_2030_scheduled_trade_review__formal_completion",
             "2026-09-23T20:30:00+08:00",
+            entry_mode="AUTOMATIC_SCHEDULED_TASK",
         )
         self.assertEqual(payload["request_type"], "SCHEDULED_REVIEW_COMPLETION")
         self.assertEqual(payload["formal_fact_type"], "FORMAL_POST_CLOSE_REVIEW")
         self.assertEqual(payload["interaction_scenario"], "SCHEDULED_TRADE_REVIEW")
         self.assertEqual(payload["source"], "CHATGPT_SCHEDULED_REVIEW_ACTOR")
+        self.assertEqual(payload["entry_mode"], "AUTOMATIC_SCHEDULED_TASK")
         self.assertEqual(payload["formal_review"], full_review())
 
     def test_20260918_style_abbreviated_review_fails_before_persistence(self):
@@ -104,6 +106,7 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
             review, "20260923_1230_scheduled_trade_review", "2026-09-23T12:30:00+08:00",
             final_content="FROZEN MIDDAY REPORT", task_id="ETF交易复盘",
             task_run_id="20260923_1230_scheduled_trade_review",
+            entry_mode="MANUAL_SCHEDULED_TASK",
         )
         self.assertEqual(payload["interaction_scenario"], "SCHEDULED_TRADE_REVIEW")
         self.assertEqual(payload["market_phase"], "MIDDAY_BREAK")
@@ -116,6 +119,7 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         payload = completion.build_completion_request(
             review, "weekly-run", "2026-09-27T20:30:00+08:00",
             final_content="FROZEN WEEKLY REPORT", task_id="ETF交易复盘", task_run_id="weekly-run",
+            entry_mode="MANUAL_SCHEDULED_TASK",
         )
         self.assertEqual(payload["interaction_scenario"], "SCHEDULED_TRADE_REVIEW")
 
@@ -126,6 +130,14 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
                 "20260923_2030_scheduled_trade_review",
                 "2026-09-23T20:30:00+08:00",
                 market_date="2026-09-22",
+            )
+
+    def test_trade_review_requires_observed_entry_mode(self):
+        with self.assertRaisesRegex(ValueError, "requires entry_mode"):
+            completion.build_completion_request(
+                full_review(), "run-without-entry", "2026-09-23T20:30:00+08:00",
+                final_content="FROZEN TRADE REPORT", task_id="ETF交易复盘",
+                task_run_id="run-without-entry",
             )
 
     def test_missing_close_snapshot_fails_closed(self):
@@ -141,6 +153,7 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
             full_review(), "trade-run", "2026-09-23T20:30:00+08:00",
             final_content="FROZEN TRADE REPORT", task_id="ETF交易复盘",
             task_run_id="trade-run", occurrence_id="occurrence-001",
+            entry_mode="MANUAL_SCHEDULED_TASK",
         )
         binding = payload["presentation_binding"]
         self.assertEqual(binding["report_type"], "ETF_TRADE_REVIEW")
@@ -151,10 +164,40 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         self.assertEqual(binding["content_hash"], hashlib.sha256(b"FROZEN TRADE REPORT").hexdigest())
         self.assertEqual(binding["content_hash_source"], "completion_builder")
 
+    def test_trade_completion_rejects_unobserved_entry_mode_at_owner(self):
+        from scripts import process_state_sync_request as state_sync
+        binding = {
+            "report_type": "ETF_TRADE_REVIEW",
+            "task_id": "ETF交易复盘",
+            "task_run_id": "run-current",
+            "occurrence_id": "occ-current",
+            "request_id": "run-current",
+            "report_id": "etf_trade_review:run-current",
+            "full_content": "FROZEN TRADE REPORT",
+            "content_hash": hashlib.sha256(b"FROZEN TRADE REPORT").hexdigest(),
+            "content_hash_source": "completion_builder",
+        }
+        with self.assertRaisesRegex(ValueError, "requires entry_mode"):
+            state_sync.record_post_close_review(
+                {"status": "VALID", "updated_at": "2026-09-23T15:00:00+08:00", "positions": []},
+                {
+                    "request_type": "SCHEDULED_REVIEW_COMPLETION",
+                    "source": "CHATGPT_SCHEDULED_REVIEW_ACTOR",
+                    "formal_fact_type": "FORMAL_POST_CLOSE_REVIEW",
+                    "interaction_scenario": "SCHEDULED_TRADE_REVIEW",
+                    "task_id": "ETF交易复盘",
+                    "request_id": "run-current",
+                    "market_date": "2026-09-23",
+                    "formal_review": full_review(),
+                    "presentation_binding": binding,
+                },
+            )
+
     def test_trade_completion_defaults_occurrence_to_task_run_for_recovery_compatibility(self):
         payload = completion.build_completion_request(
             full_review(), "trade-run-default", "2026-09-23T20:30:00+08:00",
             final_content="FROZEN TRADE REPORT", task_id="ETF交易复盘", task_run_id="trade-run-default",
+            entry_mode="MANUAL_SCHEDULED_TASK",
         )
         self.assertEqual(payload["occurrence_id"], "trade-run-default")
         self.assertEqual(payload["presentation_binding"]["occurrence_id"], "trade-run-default")
