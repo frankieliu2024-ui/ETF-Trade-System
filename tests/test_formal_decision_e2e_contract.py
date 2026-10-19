@@ -311,7 +311,9 @@ class FormalReadyHandoffContractTests(unittest.TestCase):
         protocol = (Path(__file__).parents[1] / "docs/Formal Decision执行与用户回复协议.md").read_text(encoding="utf-8")
         self.assertIn("READY 后，必须先完成业务判断并冻结唯一", protocol)
         self.assertIn("立即向用户窗口输出此前冻结的同一份完整正文", protocol)
-        self.assertIn("随后在同一运行中继续执行后置交接", protocol)
+        self.assertIn("在返回用户最终消息前", protocol)
+        self.assertIn("统一 `SCHEDULED_REVIEW_COMPLETION` ingress 提交", protocol)
+        self.assertIn("完成上述 ingress 后，必须立即向用户窗口输出此前冻结的同一份完整正文", protocol)
         self.assertNotIn("在用户窗口返回前，先执行后置交接，再输出", protocol)
         self.assertIn("通知失败不撤回用户已经看到的正文", protocol)
 
