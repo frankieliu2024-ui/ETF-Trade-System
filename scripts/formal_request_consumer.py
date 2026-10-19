@@ -7,7 +7,7 @@ INFLIGHT_STATUSES = {"BUILDING", "PENDING", "QUEUED", "RUNNING", "IN_PROGRESS", 
 READY_STATUSES = {"READY", "RESOLVED_DEGRADED"}
 TERMINAL_FAILURE_STATUSES = {"FAILED", "TERMINAL_FAILURE", "BLOCKED_TERMINAL"}
 BUSINESS_REPLY_OUTPUT = "COMPLETE_BUSINESS_DECISION_ONLY"
-PRE_REPLY_HANDOFF = "BDS_AND_COMPLETION_BEFORE_USER_REPLY"
+POST_REPLY_HANDOFF = "BDS_AND_COMPLETION_AFTER_USER_REPLY"
 ACTOR_CONTINUE = "CONTINUE_SAME_REQUEST_SILENTLY"
 ACTOR_DECIDE = "COMPLETE_BUSINESS_DECISION_NOW"
 ACTOR_TERMINATE = "TERMINATE_ON_EXPLICIT_FAILURE"
@@ -25,7 +25,7 @@ def classify_formal_request_consumer_state(
 
     The request-bound formal_reply_freeze is the reply decision boundary.
     Global e2e_status and close-review projections are observability or
-    post-decision state and must not override a same-request READY gate. The actor must complete the required BDS readback and completion ingress before returning the user-visible reply.
+    post-decision state and must not override a same-request READY gate. The actor must output the frozen FINAL_CONTENT, then continue the BDS readback and completion ingress along the same parent request.
     This helper is read-only and interprets the existing request-bound
     query_context/formal_reply_freeze contract for interactive consumers.
     """
@@ -118,10 +118,9 @@ def classify_formal_request_consumer_state(
         response_contract = dwp.get("response_contract") if isinstance(dwp, dict) else {}
         response_contract = response_contract if isinstance(response_contract, dict) else {}
         # Request-bound facts authorize business analysis. FINAL_CONTENT is frozen
-        # once, then the same execution turn must complete the pre-reply BDS
-        # readback and completion ingress before returning any user-visible
-        # content. Event, REPORT, notification and provider delivery remain
-        # downstream projections and must not rewrite the frozen content.
+        # once and returned to the user first. BDS, completion, event, REPORT,
+        # notification and provider delivery reuse that exact frozen content
+        # and remain downstream projections.
         return {
             "status": "BUSINESS_DECISION_READY",
             "continue_same_request": False,
@@ -130,7 +129,7 @@ def classify_formal_request_consumer_state(
             "user_visible_output": BUSINESS_REPLY_OUTPUT,
             "actor_action": ACTOR_DECIDE,
             "user_output_allowed": True,
-            "post_reply_processing": PRE_REPLY_HANDOFF,
+            "post_reply_processing": POST_REPLY_HANDOFF,
             "required_problem_ids": required_problem_ids,
             "required_problem_count": len(required_problem_ids),
             "business_answer_contract": "DWP_EXACT_COVERAGE_BEFORE_PRESENTATION",
@@ -183,9 +182,9 @@ def classify_formal_request_consumer_state(
                     "read_back_required": True,
                     "formal_decision_notification_chain_starts_at_bds": False,
                     "completion_and_report_not_required_for_formal_decision_notification": False,
-                    "bds_must_be_written_and_read_back_before_user_reply": True,
+                    "bds_must_be_written_and_read_back_after_user_reply": True,
                 },
-                "user_reply_precondition": True,
+                "user_reply_precondition": False,
                 "notification_attempt_precondition": True,
                 "provider_success_not_required_for_user_reply": True,
                 "user_reply_contract": {
@@ -195,9 +194,9 @@ def classify_formal_request_consumer_state(
                     "handoff_status_cannot_replace_content": True,
                     "bds_must_reuse_exact_final_content": True,
                 },
-                "post_reply_async": False,
+                "post_reply_async": True,
                 "provider_success_async": True,
-                "must_read_back_before_reply": True,
+                "must_read_back_before_reply": False,
                 "historical_fallback_forbidden": True,
                 "must_read_back_after_reply": True,
             },
