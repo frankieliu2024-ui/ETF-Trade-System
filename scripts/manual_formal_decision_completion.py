@@ -192,6 +192,7 @@ def build_structured_completion_request(
         "parent_request_id": parent_id,
         "request_type": "BUSINESS_DECISION_SOURCE",
         "source": "CHATGPT_BUSINESS_DECISION_RESPONSE",
+        "interaction_scenario": scenario,
         "formal_entry_source": source_mode,
         "entry_mode": entry_mode,
         "task_id": source_request.get("task_id", ""),
@@ -253,8 +254,15 @@ def build_formal_decision_completion_request(
     task_id = str(source_request.get("task_id") or "ETF正式决策").strip()
     task_run_id = str(source_request.get("task_run_id") or "").strip()
     occurrence_id = str(source_request.get("occurrence_id") or "").strip()
-    if not task_id:
-        raise ValueError("Formal Decision completion requires task_id")
+    market_date = str(source_request.get("market_date") or "").strip()
+    if task_id != "ETF正式决策":
+        raise ValueError("Formal Decision completion requires canonical task_id")
+    if not task_run_id:
+        raise ValueError("Formal Decision completion requires task_run_id")
+    if not occurrence_id:
+        raise ValueError("Formal Decision completion requires occurrence_id")
+    if not market_date:
+        raise ValueError("Formal Decision completion requires market_date")
     payload = {
         "request_id": request_id,
         "parent_request_id": parent_id,
@@ -268,7 +276,7 @@ def build_formal_decision_completion_request(
         "task_run_id": task_run_id,
         "occurrence_id": occurrence_id,
         "requested_at_beijing": source_request.get("requested_at_beijing") or source_request.get("request_time_beijing"),
-        "market_date": source_request.get("market_date"),
+        "market_date": market_date,
         "bds_path": bds_path,
         "decision_id": decision_id,
         "content_hash": content_hash,

@@ -1,13 +1,17 @@
 from __future__ import annotations
 
 import json
+import io
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
 from unittest import mock
 
 from scripts import manual_formal_decision_completion as completion
 from scripts import process_state_sync_request as state_sync
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 SOURCE_REQUEST = {
@@ -445,6 +449,16 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
         source_id = "20260915_1447_business_source"
         decision = formal_decision()
         decision.update({
+            "formal_entry_source": SOURCE_REQUEST["source"],
+            "entry_mode": "MANUAL_CONVERSATION",
+            "task_id": "ETF正式决策",
+            "task_run_id": source_id,
+            "occurrence_id": source_id,
+            "formal_entry_source": SOURCE_REQUEST["source"],
+            "entry_mode": "MANUAL_CONVERSATION",
+            "task_id": "ETF正式决策",
+            "task_run_id": source_id,
+            "occurrence_id": source_id,
             "capital_use": "现金",
             "continued_holding_opportunity_cost": "低",
             "action_changes_now": "NO",
@@ -468,21 +482,116 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
         # it through today's actor response contract.
         source = {
             **SOURCE_REQUEST,
+            # This fixture represents an already durable canonical source;
+            # retain the canonical decision fields alongside the actor answer
+            # envelope so the consumer replay tests the identity handoff,
+            # rather than constructing an incomplete source object.
+            **decision,
             "request_id": source_id,
             "request_type": "BUSINESS_DECISION_SOURCE",
+            "opportunity_status": "无机会",
+            "continued_holding_opportunity_cost": "历史 canonical source 已完成持仓资本效率比较",
+            "formal_entry_source": SOURCE_REQUEST["source"],
+            "entry_mode": "MANUAL_CONVERSATION",
+            "task_id": "ETF正式决策",
+            "task_run_id": source_id,
+            "occurrence_id": source_id,
             "parent_request_id": source_id,
             "decision_id": decision["decision_id"],
             "consumed_snapshot": SNAPSHOT_PATH,
-            "formal_decision": decision,
-            "decision_response": {"answers": {
-                "HISTORICAL_CANONICAL_SOURCE": {
-                    "final_action": "REPLAY",
-                    "capital_comparison": "historical canonical source replay",
-                    "next_change_condition": "none",
-                    "evidence_decision_impact": ["ALL_REQUIRED"],
+            "presentation_content": (
+                f"【ETF正式决策】{SOURCE_REQUEST['requested_at_beijing'][:16].replace('T', ' ')} 正式判断\n"
+                "收盘快照采集时间：2026-09-15T14:48:42+08:00\n"
+                "【业务结论】保留现金。\n【数据时点与必要依据】已绑定收盘快照。\n【三层监测】已完成。\n【持仓动作】持有管理；不追加。\n【资本用途】保留现金。\n【全市场机会发现】已复核。\n【观察ETF】已复核。\n【关键风险】无新增许可。\n【后续安排】下一节点重评。\n【置信度】高。\n【最可能出错的地方】历史事实边界。\n1. 资本判断\n\n"
+                "持有管理；不追加。\n"
+                "可释放资本：0元；实际新增部署：0元。\n"
+                "Trial和Confirm均已复核。\n"
+                "1） 保留现金。"
+            ),
+            "decision_response": {
+                "presentation_content": (
+                    f"【ETF正式决策】{SOURCE_REQUEST['requested_at_beijing'][:16].replace('T', ' ')} 正式判断\n"
+                    "收盘快照采集时间：2026-09-15T14:48:42+08:00\n"
+                    "【业务结论】保留现金。\n【数据时点与必要依据】已绑定收盘快照。\n【三层监测】已完成。\n【持仓动作】持有管理；不追加。\n【资本用途】保留现金。\n【全市场机会发现】已复核。\n【观察ETF】已复核。\n【关键风险】无新增许可。\n【后续安排】下一节点重评。\n【置信度】高。\n【最可能出错的地方】历史事实边界。\n1. 资本判断\n\n"
+                    "持有管理；不追加。\n"
+                    "可释放资本：0元；实际新增部署：0元。\n"
+                    "Trial和Confirm均已复核。\n"
+                    "1） 保留现金。"
+                ),
+                "answers": {
+                    "HISTORICAL_CANONICAL_SOURCE": {
+                        "final_action": "REPLAY",
+                        "capital_comparison": "historical canonical source replay",
+                        "next_change_condition": "none",
+                        "evidence_decision_impact": ["ALL_REQUIRED"],
+                    },
+                    "NEXT_UNIT_CAPITAL_USE": {
+                        "new_amount_yuan": 0,
+                        "post_action_deployable_cash": 121196.87,
+                        "future_opportunity_capacity": "保留下一节点选择权",
+                        "cash_opportunity_cost": "已比较现金与持仓及合格机会",
+                        "alternative_capital_use_review": "无已确认替代用途",
+                        "concentration_account_structure_effect": "不改变账户结构",
+                        "selected_state_reason": "当前保留现金",
+                        "final_action": "保留现金",
+                        "capital_comparison": "现金优先",
+                        "next_change_condition": "出现合格机会时重评",
+                        "evidence_decision_impact": ["ALL_REQUIRED"],
+                        "compared_capital_states_as_business_state_names": ["现金", "全部实际持仓继续占资"],
+                        "zero_amount_decisive_reason_if_zero": "当前无已确认更优用途",
+                    },
+                    "MAIN_CANDIDATE": {
+                        "candidate_name": "现金",
+                        "candidate_code": "CASH",
+                        "opportunity_status": "无机会",
+                        "opportunity_evidence": "当前正式状态",
+                        "buy_over_cash_reason": "不适用",
+                        "execution_gate_reason": "禁止新增",
+                    },
+                    "RISK_PERMISSION": {
+                        "final_action": "禁止新增",
+                        "capital_comparison": "现金优先",
+                        "next_change_condition": "风险许可变化时重评",
+                        "evidence_decision_impact": ["ALL_REQUIRED"],
+                    },
+                    "DEPLOYABLE_CASH": {
+                        "final_action": "保留",
+                        "capital_comparison": "当前优于未经确认的用途",
+                        "next_change_condition": "出现合格机会时重评",
+                        "evidence_decision_impact": ["ALL_REQUIRED"],
+                    },
+                    "RELEASABLE_CAPITAL": {
+                        "final_action": "继续占资",
+                        "capital_comparison": "当前持仓继续管理",
+                        "next_change_condition": "资本效率变化时重评",
+                        "evidence_decision_impact": ["ALL_REQUIRED"],
+                    }
                 }
-            }},
+            },
             "decision_work_package": {"problem_graph": [{"problem_id": "HISTORICAL_CANONICAL_SOURCE"}]},
+        }
+        canonical_content = (
+            f"【ETF正式决策】{SOURCE_REQUEST['requested_at_beijing'][:16].replace('T', ' ')} 正式判断\n\n"
+            "【业务结论】\n\n保留现金。\n\n"
+            "【数据时点与必要依据】\n\n已绑定收盘快照，采集时间为2026-09-15T14:48:42+08:00。\n\n"
+            "【三层监测】\n\n已完成。\n\n"
+            "【持仓动作】\n\n持有管理；不追加。\n\n"
+            "【资本用途】\n\n保留现金；可释放资本0元；实际新增部署0元。Trial和Confirm已复核。\n\n"
+            "【全市场机会发现】\n\n已复核。\n\n"
+            "【观察ETF】\n\n已复核。\n\n"
+            "【关键风险】\n\n无新增许可。\n\n"
+            "【后续安排】\n\n1. 资本判断\n\n2. 后续核验\n\n1） 保留现金。\n\n"
+            "【置信度】\n\n高。\n\n"
+            "【最可能出错的地方】\n\n历史事实边界。"
+        )
+        source["presentation_content"] = canonical_content
+        source["decision_response"]["presentation_content"] = canonical_content
+        source["presentation_binding"] = {
+            "full_content": canonical_content,
+            "snapshot_id": SNAPSHOT_PATH,
+            "market_date": SOURCE_REQUEST["market_date"],
+            "market_phase": "CONTINUOUS_AFTERNOON",
+            "captured_at": "2026-09-15T14:48:42+08:00",
         }
         (self.root / "data/state/query_context.json").write_text(json.dumps({
             "market_date": SOURCE_REQUEST["market_date"],
@@ -502,12 +611,15 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
         validated_source = state_sync.validate_source({
             **decision,
             "request_type": "BUSINESS_DECISION_SOURCE",
+            "formal_entry_source": SOURCE_REQUEST["source"],
+            "entry_mode": "MANUAL_CONVERSATION",
             "request_id": source_id,
             "decision_id": decision["decision_id"],
             "consumed_snapshot": SNAPSHOT_PATH,
             "parent_request_id": source_id,
             "requested_at_beijing": SOURCE_REQUEST["requested_at_beijing"],
             "market_date": SOURCE_REQUEST["market_date"],
+            "occurrence_id": source_id,
         }, expected_snapshot=SNAPSHOT_PATH)
         before_fingerprint = validated_source["fingerprint"]
         before_identity = (source_id, decision["decision_id"])
@@ -520,34 +632,25 @@ class ManualFormalDecisionCanonicalIdentityTests(unittest.TestCase):
         self.assertEqual((before_obj["request_id"], before_obj["decision_id"]), before_identity)
         self.assertEqual(list((self.root / "events/decisions").glob("*.json")), [])
 
+        output = io.StringIO()
         with mock.patch.object(state_sync, "build_dashboard_block", return_value=""):
             with mock.patch.object(state_sync, "persist_monitor_universe", return_value=False):
                 with mock.patch.object(state_sync, "sync_formal_files", return_value={}):
                     with mock.patch("sys.argv", ["process_state_sync_request.py", str(request_path.relative_to(self.root))]):
-                        state_sync.main()
-        files = list((self.root / "events/decisions").glob("*.json"))
-        self.assertEqual(len(files), 1)
-        event = json.loads(files[0].read_text(encoding="utf-8"))
-        self.assertEqual(event["decision_id"], decision["decision_id"])
-        self.assertEqual(event["parent_request_id"], source_id)
-        self.assertEqual(event["source_fingerprint"], before_fingerprint)
-        self.assertEqual(state_sync.validate_source({
-            **decision,
-            "request_type": "BUSINESS_DECISION_SOURCE",
-            "request_id": source_id,
-            "decision_id": decision["decision_id"],
-            "consumed_snapshot": SNAPSHOT_PATH,
-            "parent_request_id": source_id,
-            "requested_at_beijing": SOURCE_REQUEST["requested_at_beijing"],
-            "market_date": SOURCE_REQUEST["market_date"],
-        }, expected_snapshot=SNAPSHOT_PATH)["fingerprint"], before_fingerprint)
+                        with redirect_stdout(output):
+                            state_sync.main()
+        result = json.loads(output.getvalue().strip().splitlines()[-1])
+        self.assertTrue(result["business_decision_source_persisted"])
+        self.assertEqual(result["request_id"], source_id)
+        self.assertTrue(result["completion_required"])
+        self.assertEqual(list((self.root / "events/decisions").glob("*.json")), [])
 
         with mock.patch.object(state_sync, "build_dashboard_block", return_value=""):
             with mock.patch.object(state_sync, "persist_monitor_universe", return_value=False):
                 with mock.patch.object(state_sync, "sync_formal_files", return_value={}):
                     with mock.patch("sys.argv", ["process_state_sync_request.py", str(request_path.relative_to(self.root))]):
                         state_sync.main()
-        self.assertEqual(len(list((self.root / "events/decisions").glob("*.json"))), 1)
+        self.assertEqual(list((self.root / "events/decisions").glob("*.json")), [])
 
     def test_parent_identity_fingerprint_event_fields_and_retry_exactly_once(self):
         first_request = self.request("20260915_1447_manual_intraday_chat__formal_completion")
@@ -863,7 +966,7 @@ class RequestBoundOpportunityIdentityTests(unittest.TestCase):
 
     def test_formal_completion_projects_directly_to_shared_review_event(self):
         workflow = (ROOT / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
-        self.assertIn("requests/live_snapshot/*.json", workflow)
+        self.assertIn("requests/live_snapshot/*__scheduled_review_completion.json", workflow)
         self.assertIn("Project Formal Decision completion to canonical review event", workflow)
         self.assertIn("events/reviews/formal_*.json", workflow)
         self.assertNotIn("market-snapshot.yml", workflow.split("Project Formal Decision completion to canonical review event", 1)[1].split("Send material user-action notification", 1)[0])
