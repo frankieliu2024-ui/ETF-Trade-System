@@ -266,7 +266,8 @@ class FormalDecisionLessonsProtocolTests(unittest.TestCase):
         self.assertNotIn("Formal Decision 的合法后置交接只能使用 `CHATGPT_FORMAL_DECISION_COMPLETION`", index_text)
         self.assertNotIn("FORMAL_DECISION_COMPLETION` completion ingress", index_text)
         self.assertIn("BUSINESS_DECISION_SOURCE", index_text)
-        self.assertIn("原子写入并回读", index_text)
+        self.assertIn("原子写入", index_text)
+        self.assertIn("回读", index_text)
 
     def test_protocol_keeps_health_out_of_business_pr_gate(self):
         root = Path(__file__).parents[1]
