@@ -64,9 +64,8 @@
 → `current main正式规则与本次request-bound事实`
 → `完整业务判断`
 → `唯一FINAL_CONTENT`
-→ `BUSINESS_DECISION_SOURCE/BDS`
-→ `SCHEDULED_REVIEW_COMPLETION`
 → `用户窗口输出FINAL_CONTENT`
+→ `BUSINESS_DECISION_SOURCE/BDS + SCHEDULED_REVIEW_COMPLETION 原子持久化`
 → `canonical owner`
 → `唯一events/reviews/formal_<occurrence_id>.json`
 → `既有decision-notification`
@@ -101,7 +100,7 @@
 - `reuse_inflight_refresh=true`
 - `duplicate_equivalent_refresh_forbidden=true`
 
-READY 后，必须先完成业务判断并冻结唯一 `FINAL_CONTENT`；在返回用户最终消息前，必须在同一运行中完成 BDS 写入/回读和统一 `SCHEDULED_REVIEW_COMPLETION` ingress 提交，再向用户窗口输出此前冻结的同一份完整正文；完成上述 ingress 后，必须立即向用户窗口输出此前冻结的同一份完整正文。后续 event、REPORT、notification 和 provider 投影不得阻塞、缩短、改写或撤回已冻结的正文：
+READY 后，必须先完成业务判断并冻结唯一 `FINAL_CONTENT`，然后立即向用户窗口输出此前冻结的同一份完整正文。BDS 与统一 `SCHEDULED_REVIEW_COMPLETION` ingress 属于同一运行的后置持久化步骤，必须使用同一 Git tree/commit 原子提交并回读校验；后续 event、REPORT、notification 和 provider 投影不得阻塞、缩短、改写或撤回已冻结的正文：
 
 1. 使用同一父请求、同一DWP、同一request-bound snapshot和同一`decision_id`，形成 `BUSINESS_DECISION_SOURCE` envelope；
 2. 将BDS写入并回读 `requests/live_snapshot/<parent_request_id>__business_decision_source.json`；
@@ -110,7 +109,7 @@ READY 后，必须先完成业务判断并冻结唯一 `FINAL_CONTENT`；在返�
 5. 在同一handoff中显式调用既有 `decision-notification.workflow_dispatch(formal_completion_path=<当前completion路径>)`；
 6. 回读当前 `events/reviews/formal_<occurrence_id>.json`、REPORT、notification_id和provider result。
 
-任何后置阶段都不得反向阻塞、缩短、改写或撤回已冻结的正文；后置交接失败不得重写正文或创建第二请求，但在完成必要的写入/回读尝试前不得结束本次运行。没有当前completion对应的event，不得声称正式决策事件已形成；没有当前notification_id和provider结果，不得声称主动通知成功。
+任何后置阶段都不得反向阻塞、缩短、改写或撤回已冻结的正文；后置交接失败不得重写正文或创建第二请求，但在后置步骤必须继续执行或记录明确失败层级，但不得阻塞用户正文输出。没有当前completion对应的event，不得声称正式决策事件已形成；没有当前notification_id和provider结果，不得声称主动通知成功。
 
 ## 五、已删除的旧生产链
 
@@ -165,10 +164,9 @@ READY 后，必须先完成业务判断并冻结唯一 `FINAL_CONTENT`；在返�
 
 ## 七、后置交接和通知
 
-FINAL_CONTENT 冻结后，必须先沿当前父请求完成 BDS 写入/回读和统一 Scheduled Review completion ingress 提交，再向用户输出此前冻结的同一份 `FINAL_CONTENT`；随后 canonical event、REPORT 和通知继续复用该正文。后置交接失败不得改写或撤回用户已经看到的正文：
+FINAL_CONTENT 冻结后，先向用户输出此前冻结的同一份 `FINAL_CONTENT`；随后在同一运行上下文中以原子 BDS+completion 提交继续完成 canonical event、REPORT 和通知，全部复用该正文。后置交接失败不得改写或撤回用户已经看到的正文：
 
-1. BDS写入并回读；
-2. 统一 Scheduled Review completion 写入并回读；
+1. BDS与统一 Scheduled Review completion 以同一 Git tree/commit 原子写入并分别回读；
 3. 显式调用既有 `decision-notification` workflow的 `workflow_dispatch(formal_completion_path=...)`；
 4. 回读当前 `events/reviews/formal_<occurrence_id>.json`；
 5. 回读当前REPORT、notification_id和provider result。
