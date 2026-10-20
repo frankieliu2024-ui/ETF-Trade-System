@@ -46,14 +46,14 @@
     "不自动恢复或重跑历史运行"
   ],
   "artifact_status": {
-    "prompt_raw_snapshots": "PENDING_EXACT_LIVE_READBACK_EXPORT",
-    "schedule_snapshots": "PENDING_EXACT_LIVE_READBACK_EXPORT",
+    "prompt_raw_snapshots": "CURRENT_LIVE_PROMPTS_READABLE_IN_UI_NOT_EXPORTED",
+    "schedule_snapshots": "SCHEDULE_UI_SUMMARY_READBACK_ONLY",
     "repository_code_map": "RECORDED_ON_CURRENT_MAIN",
     "runtime_evidence": "PENDING_FRESH_RUN_EVIDENCE_SELECTION",
     "recovery_runbook": "RECORDED"
   },
   "source_live_readback": {
-    "captured_at_beijing": "2026-10-20 18:11",
+    "captured_at_beijing": "2026-10-20 18:29",
     "result": "THREE_TASKS_ENABLED_PROMPT_FULL_READBACK_SCHEDULE_UI_READBACK",
     "platform_hash_status": "NOT_EXPOSED_BY_UI",
     "task_readback_ids": [
@@ -62,23 +62,35 @@
         "automation_id": "6ad1d7b4c05c819180eb6af2c8086cb8",
         "conversation_id": "6ad0aef0-7718-83ee-b901-d24316ce92b6",
         "prompt_visible": true,
-        "prompt_readback_status": "FULL_CURRENT_PROMPT_READ_BACK"
+        "prompt_readback_status": "FULL_CURRENT_PROMPT_READ_BACK",
+        "prompt_length_chars": 5078,
+        "schedule_readback": "enabled; daily; custom repeat frequency"
       },
       {
         "task_id": "ETF交易复盘",
         "automation_id": "6ab78aab49988191818abf8660c65362",
         "conversation_id": "6ab89c94-e798-83e8-90e6-0b57c60905c5",
         "prompt_visible": true,
-        "prompt_readback_status": "FULL_CURRENT_PROMPT_READ_BACK"
+        "prompt_readback_status": "FULL_CURRENT_PROMPT_READ_BACK",
+        "prompt_length_chars": 6504,
+        "schedule_readback": "enabled; daily; custom repeat frequency"
       },
       {
         "task_id": "ETF系统复核",
         "automation_id": "6accb02805ec8191aca29791a72636bd",
         "conversation_id": "6accb04b-9d30-83ec-9e9f-f632d3815e92",
         "prompt_visible": true,
-        "prompt_readback_status": "FULL_CURRENT_PROMPT_READ_BACK"
+        "prompt_readback_status": "FULL_CURRENT_PROMPT_READ_BACK",
+        "prompt_length_chars": 3852,
+        "schedule_readback": "enabled; daily; custom repeat frequency"
       }
     ]
   },
-  "code_map_status": "PENDING_BLOB_SHA_EXPANSION"
+  "code_map_status": "PENDING_BLOB_SHA_EXPANSION",
+  "evidence_limits": [
+    "当前云浏览器可读取完整Prompt文本，但本次仓库写入尚未包含三份原文文件",
+    "当前界面只提供调度摘要和相对下次运行时间，未提供稳定可导出的Schedule JSON",
+    "未取得平台原生Prompt/Schedule hash，不推断、不伪造",
+    "runtime evidence仍需绑定新鲜真实运行，不用历史对象替代"
+  ]
 }
