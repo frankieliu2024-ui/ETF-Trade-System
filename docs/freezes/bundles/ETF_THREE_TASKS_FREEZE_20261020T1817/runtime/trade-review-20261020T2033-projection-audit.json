@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.0",
+  "evidence_type": "FRESH_RUNTIME_EVIDENCE",
+  "task_id": "ETF交易复盘",
+  "market_date": "2026-10-20",
+  "observed_at_beijing": "2026-10-20T20:33:00+08:00",
+  "runtime_identity": {
+    "task_run_id": "etf-trade-review-20261020T203010p0800-dd68fea7de08",
+    "occurrence_id": "etf-trade-review-20261020T203010p0800-dd68fea7de08",
+    "request_id": "etf-trade-review-20261020T203010p0800-dd68fea7de08",
+    "report_id": "ETF_TRADE_REVIEW:etf-trade-review-20261020T203010p0800-dd68fea7de08"
+  },
+  "business_and_completion": {
+    "completion_present": true,
+    "completion_path": "requests/live_snapshot/etf-trade-review-20261020T203010p0800-dd68fea7de08.json",
+    "request_type": "SCHEDULED_REVIEW_COMPLETION",
+    "formal_fact_type": "FORMAL_SCHEDULED_TRADE_REVIEW",
+    "content_hash": "fc43e293e8a1aee2524748cd723236ee5aed897d8d6c3d6eb8b5e8c868209951",
+    "final_content_bound": true,
+    "business_status": "FULL_DAY_REVIEW_COMPLETED"
+  },
+  "post_projection_readback": {
+    "canonical_event": "NOT_VERIFIED",
+    "report": "NOT_VERIFIED",
+    "notification_center": "NOT_VERIFIED",
+    "provider_result": "NOT_VERIFIED",
+    "user_receipt": "NOT_CONFIRMED"
+  },
+  "conclusion": "本次运行已确认唯一身份、完整日复盘业务内容和completion正文哈希；截至当前main回读，不能确认后置canonical event、REPORT、notification_center、provider result或用户收到。",
+  "non_inferences": [
+    "不把completion存在推定为通知闭环成功",
+    "不把用户可见正文推定为PushPlus已送达",
+    "不创建第二completion、第二正文、第二event或旁路通知",
+    "不修改ETF系统复核、ETF正式决策、任务指令、调度或共享通知生产链"
+  ],
+  "freeze_effect": "AUDIT_ONLY",
+  "freeze_status_effect": "REMAINS_RUNTIME_EVIDENCE_PENDING"
+}
