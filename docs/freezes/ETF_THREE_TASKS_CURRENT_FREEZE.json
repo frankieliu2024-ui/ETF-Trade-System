@@ -58,8 +58,10 @@
       "business_chain": "System Review → SCHEDULED_REVIEW_COMPLETION → canonical review event → REPORT → notification_center → PushPlus",
       "interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
       "prompt_snapshot": {
-        "status": "LIVE_READBACK_REQUIRED",
-        "source": "docs/ETF三类任务统一快照封存_2026-10-17.md",
+        "status": "PERSISTED_CURRENT_LIVE_PROMPT",
+        "source": "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/prompts/系统复核.txt",
+        "manifest": "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/MANIFEST.json",
+        "platform_hash_status": "NOT_EXPOSED_BY_UI",
         "historical_sources": [
           "docs/ETF三类任务当前版本冻结封存_2026-10-16.md",
           "docs/archive/automation_prompt_history/ETF三个定时任务冻结封存_2026-10-16-v2.md"
@@ -92,8 +94,10 @@
       "business_chain": "Trade Review → SCHEDULED_REVIEW_COMPLETION → canonical review event → REPORT → notification_center → PushPlus",
       "interaction_scenario": "SCHEDULED_TRADE_REVIEW",
       "prompt_snapshot": {
-        "status": "LIVE_READBACK_REQUIRED",
-        "source": "docs/ETF三类任务统一快照封存_2026-10-17.md",
+        "status": "PERSISTED_CURRENT_LIVE_PROMPT",
+        "source": "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/prompts/交易复盘.txt",
+        "manifest": "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/MANIFEST.json",
+        "platform_hash_status": "NOT_EXPOSED_BY_UI",
         "historical_sources": [
           "docs/ETF三类任务当前版本冻结封存_2026-10-16.md",
           "docs/archive/automation_prompt_history/ETF三个定时任务冻结封存_2026-10-16-v2.md"
@@ -129,8 +133,10 @@
       "business_chain": "entry identity → parent request → request-bound facts/DWP → gate → FINAL_CONTENT → BDS → SCHEDULED_REVIEW_COMPLETION → decision-notification → formal canonical event → REPORT → notification_center → PushPlus",
       "interaction_scenario": "FORMAL_DECISION_CANONICAL_SCENARIO_PER_CURRENT_MAIN",
       "prompt_snapshot": {
-        "status": "LIVE_READBACK_REQUIRED",
-        "source": "docs/ETF三类任务统一快照封存_2026-10-17.md",
+        "status": "PERSISTED_CURRENT_LIVE_PROMPT",
+        "source": "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/prompts/正式决策.txt",
+        "manifest": "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/MANIFEST.json",
+        "platform_hash_status": "NOT_EXPOSED_BY_UI",
         "historical_sources": [
           "docs/ETF三类任务当前版本冻结封存_2026-10-16.md",
           "docs/archive/formal-decision-scheduled-task-rebuild-v2.md"
@@ -185,7 +191,7 @@
     "tests/test_formal_decision_notification_chain_contract.py": "Formal chain contract tests",
     "tests/test_formal_decision_shared_report_chain.py": "shared report chain tests"
   },
-  "latest_selection": "先读取本文件；以freeze_status判断是否允许宣称完整冻结。若LIVE_READBACK_REQUIRED，必须先回读三个ChatGPT任务的完整Prompt、Schedule和平台可验证hash，再生成新的v3.1 sealed manifest；不得把历史Prompt/hash当作live。",
+  "latest_selection": "先读取本文件；再读取bundle_manifest_path及三份当前live Prompt原文。若状态非SEALED，只能按证据状态表述；不得将仓库侧指纹、历史Prompt或历史运行替代平台原生配置与新鲜运行证据。",
   "rollback": "回退到captured_main_commit，并使用各任务prompt_snapshot.source中的历史审计材料；任何恢复仍需重新核对current main，不得直接执行历史归档。",
   "acceptance_required": [
     "manifest JSON可解析",
@@ -197,9 +203,9 @@
   ],
   "evidence_note": "本次文件冻结的是仓库合同和恢复路由；由于当前工具未取得平台live task完整Prompt/Schedule及可验证hash，未宣称最终live配置冻结。",
   "live_readback": {
-    "captured_at_beijing": "2026-10-20 18:11",
+    "captured_at_beijing": "2026-10-20 19:35",
     "source": "ChatGPT scheduled tasks cloud browser readback",
-    "result": "THREE_TASKS_ENABLED_PROMPT_FULL_READBACK_SCHEDULE_UI_READBACK",
+    "result": "THREE_TASKS_ENABLED_PROMPT_FULL_READBACK_PERSISTED_SCHEDULE_UI_READBACK",
     "platform_hash_status": "NOT_EXPOSED_BY_UI",
     "verification_limits": [
       "UI exposes current prompt text and task metadata but no stable prompt blob hash or schedule blob hash",
@@ -241,7 +247,7 @@
         "prompt_readback_status": "FULL_CURRENT_PROMPT_READ_BACK"
       }
     ],
-    "next_gate": "只有平台提供可验证的完整Prompt/Schedule hash，或建立经用户确认的稳定内容指纹方案后，才可将freeze_status更新为SEALED。",
+    "next_gate": "平台原生hash不可得；在不伪造平台hash的前提下，先以仓库侧内容指纹、可见Schedule字段和新鲜真实运行证据完成审计封存；不得直接宣称SEALED。",
     "evidence_scope": {
       "readback_completed": [
         "ETF正式决策",
@@ -252,5 +258,7 @@
       "system_review_prompt_length_chars": 3852,
       "preservation_rule": "不保存或推断平台不可验证的hash；不以历史Prompt替代当前Prompt"
     }
-  }
+  },
+  "bundle_manifest_path": "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/MANIFEST.json",
+  "bundle_manifest_status": "READBACK_SCHEDULE_SNAPSHOT_PENDING"
 }
