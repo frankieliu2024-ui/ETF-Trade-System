@@ -140,7 +140,7 @@ Formal Decision completion必须使用current main的统一 Scheduled Review com
 
 三个ETF任务的冻结、历史归档、版本追踪和回退关系唯一登记于：
 
-`docs/automation_prompt_history/ETF三类任务冻结注册表.json`
+`docs/freezes/archive/registries/ETF三类任务冻结注册表.json`
 
 该注册表只负责冻结登记、审计和回退索引，不复制交易规则、业务协议、任务Prompt、workflow、state、入口、场景或通知规则，不构成第二规则源。当前live任务配置完成逐项回读并登记前，不能宣称三类任务已完成最终冻结。
 
