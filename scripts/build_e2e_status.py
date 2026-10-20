@@ -400,6 +400,13 @@ def context_component(query: dict, decision: dict) -> dict:
         "large_payload_empty_read": "REVERIFY_SAME_GITHUB_SOURCE_BEFORE_MISSING",
         "large_payload_read_contract": "USE_GITHUB_API_CONTENTS_OR_BLOB_FOR_FILES_OVER_1MB",
         "large_payload_source_url": "https://api.github.com/repos/{owner}/{repo}/contents/data/state/query_context.json?ref=main",
+        "large_payload_blob_source_url": "https://api.github.com/repos/{owner}/{repo}/git/blobs/{blob_sha}",
+        "large_payload_read_order": [
+            "contents_metadata_only",
+            "resolve_blob_sha_from_contents_metadata",
+            "git_blobs_get_base64_content",
+            "decode_and_validate_same_blob_sha256",
+        ],
     }
     reply_freeze = decision_fact_pack.get("formal_reply_freeze") or {}
     # READY is consumable only when the same request carries a real DWP.
