@@ -127,7 +127,7 @@ def validate_midday_review(review: dict, account: dict | None = None) -> None:
         raise ValueError("formal_review.holding_actions must be an object")
 
 
-def build_completion_request(
+def build_trade_review_completion_request(
     formal_review: dict,
     request_id: str,
     requested_at_beijing: str,
@@ -165,8 +165,8 @@ def build_completion_request(
     payload = {
         "request_id": _safe_id(request_id),
         "request_type": "SCHEDULED_REVIEW_COMPLETION",
-        "formal_fact_type": "FORMAL_POST_CLOSE_REVIEW",
-        "source": "CHATGPT_SCHEDULED_REVIEW_ACTOR",
+        "formal_fact_type": "FORMAL_SCHEDULED_TRADE_REVIEW",
+        "source": "CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR",
         "interaction_scenario": "SCHEDULED_TRADE_REVIEW",
         "market_phase": str(formal_review.get("market_phase") or ("MIDDAY_BREAK" if is_midday else "POST_CLOSE")),
         "requested_at_beijing": str(requested_at_beijing or "").strip(),
@@ -401,6 +401,8 @@ def write_completion_request(
     final_content: str = "",
     task_id: str = "",
     task_run_id: str = "",
+    occurrence_id: str = "",
+    entry_mode: str = "",
 ) -> Path:
     source = (ROOT / review_path).resolve()
     if ROOT not in source.parents:
@@ -408,9 +410,9 @@ def write_completion_request(
     review = json.loads(source.read_text(encoding="utf-8"))
     account_path = ROOT / "data/state/account_fact.json"
     account = json.loads(account_path.read_text(encoding="utf-8")) if account_path.exists() else None
-    payload = build_completion_request(
+    payload = build_trade_review_completion_request(
         review, request_id, requested_at_beijing, market_date, parent_request_id, account,
-        final_content, task_id, task_run_id
+        final_content, task_id, task_run_id, occurrence_id, entry_mode
     )
     target = (ROOT / output_path).resolve() if output_path else REQUEST_DIR / f"{payload['request_id']}.json"
     if ROOT not in target.parents or target.suffix != ".json":
@@ -423,6 +425,12 @@ def write_completion_request(
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(serialized, encoding="utf-8")
     return target
+
+
+# Historical import compatibility only. New Trade Review production code must
+# call the explicitly typed builder above; this alias prevents old replay tools
+# from silently creating a second payload shape.
+build_completion_request = build_trade_review_completion_request
 
 
 def main() -> int:
