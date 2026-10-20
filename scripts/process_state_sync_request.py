@@ -2176,6 +2176,17 @@ def _persist_post_close_review_projections(account: dict, request: dict, review:
     record_close_review_closure(account, request, review, event)
 
 
+def _normalize_close_snapshot_reference(value: object) -> str:
+    """Map actor timestamp references to the canonical close snapshot path."""
+    reference = str(value or "").strip()
+    if not reference or reference.startswith("data/market/snapshots/"):
+        return reference
+    parsed = parse_time(reference)
+    if parsed is None:
+        return reference
+    return f"data/market/snapshots/{parsed.strftime('%Y-%m-%d_%H%M%S')}.json"
+
+
 def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     review = request.get("formal_review")
     interaction_scenario = str(request.get("interaction_scenario") or "").strip().upper()
@@ -2269,8 +2280,8 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
         current_path = ROOT / "data" / "state" / "CURRENT.json"
         current = load_json(current_path) if current_path.exists() else {}
         close_contract = build_close_data_contract(ROOT, current)
-        supplied_close_snapshot = str(data_time.get("close_snapshot") or review.get("close_snapshot") or "").strip()
-        canonical_close_snapshot = str(close_contract.get("latest_snapshot") or "").strip()
+        supplied_close_snapshot = _normalize_close_snapshot_reference(data_time.get("close_snapshot") or review.get("close_snapshot"))
+        canonical_close_snapshot = _normalize_close_snapshot_reference(close_contract.get("latest_snapshot"))
         canonical_close_verified = (
             close_contract.get("status") == "VERIFIED_SESSION_CLOSE"
             and close_contract.get("verified_session_close") is True
