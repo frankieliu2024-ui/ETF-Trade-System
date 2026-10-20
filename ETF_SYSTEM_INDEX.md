@@ -28,6 +28,10 @@
 
 查询路由技术说明：`docs/市场行情查询路由与全球时点规则_V1.0.md`。它只解释ETF系统内部查询路由实现，不是第五个规范域；唯一无网络路由实现为`scripts/market_quote_router.py`，单对象查询入口为`scripts/query_market_object.py`，查询时即时补采由`scripts/query_time_market_refresh.py`执行。
 
+## 2.1 三类任务当前冻结指针
+
+三类任务的当前封存、字段映射、入口、场景、生产链、失败分类和恢复顺序，统一读取 `docs/freezes/ETF_THREE_TASKS_CURRENT_FREEZE.json`；目录说明见 `docs/freezes/README.md`。该清单不是第二规则源，若其 `freeze_status` 不是 `SEALED`，不得宣称平台 live Prompt/Schedule 已完成最终冻结。
+
 ## 3. 场景读取路由
 
 ### 正式ETF分析

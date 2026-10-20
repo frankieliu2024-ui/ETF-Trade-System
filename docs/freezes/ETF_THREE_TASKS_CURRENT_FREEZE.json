@@ -1,0 +1,199 @@
+{
+  "schema_version": "2.0",
+  "freeze_id": "ETF_THREE_TASKS_CURRENT_FREEZE_20261020_V3",
+  "freeze_status": "REPOSITORY_CONTRACT_FROZEN_LIVE_TASK_READBACK_PENDING",
+  "authority": "current_main_only",
+  "captured_at_beijing": "2026-10-20",
+  "captured_main_commit": "b86bdb870fe4703081af3a115faf6d083c3b1c9a",
+  "current_pointer": "docs/freezes/ETF_THREE_TASKS_CURRENT_FREEZE.json",
+  "index_path": "ETF_SYSTEM_INDEX.md",
+  "purpose": "唯一当前冻结指针；用于定位、审计、回退和按身份恢复三类ETF任务，不构成第二规则源。",
+  "non_goals": [
+    "不修改三类任务Prompt语义",
+    "不修改调度、MASTER、账户、行情、权限或通知生产逻辑",
+    "不新增任务、workflow、producer、checker、state或writer"
+  ],
+  "required_read_order": [
+    "ETF_SYSTEM_INDEX.md",
+    "docs/ETF三类任务统一快照封存_2026-10-17.md",
+    "docs/ETF自动维护与运行保障协议_V1.0.md",
+    "docs/ETF任务入口与调度治理协议_V1.0.md",
+    "所属业务协议",
+    "本清单"
+  ],
+  "recovery_rule": "恢复时只允许使用 captured_main_commit/current main 回读本清单登记的路径；先按task_id+run identity筛选，再按content_hash绑定正文和下游对象；禁止按文件名、时间或历史对象猜测。",
+  "common_identity": [
+    "task_id",
+    "source",
+    "entry_mode",
+    "interaction_scenario",
+    "task_run_id",
+    "occurrence_id",
+    "parent_request_id",
+    "request_id",
+    "market_date",
+    "report_id",
+    "content_hash"
+  ],
+  "common_chain": [
+    "FINAL_CONTENT",
+    "completion",
+    "canonical event",
+    "REPORT",
+    "notification_center",
+    "provider result",
+    "用户确认收到"
+  ],
+  "common_failure_classes": [
+    "SKIP_NOT_APPLICABLE",
+    "RETRY_SAME_INPUT",
+    "CONFLICT_REQUIRES_REVIEW",
+    "OWNER_REJECTED",
+    "PROJECTION_INCOMPLETE",
+    "MAINTENANCE_INCOMPLETE"
+  ],
+  "tasks": [
+    {
+      "task_id": "ETF系统复核",
+      "business_chain": "System Review → SCHEDULED_REVIEW_COMPLETION → canonical review event → REPORT → notification_center → PushPlus",
+      "interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
+      "prompt_snapshot": {
+        "status": "LIVE_READBACK_REQUIRED",
+        "source": "docs/ETF三类任务统一快照封存_2026-10-17.md",
+        "historical_sources": [
+          "docs/ETF三类任务当前版本冻结封存_2026-10-16.md",
+          "docs/archive/automation_prompt_history/ETF三个定时任务冻结封存_2026-10-16-v2.md"
+        ]
+      },
+      "entry_contract": {
+        "automatic": "current main calendar; 08:30/19:30 and Sunday rule per protocol",
+        "manual": "MANUAL; no automatic-node SKIP"
+      },
+      "identity_fields": [
+        "task_id",
+        "task_run_id",
+        "occurrence_id",
+        "report_id",
+        "content_hash"
+      ],
+      "invariants": [
+        "not Formal Decision",
+        "no parent_request_id/BDS/Formal event",
+        "no trading authority"
+      ],
+      "owner_paths": [
+        "ETF_SYSTEM_INDEX.md",
+        "docs/ETF任务入口与调度治理协议_V1.0.md",
+        "docs/ETF自动维护与运行保障协议_V1.0.md"
+      ]
+    },
+    {
+      "task_id": "ETF交易复盘",
+      "business_chain": "Trade Review → SCHEDULED_REVIEW_COMPLETION → canonical review event → REPORT → notification_center → PushPlus",
+      "interaction_scenario": "SCHEDULED_TRADE_REVIEW",
+      "prompt_snapshot": {
+        "status": "LIVE_READBACK_REQUIRED",
+        "source": "docs/ETF三类任务统一快照封存_2026-10-17.md",
+        "historical_sources": [
+          "docs/ETF三类任务当前版本冻结封存_2026-10-16.md",
+          "docs/archive/automation_prompt_history/ETF三个定时任务冻结封存_2026-10-16-v2.md"
+        ]
+      },
+      "entry_contract": {
+        "automatic": "12:30/20:30; Sunday weekly rule per protocol",
+        "manual": "MANUAL; no automatic-node SKIP"
+      },
+      "identity_fields": [
+        "task_id",
+        "source",
+        "entry_mode",
+        "interaction_scenario",
+        "task_run_id",
+        "occurrence_id",
+        "report_id",
+        "content_hash"
+      ],
+      "invariants": [
+        "not Formal Decision",
+        "no parent_request_id/BDS",
+        "no trading authority"
+      ],
+      "owner_paths": [
+        "ETF_SYSTEM_INDEX.md",
+        "docs/ETF任务入口与调度治理协议_V1.0.md",
+        "docs/ETF自动维护与运行保障协议_V1.0.md"
+      ]
+    },
+    {
+      "task_id": "ETF正式决策",
+      "business_chain": "entry identity → parent request → request-bound facts/DWP → gate → FINAL_CONTENT → BDS → SCHEDULED_REVIEW_COMPLETION → decision-notification → formal canonical event → REPORT → notification_center → PushPlus",
+      "interaction_scenario": "FORMAL_DECISION_CANONICAL_SCENARIO_PER_CURRENT_MAIN",
+      "prompt_snapshot": {
+        "status": "LIVE_READBACK_REQUIRED",
+        "source": "docs/ETF三类任务统一快照封存_2026-10-17.md",
+        "historical_sources": [
+          "docs/ETF三类任务当前版本冻结封存_2026-10-16.md",
+          "docs/archive/formal-decision-scheduled-task-rebuild-v2.md"
+        ]
+      },
+      "entry_contract": {
+        "conversation": "CHATGPT_MANUAL_FORMAL_ANALYSIS / MANUAL_CONVERSATION",
+        "manual_task": "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS / MANUAL_SCHEDULED_TASK",
+        "automatic": "CHATGPT_SCHEDULED_FORMAL_ANALYSIS / AUTOMATIC_SCHEDULED_TASK"
+      },
+      "identity_fields": [
+        "task_id",
+        "source",
+        "entry_mode",
+        "task_run_id",
+        "occurrence_id",
+        "parent_request_id",
+        "request_id",
+        "market_date",
+        "decision_id",
+        "report_id",
+        "content_hash"
+      ],
+      "invariants": [
+        "one parent request",
+        "one FINAL_CONTENT",
+        "one BDS",
+        "one completion",
+        "one event",
+        "one REPORT",
+        "one notification",
+        "no automatic trading"
+      ],
+      "owner_paths": [
+        "ETF_SYSTEM_INDEX.md",
+        "docs/Formal Decision执行与用户回复协议.md",
+        "docs/ETF任务入口与调度治理协议_V1.0.md",
+        "docs/ETF自动维护与运行保障协议_V1.0.md"
+      ]
+    }
+  ],
+  "file_roles": {
+    "ETF_SYSTEM_INDEX.md": "routing authority",
+    "docs/ETF三类任务统一快照封存_2026-10-17.md": "historical/current governance evidence snapshot",
+    "docs/ETF自动维护与运行保障协议_V1.0.md": "maintenance and recovery contract",
+    "docs/ETF任务入口与调度治理协议_V1.0.md": "identity and scheduling contract",
+    "docs/Formal Decision执行与用户回复协议.md": "Formal Decision contract",
+    ".github/workflows/decision-notification.yml": "shared notification workflow and persistence owner",
+    "scripts/process_state_sync_request.py": "canonical event owner entry",
+    "scripts/notification_center.py": "notification owner",
+    "scripts/merge_notification_state.py": "notification state merge owner",
+    "tests/test_formal_decision_notification_chain_contract.py": "Formal chain contract tests",
+    "tests/test_formal_decision_shared_report_chain.py": "shared report chain tests"
+  },
+  "latest_selection": "先读取本文件；以freeze_status判断是否允许宣称完整冻结。若LIVE_READBACK_REQUIRED，必须先回读三个ChatGPT任务的完整Prompt、Schedule和平台可验证hash，再生成新的v3.1 sealed manifest；不得把历史Prompt/hash当作live。",
+  "rollback": "回退到captured_main_commit，并使用各任务prompt_snapshot.source中的历史审计材料；任何恢复仍需重新核对current main，不得直接执行历史归档。",
+  "acceptance_required": [
+    "manifest JSON可解析",
+    "三任务字段/入口/场景/链路均登记",
+    "live prompt/schedule readback status明确",
+    "相关测试通过",
+    "merged main回读",
+    "新鲜真实运行分别回读completion/event/REPORT/notification/provider"
+  ],
+  "evidence_note": "本次文件冻结的是仓库合同和恢复路由；由于当前工具未取得平台live task完整Prompt/Schedule及可验证hash，未宣称最终live配置冻结。"
+}
