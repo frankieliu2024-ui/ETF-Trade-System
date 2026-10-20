@@ -128,7 +128,7 @@ INDEX只负责回答“去哪里读”，不得重新定义以下内容：正式
 
 Formal Decision completion必须使用current main的统一 Scheduled Review completion builder生成：`request_id=<parent_request_id>__scheduled_review_completion`，`parent_request_id=<原始父请求>`，且文件名必须精确为`<request_id>.json`；不得手写、复用父请求ID或使用任意文件名。写入并回读completion后，当前执行器必须在同一handoff中显式调用既有`decision-notification` workflow的`workflow_dispatch(formal_completion_path=<当前唯一completion路径>)`，再由统一canonical owner形成`events/reviews/formal_*.json`并进入notification_center。仅有BDS、completion文件或GitHub Contents push，不构成通知提交；无法完成显式handoff时只能记录FORMAL_PARENT_HANDOFF_INCOMPLETE，不得声称通知成功。
 
-“用户正文优先、完成事件后置投影”只定义用户可见顺序，不得被解释为在最终回复返回后再由同一对话回合异步执行写入。由于对话窗口和定时任务在最终消息返回后即结束，ChatGPT必须在返回最终消息前完成同一请求的唯一FINAL_CONTENT冻结、BUSINESS_DECISION_SOURCE写入与回读、以及统一SCHEDULED_REVIEW_COMPLETION ingress提交；随后最终消息只能输出该已冻结的原文。completion之后的事件、REPORT、notification_center和PushPlus继续由既有workflow异步投影，不得等待provider成功，也不得因此改写正文。
+“用户正文优先、完成事件后置投影”定义用户可见顺序：ChatGPT先冻结并输出唯一FINAL_CONTENT，随后由同一运行的后置交接完成BUSINESS_DECISION_SOURCE与统一SCHEDULED_REVIEW_COMPLETION的原子写入、回读和既有workflow投影。BDS、completion、event、REPORT、notification_center和PushPlus必须继续使用同一运行身份和正文哈希，不得等待provider成功，也不得因此改写正文。
 
 只生成完整正文但未完成BDS回读和completion提交，不得视为本次Formal Decision完成；不得以“后置异步”“已生成报告”或其他状态替代交接。若交接失败，必须保留同一请求和正文并明确记录未完成，不得声称主动通知已发送。该硬门适用于对话窗口、手动定时和自动定时三个入口，不改变【ETF系统复核】和【ETF交易复盘】既有链。
 

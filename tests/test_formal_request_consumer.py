@@ -119,7 +119,7 @@ class FormalRequestConsumerLifecycleTests(unittest.TestCase):
         self.assertFalse(state["user_output_allowed"])
         self.assertTrue(state["business_decision_allowed"])
         self.assertTrue(state["final_content_generation_allowed"])
-        self.assertTrue(state["ready_handoff"]["user_reply_precondition"])
+        self.assertFalse(state["ready_handoff"]["user_reply_precondition"])
         self.assertTrue(state["ready_handoff"]["post_reply_async"])
 
 
