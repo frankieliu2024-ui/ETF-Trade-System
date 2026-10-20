@@ -1,0 +1,165 @@
+{
+  "event_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW",
+  "occurrence_id": "system-review-manual-20261020T1956-c41bd2",
+  "request_id": "scheduled-system-review-manual-20261020T1956-c41bd2",
+  "reviewed_at_beijing": "2026-10-20T19:56:22+08:00",
+  "presentation_binding": {
+    "report_type": "ETF_SYSTEM_REVIEW",
+    "task_id": "ETF系统复核",
+    "task_run_id": "system-review-manual-20261020T1956-c41bd2",
+    "request_id": "scheduled-system-review-manual-20261020T1956-c41bd2",
+    "report_id": "etf_system_review:system-review-manual-20261020T1956-c41bd2",
+    "full_content": "【ETF系统复核】2026-10-20 19:56 晚间复核\n\n【复核时点（北京时间）】\n\n2026-10-20 19:56，星期二，A股交易日收盘后。本次按启动后读取的current main事实复核。\n\n【晚间复核结论】\n\n系统核心行情、账户、风险和生命周期事实可读，能支持下一交易日继续运行；整体状态为降级，主要待处理项是今日19:30定时复核未见对应完成记录、美国延长时段派生观察过期，以及一致性报告要求复核近期变更过的稳定合同。今日收盘行情和账户已更新，当前没有证据表明下一交易日08:30入口被阻断。本次不形成新的买卖结论、金额、份额或交易许可。\n\n本次全量一致性验收：有警告。431项检查全部完成，未发现失败；报告有1项警告：美国延长时段派生观察过期。检查还发现稳定合同一致性基线仍需按当前主版本重放复核，因此不能据此宣称近期变更的合同语义已全部重新验证。本次验收于19:56完成，对应当时的current main及本次复核事实边界。\n\n【当日运行与判断链状态】\n\n1. 今日A股正式收盘快照于15:02:10形成，覆盖17个对象、其中14只ETF，数据质量通过。收盘行情链可用。\n\n2. 今日账户事实于17:09更新：总资产171,581.97元，证券市值50,385.10元，可用现金120,196.87元；持有纳指ETF（159941）、能源化工ETF（159981）、创新药ETF（159992），无待处理订单。风险重建截至10月20日，策略风险率约-12.8179%；生命周期记录可读，没有到期或逾期必办项。\n\n3. 18:58的既有正式判断记录为风险许可“禁止新增”，下一单位资本保留现金、新增部署为0元；科创AIETF博时虽列为主候选，但缺少多窗口趋势和可执行价格，未满足部署条件。这是既有正式判断，本次系统复核不延展或改写其结论。\n\n【当日新增事实与影响】\n\n1. 今日11:30边界的交易复盘覆盖全市场1,752只ETF，形成9个候选评估对象，历史验证12项成功、1项失败，Discovery覆盖为部分完成；记录观察ETF11只、机会ETF0只。该复盘是上午时段结果，不能代表收盘后的新机会状态；Discovery、观察、机会和实际持仓身份仍分别处理。\n\n2. 美国延长时段数据当前质量降级：一致性报告指出QQQ、SOXX的派生观察过期。海外数据内容本身可读，但定时触发身份不明确，不能据此认定正式定时刷新已履约。不同市场的行情时点仍不可视作同步。\n\n【正式判断与交易复盘交付】\n\n今日上午交易复盘已有正式事件，业务边界截至11:30；current main中未见今日完整日交易复盘的正式完成记录。今日19:30系统复核也未见对应的正式完成事件，因此不能确认该固定节点已完成交付；本次手动复核不替代该次运行，也无法仅凭缺少完成事件确定其失败原因。\n\n【通知与记录状态】\n\n本次全量一致性验收已结束，结果和运行提交已回读。本次复核正文冻结时，专属完成记录、REPORT投影、通知中心记录和平台发送结果尚未核验；用户是否收到通知也不能预先确认。今日19:30复核未见可核对的对应通知记录。\n\n【未闭环事项】\n\n1. 美国延长时段的派生观察过期，海外定时触发身份仍有歧义；本次未更改数据源、规则或调度。\n\n2. 稳定合同语义基线需对近期主版本变更重新复核。此次431项检查无失败，但该语义新鲜度事项仍未消除。\n\n3. 当前账户事实最后更新于17:09；若此后发生成交、资金或持仓变化，本次复核未覆盖该变化。\n\n【下一交易日重点】\n\n下一交易日先确认账户事实是否有17:09之后的变化，再按正式节点读取新行情与有效风险事实。继续核对美国延长时段派生观察及合同语义复核状态；Discovery或观察对象不自动成为机会或交易许可。\n\n【执行状态】\n\n本次系统复核和全量一致性验收已完成，结论为有警告；一致性运行对应current main提交`47f80bc`，431项检查无失败、1项警告。未创建Formal Decision或交易请求，未执行交易，也未修改规则、权限、数据源、监控范围、代码或调度。本次完成记录、报告投影、通知发送及用户实际收到仍分别待核验。\n\n【置信度】\n\n中等偏高：今日收盘行情、17:09账户事实、当日风险重建及一致性运行结果均已回读；但晚间定时复核没有可读的完成记录，美国延长时段和合同语义仍有未闭环项。\n\n【最可能出错的地方】\n\n把上午复盘的0只机会ETF当成收盘结论；把17:09账户与10月20日风险事实当作此后没有变化的证明；或把全量检查无失败误读为合同语义基线已完成重验。",
+    "content_hash": "32db053b044e51301870b644f32a3c75e6b0ef60dd4cbd822e38153e1a7bf6a2",
+    "content_hash_source": "completion_builder"
+  },
+  "review": {
+    "review_semantics": "SYSTEM_REVIEW",
+    "entry_mode": "MANUAL_CONVERSATION",
+    "task_id": "ETF系统复核",
+    "task_run_id": "system-review-manual-20261020T1956-c41bd2",
+    "occurrence_id": "system-review-manual-20261020T1956-c41bd2",
+    "request_id": "scheduled-system-review-manual-20261020T1956-c41bd2",
+    "report_id": "etf_system_review:system-review-manual-20261020T1956-c41bd2",
+    "market_date": "2026-10-20",
+    "review_date": "2026-10-20",
+    "a_share_latest_formal_market_date": "2026-10-20",
+    "market_phase": "POST_CLOSE",
+    "is_a_share_trading_day": true,
+    "fact_cutoff_at_beijing": "2026-10-20T19:56:22+08:00",
+    "facts_as_of_beijing": "2026-10-20T19:56:22+08:00",
+    "source_facts_as_of": {
+      "market": "2026-10-20T15:02:10+08:00",
+      "account": "2026-10-20T17:09:00+08:00",
+      "risk": "2026-10-20",
+      "lifecycle": "2026-10-20T19:21:01+08:00",
+      "discovery": "2026-10-20T12:39:26+08:00",
+      "trade_review": "2026-10-20T12:39:26+08:00",
+      "formal_decision": "2026-10-20T18:58:19+08:00",
+      "overseas": "2026-10-20T16:25:55+08:00",
+      "us_extended": "2026-10-20T19:35:03+08:00",
+      "consistency": "2026-10-20T19:56:07+08:00"
+    },
+    "consistency_acceptance": {
+      "run_id": "39418460903",
+      "run_number": 4844,
+      "run_event": "workflow_dispatch",
+      "run_started_at_beijing": "2026-10-20T19:55:41+08:00",
+      "report_generated_at_beijing": "2026-10-20T19:56:07+08:00",
+      "run_completed_at_beijing": "2026-10-20T19:56:22+08:00",
+      "main_ref": "refs/heads/main",
+      "checked_commit_sha": "47f80bce77c95a2c300e36dc6bcaef7879418814",
+      "workflow_conclusion": "success",
+      "consistency_conclusion": "WARNING",
+      "checks_completed": 431,
+      "failed_checks": [],
+      "warning_count": 1,
+      "hard_error_count": 0,
+      "warnings": [
+        "us_extended:live_freshness: derived observation stale"
+      ],
+      "stable_contract_freshness": "REVIEW_REQUIRED",
+      "semantic_freshness_decision": "REPLAY_REQUIRED",
+      "runtime_fact_freshness": "CURRENT",
+      "pit_boundary_at_start_beijing": "2026-10-20T19:55:41+08:00",
+      "pit_boundary_verified": true,
+      "corresponds_to_current_main_at_start": true,
+      "current_main_after_run_sha": "47f80bce77c95a2c300e36dc6bcaef7879418814"
+    },
+    "system_status_summary": {
+      "status": "DEGRADED",
+      "market": "READY",
+      "account": "READY",
+      "risk": "READY",
+      "lifecycle": "READY",
+      "close_review": "DEGRADED"
+    },
+    "account_summary": {
+      "updated_at": "2026-10-20T17:09:00+08:00",
+      "total_asset": 171581.97,
+      "stock_market_value": 50385.1,
+      "cash": 120196.87,
+      "positions": [
+        "159941",
+        "159981",
+        "159992"
+      ],
+      "orders": []
+    },
+    "market_summary": {
+      "market_date": "2026-10-20",
+      "snapshot": "data/market/snapshots/2026-10-20_150210.json",
+      "captured_at": "2026-10-20T15:02:10+08:00",
+      "quality": "PASS",
+      "row_count": 17,
+      "etf_count": 14
+    },
+    "risk_summary": {
+      "as_of": "2026-10-20",
+      "strategy_risk_pct": -12.8179,
+      "latest_formal_permission": "禁止新增",
+      "permission_as_of": "2026-10-20T18:58:19+08:00"
+    },
+    "discovery_summary": {
+      "status": "PARTIAL",
+      "as_of": "2026-10-20T12:39:26+08:00",
+      "broad_universe_count": 1752,
+      "candidate_count": 9,
+      "history_succeeded_count": 12,
+      "history_failed_count": 1
+    },
+    "observation_summary": {
+      "count": 11,
+      "as_of": "2026-10-20T12:39:26+08:00"
+    },
+    "opportunity_summary": {
+      "count": 0,
+      "as_of": "2026-10-20T12:39:26+08:00"
+    },
+    "holdings_summary": {
+      "codes": [
+        "159941",
+        "159981",
+        "159992"
+      ],
+      "lifecycle": "持有管理"
+    },
+    "capital_summary": {
+      "cash": 120196.87,
+      "new_deployment": 0,
+      "permission": "禁止新增"
+    },
+    "lifecycle_summary": {
+      "status": "READY",
+      "mandatory_due": 0,
+      "overdue": 0
+    },
+    "close_review_summary": {
+      "status": "DEGRADED",
+      "market_date": "2026-10-19",
+      "business_completion": "COMPLETE",
+      "evidence": "DEGRADED"
+    },
+    "trade_review_delivery_summary": {
+      "midday_event": "PRESENT",
+      "full_day_event": "NOT_READ_BACK"
+    },
+    "overseas_health_summary": {
+      "status": "DEGRADED",
+      "ambiguous_scheduled_pulse": true,
+      "us_extended": "DEGRADED"
+    },
+    "notification_summary": {
+      "current_task_status": "PENDING_POST_PROJECTION_READBACK",
+      "user_received": "UNKNOWN"
+    },
+    "delivery_summary": {
+      "completion": "PENDING",
+      "report": "PENDING",
+      "notification": "PENDING",
+      "user_received": "UNKNOWN"
+    },
+    "final_content_hash": "32db053b044e51301870b644f32a3c75e6b0ef60dd4cbd822e38153e1a7bf6a2"
+  },
+  "fingerprint": "97282fcb64c08db7a2732821367fabb9600f54fe0d3ef579029542a414ca1a47"
+}
