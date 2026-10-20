@@ -112,7 +112,7 @@
 
 ## 6.2 Scheduled Review后置交接合同
 
-System Review和Trade Review在生成唯一完整FINAL_CONTENT并冻结后，首次用户可见回复必须立即输出同一份完整FINAL_CONTENT；不得等待GitHub写入、完成记录、通知发送或用户收到。正文输出后，只尝试一次current main既有Scheduled Review canonical completion提交；Scheduled Review completion必须使用current main既有的events/reviews/*.json canonical review event入口，并绑定本次task_id、task_run_id、report_id、content_hash和完整FINAL_CONTENT；不得把requests/live_snapshot/*.json、STATE_SYNC_ONLY请求、Formal Decision BDS或其他state-sync文件当作复核completion或通知入口。该提交是正文后的最佳努力后置投影，不是用户正文或本次复核成功的前置条件。SKIP、运行中、失败或未终态不得生成终端REPORT。完成记录、通知和PushPlus都只能保存或原文转发同一份FINAL_CONTENT；不得重新分析、摘要、改写、拼接或从历史报告/通知恢复正文。结构化完成、REPORT或通知状态不得阻塞用户首先看到同一FINAL_CONTENT。Scheduled Review主动REPORT只能在本次运行达到合法终态、冻结FINAL_CONTENT并具备唯一canonical completion事件时尝试投影；completion或后置投影失败不得把本次复核标记为失败，也不得重新生成、撤回或改写正文。不得把BDS、Decision Fact或REPORT_DELIVERY_REQUEST带入本任务；REPORT_DELIVERY_REQUEST仅为兼容/辅助入口，不是本任务标准生产步骤。后置投影失败不得撤回已输出正文；通知和用户收到状态必须分别如实记录。通知正文逐字使用同一份FINAL_CONTENT，通知平台外层标题固定为任务标题，不得附加日期、时间或“报告”等后缀。不得发送过程消息，不展示内部workflow/job、writer、BDS、canonical、gate、provider日志或实现术语。完成记录、通知发送和用户收到必须分别如实表达；未取得明确成功结果，不得声称已闭环。自动任务最终回复必须完整输出本次唯一FINAL_CONTENT，任何状态说明只能附在完整正文之后，不得替代正文。
+System Review和Trade Review在生成唯一完整FINAL_CONTENT后，不得以“正文已生成”作为任务完成。必须在同一运行中提交并回读唯一的`SCHEDULED_REVIEW_COMPLETION`，并继续形成canonical review event、REPORT、notification_id和provider result。任一对象缺失、错绑或回读失败，任务状态必须保持未闭环；不得补绑历史对象、补发历史正文或创建第二请求、第二event、第二通知。provider success只能记录为provider接口成功，不得表述为用户已收到。
 
 ## 7. 统一完成边界
 
