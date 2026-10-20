@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "freeze_bundle_id": "ETF_THREE_TASKS_FREEZE_20261020T1817",
-  "status": "READBACK_RAW_SNAPSHOT_PENDING",
+  "status": "READBACK_SCHEDULE_SNAPSHOT_PENDING",
   "authority": "current_main_only",
   "source_main_commit": "dc91e166d4af796d2640e174962b4f55e750780a",
   "purpose": "不可变封存证据包；不构成第二规则源，不修改任务、调度或生产链。",
@@ -46,15 +46,15 @@
     "不自动恢复或重跑历史运行"
   ],
   "artifact_status": {
-    "prompt_raw_snapshots": "CURRENT_LIVE_PROMPTS_READABLE_IN_UI_NOT_EXPORTED",
+    "prompt_raw_snapshots": "PERSISTED_CURRENT_LIVE_PROMPTS",
     "schedule_snapshots": "SCHEDULE_UI_SUMMARY_READBACK_ONLY",
     "repository_code_map": "RECORDED_ON_CURRENT_MAIN",
     "runtime_evidence": "PENDING_FRESH_RUN_EVIDENCE_SELECTION",
     "recovery_runbook": "RECORDED"
   },
   "source_live_readback": {
-    "captured_at_beijing": "2026-10-20 18:29",
-    "result": "THREE_TASKS_ENABLED_PROMPT_FULL_READBACK_SCHEDULE_UI_READBACK",
+    "captured_at_beijing": "2026-10-20 19:35",
+    "result": "THREE_TASKS_ENABLED_PROMPT_FULL_READBACK_PERSISTED_SCHEDULE_UI_READBACK",
     "platform_hash_status": "NOT_EXPOSED_BY_UI",
     "task_readback_ids": [
       {
@@ -86,11 +86,34 @@
       }
     ]
   },
-  "code_map_status": "PENDING_BLOB_SHA_EXPANSION",
+  "code_map_status": "PATHS_REGISTERED_BLOB_SHA_VERIFIED",
   "evidence_limits": [
-    "当前云浏览器可读取完整Prompt文本，但本次仓库写入尚未包含三份原文文件",
+    "三条任务当前live Prompt已由云浏览器完整回读并原文持久化到本冻结包",
     "当前界面只提供调度摘要和相对下次运行时间，未提供稳定可导出的Schedule JSON",
-    "未取得平台原生Prompt/Schedule hash，不推断、不伪造",
+    "未取得平台原生Prompt/Schedule hash，不推断、不伪造；仓库blob SHA仅证明仓库文件内容",
     "runtime evidence仍需绑定新鲜真实运行，不用历史对象替代"
+  ],
+  "prompt_snapshot_files": [
+    {
+      "task_id": "ETF正式决策",
+      "path": "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/prompts/正式决策.txt",
+      "prompt_length_chars": 5078,
+      "readback_status": "FULL_CURRENT_PROMPT_READ_BACK",
+      "repository_blob_sha": "8aed4094bcfc6b2cbf2f32b141292f42e6da1c81"
+    },
+    {
+      "task_id": "ETF交易复盘",
+      "path": "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/prompts/交易复盘.txt",
+      "prompt_length_chars": 6504,
+      "readback_status": "FULL_CURRENT_PROMPT_READ_BACK",
+      "repository_blob_sha": "549dfcbf40cc73ef994af038e10285b3acdbc497"
+    },
+    {
+      "task_id": "ETF系统复核",
+      "path": "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/prompts/系统复核.txt",
+      "prompt_length_chars": 3852,
+      "readback_status": "FULL_CURRENT_PROMPT_READ_BACK",
+      "repository_blob_sha": "6f175772ba3c48b99271bb39a7263d28a4890e26"
+    }
   ]
 }
