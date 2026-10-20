@@ -3,8 +3,8 @@
   "freeze_id": "ETF_THREE_TASKS_CURRENT_FREEZE_20261020_V3",
   "freeze_status": "LIVE_TASK_READBACK_CONFIRMED_PLATFORM_HASH_UNAVAILABLE",
   "authority": "current_main_only",
-  "captured_at_beijing": "2026-10-20",
-  "captured_main_commit": "b86bdb870fe4703081af3a115faf6d083c3b1c9a",
+  "captured_at_beijing": "2026-10-21",
+  "captured_main_commit": "f56459abc4dbca602479ec60ada32ca7986b44e5",
   "current_pointer": "docs/freezes/ETF_THREE_TASKS_CURRENT_FREEZE.json",
   "index_path": "ETF_SYSTEM_INDEX.md",
   "purpose": "唯一当前冻结指针；用于定位、审计、回退和按身份恢复三类ETF任务，不构成第二规则源。",
@@ -191,7 +191,7 @@
     "tests/test_formal_decision_notification_chain_contract.py": "Formal chain contract tests",
     "tests/test_formal_decision_shared_report_chain.py": "shared report chain tests"
   },
-  "latest_selection": "先读取本文件，再读取evidence_index_path、bundle_manifest_path、Prompt快照、schedule_readback_path、code-map和recovery-runbook。只有三类任务新鲜真实运行证据补齐后才可评估最终封存。",
+  "latest_selection": "先读取本文件，再读取evidence_index_path、bundle_manifest_path、Prompt快照、schedule_readback_path、code-map和recovery-runbook；同时按ETF_SYSTEM_INDEX.md读取自动维护与运行保障协议，持续核对current main、任务合同、workflow输入和最新运行链。只有三类任务新鲜真实运行证据补齐后才可评估最终封存。",
   "rollback": "回退到captured_main_commit，并使用各任务prompt_snapshot.source中的历史审计材料；任何恢复仍需重新核对current main，不得直接执行历史归档。",
   "acceptance_required": [
     "manifest JSON可解析",
@@ -201,7 +201,7 @@
     "merged main回读",
     "新鲜真实运行分别回读completion/event/REPORT/notification/provider"
   ],
-  "evidence_note": "本次文件冻结的是仓库合同和恢复路由；由于当前工具未取得平台live task完整Prompt/Schedule及可验证hash，未宣称最终live配置冻结。",
+  "evidence_note": "当前 main 已包含 PR #1569（merge c018550e2555ab45dfca08e4c7b4abb282704155）的 Scheduled Review dispatch 输入修复；本次冻结同步记录最新生产基线。最新可回读交易复盘运行仍停在业务复盘/生产交接之前，未形成新的 completion、canonical event、REPORT、notification_center、provider 或用户收到证据，因此状态仍为 RUNTIME_EVIDENCE_PENDING，不能宣称 SEALED。自动维护与运行保障继续按 ETF_SYSTEM_INDEX.md 路由至 docs/ETF自动维护与运行保障协议_V1.0.md，只做检测、回读、登记和失败告警，不自动补造对象或升级状态。",
   "live_readback": {
     "captured_at_beijing": "2026-10-20 19:35",
     "source": "ChatGPT scheduled tasks cloud browser readback",
