@@ -22,4 +22,4 @@
 
 ## Legacy Prompt history
 
-旧 `docs/automation_prompt_history/` 与 `docs/archive/automation_prompt_history/` 已统一迁入 `docs/freezes/archive/legacy/`。该目录只保存历史 Prompt、旧冻结和旧重建材料，不再作为现行读取入口。
+旧 `docs/freezes/archive/legacy/` 与 `docs/freezes/archive/legacy/` 已统一迁入 `docs/freezes/archive/legacy/`。该目录只保存历史 Prompt、旧冻结和旧重建材料，不再作为现行读取入口。
