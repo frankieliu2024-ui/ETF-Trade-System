@@ -8,6 +8,17 @@ from scripts.build_e2e_status import context_component, context_read_contract
 
 
 class E2EDecisionReadinessTests(unittest.TestCase):
+    def test_large_query_context_contract_exposes_executable_blob_readback(self):
+        source = (Path(__file__).parents[1] / "scripts" / "build_e2e_status.py").read_text(encoding="utf-8")
+        self.assertIn('"large_payload_blob_source_url"', source)
+        self.assertIn(
+            '"git_blobs_get_base64_content"',
+            source,
+        )
+        self.assertIn(
+            '"decode_and_validate_same_blob_sha256"',
+            source,
+        )
     def test_context_read_contract_distinguishes_verified_empty_from_readable_payload(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "query_context.json"
