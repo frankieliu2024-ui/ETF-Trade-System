@@ -40,6 +40,35 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
     def request(self, when="2026-08-31T15:20:00+08:00"):
         return {"request_id": "review-20260831", "interaction_scenario": "POST_CLOSE_REVIEW", "requested_at_beijing": when, "formal_review": {"market_date": "2026-08-31", "reviewed_at_beijing": when, "case_id": "CASE-20260827-01", "case_mode": "CONTINUATION_NO_NEW_CASE", "review_scope": "FULL_DAY", "data_time": {"close_snapshot": "data/market/snapshots/2026-08-31_150110.json"}, "archive_entry": "2026-08-31｜正式收盘事实归档。", "experience_entry": "2026-08-31｜延续既有Trial假设，不新增CASE。"}}
 
+    def test_trade_review_timestamp_close_snapshot_maps_to_canonical_path(self):
+        request = self.request()
+        request["interaction_scenario"] = "SCHEDULED_TRADE_REVIEW"
+        request["formal_fact_type"] = "FORMAL_SCHEDULED_TRADE_REVIEW"
+        request["request_type"] = "SCHEDULED_REVIEW_COMPLETION"
+        request["source"] = "CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR"
+        request["entry_mode"] = "MANUAL_SCHEDULED_TASK"
+        request["formal_review"]["data_time"]["close_snapshot"] = "2026-08-31 15:01:10 +08:00"
+        request["presentation_binding"] = {
+            "report_type": "ETF_TRADE_REVIEW",
+            "task_id": "ETF交易复盘",
+            "task_run_id": "trade-manual-occurrence-1",
+            "occurrence_id": "trade-manual-occurrence-1",
+            "entry_mode": "MANUAL_SCHEDULED_TASK",
+            "request_id": request["request_id"],
+            "report_id": "ETF_TRADE_REVIEW:trade-manual-occurrence-1",
+            "full_content": "FROZEN TRADE REVIEW",
+            "content_hash": "2c761fe07bd370042f08d2c81af775d86d4993fcf2639908c3730fafc773051f",
+            "content_hash_source": "completion_builder",
+        }
+        account = {"status": "VALID", "updated_at": "2026-08-31T15:12:00+08:00"}
+        self.assertEqual(sync.record_post_close_review(account, request), (True, False))
+        event = json.loads((self.root / "events/reviews/2026-08-31.json").read_text(encoding="utf-8"))
+        self.assertEqual(event["event_type"], "FORMAL_SCHEDULED_TRADE_REVIEW")
+        self.assertEqual(
+            event["review"]["data_time"]["close_snapshot"],
+            "data/market/snapshots/2026-08-31_150110.json",
+        )
+
     def test_weekly_trade_review_reaches_canonical_owner(self):
         request = self.request()
         request["interaction_scenario"] = "WEEKLY_REVIEW"
