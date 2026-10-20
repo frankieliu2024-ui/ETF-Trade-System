@@ -145,6 +145,40 @@ class ProductionBusinessSourceIngressTests(unittest.TestCase):
                 SOURCE, BASE_DECISION, response, work_package, "data/market/snapshots/x.json"
             )
 
+    def test_scheduled_completion_can_carry_bds_inline_compatibility_fields(self):
+        bds = {
+            "decision_response": RESPONSE,
+            "decision_work_package": WORK_PACKAGE,
+            "consumed_snapshot": "data/market/snapshots/x.json",
+            "presentation_content": "【ETF正式决策】冻结正文",
+            "presentation_binding": {
+                "request_id": SOURCE["request_id"],
+                "decision_id": BASE_DECISION["decision_id"],
+                "full_content": "【ETF正式决策】冻结正文",
+            },
+        }
+        payload = completion.build_formal_decision_completion_request(
+            SOURCE,
+            "requests/live_snapshot/bds.json",
+            BASE_DECISION["decision_id"],
+            "hash",
+            bds_payload=bds,
+        )
+        for field, value in bds.items():
+            self.assertEqual(payload[field], value)
+        self.assertEqual(payload["request_type"], "SCHEDULED_REVIEW_COMPLETION")
+        self.assertEqual(payload["source"], "CHATGPT_SCHEDULED_REVIEW_ACTOR")
+
+    def test_scheduled_completion_rejects_non_object_inline_projection(self):
+        with self.assertRaisesRegex(ValueError, "inline BDS projection"):
+            completion.build_formal_decision_completion_request(
+                SOURCE,
+                "requests/live_snapshot/bds.json",
+                BASE_DECISION["decision_id"],
+                "hash",
+                bds_payload=[],
+            )
+
     def test_repo_builder_remains_available_for_preflight_and_recovery(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
