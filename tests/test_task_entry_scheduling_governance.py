@@ -15,6 +15,9 @@ class TaskEntrySchedulingGovernanceTests(unittest.TestCase):
         self.assertEqual(data["tasks"][2]["automatic_schedule"], ["09:00", "10:00", "11:00", "13:30", "14:30"])
         self.assertTrue(data["tasks"][0]["content_contract"]["manual_and_automatic_same_contract"])
         self.assertTrue(data["tasks"][0]["content_contract"]["validation_only_report_forbidden"])
+        trade = data["tasks"][1]
+        self.assertEqual(trade["production_adapter"], "scripts/run_scheduled_trade_review_actor.py")
+        self.assertEqual(trade["completion_builder"], "build_trade_review_completion_request")
     def test_protocol_preserves_manual_and_automatic_boundaries(self):
         text = (ROOT / "docs/ETF任务入口与调度治理协议_V1.0.md").read_text(encoding="utf-8")
         for phrase in ("手动入口不得因为当前时间不是自动节点而SKIP", "不跨任务复用身份", "不得自动执行证券交易"):
