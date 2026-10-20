@@ -137,6 +137,8 @@ def build_completion_request(
     final_content: str = "",
     task_id: str = "",
     task_run_id: str = "",
+    occurrence_id: str = "",
+    entry_mode: str = "",
 ) -> dict:
     """Wrap a frozen Scheduled Review for the existing state-sync owner."""
     scope = str((formal_review or {}).get("review_scope") or "").strip().upper()
@@ -149,6 +151,13 @@ def build_completion_request(
     else:
         validate_full_day_review(formal_review, account)
     validate_user_visible_content(str(final_content or ""), canonical_closure_confirmed=False)
+    effective_entry_mode = str(entry_mode or "").strip().upper()
+    if effective_entry_mode not in {"MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"}:
+        raise ValueError("scheduled trade review completion requires entry_mode=MANUAL_SCHEDULED_TASK or AUTOMATIC_SCHEDULED_TASK")
+    effective_task_run_id = _safe_id(task_run_id or request_id)
+    effective_occurrence_id = _safe_id(occurrence_id or effective_task_run_id)
+    frozen_content = str(final_content or "")
+    frozen_content_hash = hashlib.sha256(frozen_content.encode("utf-8")).hexdigest()
     review_market_date = str(formal_review.get("market_date") or "").strip()
     effective_market_date = str(market_date or review_market_date).strip()
     if not effective_market_date or effective_market_date != review_market_date:
@@ -162,14 +171,21 @@ def build_completion_request(
         "market_phase": str(formal_review.get("market_phase") or ("MIDDAY_BREAK" if is_midday else "POST_CLOSE")),
         "requested_at_beijing": str(requested_at_beijing or "").strip(),
         "market_date": effective_market_date,
+        "entry_mode": effective_entry_mode,
+        "task_run_id": effective_task_run_id,
+        "occurrence_id": effective_occurrence_id,
         "formal_review": formal_review,
         "presentation_binding": {
             "report_type": "ETF_TRADE_REVIEW",
             "task_id": str(task_id or "ETF交易复盘"),
-            "task_run_id": str(task_run_id or request_id),
+            "task_run_id": effective_task_run_id,
+            "occurrence_id": effective_occurrence_id,
+            "entry_mode": effective_entry_mode,
             "request_id": str(request_id),
-            "report_id": f"ETF_TRADE_REVIEW:{str(task_run_id or request_id)}",
-            "full_content": str(final_content or ""),
+            "report_id": f"ETF_TRADE_REVIEW:{effective_task_run_id}",
+            "full_content": frozen_content,
+            "content_hash": frozen_content_hash,
+            "content_hash_source": "completion_builder",
         },
     }
     if parent_request_id:
@@ -420,6 +436,8 @@ def main() -> int:
     parser.add_argument("--final-content", default="")
     parser.add_argument("--task-id", default="")
     parser.add_argument("--task-run-id", default="")
+    parser.add_argument("--occurrence-id", default="")
+    parser.add_argument("--entry-mode", required=True, choices=["MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"])
     args = parser.parse_args()
     target = write_completion_request(
         args.formal_review,
@@ -431,6 +449,8 @@ def main() -> int:
         args.final_content,
         args.task_id,
         args.task_run_id,
+        args.occurrence_id,
+        args.entry_mode,
     )
     print(json.dumps({"ok": True, "request": str(target.relative_to(ROOT)).replace("\\", "/")}, ensure_ascii=False))
     return 0
