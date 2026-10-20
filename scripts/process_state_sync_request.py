@@ -3611,6 +3611,17 @@ def main() -> int:
         binding = bds.get("presentation_binding") if isinstance(bds.get("presentation_binding"), dict) else {}
         if str(binding.get("full_content") or "") != content:
             raise ValueError("Formal Decision completion content binding is invalid")
+        # BDS remains the durable source during compatibility migration. When
+        # inline Formal fields are present, compare them before projecting BDS.
+        for field in (
+            "decision_response",
+            "decision_work_package",
+            "consumed_snapshot",
+            "presentation_content",
+            "presentation_binding",
+        ):
+            if field in request and request.get(field) != bds.get(field):
+                raise ValueError(f"Formal Decision completion inline {field} does not match BDS")
         request.update({key: value for key, value in bds.items() if key not in {"request_id", "request_type", "source"}})
         request["request_type"] = BUSINESS_DECISION_SOURCE
         request["request_id"] = str(bds.get("request_id") or "").strip()
