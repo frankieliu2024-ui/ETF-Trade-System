@@ -7,7 +7,9 @@ payload, publish events, send notifications, or re-analyse the review.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+from pathlib import Path
 
 try:
     from scheduled_review_completion import write_completion_request
@@ -46,7 +48,25 @@ def main() -> int:
         args.occurrence_id,
         args.entry_mode,
     )
-    print(json.dumps({"ok": True, "completion_path": str(target)}, ensure_ascii=False))
+    completion_path = Path(target)
+    if not completion_path.exists():
+        raise RuntimeError("trade review completion write did not produce a readable file")
+    persisted = json.loads(completion_path.read_text(encoding="utf-8"))
+    binding = persisted.get("presentation_binding") or {}
+    expected_hash = hashlib.sha256(args.final_content.encode("utf-8")).hexdigest()
+    checks = {
+        "request_id": persisted.get("request_id") == args.request_id,
+        "task_run_id": persisted.get("task_run_id") == args.task_run_id,
+        "occurrence_id": persisted.get("occurrence_id") == args.occurrence_id,
+        "entry_mode": persisted.get("entry_mode") == args.entry_mode,
+        "report_type": binding.get("report_type") == "ETF_TRADE_REVIEW",
+        "content_hash": binding.get("content_hash") == expected_hash,
+        "full_content": binding.get("full_content") == args.final_content,
+    }
+    if not all(checks.values()):
+        failed = ", ".join(key for key, ok in checks.items() if not ok)
+        raise RuntimeError(f"trade review completion readback mismatch: {failed}")
+    print(json.dumps({"ok": True, "completion_path": str(target), "readback": checks}, ensure_ascii=False))
     return 0
 
 
