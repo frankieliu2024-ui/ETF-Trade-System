@@ -296,7 +296,7 @@ def _valid_current_close_review_completion(current: dict) -> dict:
         return {}
     review = _read_json(expected_review_path)
     closure = _read_json(closure_rel)
-    if review.get("event_type") != "FORMAL_POST_CLOSE_REVIEW":
+    if review.get("event_type") not in {"FORMAL_POST_CLOSE_REVIEW", "FORMAL_SCHEDULED_TRADE_REVIEW"}:
         return {}
     if str(review.get("market_date") or market_date) != market_date:
         return {}
@@ -366,7 +366,7 @@ def _validate_post_close_review_contract(report: dict, now=None) -> None:
             now or datetime.now(ZoneInfo("Asia/Shanghai")),
             due,
         )
-    if review.get("event_type") != "FORMAL_POST_CLOSE_REVIEW" or not isinstance(review.get("review"), dict):
+    if review.get("event_type") not in {"FORMAL_POST_CLOSE_REVIEW", "FORMAL_SCHEDULED_TRADE_REVIEW"} or not isinstance(review.get("review"), dict):
         errors.append(f"missing_or_invalid_review=events/reviews/{market_date}.json")
     if closure.get("status") != "CLOSED" or closure.get("formal_review_path") != f"events/reviews/{market_date}.json":
         errors.append(f"missing_or_invalid_closure=data/state/close_review_closure_{market_date}.json")
@@ -430,6 +430,7 @@ def _is_full_day_review_completion(review_event: dict) -> bool:
     """Return true only for a durable FULL_DAY review, not a midday review."""
     if str(review_event.get("event_type") or "").upper() not in {
         "FORMAL_POST_CLOSE_REVIEW",
+        "FORMAL_SCHEDULED_TRADE_REVIEW",
         "FORMAL_POST_CLOSE_REVIEW_UNAVAILABLE",
     }:
         return False

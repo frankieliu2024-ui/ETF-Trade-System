@@ -28,7 +28,7 @@
 Trade Review completion必须显式携带并回读本次真实入口身份：自动节点使用
 `entry_mode=AUTOMATIC_SCHEDULED_TASK`，任务界面手动启动使用
 `entry_mode=MANUAL_SCHEDULED_TASK`。两者均使用既有
-`source=CHATGPT_SCHEDULED_REVIEW_ACTOR`和`interaction_scenario=SCHEDULED_TRADE_REVIEW`；
+`source=CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR`和`interaction_scenario=SCHEDULED_TRADE_REVIEW`；
 缺失或冲突时必须在completion ingress fail-closed。
 
 ### ETF正式决策
@@ -124,12 +124,12 @@ System Review和Trade Review在生成唯一完整FINAL_CONTENT后，不得以“
 
 Trade Review仅允许使用唯一业务主链：
 
-ETF交易复盘 → CHATGPT_SCHEDULED_REVIEW_ACTOR → formal_review → `scripts/run_scheduled_trade_review_actor.py` → build_completion_request → SCHEDULED_REVIEW_COMPLETION → GitHub Contents写入与同文件回读 → 用户显示FINAL_CONTENT → canonical review event → REPORT → notification_center → provider
+ETF交易复盘 → CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR → formal_review → `scripts/run_scheduled_trade_review_actor.py` → build_trade_review_completion_request → SCHEDULED_REVIEW_COMPLETION → GitHub Contents写入与同文件回读 → 用户显示FINAL_CONTENT → canonical review event → REPORT → notification_center → provider
 
-对ETF交易复盘，Actor在形成任何用户可见正文前，必须完成本次运行的完整formal_review，使用同一份冻结正文调用scripts/scheduled_review_completion.py的build_completion_request，并完成唯一completion文件写入和回读。completion必须使用：
+对ETF交易复盘，Actor在形成任何用户可见正文前，必须完成本次运行的完整formal_review，使用同一份冻结正文调用scripts/scheduled_review_completion.py的build_trade_review_completion_request，并完成唯一completion文件写入和回读。completion必须使用：
 
 - request_type=SCHEDULED_REVIEW_COMPLETION；
-- source=CHATGPT_SCHEDULED_REVIEW_ACTOR；
+- source=CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR；
 - interaction_scenario=SCHEDULED_TRADE_REVIEW；
 - presentation_binding.report_type=ETF_TRADE_REVIEW；
 - 本次task_id、task_run_id、occurrence_id、request_id、report_id及完整full_content。

@@ -219,8 +219,8 @@ def formal_parent_handoff_gap() -> tuple[str | None, str | None, str | None]:
         bds = bds or request_type == "BUSINESS_DECISION_SOURCE"
         completion = completion or (
             request_type == "SCHEDULED_REVIEW_COMPLETION"
-            and source == "CHATGPT_SCHEDULED_REVIEW_ACTOR"
-            and fact_type == "FORMAL_POST_CLOSE_REVIEW"
+            and source == "CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR"
+            and fact_type == "FORMAL_SCHEDULED_TRADE_REVIEW"
         )
     event_found = False
     review_dir = ROOT / "events" / "reviews"

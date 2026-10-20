@@ -1796,7 +1796,7 @@ def record_unrecoverable_review_prerequisite(account: dict, request: dict, trade
     market_date = str(assessment["review_target_market_date"])
     event_path = ROOT / "events" / "reviews" / f"{market_date}.json"
     prior = load_json(event_path) if event_path.exists() else {}
-    if prior.get("event_type") == "FORMAL_POST_CLOSE_REVIEW":
+    if prior.get("event_type") in {"FORMAL_POST_CLOSE_REVIEW", "FORMAL_SCHEDULED_TRADE_REVIEW"}:
         raise RuntimeError("normal formal review already exists; cannot overwrite with terminal state")
     event = build_unrecoverable_review_event(
         assessment,
@@ -2228,8 +2228,8 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     raw_presentation_binding = request.get("presentation_binding")
     is_trade_review_production = (
         str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION"
-        and str(request.get("source") or "").strip().upper() == "CHATGPT_SCHEDULED_REVIEW_ACTOR"
-        and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_POST_CLOSE_REVIEW"
+        and str(request.get("source") or "").strip().upper() == "CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR"
+        and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_SCHEDULED_TRADE_REVIEW"
         and str((raw_presentation_binding or {}).get("task_id") or "").strip() == "ETF交易复盘"
     )
     if is_trade_review_production:
@@ -2325,7 +2325,7 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
         _persist_existing_case_detail_projections(prior_review)
         return True, True
     review_time = (incoming_time or datetime.now(SHANGHAI)).isoformat(timespec="seconds")
-    event = {"event_type": "FORMAL_POST_CLOSE_REVIEW", "entry_mode": request.get("entry_mode"), "market_date": market_date, "account_updated_at": account.get("updated_at"), "fingerprint": fingerprint, "request_id": request.get("request_id"), "report_id": presentation_binding.get("report_id", ""), "content_hash": presentation_binding.get("content_hash", ""), "review": review, "presentation_binding": presentation_binding, "managed_position_sell_review": managed_projection, "updated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds")}
+    event = {"event_type": "FORMAL_SCHEDULED_TRADE_REVIEW" if is_trade_review_production else "FORMAL_POST_CLOSE_REVIEW", "source": request.get("source"), "entry_mode": request.get("entry_mode"), "market_date": market_date, "account_updated_at": account.get("updated_at"), "fingerprint": fingerprint, "request_id": request.get("request_id"), "report_id": presentation_binding.get("report_id", ""), "content_hash": presentation_binding.get("content_hash", ""), "review": review, "presentation_binding": presentation_binding, "managed_position_sell_review": managed_projection, "updated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds")}
     event["reviewed_at_beijing"] = review_time
     event_path.parent.mkdir(parents=True, exist_ok=True)
     atomic_json_write(event_path, event)
@@ -2502,7 +2502,7 @@ def record_close_review_closure(account: dict, request: dict, review: dict, even
             "task_run_id": task_run_id,
             "generated_at": str(event.get("reviewed_at_beijing") or event.get("updated_at_beijing") or ""),
             "effective_market_date": market_date,
-            "source_actor": str(event.get("source") or "CHATGPT_SCHEDULED_REVIEW_ACTOR"),
+            "source_actor": str(event.get("source") or "CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR"),
             "source_reference": f"canonical-review-completion:events/reviews/{market_date}.json",
             "title": "【ETF交易复盘】",
             "summary": "Canonical review completion; deliver the frozen report unchanged.",
@@ -3198,7 +3198,7 @@ def canonical_ingress_contract_for_request(request: dict) -> dict:
     # must not be diverted into the review-ingress contract merely because the
     # user requested the decision after A-share close.
     is_review_fact = (
-        fact_type in {"FORMAL_POST_CLOSE_REVIEW", "POST_CLOSE_REVIEW"}
+        fact_type in {"FORMAL_POST_CLOSE_REVIEW", "FORMAL_SCHEDULED_TRADE_REVIEW", "POST_CLOSE_REVIEW"}
         or (scenario == "POST_CLOSE_REVIEW" and not is_decision_fact and not is_trade_fact)
     )
     is_report_delivery = channel in {"REPORT", "REPORT_DELIVERY"} or report_type in {"ETF_TRADE_REVIEW", "SCHEDULED_TRADE_REVIEW"}
@@ -3548,6 +3548,7 @@ def main() -> int:
     ):
         scenario_by_fact_type = {
             "FORMAL_POST_CLOSE_REVIEW": "POST_CLOSE_REVIEW",
+            "FORMAL_SCHEDULED_TRADE_REVIEW": "SCHEDULED_TRADE_REVIEW",
             "FORMAL_SCHEDULED_SYSTEM_REVIEW": "SCHEDULED_SYSTEM_REVIEW",
             "FORMAL_MIDDAY_REVIEW": "MIDDAY_REVIEW",
         }

@@ -355,11 +355,14 @@ def canonical_scheduled_report_events(event_path: str | None = None) -> list[dic
             continue
         event_type = str(event.get("event_type") or "")
         expected_event_type = {
-            "ETF_TRADE_REVIEW": "FORMAL_POST_CLOSE_REVIEW",
+            "ETF_TRADE_REVIEW": "FORMAL_SCHEDULED_TRADE_REVIEW",
             "ETF_SYSTEM_REVIEW": "FORMAL_SCHEDULED_SYSTEM_REVIEW",
             "ETF_FORMAL_DECISION": "FORMAL_DECISION_REPORT",
         }[report_type]
-        if event_type != expected_event_type:
+        allowed_event_types = {expected_event_type}
+        if report_type == "ETF_TRADE_REVIEW":
+            allowed_event_types.add("FORMAL_POST_CLOSE_REVIEW")
+        if event_type not in allowed_event_types:
             continue
         expected = hashlib.sha256(content.encode("utf-8")).hexdigest()
         # A supplied hash may be stale or absent; it is audit metadata only.

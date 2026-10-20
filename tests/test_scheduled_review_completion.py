@@ -55,9 +55,9 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
             "2026-09-23T20:30:00+08:00",
         )
         self.assertEqual(payload["request_type"], "SCHEDULED_REVIEW_COMPLETION")
-        self.assertEqual(payload["formal_fact_type"], "FORMAL_POST_CLOSE_REVIEW")
+        self.assertEqual(payload["formal_fact_type"], "FORMAL_SCHEDULED_TRADE_REVIEW")
         self.assertEqual(payload["interaction_scenario"], "SCHEDULED_TRADE_REVIEW")
-        self.assertEqual(payload["source"], "CHATGPT_SCHEDULED_REVIEW_ACTOR")
+        self.assertEqual(payload["source"], "CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR")
         self.assertEqual(payload["formal_review"], full_review())
 
     def test_20260918_style_abbreviated_review_fails_before_persistence(self):
