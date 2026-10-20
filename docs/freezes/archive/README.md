@@ -15,6 +15,11 @@
 - `docs/ETF三类任务当前版本冻结封存_2026-10-16.md` → `20261016/`
 - `docs/ETF三类任务统一快照封存_2026-10-17.md` → `20261017/`
 - `docs/formal-decision-scheduled-task-rebuild-v2.md` → `retired/`
-- `docs/automation_prompt_history/ETF三类任务冻结注册表.json` → `registries/`
+- `docs/freezes/archive/registries/ETF三类任务冻结注册表.json` → `registries/`
 
 正式协议、技术说明、测试和运行代码不属于本目录的历史冻结材料，不得因文件名含有“协议”“治理”或“说明”而迁入或删除。
+
+
+## Legacy Prompt history
+
+旧 `docs/automation_prompt_history/` 与 `docs/archive/automation_prompt_history/` 已统一迁入 `docs/freezes/archive/legacy/`。该目录只保存历史 Prompt、旧冻结和旧重建材料，不再作为现行读取入口。
