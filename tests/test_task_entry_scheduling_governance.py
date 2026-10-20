@@ -19,6 +19,8 @@ class TaskEntrySchedulingGovernanceTests(unittest.TestCase):
         self.assertEqual(trade["production_adapter"], "scripts/run_scheduled_trade_review_actor.py")
         self.assertEqual(trade["completion_builder"], "build_trade_review_completion_request")
         decision = data["tasks"][2]
+        self.assertEqual(decision["entry_adapter"], "scripts/create_scheduled_formal_request.py")
+        self.assertEqual(decision["entry_builder"], "build_scheduled_request")
         self.assertEqual(decision["production_adapter"], "scripts/manual_formal_decision_completion.py")
         self.assertEqual(decision["completion_builder"], "build_formal_decision_completion_request")
     def test_protocol_preserves_manual_and_automatic_boundaries(self):
