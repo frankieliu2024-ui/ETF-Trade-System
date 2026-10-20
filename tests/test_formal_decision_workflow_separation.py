@@ -16,6 +16,7 @@ class FormalDecisionWorkflowSeparationTests(unittest.TestCase):
         workflow = (self.root / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
         self.assertIn("FORMAL_SCHEDULED_REVIEW", workflow)
         self.assertIn("FORMAL_SCHEDULED_SYSTEM_REVIEW", workflow)
+        self.assertIn("FORMAL_SCHEDULED_TRADE_REVIEW", workflow)
         self.assertIn("STATE_SYNC_ONLY", workflow)
 
     def test_notification_workflow_has_no_bds_push_wake(self):
