@@ -429,6 +429,20 @@ def context_component(query: dict, decision: dict) -> dict:
         "blockers": gate_blockers,
         "source": "decision_fact_pack.formal_reply_freeze",
         "consumer_manifest": consumer_manifest,
+        # The gate is the existing small consumer surface.  Project the
+        # request-bound facts needed for the first business decision here so
+        # external consumers never need to transport the multi-megabyte
+        # query_context payload merely to validate identity and DWP shape.
+        "request_bound_fact_projection": {
+            "trigger": {
+                "request_id": request_id,
+                "requested_at_beijing": requested_at_beijing,
+            },
+            "formal_reply_freeze": reply_freeze,
+            "decision_work_package": decision_work_package,
+            "source_path": "data/state/query_context.json",
+            "source_is_canonical": True,
+        },
         "projection_scope": "FORMAL_DECISION_REQUEST",
         "parent_request_source": parent_request.get("source"),
         "parent_request_entry_mode": parent_request.get("entry_mode"),

@@ -182,6 +182,13 @@ class E2EDecisionReadinessTests(unittest.TestCase):
             "REVERIFY_SAME_GITHUB_SOURCE_BEFORE_MISSING",
         )
 
+    def test_compact_gate_projection_is_request_bound_and_canonical(self):
+        source = (Path(__file__).parents[1] / "scripts" / "build_e2e_status.py").read_text(encoding="utf-8")
+        self.assertIn('"request_bound_fact_projection"', source)
+        self.assertIn('"source_path": "data/state/query_context.json"', source)
+        self.assertIn('"source_is_canonical": True', source)
+        self.assertIn('"decision_work_package": decision_work_package', source)
+
     def test_request_bound_inflight_gate_remains_visible_when_context_degraded(self):
         result = context_component(
             {
