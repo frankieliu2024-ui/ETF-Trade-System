@@ -21,5 +21,16 @@ class TaskEntrySchedulingGovernanceTests(unittest.TestCase):
         self.assertIn("CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS", text)
         self.assertIn("CHATGPT_SCHEDULED_FORMAL_ANALYSIS", text)\n        self.assertIn("同任务同正文合同", text)\n        self.assertIn("MANUAL_SYSTEM_REVIEW_CHAIN_VALIDATION", text)\n        self.assertIn("不得使用", text)\n        self.assertIn("Scheduled Review后置交接合同", text)\n        self.assertIn("SCHEDULED_REVIEW_COMPLETION", text)\n
 
+    def test_trade_review_production_gate_and_canonical_scenario_are_explicit(self):
+        text = (ROOT / "docs/ETF任务入口与调度治理协议_V1.0.md").read_text(encoding="utf-8")
+        self.assertIn("Trade Review生产入口与用户显示硬门", text)
+        self.assertIn("CHATGPT_SCHEDULED_REVIEW_ACTOR", text)
+        self.assertIn("build_completion_request", text)
+        self.assertIn("request_type=SCHEDULED_REVIEW_COMPLETION", text)
+        self.assertIn("interaction_scenario=SCHEDULED_TRADE_REVIEW", text)
+        self.assertIn("POST_CLOSE_REVIEW", text)
+        self.assertIn("仅允许canonical owner历史兼容读取", text)
+
+
 if __name__ == "__main__":
     unittest.main()
