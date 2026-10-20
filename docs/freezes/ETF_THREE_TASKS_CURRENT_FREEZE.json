@@ -197,13 +197,14 @@
   ],
   "evidence_note": "本次文件冻结的是仓库合同和恢复路由；由于当前工具未取得平台live task完整Prompt/Schedule及可验证hash，未宣称最终live配置冻结。",
   "live_readback": {
-    "captured_at_beijing": "2026-10-20 17:22",
+    "captured_at_beijing": "2026-10-20 18:11",
     "source": "ChatGPT scheduled tasks cloud browser readback",
-    "result": "THREE_TASKS_ENABLED_PROMPT_VISIBLE_SCHEDULE_CUSTOM",
+    "result": "THREE_TASKS_ENABLED_PROMPT_FULL_READBACK_SCHEDULE_UI_READBACK",
     "platform_hash_status": "NOT_EXPOSED_BY_UI",
     "verification_limits": [
-      "UI exposes prompt text and task metadata but no stable prompt blob hash or schedule blob hash",
-      "exact hash must not be inferred from repository archive or prompt text displayed in UI"
+      "UI exposes current prompt text and task metadata but no stable prompt blob hash or schedule blob hash",
+      "exact platform hash must not be inferred from repository archive, prior freeze, or displayed task text",
+      "repository evidence records readback metadata and limits; it does not replace the platform live configuration"
     ],
     "tasks": [
       {
@@ -214,7 +215,8 @@
         "schedule_ui": "自定义重复频率；页面显示每天，下次运行约16小时后",
         "prompt_visible": true,
         "prompt_hash": "PLATFORM_HASH_NOT_EXPOSED",
-        "schedule_hash": "PLATFORM_HASH_NOT_EXPOSED"
+        "schedule_hash": "PLATFORM_HASH_NOT_EXPOSED",
+        "prompt_readback_status": "FULL_CURRENT_PROMPT_READ_BACK"
       },
       {
         "task_id": "ETF交易复盘",
@@ -224,7 +226,8 @@
         "schedule_ui": "自定义重复频率；页面显示每天，下次运行约3小时后",
         "prompt_visible": true,
         "prompt_hash": "PLATFORM_HASH_NOT_EXPOSED",
-        "schedule_hash": "PLATFORM_HASH_NOT_EXPOSED"
+        "schedule_hash": "PLATFORM_HASH_NOT_EXPOSED",
+        "prompt_readback_status": "FULL_CURRENT_PROMPT_READ_BACK"
       },
       {
         "task_id": "ETF系统复核",
@@ -234,9 +237,20 @@
         "schedule_ui": "自定义重复频率；页面显示每天，下次运行约2小时后",
         "prompt_visible": true,
         "prompt_hash": "PLATFORM_HASH_NOT_EXPOSED",
-        "schedule_hash": "PLATFORM_HASH_NOT_EXPOSED"
+        "schedule_hash": "PLATFORM_HASH_NOT_EXPOSED",
+        "prompt_readback_status": "FULL_CURRENT_PROMPT_READ_BACK"
       }
     ],
-    "next_gate": "只有平台提供可验证的完整Prompt/Schedule hash，或建立经用户确认的稳定内容指纹方案后，才可将freeze_status更新为SEALED。"
+    "next_gate": "只有平台提供可验证的完整Prompt/Schedule hash，或建立经用户确认的稳定内容指纹方案后，才可将freeze_status更新为SEALED。",
+    "evidence_scope": {
+      "readback_completed": [
+        "ETF正式决策",
+        "ETF交易复盘",
+        "ETF系统复核"
+      ],
+      "schedule_readback": "三条任务均显示启用、每日、自定义重复频率；具体平台内部时间配置未由当前界面提供稳定机器指纹",
+      "system_review_prompt_length_chars": 3852,
+      "preservation_rule": "不保存或推断平台不可验证的hash；不以历史Prompt替代当前Prompt"
+    }
   }
 }
