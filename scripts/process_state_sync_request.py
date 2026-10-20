@@ -2325,7 +2325,7 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
         _persist_existing_case_detail_projections(prior_review)
         return True, True
     review_time = (incoming_time or datetime.now(SHANGHAI)).isoformat(timespec="seconds")
-    event = {"event_type": "FORMAL_SCHEDULED_TRADE_REVIEW", "source": request.get("source"), "entry_mode": request.get("entry_mode"), "market_date": market_date, "account_updated_at": account.get("updated_at"), "fingerprint": fingerprint, "request_id": request.get("request_id"), "report_id": presentation_binding.get("report_id", ""), "content_hash": presentation_binding.get("content_hash", ""), "review": review, "presentation_binding": presentation_binding, "managed_position_sell_review": managed_projection, "updated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds")}
+    event = {"event_type": "FORMAL_SCHEDULED_TRADE_REVIEW" if is_trade_review_production else "FORMAL_POST_CLOSE_REVIEW", "source": request.get("source"), "entry_mode": request.get("entry_mode"), "market_date": market_date, "account_updated_at": account.get("updated_at"), "fingerprint": fingerprint, "request_id": request.get("request_id"), "report_id": presentation_binding.get("report_id", ""), "content_hash": presentation_binding.get("content_hash", ""), "review": review, "presentation_binding": presentation_binding, "managed_position_sell_review": managed_projection, "updated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds")}
     event["reviewed_at_beijing"] = review_time
     event_path.parent.mkdir(parents=True, exist_ok=True)
     atomic_json_write(event_path, event)
