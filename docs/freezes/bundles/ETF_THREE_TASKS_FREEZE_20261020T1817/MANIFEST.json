@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0",
+  "freeze_bundle_id": "ETF_THREE_TASKS_FREEZE_20261020T1817",
+  "status": "READBACK_RAW_SNAPSHOT_PENDING",
+  "authority": "current_main_only",
+  "source_main_commit": "dc91e166d4af796d2640e174962b4f55e750780a",
+  "purpose": "不可变封存证据包；不构成第二规则源，不修改任务、调度或生产链。",
+  "task_ids": [
+    "ETF正式决策",
+    "ETF交易复盘",
+    "ETF系统复核"
+  ],
+  "required_artifacts": {
+    "prompt_raw_snapshots": "每条任务当前live Prompt原文",
+    "schedule_snapshots": "每条任务当前live Schedule可见字段",
+    "repository_code_map": "协议、脚本、workflow、测试及main commit/blob映射",
+    "runtime_evidence": "最近成功/失败运行及逐层结果",
+    "recovery_runbook": "人工核对、差异检测和恢复边界"
+  },
+  "fingerprint_contract": {
+    "prompt_raw_sha256": "sha256(云浏览器实际回读的UTF-8原文)",
+    "prompt_normalized_sha256": "sha256(统一换行和不可见差异后的原文)",
+    "schedule_canonical_sha256": "sha256(规范化调度JSON)",
+    "platform_hash_status": "NOT_EXPOSED_BY_UI",
+    "limitation": "仓库指纹不是平台原生哈希；不得据此宣称平台不可漂移。"
+  },
+  "current_tasks": {
+    "ETF正式决策": {
+      "automation_id": "6ad1d7b4c05c819180eb6af2c8086cb8",
+      "conversation_id": "6ad0aef0-7718-83ee-b901-d24316ce92b6"
+    },
+    "ETF交易复盘": {
+      "automation_id": "6ab78aab49988191818abf8660c65362",
+      "conversation_id": "6ab89c94-e798-83e8-90e6-0b57c60905c5"
+    },
+    "ETF系统复核": {
+      "automation_id": "6accb02805ec8191aca29791a72636bd",
+      "conversation_id": "6accb04b-9d30-83ec-9e9f-f632d3815e92"
+    }
+  },
+  "freeze_gate": "只有原文快照、调度快照、指纹、代码映射和运行证据全部齐备并通过CI，才可评估SEALED_WITH_REPOSITORY_READBACK_FINGERPRINT。",
+  "non_goals": [
+    "不修改任务Prompt",
+    "不修改调度",
+    "不新增workflow/producer/checker/state/writer",
+    "不自动恢复或重跑历史运行"
+  ]
+}
