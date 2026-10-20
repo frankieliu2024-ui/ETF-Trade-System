@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0",
+  "evidence_type": "RUNTIME_GAP_AUDIT",
+  "task_id": "ETF系统复核",
+  "market_date": "2026-10-20",
+  "audited_at_beijing": "2026-10-20T20:13:00+08:00",
+  "trigger_context": "19:56手动系统复核对19:30定时运行的current main回读",
+  "observed_facts": {
+    "scheduled_occurrence": "2026-10-20T19:30:00+08:00",
+    "manual_follow_up_run": {
+      "task_run_id": "system-review-manual-20261020T1956-c41bd2",
+      "occurrence_id": "system-review-manual-20261020T1956-c41bd2",
+      "request_id": "scheduled-system-review-manual-20261020T1956-c41bd2",
+      "report_id": "etf_system_review:system-review-manual-20261020T1956-c41bd2",
+      "content_hash": "32db053b044e51301870b644f32a3c75e6b0ef60dd4cbd822e38153e1a7bf6a2",
+      "completion_path": "requests/live_snapshot/scheduled-system-review-manual-20261020T1956-c41bd2__scheduled_review_completion.json",
+      "event_path": "events/reviews/system_system-review-manual-20261020T1956-c41bd2.json"
+    },
+    "nineteen_thirty_readback": {
+      "completion": "NOT_FOUND_IN_CURRENT_MAIN_READBACK",
+      "canonical_event": "NOT_FOUND_IN_CURRENT_MAIN_READBACK",
+      "report": "NOT_VERIFIED",
+      "notification_center": "NOT_VERIFIED",
+      "provider_result": "NOT_VERIFIED",
+      "runtime_identity": "NOT_VERIFIED"
+    }
+  },
+  "conclusion": "当前证据只能确认19:30对应完成对象未在current main中回读；不能确定是未启动、入口失败、事实/门禁失败、completion未写入、后置投影失败或通知失败。",
+  "non_inferences": [
+    "不把19:56手动运行视为19:30运行的补偿或替代",
+    "不把用户收到19:56 PushPlus视为19:30通知成功",
+    "不创建或补造19:30运行身份、正文、completion、event、REPORT或notification",
+    "不重跑19:30历史运行"
+  ],
+  "freeze_effect": "AUDIT_ONLY",
+  "runtime_or_protocol_change": false,
+  "freeze_status_effect": "REMAINS_RUNTIME_EVIDENCE_PENDING",
+  "next_required_evidence": [
+    "平台运行历史中19:30 occurrence的启动/终止记录",
+    "若启动，按唯一运行身份回读completion、canonical event、REPORT、notification_center和provider result",
+    "若未启动，取得平台侧未启动或调度跳过证据"
+  ]
+}
