@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-10-20T03:43:09Z",
-  "generated_at_beijing": "2026-10-20T11:43:09+08:00",
+  "generated_at": "2026-10-20T03:44:28Z",
+  "generated_at_beijing": "2026-10-20T11:44:28+08:00",
   "market_date": "2026-10-20",
   "latest_valid_node": "1130",
   "rules_version": "V2.2.34",
@@ -666,7 +666,7 @@
     "last_trade_event_id": "broker-screenshot-20261015-141944-exits_5_5084098f663b90e4",
     "rules_version": "V2.2.34",
     "generated_at": "2026-10-20T03:33:14Z",
-    "account_fact_reference_synced_at": "2026-10-20T11:42:43+08:00",
+    "account_fact_reference_synced_at": "2026-10-20T11:44:13+08:00",
     "account_fact_path": "data/state/account_fact.json",
     "account_fact_updated_at": "2026-10-19T15:00:00+08:00",
     "account_fact_status": "VALID",
@@ -708,7 +708,7 @@
       "boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
       "timing": {}
     },
-    "generated_at": "2026-10-20T03:43:08Z",
+    "generated_at": "2026-10-20T03:44:27Z",
     "rules_version": "V2.2.34",
     "market_date": "2026-10-20",
     "latest_node": "1130",
@@ -1374,7 +1374,7 @@
       "last_trade_event_id": "broker-screenshot-20261015-141944-exits_5_5084098f663b90e4",
       "rules_version": "V2.2.34",
       "generated_at": "2026-10-20T03:33:14Z",
-      "account_fact_reference_synced_at": "2026-10-20T11:42:43+08:00",
+      "account_fact_reference_synced_at": "2026-10-20T11:44:13+08:00",
       "account_fact_path": "data/state/account_fact.json",
       "account_fact_updated_at": "2026-10-19T15:00:00+08:00",
       "account_fact_status": "VALID",
@@ -2190,7 +2190,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 7.872,
-      "age_seconds": 594
+      "age_seconds": 673
     },
     "freshness_at_context_build": {
       "status": "FRESH",
@@ -2206,7 +2206,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 7.872,
-      "age_seconds": 594
+      "age_seconds": 673
     },
     "data_quality_summary": {
       "pass_count": 17,
@@ -2292,7 +2292,7 @@
       "account_fact_time": "2026-10-19T15:00:00+08:00",
       "market_snapshot_time": "2026-10-20T11:33:14+08:00",
       "market_phase": "MIDDAY_BREAK",
-      "context_generated_time": "2026-10-20T03:43:08Z",
+      "context_generated_time": "2026-10-20T03:44:27Z",
       "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
       "read_only": true
     },
@@ -2332,12 +2332,16 @@
       "read_only": true
     },
     "market_quote_router": {
-      "generated_at_beijing": "2026-10-20T11:42:43+08:00",
+      "generated_at_beijing": "2026-10-20T11:44:20+08:00",
       "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
       "refresh_failures": [
         {
+          "symbol": "N225",
+          "error": "N225 query-time direct chain has no fresh usable quote; eastmoney_push2delay:100.N225: HTTP Error 502: Bad Gateway | eastmoney_push2:100.N225: HTTP Error 502: Bad Gateway | yahoo_chart_api: freshness=STALE quality=PASS"
+        },
+        {
           "symbol": "HSTECH",
-          "error": "HSTECH query-time direct chain has no fresh usable quote; eastmoney_push2:124.HSTECH: <urlopen error _ssl.c:999: The handshake operation timed out> | hithink-finance:HS2083: CLI unavailable: hithink-finance not installed"
+          "error": "HSTECH query-time direct chain has no fresh usable quote; eastmoney_push2:124.HSTECH: HTTP Error 502: Bad Gateway | hithink-finance:HS2083: CLI unavailable: hithink-finance not installed"
         }
       ],
       "decision_freshness": {
@@ -2347,7 +2351,7 @@
         "provider_as_of": "2026-10-20T03:33:08+00:00",
         "effective_as_of": "2026-10-20T03:33:08+00:00",
         "request_time": "2026-10-20T03:33:30+00:00",
-        "age_seconds": 575,
+        "age_seconds": 672,
         "post_request": false,
         "preferred_max_age_seconds": 300,
         "fallback_max_age_seconds": 900,
@@ -2355,55 +2359,28 @@
         "refresh_required": true,
         "fallback_allowed": false,
         "reason": "CURRENT quality PASS does not override decision freshness; query-time refresh required",
-        "resolved_as_of": "2026-10-20T03:42:45+00:00",
+        "resolved_as_of": "2026-10-20T03:44:23+00:00",
         "resolved_post_request": true
       },
       "route_version": "V1.1",
       "query_entry": "market_quote_router",
       "quotes": [
         {
-          "market": "JP",
-          "market_name": "日本",
-          "symbol": "N225",
-          "canonical_object": "N225",
-          "name": "日经225指数",
-          "latest_price": 64375.48,
-          "open": 64755.49,
-          "high": 64822.22,
-          "low": 63894.67,
-          "prev_close": 64916.7,
-          "volume": 0,
-          "amount": "-",
-          "turnover": "-",
-          "data_time_beijing": "2026-10-20T11:42:39+08:00",
-          "data_time_local": "2026-10-20T12:42:39+09:00",
-          "market_phase": "REGULAR",
-          "market_status_cn": "日股交易中",
-          "data_nature_cn": "实时交易行情",
-          "source": "eastmoney_push2delay:100.N225",
-          "freshness": "FRESH",
-          "quality_status": "PASS",
-          "direct_quote": true,
-          "refresh_source": "QUERY_TIME_FORMAL_PROVIDER_CHAIN",
-          "provider_timestamp_field": "f86",
-          "refresh_contract": "ACTIVE_MARKET_REQUIRES_FRESH_PROVIDER_TIMESTAMP"
-        },
-        {
           "market": "KR",
           "market_name": "韩国",
           "symbol": "KOSPI",
           "canonical_object": "KOSPI",
           "name": "韩国综合指数",
-          "latest_price": 5565.4,
+          "latest_price": 5568.78,
           "open": 5733.57,
           "high": 5733.57,
           "low": 5493.24,
           "prev_close": 5768.01,
-          "volume": 186028000.0,
-          "amount": 9746156000000.0,
-          "turnover": 9746156000000.0,
-          "data_time_beijing": "2026-10-20T11:42:45+08:00",
-          "data_time_local": "2026-10-20T12:42:45+09:00",
+          "volume": 186485000.0,
+          "amount": 9777005000000.0,
+          "turnover": 9777005000000.0,
+          "data_time_beijing": "2026-10-20T11:44:23+08:00",
+          "data_time_local": "2026-10-20T12:44:23+09:00",
           "market_phase": "REGULAR",
           "market_status_cn": "韩股交易中",
           "data_nature_cn": "实时交易行情",
@@ -2421,7 +2398,7 @@
           "symbol": "TWII",
           "canonical_object": "TWII",
           "name": "台湾加权指数",
-          "latest_price": 46684.1,
+          "latest_price": 46683.04,
           "open": 46712.57,
           "high": 46967.91,
           "low": 46397.12,
@@ -2429,8 +2406,8 @@
           "volume": null,
           "amount": null,
           "turnover": null,
-          "data_time_beijing": "2026-10-20T11:42:00+08:00",
-          "data_time_local": "2026-10-20T11:42:00+08:00",
+          "data_time_beijing": "2026-10-20T11:44:00+08:00",
+          "data_time_local": "2026-10-20T11:44:00+08:00",
           "market_phase": "REGULAR",
           "market_status_cn": "台股交易中",
           "data_nature_cn": "实时交易行情",
@@ -2935,6 +2912,32 @@
           "quality_status_cn": "数据可用",
           "direct_quote": true,
           "route_rule": "返回最近正式收盘行情"
+        },
+        {
+          "market": "JP",
+          "market_name": "日本",
+          "symbol": "100.N225",
+          "name": "日经225指数",
+          "latest_price": 64443.85,
+          "open": null,
+          "high": null,
+          "low": null,
+          "prev_close": null,
+          "volume": null,
+          "amount": null,
+          "turnover": null,
+          "data_time_beijing": "2026-10-20T11:31:19+08:00",
+          "data_time_local": "",
+          "market_phase": "REGULAR",
+          "market_status_cn": "日股交易中",
+          "data_nature_cn": "实时交易行情",
+          "source": "eastmoney_push2",
+          "freshness": "FRESH",
+          "freshness_cn": "时点正常",
+          "quality_status": "PASS",
+          "quality_status_cn": "数据可用",
+          "direct_quote": true,
+          "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
         },
         {
           "market": "HK",
@@ -5497,7 +5500,7 @@
     "account_fact_time": "2026-10-19T15:00:00+08:00",
     "market_snapshot_time": "2026-10-20T11:33:14+08:00",
     "market_phase": "MIDDAY_BREAK",
-    "context_generated_time": "2026-10-20T03:43:08Z",
+    "context_generated_time": "2026-10-20T03:44:27Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
@@ -5600,7 +5603,7 @@
       "runtime_policy": "config/runtime_policy.json",
       "freshness_at_context_build": {
         "status": "FRESH",
-        "age_seconds": 594,
+        "age_seconds": 673,
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500
       },
@@ -5618,7 +5621,7 @@
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500,
         "acquisition_seconds": 7.872,
-        "age_seconds": 594
+        "age_seconds": 673
       },
       "query_time_rule": "行情获取固定顺序为：查询时立即补采 → 最近一次有效快照 → 明确降级/缺失。最近快照只有在即时补采失败或不可执行时才作为第二顺位；使用前必须按查询时刻重新判断为“时点正常／存在延迟／时点过旧”。",
       "partial_refresh_rule": "逐对象采用最新有效证据：补采成功对象使用新数据，失败对象才回退最近有效快照；不得为了统一时点把成功补采对象整体退回旧快照。",
@@ -5669,12 +5672,16 @@
     }
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-10-20T11:42:43+08:00",
+    "generated_at_beijing": "2026-10-20T11:44:20+08:00",
     "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
     "refresh_failures": [
       {
+        "symbol": "N225",
+        "error": "N225 query-time direct chain has no fresh usable quote; eastmoney_push2delay:100.N225: HTTP Error 502: Bad Gateway | eastmoney_push2:100.N225: HTTP Error 502: Bad Gateway | yahoo_chart_api: freshness=STALE quality=PASS"
+      },
+      {
         "symbol": "HSTECH",
-        "error": "HSTECH query-time direct chain has no fresh usable quote; eastmoney_push2:124.HSTECH: <urlopen error _ssl.c:999: The handshake operation timed out> | hithink-finance:HS2083: CLI unavailable: hithink-finance not installed"
+        "error": "HSTECH query-time direct chain has no fresh usable quote; eastmoney_push2:124.HSTECH: HTTP Error 502: Bad Gateway | hithink-finance:HS2083: CLI unavailable: hithink-finance not installed"
       }
     ],
     "decision_freshness": {
@@ -5684,7 +5691,7 @@
       "provider_as_of": "2026-10-20T03:33:08+00:00",
       "effective_as_of": "2026-10-20T03:33:08+00:00",
       "request_time": "2026-10-20T03:33:30+00:00",
-      "age_seconds": 575,
+      "age_seconds": 672,
       "post_request": false,
       "preferred_max_age_seconds": 300,
       "fallback_max_age_seconds": 900,
@@ -5692,55 +5699,28 @@
       "refresh_required": true,
       "fallback_allowed": false,
       "reason": "CURRENT quality PASS does not override decision freshness; query-time refresh required",
-      "resolved_as_of": "2026-10-20T03:42:45+00:00",
+      "resolved_as_of": "2026-10-20T03:44:23+00:00",
       "resolved_post_request": true
     },
     "route_version": "V1.1",
     "query_entry": "market_quote_router",
     "quotes": [
       {
-        "market": "JP",
-        "market_name": "日本",
-        "symbol": "N225",
-        "canonical_object": "N225",
-        "name": "日经225指数",
-        "latest_price": 64375.48,
-        "open": 64755.49,
-        "high": 64822.22,
-        "low": 63894.67,
-        "prev_close": 64916.7,
-        "volume": 0,
-        "amount": "-",
-        "turnover": "-",
-        "data_time_beijing": "2026-10-20T11:42:39+08:00",
-        "data_time_local": "2026-10-20T12:42:39+09:00",
-        "market_phase": "REGULAR",
-        "market_status_cn": "日股交易中",
-        "data_nature_cn": "实时交易行情",
-        "source": "eastmoney_push2delay:100.N225",
-        "freshness": "FRESH",
-        "quality_status": "PASS",
-        "direct_quote": true,
-        "refresh_source": "QUERY_TIME_FORMAL_PROVIDER_CHAIN",
-        "provider_timestamp_field": "f86",
-        "refresh_contract": "ACTIVE_MARKET_REQUIRES_FRESH_PROVIDER_TIMESTAMP"
-      },
-      {
         "market": "KR",
         "market_name": "韩国",
         "symbol": "KOSPI",
         "canonical_object": "KOSPI",
         "name": "韩国综合指数",
-        "latest_price": 5565.4,
+        "latest_price": 5568.78,
         "open": 5733.57,
         "high": 5733.57,
         "low": 5493.24,
         "prev_close": 5768.01,
-        "volume": 186028000.0,
-        "amount": 9746156000000.0,
-        "turnover": 9746156000000.0,
-        "data_time_beijing": "2026-10-20T11:42:45+08:00",
-        "data_time_local": "2026-10-20T12:42:45+09:00",
+        "volume": 186485000.0,
+        "amount": 9777005000000.0,
+        "turnover": 9777005000000.0,
+        "data_time_beijing": "2026-10-20T11:44:23+08:00",
+        "data_time_local": "2026-10-20T12:44:23+09:00",
         "market_phase": "REGULAR",
         "market_status_cn": "韩股交易中",
         "data_nature_cn": "实时交易行情",
@@ -5758,7 +5738,7 @@
         "symbol": "TWII",
         "canonical_object": "TWII",
         "name": "台湾加权指数",
-        "latest_price": 46684.1,
+        "latest_price": 46683.04,
         "open": 46712.57,
         "high": 46967.91,
         "low": 46397.12,
@@ -5766,8 +5746,8 @@
         "volume": null,
         "amount": null,
         "turnover": null,
-        "data_time_beijing": "2026-10-20T11:42:00+08:00",
-        "data_time_local": "2026-10-20T11:42:00+08:00",
+        "data_time_beijing": "2026-10-20T11:44:00+08:00",
+        "data_time_local": "2026-10-20T11:44:00+08:00",
         "market_phase": "REGULAR",
         "market_status_cn": "台股交易中",
         "data_nature_cn": "实时交易行情",
@@ -6274,6 +6254,32 @@
         "route_rule": "返回最近正式收盘行情"
       },
       {
+        "market": "JP",
+        "market_name": "日本",
+        "symbol": "100.N225",
+        "name": "日经225指数",
+        "latest_price": 64443.85,
+        "open": null,
+        "high": null,
+        "low": null,
+        "prev_close": null,
+        "volume": null,
+        "amount": null,
+        "turnover": null,
+        "data_time_beijing": "2026-10-20T11:31:19+08:00",
+        "data_time_local": "",
+        "market_phase": "REGULAR",
+        "market_status_cn": "日股交易中",
+        "data_nature_cn": "实时交易行情",
+        "source": "eastmoney_push2",
+        "freshness": "FRESH",
+        "freshness_cn": "时点正常",
+        "quality_status": "PASS",
+        "quality_status_cn": "数据可用",
+        "direct_quote": true,
+        "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
+      },
+      {
         "market": "HK",
         "market_name": "中国香港",
         "symbol": "124.HSTECH",
@@ -6634,11 +6640,11 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 7.872,
-    "age_seconds": 594
+    "age_seconds": 673
   },
   "freshness_at_context_build": {
     "status": "FRESH",
-    "age_seconds": 594,
+    "age_seconds": 673,
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500
   },
@@ -6649,7 +6655,7 @@
     "provider_as_of": "2026-10-20T03:33:08+00:00",
     "effective_as_of": "2026-10-20T03:33:08+00:00",
     "request_time": "2026-10-20T03:33:30+00:00",
-    "age_seconds": 575,
+    "age_seconds": 672,
     "post_request": false,
     "preferred_max_age_seconds": 300,
     "fallback_max_age_seconds": 900,
@@ -6657,7 +6663,7 @@
     "refresh_required": true,
     "fallback_allowed": false,
     "reason": "CURRENT quality PASS does not override decision freshness; query-time refresh required",
-    "resolved_as_of": "2026-10-20T03:42:45+00:00",
+    "resolved_as_of": "2026-10-20T03:44:23+00:00",
     "resolved_post_request": true
   },
   "trading_day_status": {
@@ -6820,22 +6826,12 @@
     },
     "qualified_market_facts": [
       {
-        "code": "N225",
-        "name": "日经225指数",
-        "price": null,
-        "change_pct": null,
-        "market_phase": "REGULAR",
-        "as_of_beijing": "2026-10-20T11:42:39+08:00",
-        "quality_status": "PASS",
-        "provider": ""
-      },
-      {
         "code": "KOSPI",
         "name": "韩国综合指数",
         "price": null,
         "change_pct": null,
         "market_phase": "REGULAR",
-        "as_of_beijing": "2026-10-20T11:42:45+08:00",
+        "as_of_beijing": "2026-10-20T11:44:23+08:00",
         "quality_status": "PASS",
         "provider": ""
       },
@@ -6845,7 +6841,7 @@
         "price": null,
         "change_pct": null,
         "market_phase": "REGULAR",
-        "as_of_beijing": "2026-10-20T11:42:00+08:00",
+        "as_of_beijing": "2026-10-20T11:44:00+08:00",
         "quality_status": "PASS",
         "provider": ""
       },
@@ -7040,6 +7036,16 @@
         "provider": ""
       },
       {
+        "code": "100.N225",
+        "name": "日经225指数",
+        "price": null,
+        "change_pct": null,
+        "market_phase": "REGULAR",
+        "as_of_beijing": "2026-10-20T11:31:19+08:00",
+        "quality_status": "PASS",
+        "provider": ""
+      },
+      {
         "code": "124.HSTECH",
         "name": "恒生科技指数",
         "price": null,
@@ -7051,7 +7057,7 @@
       }
     ],
     "decision_context": {
-      "generated_at_beijing": "2026-10-20T03:43:08Z",
+      "generated_at_beijing": "2026-10-20T03:44:27Z",
       "source": "scripts/state_manager.py::build_decision_context",
       "analysis_coverage": {
         "indices_total": 3,
@@ -7242,7 +7248,7 @@
         "provider_as_of": "2026-10-20T03:33:08+00:00",
         "effective_as_of": "2026-10-20T03:33:08+00:00",
         "request_time": "2026-10-20T03:33:30+00:00",
-        "age_seconds": 575,
+        "age_seconds": 672,
         "post_request": false,
         "preferred_max_age_seconds": 300,
         "fallback_max_age_seconds": 900,
@@ -7250,11 +7256,12 @@
         "refresh_required": true,
         "fallback_allowed": false,
         "reason": "CURRENT quality PASS does not override decision freshness; query-time refresh required",
-        "resolved_as_of": "2026-10-20T03:42:45+00:00",
+        "resolved_as_of": "2026-10-20T03:44:23+00:00",
         "resolved_post_request": true
       },
       "quotes_as_of_beijing": [
         "2026-10-20T04:00:00+08:00",
+        "2026-10-20T11:31:19+08:00",
         "2026-10-20T11:31:44+08:00",
         "2026-10-20T11:32:24+08:00",
         "2026-10-20T11:32:27+08:00",
@@ -7269,9 +7276,8 @@
         "2026-10-20T11:33:01+08:00",
         "2026-10-20T11:33:04+08:00",
         "2026-10-20T11:33:08+08:00",
-        "2026-10-20T11:42:00+08:00",
-        "2026-10-20T11:42:39+08:00",
-        "2026-10-20T11:42:45+08:00"
+        "2026-10-20T11:44:00+08:00",
+        "2026-10-20T11:44:23+08:00"
       ],
       "source": "scripts/market_quote_router.py"
     },
@@ -12190,22 +12196,12 @@
       ],
       "current_evidence": [
         {
-          "code": "N225",
-          "name": "日经225指数",
-          "price": null,
-          "change_pct": null,
-          "market_phase": "REGULAR",
-          "as_of_beijing": "2026-10-20T11:42:39+08:00",
-          "quality_status": "PASS",
-          "provider": ""
-        },
-        {
           "code": "KOSPI",
           "name": "韩国综合指数",
           "price": null,
           "change_pct": null,
           "market_phase": "REGULAR",
-          "as_of_beijing": "2026-10-20T11:42:45+08:00",
+          "as_of_beijing": "2026-10-20T11:44:23+08:00",
           "quality_status": "PASS",
           "provider": ""
         },
@@ -12215,7 +12211,7 @@
           "price": null,
           "change_pct": null,
           "market_phase": "REGULAR",
-          "as_of_beijing": "2026-10-20T11:42:00+08:00",
+          "as_of_beijing": "2026-10-20T11:44:00+08:00",
           "quality_status": "PASS",
           "provider": ""
         },
@@ -12406,6 +12402,16 @@
           "change_pct": null,
           "market_phase": "OFF_SESSION",
           "as_of_beijing": "2026-10-20T04:00:00+08:00",
+          "quality_status": "PASS",
+          "provider": ""
+        },
+        {
+          "code": "100.N225",
+          "name": "日经225指数",
+          "price": null,
+          "change_pct": null,
+          "market_phase": "REGULAR",
+          "as_of_beijing": "2026-10-20T11:31:19+08:00",
           "quality_status": "PASS",
           "provider": ""
         },
@@ -24250,16 +24256,16 @@
     "screenshot_account_fact_available_at": "UNKNOWN",
     "t_refresh_start_or_reuse": "",
     "market_refresh_identity": "UNKNOWN",
-    "first_qualified_market_fact_identity": "N225",
-    "first_qualified_market_fact_as_of": "2026-10-20T11:42:39+08:00",
+    "first_qualified_market_fact_identity": "KOSPI",
+    "first_qualified_market_fact_as_of": "2026-10-20T11:44:23+08:00",
     "first_qualified_market_fact_quality": "PASS",
     "t_new_current": "2026-10-20T11:33:14+08:00",
-    "t_minimum_legal_inputs_ready": "2026-10-20T11:43:08+08:00",
-    "minimum_legal_inputs_ready_at": "2026-10-20T11:43:08+08:00",
-    "t_decision_ready": "2026-10-20T03:43:08Z",
-    "final_answer_identity": "2026-10-20T11:43:08+08:00",
-    "final_analysis_identity": "2026-10-20T11:43:08+08:00",
-    "t_reply_or_output_ready": "2026-10-20T11:43:08+08:00",
+    "t_minimum_legal_inputs_ready": "2026-10-20T11:44:28+08:00",
+    "minimum_legal_inputs_ready_at": "2026-10-20T11:44:28+08:00",
+    "t_decision_ready": "2026-10-20T03:44:27Z",
+    "final_answer_identity": "2026-10-20T11:44:28+08:00",
+    "final_analysis_identity": "2026-10-20T11:44:28+08:00",
+    "t_reply_or_output_ready": "2026-10-20T11:44:28+08:00",
     "minimum_legal_inputs_ready_role": "NON_TERMINAL_READINESS_MARKER",
     "minimum_legal_inputs_ready_is_stop_boundary": false,
     "canonical_chain_status": "FORMAL_COMPLETION_PENDING",
@@ -24267,8 +24273,8 @@
     "required_account_persistence_identity": "UNKNOWN",
     "refresh_start_latency": null,
     "refresh_duration": null,
-    "post_current_decision_latency": 594.0,
-    "total_fast_path_latency": 578.0,
+    "post_current_decision_latency": 673.0,
+    "total_fast_path_latency": 658.0,
     "measurement_status": "OBSERVED_FIELDS_ONLY; MISSING_TIMESTAMPS_REMAIN_EXPLICIT",
     "trace_metadata_is_non_authoritative": true,
     "trace_metadata_is_decision_gate": false,
@@ -24281,8 +24287,8 @@
     "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
     "request_bound_at": "2026-10-20T11:33:30+08:00",
     "pit_ready_at": "2026-10-20T11:33:14+08:00",
-    "core_result_at": "2026-10-20T03:43:08Z",
-    "request_to_core_result_latency": 578.0,
+    "core_result_at": "2026-10-20T03:44:27Z",
+    "request_to_core_result_latency": 657.0,
     "request_to_canonical_ingress_latency": null,
     "canonical_ingress_to_decision_latency": null,
     "decision_latency_excludes_completion": true,
@@ -24291,16 +24297,16 @@
     "user_visible_decision_waterfall": {
       "request_received_at_beijing": "2026-10-20T11:33:30+08:00",
       "canonical_ingress_at_beijing": "UNKNOWN",
-      "first_qualified_market_fact_as_of_beijing": "2026-10-20T11:42:39+08:00",
-      "minimum_legal_inputs_ready_at_beijing": "2026-10-20T11:43:08+08:00",
-      "business_decision_ready_at_beijing": "2026-10-20T03:43:08Z",
+      "first_qualified_market_fact_as_of_beijing": "2026-10-20T11:44:23+08:00",
+      "minimum_legal_inputs_ready_at_beijing": "2026-10-20T11:44:28+08:00",
+      "business_decision_ready_at_beijing": "2026-10-20T03:44:27Z",
       "business_decision_source": {
         "status": "UNKNOWN",
         "requested_at_beijing": "UNKNOWN",
         "request_id": "UNKNOWN",
         "role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE"
       },
-      "request_to_business_decision_ready_seconds": 578.0,
+      "request_to_business_decision_ready_seconds": 657.0,
       "business_decision_ready_to_bds_seconds": null,
       "business_decision_source_to_user_visible_delivery_seconds": null,
       "user_visible_delivery_at_beijing": "UNKNOWN",
@@ -24312,16 +24318,16 @@
       "role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE"
     },
     "in_process_stage_durations_seconds": {
-      "freshness_assurance_and_quote_context": 24.585,
+      "freshness_assurance_and_quote_context": 6.641,
       "discovery_pipeline": null,
-      "decision_context_build": 0.568,
-      "decision_fact_pack_build": 0.204,
-      "query_context_build_total": 25.494
+      "decision_context_build": 0.895,
+      "decision_fact_pack_build": 0.317,
+      "query_context_build_total": 8.083
     },
     "workflow_runtime_observation": {
       "run_started_at_beijing": "UNKNOWN",
       "core_snapshot_finished_at_beijing": "UNKNOWN",
-      "workflow_run_id": "39365697999",
+      "workflow_run_id": "39365821201",
       "runtime_health_workflow_run_id": "39364859829",
       "correlation_status": "RUNTIME_HEALTH_NOT_CURRENT_RUN",
       "role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE"
