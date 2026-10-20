@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-10-20T13:44:49+08:00",
+  "generated_at": "2026-10-20T14:01:10+08:00",
   "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -8,8 +8,8 @@
     "market": {
       "status": "READY",
       "reason": "latest market snapshot is valid",
-      "snapshot": "data/market/snapshots/2026-10-20_134339.json",
-      "captured_at": "2026-10-20T13:43:39+08:00",
+      "snapshot": "data/market/snapshots/2026-10-20_140000.json",
+      "captured_at": "2026-10-20T14:00:00+08:00",
       "market_phase": "CONTINUOUS_AFTERNOON"
     },
     "account": {
@@ -54,15 +54,15 @@
       "observability_boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
       "request_bound": true,
       "formal_reply_gate": {
-        "request_id": "20261020T134243+0800_formal_manual_f8m3q1",
-        "requested_at_beijing": "2026-10-20T13:42:43+08:00",
+        "request_id": "20261020T135918+0800_formal_manual_q7m4vx",
+        "requested_at_beijing": "2026-10-20T13:59:18+08:00",
         "status": "READY",
         "reply_freezable": true,
         "blockers": [],
         "source": "decision_fact_pack.formal_reply_freeze",
         "consumer_manifest": {
-          "request_id": "20261020T134243+0800_formal_manual_f8m3q1",
-          "requested_at_beijing": "2026-10-20T13:42:43+08:00",
+          "request_id": "20261020T135918+0800_formal_manual_q7m4vx",
+          "requested_at_beijing": "2026-10-20T13:59:18+08:00",
           "query_context_path": "data/state/query_context.json",
           "decision_context_path": "data/state/decision_context.json",
           "decision_work_package_present": true,
@@ -71,10 +71,17 @@
             "decision_fact_pack.formal_reply_freeze",
             "decision_fact_pack.decision_work_package.problem_graph"
           ],
-          "read_strategy": "GATE_FIRST_TARGETED_PAYLOAD_VIA_GITHUB_API_CONTENTS",
+          "read_strategy": "GATE_FIRST_CONTENTS_METADATA_THEN_GIT_BLOBS_BASE64",
           "large_payload_empty_read": "REVERIFY_SAME_GITHUB_SOURCE_BEFORE_MISSING",
           "large_payload_read_contract": "USE_GITHUB_API_CONTENTS_OR_BLOB_FOR_FILES_OVER_1MB",
-          "large_payload_source_url": "https://api.github.com/repos/{owner}/{repo}/contents/data/state/query_context.json?ref=main"
+          "large_payload_source_url": "https://api.github.com/repos/{owner}/{repo}/contents/data/state/query_context.json?ref=main",
+          "large_payload_blob_source_url": "https://api.github.com/repos/{owner}/{repo}/git/blobs/{blob_sha}",
+          "large_payload_read_order": [
+            "contents_metadata_only",
+            "resolve_blob_sha_from_contents_metadata",
+            "git_blobs_get_base64_content",
+            "decode_and_validate_same_blob_sha256"
+          ]
         },
         "projection_scope": "FORMAL_DECISION_REQUEST",
         "parent_request_source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
@@ -109,14 +116,14 @@
           "OBSERVATION:515220",
           "OBSERVATION:513350",
           "OBSERVATION:515080",
-          "DISCOVERY:159355",
-          "DISCOVERY:159509",
+          "DISCOVERY:159217",
+          "DISCOVERY:159303",
+          "DISCOVERY:159518",
           "DISCOVERY:159565",
-          "DISCOVERY:159828",
           "DISCOVERY:159837",
           "DISCOVERY:159892",
-          "DISCOVERY:159930",
           "DISCOVERY:513200",
+          "DISCOVERY:588230",
           "DISCOVERY:588790"
         ],
         "required_problem_count": 33,
@@ -125,7 +132,7 @@
           "required": true,
           "submission_type": "BUSINESS_DECISION_SOURCE",
           "source": "CHATGPT_BUSINESS_DECISION_RESPONSE",
-          "parent_request_id": "20261020T134243+0800_formal_manual_f8m3q1",
+          "parent_request_id": "20261020T135918+0800_formal_manual_q7m4vx",
           "required_payload_fields": [
             "request_id",
             "parent_request_id",
@@ -142,9 +149,9 @@
             "content_hash",
             "target_path"
           ],
-          "target_path": "requests/live_snapshot/20261020T134243+0800_formal_manual_f8m3q1__business_decision_source.json",
+          "target_path": "requests/live_snapshot/20261020T135918+0800_formal_manual_q7m4vx__business_decision_source.json",
           "binding_rules": {
-            "parent_request_id": "20261020T134243+0800_formal_manual_f8m3q1",
+            "parent_request_id": "20261020T135918+0800_formal_manual_q7m4vx",
             "allowed_sources": [
               "CHATGPT_BUSINESS_DECISION_RESPONSE"
             ],
@@ -176,15 +183,15 @@
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 1729082,
-          "sha256": "e5e7b0f5e58607bd37addd6d25b97eea1b31596be8bc995a7d5208d6c535e719",
+          "byte_count": 1729515,
+          "sha256": "bec42893ee618850b1106a6c4088698e72f8273d0e7481374d9e597704530bed",
           "parsed_object": true
         },
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 570218,
-          "sha256": "baff5a47b3dca9c1391b9730ee93a37e2cb1032f8c3e079f3dc3777239192f53",
+          "byte_count": 569777,
+          "sha256": "360a56cc1d1eb03ffb6619b52d5ce2964998d686b0e72031a8e8b200be8f3da9",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -214,15 +221,15 @@
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 1729082,
-      "sha256": "e5e7b0f5e58607bd37addd6d25b97eea1b31596be8bc995a7d5208d6c535e719",
+      "byte_count": 1729515,
+      "sha256": "bec42893ee618850b1106a6c4088698e72f8273d0e7481374d9e597704530bed",
       "parsed_object": true
     },
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 570218,
-      "sha256": "baff5a47b3dca9c1391b9730ee93a37e2cb1032f8c3e079f3dc3777239192f53",
+      "byte_count": 569777,
+      "sha256": "360a56cc1d1eb03ffb6619b52d5ce2964998d686b0e72031a8e8b200be8f3da9",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"
