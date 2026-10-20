@@ -96,6 +96,7 @@ def build_scheduled_request(
             "query_intent": "FORMAL_INTRADAY_ANALYSIS",
             "interaction_scenario": "FORMAL_DECISION",
         },
+        "interaction_scenario": "FORMAL_DECISION",
         "force_refresh": True,
         "require_post_request_snapshot": True,
         "reuse_inflight_refresh": True,
