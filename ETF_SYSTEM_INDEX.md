@@ -146,9 +146,9 @@ Formal Decision completion必须使用current main的统一 Scheduled Review com
 
 历史冻结全文仅用于审计和回退：
 
-- `docs/archive/automation_prompt_history/ETF三个定时任务冻结封存_2026-10-16.md`
-- `docs/archive/automation_prompt_history/ETF三个定时任务冻结封存_2026-10-16-v2.md`
-- `docs/archive/formal-decision-scheduled-task-rebuild-v2.md`
+- `docs/freezes/archive/legacy/ETF三个定时任务冻结封存_2026-10-16.md`
+- `docs/freezes/archive/legacy/ETF三个定时任务冻结封存_2026-10-16-v2.md`
+- `docs/freezes/archive/legacy/formal-decision-scheduled-task-rebuild-v2.md`
 
 不得从历史归档、分支临时清单或聊天记录读取当前运行规则；当前规则仍按本索引路由至正式协议、机器事实和live任务配置。
 
