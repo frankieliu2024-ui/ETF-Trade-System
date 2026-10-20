@@ -24,8 +24,8 @@ class TaskEntrySchedulingGovernanceTests(unittest.TestCase):
     def test_trade_review_production_gate_and_canonical_scenario_are_explicit(self):
         text = (ROOT / "docs/ETF任务入口与调度治理协议_V1.0.md").read_text(encoding="utf-8")
         self.assertIn("Trade Review生产入口与用户显示硬门", text)
-        self.assertIn("CHATGPT_SCHEDULED_REVIEW_ACTOR", text)
-        self.assertIn("build_completion_request", text)
+        self.assertIn("CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR", text)
+        self.assertIn("build_trade_review_completion_request", text)
         self.assertIn("request_type=SCHEDULED_REVIEW_COMPLETION", text)
         self.assertIn("interaction_scenario=SCHEDULED_TRADE_REVIEW", text)
         self.assertIn("POST_CLOSE_REVIEW", text)
