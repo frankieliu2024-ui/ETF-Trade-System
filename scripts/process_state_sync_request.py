@@ -3787,6 +3787,28 @@ def main() -> int:
             if not isinstance(decision_response, dict):
                 raise ValueError("business decision source requires actor-only structured decision_response")
             source_payload = project_decision_response(source_payload, decision_response, decision_work_package, forensic_historical_replay=forensic_historical_replay)
+            # The projection builder returns a canonical source object, but
+            # ingress identity belongs to the immutable request envelope. Keep
+            # that identity bound across the same-run projection boundary;
+            # otherwise the downstream source validator sees an anonymous
+            # source even though the parent request carried a valid Formal
+            # entry/source mapping.
+            for identity_field in (
+                "formal_entry_source",
+                "entry_mode",
+                "task_id",
+                "task_run_id",
+                "occurrence_id",
+            ):
+                if identity_field in request:
+                    source_payload[identity_field] = request.get(identity_field)
+            for canonical_field in (
+                "opportunity_status",
+                "continued_holding_opportunity_cost",
+                "decision_evidence_consumption",
+            ):
+                if request.get(canonical_field) not in (None, "", [], {}):
+                    source_payload[canonical_field] = request.get(canonical_field)
         # Resolve and validate the exact request-bound PIT snapshot before
         # projecting the Business Decision Source. This path previously used
         # snapshot_rel/snapshot without selecting them, so a valid manual
