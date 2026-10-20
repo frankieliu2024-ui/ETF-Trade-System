@@ -159,10 +159,7 @@ def build_completion_request(
     effective_occurrence_id = _safe_id(occurrence_id or effective_task_run_id)
     effective_entry_mode = str(entry_mode or "").strip().upper()
     if effective_entry_mode not in TRADE_REVIEW_ENTRY_MODES:
-        raise ValueError(
-            "scheduled trade review completion requires entry_mode="
-            "MANUAL_SCHEDULED_TASK or AUTOMATIC_SCHEDULED_TASK"
-        )
+        raise ValueError("scheduled trade review completion requires entry_mode=MANUAL_SCHEDULED_TASK or AUTOMATIC_SCHEDULED_TASK")
     frozen_content = str(final_content or "")
     frozen_content_hash = hashlib.sha256(frozen_content.encode("utf-8")).hexdigest()
     review_market_date = str(formal_review.get("market_date") or "").strip()
@@ -187,6 +184,7 @@ def build_completion_request(
             "task_id": str(task_id or "ETF交易复盘"),
             "task_run_id": effective_task_run_id,
             "occurrence_id": effective_occurrence_id,
+            "entry_mode": effective_entry_mode,
             "request_id": str(request_id),
             "report_id": f"etf_trade_review:{effective_task_run_id}",
             "full_content": frozen_content,
@@ -353,12 +351,11 @@ def build_system_review_completion_request(
     }
 
 
-
 def build_report_delivery_from_completion(completion: dict) -> dict:
     """Project the frozen Scheduled Review presentation into the existing REPORT contract."""
     binding = completion.get("presentation_binding") or {}
     report_type = str(binding.get("report_type") or "")
-    if report_type not in {"ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW", "ETF_FORMAL_DECISION"}:
+    if report_type not in {"ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW"}:
         raise ValueError("unsupported Scheduled Review report_type")
     full_content = str(binding.get("full_content") or "")
     task_id = str(binding.get("task_id") or "")
@@ -445,6 +442,7 @@ def main() -> int:
     parser.add_argument("--final-content", default="")
     parser.add_argument("--task-id", default="")
     parser.add_argument("--task-run-id", default="")
+    parser.add_argument("--occurrence-id", default="")
     parser.add_argument("--entry-mode", required=True, choices=sorted(TRADE_REVIEW_ENTRY_MODES))
     args = parser.parse_args()
     target = write_completion_request(
