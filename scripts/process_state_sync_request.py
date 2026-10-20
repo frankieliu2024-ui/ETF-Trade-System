@@ -1,4 +1,4 @@
-Warning: truncated output (original token count: 58322)
+Warning: truncated output (original token count: 58378)
 Total output lines: 4094
 
 from __future__ import annotations
@@ -1799,7 +1799,7 @@ def record_unrecoverable_review_prerequisite(account: dict, request: dict, trade
     market_date = str(assessment["review_target_market_date"])
     event_path = ROOT / "events" / "reviews" / f"{market_date}.json"
     prior = load_json(event_path) if event_path.exists() else {}
-    if prior.get("event_type") == "FOR…8322 tokens truncated…)
+    if prior.get("event_type") == "FOR…8378 tokens truncated…)
     content_hash = hashlib.sha256(full_content.encode("utf-8")).hexdigest()
     supplied_bds_hash = str(bds.get("content_hash") or "").strip()
     supplied_binding_hash = str(binding.get("content_hash") or "").strip()
