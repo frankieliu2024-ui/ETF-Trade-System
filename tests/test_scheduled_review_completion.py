@@ -53,7 +53,6 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
             full_review(),
             "20260923_2030_scheduled_trade_review__formal_completion",
             "2026-09-23T20:30:00+08:00",
-            entry_mode="AUTOMATIC_SCHEDULED_TASK",
         )
         self.assertEqual(payload["request_type"], "SCHEDULED_REVIEW_COMPLETION")
         self.assertEqual(payload["formal_fact_type"], "FORMAL_POST_CLOSE_REVIEW")
@@ -72,15 +71,13 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         }
         with self.assertRaisesRegex(ValueError, "review_scope=FULL_DAY"):
             completion.build_completion_request(
-                abbreviated, "20260918_2030_scheduled_trade_review", "2026-09-18T20:30:00+08:00",
-                entry_mode="AUTOMATIC_SCHEDULED_TASK",
+                abbreviated, "20260918_2030_scheduled_trade_review", "2026-09-18T20:30:00+08:00"
             )
 
     def test_missing_formal_review_fails_explicitly(self):
         with self.assertRaisesRegex(ValueError, "completed formal_review payload is required"):
             completion.build_completion_request(
-                {}, "20260923_2030_scheduled_trade_review", "2026-09-23T20:30:00+08:00",
-                entry_mode="AUTOMATIC_SCHEDULED_TASK",
+                {}, "20260923_2030_scheduled_trade_review", "2026-09-23T20:30:00+08:00"
             )
 
     def test_morning_stage_uses_same_trade_completion_scenario_without_close_snapshot(self):
@@ -107,7 +104,6 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
             review, "20260923_1230_scheduled_trade_review", "2026-09-23T12:30:00+08:00",
             final_content="FROZEN MIDDAY REPORT", task_id="ETF交易复盘",
             task_run_id="20260923_1230_scheduled_trade_review",
-            entry_mode="AUTOMATIC_SCHEDULED_TASK",
         )
         self.assertEqual(payload["interaction_scenario"], "SCHEDULED_TRADE_REVIEW")
         self.assertEqual(payload["market_phase"], "MIDDAY_BREAK")
@@ -120,7 +116,6 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         payload = completion.build_completion_request(
             review, "weekly-run", "2026-09-27T20:30:00+08:00",
             final_content="FROZEN WEEKLY REPORT", task_id="ETF交易复盘", task_run_id="weekly-run",
-            entry_mode="MANUAL_SCHEDULED_TASK",
         )
         self.assertEqual(payload["interaction_scenario"], "SCHEDULED_TRADE_REVIEW")
 
@@ -131,7 +126,6 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
                 "20260923_2030_scheduled_trade_review",
                 "2026-09-23T20:30:00+08:00",
                 market_date="2026-09-22",
-                entry_mode="AUTOMATIC_SCHEDULED_TASK",
             )
 
     def test_missing_close_snapshot_fails_closed(self):
@@ -139,35 +133,16 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         review["data_time"] = {"close_data_status": "VERIFIED_SESSION_CLOSE"}
         with self.assertRaisesRegex(ValueError, "close_snapshot is required"):
             completion.build_completion_request(
-                review, "20260923_2030_scheduled_trade_review", "2026-09-23T20:30:00+08:00",
-                entry_mode="AUTOMATIC_SCHEDULED_TASK",
+                review, "20260923_2030_scheduled_trade_review", "2026-09-23T20:30:00+08:00"
             )
 
     def test_trade_completion_binds_frozen_final_content(self):
         payload = completion.build_completion_request(
             full_review(), "trade-run", "2026-09-23T20:30:00+08:00",
             final_content="FROZEN TRADE REPORT", task_id="ETF交易复盘", task_run_id="trade-run",
-            entry_mode="MANUAL_SCHEDULED_TASK",
         )
         self.assertEqual(payload["presentation_binding"]["report_type"], "ETF_TRADE_REVIEW")
         self.assertEqual(payload["presentation_binding"]["full_content"], "FROZEN TRADE REPORT")
-
-    def test_trade_entry_mode_is_required_and_bound(self):
-        with self.assertRaisesRegex(ValueError, "entry_mode"):
-            completion.build_completion_request(
-                full_review(), "trade-run", "2026-09-23T20:30:00+08:00",
-                final_content="FROZEN TRADE REPORT", task_id="ETF交易复盘", task_run_id="trade-run",
-            )
-        payload = completion.build_completion_request(
-            full_review(), "trade-run-2", "2026-09-23T20:30:00+08:00",
-            final_content="FROZEN TRADE REPORT", task_id="ETF交易复盘", task_run_id="trade-run-2",
-            occurrence_id="occ-2", entry_mode="MANUAL_SCHEDULED_TASK",
-        )
-        self.assertEqual(payload["entry_mode"], "MANUAL_SCHEDULED_TASK")
-        self.assertEqual(payload["occurrence_id"], "occ-2")
-        self.assertEqual(payload["presentation_binding"]["occurrence_id"], "occ-2")
-        self.assertEqual(payload["presentation_binding"]["entry_mode"], "MANUAL_SCHEDULED_TASK")
-        self.assertEqual(payload["presentation_binding"]["content_hash"], hashlib.sha256(b"FROZEN TRADE REPORT").hexdigest())
 
     def test_scheduled_review_projection_rejects_formal_decision(self):
         payload = {
@@ -514,6 +489,23 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         }
         normalized = owner._validate_presentation_binding(binding, "ETF_TRADE_REVIEW")
         self.assertTrue(normalized["content_hash"])
+
+
+    def test_trade_entry_mode_is_required_and_bound(self):
+        with self.assertRaisesRegex(ValueError, "entry_mode"):
+            completion.build_completion_request(
+                full_review(), "trade-run", "2026-09-23T20:30:00+08:00",
+                final_content="FROZEN TRADE REPORT", task_id="ETF交易复盘", task_run_id="trade-run",
+            )
+        payload = completion.build_completion_request(
+            full_review(), "trade-run-2", "2026-09-23T20:30:00+08:00",
+            final_content="FROZEN TRADE REPORT", task_id="ETF交易复盘", task_run_id="trade-run-2",
+            occurrence_id="occ-2", entry_mode="MANUAL_SCHEDULED_TASK",
+        )
+        self.assertEqual(payload["entry_mode"], "MANUAL_SCHEDULED_TASK")
+        self.assertEqual(payload["presentation_binding"]["entry_mode"], "MANUAL_SCHEDULED_TASK")
+        self.assertEqual(payload["occurrence_id"], "occ-2")
+        self.assertEqual(payload["presentation_binding"]["content_hash"], hashlib.sha256(b"FROZEN TRADE REPORT").hexdigest())
 
 
 if __name__ == "__main__":
