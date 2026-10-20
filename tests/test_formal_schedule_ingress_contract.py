@@ -37,6 +37,23 @@ def test_automatic_identity_is_runtime_bound_and_fail_closed():
     assert "MARKET_QUOTE_REFRESH" not in text
 
 
+def test_canonical_parent_request_carries_top_level_formal_scenario_and_identity():
+    from datetime import datetime, timezone, timedelta
+    from scripts.create_scheduled_formal_request import build_scheduled_request
+
+    request = build_scheduled_request(
+        now=datetime(2026, 10, 20, 13, 0, tzinfo=timezone(timedelta(hours=8))),
+        task_id="ETF正式决策",
+        task_run_id="manual-run-1",
+        occurrence_id="conversation-20261020T130000+0800-test",
+        entry_mode="MANUAL_CONVERSATION",
+    )
+    assert request["interaction_scenario"] == "FORMAL_DECISION"
+    assert request["intent"]["interaction_scenario"] == "FORMAL_DECISION"
+    for field in ("task_run_id", "occurrence_id", "market_date"):
+        assert request[field]
+
+
 def test_manual_entry_is_not_created_by_automatic_ingress_script():
     text = SCRIPT.read_text(encoding="utf-8")
     assert 'ENTRY_MODE' in text
