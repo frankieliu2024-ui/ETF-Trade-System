@@ -279,7 +279,7 @@ class FormalDecisionLessonsProtocolTests(unittest.TestCase):
         invariants = routing["invariants"]
         self.assertIn("scheduled_review_formal_projection_must_preserve_formal_report_type", invariants)
         self.assertNotIn("scheduled_review_cannot_use_formal_decision_projection", invariants)
-        self.assertIn("在返回用户最终消息前", formal_text)
+        self.assertIn("然后立即向用户窗口输出此前冻结的同一份完整正文", formal_text)
 
     def test_protocol_preserves_current_request_fail_closed_and_send_boundary(self):
         root = Path(__file__).parents[1]
@@ -302,7 +302,7 @@ class FormalReadyHandoffContractTests(unittest.TestCase):
         self.assertIn('"formal_decision_notification_chain_starts_at_bds": False', text)
         self.assertIn('"post_reply_async": True', text)
         self.assertIn('"provider_success_async": True', text)
-        self.assertIn('"must_read_back_before_reply": True', text)
+        self.assertIn('"must_read_back_before_reply": False', text)
         self.assertIn('PRE_REPLY_HANDOFF = "BDS_AND_COMPLETION_BEFORE_USER_REPLY"', text)
         self.assertNotIn('BDS_AND_COMPLETION_AFTER_USER_REPLY', text)
         self.assertNotIn('must_read_back_after_reply', text)
@@ -311,9 +311,9 @@ class FormalReadyHandoffContractTests(unittest.TestCase):
         protocol = (Path(__file__).parents[1] / "docs/Formal Decision执行与用户回复协议.md").read_text(encoding="utf-8")
         self.assertIn("READY 后，必须先完成业务判断并冻结唯一", protocol)
         self.assertIn("立即向用户窗口输出此前冻结的同一份完整正文", protocol)
-        self.assertIn("在返回用户最终消息前", protocol)
+        self.assertIn("然后立即向用户窗口输出此前冻结的同一份完整正文", protocol)
         self.assertIn("统一 `SCHEDULED_REVIEW_COMPLETION` ingress 提交", protocol)
-        self.assertIn("完成上述 ingress 后，必须立即向用户窗口输出此前冻结的同一份完整正文", protocol)
+        self.assertNotIn("完成上述 ingress 后，必须立即向用户窗口输出", protocol)
         self.assertIn("通知失败不撤回用户已经看到的正文", protocol)
 
     def test_ready_handoff_does_not_create_a_second_notification_path(self):
