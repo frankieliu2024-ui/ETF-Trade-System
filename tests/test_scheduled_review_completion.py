@@ -491,6 +491,23 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         self.assertTrue(normalized["content_hash"])
 
 
+    def test_trade_entry_mode_is_required_and_bound(self):
+        with self.assertRaisesRegex(ValueError, "entry_mode"):
+            completion.build_completion_request(
+                full_review(), "trade-run", "2026-09-23T20:30:00+08:00",
+                final_content="FROZEN TRADE REPORT", task_id="ETF交易复盘", task_run_id="trade-run",
+            )
+        payload = completion.build_completion_request(
+            full_review(), "trade-run-2", "2026-09-23T20:30:00+08:00",
+            final_content="FROZEN TRADE REPORT", task_id="ETF交易复盘", task_run_id="trade-run-2",
+            occurrence_id="occ-2", entry_mode="MANUAL_SCHEDULED_TASK",
+        )
+        self.assertEqual(payload["entry_mode"], "MANUAL_SCHEDULED_TASK")
+        self.assertEqual(payload["presentation_binding"]["entry_mode"], "MANUAL_SCHEDULED_TASK")
+        self.assertEqual(payload["occurrence_id"], "occ-2")
+        self.assertEqual(payload["presentation_binding"]["content_hash"], hashlib.sha256(b"FROZEN TRADE REPORT").hexdigest())
+
+
 if __name__ == "__main__":
     unittest.main()
 

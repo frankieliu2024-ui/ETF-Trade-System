@@ -2232,6 +2232,13 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
         and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_POST_CLOSE_REVIEW"
         and str((raw_presentation_binding or {}).get("task_id") or "").strip() == "ETF交易复盘"
     )
+    if is_trade_review_production:
+        entry_mode = str(request.get("entry_mode") or "").strip().upper()
+        if entry_mode not in {"MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"}:
+            raise ValueError("scheduled trade review production requires entry_mode=MANUAL_SCHEDULED_TASK or AUTOMATIC_SCHEDULED_TASK")
+        binding_entry_mode = str((raw_presentation_binding or {}).get("entry_mode") or "").strip().upper()
+        if binding_entry_mode != entry_mode:
+            raise ValueError("scheduled trade review production entry_mode must match presentation_binding.entry_mode")
     presentation_binding = (
         _validate_presentation_binding(
             raw_presentation_binding,
@@ -2318,7 +2325,7 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
         _persist_existing_case_detail_projections(prior_review)
         return True, True
     review_time = (incoming_time or datetime.now(SHANGHAI)).isoformat(timespec="seconds")
-    event = {"event_type": "FORMAL_POST_CLOSE_REVIEW", "market_date": market_date, "account_updated_at": account.get("updated_at"), "fingerprint": fingerprint, "request_id": request.get("request_id"), "report_id": presentation_binding.get("report_id", ""), "content_hash": presentation_binding.get("content_hash", ""), "review": review, "presentation_binding": presentation_binding, "managed_position_sell_review": managed_projection, "updated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds")}
+    event = {"event_type": "FORMAL_POST_CLOSE_REVIEW", "entry_mode": request.get("entry_mode"), "market_date": market_date, "account_updated_at": account.get("updated_at"), "fingerprint": fingerprint, "request_id": request.get("request_id"), "report_id": presentation_binding.get("report_id", ""), "content_hash": presentation_binding.get("content_hash", ""), "review": review, "presentation_binding": presentation_binding, "managed_position_sell_review": managed_projection, "updated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds")}
     event["reviewed_at_beijing"] = review_time
     event_path.parent.mkdir(parents=True, exist_ok=True)
     atomic_json_write(event_path, event)
