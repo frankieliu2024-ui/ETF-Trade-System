@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "freeze_bundle_id": "ETF_THREE_TASKS_FREEZE_20261020T1817",
-  "status": "READBACK_SCHEDULE_SNAPSHOT_PENDING",
+  "status": "REPOSITORY_EVIDENCE_COMPLETE_RUNTIME_EVIDENCE_PENDING",
   "authority": "current_main_only",
   "source_main_commit": "dc91e166d4af796d2640e174962b4f55e750780a",
   "purpose": "不可变封存证据包；不构成第二规则源，不修改任务、调度或生产链。",
@@ -38,7 +38,7 @@
       "conversation_id": "6accb04b-9d30-83ec-9e9f-f632d3815e92"
     }
   },
-  "freeze_gate": "只有原文快照、调度快照、指纹、代码映射和运行证据全部齐备并通过CI，才可评估SEALED_WITH_REPOSITORY_READBACK_FINGERPRINT。",
+  "freeze_gate": "Prompt原文、可见Schedule字段、代码映射和恢复路径已持久化；仍须补齐三类任务新鲜真实运行逐层证据后，才可评估最终封存。平台原生hash不可得时不得宣称平台配置不可漂移。",
   "non_goals": [
     "不修改任务Prompt",
     "不修改调度",
@@ -47,7 +47,7 @@
   ],
   "artifact_status": {
     "prompt_raw_snapshots": "PERSISTED_CURRENT_LIVE_PROMPTS",
-    "schedule_snapshots": "SCHEDULE_UI_SUMMARY_READBACK_ONLY",
+    "schedule_snapshots": "VISIBLE_UI_FIELDS_PERSISTED_PLATFORM_JSON_UNAVAILABLE",
     "repository_code_map": "RECORDED_ON_CURRENT_MAIN",
     "runtime_evidence": "PENDING_FRESH_RUN_EVIDENCE_SELECTION",
     "recovery_runbook": "RECORDED"
@@ -88,10 +88,10 @@
   },
   "code_map_status": "PATHS_REGISTERED_BLOB_SHA_VERIFIED",
   "evidence_limits": [
-    "三条任务当前live Prompt已由云浏览器完整回读并原文持久化到本冻结包",
-    "当前界面只提供调度摘要和相对下次运行时间，未提供稳定可导出的Schedule JSON",
-    "未取得平台原生Prompt/Schedule hash，不推断、不伪造；仓库blob SHA仅证明仓库文件内容",
-    "runtime evidence仍需绑定新鲜真实运行，不用历史对象替代"
+    "Prompt原文已持久化并登记仓库blob SHA；blob SHA不是平台原生hash",
+    "可见Schedule字段已持久化；稳定Schedule JSON和平台Schedule hash不可得",
+    "三类任务新鲜真实运行逐层证据尚未绑定，历史运行不能替代",
+    "任何最终SEALED结论必须同时满足运行证据和CI"
   ],
   "prompt_snapshot_files": [
     {
@@ -115,5 +115,7 @@
       "readback_status": "FULL_CURRENT_PROMPT_READ_BACK",
       "repository_blob_sha": "6f175772ba3c48b99271bb39a7263d28a4890e26"
     }
-  ]
+  ],
+  "evidence_index": "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/EVIDENCE_INDEX.md",
+  "schedule_readback_file": "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/schedule-readback.json"
 }
