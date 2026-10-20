@@ -58,6 +58,7 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
             "report_id": "ETF_TRADE_REVIEW:trade-manual-occurrence-1",
             "full_content": "FROZEN TRADE REVIEW",
             "content_hash": "2c761fe07bd370042f08d2c81af775d86d4993fcf2639908c3730fafc773051f",
+            "content_hash_source": "completion_builder",
         }
         account = {"status": "VALID", "updated_at": "2026-08-31T15:12:00+08:00"}
         self.assertEqual(sync.record_post_close_review(account, request), (True, False))
