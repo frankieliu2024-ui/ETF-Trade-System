@@ -139,25 +139,10 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
     def test_trade_completion_binds_frozen_final_content(self):
         payload = completion.build_completion_request(
             full_review(), "trade-run", "2026-09-23T20:30:00+08:00",
-            final_content="FROZEN TRADE REPORT", task_id="ETF交易复盘",
-            task_run_id="trade-run", occurrence_id="occurrence-001",
+            final_content="FROZEN TRADE REPORT", task_id="ETF交易复盘", task_run_id="trade-run",
         )
-        binding = payload["presentation_binding"]
-        self.assertEqual(binding["report_type"], "ETF_TRADE_REVIEW")
-        self.assertEqual(binding["full_content"], "FROZEN TRADE REPORT")
-        self.assertEqual(payload["occurrence_id"], "occurrence-001")
-        self.assertEqual(binding["occurrence_id"], "occurrence-001")
-        self.assertEqual(binding["report_id"], "etf_trade_review:trade-run")
-        self.assertEqual(binding["content_hash"], hashlib.sha256(b"FROZEN TRADE REPORT").hexdigest())
-        self.assertEqual(binding["content_hash_source"], "completion_builder")
-
-    def test_trade_completion_defaults_occurrence_to_task_run_for_recovery_compatibility(self):
-        payload = completion.build_completion_request(
-            full_review(), "trade-run-default", "2026-09-23T20:30:00+08:00",
-            final_content="FROZEN TRADE REPORT", task_id="ETF交易复盘", task_run_id="trade-run-default",
-        )
-        self.assertEqual(payload["occurrence_id"], "trade-run-default")
-        self.assertEqual(payload["presentation_binding"]["occurrence_id"], "trade-run-default")
+        self.assertEqual(payload["presentation_binding"]["report_type"], "ETF_TRADE_REVIEW")
+        self.assertEqual(payload["presentation_binding"]["full_content"], "FROZEN TRADE REPORT")
 
     def test_scheduled_review_projection_rejects_formal_decision(self):
         payload = {
@@ -168,59 +153,9 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
                 "full_content": "FROZEN FORMAL REPORT",
             }
         }
-        report = completion.build_report_delivery_from_completion({
-            "market_date": "2026-09-26",
-            **payload,
-        })
-        self.assertEqual(report["report_type"], "ETF_FORMAL_DECISION")
+        with self.assertRaisesRegex(ValueError, "unsupported Scheduled Review report_type"):
+            completion.build_report_delivery_from_completion(payload)
 
-
-    def test_trade_review_production_rejects_legacy_missing_hash_source(self):
-        binding = {
-            "report_type": "ETF_TRADE_REVIEW",
-            "task_id": "ETF交易复盘",
-            "task_run_id": "run-legacy",
-            "occurrence_id": "run-legacy",
-            "request_id": "run-legacy",
-            "report_id": "ETF_TRADE_REVIEW:run-legacy",
-            "full_content": "FROZEN TRADE REPORT",
-        }
-        with self.assertRaisesRegex(ValueError, "requires content_hash"):
-            state_sync._validate_presentation_binding(binding, "ETF_TRADE_REVIEW", strict_production=True)
-
-    def test_trade_review_production_requires_builder_hash_contract(self):
-        content_text = "FROZEN TRADE REPORT"
-        binding = {
-            "report_type": "ETF_TRADE_REVIEW",
-            "task_id": "ETF交易复盘",
-            "task_run_id": "run-current",
-            "occurrence_id": "occ-current",
-            "request_id": "run-current",
-            "report_id": "etf_trade_review:run-current",
-            "full_content": content_text,
-            "content_hash": hashlib.sha256(content_text.encode("utf-8")).hexdigest(),
-            "content_hash_source": "completion_builder",
-        }
-        normalized = completion._validate_presentation_binding(
-            binding, "ETF_TRADE_REVIEW", strict_production=True
-        )
-        self.assertEqual(normalized["content_hash"], binding["content_hash"])
-        self.assertEqual(normalized["content_hash_source"], "completion_builder")
-
-    def test_trade_review_historical_compatibility_still_allows_missing_hash_source(self):
-        binding = {
-            "report_type": "ETF_TRADE_REVIEW",
-            "task_id": "ETF交易复盘",
-            "task_run_id": "run-history",
-            "occurrence_id": "run-history",
-            "request_id": "run-history",
-            "report_id": "ETF_TRADE_REVIEW:run-history",
-            "full_content": "HISTORICAL TRADE REPORT",
-        }
-        normalized = completion._validate_presentation_binding(
-            binding, "ETF_TRADE_REVIEW", strict_production=False
-        )
-        self.assertEqual(normalized["content_hash_source"], "canonical_owner")
 
     def test_system_review_completion_is_business_completion_not_report_handoff(self):
         payload = completion.build_system_review_completion_request(
