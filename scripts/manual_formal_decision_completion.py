@@ -230,8 +230,14 @@ def build_formal_decision_completion_request(
     decision_id: str,
     content_hash: str,
     completion_request_id: str = "",
+    bds_payload: dict | None = None,
 ) -> dict:
-    """Build the post-BDS completion ingress consumed by the existing owner."""
+    """Build the post-BDS completion ingress consumed by the existing owner.
+
+    ``bds_payload`` is an optional inline compatibility projection. BDS remains
+    the durable source and is still required by the canonical owner; the inline
+    fields only allow that owner to verify the same immutable handoff.
+    """
     if not isinstance(source_request, dict) or not source_request:
         raise ValueError("Formal Decision completion requires the source request")
     parent_id = _safe_id(source_request.get("request_id"))
@@ -281,6 +287,18 @@ def build_formal_decision_completion_request(
         "decision_id": decision_id,
         "content_hash": content_hash,
     }
+    if bds_payload is not None:
+        if not isinstance(bds_payload, dict):
+            raise ValueError("Formal Decision completion inline BDS projection must be an object")
+        for field in (
+            "decision_response",
+            "decision_work_package",
+            "consumed_snapshot",
+            "presentation_content",
+            "presentation_binding",
+        ):
+            if field in bds_payload:
+                payload[field] = bds_payload[field]
     payload = {key: value for key, value in payload.items() if value not in (None, "")}
     if classify_live_snapshot_request(payload) != "STATE_SYNC_ONLY":
         raise ValueError("Formal Decision completion must use the shared Scheduled Review ingress")
