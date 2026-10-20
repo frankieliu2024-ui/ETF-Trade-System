@@ -46,8 +46,14 @@
       "production_adapter": "scripts/run_scheduled_trade_review_actor.py",
       "completion_builder": "build_trade_review_completion_request",
       "entry_modes": {
-        "automatic": {"source": "CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR", "entry_mode": "AUTOMATIC_SCHEDULED_TASK"},
-        "manual": {"source": "CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR", "entry_mode": "MANUAL_SCHEDULED_TASK"}
+        "automatic": {
+          "source": "CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR",
+          "entry_mode": "AUTOMATIC_SCHEDULED_TASK"
+        },
+        "manual": {
+          "source": "CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR",
+          "entry_mode": "MANUAL_SCHEDULED_TASK"
+        }
       },
       "canonical_task_id": "ETF交易复盘"
     },
@@ -64,6 +70,8 @@
       "sunday_rule": "按current main正式日历判定",
       "manual_allowed": true,
       "route": "FORMAL_DECISION",
+      "production_adapter": "scripts/manual_formal_decision_completion.py",
+      "completion_builder": "build_formal_decision_completion_request",
       "manual_entry_modes": [
         "MANUAL_CONVERSATION",
         "MANUAL_SCHEDULED_TASK"
