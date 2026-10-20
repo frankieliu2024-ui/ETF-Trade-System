@@ -174,7 +174,7 @@ class E2EDecisionReadinessTests(unittest.TestCase):
         self.assertEqual(result["formal_reply_gate"]["blockers"], [])
         manifest = result["formal_reply_gate"]["consumer_manifest"]
         self.assertEqual(manifest["request_id"], "r3")
-        self.assertEqual(manifest["read_strategy"], "GATE_FIRST_TARGETED_PAYLOAD_VIA_GITHUB_API_CONTENTS")
+        self.assertEqual(manifest["read_strategy"], "GATE_FIRST_CONTENTS_METADATA_THEN_GIT_BLOBS_BASE64")
         self.assertEqual(manifest["large_payload_read_contract"], "USE_GITHUB_API_CONTENTS_OR_BLOB_FOR_FILES_OVER_1MB")
         self.assertIn("/contents/data/state/query_context.json?ref=main", manifest["large_payload_source_url"])
         self.assertEqual(
