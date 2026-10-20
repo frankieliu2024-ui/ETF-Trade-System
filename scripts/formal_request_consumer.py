@@ -7,7 +7,7 @@ INFLIGHT_STATUSES = {"BUILDING", "PENDING", "QUEUED", "RUNNING", "IN_PROGRESS", 
 READY_STATUSES = {"READY", "RESOLVED_DEGRADED"}
 TERMINAL_FAILURE_STATUSES = {"FAILED", "TERMINAL_FAILURE", "BLOCKED_TERMINAL"}
 BUSINESS_REPLY_OUTPUT = "COMPLETE_BUSINESS_DECISION_ONLY"
-PRE_REPLY_HANDOFF = "BDS_AND_COMPLETION_BEFORE_USER_REPLY"
+POST_REPLY_HANDOFF = "BDS_COMPLETION_EVENT_REPORT_NOTIFICATION_ASYNC"
 ACTOR_CONTINUE = "CONTINUE_SAME_REQUEST_SILENTLY"
 ACTOR_DECIDE = "COMPLETE_BUSINESS_DECISION_NOW"
 ACTOR_TERMINATE = "TERMINATE_ON_EXPLICIT_FAILURE"
@@ -25,7 +25,7 @@ def classify_formal_request_consumer_state(
 
     The request-bound formal_reply_freeze is the reply decision boundary.
     Global e2e_status and close-review projections are observability or
-    post-decision state and must not override a same-request READY gate. The actor must freeze FINAL_CONTENT, complete the BDS readback and completion ingress, then output that exact frozen content.
+    post-decision state and must not override a same-request READY gate. The actor must freeze FINAL_CONTENT and output that exact frozen content; BDS, completion, event, REPORT and notification are post-reply projections of the same frozen content.
     This helper is read-only and interprets the existing request-bound
     query_context/formal_reply_freeze contract for interactive consumers.
     """
@@ -132,8 +132,8 @@ def classify_formal_request_consumer_state(
             "final_content_generation_allowed": True,
             "user_visible_output": BUSINESS_REPLY_OUTPUT,
             "actor_action": ACTOR_DECIDE,
-            "user_output_allowed": False,
-            "pre_reply_processing": PRE_REPLY_HANDOFF,
+            "user_output_allowed": True,
+            "post_reply_processing": POST_REPLY_HANDOFF,
             "required_problem_ids": required_problem_ids,
             "required_problem_count": len(required_problem_ids),
             "business_answer_contract": "DWP_EXACT_COVERAGE_BEFORE_PRESENTATION",
@@ -146,7 +146,7 @@ def classify_formal_request_consumer_state(
             "canonical_persistence_status": (
                 "CONFIRMED" if canonical_persisted else "PENDING_ASYNC"
             ),
-            # This is the single pre-reply completion handoff contract, not a new
+            # This is the single post-reply completion handoff contract, not a new
             # state or producer. The Actor freezes FINAL_CONTENT, writes and
             # reads back BDS, submits the existing completion ingress, and only
             # then returns the exact frozen content. Downstream event,
@@ -186,14 +186,15 @@ def classify_formal_request_consumer_state(
                     "read_back_required": True,
                     "formal_decision_notification_chain_starts_at_bds": False,
                     "completion_and_report_not_required_for_formal_decision_notification": False,
-                    "bds_must_be_written_and_read_back_before_user_reply": True,
+                    "bds_must_be_written_and_read_back_before_user_reply": False,
+                    "bds_and_completion_atomic_commit_required": True,
                 },
                 # The task may continue generating the complete report now;
                 # user-visible output is gated until BDS and completion are
                 # written and read back. Provider delivery remains async.
                 "business_decision_allowed": True,
                 "final_content_generation_allowed": True,
-                "user_reply_precondition": True,
+                "user_reply_precondition": False,
                 "notification_attempt_precondition": True,
                 "provider_success_not_required_for_user_reply": True,
                 "user_reply_contract": {
@@ -205,7 +206,8 @@ def classify_formal_request_consumer_state(
                 },
                 "post_reply_async": True,
                 "provider_success_async": True,
-                "must_read_back_before_reply": True,
+                "must_read_back_before_reply": False,
+                "bds_and_completion_atomic_commit_required": True,
                 "historical_fallback_forbidden": True,
             },
         }
