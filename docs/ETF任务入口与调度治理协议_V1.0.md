@@ -124,7 +124,7 @@ System Review和Trade Review在生成唯一完整FINAL_CONTENT后，不得以“
 
 Trade Review仅允许使用唯一业务主链：
 
-ETF交易复盘 → CHATGPT_SCHEDULED_REVIEW_ACTOR → formal_review → build_completion_request → SCHEDULED_REVIEW_COMPLETION → GitHub Contents写入与同文件回读 → 用户显示FINAL_CONTENT → canonical review event → REPORT → notification_center → provider
+ETF交易复盘 → CHATGPT_SCHEDULED_REVIEW_ACTOR → formal_review → `scripts/run_scheduled_trade_review_actor.py` → build_completion_request → SCHEDULED_REVIEW_COMPLETION → GitHub Contents写入与同文件回读 → 用户显示FINAL_CONTENT → canonical review event → REPORT → notification_center → provider
 
 对ETF交易复盘，Actor在形成任何用户可见正文前，必须完成本次运行的完整formal_review，使用同一份冻结正文调用scripts/scheduled_review_completion.py的build_completion_request，并完成唯一completion文件写入和回读。completion必须使用：
 
