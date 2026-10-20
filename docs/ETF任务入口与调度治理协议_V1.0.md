@@ -114,6 +114,24 @@
 
 System Review和Trade Review在生成唯一完整FINAL_CONTENT后，不得以“正文已生成”作为任务完成。必须在同一运行中提交并回读唯一的`SCHEDULED_REVIEW_COMPLETION`，并继续形成canonical review event、REPORT、notification_id和provider result。任一对象缺失、错绑或回读失败，任务状态必须保持未闭环；不得补绑历史对象、补发历史正文或创建第二请求、第二event、第二通知。provider success只能记录为provider接口成功，不得表述为用户已收到。
 
+## 6.3 Trade Review生产入口与用户显示硬门
+
+Trade Review仅允许使用唯一业务主链：
+
+ETF交易复盘 → CHATGPT_SCHEDULED_REVIEW_ACTOR → formal_review → build_completion_request → SCHEDULED_REVIEW_COMPLETION → GitHub Contents写入与同文件回读 → 用户显示FINAL_CONTENT → canonical review event → REPORT → notification_center → provider
+
+对ETF交易复盘，Actor在形成任何用户可见正文前，必须完成本次运行的完整formal_review，使用同一份冻结正文调用scripts/scheduled_review_completion.py的build_completion_request，并完成唯一completion文件写入和回读。completion必须使用：
+
+- request_type=SCHEDULED_REVIEW_COMPLETION；
+- source=CHATGPT_SCHEDULED_REVIEW_ACTOR；
+- interaction_scenario=SCHEDULED_TRADE_REVIEW；
+- presentation_binding.report_type=ETF_TRADE_REVIEW；
+- 本次task_id、task_run_id、occurrence_id、request_id、report_id及完整full_content。
+
+completion写入或回读未完成时，Actor不得输出完整用户正文，也不得用“正文已生成、completion未执行”作为本次运行的正常终态；只能继续当前运行，或在真实终止边界后登记失败。provider、REPORT和notification属于completion之后的后置投影，不得生成第二正文、第二completion或第二请求。该硬门只适用于ETF交易复盘，不改变ETF系统复核、ETF正式决策或共享通知owner的业务合同。
+
+生产写入统一使用SCHEDULED_TRADE_REVIEW；POST_CLOSE_REVIEW、MIDDAY_REVIEW、WEEKLY_REVIEW仅允许canonical owner历史兼容读取，不得由当前Trade Review Actor写出。
+
 ## 7. 统一完成边界
 
 调度成功、任务已启动、请求已写入、正文已生成、workflow success、REPORT生成、provider success和用户已收到必须分别记录。
