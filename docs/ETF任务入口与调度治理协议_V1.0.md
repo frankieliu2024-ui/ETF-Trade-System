@@ -112,7 +112,7 @@
 
 ## 6.2 Scheduled Review后置交接合同
 
-System Review和Trade Review在生成唯一完整FINAL_CONTENT后，不得以“正文已生成”作为后置链已完成。两者均须先冻结并向用户输出同一份FINAL_CONTENT，再在同一运行中提交并回读唯一的`SCHEDULED_REVIEW_COMPLETION`，并继续形成canonical review event、REPORT、notification_id和provider result。completion ingress写入`requests/live_snapshot/*.json`，canonical review event写入`events/reviews/*.json`；二者不是同一对象，也不得用旧的`STATE_SYNC_ONLY`作为公开完成入口。任一后置对象缺失、错绑或回读失败，任务状态必须保持未闭环，但不得撤回、改写或截断已经输出的FINAL_CONTENT，不得补绑历史对象、补发历史正文或创建第二请求、第二event、第二通知。provider success只能记录为provider接口成功，不得表述为用户已收到。Trade Review生产运行统一使用`interaction_scenario=SCHEDULED_TRADE_REVIEW`，并在completion及其presentation binding中绑定同一`task_run_id`、`occurrence_id`、`request_id`、`report_id`、`content_hash`和完整FINAL_CONTENT；历史场景和缺失hash仅限canonical owner的兼容回读，不得成为当前生产builder路径。
+System Review和Trade Review在生成唯一完整FINAL_CONTENT后，必须先冻结正文并完成一次唯一的completion ingress，再向用户输出同一份已冻结FINAL_CONTENT；不得以“正文已生成”替代completion ingress。completion ingress必须在同一运行中由既有canonical completion owner使用生产builder完成校验、身份绑定和content_hash处理，写入并回读唯一的`SCHEDULED_REVIEW_COMPLETION`于`requests/live_snapshot/*.json`；确认写入和回读成功后，最终用户消息只输出此前冻结的完整FINAL_CONTENT。随后继续形成canonical review event、REPORT、notification_id和provider result。canonical review event写入`events/reviews/*.json`；二者不是同一对象，也不得用旧的`STATE_SYNC_ONLY`作为公开完成入口。任一completion、后置对象缺失、错绑或回读失败，任务状态必须保持未闭环；若completion ingress失败，仍须输出已冻结完整FINAL_CONTENT并如实附加`PROJECTION_INCOMPLETE`或`MAINTENANCE_INCOMPLETE`，不得重试创建第二请求、补绑历史对象、补发历史正文或创建第二event、第二通知。provider success只能记录为provider接口成功，不得表述为用户已收到。Trade Review生产运行统一使用`interaction_scenario=SCHEDULED_TRADE_REVIEW`，并在completion及其presentation binding中绑定同一`task_run_id`、`occurrence_id`、`request_id`、`report_id`、`content_hash`和完整FINAL_CONTENT；历史场景和缺失hash仅限canonical owner的兼容回读，不得成为当前生产builder路径。
 
 ## 7. 统一完成边界
 
