@@ -267,7 +267,7 @@ class FormalDecisionLessonsProtocolTests(unittest.TestCase):
         self.assertIn("不得再使用旧的", text)
         self.assertIn("SCHEDULED_REVIEW_COMPLETION", text)
         self.assertIn("MARKET_QUOTE_REFRESH", text)
-        self.assertIn("PushPlus/微信原文投递", text)
+        self.assertIn("PushPlus/微信原文投递回读", text)
         self.assertIn("不得产生不同的业务判断、正文、completion、event、REPORT 或通知链", text)
         index_text = (root / "ETF_SYSTEM_INDEX.md").read_text(encoding="utf-8")
         self.assertIn("request_type=SCHEDULED_REVIEW_COMPLETION", index_text)
