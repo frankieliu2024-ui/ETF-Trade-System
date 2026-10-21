@@ -959,17 +959,19 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
     # observable here, while the action/amount/share decision remains subject
     # to the single unified capital-comparison contract at BDS validation.
     work_package["capital_competition_readiness"] = {
-        "status": "READY" if not capital_unresolved else "NOT_READY",
-        "ready": not capital_unresolved,
-        "hard_gate": True,
-        "scope": "ACTION_AMOUNT_SHARE_ONLY",
+        "status": "READY" if not capital_unresolved else "EVIDENCE_INCOMPLETE",
+        "ready": True,
+        "hard_gate": False,
+        "scope": "BUSINESS_ANALYSIS_AND_POSTERIOR_BDS_VALIDATION",
         "unresolved_required_requirements": capital_unresolved,
-        "rule": "分析可以继续输出；具体买卖、金额和份额必须由统一资本比较合同在BDS阶段完成校验。",
+        "rule": "资本竞争必须在正式业务判断中完成；证据不足是可披露的业务结论，不得阻断FINAL_CONTENT。BDS仍须校验资本竞争字段完整性，字段缺失只能阻断BDS及后置投影。",
     }
     work_package["capital_competition_action_gate"] = {
-        "status": "BLOCKED" if capital_unresolved else "OPEN",
-        "blocks": ["ACTION_AMOUNT_SHARE"] if capital_unresolved else [],
+        "status": "ADVISORY" if capital_unresolved else "OPEN",
+        "blocks": [],
         "source": "UNIFIED_CAPITAL_COMPARISON_CONTRACT",
+        "post_final_content_validation": True,
+        "rule": "该投影仅标记证据完整性，不是FINAL_CONTENT前置门；BDS字段校验仍由统一BUSINESS_DECISION_SOURCE owner执行。",
     }
 
     work_package["three_layer_monitoring_evidence"] = three_layer_monitoring
