@@ -1040,24 +1040,42 @@ jobs:
             fi
           done
           echo "processed=$processed" >> "$GITHUB_OUTPUT"
+      - name: Record broker account sync maintenance receipt
+        if: ${{ always() && github.event_name == 'push' && env.TRIGGERING_REQUEST_ID != '' && env.TRIGGERING_REQUEST_FILE != '' }}
+        shell: bash
+        env:
+          ACCOUNT_SYNC_OUTCOME: ${{ steps.state_sync.outcome }}
+        run: |
+          python scripts/record_account_sync_maintenance.py \
+            --request-id "$TRIGGERING_REQUEST_ID" \
+            --request-path "$TRIGGERING_REQUEST_FILE" \
+            --owner-outcome "$ACCOUNT_SYNC_OUTCOME" \
+            --run-id "$GITHUB_RUN_ID"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/state/maintenance_health.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: record broker account sync maintenance receipt"
+            git push
+          fi
       - name: Build objective intraday market delta
         # Derived observability must not block the formal decision critical path.
-        if: ${{ always() && steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
+        if: ${{ always() && steps.state_sync.outcome != 'failure' && steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
         continue-on-error: true
         run: python scripts/build_market_delta.py
       - name: Build dynamic stock context from current account
         # Decision input: run independently of unrelated prior-step failures.
-        if: ${{ always() && steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
+        if: ${{ always() && steps.state_sync.outcome != 'failure' && steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_stock_context.py
       - name: Collect current account-stock market facts
         # Decision input: run independently of unrelated prior-step failures.
-        if: ${{ always() && steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
+        if: ${{ always() && steps.state_sync.outcome != 'failure' && steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_account_stock_market.py
       - name: Build on-demand query context
         id: query_context
         # Formal decision critical path. Do not let an unrelated optional/derived
         # step failure suppress request binding and PIT qualification.
-        if: ${{ always() && (steps.state_sync.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (steps.triggering_request.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (github.event_name == 'push' || steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true' || github.event.inputs.formal_context_recovery_request != '') && github.event.inputs.probe_only != 'true' }}
+        if: ${{ always() && steps.state_sync.outcome != 'failure' && (steps.state_sync.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (steps.triggering_request.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (github.event_name == 'push' || steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true' || github.event.inputs.formal_context_recovery_request != '') && github.event.inputs.probe_only != 'true' }}
         run: |
           REQUEST_FILE="${TRIGGERING_REQUEST_FILE:-}"
           REQUEST_FILE="$(printf '%s' "$REQUEST_FILE" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
@@ -1219,19 +1237,19 @@ jobs:
       - name: Build post-market review context
         # Review is a close/state-sync consumer, not a generic intraday pulse
         # responsibility. Explicit/manual close remains a legal recovery path.
-        if: ${{ always() && (steps.state_sync.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (steps.triggering_request.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (steps.state_sync.outputs.processed == 'true' || (steps.snapshot_result.outputs.snapshot_written == 'true' && (steps.session_gate.outputs.close_intent == 'true' || github.event.inputs.node == 'close')) || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close') || steps.state_sync.outputs.formal_post_close_review == 'true') && github.event.inputs.probe_only != 'true' }}
+        if: ${{ always() && steps.state_sync.outcome != 'failure' && (steps.state_sync.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (steps.triggering_request.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (steps.state_sync.outputs.processed == 'true' || (steps.snapshot_result.outputs.snapshot_written == 'true' && (steps.session_gate.outputs.close_intent == 'true' || github.event.inputs.node == 'close')) || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close') || steps.state_sync.outputs.formal_post_close_review == 'true') && github.event.inputs.probe_only != 'true' }}
         continue-on-error: true
         run: python scripts/build_post_market_review.py
       - name: Rebuild E2E usability state after close-review projection
         # The close-review producer must publish before the E2E consumer reads
         # closure/evidence/business-completion state; otherwise stale or future
         # close_review data can survive in e2e_status.
-        if: ${{ always() && (steps.query_context.outcome == 'success' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && (steps.state_sync.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (steps.triggering_request.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (github.event_name == 'push' || steps.state_sync.outputs.processed == 'true' || github.event.inputs.formal_context_recovery_request != '' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && github.event.inputs.probe_only != 'true' }}
+        if: ${{ always() && steps.state_sync.outcome != 'failure' && (steps.query_context.outcome == 'success' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && (steps.state_sync.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (steps.triggering_request.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (github.event_name == 'push' || steps.state_sync.outputs.processed == 'true' || github.event.inputs.formal_context_recovery_request != '' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_e2e_status.py
       - name: Commit downstream runtime/data artifacts
         # A failed close-derived refresh must not publish a mixed generation
         # containing fresh market facts alongside stale risk/decision state.
-        if: ${{ always() && steps.risk_refresh.outcome != 'failure' && (steps.session_gate.outcome == 'success' || steps.capture.outcome == 'success' || steps.state_sync.outputs.processed == 'true') }}
+        if: ${{ always() && steps.state_sync.outcome != 'failure' && steps.risk_refresh.outcome != 'failure' && (steps.session_gate.outcome == 'success' || steps.capture.outcome == 'success' || steps.state_sync.outputs.processed == 'true') }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
