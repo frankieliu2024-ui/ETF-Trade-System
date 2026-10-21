@@ -979,5 +979,23 @@ class RequestBoundOpportunityIdentityTests(unittest.TestCase):
         self.assertNotIn("PUSHPLUS", direct_block)
 
 
+
+
+class CapitalCompetitionCrossFieldTests(unittest.TestCase):
+    def test_zero_deployment_cannot_be_justified_by_risk_permission(self):
+        decision = {
+            "risk_permission": "禁止新增",
+            "capital_competition": {
+                "new_amount_yuan": 0,
+                "zero_amount_decisive_reason": "风险许可禁止新增",
+            },
+            "managed_position_reviews": [],
+        }
+        error = state_sync.validate_formal_decision_cross_field_consistency(
+            decision, {"positions": []}
+        )
+        self.assertIn("risk permission alone", error)
+
+
 if __name__ == "__main__":
     unittest.main()

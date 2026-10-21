@@ -1654,6 +1654,20 @@ def validate_formal_decision_cross_field_consistency(
             return f"{object_name}.managed_position_reviews[{code}] cannot HOLD while the same asset funds a capital release migration"
 
     new_amount = safe_float(capital.get("new_amount_yuan"))
+    if new_amount == 0:
+        zero_reason = " ".join(str(capital.get("zero_amount_decisive_reason") or "").split())
+        risk_only_reasons = {
+            "风险许可禁止新增",
+            "风险许可为禁止新增",
+            "风险许可不允许新增",
+            "风险率过低",
+            "风险较高禁止新增",
+        }
+        if zero_reason in risk_only_reasons:
+            return (
+                f"{object_name}.zero_amount_decisive_reason cannot use risk permission alone; "
+                "must reflect completed capital competition"
+            )
     states = capital.get("compared_capital_states") or []
     selected = [
         state for state in states
