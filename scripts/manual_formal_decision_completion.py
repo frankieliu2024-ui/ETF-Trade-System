@@ -17,9 +17,15 @@ except ModuleNotFoundError:
     from scripts.business_decision_source import project_decision_response, validate_source
 
 try:
-    from user_visible_presentation import build_formal_decision_presentation_binding
+    from user_visible_presentation import (
+        build_formal_decision_presentation_binding,
+        normalize_formal_decision_content,
+    )
 except ModuleNotFoundError:
-    from scripts.user_visible_presentation import build_formal_decision_presentation_binding
+    from scripts.user_visible_presentation import (
+        build_formal_decision_presentation_binding,
+        normalize_formal_decision_content,
+    )
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 REQUEST_DIR = ROOT / "requests" / "live_snapshot"
@@ -176,6 +182,11 @@ def build_structured_completion_request(
         raise ValueError("presentation_content must be a string")
     if isinstance(frozen_content, str) and not frozen_content.strip():
         raise ValueError("presentation_content must not be empty")
+    if isinstance(frozen_content, str):
+        # Normalize once before constructing the BDS. The exact normalized
+        # bytes are then reused by the response, binding, hash and completion;
+        # downstream projection must not silently rewrite a different body.
+        frozen_content = normalize_formal_decision_content(frozen_content)
     response_payload = dict(decision_response)
     if frozen_content not in (None, ""):
         # The report shown to the user and the report handed to the canonical
