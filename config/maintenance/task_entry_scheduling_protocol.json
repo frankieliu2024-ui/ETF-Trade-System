@@ -80,8 +80,9 @@
       ],
       "automatic_entry_mode": "AUTOMATIC_SCHEDULED_TASK",
       "canonical_task_id": "ETF正式决策",
-      "automatic_schedule_grace_seconds": 300,
-      "schedule_attribution": "SLOT_BASED_WITH_BOUNDED_DELAY"
+      "schedule_attribution": "NEAREST_UNIQUE_SLOT_WITH_BIDIRECTIONAL_WINDOW",
+      "automatic_schedule_early_tolerance_seconds": 300,
+      "automatic_schedule_late_tolerance_seconds": 300
     }
   ],
   "invariants": [
@@ -98,7 +99,7 @@
     "scheduled_review_formal_projection_must_preserve_formal_report_type",
     "formal_decision_task_id_is_canonical",
     "readback_identity_fields_are_contract_validated",
-    "automatic_bounded_delay_is_not_non_applicable"
+    "automatic_bounded_early_or_late_drift_is_not_non_applicable"
   ],
   "required_readback": [
     "task_id",
