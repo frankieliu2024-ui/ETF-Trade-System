@@ -229,6 +229,13 @@ def build_structured_completion_request(
     }
     if frozen_content not in (None, ""):
         payload["presentation_content"] = frozen_content
+
+    # Validate the final persisted envelope after the frozen presentation is
+    # attached. The preflight above intentionally has no presentation body;
+    # validating only that preflight allowed stale FINAL_CONTENT to enter a new
+    # request. This second validation binds the actual body to this request,
+    # requested_at_beijing, decision identity, snapshot and presentation hash.
+    validate_source(payload, expected_snapshot=snapshot)
     return {key: value for key, value in payload.items() if value not in (None, "")}
 
 
