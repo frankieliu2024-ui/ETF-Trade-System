@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-10-21T20:10:36+08:00",
+  "generated_at": "2026-10-21T20:12:13+08:00",
   "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -55,7 +55,7 @@
       "formal_reply_gate": {
         "request_id": "conversation-formal-202610212009-9xf0cil3",
         "requested_at_beijing": "2026-10-21T20:09:31.553+08:00",
-        "status": "READY",
+        "status": "NOT_APPLICABLE",
         "reply_freezable": true,
         "blockers": [],
         "source": "decision_fact_pack.formal_reply_freeze",
@@ -88,7 +88,7 @@
             "requested_at_beijing": "2026-10-21T20:09:31.553+08:00"
           },
           "formal_reply_freeze": {
-            "status": "READY",
+            "status": "NOT_APPLICABLE",
             "reply_freezable": true,
             "blockers": [],
             "request_id": "conversation-formal-202610212009-9xf0cil3",
@@ -6214,7 +6214,7 @@
                 "price": null,
                 "change_pct": null,
                 "market_phase": "PRE_MARKET",
-                "as_of_beijing": "2026-10-21T20:09:56+08:00",
+                "as_of_beijing": "2026-10-21T20:11:32+08:00",
                 "quality_status": "PASS",
                 "provider": ""
               },
@@ -6224,7 +6224,7 @@
                 "price": null,
                 "change_pct": null,
                 "market_phase": "PRE_MARKET",
-                "as_of_beijing": "2026-10-21T20:09:37+08:00",
+                "as_of_beijing": "2026-10-21T20:11:38+08:00",
                 "quality_status": "PASS",
                 "provider": ""
               },
@@ -8138,7 +8138,7 @@
                 },
                 "market_structure_context": {
                   "schema_version": "1.4",
-                  "generated_at": "2026-10-21T11:26:23Z",
+                  "generated_at": "2026-10-21T12:10:44Z",
                   "market_date": "2026-10-21",
                   "as_of_beijing": "2026-10-21T15:11:27+08:00",
                   "source_snapshot": "data/market/snapshots/2026-10-21_151127.json",
@@ -10847,112 +10847,29 @@
         "projection_scope": "FORMAL_DECISION_REQUEST",
         "parent_request_source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
         "parent_request_entry_mode": "MANUAL_CONVERSATION",
-        "actor_action": "COMPLETE_BUSINESS_DECISION_NOW",
+        "actor_action": "CONTINUE_SAME_REQUEST_SILENTLY",
         "user_output_allowed": false,
-        "business_decision_allowed": true,
-        "final_content_generation_allowed": true,
-        "consumer_status": "BUSINESS_DECISION_READY",
-        "required_problem_ids": [
-          "RISK_PERMISSION",
-          "MAIN_CANDIDATE",
-          "DEPLOYABLE_CASH",
-          "RELEASABLE_CAPITAL",
-          "TRIAL_CONFIRM_CAPACITY",
-          "CONCENTRATION_COMMON_RISK",
-          "NEXT_UNIT_CAPITAL_USE",
-          "HOLDING:159941",
-          "HELD_ETF_ADD:159941",
-          "HOLDING:159981",
-          "HELD_ETF_ADD:159981",
-          "HOLDING:159992",
-          "HELD_ETF_ADD:159992",
-          "OBSERVATION:588000",
-          "OBSERVATION:159781",
-          "OBSERVATION:513180",
-          "OBSERVATION:159561",
-          "OBSERVATION:513520",
-          "OBSERVATION:518880",
-          "OBSERVATION:515880",
-          "OBSERVATION:159326",
-          "OBSERVATION:515220",
-          "OBSERVATION:513350",
-          "OBSERVATION:515080",
-          "DISCOVERY:159007",
-          "DISCOVERY:159100",
-          "DISCOVERY:159108",
-          "DISCOVERY:159573",
-          "DISCOVERY:159811",
-          "DISCOVERY:513390",
-          "DISCOVERY:561460"
-        ],
-        "required_problem_count": 31,
-        "business_answer_contract": "DWP_EXACT_COVERAGE_BEFORE_PRESENTATION",
-        "ready_handoff": {
-          "required": true,
-          "submission_type": "BUSINESS_DECISION_SOURCE",
-          "source": "CHATGPT_BUSINESS_DECISION_RESPONSE",
-          "parent_request_id": "conversation-formal-202610212009-9xf0cil3",
-          "required_payload_fields": [
-            "request_id",
-            "parent_request_id",
-            "entry_mode",
-            "source",
-            "task_id",
-            "task_run_id",
-            "occurrence_id",
-            "market_date",
-            "decision_response.answers",
-            "decision_id",
-            "consumed_snapshot",
-            "presentation_content",
-            "content_hash",
-            "target_path"
-          ],
-          "target_path": "requests/live_snapshot/conversation-formal-202610212009-9xf0cil3__business_decision_source.json",
-          "binding_rules": {
-            "parent_request_id": "conversation-formal-202610212009-9xf0cil3",
-            "allowed_sources": [
-              "CHATGPT_BUSINESS_DECISION_RESPONSE"
-            ],
-            "forbid_historical_fallback": true,
-            "read_back_required": true,
-            "formal_decision_notification_chain_starts_at_bds": false,
-            "completion_and_report_not_required_for_formal_decision_notification": false,
-            "bds_must_be_written_and_read_back_before_user_reply": true,
-            "bds_and_completion_atomic_commit_required": true
-          },
-          "business_decision_allowed": true,
-          "final_content_generation_allowed": true,
-          "user_reply_precondition": true,
-          "notification_attempt_precondition": true,
-          "provider_success_not_required_for_user_reply": true,
-          "user_reply_contract": {
-            "must_be_first_user_visible_message": true,
-            "must_contain_complete_final_content": true,
-            "status_only_reply_forbidden": true,
-            "handoff_status_cannot_replace_content": true,
-            "bds_must_reuse_exact_final_content": true
-          },
-          "post_reply_async": false,
-          "provider_success_async": false,
-          "must_read_back_before_reply": true,
-          "bds_and_completion_atomic_commit_required": true,
-          "historical_fallback_forbidden": true
-        }
+        "business_decision_allowed": false,
+        "final_content_generation_allowed": false,
+        "consumer_status": "REQUEST_BOUND_FACTS_BUILDING",
+        "required_problem_ids": [],
+        "required_problem_count": 0,
+        "business_answer_contract": null,
+        "ready_handoff": null
       },
       "context_read_contract": {
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 1478407,
-          "sha256": "1fc2c5693a9889f336089e4c13ab755cd5206a1fe0eb35ded34fc9596f730768",
+          "byte_count": 1479088,
+          "sha256": "ecc4428e22853d00db02c2014853d64ce63a7c40e8973aac5f09dd0e20c175db",
           "parsed_object": true
         },
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 480028,
-          "sha256": "f9802ba08e0c0507893a771fc5469ff1fa022f15bbfa52792db52a51a6fb5c79",
+          "byte_count": 480334,
+          "sha256": "0aad1b1150feac197dc329a12b0de7afac70759c677c223f48cd6b194bd1234f",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -10981,15 +10898,15 @@
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 1478407,
-      "sha256": "1fc2c5693a9889f336089e4c13ab755cd5206a1fe0eb35ded34fc9596f730768",
+      "byte_count": 1479088,
+      "sha256": "ecc4428e22853d00db02c2014853d64ce63a7c40e8973aac5f09dd0e20c175db",
       "parsed_object": true
     },
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 480028,
-      "sha256": "f9802ba08e0c0507893a771fc5469ff1fa022f15bbfa52792db52a51a6fb5c79",
+      "byte_count": 480334,
+      "sha256": "0aad1b1150feac197dc329a12b0de7afac70759c677c223f48cd6b194bd1234f",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"
