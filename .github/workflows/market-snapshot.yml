@@ -1041,7 +1041,7 @@ jobs:
           done
           echo "processed=$processed" >> "$GITHUB_OUTPUT"
       - name: Record broker account sync maintenance receipt
-        if: ${{ always() && steps.state_sync.outcome != 'failure' && github.event_name == 'push' && env.TRIGGERING_REQUEST_ID != '' && env.TRIGGERING_REQUEST_FILE != '' }}
+        if: ${{ always() && github.event_name == 'push' && env.TRIGGERING_REQUEST_ID != '' && env.TRIGGERING_REQUEST_FILE != '' }}
         shell: bash
         env:
           ACCOUNT_SYNC_OUTCOME: ${{ steps.state_sync.outcome }}
