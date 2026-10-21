@@ -1,0 +1,354 @@
+{
+  "schema_version": "1.0",
+  "request_type": "SCHEDULED_REVIEW_COMPLETION",
+  "source_type": "BUSINESS_DECISION_SOURCE",
+  "source": "CHATGPT_SCHEDULED_REVIEW_ACTOR",
+  "formal_entry_source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+  "entry_mode": "MANUAL_CONVERSATION",
+  "task_id": "ETF正式决策",
+  "request_id": "formal_20261021080050_h225xv9y__scheduled_review_completion",
+  "parent_request_id": "formal_20261021080050_h225xv9y",
+  "task_run_id": "manual_formal_20261021080050_h225xv9y",
+  "occurrence_id": "conversation_formal_20261021080050_h225xv9y",
+  "decision_id": "formal_20261021080050_h225xv9y_decision",
+  "market_date": "2026-10-21",
+  "report_id": "formal_20261021080050_h225xv9y_decision",
+  "formal_fact_type": "FORMAL_POST_CLOSE_REVIEW",
+  "report_type": "ETF_FORMAL_DECISION",
+  "consumed_snapshot": "data/market/snapshots/2026-10-21_151127.json",
+  "market_phase": "POST_CLOSE_GRACE",
+  "captured_at": "2026-10-21T15:11:27+08:00",
+  "content_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+  "presentation_content": "【ETF正式决策】2026-10-21 23:35 正式判断\n\n【业务结论】\n\n1. 风险许可：禁止新增；实际新增部署0元，主候选为现金；Trial资格0个，Confirm资格0个。\n\n2. 现金120196.87元胜出。三只持仓继续持有、不追加；不自动下单、不调仓、不改变交易权限。\n\n【数据时点与必要依据】\n\n本次请求事实绑定市场日期2026-10-21；正式快照data/market/snapshots/2026-10-21_151127.json，捕获时间2026-10-21 15:11:27，市场阶段POST_CLOSE_GRACE；账户事实截至2026-10-20 17:09。\n\n【三层监测】\n\n1. 海外与跨市场：NDX、SOX为上一美股交易时段参考；日经、韩国、台湾、恒生科技按各自时点记录；SOX与SOXX不混用。\n\n2. A股内部：上证指数（000001）约-0.60%，创业板指（399006）约-1.62%，科创50指数（000688）约+0.06%，成长弱于大盘。\n\n3. ETF机会与资本：Discovery 5只，观察ETF 11只；均未形成机会ETF。\n\n【持仓动作】\n\n1. 纳指ETF（159941）：HOLD胜过REDUCE/EXIT，不追加。\n\n2. 能源化工ETF（159981）：HOLD胜过REDUCE/EXIT，不追加。\n\n3. 创新药ETF（159992）：HOLD胜过REDUCE/EXIT，不追加。\n\n【资本用途】\n\n现金120196.87元；持仓市值约50385.10元；可释放资本0元；资金缺口0元；实际新增部署0元。现金、持仓继续占资、追加、释放资本和合格机会已完成比较，现金胜出。证据不足以对合格机会排序，缺失独立估值、盈利/事件催化和更长窗口验证，因此暂不部署。\n\n【全市场机会发现】\n\n本次5只Discovery候选仅完成发现与资格判断，尚未进入资本竞争。\n\n1）工业软件ETF博时（159108）：尚未进入资本竞争。\n\n2）农牧渔ETF华宝（159275）：尚未进入资本竞争。\n\n3）800红利低波ETF华宝（159355）：尚未进入资本竞争。\n\n4）创业板200ETF华夏（159573）：尚未进入资本竞争。\n\n5）金融ETF国泰（510230）：尚未进入资本竞争。\n\n【观察ETF】\n\n1）科创50ETF（588000）：保留观察，无机会。\n\n2）科创创业ETF（159781）：保留观察，无机会。\n\n3）恒生科技ETF（513180）：保留观察，无机会。\n\n4）德国ETF（159561）：保留观察，无机会。\n\n5）日经ETF（513520）：保留观察，无机会。\n\n6）黄金ETF（518880）：保留观察，无机会。\n\n7）通信ETF（515880）：保留观察，无机会。\n\n8）电网设备ETF（159326）：保留观察，无机会。\n\n9）煤炭ETF（515220）：保留观察，无机会。\n\n10）标普油气ETF（513350）：保留观察，无机会。\n\n11）中证红利ETF招商（515080）：保留观察，无机会。\n\n【关键风险】\n\n风险重建降级、跨市场不同步、收盘后快照不代表下一交易日可执行价格；缺少独立估值、盈利或事件催化和更长窗口证据。\n\n【后续安排】\n\n下一合法节点复核风险重建、持仓HOLD/REDUCE/EXIT、观察功能、Discovery转化和现金机会成本；实际执行结果为0元新增，未自动交易。\n\n【置信度】\n\n中等。行情与账户绑定较强，但风险降级和候选证据不足限制了新增排序。\n\n【最可能出错的地方】\n\n可能把收盘后短时相对强弱误判为可持续趋势，或低估持仓继续占资与现金选择权的机会成本。",
+  "decision_response": {
+    "decision_id": "formal_20261021080050_h225xv9y_decision",
+    "answers": {
+      "RISK_PERMISSION": {
+        "risk_permission": "禁止新增",
+        "boundary": "不得自动交易或改变权限",
+        "evidence_status": "READY"
+      },
+      "MAIN_CANDIDATE": {
+        "main_candidate": "现金",
+        "opportunity_status": "无机会",
+        "new_amount_yuan": 0
+      },
+      "DEPLOYABLE_CASH": {
+        "decision": "证据不足以排序，暂不新增或调整",
+        "final_action": "HOLD/REJECT",
+        "evidence_status": "READY但证据不足",
+        "missing_evidence": [
+          "独立估值",
+          "盈利/事件催化",
+          "更长窗口验证"
+        ],
+        "capital_competition": "现金胜出，持仓继续占资暂不释放，合格机会未形成"
+      },
+      "RELEASABLE_CAPITAL": {
+        "decision": "证据不足以排序，暂不新增或调整",
+        "final_action": "HOLD/REJECT",
+        "evidence_status": "READY但证据不足",
+        "missing_evidence": [
+          "独立估值",
+          "盈利/事件催化",
+          "更长窗口验证"
+        ],
+        "capital_competition": "现金胜出，持仓继续占资暂不释放，合格机会未形成"
+      },
+      "TRIAL_CONFIRM_CAPACITY": {
+        "decision": "证据不足以排序，暂不新增或调整",
+        "final_action": "HOLD/REJECT",
+        "evidence_status": "READY但证据不足",
+        "missing_evidence": [
+          "独立估值",
+          "盈利/事件催化",
+          "更长窗口验证"
+        ],
+        "capital_competition": "现金胜出，持仓继续占资暂不释放，合格机会未形成"
+      },
+      "CONCENTRATION_COMMON_RISK": {
+        "decision": "证据不足以排序，暂不新增或调整",
+        "final_action": "HOLD/REJECT",
+        "evidence_status": "READY但证据不足",
+        "missing_evidence": [
+          "独立估值",
+          "盈利/事件催化",
+          "更长窗口验证"
+        ],
+        "capital_competition": "现金胜出，持仓继续占资暂不释放，合格机会未形成"
+      },
+      "NEXT_UNIT_CAPITAL_USE": {
+        "new_amount_yuan": 0,
+        "zero_amount_decisive_reason_if_zero": "风险许可为禁止新增，合格机会证据不足且现金机会成本最低；持仓HOLD优于REDUCE/EXIT但不具备追加优势。",
+        "compared_capital_states_as_business_state_names": [
+          {
+            "state_name": "现金保留",
+            "capital_action": "保留现金",
+            "remaining_deployable_cash": 120196.87,
+            "why_not_selected": "已选择",
+            "opportunity_cost_if_selected": "放弃潜在但未验证的市场收益"
+          },
+          {
+            "state_name": "合格机会部署",
+            "capital_action": "不买入",
+            "remaining_deployable_cash": 120196.87,
+            "why_not_selected": "证据不足以排序",
+            "opportunity_cost_if_selected": "承担未经验证的估值、催化与趋势风险"
+          },
+          {
+            "state_name": "持仓继续占资",
+            "capital_action": "HOLD",
+            "remaining_deployable_cash": 120196.87,
+            "why_not_selected": "不释放资本",
+            "opportunity_cost_if_selected": "放弃释放资金寻找更高效率机会"
+          }
+        ]
+      },
+      "HOLDING:159941": {
+        "decision": "证据不足以排序，暂不新增或调整",
+        "final_action": "HOLD/REJECT",
+        "evidence_status": "READY但证据不足",
+        "missing_evidence": [
+          "独立估值",
+          "盈利/事件催化",
+          "更长窗口验证"
+        ],
+        "capital_competition": "现金胜出，持仓继续占资暂不释放，合格机会未形成"
+      },
+      "HELD_ETF_ADD:159941": {
+        "decision": "证据不足以排序，暂不新增或调整",
+        "final_action": "HOLD/REJECT",
+        "evidence_status": "READY但证据不足",
+        "missing_evidence": [
+          "独立估值",
+          "盈利/事件催化",
+          "更长窗口验证"
+        ],
+        "capital_competition": "现金胜出，持仓继续占资暂不释放，合格机会未形成"
+      },
+      "HOLDING:159981": {
+        "decision": "证据不足以排序，暂不新增或调整",
+        "final_action": "HOLD/REJECT",
+        "evidence_status": "READY但证据不足",
+        "missing_evidence": [
+          "独立估值",
+          "盈利/事件催化",
+          "更长窗口验证"
+        ],
+        "capital_competition": "现金胜出，持仓继续占资暂不释放，合格机会未形成"
+      },
+      "HELD_ETF_ADD:159981": {
+        "decision": "证据不足以排序，暂不新增或调整",
+        "final_action": "HOLD/REJECT",
+        "evidence_status": "READY但证据不足",
+        "missing_evidence": [
+          "独立估值",
+          "盈利/事件催化",
+          "更长窗口验证"
+        ],
+        "capital_competition": "现金胜出，持仓继续占资暂不释放，合格机会未形成"
+      },
+      "HOLDING:159992": {
+        "decision": "证据不足以排序，暂不新增或调整",
+        "final_action": "HOLD/REJECT",
+        "evidence_status": "READY但证据不足",
+        "missing_evidence": [
+          "独立估值",
+          "盈利/事件催化",
+          "更长窗口验证"
+        ],
+        "capital_competition": "现金胜出，持仓继续占资暂不释放，合格机会未形成"
+      },
+      "HELD_ETF_ADD:159992": {
+        "decision": "证据不足以排序，暂不新增或调整",
+        "final_action": "HOLD/REJECT",
+        "evidence_status": "READY但证据不足",
+        "missing_evidence": [
+          "独立估值",
+          "盈利/事件催化",
+          "更长窗口验证"
+        ],
+        "capital_competition": "现金胜出，持仓继续占资暂不释放，合格机会未形成"
+      },
+      "OBSERVATION:588000": {
+        "decision": "证据不足以排序，暂不新增或调整",
+        "final_action": "HOLD/REJECT",
+        "evidence_status": "READY但证据不足",
+        "missing_evidence": [
+          "独立估值",
+          "盈利/事件催化",
+          "更长窗口验证"
+        ],
+        "capital_competition": "现金胜出，持仓继续占资暂不释放，合格机会未形成"
+      },
+      "OBSERVATION:159781": {
+        "decision": "证据不足以排序，暂不新增或调整",
+        "final_action": "HOLD/REJECT",
+        "evidence_status": "READY但证据不足",
+        "missing_evidence": [
+          "独立估值",
+          "盈利/事件催化",
+          "更长窗口验证"
+        ],
+        "capital_competition": "现金胜出，持仓继续占资暂不释放，合格机会未形成"
+      },
+      "OBSERVATION:513180": {
+        "decision": "证据不足以排序，暂不新增或调整",
+        "final_action": "HOLD/REJECT",
+        "evidence_status": "READY但证据不足",
+        "missing_evidence": [
+          "独立估值",
+          "盈利/事件催化",
+          "更长窗口验证"
+        ],
+        "capital_competition": "现金胜出，持仓继续占资暂不释放，合格机会未形成"
+      },
+      "OBSERVATION:159561": {
+        "decision": "证据不足以排序，暂不新增或调整",
+        "final_action": "HOLD/REJECT",
+        "evidence_status": "READY但证据不足",
+        "missing_evidence": [
+          "独立估值",
+          "盈利/事件催化",
+          "更长窗口验证"
+        ],
+        "capital_competition": "现金胜出，持仓继续占资暂不释放，合格机会未形成"
+      },
+      "OBSERVATION:513520": {
+        "decision": "证据不足以排序，暂不新增或调整",
+        "final_action": "HOLD/REJECT",
+        "evidence_status": "READY但证据不足",
+        "missing_evidence": [
+          "独立估值",
+          "盈利/事件催化",
+          "更长窗口验证"
+        ],
+        "capital_competition": "现金胜出，持仓继续占资暂不释放，合格机会未形成"
+      },
+      "OBSERVATION:518880": {
+        "decision": "证据不足以排序，暂不新增或调整",
+        "final_action": "HOLD/REJECT",
+        "evidence_status": "READY但证据不足",
+        "missing_evidence": [
+          "独立估值",
+          "盈利/事件催化",
+          "更长窗口验证"
+        ],
+        "capital_competition": "现金胜出，持仓继续占资暂不释放，合格机会未形成"
+      },
+      "OBSERVATION:515880": {
+        "decision": "证据不足以排序，暂不新增或调整",
+        "final_action": "HOLD/REJECT",
+        "evidence_status": "READY但证据不足",
+        "missing_evidence": [
+          "独立估值",
+          "盈利/事件催化",
+          "更长窗口验证"
+        ],
+        "capital_competition": "现金胜出，持仓继续占资暂不释放，合格机会未形成"
+      },
+      "OBSERVATION:159326": {
+        "decision": "证据不足以排序，暂不新增或调整",
+        "final_action": "HOLD/REJECT",
+        "evidence_status": "READY但证据不足",
+        "missing_evidence": [
+          "独立估值",
+          "盈利/事件催化",
+          "更长窗口验证"
+        ],
+        "capital_competition": "现金胜出，持仓继续占资暂不释放，合格机会未形成"
+      },
+      "OBSERVATION:515220": {
+        "decision": "证据不足以排序，暂不新增或调整",
+        "final_action": "HOLD/REJECT",
+        "evidence_status": "READY但证据不足",
+        "missing_evidence": [
+          "独立估值",
+          "盈利/事件催化",
+          "更长窗口验证"
+        ],
+        "capital_competition": "现金胜出，持仓继续占资暂不释放，合格机会未形成"
+      },
+      "OBSERVATION:513350": {
+        "decision": "证据不足以排序，暂不新增或调整",
+        "final_action": "HOLD/REJECT",
+        "evidence_status": "READY但证据不足",
+        "missing_evidence": [
+          "独立估值",
+          "盈利/事件催化",
+          "更长窗口验证"
+        ],
+        "capital_competition": "现金胜出，持仓继续占资暂不释放，合格机会未形成"
+      },
+      "OBSERVATION:515080": {
+        "decision": "证据不足以排序，暂不新增或调整",
+        "final_action": "HOLD/REJECT",
+        "evidence_status": "READY但证据不足",
+        "missing_evidence": [
+          "独立估值",
+          "盈利/事件催化",
+          "更长窗口验证"
+        ],
+        "capital_competition": "现金胜出，持仓继续占资暂不释放，合格机会未形成"
+      },
+      "DISCOVERY:159108": {
+        "decision": "证据不足以排序，暂不新增或调整",
+        "final_action": "HOLD/REJECT",
+        "evidence_status": "READY但证据不足",
+        "missing_evidence": [
+          "独立估值",
+          "盈利/事件催化",
+          "更长窗口验证"
+        ],
+        "capital_competition": "现金胜出，持仓继续占资暂不释放，合格机会未形成"
+      },
+      "DISCOVERY:159275": {
+        "decision": "证据不足以排序，暂不新增或调整",
+        "final_action": "HOLD/REJECT",
+        "evidence_status": "READY但证据不足",
+        "missing_evidence": [
+          "独立估值",
+          "盈利/事件催化",
+          "更长窗口验证"
+        ],
+        "capital_competition": "现金胜出，持仓继续占资暂不释放，合格机会未形成"
+      },
+      "DISCOVERY:159355": {
+        "decision": "证据不足以排序，暂不新增或调整",
+        "final_action": "HOLD/REJECT",
+        "evidence_status": "READY但证据不足",
+        "missing_evidence": [
+          "独立估值",
+          "盈利/事件催化",
+          "更长窗口验证"
+        ],
+        "capital_competition": "现金胜出，持仓继续占资暂不释放，合格机会未形成"
+      },
+      "DISCOVERY:159573": {
+        "decision": "证据不足以排序，暂不新增或调整",
+        "final_action": "HOLD/REJECT",
+        "evidence_status": "READY但证据不足",
+        "missing_evidence": [
+          "独立估值",
+          "盈利/事件催化",
+          "更长窗口验证"
+        ],
+        "capital_competition": "现金胜出，持仓继续占资暂不释放，合格机会未形成"
+      },
+      "DISCOVERY:510230": {
+        "decision": "证据不足以排序，暂不新增或调整",
+        "final_action": "HOLD/REJECT",
+        "evidence_status": "READY但证据不足",
+        "missing_evidence": [
+          "独立估值",
+          "盈利/事件催化",
+          "更长窗口验证"
+        ],
+        "capital_competition": "现金胜出，持仓继续占资暂不释放，合格机会未形成"
+      }
+    },
+    "presentation_content": "【ETF正式决策】2026-10-21 23:35 正式判断\n\n【业务结论】\n\n1. 风险许可：禁止新增；实际新增部署0元，主候选为现金；Trial资格0个，Confirm资格0个。\n\n2. 现金120196.87元胜出。三只持仓继续持有、不追加；不自动下单、不调仓、不改变交易权限。\n\n【数据时点与必要依据】\n\n本次请求事实绑定市场日期2026-10-21；正式快照data/market/snapshots/2026-10-21_151127.json，捕获时间2026-10-21 15:11:27，市场阶段POST_CLOSE_GRACE；账户事实截至2026-10-20 17:09。\n\n【三层监测】\n\n1. 海外与跨市场：NDX、SOX为上一美股交易时段参考；日经、韩国、台湾、恒生科技按各自时点记录；SOX与SOXX不混用。\n\n2. A股内部：上证指数（000001）约-0.60%，创业板指（399006）约-1.62%，科创50指数（000688）约+0.06%，成长弱于大盘。\n\n3. ETF机会与资本：Discovery 5只，观察ETF 11只；均未形成机会ETF。\n\n【持仓动作】\n\n1. 纳指ETF（159941）：HOLD胜过REDUCE/EXIT，不追加。\n\n2. 能源化工ETF（159981）：HOLD胜过REDUCE/EXIT，不追加。\n\n3. 创新药ETF（159992）：HOLD胜过REDUCE/EXIT，不追加。\n\n【资本用途】\n\n现金120196.87元；持仓市值约50385.10元；可释放资本0元；资金缺口0元；实际新增部署0元。现金、持仓继续占资、追加、释放资本和合格机会已完成比较，现金胜出。证据不足以对合格机会排序，缺失独立估值、盈利/事件催化和更长窗口验证，因此暂不部署。\n\n【全市场机会发现】\n\n本次5只Discovery候选仅完成发现与资格判断，尚未进入资本竞争。\n\n1）工业软件ETF博时（159108）：尚未进入资本竞争。\n\n2）农牧渔ETF华宝（159275）：尚未进入资本竞争。\n\n3）800红利低波ETF华宝（159355）：尚未进入资本竞争。\n\n4）创业板200ETF华夏（159573）：尚未进入资本竞争。\n\n5）金融ETF国泰（510230）：尚未进入资本竞争。\n\n【观察ETF】\n\n1）科创50ETF（588000）：保留观察，无机会。\n\n2）科创创业ETF（159781）：保留观察，无机会。\n\n3）恒生科技ETF（513180）：保留观察，无机会。\n\n4）德国ETF（159561）：保留观察，无机会。\n\n5）日经ETF（513520）：保留观察，无机会。\n\n6）黄金ETF（518880）：保留观察，无机会。\n\n7）通信ETF（515880）：保留观察，无机会。\n\n8）电网设备ETF（159326）：保留观察，无机会。\n\n9）煤炭ETF（515220）：保留观察，无机会。\n\n10）标普油气ETF（513350）：保留观察，无机会。\n\n11）中证红利ETF招商（515080）：保留观察，无机会。\n\n【关键风险】\n\n风险重建降级、跨市场不同步、收盘后快照不代表下一交易日可执行价格；缺少独立估值、盈利或事件催化和更长窗口证据。\n\n【后续安排】\n\n下一合法节点复核风险重建、持仓HOLD/REDUCE/EXIT、观察功能、Discovery转化和现金机会成本；实际执行结果为0元新增，未自动交易。\n\n【置信度】\n\n中等。行情与账户绑定较强，但风险降级和候选证据不足限制了新增排序。\n\n【最可能出错的地方】\n\n可能把收盘后短时相对强弱误判为可持续趋势，或低估持仓继续占资与现金选择权的机会成本。"
+  },
+  "bds_path": "requests/live_snapshot/formal_20261021080050_h225xv9y__business_decision_source.json",
+  "no_trade_authority": true
+}
