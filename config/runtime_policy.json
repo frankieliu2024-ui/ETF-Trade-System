@@ -169,7 +169,9 @@
     "require_final_post_request_recheck": true,
     "require_final_current_and_decision_context_recheck": true,
     "interactive_short_wait_unchanged": false,
-    "rule": "Scheduled正式决策与interactive用户触发正式分析共享‘关键事实优先、canonical链状态驱动’的上位终止原则，但两者仍保持独立执行预算与调用边界。Scheduled路径继续以同一canonical producer/C链状态和必要decision context为主要终止条件；interactive路径的20秒仅为快速读取窗口，不再表示可在关键事实仍在形成时提前结束。已有合法READY则直接消费；同一producer queued/in_progress则复用并继续有界等待；CURRENT已形成但同一事实窗口的必要decision context仍在构建时继续等待；只有不存在合法链、producer/runtime/context明确失败，或达到各自现有合法终止边界时才fail closed。正式输出和持久化前必须最终重读CURRENT、decision context与同一事实窗口，禁止新行情配旧决策上下文。"
+    "rule": "Scheduled正式决策与interactive用户触发正式分析共享‘关键事实优先、canonical链状态驱动’的上位终止原则，但两者仍保持独立执行预算与调用边界。Scheduled路径继续以同一canonical producer/C链状态和必要decision context为主要终止条件；interactive路径的20秒仅为快速读取窗口，不再表示可在关键事实仍在形成时提前结束。已有合法READY则直接消费；同一producer queued/in_progress则复用并继续有界等待；CURRENT已形成但同一事实窗口的必要decision context仍在构建时继续等待；只有不存在合法链、producer/runtime/context明确失败，或达到各自现有合法终止边界时才fail closed。正式输出和持久化前必须最终重读CURRENT、decision context与同一事实窗口，禁止新行情配旧决策上下文。 自动任务平台的有界调度延迟不改变入口类型；在5分钟宽限内按唯一最近计划槽位归属继续同一Formal Decision链，超过宽限或无法唯一归属才进入SKIP/入口失败边界。",
+    "scheduled_slot_grace_seconds": 300,
+    "scheduled_slot_attribution": "SLOT_BASED_WITH_BOUNDED_DELAY"
   },
   "scheduled_trade_review": {
     "schedule_id": "ETF_TRADE_REVIEW",
