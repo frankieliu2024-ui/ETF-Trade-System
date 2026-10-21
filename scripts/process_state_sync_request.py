@@ -3672,9 +3672,31 @@ def main() -> int:
         content = bds.get("presentation_content")
         if not isinstance(content, str) or not content:
             raise ValueError("Formal Decision completion content binding is invalid")
+        # The live actor historically wrote a fresh top-level presentation
+        # while carrying forward the nested binding from an older run.  The
+        # top-level presentation is the durable BDS source; rebuild the
+        # derived binding from those exact bytes before projection, and persist
+        # the repaired BDS so the read-back contract is true as well.
+        expected_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
+        if str(bds.get("content_hash") or "").strip() != expected_hash:
+            raise ValueError("Formal Decision completion content binding is invalid")
         binding = bds.get("presentation_binding") if isinstance(bds.get("presentation_binding"), dict) else {}
         if str(binding.get("full_content") or "") != content:
-            raise ValueError("Formal Decision completion content binding is invalid")
+            repaired_binding = build_formal_decision_presentation_binding(
+                content,
+                request_id=str(bds.get("request_id") or "").strip(),
+                decision_id=str(bds.get("decision_id") or "").strip(),
+                parent_request_id=str(bds.get("parent_request_id") or "").strip(),
+                report_id=str(bds.get("report_id") or "").strip(),
+            )
+            if repaired_binding.get("full_content") != content:
+                raise ValueError("Formal Decision completion content binding is invalid")
+            bds["presentation_binding"] = repaired_binding
+            atomic_json_write(bds_file, bds)
+            bds = load_json(bds_file)
+            binding = bds.get("presentation_binding") if isinstance(bds.get("presentation_binding"), dict) else {}
+            if str(binding.get("full_content") or "") != content:
+                raise ValueError("Formal Decision completion content binding is invalid")
         # BDS is the sole durable business source. The completion ingress is
         # only the Scheduled Review handoff and must not re-validate a second
         # copy of the decision work package or decision answers. Those copies
