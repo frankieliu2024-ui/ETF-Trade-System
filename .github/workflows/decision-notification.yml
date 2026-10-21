@@ -113,12 +113,44 @@ jobs:
           git cat-file -e "$PUSH_BEFORE^{commit}" 2>/dev/null || git fetch --no-tags origin "$PUSH_BEFORE"
           git cat-file -e "$PUSH_AFTER^{commit}" 2>/dev/null || git fetch --no-tags origin "$PUSH_AFTER"
           git diff --name-only "$PUSH_BEFORE" "$PUSH_AFTER" > /tmp/changed_files.txt
-          mapfile -t formal_completion_paths < <(grep -E '^requests/live_snapshot/[^/]+__scheduled_review_completion\\.json$' /tmp/changed_files.txt || true)
-          if [ "${#formal_completion_paths[@]}" -eq 1 ]; then
-            echo "formal_completion=true" >> "$GITHUB_OUTPUT"
-            echo "formal_completion_path=${formal_completion_paths[0]}" >> "$GITHUB_OUTPUT"
-          elif [ "${#formal_completion_paths[@]}" -gt 1 ]; then
-            echo "Ambiguous Formal Decision completion push: expected exactly one completion file, found ${#formal_completion_paths[@]}" >&2
+          mapfile -t completion_paths < <(grep -E '^requests/live_snapshot/[^/]+__scheduled_review_completion\\.json$' /tmp/changed_files.txt || true)
+          if [ "${#completion_paths[@]}" -eq 1 ]; then
+            completion_path="${completion_paths[0]}"
+            completion_kind=$(python - "$completion_path" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as handle:
+    payload = json.load(handle)
+binding = payload.get("presentation_binding") or {}
+if (
+    payload.get("formal_fact_type") == "FORMAL_POST_CLOSE_REVIEW"
+    and binding.get("report_type") == "ETF_FORMAL_DECISION"
+):
+    print("FORMAL")
+elif payload.get("request_type") == "SCHEDULED_REVIEW_COMPLETION":
+    print("SCHEDULED_REVIEW")
+else:
+    print("UNKNOWN")
+PY
+)
+            case "$completion_kind" in
+              FORMAL)
+                echo "formal_completion=true" >> "$GITHUB_OUTPUT"
+                echo "formal_completion_path=$completion_path" >> "$GITHUB_OUTPUT"
+                ;;
+              SCHEDULED_REVIEW)
+                echo "Scheduled Review completion push is not a Formal Decision wake; waiting for explicit scheduled_review_completion_path dispatch."
+                echo "formal_completion=false" >> "$GITHUB_OUTPUT"
+                echo "formal_completion_path=" >> "$GITHUB_OUTPUT"
+                ;;
+              *)
+                echo "Unknown completion contract in $completion_path; fail closed." >&2
+                exit 1
+                ;;
+            esac
+          elif [ "${#completion_paths[@]}" -gt 1 ]; then
+            echo "Ambiguous completion push: expected exactly one completion file, found ${#completion_paths[@]}" >&2
             exit 1
           else
             echo "formal_completion=false" >> "$GITHUB_OUTPUT"
