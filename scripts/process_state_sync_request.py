@@ -3636,17 +3636,19 @@ def main() -> int:
         binding = bds.get("presentation_binding") if isinstance(bds.get("presentation_binding"), dict) else {}
         if str(binding.get("full_content") or "") != content:
             raise ValueError("Formal Decision completion content binding is invalid")
-        # BDS remains the durable source during compatibility migration. When
-        # inline Formal fields are present, compare them before projecting BDS.
-        for field in (
-            "decision_response",
-            "decision_work_package",
-            "consumed_snapshot",
-            "presentation_content",
-            "presentation_binding",
-        ):
-            if field in request and request.get(field) != bds.get(field):
-                raise ValueError(f"Formal Decision completion inline {field} does not match BDS")
+        # BDS is the sole durable business source. The completion ingress is
+        # only the Scheduled Review handoff and must not re-validate a second
+        # copy of the decision work package or decision answers. Those copies
+        # can differ after canonical normalization/recovery even when the
+        # frozen presentation and identity are valid; the shared review chain
+        # deliberately projects from presentation_binding.full_content.
+        inline_content = request.get("presentation_content")
+        if inline_content not in (None, "") and inline_content != content:
+            raise ValueError("Formal Decision completion presentation content does not match BDS")
+        inline_binding = request.get("presentation_binding")
+        if isinstance(inline_binding, dict):
+            if str(inline_binding.get("full_content") or "") != content:
+                raise ValueError("Formal Decision completion presentation binding does not match BDS")
         request.update({key: value for key, value in bds.items() if key not in {"request_id", "request_type", "source"}})
         request["request_type"] = BUSINESS_DECISION_SOURCE
         request["request_id"] = str(bds.get("request_id") or "").strip()
