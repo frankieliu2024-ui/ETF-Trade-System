@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-10-22T07:27:51+08:00",
+  "generated_at": "2026-10-22T07:28:40+08:00",
   "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -51,13 +51,15 @@
       "decision_context": true,
       "minimum_decision_context": "READY_OR_NOT_APPLICABLE",
       "observability_boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
-      "request_bound": true,
+      "request_bound": false,
       "formal_reply_gate": {
         "request_id": "conversation-formal-20261022T070000_s2g76pwg",
         "requested_at_beijing": "2026-10-22T07:00:00+08:00",
-        "status": "NOT_APPLICABLE",
-        "reply_freezable": true,
-        "blockers": [],
+        "status": "IN_FLIGHT",
+        "reply_freezable": false,
+        "blockers": [
+          "REQUEST_BOUND_QUERY_CONTEXT_NOT_PUBLISHED"
+        ],
         "source": "decision_fact_pack.formal_reply_freeze",
         "consumer_manifest": {
           "request_id": "conversation-formal-20261022T070000_s2g76pwg",
@@ -10987,21 +10989,23 @@
         "required_problem_ids": [],
         "required_problem_count": 0,
         "business_answer_contract": null,
-        "ready_handoff": null
+        "ready_handoff": null,
+        "request_bound": false,
+        "projection_preserved_from_non_formal_runtime_request": true
       },
       "context_read_contract": {
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 1491229,
-          "sha256": "21241a5937fe10acbe1977dacf847c653be1fac1b82560836f55a63849aa4828",
+          "byte_count": 1240887,
+          "sha256": "2180e035461969fbc13c1862a455740f0158952585bccce35ebc96b0e117abe7",
           "parsed_object": true
         },
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 480308,
-          "sha256": "58338205088388508d328a2fa6c421845fbda1cd1dc0c45845a552f5514e2dac",
+          "byte_count": 416218,
+          "sha256": "f9cd950b49244aa4808885e10b9b405e19611be4c2a9f8745f7d840241d9f204",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -11030,15 +11034,15 @@
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 1491229,
-      "sha256": "21241a5937fe10acbe1977dacf847c653be1fac1b82560836f55a63849aa4828",
+      "byte_count": 1240887,
+      "sha256": "2180e035461969fbc13c1862a455740f0158952585bccce35ebc96b0e117abe7",
       "parsed_object": true
     },
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 480308,
-      "sha256": "58338205088388508d328a2fa6c421845fbda1cd1dc0c45845a552f5514e2dac",
+      "byte_count": 416218,
+      "sha256": "f9cd950b49244aa4808885e10b9b405e19611be4c2a9f8745f7d840241d9f204",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"
