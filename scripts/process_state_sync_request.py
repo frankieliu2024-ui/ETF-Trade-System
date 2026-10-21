@@ -1,5 +1,5 @@
-Warning: truncated output (original token count: 59230)
-Total output lines: 4162
+Warning: truncated output (original token count: 59121)
+Total output lines: 4153
 
 from __future__ import annotations
 
@@ -30,7 +30,6 @@ try:
         build_formal_completion_from_source,
         project_decision_response,
         source_fingerprint,
-        validate_formal_presentation_provenance,
         emit_formal_replay_forensic_fingerprint,
         reset_formal_replay_forensic_trace,
         validate_source,
@@ -41,7 +40,6 @@ except ModuleNotFoundError:
         build_formal_completion_from_source,
         project_decision_response,
         source_fingerprint,
-        validate_formal_presentation_provenance,
         emit_formal_replay_forensic_fingerprint,
         reset_formal_replay_forensic_trace,
         validate_source,
@@ -1056,7 +1054,1511 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
     if event_path.exists():
         prior = load_json(event_path)
         if str(request.get("request_type") or "").upper() == BUSINESS_DECISION_SOURCE:
-            prior_sour…29230 tokens truncated…or (scenario == "POST_CLOSE_REVIEW" and not is_decision_fact and not is_trade_fact)
+            prior_source = str(prior.get("source_fingerprint") or "").strip()
+            current_source = str(request.get("_source_fingerprint") or "").strip()
+            if prior_source and current_source and prior_source != current_source:
+                raise ValueError("business decision source semantic conflict: immutable source fingerprint mismatch")
+        if is_manual_completion and prior.get("fingerprint") == fingerprint:
+            if (
+                prior.get("price_source_snapshot") == snapshot_rel
+                and prior.get("point_in_time_status") == pit_status
+            ):
+                return True, decision_id
+            raise ValueError("manual formal decision retry changed its PIT/source snapshot linkage")
+        if is_manual_completion:
+            raise ValueError("manual formal decision_id is already bound to a different request or decision")
+        if prior.get("fingerprint") == fingerprint and prior.get("price_source_snapshot") == snapshot_rel:
+            # Preserve semantic idempotency while refreshing the non-semantic
+            # user-visible presentation binding when a replay supplies newer
+            # presentation text for the same immutable decision fact.
+            if prior.get("presentation_binding") != event.get("presentation_binding"):
+                prior["presentation_binding"] = event.get("presentation_binding")
+                atomic_json_write(event_path, prior)
+            return True, decision_id
+    atomic_json_write(event_path, event)
+    return True, decision_id
+
+
+def _formal_decision_presentation_binding(request: dict, request_id: str, decision_id: str) -> dict:
+    """Validate and fingerprint supplied Formal Decision user-facing text."""
+    supplied = request.get("presentation_content")
+    if supplied in (None, ""):
+        return {"status": "NOT_SUPPLIED", "presentation_valid": False, "business_reply_eligible": bool(request.get("_source_fingerprint"))}
+    return build_formal_decision_presentation_binding(
+        str(supplied),
+        request_id=request_id,
+        decision_id=decision_id,
+        parent_request_id=str(request.get("parent_request_id") or request_id),
+        report_id=f"etf-formal-decision:{decision_id}",
+        canonical_closure_confirmed=bool(request.get("canonical_closure_confirmed")),
+        technical_audit_mode=bool(request.get("technical_audit_mode")),
+    )
+
+
+def validate_formal_decision_contract(decision: dict) -> str:
+    """Validate stable user-facing decision enums before persistence.
+
+    Formal facts are validated at their canonical ingress, rather than repaired
+    later by notification rendering.  This intentionally validates only the
+    existing contract fields and does not infer a transaction or alter MASTER.
+    """
+    opportunity_status = _canonical_formal_opportunity_status(decision.get("opportunity_status"))
+    if not opportunity_status:
+        return "opportunity_status must be one of: " + ", ".join(sorted(FORMAL_OPPORTUNITY_STATUSES))
+    risk = decision.get("risk_permission")
+    if risk is not None and str(risk).strip() not in {"禁止新增", "允许Trial", "允许Confirm"}:
+        return "risk_permission is not a registered formal value"
+    lifecycle_error = _validate_formal_lifecycle(decision.get("lifecycle"))
+    if lifecycle_error:
+        return lifecycle_error
+    lifecycle_error = validate_current_lifecycle_contract(decision.get("lifecycle"), _load_account_for_lifecycle_validation())
+    if lifecycle_error:
+        return lifecycle_error
+    return ""
+
+
+def _canonical_formal_opportunity_status(value: object) -> str:
+    """Map unambiguous rich status text to the existing canonical enum."""
+    text = str(value or "").strip()
+    if text in FORMAL_OPPORTUNITY_STATUSES:
+        return text
+    for prefix, canonical in (
+        ("Trial", "Trial机会"),
+        ("Confirm", "Confirm机会"),
+        ("观察", "观察机会"),
+        ("无机会", "无机会"),
+    ):
+        if text.startswith(prefix):
+            return canonical
+    return ""
+
+
+def _validate_formal_lifecycle(value: object, object_name: str = "lifecycle") -> str:
+    """Validate lifecycle actions without narrowing the existing multi-object schema.
+
+    Current formal decisions use both a single legacy string and a mapping from
+    security name to per-object lifecycle text.  The canonical contract is the
+    action expressed for each object; explanatory text may accompany that
+    action and is retained for compatibility.
+    """
+    if value is None or value == "":
+        return ""
+    if isinstance(value, dict):
+        for security, action in value.items():
+            if not str(security).strip():
+                return f"{object_name} contains an empty object key"
+            error = _validate_formal_lifecycle(action, f"{object_name}[{security}]")
+            if error:
+                return error
+        return ""
+    if not isinstance(value, str):
+        return f"{object_name} must be text or an object-to-lifecycle mapping"
+    text = value.strip()
+    if not text:
+        return ""
+    clauses = [part.strip() for part in text.replace(";", "；").split("；") if part.strip()]
+    current_seen = False
+    for clause in clauses:
+        # Historical Trial/Confirm/exit wording is explanatory only.  It may
+        # follow a current action, but it cannot be the current action itself.
+        historical_exit = "已退出" in clause
+        if "持有并" in clause or "持有且" in clause:
+            return f"{object_name} clause must state the current holding action explicitly: {clause}"
+        current_actions = ("持有管理", "持仓管理", "降低风险", "退出")
+        has_current_action = any(
+            action in clause and not (action == "退出" and historical_exit)
+            for action in current_actions
+        )
+        legacy_hold = "持有" in clause and not has_current_action and "持有并" not in clause and "持有且" not in clause
+        if not has_current_action and current_seen and (historical_exit or any(term in clause for term in ("Trial", "Confirm", "观察", "已关闭", "继续"))):
+            continue
+        if not has_current_action and not legacy_hold:
+            return f"{object_name} clause has no registered lifecycle action: {clause}"
+        current_seen = True
+    return ""
+
+
+def _load_account_for_lifecycle_validation() -> dict:
+    """Load the canonical account fact for current lifecycle validation."""
+    account_path = ROOT / "data" / "state" / "account_fact.json"
+    return load_json(account_path) if account_path.exists() else {}
+
+
+def _account_for_decision_validation(request: dict) -> dict:
+    """Resolve the account fact at the decision boundary being validated.
+
+    Historical Formal Decision recovery validates the immutable decision against
+    the account snapshot captured in its request-bound query context. Ordinary
+    current completion keeps the existing current-account contract. The
+    snapshot is request-local only and is never persisted or used to rewrite
+    current account state.
+    """
+    if request.get("_historical_replay") is True:
+        historical = request.get("_historical_account_fact")
+        if not isinstance(historical, dict) or not historical:
+            raise ValueError("historical Formal Decision recovery requires request-bound account fact")
+        return json.loads(json.dumps(historical))
+    return _load_account_for_lifecycle_validation()
+
+
+def _lifecycle_object_code(security: object) -> str:
+    match = re.search(r"(?<!\d)(\d{6})(?!\d)", str(security or ""))
+    return normalize_code(match.group(1)) if match else ""
+
+
+def _is_historical_lifecycle_explanation(text: str) -> bool:
+    return any(marker in text for marker in ("历史", "曾", "来源", "解释", "原", "previous", "historical"))
+
+
+def _managed_position_code(key: object, managed: list[dict]) -> str:
+    text = str(key or "")
+    for item in managed:
+        if item["code"] in text or item["name"] in text:
+            return item["code"]
+    return ""
+
+
+def validate_managed_position_lifecycle(value: object, account: dict, object_name: str = "lifecycle") -> str:
+    """Require one explicit lifecycle line/entry for every positive account position."""
+    managed = build_managed_position_projection(ROOT, account or {}).get("positions", [])
+    if not managed:
+        return ""
+    covered: set[str] = set()
+    if isinstance(value, dict):
+        for key in value:
+            code = _managed_position_code(key, managed)
+            if code:
+                covered.add(code)
+    elif isinstance(value, str):
+        lines = [line.strip() for line in value.splitlines() if line.strip()]
+        for line in lines:
+            matches = [item["code"] for item in managed if item["code"] in line]
+            if len(matches) == 1:
+                covered.add(matches[0])
+            elif len(matches) > 1:
+                return f"{object_name} must provide one separate line per managed position"
+    missing = [f"{item['name']}（{item['code']}）" for item in managed if item["code"] not in covered]
+    if missing:
+        return f"{object_name} is missing current managed positions: {', '.join(missing)}"
+    return ""
+
+
+def discovery_eligibility_inputs(root: Path, market_date: str = "", context: dict | None = None) -> dict[str, dict]:
+    if context is None:
+        path = root / "data" / "state" / "query_context.json"
+        if not path.exists():
+            return {}
+        context = load_json(path)
+    if not isinstance(context, dict):
+        return {}
+    context_market_date = str(context.get("market_date") or (context.get("current") or {}).get("market_date") or "")
+    if market_date and context_market_date != str(market_date):
+        return {}
+    discovery = context.get("formal_etf_discovery") or context.get("opportunity_inputs") or (context.get("decision_fact_pack") or {}).get("opportunity_inputs") or {}
+    return {
+        normalize_code(item.get("code") or ""): item
+        for item in (discovery.get("candidates") or [])
+        if isinstance(item, dict) and normalize_code(item.get("code") or "")
+    }
+
+
+def request_bound_discovery_eligibility_inputs(root: Path, market_date: str, request: dict) -> dict[str, dict]:
+    if request.get("_historical_replay") is not True:
+        return discovery_eligibility_inputs(root, market_date)
+
+    context = request.get("_historical_query_context")
+    if not isinstance(context, dict) or not context:
+        raise ValueError("historical Formal Decision replay requires request-bound Discovery context")
+    inputs = discovery_eligibility_inputs(root, market_date, context=context)
+    dwp = request.get("decision_work_package") or {}
+    problem_graph = dwp.get("problem_graph") if isinstance(dwp, dict) else None
+    if not isinstance(problem_graph, list):
+        raise ValueError("historical Formal Decision replay requires request-bound DWP problem_graph")
+
+    graph_codes = []
+    for item in problem_graph:
+        if not isinstance(item, dict):
+            raise ValueError("historical Formal Decision replay DWP problem_graph contains an invalid item")
+        problem_id = str(item.get("problem_id") or "")
+        if not problem_id.startswith("DISCOVERY:"):
+            continue
+        code = normalize_code(problem_id.split(":", 1)[1])
+        if not code:
+            raise ValueError("historical Formal Decision replay DWP Discovery item has no code")
+        graph_codes.append(code)
+    if len(graph_codes) != len(set(graph_codes)) or set(inputs) != set(graph_codes):
+        raise ValueError("historical Formal Decision Discovery candidates do not match request-bound DWP")
+    return inputs
+
+
+def manual_completion_discovery_inputs(request: dict) -> tuple[dict[str, dict] | None, str]:
+    """Recover immutable same-request Discovery eligibility after query_context moves on."""
+    if str(request.get("source") or "").upper() != "CHATGPT_MANUAL_FORMAL_COMPLETION":
+        return None, ""
+    closure = request.get("observation_eligibility_closure")
+    if closure is None:
+        return None, ""
+    if not isinstance(closure, dict):
+        return None, "manual completion observation_eligibility_closure must be an object"
+    parent_id = str(request.get("parent_request_id") or "").strip()
+    if (
+        str(closure.get("parent_request_id") or "").strip() != parent_id
+        or str(closure.get("status") or "").upper() != "READY"
+    ):
+        return None, "manual completion observation eligibility closure is not bound READY to parent request"
+    candidates = closure.get("candidates")
+    if not isinstance(candidates, list):
+        return None, "manual completion observation eligibility closure requires candidates"
+    out: dict[str, dict] = {}
+    for index, item in enumerate(candidates):
+        if not isinstance(item, dict):
+            return None, f"manual completion observation eligibility closure candidate[{index}] must be an object"
+        code = normalize_code(item.get("code") or "")
+        quote_status = str(item.get("formal_quote_status") or "").upper()
+        if not code or code in out:
+            return None, f"manual completion observation eligibility closure candidate[{index}] has invalid or duplicate code"
+        if quote_status not in {"READY", "DEGRADED", "FAILED"}:
+            return None, f"manual completion observation eligibility closure candidate[{index}] has invalid formal_quote_status"
+        out[code] = {"code": code, "formal_quote_status": quote_status}
+    return out, ""
+
+
+def validate_observation_eligibility_reviews(decision: dict, inputs: dict[str, dict], *, identity_review_codes: set[str] | None = None) -> tuple[set[str], str]:
+    if not inputs:
+        return set(), ""
+    reviews = decision.get("observation_eligibility_reviews")
+    if not isinstance(reviews, list):
+        return set(), "formal_decision.observation_eligibility_reviews must cover every same-node Discovery input"
+    seen, admitted = set(), set()
+    identity_review_codes = {normalize_code(code) for code in (identity_review_codes or set())}
+    for index, review in enumerate(reviews):
+        if not isinstance(review, dict):
+            return set(), f"formal_decision.observation_eligibility_reviews[{index}] must be an object"
+        code = normalize_code(review.get("code") or review.get("security_code") or "")
+        disposition = str(review.get("disposition") or "").upper().strip()
+        if code not in inputs or code in seen:
+            return set(), f"formal_decision.observation_eligibility_reviews[{index}] has unknown or duplicate code"
+        if disposition not in {"ADMIT", "REJECT"}:
+            return set(), f"formal_decision.observation_eligibility_reviews[{index}].disposition must be ADMIT or REJECT"
+        if not str(review.get("reason") or "").strip():
+            return set(), f"formal_decision.observation_eligibility_reviews[{index}] requires reason"
+        if disposition == "ADMIT":
+            quote_status = str(inputs[code].get("formal_quote_status") or "").upper()
+            # MASTER 3.2: a persistent Observation identity may be admitted on lawful
+            # non-execution cross-node evidence even when the current executable quote
+            # is unavailable.  Discovery-origin admission still requires READY because
+            # it originates in same-node opportunity qualification.
+            if code not in identity_review_codes and quote_status != "READY":
+                return set(), f"formal_decision cannot ADMIT Discovery input {code} without READY formal quote"
+            admitted.add(code)
+        seen.add(code)
+    missing = sorted(set(inputs) - seen)
+    if missing:
+        return set(), "formal_decision.observation_eligibility_reviews missing Discovery inputs: " + ", ".join(missing)
+    return admitted, ""
+
+
+def legal_observation_reviews(decision: dict, current_observations: set[str], admitted: set[str]) -> dict[str, str]:
+    actions = {
+        normalize_code(item.get("code") or ""): str(item.get("action") or "").upper()
+        for item in (decision.get("observation_management") or [])
+        if isinstance(item, dict)
+    }
+    legal = {code for code in current_observations if actions.get(code) == "RETAIN"} | set(admitted)
+    return {code: "OBSERVED_ETF" for code in legal}
+
+
+def request_bound_observation_identity_review_inputs(request: dict) -> dict[str, dict]:
+    """Return explicit non-managed Observation identity reviews frozen in the request-bound DWP."""
+    work_package = request.get("decision_work_package") or {}
+    graph = work_package.get("problem_graph") if isinstance(work_package, dict) else None
+    if not isinstance(graph, list):
+        return {}
+    out: dict[str, dict] = {}
+    for item in graph:
+        if not isinstance(item, dict):
+            continue
+        problem_id = str(item.get("problem_id") or "")
+        if not problem_id.startswith("OBSERVATION_REVIEW:"):
+            continue
+        code = normalize_code(problem_id.split(":", 1)[1])
+        if not code or code in out:
+            raise ValueError("decision work package has invalid or duplicate explicit Observation identity review")
+        if str(item.get("role_contract") or "") != "EXPLICIT_OBSERVATION_IDENTITY_REVIEW_V1":
+            raise ValueError("explicit Observation identity review has invalid role contract")
+        out[code] = {
+            "code": code,
+            "formal_quote_status": str(item.get("formal_quote_status") or "").upper(),
+            "source": "REQUEST_BOUND_EXPLICIT_OBSERVATION_IDENTITY_REVIEW",
+        }
+    return out
+
+
+def request_bound_etf_opportunity_reviews(request: dict) -> dict[str, str]:
+    """Return the immutable ETF opportunity domain frozen in this Formal Decision request.
+
+    A durable BUSINESS_DECISION_SOURCE carries the same request-bound Decision Work
+    Package that ChatGPT answered.  Persistence must validate coverage against that
+    frozen problem graph, not reconstruct the decision-object universe from a later
+    monitor/query state.  Observation eligibility remains a separate identity gate.
+    """
+    work_package = request.get("decision_work_package") or {}
+    graph = work_package.get("problem_graph") if isinstance(work_package, dict) else None
+    if not isinstance(graph, list):
+        return {}
+    required: dict[str, str] = {}
+    seen_roles: dict[str, set[str]] = {}
+    for item in graph:
+        if not isinstance(item, dict):
+            continue
+        problem_id = str(item.get("problem_id") or "")
+        if problem_id.startswith("OBSERVATION:"):
+            code = normalize_code(problem_id.split(":", 1)[1])
+            category = "OBSERVED_ETF"
+        elif problem_id.startswith(("DISCOVERY:", "OBSERVATION_REVIEW:")):
+            code = normalize_code(problem_id.split(":", 1)[1])
+            category = "OBSERVATION_EVALUATION_INPUT"
+        else:
+            continue
+        if not code:
+            raise ValueError("decision work package has invalid ETF opportunity identity")
+        prior_roles = seen_roles.get(code, set())
+        if category in prior_roles:
+            raise ValueError("decision work package has invalid or duplicate ETF opportunity identity")
+        if code in required:
+            role_pair = prior_roles | {category}
+            if role_pair != {"OBSERVED_ETF", "OBSERVATION_EVALUATION_INPUT"}:
+                raise ValueError("decision work package has invalid or duplicate ETF opportunity identity")
+            # One instrument may have two distinct decision roles in the same
+            # node: an existing Observation and a temporary Discovery evaluation.
+            # Capital competition is instrument-level, so the registered
+            # Observation identity owns the single canonical opportunity row.
+            required[code] = "OBSERVED_ETF"
+            seen_roles[code] = role_pair
+            continue
+        required[code] = category
+        seen_roles[code] = {category}
+    return required
+
+
+def freeze_source_work_package(source_payload: dict, decision_work_package: dict) -> dict:
+    """Bind the exact request-bound DWP to the in-memory Source projection."""
+    if not isinstance(source_payload, dict) or not isinstance(decision_work_package, dict):
+        raise ValueError("source payload and decision work package must be objects")
+    graph = decision_work_package.get("problem_graph")
+    if not isinstance(graph, list) or not graph:
+        raise ValueError("source projection requires a non-empty request-bound problem graph")
+    bound = json.loads(json.dumps(source_payload))
+    bound["decision_work_package"] = json.loads(json.dumps(decision_work_package))
+    return bound
+
+
+def required_etf_opportunity_reviews(root: Path, account: dict, market_date: str = "") -> dict[str, str]:
+    """Return the request-node ETF opportunity set that formal completion must cover.
+
+    Current query_context must never be projected backwards onto a historical
+    replay.  Coverage is enforced only when the decision market_date matches
+    the query-context market_date that enumerated the node.
+    """
+    path = root / "data" / "state" / "query_context.json"
+    if not path.exists():
+        return {}
+    context = load_json(path)
+    context_market_date = str(context.get("market_date") or (context.get("current") or {}).get("market_date") or "")
+    if market_date and context_market_date != str(market_date):
+        return {}
+    decision_context = context.get("decision_context") if isinstance(context.get("decision_context"), dict) else context
+    capital = (decision_context or {}).get("capital_efficiency_ranking") or context.get("capital_efficiency_ranking") or {}
+    rows = capital.get("comparison_universe") or capital.get("ordered_candidates") or []
+    required: dict[str, str] = {}
+    for item in rows:
+        if not isinstance(item, dict):
+            continue
+        category = str(item.get("category") or "").upper()
+        if category not in {"OBSERVED_ETF", "OBSERVATION_EVALUATION_INPUT"}:
+            continue
+        code = normalize_code(item.get("code") or "")
+        if code:
+            required[code] = category
+    return required
+
+
+def validate_capital_competition_contract(value: object, account: dict, object_name: str = "capital_competition", required_etf_opportunities: dict[str, str] | None = None) -> str:
+    """Validate whole-account capital-allocation completion without making the decision."""
+    if not isinstance(value, dict):
+        return f"{object_name} must be an object"
+    required = (
+        "next_unit_capital_use",
+        "full_competition_completed",
+        "releasable_capital_reviewed",
+        "post_action_deployable_cash",
+        "future_opportunity_capacity",
+        "cash_opportunity_cost",
+        "alternative_capital_use_review",
+        "concentration_account_structure_effect",
+        "selected_state_reason",
+        "new_amount_yuan",
+    )
+    missing = [key for key in required if key not in value or value[key] in (None, "", [])]
+    if missing:
+        return f"{object_name} missing required fields: {', '.join(missing)}"
+    if value.get("full_competition_completed") is not True:
+        return f"{object_name}.full_competition_completed must be true"
+    if not isinstance(value.get("releasable_capital_reviewed"), bool):
+        return f"{object_name}.releasable_capital_reviewed must be boolean"
+
+    new_amount = safe_float(value.get("new_amount_yuan"))
+    post_cash = safe_float(value.get("post_action_deployable_cash"))
+    if new_amount is None or new_amount < 0:
+        return f"{object_name}.new_amount_yuan must be a non-negative number"
+    if post_cash is None or post_cash < 0:
+        return f"{object_name}.post_action_deployable_cash must be a non-negative number"
+    if new_amount == 0 and not str(value.get("zero_amount_decisive_reason") or "").strip():
+        return f"{object_name} requires zero_amount_decisive_reason when new_amount_yuan is 0"
+
+    states = value.get("compared_capital_states")
+    if not isinstance(states, list) or len(states) < 2:
+        return f"{object_name}.compared_capital_states must contain at least two executable states"
+    for index, state in enumerate(states):
+        if not isinstance(state, dict):
+            return f"{object_name}.compared_capital_states[{index}] must be an object"
+        for key in ("state_name", "capital_action", "remaining_deployable_cash", "why_not_selected", "opportunity_cost_if_selected"):
+            if key not in state or state[key] in (None, ""):
+                return f"{object_name}.compared_capital_states[{index}] missing {key}"
+        if safe_float(state.get("remaining_deployable_cash")) is None:
+            return f"{object_name}.compared_capital_states[{index}].remaining_deployable_cash must be numeric"
+
+    membership = active_account_asset_codes(ROOT, account or {})
+    held_etfs = set(membership.get("etf") or set())
+    add_reviews = value.get("held_etf_add_capital_reviews")
+    if held_etfs:
+        if not isinstance(add_reviews, list):
+            return f"{object_name}.held_etf_add_capital_reviews must cover current held ETFs"
+        covered = set()
+        for index, review in enumerate(add_reviews):
+            if not isinstance(review, dict):
+                return f"{object_name}.held_etf_add_capital_reviews[{index}] must be an object"
+            code = normalize_code(review.get("security_code") or review.get("code") or "")
+            if code not in held_etfs:
+                return f"{object_name}.held_etf_add_capital_reviews[{index}] has unknown held ETF"
+            if code in covered:
+                return f"{object_name}.held_etf_add_capital_reviews must cover each held ETF exactly once"
+            covered.add(code)
+            for key in ("eligible_for_additional_capital_review", "conclusion", "reason"):
+                if key not in review or review[key] in (None, ""):
+                    return f"{object_name}.held_etf_add_capital_reviews[{index}] missing {key}"
+            if not isinstance(review.get("eligible_for_additional_capital_review"), bool):
+                return f"{object_name}.held_etf_add_capital_reviews[{index}].eligible_for_additional_capital_review must be boolean"
+        missing_held = sorted(held_etfs - covered)
+        if missing_held:
+            return f"{object_name}.held_etf_add_capital_reviews missing held ETFs: {', '.join(missing_held)}"
+
+    required_etf_opportunities = required_etf_opportunities or {}
+    reviews = value.get("etf_opportunity_reviews")
+    if required_etf_opportunities:
+        if not isinstance(reviews, list):
+            return f"{object_name}.etf_opportunity_reviews must cover all current observation and discovered ETFs"
+        covered: set[str] = set()
+        for index, review in enumerate(reviews):
+            if not isinstance(review, dict):
+                return f"{object_name}.etf_opportunity_reviews[{index}] must be an object"
+            code = normalize_code(review.get("security_code") or review.get("code") or "")
+            if code not in required_etf_opportunities:
+                return f"{object_name}.etf_opportunity_reviews[{index}] has unknown ETF opportunity object"
+            if code in covered:
+                return f"{object_name}.etf_opportunity_reviews must cover each ETF opportunity exactly once"
+            covered.add(code)
+            category = str(review.get("category") or "").upper()
+            if category != required_etf_opportunities[code]:
+                return f"{object_name}.etf_opportunity_reviews[{index}].category conflicts with query context"
+            for key in ("opportunity_status", "conclusion", "reason"):
+                if key not in review or review[key] in (None, ""):
+                    return f"{object_name}.etf_opportunity_reviews[{index}] missing {key}"
+            if str(review.get("opportunity_status") or "").strip() not in FORMAL_OPPORTUNITY_STATUSES:
+                return f"{object_name}.etf_opportunity_reviews[{index}].opportunity_status is not a registered formal value"
+        missing = sorted(set(required_etf_opportunities) - covered)
+        if missing:
+            return f"{object_name}.etf_opportunity_reviews missing ETF opportunities: {', '.join(missing)}"
+    elif reviews not in (None, []):
+        return f"{object_name}.etf_opportunity_reviews supplied but current query context has no observation/discovered ETF requirement"
+
+    migrations = value.get("capital_release_migrations")
+    if migrations is not None:
+        if not isinstance(migrations, list):
+            return f"{object_name}.capital_release_migrations must be a list"
+        for index, migration in enumerate(migrations):
+            if not isinstance(migration, dict):
+                return f"{object_name}.capital_release_migrations[{index}] must be an object"
+            for key in ("source", "amount_or_quantity", "destination", "reason"):
+                if key not in migration or migration[key] in (None, ""):
+                    return f"{object_name}.capital_release_migrations[{index}] missing {key}"
+    return ""
+
+
+def validate_formal_decision_cross_field_consistency(
+    decision: object, account: dict, object_name: str = "formal_decision"
+) -> str:
+    """Reject deterministic contradictions across already-required formal-decision fields.
+
+    This validator never chooses an action. It only checks whether decision-supplied
+    capital and per-position conclusions can all be true at the same time.
+    """
+    if not isinstance(decision, dict):
+        return f"{object_name} must be an object"
+    capital = decision.get("capital_competition")
+    reviews = decision.get("managed_position_reviews")
+    if not isinstance(capital, dict):
+        return ""
+    if reviews is None:
+        reviews = []
+    if not isinstance(reviews, list):
+        return ""
+
+    review_by_code = {}
+    for review in reviews:
+        if not isinstance(review, dict):
+            continue
+        code = normalize_code(review.get("security_code") or review.get("code") or "")
+        if code:
+            review_by_code[code] = review
+
+    migrations = capital.get("capital_release_migrations") or []
+    if isinstance(migrations, list) and migrations and capital.get("releasable_capital_reviewed") is not True:
+        return f"{object_name}.capital_competition has release migrations but releasable_capital_reviewed is not true"
+
+    account_positions = {}
+    for position in (account or {}).get("positions") or []:
+        if not isinstance(position, dict):
+            continue
+        code = normalize_code(first(position, "code", "symbol", "security_code", "instrument_code"))
+        if code:
+            account_positions[code] = position
+
+    migration_sources = set()
+    if isinstance(migrations, list):
+        for index, migration in enumerate(migrations):
+            if not isinstance(migration, dict):
+                continue
+            source_text = str(migration.get("source") or "")
+            matches = [
+                code for code in account_positions
+                if code and (code in source_text or str(first(account_positions[code], "name", "security_name") or "") in source_text)
+            ]
+            if len(matches) == 1:
+                migration_sources.add(matches[0])
+            elif len(matches) == 0:
+                normalized = normalize_code(source_text)
+                if normalized:
+                    return f"{object_name}.capital_competition.capital_release_migrations[{index}] source is not a current account asset"
+
+    for code in migration_sources:
+        review = review_by_code.get(code)
+        if review and str(review.get("current_action") or "").strip() in {"持有", "HOLD"}:
+            return f"{object_name}.managed_position_reviews[{code}] cannot HOLD while the same asset funds a capital release migration"
+
+    new_amount = safe_float(capital.get("new_amount_yuan"))
+    if new_amount == 0:
+        zero_reason = " ".join(str(capital.get("zero_amount_decisive_reason") or "").split())
+        risk_only_reasons = {
+            "风险许可禁止新增",
+            "风险许可为禁止新增",
+            "风险许可不允许新增",
+            "风险率过低",
+            "风险较高禁止新增",
+        }
+        if zero_reason in risk_only_reasons:
+            return (
+                f"{object_name}.zero_amount_decisive_reason cannot use risk permission alone; "
+                "must reflect completed capital competition"
+            )
+    states = capital.get("compared_capital_states") or []
+    selected = [
+        state for state in states
+        if isinstance(state, dict) and str(state.get("why_not_selected") or "").strip() in {"已选中", "SELECTED", "selected"}
+    ]
+    if len(selected) > 1:
+        return f"{object_name}.capital_competition compared_capital_states identifies multiple selected states"
+    if len(selected) == 1:
+        selected_cash = safe_float(selected[0].get("remaining_deployable_cash"))
+        post_cash = safe_float(capital.get("post_action_deployable_cash"))
+        if selected_cash is not None and post_cash is not None and abs(selected_cash - post_cash) > 0.01:
+            return f"{object_name}.capital_competition selected state remaining cash conflicts with post_action_deployable_cash"
+
+    return ""
+
+
+def validate_managed_position_review_contract(value: object, account: dict, object_name: str = "managed_position_reviews") -> str:
+    """Validate decision-supplied, per-position review completeness only.
+
+    This is deliberately not an action engine: it checks object coverage and
+    required evidence fields, while leaving every action and conclusion to the
+    Formal Decision actor.
+    """
+    managed = build_managed_position_projection(ROOT, account or {}).get("positions", [])
+    if not managed:
+        return ""
+    if not isinstance(value, list) or not value:
+        return f"{object_name} must be a non-empty list with one entry per managed position"
+    by_code = {item["code"]: item for item in managed}
+    covered: set[str] = set()
+    for index, review in enumerate(value):
+        if not isinstance(review, dict):
+            return f"{object_name}[{index}] must be an object"
+        code = normalize_code(review.get("security_code") or review.get("code") or "")
+        if code not in by_code:
+            return f"{object_name}[{index}] has unknown managed position"
+        if code in covered:
+            return f"{object_name} must cover each managed position exactly once"
+        covered.add(code)
+        required = (
+            "current_action", "holding_state_risk_reward_evidence",
+            "holding_thesis_status", "risk_reduction_or_exit_condition",
+            "higher_efficiency_alternative", "capital_occupancy_reason",
+            "continued_holding_opportunity_cost",
+            "capital_use", "action_changes_now", "next_change_condition",
+        )
+        missing = [key for key in required if key not in review or review[key] in (None, "", [])]
+        if missing:
+            return f"{object_name}[{index}] missing required fields: {', '.join(missing)}"
+        capital_use = review["capital_use"]
+        if not isinstance(capital_use, dict) or not capital_use.get("continued_holding_vs_cash"):
+            return f"{object_name}[{index}].capital_use requires continued_holding_vs_cash"
+        if not capital_use.get("alternative_capital_uses_review"):
+            return f"{object_name}[{index}].capital_use requires alternative_capital_uses_review"
+        position_states = capital_use.get("position_capital_states")
+        if not isinstance(position_states, dict):
+            return f"{object_name}[{index}].capital_use requires position_capital_states"
+        missing_states = [state for state in ("HOLD", "REDUCE", "EXIT") if not position_states.get(state)]
+        if missing_states:
+            return f"{object_name}[{index}].capital_use.position_capital_states missing: {', '.join(missing_states)}"
+        action = str(review["current_action"]).strip()
+        if action in {"降低风险", "退出"}:
+            if review.get("action_changes_now") is not True:
+                return f"{object_name}[{index}] reduce/exit must explicitly change action now"
+            if not review.get("action_detail") or not review.get("capital_destination"):
+                return f"{object_name}[{index}] reduce/exit requires action_detail and capital_destination"
+        elif not isinstance(review["action_changes_now"], bool):
+            return f"{object_name}[{index}].action_changes_now must be boolean"
+    missing = [f"{item['name']}（{item['code']}）" for item in managed if item["code"] not in covered]
+    if missing:
+        return f"{object_name} is missing current managed positions: {', '.join(missing)}"
+    return ""
+
+
+def _managed_lifecycle_lines(value: object, account: dict) -> list[str]:
+    managed = build_managed_position_projection(ROOT, account or {}).get("positions", [])
+    if not managed:
+        return []
+    actions: dict[str, str] = {}
+    if isinstance(value, dict):
+        for key, action in value.items():
+            code = _managed_position_code(key, managed)
+            if code:
+                actions[code] = str(action or "").strip()
+    elif isinstance(value, str):
+        for line in value.splitlines():
+            matches = [item["code"] for item in managed if item["code"] in line]
+            if len(matches) == 1:
+                code = matches[0]
+                actions[code] = line.split("：", 1)[1].strip() if "：" in line else line
+    return [f"- {item['name']}（{item['code']}）：{actions.get(item['code'], '事实不足：未提供本轮持仓动作')}" for item in managed]
+
+
+def validate_current_lifecycle_contract(value: object, account: dict, object_name: str = "lifecycle") -> str:
+    """Validate current lifecycle semantics against the canonical account fact.
+
+    Formal decisions and post-close reviews share this ingress contract.  A
+    historical Trial/Confirm mention remains explanatory when explicitly
+    marked as such, but it cannot be the current lifecycle of a held asset.
+    """
+    if not isinstance(value, dict):
+        return ""
+    membership = active_account_asset_codes(ROOT, account or {})
+    held_codes = membership["etf"] | membership["stocks"]
+    position_names = {
+        normalize_code(first(position, "code", "symbol", "security_code", "instrument_code")): str(
+            first(position, "name", "security_name", "instrument_name") or ""
+        )
+        for position in (account or {}).get("positions") or []
+        if isinstance(position, dict)
+    }
+    opportunity_terms = ("观察", "Trial", "Confirm", "观察机会", "Trial机会", "Confirm机会")
+    holding_terms = ("持有管理", "持仓管理", "降低风险", "退出", "持有")
+    for security, action in value.items():
+        text = str(action or "").strip()
+        code = _lifecycle_object_code(security)
+        if not code:
+            security_text = str(security or "")
+            code = next((candidate for candidate, name in position_names.items() if name and name in security_text), "")
+        is_held = code in held_codes
+        historical = _is_historical_lifecycle_explanation(text) or (
+            "继续" in text and any(term in text for term in ("持有管理", "持仓管理", "降低风险", "退出"))
+        )
+        if is_held and any(term in text for term in opportunity_terms) and not historical:
+            return f"{object_name}[{security}] uses opportunity lifecycle for a held asset; current action must be holding management"
+        if not is_held and any(term in text for term in holding_terms) and not historical:
+            return f"{object_name}[{security}] uses holding lifecycle for an unheld asset; current action must be observation or opportunity"
+    return ""
+
+
+def record_unrecoverable_review_prerequisite(account: dict, request: dict, trade_event: dict) -> tuple[bool, bool]:
+    """Project an evidence-backed terminal review state, never a normal CASE."""
+    assessment = request.get("historical_r…9121 tokens truncated…or ""),
+    }
+    payload["fingerprint"] = hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
+    event_path = ROOT / "events" / "reviews" / f"formal_{occurrence}.json"
+    prior = load_json(event_path) if event_path.exists() else {}
+    if prior and prior.get("fingerprint") != payload["fingerprint"]:
+        raise ValueError("Formal Decision occurrence is immutable")
+    if not prior:
+        event_path.parent.mkdir(parents=True, exist_ok=True)
+        atomic_json_write(event_path, payload)
+        return True, False, str(event_path.relative_to(ROOT)).replace("\\", "/")
+    return True, True, str(event_path.relative_to(ROOT)).replace("\\", "/")
+
+
+def record_close_review_closure(account: dict, request: dict, review: dict, event: dict) -> None:
+    """Persist canonical closure while preserving degraded evidence semantics."""
+    market_date = str(event.get("market_date") or "")
+    if not market_date:
+        return
+    review_scope = str(review.get("review_scope") or "").strip().upper()
+    data_time = review.get("data_time") if isinstance(review.get("data_time"), dict) else {}
+    reviewed_at = parse_time(
+        review.get("reviewed_at_beijing")
+        or event.get("reviewed_at_beijing")
+        or event.get("updated_at_beijing")
+    )
+    legal_close_boundary = parse_time(f"{market_date}T15:00:00+08:00")
+    if (
+        review_scope != "FULL_DAY"
+        or reviewed_at is None
+        or legal_close_boundary is None
+        or reviewed_at < legal_close_boundary
+    ):
+        return
+    closure_path = ROOT / "data" / "state" / f"close_review_closure_{market_date}.json"
+    snapshot = review.get("data_time") or {}
+    binding = event.get("presentation_binding") if isinstance(event.get("presentation_binding"), dict) else {}
+    # The review event is the single completion owner.  Persist the REPORT
+    # handoff from that same event so a generated review cannot exist without
+    # a durable, request-bound delivery request.  notification_center remains
+    # the only sender; this projection only records the immutable handoff.
+    task_run_id = str(binding.get("task_run_id") or "").strip()
+    full_content = str(binding.get("full_content") or "")
+    report_id = f"etf_trade_review:{task_run_id}" if task_run_id else ""
+    content_hash = hashlib.sha256(full_content.encode("utf-8")).hexdigest() if full_content else ""
+    if task_run_id and full_content:
+        report_path = ROOT / "requests" / "report_delivery" / f"{report_id.replace(':', '__')}.json"
+        report = {
+            "schema_version": "1.0",
+            "event_type": "REPORT_DELIVERY_REQUEST",
+            "channel": "REPORT",
+            "report_type": str(binding.get("report_type") or "ETF_TRADE_REVIEW"),
+            "report_id": report_id,
+            "request_id": str(event.get("request_id") or request.get("request_id") or ""),
+            "task_id": str(binding.get("task_id") or "ETF交易复盘"),
+            "task_run_id": task_run_id,
+            "generated_at": str(event.get("reviewed_at_beijing") or event.get("updated_at_beijing") or ""),
+            "effective_market_date": market_date,
+            "source_actor": str(event.get("source") or "CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR"),
+            "source_reference": f"canonical-review-completion:events/reviews/{market_date}.json",
+            "title": "【ETF交易复盘】",
+            "summary": "Canonical review completion; deliver the frozen report unchanged.",
+            "full_content": full_content,
+            "content_hash": content_hash,
+            "idempotency_key": f"ETF_TRADE_REVIEW:{task_run_id}",
+            "delivery_mode": "FULL_REPORT",
+            "no_trade_authority": True,
+        }
+        if report_path.exists() and load_json(report_path) != report:
+            raise RuntimeError("current review REPORT_DELIVERY_REQUEST identity/content mismatch")
+        if not report_path.exists():
+            atomic_json_write(report_path, report)
+    canonical_equity_path = ROOT / "data" / "state" / "etf_strategy_equity.json"
+    canonical_equity = load_json(canonical_equity_path) if canonical_equity_path.exists() else {}
+    canonical_summary = canonical_equity.get("summary") if isinstance(canonical_equity.get("summary"), dict) else {}
+    canonical_risk = (
+        canonical_summary.get("current_strategy_return_pct_gross")
+        if str(canonical_equity.get("replay_cutoff") or canonical_equity.get("as_of_transaction_date") or "") == market_date
+        else None
+    )
+    review_known_net = review.get("etf_strategy_known_net") or {}
+    closure = {
+        "schema_version": "1.0", "market_date": market_date,
+        "chain": ["market_close", "account", "formal_review", "archive", "experience", "dashboard", "risk"],
+        "account_fact_updated_at": account.get("updated_at", ""),
+        "close_snapshot": snapshot.get("close_snapshot") or review.get("close_snapshot", ""),
+        "formal_review_path": f"events/reviews/{market_date}.json",
+        "dashboard_path": "ETF当前状态_DASHBOARD.md", "archive_path": "ETF市场行情档案_2026.md",
+        "experience_path": "ETF交易复盘与经验库_2026.md",
+        "case_id": review.get("case_id") or "", "case_mode": review.get("case_mode") or "CONTINUATION_NO_NEW_CASE",
+        "known_net_equity": review_known_net.get("known_net_strategy_equity") or canonical_summary.get("current_gross_strategy_equity"),
+        "risk_rate_pct": review_known_net.get("etf_strategy_risk_rate_pct") if review_known_net.get("etf_strategy_risk_rate_pct") is not None else canonical_risk,
+        # CLOSED means the canonical closure event was persisted.  Keep the
+        # substantive evidence state separate so degraded discovery/evidence
+        # cannot be mistaken for a complete business review.
+        "status": "CLOSED",
+        "review_evidence_status": (
+            "COMPLETE"
+            if (
+                str(data_time.get("close_data_status") or "").upper() == "VERIFIED_SESSION_CLOSE"
+                and bool(str(data_time.get("close_snapshot") or "").strip())
+                and str(review.get("discovery_close_status") or "").upper() == "COMPLETED"
+            )
+            else "DEGRADED"
+        ),
+        # Business completion is independent from discovery coverage.  A
+        # review can be a complete business handoff while its market-wide
+        # evidence remains degraded or source-limited.
+        "business_completion_status": (
+            "COMPLETE"
+            if (
+                str(data_time.get("close_data_status") or "").upper() == "VERIFIED_SESSION_CLOSE"
+                and bool(str(data_time.get("close_snapshot") or "").strip())
+                and isinstance(review.get("account_close"), dict)
+                and str(review.get("risk_permission") or "").strip()
+                and str(review.get("opportunity_status") or "").strip()
+                and isinstance(review.get("holding_actions"), dict)
+                and str(review.get("capital_efficiency") or "").strip()
+                and str(review.get("action") or review.get("amount_action") or "").strip()
+            )
+            else "DEGRADED"
+        ),
+        "reviewed_at_beijing": event.get("reviewed_at_beijing", ""),
+        "request_id": request.get("request_id", ""),
+        "note": "Formal post-close review is canonicalized from the request-scoped review payload; no trade or permission is inferred.",
+    }
+    prior = load_json(closure_path) if closure_path.exists() else {}
+    if prior == closure:
+        return
+    atomic_json_write(closure_path, closure)
+    current_path = ROOT / "data" / "state" / "CURRENT.json"
+    if current_path.exists():
+        current = load_json(current_path)
+        current["close_review_closure"] = {
+            "status": "CLOSED", "market_date": market_date,
+            "path": str(closure_path.relative_to(ROOT)).replace("\\", "/"),
+            "formal_review_path": f"events/reviews/{market_date}.json", "case_id": closure.get("case_id", ""),
+        }
+        atomic_json_write(current_path, current)
+
+
+def execution_attribution(trade: dict, linked_decision_id: str) -> dict:
+    try:
+        from decision_trade_link import resolve_link
+        resolved_id, _decision, resolution = resolve_link(ROOT, trade, linked_decision_id)
+        if resolution == "CORRECTION_CONFLICT":
+            return {"status": "CORRECTION_CONFLICT"}
+        if resolved_id:
+            return {"status": "READY", "decision_id": resolved_id, "resolution": resolution}
+    except Exception:
+        pass
+    if not linked_decision_id:
+        return {"status": "NO_LINKED_DECISION"}
+    path = ROOT / "events/decisions" / f"{linked_decision_id}.json"
+    if not path.exists():
+        return {"status": "LINKED_DECISION_NOT_FOUND"}
+    decision = load_json(path)
+    try:
+        from decision_trade_link import decision_price_for_trade
+    except ModuleNotFoundError:
+        from scripts.decision_trade_link import decision_price_for_trade
+    # Attribute price only to the actual traded object/action.  candidate_code
+    # may describe a simultaneous observation or new opportunity.
+    dprice = safe_float(decision_price_for_trade(decision, trade))
+    eprice = safe_float(trade.get("price"))
+    diff_pct = pct(eprice, dprice) if dprice not in (None, 0.0) and eprice is not None else None
+    side = str(trade.get("side") or "").upper()
+    is_buy = side in {"BUY", "B", "买", "买入"} or "买" in side
+    is_sell = side in {"SELL", "S", "卖", "卖出"} or "卖" in side
+    adverse = diff_pct if is_buy else (-diff_pct if is_sell and diff_pct is not None else None)
+    dt0 = parse_time(decision.get("decision_effective_at_beijing") or decision.get("issued_at_beijing") or decision.get("decision_time_beijing"))
+    dt1 = parse_time(trade.get("confirmed_at_beijing"))
+    delay = round((dt1 - dt0).total_seconds(), 1) if dt0 and dt1 else None
+    ordering = str(decision.get("decision_effective_ordering") or "").upper()
+    timing_quality = str(decision.get("timing_quality") or "").upper()
+    bounded_before_execution = ordering == "BEFORE_EXECUTION" and timing_quality in {"USER_CONFIRMED_BOUNDED", "USER_CONFIRMED"}
+    candidate_code = str(decision.get("candidate_code") or "").strip()
+    hypothesis_id = decision.get("hypothesis_id") if candidate_code and candidate_code == str(trade.get("code") or "").strip() else None
+    return {"status": "READY" if dprice is not None and eprice is not None and (delay is None or delay >= 0 or bounded_before_execution) else "PARTIAL", "decision_id": linked_decision_id, "hypothesis_id": hypothesis_id, "decision_price": dprice, "execution_price": eprice, "execution_price_vs_decision_pct": diff_pct, "adverse_execution_cost_pct": adverse, "decision_to_execution_seconds": delay if delay is None or delay >= 0 else None, "decision_effective_ordering": decision.get("decision_effective_ordering"), "timing_quality": decision.get("timing_quality"), "timing_status": "EXACT" if delay is not None and delay >= 0 else "BOUNDED_BEFORE_EXECUTION" if bounded_before_execution else "UNAVAILABLE", "method_note": "正的adverse_execution_cost_pct表示相对正式决策价格出现不利执行偏差；买入价更高或卖出价更低均为正。该指标分离判断质量与执行质量，不改变交易权限。"}
+
+
+
+def _trade_idempotency_key(trade: dict, confirmed_at: str) -> str:
+    explicit = str(trade.get("idempotency_key") or "").strip()
+    return explicit or "|".join(str(trade.get(key) or "") for key in ("code", "side", "quantity", "price")) + "|" + str(confirmed_at)
+
+
+def _find_existing_trade(trade: dict, confirmed_at: str, key: str) -> dict | None:
+    directory = ROOT / "events" / "trades"
+    for path in sorted(directory.glob("*.json")) if directory.exists() else []:
+        try: prior = load_json(path)
+        except Exception: continue
+        if prior.get("idempotency_key") == key or (all(str(prior.get(k) or "") == str(trade.get(k) or "") for k in ("code", "side", "quantity", "price")) and str(prior.get("confirmed_at_beijing") or "") == str(confirmed_at)):
+            return prior
+    return None
+
+
+def resolve_trade_linked_decision_id(
+    trade: dict,
+    decision_id: str = "",
+    existing_linked_decision_id: str = "",
+) -> str:
+    """Resolve one durable decision association without weakening legacy inputs.
+
+    An already-persisted association wins on replay.  For a new event, an
+    explicit trade-event link is authoritative, followed by the legacy
+    decision_id and same-request formal decision compatibility.
+    """
+    for value in (
+        existing_linked_decision_id,
+        trade.get("linked_decision_id"),
+        trade.get("decision_id"),
+        decision_id,
+    ):
+        resolved = str(value or "").strip()
+        if resolved:
+            return resolved
+    return ""
+
+def _latest_trade_event_id() -> str:
+    directory = ROOT / "events" / "trades"
+    candidates = []
+    for path in sorted(directory.glob("*.json")) if directory.exists() else []:
+        try:
+            event = load_json(path)
+        except Exception:
+            continue
+        event_id = str(event.get("event_id") or "")
+        if event_id:
+            candidates.append((str(event.get("confirmed_at_beijing") or ""), event_id))
+    return max(candidates)[1] if candidates else ""
+
+
+
+def _account_change_events(prior: dict, current: dict, request: dict, trade: dict | list[dict] | None) -> list[dict]:
+    """Record observable account deltas and reconcile each against exact confirmed trade mechanics."""
+    prior_positions = {str(x.get("code")): x for x in (prior.get("positions") or []) if x.get("code")}
+    current_positions = {str(x.get("code")): x for x in (current.get("positions") or []) if x.get("code")}
+    trades = trade if isinstance(trade, list) else ([trade] if isinstance(trade, dict) else [])
+    by_code: dict[str, list[dict]] = {}
+    for item in trades:
+        by_code.setdefault(str(item.get("code") or ""), []).append(item)
+    codes = sorted(set(prior_positions) | set(current_positions))
+    event_type = str(request.get("account_change_event_type") or "").strip() or (
+        "USER_REPORTED_TRADE" if trades else "BROKER_SCREENSHOT_CHANGE"
+    )
+    events: list[dict] = []
+    for code in codes:
+        before = safe_float(prior_positions.get(code, {}).get("quantity")) or 0.0
+        after = safe_float(current_positions.get(code, {}).get("quantity")) or 0.0
+        delta = round(after - before, 8)
+        if delta == 0:
+            continue
+        row = current_positions.get(code) or prior_positions.get(code) or {}
+        matching_trade = None
+        for candidate in by_code.get(code, []):
+            side = str(candidate.get("side") or "").upper()
+            quantity = safe_float(candidate.get("quantity"))
+            direction_matches = (delta > 0 and side in {"BUY", "B", "买入", "买"}) or (delta < 0 and side in {"SELL", "S", "卖出", "卖"})
+            if quantity is not None and abs(abs(delta) - quantity) < 1e-8 and direction_matches:
+                matching_trade = candidate
+                break
+        explained = matching_trade is not None
+        known_ipo = _is_known_ipo_registration(current, code, delta, after)
+        event_time = str((matching_trade or {}).get("confirmed_at_beijing") or current.get("updated_at") or "")
+        key_body = {"event_type": event_type, "code": code, "delta": delta, "event_time": event_time}
+        key = "account_change_" + hashlib.sha256(json.dumps(key_body, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()[:20]
+        events.append({
+            "event_id": key, "idempotency_key": key, "event_type": event_type,
+            "event_time": event_time, "object": display_name(row),
+            "code": code, "quantity_before": before, "quantity_after": after,
+            "quantity_delta": delta,
+            "change_summary": ("买入/新增持仓" if delta > 0 else "卖出/减少持仓"),
+            "reconciliation_status": (
+                "RECONCILED_BY_CONFIRMED_TRADE" if explained
+                else "RECONCILED_BY_KNOWN_IPO_REGISTRATION" if known_ipo
+                else "UNRECONCILED_ACCOUNT_CHANGE"
+            ),
+            "source": str(current.get("source") or request.get("source") or "USER_CONFIRMED"),
+            "read_only": True,
+        })
+    batch_event_time = next(
+        (str(item.get("confirmed_at_beijing") or item.get("executed_at") or "") for item in trades
+         if item.get("confirmed_at_beijing") or item.get("executed_at")),
+        str(current.get("updated_at") or ""),
+    )
+    for field in ("cash", "total_asset"):
+        before = safe_float(prior.get(field))
+        after = safe_float(current.get(field))
+        if before is None or after is None or abs(after - before) < 0.005:
+            continue
+        key_body = {"event_type": event_type, "field": field, "delta": round(after - before, 2), "event_time": batch_event_time}
+        key = "account_change_" + hashlib.sha256(json.dumps(key_body, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()[:20]
+        events.append({
+            "event_id": key, "idempotency_key": key, "event_type": event_type,
+            "event_time": batch_event_time, "object": field, "change_summary": f"{field}变化 {after - before:+.2f}",
+            "amount_before": before, "amount_after": after, "amount_delta": round(after - before, 2),
+            "reconciliation_status": "RECONCILED_BY_CONFIRMED_TRADE" if trades else "UNRECONCILED_ACCOUNT_CHANGE",
+            "source": str(current.get("source") or request.get("source") or "USER_CONFIRMED"),
+            "read_only": True,
+        })
+    return events
+
+
+def _is_known_ipo_registration(account: dict, code: str, delta: float, after: float) -> bool:
+    """Attribute a new position to one exact settled IPO obligation."""
+    if delta <= 0 or after <= 0:
+        return False
+    positions = [p for p in account.get("positions") or [] if str(p.get("code") or "") == code]
+    obligations = [
+        o for o in account.get("settlement_obligations") or []
+        if str(o.get("status") or "").upper() == "SETTLED"
+        and str(o.get("obligation_type") or "").upper() == "IPO_ALLOTMENT_PAYMENT"
+        and str(o.get("security_code") or "") == code
+    ]
+    if len(positions) != 1 or len(obligations) != 1:
+        return False
+    position, obligation = positions[0], obligations[0]
+    quantity = safe_float(position.get("quantity"))
+    price = safe_float(obligation.get("subscription_price"))
+    cost = safe_float(position.get("cost"))
+    required_cash = safe_float(obligation.get("required_cash"))
+    if None in (quantity, price, cost, required_cash):
+        return False
+    return (
+        abs(quantity - after) <= 1e-8
+        and price > 0
+        and abs(cost - price) <= max(0.01, price * 0.0001)
+        and abs(required_cash - after * price) <= 0.01
+    )
+
+
+def _reconcile_known_ipo_events(account: dict) -> None:
+    """Upgrade matching historical deltas without re-emitting notifications."""
+    for event in account.get("account_change_events_after_confirmed_at") or []:
+        if str(event.get("reconciliation_status") or "").upper() != "UNRECONCILED_ACCOUNT_CHANGE":
+            continue
+        code = str(event.get("code") or "").strip()
+        delta = safe_float(event.get("quantity_delta"))
+        after = safe_float(event.get("quantity_after"))
+        if code and delta is not None and after is not None and _is_known_ipo_registration(account, code, delta, after):
+            event["reconciliation_status"] = "RECONCILED_BY_KNOWN_IPO_REGISTRATION"
+
+
+def _apply_trade_to_account(prior: dict, trade: dict) -> dict:
+    """Safely carry a user-confirmed trade into the account fact when no screenshot is supplied."""
+    account = json.loads(json.dumps(prior))
+    account.setdefault("positions", [])
+    code = str(trade.get("code") or "")
+    side = str(trade.get("side") or "").upper()
+    qty = safe_float(trade.get("quantity"))
+    amount = safe_float(trade.get("amount"))
+    if amount is None:
+        price = safe_float(trade.get("price"))
+        amount = round(price * qty, 6) if price is not None else None
+    if not code or qty is None or qty <= 0 or amount is None:
+        return account
+    sign = 1 if side in {"BUY", "B", "买入", "买"} else -1 if side in {"SELL", "S", "卖出", "卖"} else 0
+    if sign == 0:
+        return account
+    position = next((p for p in account["positions"] if str(p.get("code")) == code), None)
+    if position is None:
+        if sign < 0:
+            return account
+        position = {"asset_type": trade.get("asset_type") or "ETF", "name": trade.get("name") or code, "code": code, "quantity": 0, "cost": safe_float(trade.get("price")) or 0, "last_price": safe_float(trade.get("price")) or 0, "market_value": 0, "holding_pnl": 0, "holding_pnl_pct": 0}
+        account["positions"].append(position)
+    before = safe_float(position.get("quantity")) or 0.0
+    after = before + sign * qty
+    if after < -1e-8:
+        return account
+    position["quantity"] = int(after) if abs(after - round(after)) < 1e-8 else after
+    if sign < 0 and after <= 1e-8:
+        # A fully executed exit must not leave an impossible residual
+        # available quantity. Partial sells retain existing semantics.
+        position["quantity"] = 0
+        position["available_quantity"] = 0
+    elif sign < 0 and position.get("available_quantity") is not None:
+        available = safe_float(position.get("available_quantity"))
+        if available is not None:
+            position["available_quantity"] = max(0, min(after, available - qty))
+    if sign > 0 and position.get("cost") in (None, 0, 0.0):
+        position["cost"] = safe_float(trade.get("price")) or position.get("cost") or 0
+    if position.get("last_price") in (None, 0, 0.0):
+        position["last_price"] = safe_float(trade.get("price")) or 0
+    position["market_value"] = round(float(position.get("last_price") or 0) * float(position["quantity"]), 2)
+    cash_delta = -sign * amount
+    account["cash"] = round((safe_float(account.get("cash")) or 0) + cash_delta, 2)
+    if account.get("total_asset") is not None:
+        account["total_asset"] = round((safe_float(account.get("total_asset")) or 0) + cash_delta, 2)
+    account["updated_at"] = str(trade.get("confirmed_at_beijing") or account.get("updated_at") or datetime.now(SHANGHAI).isoformat(timespec="seconds"))
+    account["last_confirmed_market_date"] = account["updated_at"][:10]
+    account["status"] = "VALID"
+    account["source"] = str(trade.get("source") or "USER_REPORTED_TRADE_CONFIRMED")
+    account["validity_mode"] = "EVENT_DRIVEN_TRADE_CONFIRMED"
+    return account
+
+
+
+
+def _explicit_case_ids_from_text(value: object) -> list[str]:
+    return sorted(set(re.findall(r"CASE-\d{8}-\d{2}", str(value or ""))))
+
+
+def _review_case_ids_for_trade(event: dict) -> list[str]:
+    """Read only existing formal review mappings; never create a CASE mapping."""
+    event_id = str(event.get("event_id") or "").strip()
+    if not event_id:
+        return []
+    found = set()
+    review_dir = ROOT / "events" / "reviews"
+    for path in sorted(review_dir.glob("*.json")) if review_dir.exists() else []:
+        try:
+            payload = load_json(path)
+        except (OSError, ValueError, TypeError):
+            continue
+
+        def walk(value):
+            if isinstance(value, dict):
+                if str(value.get("trade_event_id") or "").strip() == event_id:
+                    case_id = str(value.get("case_id") or "").strip()
+                    if case_id:
+                        found.add(case_id)
+                for child in value.values():
+                    walk(child)
+            elif isinstance(value, list):
+                for child in value:
+                    walk(child)
+
+        walk(payload)
+    return sorted(found)
+
+
+def _case_ids_from_existing_experience_for_trade(event: dict, text: str, table_start: int, table_end: int) -> list[str]:
+    """Recover an already documented CASE owner using exact immutable trade facts."""
+    event_id = str(event.get("event_id") or "").strip()
+    code = str(event.get("code") or "").strip()
+    name = str(event.get("name") or "").strip()
+    side = str(event.get("side") or "").upper()
+    side_cn = "买入" if side in {"BUY", "B", "买入", "买"} else "卖出" if side in {"SELL", "S", "卖出", "卖"} else side
+    qty = int(float(event.get("quantity") or 0))
+    price = float(event.get("price") or 0)
+    confirmed_at = str(
+        event.get("executed_at_beijing")
+        or event.get("executed_at")
+        or event.get("trade_time")
+        or event.get("confirmed_at_beijing")
+        or ""
+    )
+    trade_date = confirmed_at[:10]
+    date_time_tokens = set()
+    if len(confirmed_at) >= 19 and confirmed_at[5:7].isdigit() and confirmed_at[8:10].isdigit():
+        month = str(int(confirmed_at[5:7]))
+        day = str(int(confirmed_at[8:10]))
+        clock = confirmed_at[11:19]
+        date_time_tokens.update({f"{month}月{day}日{clock}", f"{confirmed_at[5:7]}月{confirmed_at[8:10]}日{clock}", f"{trade_date} {clock}"})
+    elif trade_date:
+        date_time_tokens.add(trade_date)
+    marker = f"TRADE_EVENT:{event_id}" if event_id else ""
+    old_case_ids = []
+    table_text = text[table_start:table_end]
+    for line in table_text.splitlines():
+        if (marker and marker in line) or (
+            trade_date and f"|{trade_date} " in line and f"|{code}|" in line
+            and f"|{side_cn}|" in line and f"|{qty:,}|" in line and f"|{price:.3f}|" in line
+        ):
+            old_case_ids.extend(_explicit_case_ids_from_text(line))
+
+    # The CASE section is a human-maintained formal owner record.  Consume it
+    # only when it contains either the exact event marker/linked decision, or
+    # all immutable trade facts; code/date alone is intentionally insufficient.
+    linked = str(event.get("linked_decision_id") or "").strip()
+    heading = re.compile(r"^###\s+.*?(CASE-\d{8}-\d{2}).*?$", re.MULTILINE)
+    matches = list(heading.finditer(text))
+    found = set()
+    for index, match in enumerate(matches):
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
+        section = text[match.start():end]
+        exact_identity = (
+            (code and code in section or name and name in section)
+            and side_cn and side_cn in section
+            and (f"{qty:,}" in section or str(qty) in section)
+            and f"{price:.3f}" in section
+            and any(token in section for token in date_time_tokens)
+        )
+        if (marker and marker in section) or (linked and linked in section) or exact_identity:
+            found.add(match.group(1))
+    resolved = sorted(set(old_case_ids) | found)
+    if len(resolved) > 1:
+        raise ValueError(
+            f"conflicting existing CASE ownership for {event_id or code}: {resolved}"
+        )
+    return resolved
+
+
+def _case_ids_for_transaction_projection(event: dict, text: str, table_start: int, table_end: int) -> list[str]:
+    """Resolve CASE ownership with strong facts first and no guessing."""
+    event_id = str(event.get("event_id") or "").strip()
+    # Historical FACT_ENRICHMENT_ONLY replay may preserve an exact CASE
+    # already documented on the economic row. This older formal PIT ownership
+    # must not be erased by later adoption-time ineligibility metadata.
+    # Ordinary events keep terminal-review precedence below.
+    if (
+        bool(event.get("historical_backfill"))
+        and str(event.get("replay_semantics") or "").upper() == "FACT_ENRICHMENT_ONLY"
+    ):
+        preserved = _case_ids_from_existing_experience_for_trade(
+            event, text, table_start, table_end
+        )
+        if preserved:
+            return preserved
+    event_date = str(
+        event.get("execution_date")
+        or event.get("executed_at_beijing")
+        or event.get("executed_at")
+        or event.get("trade_time")
+        or event.get("confirmed_at_beijing")
+        or ""
+    )[:10]
+    if event_id and event_date:
+        terminal_path = ROOT / "events" / "reviews" / f"{event_date}.json"
+        if terminal_path.exists():
+            try:
+                from review_prerequisite_lifecycle import is_valid_unrecoverable_review_event
+                terminal_review = json.loads(terminal_path.read_text(encoding="utf-8"))
+                if is_valid_unrecoverable_review_event(terminal_review, event_id):
+                    # An unrecoverable review is a canonical terminal lifecycle
+                    # fact, not a normal CASE owner.  Do not project a stale
+                    # CASE from an older transaction-index row.
+                    return []
+            except (OSError, ValueError, TypeError, ImportError):
+                pass
+    review_ids = _review_case_ids_for_trade(event)
+    if review_ids:
+        return review_ids
+    return _case_ids_from_existing_experience_for_trade(event, text, table_start, table_end)
+
+
+def sync_experience_transaction_index(event: dict) -> None:
+    """Upsert a confirmed trade into Experience §2.1 and keep its counts aligned.
+
+    This is fact synchronization only. It never evaluates trade quality, changes
+    lifecycle rules, or creates a trading action.
+    """
+    import re
+
+    event_id = str(event.get("event_id") or "")
+    if not event_id:
+        return
+    text = EXPERIENCE.read_text(encoding="utf-8")
+    section_end = "\n### 2.2 银证转账与非交易现金流水"
+    if section_end not in text:
+        raise RuntimeError("experience transaction-index boundary missing")
+
+    marker = f"TRADE_EVENT:{event_id}"
+    confirmed = str(event.get("confirmed_at_beijing") or "")
+    execution_stamp = str(
+        event.get("executed_at_beijing")
+        or event.get("executed_at")
+        or event.get("trade_time")
+        or confirmed
+    )
+    dt = execution_stamp.replace("T", " ")[:19]
+    code = str(event.get("code") or "")
+    name = str(event.get("name") or code)
+    name = re.sub(rf"（{re.escape(code)}）$", "", name).strip() if code else name
+    side = str(event.get("side") or "").upper()
+    side_cn = "买入" if side in {"BUY", "B", "买入", "买"} else "卖出" if side in {"SELL", "S", "卖出", "卖"} else side
+    qty = int(float(event.get("quantity") or 0))
+    price = float(event.get("price") or 0)
+    gross = float(event.get("amount") or price * qty)
+    # Older confirmed trade events use the canonical ``fee`` field while
+    # correction-enriched events use ``fee_amount``.  Treat both as the same
+    # trade-fact fee; a confirmed status still remains mandatory.
+    fee = safe_float(event.get("fee_amount"))
+    if fee is None:
+        fee = safe_float(event.get("fee"))
+    fee_status = str(event.get("fee_status") or "").upper()
+    fee_confirmed = fee is not None and fee_status in {"CONFIRMED", "KNOWN", "FINAL"}
+    fee_text = f"{fee:.2f}" if fee_confirmed else "待确认"
+    if side_cn == "买入":
+        cash = -(gross + (fee if fee_confirmed and fee is not None else 0))
+    elif side_cn == "卖出":
+        cash = gross - (fee if fee_confirmed and fee is not None else 0)
+    else:
+        cash = 0.0
+    cash_text = f"{cash:,.2f}" if fee_confirmed else f"{cash:,.2f}（未含待确认费用）"
+    lifecycle = str(event.get("lifecycle") or "").strip()
+    if lifecycle in {"待确认", "UNKNOWN", "未提供"}:
+        lifecycle = ""
+    linked = str(event.get("linked_decision_id") or "").strip()
+    # Preserve the strongest already-existing CASE ownership while rewriting
+    # the managed transaction row.  This is projection-only: no CASE is created.
+    table_header = "|日期时间|标的|代码|动作|数量|成交价|成交本金|实际费用|资金发生额|归属/备注|"
+    projection_table_start = text.index(table_header)
+    projection_table_end = text.index(section_end, projection_table_start)
+    case_ids = _case_ids_for_transaction_projection(
+        event, text, projection_table_start, projection_table_end
+    )
+    note_parts = list(case_ids)
+    if lifecycle:
+        note_parts.append(lifecycle)
+    if linked:
+        note_parts.append(f"关联决策{linked}")
+    note_parts.append("真实成交已执行")
+    note = "；".join(note_parts)
+    row = f"|{dt}|{name}（{code}）|{code}|{side_cn}|{qty:,}|{price:.3f}|{gross:,.2f}|{fee_text}|{cash_text}|{note}| <!-- {marker} -->"
+
+    table_start = text.index("|日期时间|标的|代码|动作|数量|成交价|成交本金|实际费用|资金发生额|归属/备注|")
+    table_end = text.index(section_end, table_start)
+    table = text[table_start:table_end]
+    lines = table.splitlines()
+    marker_index = next((index for index, line in enumerate(lines) if marker in line), None)
+    identity = f"|{dt}|{name}（{code}）|{code}|{side_cn}|{qty:,}|{price:.3f}|{gross:,.2f}|"
+    economic_index = next((index for index, line in enumerate(lines) if line.startswith(identity)), None)
+    enrichment_only = str(event.get("replay_semantics") or "").upper() == "FACT_ENRICHMENT_ONLY"
+    if enrichment_only and economic_index is not None:
+        lines[economic_index] = row
+        if marker_index is not None and marker_index != economic_index:
+            del lines[marker_index]
+        updated_table = "\n".join(lines)
+        text = text[:table_start] + updated_table + text[table_end:]
+    elif marker_index is not None:
+        lines[marker_index] = row
+        updated_table = "\n".join(lines)
+        text = text[:table_start] + updated_table + text[table_end:]
+    elif economic_index is not None:
+        lines[economic_index] = row
+        updated_table = "\n".join(lines)
+        text = text[:table_start] + updated_table + text[table_end:]
+    else:
+        idx = text.index(section_end)
+        text = text[:idx].rstrip() + "\n" + row + "\n" + text[idx:]
+
+    # Recompute the unique index counts from the actual table instead of carrying
+    # a hand-maintained number that can lag a newly confirmed fill.
+    table_start = text.index("|日期时间|标的|代码|动作|数量|成交价|成交本金|实际费用|资金发生额|归属/备注|")
+    table_end = text.index(section_end, table_start)
+    rows = []
+    for line in text[table_start:table_end].splitlines():
+        if re.match(r"^\|20\d{2}-\d{2}-\d{2} ", line):
+            rows.append(line)
+    total = len(rows)
+    etf_count = sum("ETF（" in line for line in rows)
+    stock_count = total - etf_count
+    dates = [line.split("|")[1][:10] for line in rows]
+    last_date = max(dates) if dates else ""
+    text = re.sub(
+        r"统计区间为2026-07-13至\d{4}-\d{2}-\d{2}，共\d+笔证券交易：ETF \d+笔、个股\d+笔。",
+        f"统计区间为2026-07-13至{last_date}，共{total}笔证券交易：ETF {etf_count}笔、个股{stock_count}笔。",
+        text,
+        count=1,
+    )
+    text = re.sub(r"不属于\d+笔证券交易", f"不属于{total}笔证券交易", text, count=1)
+    table_start = text.index("|日期时间|标的|代码|动作|数量|成交价|成交本金|实际费用|资金发生额|归属/备注|")
+    table_end = text.index(section_end, table_start)
+    text = _refresh_current_fee_projection(text, table_start, table_end)
+    write_formal_text_if_changed(ROOT, EXPERIENCE.name, text)
+
+
+def _refresh_current_fee_projection(text: str, table_start: int, table_end: int) -> str:
+    """Project current cumulative ETF fees from canonical facts without rewriting PIT history."""
+    try:
+        from confirmed_trade_facts import canonical_etf_fee_projection
+        equity_path = ROOT / "data" / "state" / "etf_strategy_equity.json"
+        equity = load_json(equity_path) if equity_path.exists() else {}
+        projection = canonical_etf_fee_projection(ROOT, equity.get("trades") or [])
+    except (OSError, ValueError, TypeError, ImportError):
+        return text
+    rows = [line for line in text[table_start:table_end].splitlines() if re.match(r"^\|20\d{2}-\d{2}-\d{2} ", line)]
+    dates = [line.split("|")[1][:10] for line in rows]
+    last_date = max(dates) if dates else ""
+    pending = "无" if projection["pending_fee_count"] == 0 else f"{projection['pending_fee_count']}笔"
+    sentence = f"截至{last_date}累计已确认ETF费用{projection['effective_confirmed_fee_sum']:.2f}元；待确认费用：{pending}。"
+    return re.sub(r"截至.*?。", sentence, text, count=1)
+
+def write_trade_review_required(event: dict) -> None:
+    event_id = str(event.get("event_id") or "")
+    if not event_id:
+        return
+    path = ROOT / "events" / "research" / "decision_outcomes" / f"TRADE_COMPLETED_REVIEW_REQUIRED_{event_id}.json"
+    if path.exists():
+        return
+    atomic_json_write(path, {
+        "event_type": "TRADE_COMPLETED_REVIEW_REQUIRED",
+        "event_id": event_id,
+        "notification_id": event.get("notification_id"),
+        "related_decision_id": event.get("linked_decision_id"),
+        "execution_date": event.get("execution_date"),
+        "confirmation_date": event.get("confirmation_date"),
+        "security_code": event.get("code"),
+        "security_name": event.get("name"),
+        "side": event.get("side"),
+        "quantity": event.get("quantity"),
+        "price": event.get("price"),
+        "amount": event.get("amount"),
+        "review_status": "PENDING_FORMAL_REVIEW",
+        "objective_fields": ["trade_event", "strategy_risk_rate_change", "cash_change", "next_observation_point"],
+        "safety_boundary": "只生成客观复盘待办，不自动判断交易正确/错误，不修改MASTER，不生成新的交易动作。",
+    })
+
+
+def _explicit_fact_type(request: dict) -> str:
+    return str(
+        request.get("formal_fact_type")
+        or request.get("fact_type")
+        or request.get("ingress_intent")
+        or ""
+    ).strip().upper()
+
+
+
+def _request_trade_events(request: dict) -> list[dict]:
+    """Normalize the existing singular and batch broker trade ingress shapes."""
+    plural = request.get("trade_events")
+    if isinstance(plural, list) and plural and all(isinstance(item, dict) for item in plural):
+        return plural
+    if "trade_events" in request:
+        return []
+    singular = request.get("trade_event")
+    return [singular] if isinstance(singular, dict) else []
+
+
+def _trade_event_id(request: dict, trade: dict, idempotency_key: str, ordinal: int, total: int) -> str:
+    """Use stable, collision-resistant IDs when a batch omits explicit event IDs."""
+    explicit = str(trade.get("event_id") or "").strip()
+    if explicit:
+        return explicit
+    request_id = str(request.get("request_id") or datetime.now(SHANGHAI).strftime("%Y%m%d_%H%M%S"))
+    if total == 1:
+        return request_id
+    suffix = hashlib.sha256(idempotency_key.encode("utf-8")).hexdigest()[:16]
+    return f"{request_id}_{ordinal + 1}_{suffix}"
+
+def canonical_ingress_contract_for_request(request: dict) -> dict:
+    """Return the actor-side terminal canonical ingress contract for formal facts."""
+
+    fact_type = _explicit_fact_type(request)
+    scenario = str(request.get("interaction_scenario") or "").strip().upper()
+    channel = str(request.get("channel") or request.get("delivery_channel") or "").strip().upper()
+    report_type = str(request.get("report_type") or request.get("report_kind") or "").strip().upper()
+
+    is_broker_fact = is_broker_screenshot_request(request)
+    trade_events = request.get("trade_events")
+    has_trade_events = isinstance(trade_events, list) and bool(trade_events) and all(isinstance(item, dict) for item in trade_events)
+    invalid_trade_events = "trade_events" in request and (
+        not has_trade_events or isinstance(request.get("trade_event"), dict)
+    )
+    is_trade_fact = fact_type in {"CONFIRMED_TRADE", "TRADE_EVENT"} or isinstance(request.get("trade_event"), dict) or has_trade_events
+    is_decision_fact = fact_type == "FORMAL_DECISION" or isinstance(request.get("formal_decision"), dict)
+    # POST_CLOSE_REVIEW is a session/scenario label as well as a review fact
+    # label. An explicit formal_decision payload remains a Decision Fact and
+    # must not be diverted into the review-ingress contract merely because the
+    # user requested the decision after A-share close.
+    is_review_fact = (
+        fact_type in {"FORMAL_POST_CLOSE_REVIEW", "FORMAL_SCHEDULED_TRADE_REVIEW", "POST_CLOSE_REVIEW"}
+        or (scenario == "POST_CLOSE_REVIEW" and not is_decision_fact and not is_trade_fact)
     )
     is_report_delivery = channel in {"REPORT", "REPORT_DELIVERY"} or report_type in {"ETF_TRADE_REVIEW", "SCHEDULED_TRADE_REVIEW"}
 
@@ -1626,13 +3128,6 @@ def main() -> int:
             raise ValueError(
                 "business decision source requires frozen presentation_content"
             )
-        validate_formal_presentation_provenance(
-            str(presentation_content),
-            parent_request_id=parent_id,
-            decision_id=str(request.get("decision_id") or "").strip(),
-            market_date=str(request.get("market_date") or parent_request.get("market_date") or "").strip(),
-            root=ROOT,
-        )
         if presentation_content not in (None, ""):
             source_payload["presentation_content"] = presentation_content
             binding = request.get("presentation_binding")
