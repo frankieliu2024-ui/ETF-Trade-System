@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from pathlib import Path
 from typing import Any
 
 BUSINESS_DECISION_SOURCE = "BUSINESS_DECISION_SOURCE"
@@ -175,6 +176,70 @@ def _parse_yuan_amount(value: Any, field: str) -> float:
 def source_fingerprint(source: dict[str, Any]) -> str:
     body = {k: v for k, v in source.items() if k not in {"fingerprint", "status", "projection_status"}}
     return hashlib.sha256(_canonical(body).encode("utf-8")).hexdigest()
+
+
+def validate_formal_presentation_provenance(
+    content: str,
+    *,
+    parent_request_id: str,
+    decision_id: str,
+    market_date: str,
+    root: Path,
+) -> str:
+    """Reject a frozen public body reused by another Formal Decision run.
+
+    Identity fields alone are insufficient: an actor can accidentally pair a
+    fresh title/request envelope with an old report body.  The durable body
+    hash is therefore checked against prior BDS and review artifacts for the
+    same market date.  Reuse within the same request is idempotent; reuse by a
+    different request or decision is a provenance failure.
+    """
+    if not isinstance(content, str) or not content.strip():
+        raise ValueError("formal presentation provenance requires non-empty content")
+    parent = str(parent_request_id or "").strip()
+    decision = str(decision_id or "").strip()
+    date = str(market_date or "").strip()
+    if not parent or not decision or not date:
+        raise ValueError("formal presentation provenance requires request, decision and market date")
+    digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
+    candidates = (
+        root / "requests" / "live_snapshot",
+        root / "events" / "reviews",
+    )
+    for directory in candidates:
+        if not directory.is_dir():
+            continue
+        for path in directory.glob("*.json"):
+            try:
+                payload = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, ValueError, TypeError):
+                continue
+            if not isinstance(payload, dict):
+                continue
+            prior_content = payload.get("presentation_content")
+            binding = payload.get("presentation_binding")
+            if prior_content is None and isinstance(binding, dict):
+                prior_content = binding.get("full_content")
+            if not isinstance(prior_content, str) or not prior_content:
+                continue
+            prior_hash = str(payload.get("content_hash") or "").strip()
+            if not prior_hash:
+                prior_hash = hashlib.sha256(prior_content.encode("utf-8")).hexdigest()
+            if prior_hash != digest:
+                continue
+            prior_parent = str(payload.get("parent_request_id") or "").strip()
+            prior_request = str(payload.get("request_id") or "").strip()
+            prior_decision = str(payload.get("decision_id") or "").strip()
+            prior_date = str(payload.get("market_date") or "").strip()
+            if prior_parent == parent or prior_request == parent or prior_decision == decision:
+                continue
+            if prior_date and prior_date != date:
+                continue
+            raise ValueError(
+                "formal presentation content hash is already bound to another "
+                f"Formal Decision run: {path.name}"
+            )
+    return digest
 
 def validate_decision_evidence_consumption(value: Any, *, parent_request_id: str = "") -> str:
     """Validate explicit evidence consumption without making an investment judgment."""
