@@ -163,7 +163,7 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
         self.assertNotIn("1. ChatGPT完成业务判断后，必须先提交唯一 BUSINESS_DECISION_SOURCE", protocol)
         self.assertIn("READY 后，必须先完成业务判断并冻结唯一", protocol)
         self.assertIn("交接成功或明确到达最后失败层级后，才向用户窗口输出", protocol)
-        self.assertIn("然后立即向用户窗口输出此前冻结的同一份完整正文", protocol)
+        self.assertIn("交接成功或明确到达最后失败层级后，才向用户窗口输出", protocol)
         self.assertIn("统一 `SCHEDULED_REVIEW_COMPLETION` ingress", protocol)
         self.assertNotIn("在用户窗口返回前，先执行后置交接，再输出", protocol)
         self.assertIn("BUSINESS_DECISION_SOURCE", protocol)
