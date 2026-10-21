@@ -9,6 +9,7 @@ from scripts.business_decision_source import (
     _normalize_formal_presentation_layout,
     _validate_formal_presentation_layout,
     _validate_formal_presentation_contract,
+    _validate_formal_presentation_hashes,
 )
 
 class BusinessDecisionSourceTests(unittest.TestCase):
@@ -60,6 +61,36 @@ class BusinessDecisionSourceTests(unittest.TestCase):
         self.assertTrue(source["source_durable"])
         self.assertTrue(source["reply_ready"])
         self.assertNotIn("formal_completion_validator", source)
+
+    def test_formal_presentation_hashes_bind_to_current_frozen_content(self):
+        import hashlib
+        current = "current FINAL_CONTENT"
+        source = {
+            "presentation_content": current,
+            "content_hash": hashlib.sha256(current.encode("utf-8")).hexdigest(),
+            "presentation_binding": {
+                "full_content": current,
+                "content_hash": hashlib.sha256(current.encode("utf-8")).hexdigest(),
+                "content_sha256": hashlib.sha256(current.encode("utf-8")).hexdigest(),
+            },
+        }
+        _validate_formal_presentation_hashes(source)
+
+    def test_stale_formal_presentation_binding_hash_fails_closed(self):
+        import hashlib
+        current = "current FINAL_CONTENT"
+        stale = "previous FINAL_CONTENT"
+        source = {
+            "presentation_content": current,
+            "content_hash": hashlib.sha256(current.encode("utf-8")).hexdigest(),
+            "presentation_binding": {
+                "full_content": stale,
+                "content_hash": hashlib.sha256(stale.encode("utf-8")).hexdigest(),
+                "content_sha256": hashlib.sha256(stale.encode("utf-8")).hexdigest(),
+            },
+        }
+        with self.assertRaisesRegex(ValueError, "content_hash"):
+            _validate_formal_presentation_hashes(source)
 
     def test_entry_identity_mismatch_fails_closed(self):
         source = self.base()
