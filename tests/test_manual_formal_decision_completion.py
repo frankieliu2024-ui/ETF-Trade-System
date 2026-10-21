@@ -10,6 +10,7 @@ from unittest import mock
 
 from scripts import manual_formal_decision_completion as completion
 from scripts import process_state_sync_request as state_sync
+from scripts import business_decision_source as business_source
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -995,6 +996,76 @@ class CapitalCompetitionCrossFieldTests(unittest.TestCase):
             decision, {"positions": []}
         )
         self.assertIn("risk permission alone", error)
+
+
+class BusinessSourceCapitalCompetitionPreflightTests(unittest.TestCase):
+    def _request(self, compared_states):
+        return {
+            "parent_request_id": "parent-capital-preflight",
+            "request_id": "parent-capital-preflight__business_decision_source",
+        }, {
+            "answers": {
+                "NEXT_UNIT_CAPITAL_USE": {
+                    "final_action": "保留现金",
+                    "capital_comparison": "已比较合法资本状态",
+                    "next_change_condition": "出现独立机会时重评",
+                    "evidence_decision_impact": [],
+                    "new_amount_yuan": 0,
+                    "post_action_deployable_cash": 120000,
+                    "future_opportunity_capacity": "保留后续Trial能力",
+                    "cash_opportunity_cost": "可能错过上涨",
+                    "alternative_capital_use_review": "已比较持仓、追加、释放和机会",
+                    "concentration_account_structure_effect": "不增加集中度",
+                    "selected_state_reason": "资本竞争后现金胜出",
+                    "zero_amount_decisive_reason_if_zero": "完成资本竞争后现金胜出",
+                    "compared_capital_states_as_business_state_names": compared_states,
+                }
+            }
+        }, {
+            "problem_graph": [{"problem_id": "NEXT_UNIT_CAPITAL_USE"}],
+            "response_contract": {}
+        }
+
+    def test_zero_deployment_requires_structurally_complete_state_comparisons(self):
+        source, response, work_package = self._request([
+            {
+                "state_name": "现金",
+                "capital_action": "保留",
+                "remaining_deployable_cash": 120000,
+                "why_not_selected": "已选中",
+            },
+            {
+                "state_name": "Trial",
+                "capital_action": "新增",
+                "remaining_deployable_cash": 115000,
+                "why_not_selected": "未优于现金",
+                "opportunity_cost_if_selected": "承担新增风险",
+            },
+        ])
+        with self.assertRaisesRegex(ValueError, "complete capital-state comparisons"):
+            business_source.project_decision_response(source, response, work_package)
+
+    def test_zero_deployment_accepts_complete_state_comparisons(self):
+        source, response, work_package = self._request([
+            {
+                "state_name": "现金",
+                "capital_action": "保留",
+                "remaining_deployable_cash": 120000,
+                "why_not_selected": "已选中",
+                "opportunity_cost_if_selected": "放弃即时收益",
+            },
+            {
+                "state_name": "Trial",
+                "capital_action": "新增",
+                "remaining_deployable_cash": 115000,
+                "why_not_selected": "未优于现金",
+                "opportunity_cost_if_selected": "承担新增风险",
+            },
+        ])
+        result = business_source.project_decision_response(source, response, work_package)
+        self.assertEqual(result["capital_competition"]["next_unit_capital_use"]["new_amount_yuan"], 0)
+
+
 
 
 if __name__ == "__main__":
