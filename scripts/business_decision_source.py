@@ -475,6 +475,29 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
     if new_amount == 0 and not zero_amount_decisive_reason:
         raise ValueError("decision response requires zero_amount_decisive_reason_if_zero when new amount is zero")
 
+    # A zero-deployment conclusion is a capital-competition result, not a
+    # risk-permission shortcut. Enforce the structural proof at the BDS
+    # boundary so malformed answers fail before canonical projection.
+    if new_amount == 0:
+        if len(compared_capital_states) < 2:
+            raise ValueError(
+                "zero deployment requires at least two compared capital states"
+            )
+        invalid_states = []
+        for state in compared_capital_states:
+            if not isinstance(state, dict):
+                invalid_states.append("non_object_state")
+                continue
+            for field in ("state_name", "capital_action", "remaining_cash", "why_not_selected", "opportunity_cost"):
+                if state.get(field) in (None, "", [], {}):
+                    invalid_states.append(field)
+                    break
+        if invalid_states:
+            raise ValueError(
+                "zero deployment requires complete capital-state comparisons: "
+                + ",".join(invalid_states)
+            )
+
     # When cash is insufficient but a current opportunity and actual holdings
     # coexist, zero deployment is not complete until the actor compares
     # releasing the lowest-efficiency holding against continuing to hold it.
