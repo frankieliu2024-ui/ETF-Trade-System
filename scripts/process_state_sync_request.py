@@ -3343,6 +3343,45 @@ def is_broker_screenshot_request(request: dict) -> bool:
     )
 
 
+def normalize_broker_account_fact_ingress(request: dict, supplied: object) -> tuple[object, int]:
+    """Move explicitly typed non-security screenshot rows out of positions.
+
+    No security identity is inferred. Rows are moved only when the ingress
+    explicitly declares a non-security account asset type and supplies a name.
+    Unknown security-like rows remain fail-closed.
+    """
+    if not is_broker_screenshot_request(request) or not isinstance(supplied, dict):
+        return supplied, 0
+    positions = supplied.get("positions")
+    if not isinstance(positions, list):
+        return supplied, 0
+    normalized = json.loads(json.dumps(supplied))
+    kept = []
+    unresolved = list(normalized.get("unresolved_assets") or [])
+    moved = 0
+    non_security_types = {"BOND", "CONVERTIBLE_BOND", "DEBT", "ACCOUNT_ASSET"}
+    for index, position in enumerate(normalized.get("positions") or []):
+        if not isinstance(position, dict):
+            kept.append(position)
+            continue
+        code = str(position.get("code") or "").strip()
+        asset_type = str(position.get("asset_type") or "").strip().upper()
+        name = str(position.get("name") or position.get("security_name") or "").strip()
+        if not re.fullmatch(r"\d{6}", code) and asset_type in non_security_types and name:
+            row = dict(position)
+            row["source_position_index"] = index
+            row["identity_status"] = "UNRESOLVED_NON_SECURITY_ASSET"
+            row["resolution_boundary"] = "No security code inferred from screenshot"
+            unresolved.append(row)
+            moved += 1
+        else:
+            kept.append(position)
+    if moved:
+        normalized["positions"] = kept
+        normalized["unresolved_assets"] = unresolved
+    return normalized, moved
+
+
 def validate_broker_account_fact_ingress(request: dict, supplied: object) -> str:
     """Fail fast on malformed ChatGPT-translated broker account facts.
 
@@ -3976,6 +4015,7 @@ def main() -> int:
         }, ensure_ascii=False, indent=2, sort_keys=True))
         return 1
 
+    supplied_account, normalized_non_security_asset_count = normalize_broker_account_fact_ingress(request, supplied_account)
     broker_shape_error = validate_broker_account_fact_ingress(request, supplied_account)
     if broker_shape_error:
         print(json.dumps({
@@ -4146,7 +4186,7 @@ def main() -> int:
         ROOT, account, (request.get("formal_decision") or {}) if formal_decision_current else {}
     ) if (formal_decision_current or account_membership_changed) else False
     formal_files_sync = sync_formal_files(ROOT, account)
-    result = {"ok": True, "request_id": request.get("request_id"), "interaction_scenario": request.get("interaction_scenario"), "account_updated_at": account.get("updated_at"), "dashboard_updated": True, "formal_decision_recorded": decision_recorded, "formal_decision_id": decision_id, "trade_event_recorded": trade_event_recorded, "post_close_review_recorded": review_recorded, "post_close_review_idempotent_noop": review_idempotent, "review_prerequisite_unavailable_recorded": unavailable_recorded, "review_prerequisite_unavailable_idempotent_noop": unavailable_idempotent, "formal_files_sync": formal_files_sync, "observation_universe_changed": observation_universe_changed, "account_sync_status": account_sync_status, "canonical_ingress_state": canonical_ingress_contract["terminal_state"], "canonical_ingress_failure_reason": None if canonical_ingress_contract["terminal_state"] == CANONICAL_INGRESS_SUBMITTED else canonical_ingress_contract["reason"]}
+    result = {"ok": True, "request_id": request.get("request_id"), "interaction_scenario": request.get("interaction_scenario"), "account_updated_at": account.get("updated_at"), "dashboard_updated": True, "formal_decision_recorded": decision_recorded, "formal_decision_id": decision_id, "trade_event_recorded": trade_event_recorded, "post_close_review_recorded": review_recorded, "post_close_review_idempotent_noop": review_idempotent, "review_prerequisite_unavailable_recorded": unavailable_recorded, "review_prerequisite_unavailable_idempotent_noop": unavailable_idempotent, "formal_files_sync": formal_files_sync, "observation_universe_changed": observation_universe_changed, "account_sync_status": account_sync_status, "normalized_non_security_asset_count": normalized_non_security_asset_count, "canonical_ingress_state": canonical_ingress_contract["terminal_state"], "canonical_ingress_failure_reason": None if canonical_ingress_contract["terminal_state"] == CANONICAL_INGRESS_SUBMITTED else canonical_ingress_contract["reason"]}
     print(json.dumps(result, ensure_ascii=False))
     return 0
 
