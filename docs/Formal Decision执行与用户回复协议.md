@@ -65,13 +65,11 @@
 → `完整业务判断`
 → `唯一FINAL_CONTENT`
 → `BUSINESS_DECISION_SOURCE/BDS + SCHEDULED_REVIEW_COMPLETION 原子持久化`
-→ `显式通知dispatch与后续回读`
-→ `用户窗口输出FINAL_CONTENT`
+→ `显式通知dispatch`
 → `canonical owner`
 → `唯一events/reviews/formal_<occurrence_id>.json`
-→ `既有decision-notification`
-→ `notification_center`
-→ `PushPlus/微信原文投递`
+→ `REPORT/notification_center/PushPlus回读`
+→ `用户窗口输出FINAL_CONTENT`
 
 三个入口的业务语义统一，但入口身份必须原样保留。正式决策不得使用旧的独立 Formal completion；不得再使用旧的独立 Formal completion 生产链。它必须使用统一 Scheduled Review completion，但不得让系统复核或交易复盘的业务事实冒充正式决策。
 
