@@ -901,6 +901,23 @@ def _normalize_formal_presentation_layout(value: Any) -> Any:
         return value
     import re
 
+    # Keep user-facing prose in business language. These are execution-model
+    # labels, not investment conclusions; normalize the common actor wording
+    # before the frozen content is hashed and projected to notifications.
+    public_replacements = (
+        ("下一合法节点复核", "下一次正式判断将重新评估"),
+        ("下一合法节点", "下一次正式判断"),
+        ("HOLD胜过REDUCE/EXIT", "继续持有优于减持或全部退出"),
+        ("HOLD/REDUCE/EXIT", "继续持有、减持或全部退出"),
+        ("HOLD", "继续持有"),
+        ("REDUCE", "减持"),
+        ("EXIT", "全部退出"),
+        ("Discovery转化", "候选方向是否值得进一步研究"),
+        ("现金机会成本", "持有现金可能错过的潜在收益"),
+    )
+    for source, target in public_replacements:
+        value = value.replace(source, target)
+
     # Actor handoffs may append delivery diagnostics after the business report.
     # Those diagnostics are not FINAL_CONTENT and must never enter the frozen
     # presentation/event/notification payload. Keep the split deterministic so
