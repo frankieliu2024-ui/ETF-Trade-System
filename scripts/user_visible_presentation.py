@@ -113,6 +113,9 @@ def _internal_presentation_terms(text: str) -> list[str]:
         "provider", "content_hash", "BDS", "DWP", "PIT",
         "query_context", "decision_work_package", "系统时钟", "执行环境",
         "UTC+08:00", "DEGRADED", "FULL_REPORT", "STATE_SYNC_ONLY",
+        "HOLD/REDUCE/EXIT", "HOLD", "REDUCE", "Discovery转化",
+        "现金机会成本", "下一合法节点", "事实绑定", "后置交接", "投影未闭环",
+        "交接状态", "执行状态", "通知状态", "PROJECTION_INCOMPLETE",
     )
     return [term for term in terms if re.search(re.escape(term), text, re.IGNORECASE)]
 
