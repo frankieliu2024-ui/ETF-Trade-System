@@ -240,4 +240,4 @@ Formal Decision 与两个 Scheduled Review 任务共用同一个 Scheduled Revie
 
 `ETF_FORMAL_DECISION` 的通知正文唯一来源是当前请求已冻结并由统一 Scheduled Review completion event 绑定的 `FINAL_CONTENT`；Formal Decision 与【ETF系统复核】、【ETF交易复盘】共用同一个 completion owner、completion request type、REPORT、notification_center/PushPlus 主链，但通过 `report_type=ETF_FORMAL_DECISION` 保留独立业务身份。BDS 只负责业务事实入口和正文冻结，不是通知唤醒事件。通知中心必须消费当前精确 completion event，验证 `request_id`、`parent_request_id`、`decision_id`、`content_hash` 和 presentation binding；任何字段缺失或不一致都不得发送，不得扫描历史事件回退，也不得返回 `ALREADY_MANAGED`。
 
-`notification.content` 必须逐字等于当前 BDS 的 `presentation_content`，`notification.content_hash` 必须等于正文实际哈希。PushPlus 只发送该正文原文。用户窗口输出是 READY 后的首个可见动作；BDS 写入、回读、completion、canonical event 和通知尝试均为正文后的后置投影。provider 成功不是用户回复门禁，通知失败不得替代或改写完整 FINAL_CONTENT。
+`notification.content` 必须逐字等于当前 BDS 的 `presentation_content`，`notification.content_hash` 必须等于正文实际哈希。PushPlus 只发送该正文原文。用户窗口输出应在同一运行完成BDS写入回读、completion、显式通知dispatch及可取得的canonical event、REPORT、notification_center和provider回读后进行；若后置链路失败或超时，必须明确记录最后失败层级后输出同一份完整 FINAL_CONTENT。不得因等待不可取得的provider或用户收件确认而无限等待；provider成功不是用户实际收到的证明，通知失败不得替代或改写完整 FINAL_CONTENT。

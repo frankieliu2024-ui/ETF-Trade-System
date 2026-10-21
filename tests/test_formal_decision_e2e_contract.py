@@ -267,7 +267,7 @@ class FormalDecisionLessonsProtocolTests(unittest.TestCase):
         self.assertIn("不得再使用旧的", text)
         self.assertIn("SCHEDULED_REVIEW_COMPLETION", text)
         self.assertIn("MARKET_QUOTE_REFRESH", text)
-        self.assertIn("PushPlus/微信原文投递", text)
+        self.assertIn("PushPlus/微信原文投递回读", text)
         self.assertIn("不得产生不同的业务判断、正文、completion、event、REPORT 或通知链", text)
         index_text = (root / "ETF_SYSTEM_INDEX.md").read_text(encoding="utf-8")
         self.assertIn("request_type=SCHEDULED_REVIEW_COMPLETION", index_text)
@@ -290,7 +290,7 @@ class FormalDecisionLessonsProtocolTests(unittest.TestCase):
         invariants = routing["invariants"]
         self.assertIn("scheduled_review_formal_projection_must_preserve_formal_report_type", invariants)
         self.assertNotIn("scheduled_review_cannot_use_formal_decision_projection", invariants)
-        self.assertIn("然后立即向用户窗口输出此前冻结的同一份完整正文", formal_text)
+        self.assertIn("交接成功或明确到达最后失败层级后，才向用户窗口输出", formal_text)
 
     def test_protocol_preserves_current_request_fail_closed_and_send_boundary(self):
         root = Path(__file__).parents[1]
@@ -311,21 +311,21 @@ class FormalReadyHandoffContractTests(unittest.TestCase):
         self.assertIn('"provider_success_not_required_for_user_reply": True', text)
         self.assertIn('"historical_fallback_forbidden": True', text)
         self.assertIn('"formal_decision_notification_chain_starts_at_bds": False', text)
-        self.assertIn('"post_reply_async": True', text)
-        self.assertIn('"provider_success_async": True', text)
-        self.assertIn('"must_read_back_before_reply": False', text)
-        self.assertIn('POST_REPLY_HANDOFF = "BDS_COMPLETION_EVENT_REPORT_NOTIFICATION_ASYNC"', text)
+        self.assertIn('"post_reply_async": False', text)
+        self.assertIn('"provider_success_async": False', text)
+        self.assertIn('"must_read_back_before_reply": True', text)
+        self.assertIn('HANDOFF_BEFORE_REPLY = "BDS_COMPLETION_EVENT_REPORT_NOTIFICATION_BOUNDED"', text)
         self.assertIn('"bds_and_completion_atomic_commit_required": True', text)
         self.assertNotIn('BDS_AND_COMPLETION_BEFORE_USER_REPLY', text)
 
     def test_protocol_completes_handoff_before_user_reply(self):
         protocol = (Path(__file__).parents[1] / "docs/Formal Decision执行与用户回复协议.md").read_text(encoding="utf-8")
         self.assertIn("READY 后，必须先完成业务判断并冻结唯一", protocol)
-        self.assertIn("立即向用户窗口输出此前冻结的同一份完整正文", protocol)
-        self.assertIn("然后立即向用户窗口输出此前冻结的同一份完整正文", protocol)
+        self.assertNotIn("立即向用户窗口输出此前冻结的同一份完整正文", protocol)
+        self.assertIn("交接成功或明确到达最后失败层级后，才向用户窗口输出", protocol)
         self.assertIn("统一 `SCHEDULED_REVIEW_COMPLETION` ingress", protocol)
-        self.assertNotIn("完成上述 ingress 后，必须立即向用户窗口输出", protocol)
-        self.assertIn("通知失败不撤回用户已经看到的正文", protocol)
+
+
 
     def test_ready_handoff_does_not_create_a_second_notification_path(self):
         root = Path(__file__).parents[1]
