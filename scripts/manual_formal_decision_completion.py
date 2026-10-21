@@ -450,10 +450,31 @@ def write_completion_request(source_request_path: str, decision_path: str, consu
     serialized = json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
     if target.exists():
         if target.read_text(encoding="utf-8") == serialized:
-            return target
-        raise FileExistsError("completion request path already contains a different payload")
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(serialized, encoding="utf-8")
+            pass
+        else:
+            raise FileExistsError("completion request path already contains a different payload")
+    else:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(serialized, encoding="utf-8")
+    # The BDS is only the first durable handoff.  Production must immediately
+    # create the shared Scheduled Review completion from the exact persisted
+    # BDS, otherwise notification projection has no legal completion ingress.
+    bds_relative = str(target.relative_to(ROOT)).replace("\\", "/")
+    persisted_bds = json.loads(target.read_text(encoding="utf-8"))
+    completion_payload = build_formal_decision_completion_request(
+        source,
+        bds_relative,
+        str(persisted_bds.get("decision_id") or decision.get("decision_id") or "").strip(),
+        str(persisted_bds.get("content_hash") or "").strip(),
+        bds_payload=persisted_bds,
+    )
+    completion_target = REQUEST_DIR / f"{completion_payload['request_id']}.json"
+    completion_serialized = json.dumps(completion_payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+    if completion_target.exists():
+        if completion_target.read_text(encoding="utf-8") != completion_serialized:
+            raise FileExistsError("Formal Decision completion path already contains a different payload")
+    else:
+        completion_target.write_text(completion_serialized, encoding="utf-8")
     return target
 
 
@@ -473,11 +494,13 @@ def main() -> int:
         args.final_content,
     )
     written = json.loads(target.read_text(encoding="utf-8"))
+    completion_path = target.parent / f"{written['parent_request_id']}__scheduled_review_completion.json"
     print(json.dumps({
         "ok": True,
         "request": str(target.relative_to(ROOT)).replace("\\", "/"),
         "completion_request_id": written.get("request_id"),
         "parent_request_id": written.get("parent_request_id"),
+        "completion_request": str(completion_path.relative_to(ROOT)).replace("\\", "/"),
         "handoff_required": True,
         "handoff": "decision-notification.workflow_dispatch(formal_completion_path=<request>)",
     }, ensure_ascii=False))
