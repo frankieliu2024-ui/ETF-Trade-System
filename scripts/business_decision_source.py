@@ -488,7 +488,7 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
             if not isinstance(state, dict):
                 invalid_states.append("non_object_state")
                 continue
-            for field in ("state_name", "capital_action", "remaining_cash", "why_not_selected", "opportunity_cost"):
+            for field in ("state_name", "capital_action", "remaining_deployable_cash", "why_not_selected", "opportunity_cost_if_selected"):
                 if state.get(field) in (None, "", [], {}):
                     invalid_states.append(field)
                     break
