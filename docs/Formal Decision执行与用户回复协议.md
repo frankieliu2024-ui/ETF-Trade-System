@@ -64,8 +64,9 @@
 → `current main正式规则与本次request-bound事实`
 → `完整业务判断`
 → `唯一FINAL_CONTENT`
-→ `用户窗口输出FINAL_CONTENT`
 → `BUSINESS_DECISION_SOURCE/BDS + SCHEDULED_REVIEW_COMPLETION 原子持久化`
+→ `显式通知dispatch与后续回读`
+→ `用户窗口输出FINAL_CONTENT`
 → `canonical owner`
 → `唯一events/reviews/formal_<occurrence_id>.json`
 → `既有decision-notification`
