@@ -224,7 +224,7 @@ def validate_formal_presentation_contract(envelope: dict[str, Any]) -> tuple[boo
         return False, "formal_presentation_missing_content"
     required_headings = (
         "【业务结论】", "【数据时点与必要依据】", "【三层监测】",
-        "【持仓动作】", "【资本用途】", "【全市场机会发现】",
+        "【持仓动作】", "【资本用途】", "【全市场机会发现】", "【机会ETF】",
         "【观察ETF】", "【关键风险】", "【后续安排】",
         "【置信度】", "【最可能出错的地方】",
     )

@@ -901,6 +901,40 @@ def _normalize_formal_presentation_layout(value: Any) -> Any:
         return value
     import re
 
+    # Keep user-facing prose in business language. These are execution-model
+    # labels, not investment conclusions; normalize the common actor wording
+    # before the frozen content is hashed and projected to notifications.
+    public_replacements = (
+        ("下一合法节点复核", "下一次正式判断将重新评估"),
+        ("下一合法节点", "下一次正式判断"),
+        ("HOLD胜过REDUCE/EXIT", "继续持有优于减持或全部退出"),
+        ("HOLD/REDUCE/EXIT", "继续持有、减持或全部退出"),
+        ("HOLD", "继续持有"),
+        ("REDUCE", "减持"),
+        ("EXIT", "全部退出"),
+        ("Discovery转化", "候选方向是否值得进一步研究"),
+        ("现金机会成本", "持有现金可能错过的潜在收益"),
+    )
+    for source, target in public_replacements:
+        value = value.replace(source, target)
+
+    # Actor handoffs may append delivery diagnostics after the business report.
+    # Those diagnostics are not FINAL_CONTENT and must never enter the frozen
+    # presentation/event/notification payload. Keep the split deterministic so
+    # the canonical producer, rather than a downstream sender, owns the public
+    # body boundary.
+    noise_markers = (
+        "\n交接状态：",
+        "\n交接状态:",
+        "\n执行状态：",
+        "\n执行状态:",
+        "\n通知状态：",
+        "\n通知状态:",
+    )
+    cut = min((value.find(marker) for marker in noise_markers if value.find(marker) >= 0), default=-1)
+    if cut >= 0:
+        value = value[:cut].rstrip()
+
     text = re.sub(r"[ \t]+([（(][0-9]{1,2}[）)])", r"\n\n\1", value)
     lines = text.splitlines()
     heading = re.compile(r"^【[^】]+】$")
@@ -973,6 +1007,7 @@ _FORMAL_PRESENTATION_HEADINGS = (
     "【持仓动作】",
     "【资本用途】",
     "【全市场机会发现】",
+    "【机会ETF】",
     "【观察ETF】",
     "【关键风险】",
     "【后续安排】",
