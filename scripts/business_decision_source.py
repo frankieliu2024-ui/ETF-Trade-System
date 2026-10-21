@@ -1194,6 +1194,15 @@ def _validate_request_bound_identity(source: dict[str, Any]) -> None:
         request_minute = requested_at[:16].replace("T", " ")
         if request_minute not in content:
             raise ValueError("formal presentation does not contain current request timestamp")
+        # The first line is the user-visible decision identity.  Checking only
+        # whether the request minute appears somewhere in the body is insufficient:
+        # a stale report can contain unrelated current timestamps while retaining
+        # an older title.  Bind the frozen title to this request before BDS
+        # persistence so an older FINAL_CONTENT cannot enter a new source.
+        first_line = content.splitlines()[0].strip() if content.splitlines() else ""
+        expected_title = f"【ETF正式决策】{request_minute} 正式判断"
+        if first_line != expected_title:
+            raise ValueError("formal presentation title does not match current request timestamp")
     if request_id.startswith("fd-chatgpt-") and isinstance(content, str):
         parts = request_id.split("-")
         if len(parts) >= 4 and len(parts[2]) == 8 and len(parts[3]) == 6:
