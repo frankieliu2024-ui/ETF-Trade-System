@@ -7,15 +7,15 @@
     "snapshot_commit": "d67f56cbdacbc65341bc1449e78002c6e7746aef",
     "boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
     "timing": {
-      "state_builder_started_at": "2026-10-21T08:40:15Z",
+      "state_builder_started_at": "2026-10-21T08:41:41Z",
       "current_published_at": "2026-10-21T15:11:27+08:00",
-      "market_regime_ready_at": "2026-10-21T08:40:21Z",
-      "market_structure_ready_at": "2026-10-21T08:40:21Z",
-      "full_state_context_observation_at": "2026-10-21T08:40:21Z",
-      "decision_context_written_at": "2026-10-21T08:40:23Z"
+      "market_regime_ready_at": "2026-10-21T08:41:46Z",
+      "market_structure_ready_at": "2026-10-21T08:41:47Z",
+      "full_state_context_observation_at": "2026-10-21T08:41:47Z",
+      "decision_context_written_at": "2026-10-21T08:41:48Z"
     }
   },
-  "generated_at": "2026-10-21T08:40:21Z",
+  "generated_at": "2026-10-21T08:41:47Z",
   "rules_version": "V2.2.34",
   "market_date": "2026-10-21",
   "latest_node": "close",
@@ -1542,7 +1542,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 8.046,
-    "age_seconds": 5334
+    "age_seconds": 5420
   },
   "freshness_at_context_build": {
     "status": "STALE",
@@ -1558,7 +1558,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 8.046,
-    "age_seconds": 5334
+    "age_seconds": 5420
   },
   "data_quality_summary": {
     "pass_count": 17,
@@ -1659,7 +1659,7 @@
     "account_fact_time": "2026-10-20T17:09:00+08:00",
     "market_snapshot_time": "2026-10-21T15:11:27+08:00",
     "market_phase": "POST_CLOSE_GRACE",
-    "context_generated_time": "2026-10-21T08:40:21Z",
+    "context_generated_time": "2026-10-21T08:41:47Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
@@ -1699,90 +1699,28 @@
     "read_only": true
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-10-21T16:40:21+08:00",
-    "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
-    "refresh_failures": [
-      {
-        "symbol": "NDX",
-        "error": "NDX active-market immediate refresh rejected non-FRESH provider result: PREVIOUS_SESSION_REFERENCE"
-      },
-      {
-        "symbol": "SOX",
-        "error": "SOX active-market immediate refresh rejected non-FRESH provider result: PREVIOUS_SESSION_REFERENCE"
-      }
-    ],
+    "generated_at_beijing": "2026-10-21T16:41:47+08:00",
+    "refresh_mode": "CACHED_STATE",
+    "refresh_failures": [],
     "decision_freshness": {
-      "status": "DIRECT",
+      "status": "REFRESH_REQUIRED",
       "quality_status": "UNKNOWN",
       "captured_at": "2026-10-21T07:11:27+00:00",
       "provider_as_of": "2026-10-21T07:11:22+00:00",
       "effective_as_of": "2026-10-21T07:11:22+00:00",
-      "request_time": "2026-10-21T16:10:00+00:00",
-      "age_seconds": 5339,
+      "request_time": "2026-10-21T08:41:47.378026+00:00",
+      "age_seconds": 5425,
       "post_request": false,
       "preferred_max_age_seconds": 300,
       "fallback_max_age_seconds": 900,
-      "formal_decision_allowed": true,
-      "refresh_required": false,
+      "formal_decision_allowed": false,
+      "refresh_required": true,
       "fallback_allowed": false,
-      "reason": "CURRENT quality PASS does not override decision freshness; query-time refresh required",
-      "resolved_post_request": true,
-      "request_scoped_resolution_mode": "CLOSED_SESSION_CANONICAL_REUSE",
-      "request_scoped_resolution_reason": "closed A-share session legally reuses latest canonical close",
-      "a_share_market_phase": "OFF_SESSION",
-      "resolved_as_of": "2026-10-21T08:40:20+00:00"
+      "reason": "CURRENT quality PASS does not override decision freshness; query-time refresh required"
     },
     "route_version": "V1.1",
     "query_entry": "market_quote_router",
     "quotes": [
-      {
-        "market": "US",
-        "market_name": "美国",
-        "symbol": "QQQ",
-        "name": "QQQ",
-        "latest_price": 720.84,
-        "open": 720.84,
-        "high": 720.84,
-        "low": 720.84,
-        "prev_close": 718.36,
-        "volume": 0,
-        "amount": null,
-        "turnover": null,
-        "data_time_beijing": "2026-10-21T16:40:20+08:00",
-        "data_time_local": "2026-10-21T04:40:20-04:00",
-        "market_phase": "PRE_MARKET",
-        "market_status_cn": "美股盘前",
-        "data_nature_cn": "盘前行情（附最近正式收盘基准）",
-        "source": "yahoo_chart_api",
-        "freshness": "FRESH",
-        "quality_status": "PASS",
-        "direct_quote": true,
-        "refresh_source": "QUERY_TIME_PROVIDER"
-      },
-      {
-        "market": "US",
-        "market_name": "美国",
-        "symbol": "SOXX",
-        "name": "SOXX",
-        "latest_price": 507.35,
-        "open": 507.35,
-        "high": 507.35,
-        "low": 507.35,
-        "prev_close": 501.93,
-        "volume": 0,
-        "amount": null,
-        "turnover": null,
-        "data_time_beijing": "2026-10-21T16:40:13+08:00",
-        "data_time_local": "2026-10-21T04:40:13-04:00",
-        "market_phase": "PRE_MARKET",
-        "market_status_cn": "美股盘前",
-        "data_nature_cn": "盘前行情（附最近正式收盘基准）",
-        "source": "yahoo_chart_api",
-        "freshness": "FRESH",
-        "quality_status": "PASS",
-        "direct_quote": true,
-        "refresh_source": "QUERY_TIME_PROVIDER"
-      },
       {
         "market": "CN",
         "market_name": "中国大陆",
@@ -2230,7 +2168,7 @@
         "market_name": "美国",
         "symbol": "NDX",
         "name": "纳斯达克100指数",
-        "latest_price": 722.26,
+        "latest_price": 720.57,
         "open": null,
         "high": null,
         "low": null,
@@ -2238,7 +2176,7 @@
         "volume": null,
         "amount": null,
         "turnover": null,
-        "data_time_beijing": "2026-10-21T16:30:41+08:00",
+        "data_time_beijing": "2026-10-21T16:41:07+08:00",
         "data_time_local": "",
         "market_phase": "PRE_MARKET",
         "market_status_cn": "美股盘前",
@@ -2256,7 +2194,7 @@
         "market_name": "美国",
         "symbol": "SOX",
         "name": "费城半导体指数",
-        "latest_price": 510.71,
+        "latest_price": 507.6,
         "open": null,
         "high": null,
         "low": null,
@@ -2264,7 +2202,7 @@
         "volume": null,
         "amount": null,
         "turnover": null,
-        "data_time_beijing": "2026-10-21T16:28:44+08:00",
+        "data_time_beijing": "2026-10-21T16:40:48+08:00",
         "data_time_local": "",
         "market_phase": "PRE_MARKET",
         "market_status_cn": "美股盘前",
@@ -2555,7 +2493,7 @@
   },
   "decision_trigger": {
     "schema_version": "1.2",
-    "generated_at": "2026-10-21T16:40:21+08:00",
+    "generated_at": "2026-10-21T16:41:47+08:00",
     "status": "NO_NEW_TRIGGER",
     "trigger_type": "",
     "triggered_at": "",
@@ -2576,7 +2514,7 @@
   },
   "capital_efficiency_ranking": {
     "schema_version": "1.2",
-    "generated_at": "2026-10-21T16:40:21+08:00",
+    "generated_at": "2026-10-21T16:41:47+08:00",
     "as_of": "2026-10-21T15:11:27+08:00",
     "e2e_status": "DEGRADED",
     "risk_zone": "RISK_CONTROL",
@@ -4092,7 +4030,7 @@
     ]
   },
   "intraday_path_features": {
-    "generated_at": "2026-10-21T08:40:15Z",
+    "generated_at": "2026-10-21T08:41:41Z",
     "market_date": "2026-10-21",
     "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
     "read_only": true,
@@ -5633,7 +5571,7 @@
     },
     "market_structure_context": {
       "schema_version": "1.4",
-      "generated_at": "2026-10-21T08:40:21Z",
+      "generated_at": "2026-10-21T08:41:46Z",
       "market_date": "2026-10-21",
       "as_of_beijing": "2026-10-21T15:11:27+08:00",
       "source_snapshot": "data/market/snapshots/2026-10-21_151127.json",
@@ -8588,7 +8526,7 @@
     },
     "source_role": "DISCOVERY_ONLY; formal trade decision remains MASTER-owned",
     "broad_universe_count": 1770,
-    "managed_identity_count": 14,
+    "managed_identity_count": 0,
     "held_identity_count": 3,
     "managed_excluded_count": 0,
     "history_prefilter_count": 99,
@@ -8607,9 +8545,9 @@
       "prefilter_elapsed_seconds": 0.008,
       "history_validation_elapsed_seconds": 4.32,
       "measurement_role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE",
-      "candidate_formal_quote_elapsed_seconds": 4.472,
-      "discovery_pipeline_elapsed_seconds": 17.814,
-      "reuse_mode": "FRESH_DISCOVERY"
+      "candidate_formal_quote_elapsed_seconds": 4.439,
+      "discovery_pipeline_elapsed_seconds": 4.454,
+      "reuse_mode": "SAME_MARKET_NODE_LEGAL_DISCOVERY_EVIDENCE_REUSE"
     },
     "coverage_status": "COMPLETE",
     "history_failures": [],
@@ -9323,7 +9261,13 @@
     "decision_boundary": "发现对象是本节点临时正式评估输入，不是第三种ETF身份；不得自动写观察池、生成Trial/Confirm或交易动作。",
     "universe_identity": "7c96b55c397e7c8c",
     "discovery_delta_identity": "fb43cf658b7ecc78",
-    "formal_quote_coverage": 7
+    "formal_quote_coverage": 7,
+    "reuse": {
+      "mode": "SAME_MARKET_NODE_LEGAL_DISCOVERY_EVIDENCE_REUSE",
+      "source": "data/state/query_context.json",
+      "qualification": "same_market_date_same_latest_valid_node_same_discovery_delta_identity_same_universe_identity",
+      "fixed_ttl": false
+    }
   },
   "interaction_boundary": "ChatGPT聊天负责账户截图与正式交易判断；本文件不生成交易动作。正式机会比较完整覆盖全部持仓/观察ETF，并在本节点存在合格池外发现对象时把其作为临时正式评估输入加入同一次MASTER与全资本竞争；发现本身不产生管理身份或交易权限。",
   "managed_position_sell_review": {
