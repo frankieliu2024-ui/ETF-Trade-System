@@ -2417,7 +2417,12 @@ def record_scheduled_system_review(request: dict) -> tuple[bool, bool]:
 
 def record_formal_decision_report_event(request: dict, bds: dict) -> tuple[bool, bool, str]:
     """Project one frozen Formal Decision body directly to the shared review-event notification chain."""
-    # Revalidate the persisted BDS at the canonical owner, including the actual\n    # frozen presentation. Idempotent replay must not allow an already-written\n    # short/legacy payload to bypass the current Formal Decision contract.\n    validate_source(bds, expected_snapshot=str(bds.get("consumed_snapshot") or "").strip() or None)\n    binding = bds.get("presentation_binding") if isinstance(bds.get("presentation_binding"), dict) else {}\n    identity = {
+    # Revalidate the persisted BDS at the canonical owner, including the actual
+    # frozen presentation. Idempotent replay must not allow an already-written
+    # short/legacy payload to bypass the current Formal Decision contract.
+    validate_source(bds, expected_snapshot=str(bds.get("consumed_snapshot") or "").strip() or None)
+    binding = bds.get("presentation_binding") if isinstance(bds.get("presentation_binding"), dict) else {}
+    identity = {
         "request_id": str(bds.get("request_id") or "").strip(),
         "parent_request_id": str(bds.get("parent_request_id") or "").strip(),
         "decision_id": str(bds.get("decision_id") or "").strip(),
