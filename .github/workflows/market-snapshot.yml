@@ -169,6 +169,33 @@ jobs:
             REQUEST_EXPECTED=true
             mkdir -p "/tmp/etf-triggering-request/$(dirname "$REQUEST_FILE")"
             cp "$REQUEST_FILE" "/tmp/etf-triggering-request/$REQUEST_FILE"
+            # Manual ChatGPT requests may carry a producer/client timestamp that
+            # is ahead of the actual GitHub runner receipt time. Normalize the
+            # canonical ingress clock before any PIT routing or query-context
+            # construction, while preserving the supplied value as audit-only
+            # interaction_requested_at_beijing. Scheduled ingress already owns a
+            # runner-generated timestamp and is left unchanged.
+            python - "$REQUEST_FILE" "/tmp/etf-triggering-request/$REQUEST_FILE" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+          from scripts.runtime_session_gate import normalize_manual_request_session
+
+          src = Path(sys.argv[1])
+          dst = Path(sys.argv[2])
+          request = json.loads(src.read_text(encoding="utf-8"))
+          source = str(request.get("source") or "").strip().upper()
+          if source in {
+              "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+              "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
+          }:
+              policy = json.loads(Path("config/runtime_policy.json").read_text(encoding="utf-8"))
+              request = normalize_manual_request_session(request, policy)
+              dst.write_text(
+                  json.dumps(request, ensure_ascii=False, indent=2) + "\n",
+                  encoding="utf-8",
+              )
+          PY
           fi
           {
             echo "TRIGGERING_REQUEST_FILE=$REQUEST_FILE"
