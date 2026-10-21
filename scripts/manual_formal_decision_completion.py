@@ -12,28 +12,14 @@ except ModuleNotFoundError:
     from scripts.runtime_session_gate import classify_live_snapshot_request, interaction_scenario_for_time, parse_runtime_time
 
 try:
-    from business_decision_source import (
-        project_decision_response,
-        validate_formal_presentation_provenance,
-        validate_source,
-    )
+    from business_decision_source import project_decision_response, validate_source
 except ModuleNotFoundError:
-    from scripts.business_decision_source import (
-        project_decision_response,
-        validate_formal_presentation_provenance,
-        validate_source,
-    )
+    from scripts.business_decision_source import project_decision_response, validate_source
 
 try:
-    from user_visible_presentation import (
-        build_formal_decision_presentation_binding,
-        normalize_formal_decision_content,
-    )
+    from user_visible_presentation import build_formal_decision_presentation_binding
 except ModuleNotFoundError:
-    from scripts.user_visible_presentation import (
-        build_formal_decision_presentation_binding,
-        normalize_formal_decision_content,
-    )
+    from scripts.user_visible_presentation import build_formal_decision_presentation_binding
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 REQUEST_DIR = ROOT / "requests" / "live_snapshot"
@@ -190,18 +176,6 @@ def build_structured_completion_request(
         raise ValueError("presentation_content must be a string")
     if isinstance(frozen_content, str) and not frozen_content.strip():
         raise ValueError("presentation_content must not be empty")
-    if isinstance(frozen_content, str):
-        # Normalize once before constructing the BDS. The exact normalized
-        # bytes are then reused by the response, binding, hash and completion;
-        # downstream projection must not silently rewrite a different body.
-        frozen_content = normalize_formal_decision_content(frozen_content)
-        validate_formal_presentation_provenance(
-            frozen_content,
-            parent_request_id=parent_id,
-            decision_id=decision_id,
-            market_date=str(source_request.get("market_date") or "").strip(),
-            root=ROOT,
-        )
     response_payload = dict(decision_response)
     if frozen_content not in (None, ""):
         # The report shown to the user and the report handed to the canonical
