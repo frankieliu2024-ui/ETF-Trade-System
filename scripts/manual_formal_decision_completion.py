@@ -350,7 +350,7 @@ def build_ready_actor_envelope(
     return payload
 
 
-def write_completion_request(source_request_path: str, decision_path: str, consumed_snapshot: str, output_path: str = "", completion_request_id: str = "", decision_response_path: str = "") -> Path:
+def write_completion_request(source_request_path: str, decision_path: str, consumed_snapshot: str, output_path: str = "", completion_request_id: str = "", decision_response_path: str = "", final_content_path: str = "") -> Path:
     source_path = (ROOT / source_request_path).resolve()
     decision_file = (ROOT / decision_path).resolve() if decision_path else None
     if ROOT not in source_path.parents or (decision_file is not None and ROOT not in decision_file.parents):
@@ -407,6 +407,18 @@ def write_completion_request(source_request_path: str, decision_path: str, consu
     if ROOT not in response_file.parents or not response_file.exists():
         raise ValueError("decision response path must stay inside repository root and exist")
     decision_response = json.loads(response_file.read_text(encoding="utf-8"))
+    if not final_content_path:
+        raise ValueError("Formal Decision production requires --final-content")
+    final_file = (ROOT / final_content_path).resolve()
+    if ROOT not in final_file.parents or not final_file.exists():
+        raise ValueError("final content path must stay inside repository root and exist")
+    final_content = final_file.read_text(encoding="utf-8")
+    if not final_content.strip():
+        raise ValueError("final content must not be empty")
+    supplied_content = decision_response.get("presentation_content")
+    if supplied_content not in (None, "") and supplied_content != final_content:
+        raise ValueError("final content does not match decision response presentation_content")
+    decision_response["presentation_content"] = final_content
     if not query_path.exists():
         raise ValueError("request-bound query context is required for structured Formal Decision completion")
     query = json.loads(query_path.read_text(encoding="utf-8"))
@@ -418,6 +430,7 @@ def write_completion_request(source_request_path: str, decision_path: str, consu
     payload = build_structured_completion_request(
         source, decision, decision_response, work_package, consumed_snapshot,
         completion_request_id, pit_closure, observation_closure,
+        presentation_content=final_content,
     )
     target = (ROOT / output_path).resolve() if output_path else REQUEST_DIR / f"{payload['request_id']}.json"
     if ROOT not in target.parents or target.suffix != ".json":
@@ -444,11 +457,13 @@ def main() -> int:
     parser.add_argument("--consumed-snapshot", required=True)
     parser.add_argument("--completion-request-id", default="")
     parser.add_argument("--decision-response", required=True)
+    parser.add_argument("--final-content", required=True, help="path to the exact frozen FINAL_CONTENT from this run")
     parser.add_argument("--output", default="")
     args = parser.parse_args()
     target = write_completion_request(
         args.source_request, args.formal_decision, args.consumed_snapshot,
         args.output, args.completion_request_id, args.decision_response,
+        args.final_content,
     )
     written = json.loads(target.read_text(encoding="utf-8"))
     print(json.dumps({

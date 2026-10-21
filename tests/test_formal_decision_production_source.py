@@ -185,8 +185,11 @@ class ProductionBusinessSourceIngressTests(unittest.TestCase):
             (root / "requests/live_snapshot").mkdir(parents=True)
             source_path = root / "requests/live_snapshot/source.json"
             response_path = root / "response.json"
+            final_path = root / "final_content.txt"
             source_path.write_text(json.dumps(SOURCE), encoding="utf-8")
             response_path.write_text(json.dumps(RESPONSE), encoding="utf-8")
+            final_content = "【ETF正式决策】2026-09-25 16:49 正式判断\n【业务结论】当前无新增部署。"
+            final_path.write_text(final_content, encoding="utf-8")
             query = {
                 "decision_fact_pack": {
                     "trigger": {"request_id": SOURCE["request_id"]},
@@ -209,10 +212,13 @@ class ProductionBusinessSourceIngressTests(unittest.TestCase):
                     "",
                     "data/market/snapshots/x.json",
                     decision_response_path="response.json",
+                    final_content_path="final_content.txt",
                 )
             durable = json.loads(target.read_text(encoding="utf-8"))
             self.assertEqual(durable["request_type"], "BUSINESS_DECISION_SOURCE")
-            self.assertEqual(durable["decision_response"], RESPONSE)
+            self.assertEqual(durable["decision_response"]["answers"], RESPONSE["answers"])
+            self.assertEqual(durable["decision_response"]["presentation_content"], final_content)
+            self.assertEqual(durable["presentation_content"], final_content)
             self.assertEqual(durable["decision_work_package"], WORK_PACKAGE)
 
     def test_structured_completion_derives_scenario_for_canonical_minimal_parent(self):
