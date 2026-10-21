@@ -12,9 +12,9 @@ except ModuleNotFoundError:
     from scripts.runtime_session_gate import classify_live_snapshot_request, interaction_scenario_for_time, parse_runtime_time
 
 try:
-    from business_decision_source import project_decision_response, validate_source
+    from business_decision_source import _normalize_formal_presentation_layout, project_decision_response, validate_source
 except ModuleNotFoundError:
-    from scripts.business_decision_source import project_decision_response, validate_source
+    from scripts.business_decision_source import _normalize_formal_presentation_layout, project_decision_response, validate_source
 
 try:
     from user_visible_presentation import build_formal_decision_presentation_binding
@@ -176,6 +176,11 @@ def build_structured_completion_request(
         raise ValueError("presentation_content must be a string")
     if isinstance(frozen_content, str) and not frozen_content.strip():
         raise ValueError("presentation_content must not be empty")
+    if isinstance(frozen_content, str):
+        # Canonicalize once before BDS and completion are written. The same
+        # bytes must be reused by the user response, binding, hashes and
+        # downstream event; no later stage may rewrite the body.
+        frozen_content = _normalize_formal_presentation_layout(frozen_content)
     response_payload = dict(decision_response)
     if frozen_content not in (None, ""):
         # The report shown to the user and the report handed to the canonical
