@@ -108,10 +108,19 @@ class FormalDecisionE2EContractTests(unittest.TestCase):
                 presentation_content=body,
             )
         binding = payload["presentation_binding"]
-        self.assertEqual(binding["request_id"], "fd_current")
+        self.assertEqual(binding["request_id"], payload["request_id"])
         self.assertEqual(binding["parent_request_id"], "fd_current")
         self.assertEqual(binding["full_content"], body)
         self.assertEqual(binding["content_hash"], payload["content_hash"])
+        from scripts.user_visible_presentation import build_formal_decision_presentation_binding
+        expected = build_formal_decision_presentation_binding(
+            body,
+            request_id=payload["request_id"],
+            decision_id=payload["decision_id"],
+            parent_request_id=payload["parent_request_id"],
+            report_id=f"etf-formal-decision:{payload['decision_id']}",
+        )
+        self.assertEqual(binding, expected)
 
     def test_bds_notification_rejects_compressed_presentation_with_structured_answers(self):
         import scripts.notification_center as center

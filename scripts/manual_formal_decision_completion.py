@@ -16,6 +16,11 @@ try:
 except ModuleNotFoundError:
     from scripts.business_decision_source import project_decision_response, validate_source
 
+try:
+    from user_visible_presentation import build_formal_decision_presentation_binding
+except ModuleNotFoundError:
+    from scripts.user_visible_presentation import build_formal_decision_presentation_binding
+
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 REQUEST_DIR = ROOT / "requests" / "live_snapshot"
 
@@ -206,15 +211,13 @@ def build_structured_completion_request(
         "decision_work_package": decision_work_package,
         "presentation_content": frozen_content,
         "content_hash": hashlib.sha256(frozen_content.encode("utf-8")).hexdigest() if isinstance(frozen_content, str) else "",
-        "presentation_binding": {
-            "schema_version": "formal-decision-presentation-binding-v1",
-            "request_id": parent_id,
-            "parent_request_id": parent_id,
-            "decision_id": decision_id,
-            "report_id": f"etf-formal-decision:{decision_id}",
-            "full_content": frozen_content,
-            "content_hash": hashlib.sha256(frozen_content.encode("utf-8")).hexdigest() if isinstance(frozen_content, str) else "",
-        },
+        "presentation_binding": build_formal_decision_presentation_binding(
+            frozen_content,
+            request_id=envelope_id,
+            decision_id=decision_id,
+            parent_request_id=parent_id,
+            report_id=f"etf-formal-decision:{decision_id}",
+        ) if isinstance(frozen_content, str) else {},
         "target_bds_path": f"requests/live_snapshot/{parent_id}__business_decision_source.json",
         "request_bound_pit_closure": request_bound_pit_closure,
         "observation_eligibility_closure": observation_eligibility_closure,
