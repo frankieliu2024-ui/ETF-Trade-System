@@ -135,7 +135,7 @@ def validate_formal_runtime_clock(payload: dict) -> str:
     if triggered and triggered != requested:
         return "formal_parent_runtime_clock_mismatch"
     request_id = str(payload.get("request_id") or "").strip()
-    match = re.search(r"(?:conversation-formal|manual-scheduled-formal)[-_](\\d{8})T?(\\d{6})", request_id)
+    match = re.search(r"(?:conversation-formal|manual-scheduled-formal)[-_](\d{8})T?(\d{6})", request_id)
     if match:
         encoded = f"{match.group(1)[:4]}-{match.group(1)[4:6]}-{match.group(1)[6:]} {match.group(2)[:2]}:{match.group(2)[2:4]}"
         if encoded != beijing.strftime("%Y-%m-%d %H:%M"):
