@@ -4,7 +4,7 @@
   "requested_at_beijing": "2026-10-21T19:01:23+08:00",
   "interaction_scenario": "BROKER_SCREENSHOT_SYNC",
   "source": "CHATGPT_USER_BROKER_SCREENSHOT",
-  "formal_fact_type": "BROKER_SCREENSHOT_NO_NEW_TRADE",
+  "formal_fact_type": "BROKER_SCREENSHOT_ACCOUNT_FACT",
   "market_date": "2026-10-21",
   "screenshot_market_time_beijing": "2026-10-21T15:00:00+08:00",
   "screenshot_captured_at_beijing": "2026-10-21T19:01:23+08:00",
@@ -17,7 +17,7 @@
     "source": "BROKER_HOLDINGS_SCREENSHOT_20261021_190123_USER_PROVIDED",
     "last_confirmed_market_date": "2026-10-21",
     "total_asset": 171486.27,
-    "stock_market_value": 51289.4,
+    "stock_market_value": 50289.4,
     "cash": 120196.87,
     "positions": [
       {
@@ -49,21 +49,41 @@
         "cost": 0.868,
         "last_price": 0.815,
         "market_value": 14018
-      },
-      {
-        "asset_type": "BOND",
-        "name": "华纬发债",
-        "code": null,
-        "quantity": 10,
-        "available_quantity": 10,
-        "cost": 100,
-        "last_price": 100,
-        "market_value": 1000
       }
     ],
     "orders": [],
-    "trades": []
+    "trades": [],
+    "holding_pnl": 644.4,
+    "settlement_obligations": [
+      {
+        "obligation_type": "CONVERTIBLE_BOND_ALLOTMENT_PAYMENT",
+        "security_name": "华纬发债",
+        "security_code": "071380",
+        "quantity": 10,
+        "subscription_price": 100,
+        "required_cash": 1000,
+        "payment_deadline_beijing": "2026-10-19T16:00:00+08:00",
+        "status": "SETTLED",
+        "cash_must_remain_available": false,
+        "settled_at_beijing": "2026-10-19T21:14:11+08:00",
+        "settlement_evidence": "Current main此前已确认的券商历史成交/中签证据；本次截图仅确认账户当前显示该债券资产事实。",
+        "source": "CURRENT_MAIN_PRIOR_CONFIRMED_BROKER_EVIDENCE",
+        "pit_timestamp": "2026-10-21T15:00:00+08:00"
+      }
+    ]
   },
   "evidence_boundary": "截图仅证明截图显示的账户、持仓、现金和账户显示价格事实；不替代独立市场行情，不证明新增成交。",
-  "user_assertion": "用户确认该截图为2026-10-21 15:00收盘账户事实，并要求按既有自动维护链更新。"
+  "user_assertion": "用户确认该截图为2026-10-21 15:00收盘账户事实，并要求按既有自动维护链更新。",
+  "requested_by": "chatgpt",
+  "reason": "Persist the user's 2026-10-21 post-close broker holdings screenshot as the latest confirmed account fact. Update broker-observed account totals, cash, ETF positions and prices without inferring ETF trades. Preserve the confirmed Huáwěi convertible-bond settlement obligation as a separate settled account obligation; do not treat it as an ETF position or market quote.",
+  "evidence_refs": [
+    {
+      "type": "broker_holdings_screenshot",
+      "description": "2026-10-21收盘后券商持仓截图"
+    },
+    {
+      "type": "prior_canonical_settlement_evidence",
+      "description": "current main此前已确认华纬发债中签/交收事实"
+    }
+  ]
 }
