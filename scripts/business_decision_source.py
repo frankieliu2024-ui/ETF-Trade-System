@@ -1000,6 +1000,22 @@ def _validate_single_frozen_presentation(source: dict[str, Any]) -> None:
     if len(values) != 3 or len(set(str(value) for value in values)) != 1:
         raise ValueError("formal presentation content must have one identical frozen source")
 
+
+def _validate_formal_presentation_hashes(source: dict[str, Any]) -> None:
+    """Bind every persisted Formal Decision hash to the one frozen presentation."""
+    content = source.get("presentation_content")
+    binding = source.get("presentation_binding")
+    if not isinstance(content, str) or not content or not isinstance(binding, dict):
+        return
+    expected = hashlib.sha256(content.encode("utf-8")).hexdigest()
+    top_hash = str(source.get("content_hash") or "").strip()
+    binding_hash = str(binding.get("content_hash") or "").strip()
+    binding_sha = str(binding.get("content_sha256") or "").strip()
+    if top_hash != expected:
+        raise ValueError("formal presentation content_hash is not bound to presentation_content")
+    if binding_hash != expected or binding_sha != expected:
+        raise ValueError("formal presentation binding hash is not bound to presentation_content")
+
 _FORMAL_PRESENTATION_HEADINGS = (
     "【业务结论】",
     "【数据时点与必要依据】",
@@ -1259,6 +1275,7 @@ def validate_source(
     if missing:
         raise ValueError("business decision completeness failed: " + ",".join(missing))
     _validate_single_frozen_presentation(source)
+    _validate_formal_presentation_hashes(source)
     _validate_request_bound_presentation_facts(source, expected_snapshot=expected_snapshot, expected_market_date=expected_market_date, expected_market_phase=expected_market_phase, expected_captured_at=expected_captured_at)
     _validate_formal_presentation_contract(source)
     parent_request_id = str(source.get("parent_request_id") or source.get("request_id") or "").strip()
