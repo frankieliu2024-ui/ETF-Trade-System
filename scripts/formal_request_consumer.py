@@ -141,7 +141,7 @@ def classify_formal_request_consumer_state(
             "control_plane_in_user_reply": False,
             "reason": (
                 "SAME_REQUEST_FACTS_READY_COMPLETION_HANDOFF_BEFORE_REPLY_"
-                "BDS_AUDIT_AND_PROVIDER_ASYNC"
+                "BDS_AUDIT_AND_PROVIDER_READBACK"
             ),
             "canonical_persistence_status": (
                 "CONFIRMED" if canonical_persisted else "PENDING_ASYNC"
