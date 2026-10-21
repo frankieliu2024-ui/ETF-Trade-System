@@ -108,7 +108,7 @@ class FormalDecisionE2EContractTests(unittest.TestCase):
                 presentation_content=body,
             )
         binding = payload["presentation_binding"]
-        self.assertEqual(binding["request_id"], "fd_current")
+        self.assertEqual(binding["request_id"], payload["request_id"])
         self.assertEqual(binding["parent_request_id"], "fd_current")
         self.assertEqual(binding["full_content"], body)
         self.assertEqual(binding["content_hash"], payload["content_hash"])
