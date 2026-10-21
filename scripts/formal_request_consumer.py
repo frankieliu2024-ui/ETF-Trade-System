@@ -132,7 +132,7 @@ def classify_formal_request_consumer_state(
             "final_content_generation_allowed": True,
             "user_visible_output": BUSINESS_REPLY_OUTPUT,
             "actor_action": ACTOR_DECIDE,
-            "user_output_allowed": True,
+            "user_output_allowed": False,
             "handoff_before_reply": HANDOFF_BEFORE_REPLY,
             "required_problem_ids": required_problem_ids,
             "required_problem_count": len(required_problem_ids),
