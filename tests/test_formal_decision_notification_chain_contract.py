@@ -13,7 +13,7 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
         self.assertIn("github.event_name == 'workflow_run'", workflow)
         self.assertNotIn("\\n      - name: Send material user-action notification", workflow)
 
-    def test_formal_review_event_requires_identity_binding(self):
+    def test_completion_push_classifies_scheduled_review_by_contract(self):\n        workflow = (ROOT / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")\n        self.assertIn('payload.get("formal_fact_type") == "FORMAL_POST_CLOSE_REVIEW"', workflow)\n        self.assertIn('binding.get("report_type") == "ETF_FORMAL_DECISION"', workflow)\n        self.assertIn('completion_kind', workflow)\n        self.assertIn("Scheduled Review completion push is not a Formal Decision wake", workflow)\n\n    def test_formal_review_event_requires_identity_binding(self):
         writer = (ROOT / "scripts" / "process_state_sync_request.py").read_text(encoding="utf-8")
         center = (ROOT / "scripts" / "notification_center.py").read_text(encoding="utf-8")
         self.assertIn("complete request/parent/decision identity", writer)
