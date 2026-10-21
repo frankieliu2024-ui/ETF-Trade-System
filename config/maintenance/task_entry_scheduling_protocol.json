@@ -46,8 +46,14 @@
       "production_adapter": "scripts/run_scheduled_trade_review_actor.py",
       "completion_builder": "build_trade_review_completion_request",
       "entry_modes": {
-        "automatic": {"source": "CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR", "entry_mode": "AUTOMATIC_SCHEDULED_TASK"},
-        "manual": {"source": "CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR", "entry_mode": "MANUAL_SCHEDULED_TASK"}
+        "automatic": {
+          "source": "CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR",
+          "entry_mode": "AUTOMATIC_SCHEDULED_TASK"
+        },
+        "manual": {
+          "source": "CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR",
+          "entry_mode": "MANUAL_SCHEDULED_TASK"
+        }
       },
       "canonical_task_id": "ETF交易复盘"
     },
@@ -73,7 +79,26 @@
         "MANUAL_SCHEDULED_TASK"
       ],
       "automatic_entry_mode": "AUTOMATIC_SCHEDULED_TASK",
-      "canonical_task_id": "ETF正式决策"
+      "canonical_task_id": "ETF正式决策",
+      "production_adapter_role": "ACTOR_HANDOFF_ADAPTER_NOT_CANONICAL_OWNER",
+      "handoff_contract": {
+        "source": "BUSINESS_DECISION_SOURCE",
+        "sequence": [
+          "freeze_FINAL_CONTENT",
+          "compute_content_hash",
+          "write_read_BDS",
+          "write_read_SCHEDULED_REVIEW_COMPLETION",
+          "dispatch_decision_notification",
+          "read_back_event_REPORT_notification_provider"
+        ],
+        "same_run_runtime_clock": "requested_at_beijing",
+        "timezone": "Asia/Shanghai",
+        "utc_only_for": [
+          "GitHub Actions cron",
+          "persistence metadata"
+        ],
+        "stop_before_bds_forbidden": true
+      }
     }
   ],
   "invariants": [

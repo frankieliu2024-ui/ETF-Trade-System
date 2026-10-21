@@ -7,6 +7,8 @@ fields before entering the canonical Formal Decision pipeline.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime, timezone, timedelta
+import re
 
 
 ENTRY_MANUAL_CONVERSATION = "MANUAL_CONVERSATION"
@@ -33,6 +35,7 @@ CANONICAL_COMPLETION_SOURCE = "CHATGPT_SCHEDULED_REVIEW_ACTOR"
 CANONICAL_SCENARIO = "FORMAL_DECISION"
 CANONICAL_REPORT_TYPE = "ETF_FORMAL_DECISION"
 CANONICAL_TASK_ID = "ETF正式决策"
+BEIJING = timezone(timedelta(hours=8))
 
 
 def validate_formal_parent_request(payload: dict) -> tuple[bool, str]:
@@ -52,7 +55,13 @@ def validate_formal_parent_request(payload: dict) -> tuple[bool, str]:
     ):
         if payload.get(field) is not True:
             return False, reason
-    return validate_formal_entry_identity(payload)
+    valid, reason = validate_formal_entry_identity(payload)
+    if not valid:
+        return False, reason
+    clock_error = validate_formal_runtime_clock(payload)
+    if clock_error:
+        return False, clock_error
+    return True, ""
 
 
 def validate_formal_completion_request(payload: dict) -> tuple[bool, str]:
@@ -101,6 +110,37 @@ class FormalEntryIdentity:
         return ":".join(
             (self.market_date, self.task_id, self.entry_mode, self.occurrence)
         )
+
+
+def validate_formal_runtime_clock(payload: dict) -> str:
+    """Keep request identity, displayed Beijing time, and market date on one clock.
+
+    GitHub commit timestamps are UTC persistence metadata and are never used as
+    the business runtime clock.  When an ingress ID carries a recognizable
+    timestamp, it must agree with requested_at_beijing to the minute.
+    """
+    requested = str(payload.get("requested_at_beijing") or "").strip()
+    if not requested:
+        return "formal_parent_requested_at_beijing_required"
+    try:
+        parsed = datetime.fromisoformat(requested.replace("Z", "+00:00"))
+    except ValueError:
+        return "formal_parent_requested_at_beijing_invalid"
+    if parsed.tzinfo is None:
+        return "formal_parent_requested_at_beijing_timezone_required"
+    beijing = parsed.astimezone(BEIJING)
+    if beijing.strftime("%Y-%m-%d") != str(payload.get("market_date") or "").strip():
+        return "formal_parent_market_date_mismatch"
+    triggered = str(payload.get("triggered_at_beijing") or "").strip()
+    if triggered and triggered != requested:
+        return "formal_parent_runtime_clock_mismatch"
+    request_id = str(payload.get("request_id") or "").strip()
+    match = re.search(r"(?:conversation-formal|manual-scheduled-formal)[-_](\\d{8})T?(\\d{6})", request_id)
+    if match:
+        encoded = f"{match.group(1)[:4]}-{match.group(1)[4:6]}-{match.group(1)[6:]} {match.group(2)[:2]}:{match.group(2)[2:4]}"
+        if encoded != beijing.strftime("%Y-%m-%d %H:%M"):
+            return "formal_parent_request_id_time_mismatch"
+    return ""
 
 
 def validate_formal_entry_identity(payload: dict) -> tuple[bool, str]:
