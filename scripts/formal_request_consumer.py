@@ -186,10 +186,10 @@ def classify_formal_request_consumer_state(
                     "read_back_required": True,
                     "formal_decision_notification_chain_starts_at_bds": False,
                     "completion_and_report_not_required_for_formal_decision_notification": False,
-                    "bds_must_be_written_and_read_back_before_user_reply": False,
+                    "bds_must_be_written_and_read_back_before_user_reply": True,
                     "bds_and_completion_atomic_commit_required": True,
                 },
-                # The task may continue generating the complete report now;
+                # The task freezes one FINAL_CONTENT, completes the bounded handoff,
                 # user-visible output is gated until BDS and completion are
                 # written and read back. Provider delivery remains async.
                 "business_decision_allowed": True,
@@ -204,9 +204,9 @@ def classify_formal_request_consumer_state(
                     "handoff_status_cannot_replace_content": True,
                     "bds_must_reuse_exact_final_content": True,
                 },
-                "post_reply_async": True,
-                "provider_success_async": True,
-                "must_read_back_before_reply": False,
+                "post_reply_async": False,
+                "provider_success_async": False,
+                "must_read_back_before_reply": True,
                 "bds_and_completion_atomic_commit_required": True,
                 "historical_fallback_forbidden": True,
             },
