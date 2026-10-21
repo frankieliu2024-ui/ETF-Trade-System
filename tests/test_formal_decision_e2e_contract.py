@@ -314,7 +314,7 @@ class FormalReadyHandoffContractTests(unittest.TestCase):
         self.assertIn('"post_reply_async": False', text)
         self.assertIn('"provider_success_async": False', text)
         self.assertIn('"must_read_back_before_reply": True', text)
-        self.assertIn('POST_REPLY_HANDOFF = "BDS_COMPLETION_EVENT_REPORT_NOTIFICATION_ASYNC"', text)
+        self.assertIn('HANDOFF_BEFORE_REPLY = "BDS_COMPLETION_EVENT_REPORT_NOTIFICATION_BOUNDED"', text)
         self.assertIn('"bds_and_completion_atomic_commit_required": True', text)
         self.assertNotIn('BDS_AND_COMPLETION_BEFORE_USER_REPLY', text)
 
