@@ -117,23 +117,23 @@ jobs:
           if [ "${#completion_paths[@]}" -eq 1 ]; then
             completion_path="${completion_paths[0]}"
             completion_kind=$(python - "$completion_path" <<'PY'
-import json
-import sys
-
-with open(sys.argv[1], encoding="utf-8") as handle:
-    payload = json.load(handle)
-binding = payload.get("presentation_binding") or {}
-if (
-    payload.get("formal_fact_type") == "FORMAL_POST_CLOSE_REVIEW"
-    and binding.get("report_type") == "ETF_FORMAL_DECISION"
-):
-    print("FORMAL")
-elif payload.get("request_type") == "SCHEDULED_REVIEW_COMPLETION":
-    print("SCHEDULED_REVIEW")
-else:
-    print("UNKNOWN")
-PY
-)
+          import json
+          import sys
+          
+          with open(sys.argv[1], encoding="utf-8") as handle:
+              payload = json.load(handle)
+          binding = payload.get("presentation_binding") or {}
+          if (
+              payload.get("formal_fact_type") == "FORMAL_POST_CLOSE_REVIEW"
+              and binding.get("report_type") == "ETF_FORMAL_DECISION"
+          ):
+              print("FORMAL")
+          elif payload.get("request_type") == "SCHEDULED_REVIEW_COMPLETION":
+              print("SCHEDULED_REVIEW")
+          else:
+              print("UNKNOWN")
+          PY
+          )
             case "$completion_kind" in
               FORMAL)
                 echo "formal_completion=true" >> "$GITHUB_OUTPUT"
