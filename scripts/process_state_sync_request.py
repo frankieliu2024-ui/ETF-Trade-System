@@ -27,6 +27,7 @@ try:
         build_formal_completion_from_source,
         project_decision_response,
         source_fingerprint,
+        validate_formal_presentation_provenance,
         emit_formal_replay_forensic_fingerprint,
         reset_formal_replay_forensic_trace,
         validate_source,
@@ -37,6 +38,7 @@ except ModuleNotFoundError:
         build_formal_completion_from_source,
         project_decision_response,
         source_fingerprint,
+        validate_formal_presentation_provenance,
         emit_formal_replay_forensic_fingerprint,
         reset_formal_replay_forensic_trace,
         validate_source,
@@ -3794,6 +3796,13 @@ def main() -> int:
             raise ValueError(
                 "business decision source requires frozen presentation_content"
             )
+        validate_formal_presentation_provenance(
+            str(presentation_content),
+            parent_request_id=parent_id,
+            decision_id=str(request.get("decision_id") or "").strip(),
+            market_date=str(request.get("market_date") or parent_request.get("market_date") or "").strip(),
+            root=ROOT,
+        )
         if presentation_content not in (None, ""):
             source_payload["presentation_content"] = presentation_content
             binding = request.get("presentation_binding")
