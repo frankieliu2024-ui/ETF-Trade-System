@@ -406,8 +406,7 @@ def canonical_scheduled_report_events(event_path: str | None = None) -> list[dic
             "title": canonical_report_title(report_type),
             "content": content, "source": f"canonical-review-completion:{path.name}",
             "user_severity": "正式报告", "user_action": "阅读已完成的正式ETF报告；无需交易操作",
-            "report_type": report_type, "report_id": binding_report_id, "request_id": binding_request_id,
-            "task_id": task_id, "task_run_id": task_run_id, "idempotency_key": key,
+            "report_type": report_type, "report_id": binding_report_id, "request_id": binding_request_id,\n            "parent_request_id": binding_parent_request_id if formal_report else event_parent_request_id,\n            "task_id": task_id, "task_run_id": task_run_id, "idempotency_key": key,
             "no_trade_authority": True, "content_hash": expected,
         })
     return events
