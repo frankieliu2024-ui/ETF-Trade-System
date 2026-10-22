@@ -4000,7 +4000,7 @@ def main() -> int:
         return 0
     system_review_recorded, system_review_idempotent = record_scheduled_system_review(request)
     if system_review_recorded:
-        result = {"ok": True, "request_id": request.get("request_id"), "system_review_completion": True, "idempotent_replay": system_review_idempotent, "canonical_publication": "events/reviews/system_" + str((request.get("presentation_binding") or {}).get("task_run_id") or "") + ".json"}
+        result = {"ok": True, "request_id": request.get("request_id"), "system_review_completion": True, "idempotent_replay": system_review_idempotent, "canonical_publication": "events/reviews/system_" + str(((request.get("presentation_binding") or {}).get("task_run_id") or request.get("task_run_id") or "")).strip() + ".json"}
         print(json.dumps(result, ensure_ascii=False))
         return 0
     if str(request.get("ingress_mode") or "").upper() == "HISTORICAL_BACKFILL":
