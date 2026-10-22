@@ -215,8 +215,8 @@ def validate_user_visible_numbering(content: str) -> str:
     secondary_expected = None
     saw_numbered = False
     heading = re.compile(r"^【[^】]+】$")
-    primary = re.compile(r"^(\\d+)\\.\\s+")
-    secondary = re.compile(r"^(\\d+)）\\s+")
+    primary = re.compile(r"^(\d+)\.\s+")
+    secondary = re.compile(r"^(\d+)）\s+")
     for index, line in enumerate(lines):
         stripped = line.strip()
         if heading.fullmatch(stripped):
