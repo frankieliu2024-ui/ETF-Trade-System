@@ -2400,10 +2400,16 @@ def record_scheduled_system_review(request: dict) -> tuple[bool, bool]:
     if not isinstance(raw_binding, dict):
         task_run_id = str(request.get("task_run_id") or "").strip()
         request_id = str(request.get("request_id") or "").strip()
-        final_content = str(request.get("final_content") or "").strip()
-        if not task_run_id or not request_id or not final_content:
+        # Preserve the frozen body byte-for-byte.  The completion builder hashes
+        # the exact FINAL_CONTENT; stripping here changes the body/hash pair and
+        # lets the canonical event disagree with the completion envelope.
+        final_content = str(request.get("final_content") or "")
+        if not task_run_id or not request_id or not final_content.strip():
             raise ValueError("scheduled system review completion requires presentation_binding or complete top-level binding fields")
         content_hash = hashlib.sha256(final_content.encode("utf-8")).hexdigest()
+        supplied_hash = str(request.get("content_hash") or "").strip()
+        if supplied_hash and supplied_hash != content_hash:
+            raise ValueError("scheduled system review completion top-level content_hash mismatch")
         raw_binding = {
             "report_type": "ETF_SYSTEM_REVIEW",
             "task_id": str(request.get("task_id") or "ETF系统复核"),
