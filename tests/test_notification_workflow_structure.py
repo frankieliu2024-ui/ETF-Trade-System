@@ -179,5 +179,11 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
         self.assertNotIn("DECISION_EVENT_PATH", self.text)
 
 
+    def test_scheduled_trade_review_process_returns_canonical_publication(self):
+        sync = (ROOT / "scripts" / "process_state_sync_request.py").read_text(encoding="utf-8")
+        self.assertIn('result["canonical_publication"] = f"events/reviews/{market_date}.json"', sync)
+        self.assertIn('str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION"', sync)
+
+
 if __name__ == "__main__":
     unittest.main()
