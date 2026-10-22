@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-10-22T17:55:35+08:00",
+  "generated_at": "2026-10-22T17:56:56+08:00",
   "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -51,13 +51,15 @@
       "decision_context": true,
       "minimum_decision_context": "READY_OR_NOT_APPLICABLE",
       "observability_boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
-      "request_bound": true,
+      "request_bound": false,
       "formal_reply_gate": {
         "request_id": "manual-20261022T174152+0800-formal-market-quote-refresh",
         "requested_at_beijing": "2026-10-22T17:41:52+08:00",
-        "status": "NOT_APPLICABLE",
-        "reply_freezable": true,
-        "blockers": [],
+        "status": "IN_FLIGHT",
+        "reply_freezable": false,
+        "blockers": [
+          "REQUEST_BOUND_QUERY_CONTEXT_NOT_PUBLISHED"
+        ],
         "source": "decision_fact_pack.formal_reply_freeze",
         "consumer_manifest": {
           "request_id": "manual-20261022T174152+0800-formal-market-quote-refresh",
@@ -11955,21 +11957,23 @@
         "required_problem_ids": [],
         "required_problem_count": 0,
         "business_answer_contract": null,
-        "ready_handoff": null
+        "ready_handoff": null,
+        "request_bound": false,
+        "projection_preserved_from_non_formal_runtime_request": true
       },
       "context_read_contract": {
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 1661123,
-          "sha256": "45075d62d899db8c1d0b09a45540304062a080637a212c520eccd1b4a86fbca7",
+          "byte_count": 1231693,
+          "sha256": "7086e3c7985f01c3300995b4569027e915699e6e0a3ec6d6fd473e3c2805d856",
           "parsed_object": true
         },
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 528986,
-          "sha256": "9d2ab359351334d86b59ee49fccbf6aba170ac6a2c3f2cb8ea864b68a464038e",
+          "byte_count": 417773,
+          "sha256": "517c5c46f8451c51ceb15bcda287235f100c617a7bd6949a811bb7be9cec9bbd",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -11998,15 +12002,15 @@
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 1661123,
-      "sha256": "45075d62d899db8c1d0b09a45540304062a080637a212c520eccd1b4a86fbca7",
+      "byte_count": 1231693,
+      "sha256": "7086e3c7985f01c3300995b4569027e915699e6e0a3ec6d6fd473e3c2805d856",
       "parsed_object": true
     },
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 528986,
-      "sha256": "9d2ab359351334d86b59ee49fccbf6aba170ac6a2c3f2cb8ea864b68a464038e",
+      "byte_count": 417773,
+      "sha256": "517c5c46f8451c51ceb15bcda287235f100c617a7bd6949a811bb7be9cec9bbd",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"
