@@ -78,5 +78,45 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
         self.assertIn('for attempt in 1 2 3; do', workflow)
 
 
+    def test_shared_numbering_accepts_primary_and_secondary_hierarchy(self):
+        from scripts.notification_center import validate_user_visible_numbering
+        content = """【ETF系统复核】
+
+1. 系统状态。
+
+1）核心链路可用。
+
+2）通知链可用。
+
+2. 下一阶段。
+
+1）继续观察。"""
+        self.assertEqual(validate_user_visible_numbering(content), "")
+
+    def test_shared_numbering_rejects_repeated_secondary_one(self):
+        from scripts.notification_center import validate_user_visible_numbering
+        content = """【ETF交易复盘】
+
+1. 资本效率。
+
+1）现金保留。
+
+1）持仓继续占资。"""
+        self.assertEqual(
+            validate_user_visible_numbering(content),
+            "user_visible_secondary_numbering_not_sequential",
+        )
+
+    def test_shared_numbering_rejects_secondary_without_parent(self):
+        from scripts.notification_center import validate_user_visible_numbering
+        content = """【ETF正式决策】
+
+1）风险许可。"""
+        self.assertEqual(
+            validate_user_visible_numbering(content),
+            "user_visible_secondary_without_primary_parent",
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
