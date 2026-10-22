@@ -119,7 +119,7 @@ def _single_item_numbering_errors(text: str) -> list[str]:
             flush()
             current_heading = stripped
             continue
-        if re.match(r"^\\d+\\.\\s+", stripped):
+        if re.match(r"^\d+\.\s+", stripped):
             top_level_count += 1
     flush()
     return errors
