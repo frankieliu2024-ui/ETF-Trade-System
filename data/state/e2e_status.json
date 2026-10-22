@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-10-22T18:14:43+08:00",
+  "generated_at": "2026-10-22T18:15:24+08:00",
   "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -51,13 +51,15 @@
       "decision_context": true,
       "minimum_decision_context": "READY_OR_NOT_APPLICABLE",
       "observability_boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
-      "request_bound": true,
+      "request_bound": false,
       "formal_reply_gate": {
         "request_id": "manual-20261022T181112+0800-formal-decision",
         "requested_at_beijing": "2026-10-22 18:11:12",
-        "status": "NOT_APPLICABLE",
-        "reply_freezable": true,
-        "blockers": [],
+        "status": "IN_FLIGHT",
+        "reply_freezable": false,
+        "blockers": [
+          "REQUEST_BOUND_QUERY_CONTEXT_NOT_PUBLISHED"
+        ],
         "source": "decision_fact_pack.formal_reply_freeze",
         "consumer_manifest": {
           "request_id": "manual-20261022T181112+0800-formal-decision",
@@ -88,7 +90,7 @@
             "requested_at_beijing": "2026-10-22 18:11:12"
           },
           "formal_reply_freeze": {
-            "status": "NOT_APPLICABLE",
+            "status": "READY",
             "reply_freezable": true,
             "blockers": [],
             "request_id": "manual-20261022T181112+0800-formal-decision",
@@ -6930,7 +6932,7 @@
                 "price": null,
                 "change_pct": null,
                 "market_phase": "PRE_MARKET",
-                "as_of_beijing": "2026-10-22T18:14:20+08:00",
+                "as_of_beijing": "2026-10-22T18:11:42+08:00",
                 "quality_status": "PASS",
                 "provider": ""
               },
@@ -6940,7 +6942,7 @@
                 "price": null,
                 "change_pct": null,
                 "market_phase": "PRE_MARKET",
-                "as_of_beijing": "2026-10-22T18:12:15+08:00",
+                "as_of_beijing": "2026-10-22T18:11:27+08:00",
                 "quality_status": "PASS",
                 "provider": ""
               },
@@ -8970,7 +8972,7 @@
                 },
                 "market_structure_context": {
                   "schema_version": "1.4",
-                  "generated_at": "2026-10-22T10:12:25Z",
+                  "generated_at": "2026-10-22T09:59:59Z",
                   "market_date": "2026-10-22",
                   "as_of_beijing": "2026-10-22T15:15:27+08:00",
                   "source_snapshot": "data/market/snapshots/2026-10-22_151527.json",
@@ -11711,27 +11713,29 @@
         "parent_request_entry_mode": "MANUAL_CONVERSATION",
         "actor_action": "CONTINUE_SAME_REQUEST_SILENTLY",
         "user_output_allowed": false,
-        "business_decision_allowed": false,
-        "final_content_generation_allowed": false,
+        "business_decision_allowed": true,
+        "final_content_generation_allowed": true,
         "consumer_status": "REQUEST_BOUND_FACTS_BUILDING",
         "required_problem_ids": [],
         "required_problem_count": 0,
         "business_answer_contract": null,
-        "ready_handoff": null
+        "ready_handoff": null,
+        "request_bound": false,
+        "projection_preserved_from_non_formal_runtime_request": true
       },
       "context_read_contract": {
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 1628480,
-          "sha256": "f47f4dfee3225cb179a9663048d85388eaccae5fd1c22e3c2c52b4a1ac1792d4",
+          "byte_count": 1225268,
+          "sha256": "554594500d3ada8651257716bf86f1cc6fbd244253e6a172ecd16308700770a7",
           "parsed_object": true
         },
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 521048,
-          "sha256": "95ac3da9b91049c55f3f8a0bef0c457e93be444a3309605a0b0b40e7e17b4e92",
+          "byte_count": 415588,
+          "sha256": "b55e475c183d83ec88801c21cfac28246d619f62fb769cb6d25759b8273501ba",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -11760,15 +11764,15 @@
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 1628480,
-      "sha256": "f47f4dfee3225cb179a9663048d85388eaccae5fd1c22e3c2c52b4a1ac1792d4",
+      "byte_count": 1225268,
+      "sha256": "554594500d3ada8651257716bf86f1cc6fbd244253e6a172ecd16308700770a7",
       "parsed_object": true
     },
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 521048,
-      "sha256": "95ac3da9b91049c55f3f8a0bef0c457e93be444a3309605a0b0b40e7e17b4e92",
+      "byte_count": 415588,
+      "sha256": "b55e475c183d83ec88801c21cfac28246d619f62fb769cb6d25759b8273501ba",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"
