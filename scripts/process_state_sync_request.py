@@ -3716,7 +3716,20 @@ def main() -> int:
     )
     if completion_dispatch:
         bds_path = str(request.get("bds_path") or "").strip()
-        if not bds_path or ".." in bds_path:
+        # Older task runners may have written the completion envelope without
+        # bds_path. Recover only the deterministic BDS belonging to this same
+        # parent request; never scan history or choose a lexicographic match.
+        if not bds_path:
+            parent_id = str(request.get("parent_request_id") or "").strip()
+            if not parent_id or any(part in parent_id for part in ("/", "\\", "..")):
+                raise ValueError("Formal Decision completion is missing a safe parent identity for BDS recovery")
+            derived_bds_path = f"requests/live_snapshot/{parent_id}__business_decision_source.json"
+            derived_bds_file = (ROOT / derived_bds_path).resolve()
+            if ROOT not in derived_bds_file.parents or not derived_bds_file.is_file():
+                raise ValueError("Formal Decision completion is missing its same-request BDS")
+            bds_path = derived_bds_path
+            request["bds_path"] = bds_path
+        if ".." in bds_path or bds_path.startswith(("/", "\\")):
             raise ValueError("Formal Decision completion requires a safe BDS path")
         bds_file = (ROOT / bds_path).resolve()
         if ROOT not in bds_file.parents or not bds_file.is_file():
