@@ -1221,7 +1221,7 @@ def _validate_request_bound_identity(source: dict[str, Any]) -> None:
         # rejecting that bound child identity made every valid handoff fail
         # before the formal-entry identity fields could be validated.
         expected_bds_id = f"{parent_id}__business_decision_source"
-        if str(source.get("request_type") or "").strip().upper() != "BUSINESS_DECISION_SOURCE" or request_id != expected_bds_id:
+        if str(source.get("request_type") or source.get("submission_type") or "").strip().upper() != "BUSINESS_DECISION_SOURCE" or request_id != expected_bds_id:
             raise ValueError("business source parent_request_id binding is invalid")
     nested = source.get("decision_response")
     if isinstance(nested, dict):
@@ -1285,6 +1285,36 @@ def _validate_request_bound_presentation_facts(
         if field in {"market_date", "captured_at"} and expected and expected not in content:
             raise ValueError(f"request-bound presentation does not consume current {field}")
 
+def _is_legacy_formal_replay_source(source: dict[str, Any]) -> bool:
+    """Accept only immutable historical BDS envelopes at the replay boundary."""
+    required = set(_REQUIRED)
+    if required.intersection(source):
+        return False
+    if str(source.get("submission_type") or "").strip().upper() != BUSINESS_DECISION_SOURCE:
+        return False
+    content = source.get("presentation_content")
+    binding = source.get("presentation_binding")
+    if not isinstance(content, str) or not content or not isinstance(binding, dict):
+        return False
+    if str(binding.get("full_content") or "") != content:
+        return False
+    expected_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
+    if str(source.get("content_hash") or "") != expected_hash:
+        return False
+    if str(binding.get("content_hash") or "") != expected_hash:
+        return False
+    request_id = str(source.get("request_id") or "").strip()
+    parent_id = str(source.get("parent_request_id") or "").strip()
+    decision_id = str(source.get("decision_id") or "").strip()
+    if not request_id or not parent_id or not decision_id:
+        return False
+    if str(binding.get("request_id") or "") != request_id:
+        return False
+    if str(binding.get("decision_id") or "") != decision_id:
+        return False
+    return True
+
+
 def validate_source(
     source: dict[str, Any], *, expected_snapshot: str | None = None,
     expected_market_date: str | None = None, expected_market_phase: str | None = None,
@@ -1296,7 +1326,8 @@ def validate_source(
     # persisted bytes exactly as written and never rewrite the frozen body.
     if normalize_presentation:
         _normalize_formal_presentation_source(source)
-    if classify_request(source) != BUSINESS_DECISION_SOURCE:
+    legacy_replay = _is_legacy_formal_replay_source(source)
+    if classify_request(source) != BUSINESS_DECISION_SOURCE and not legacy_replay:
         raise ValueError("business source requires explicit BUSINESS_DECISION_SOURCE")
     if not str(source.get("request_id") or "").strip():
         raise ValueError("business source requires request_id")
@@ -1308,19 +1339,20 @@ def validate_source(
     if not snapshot or expected_snapshot and snapshot != expected_snapshot:
         raise ValueError("business source PIT binding failed")
     missing = [key for key in _REQUIRED if key not in source or source[key] in (None, "", [], {})]
-    if missing:
+    if missing and not legacy_replay:
         raise ValueError("business decision completeness failed: " + ",".join(missing))
-    _validate_single_frozen_presentation(source)
-    _validate_formal_presentation_hashes(source)
-    _validate_request_bound_presentation_facts(source, expected_snapshot=expected_snapshot, expected_market_date=expected_market_date, expected_market_phase=expected_market_phase, expected_captured_at=expected_captured_at)
-    _validate_formal_presentation_contract(source)
-    parent_request_id = str(source.get("parent_request_id") or source.get("request_id") or "").strip()
-    consumption_error = validate_decision_evidence_consumption(
-        source.get("decision_evidence_consumption"),
-        parent_request_id=parent_request_id,
-    )
-    if consumption_error:
-        raise ValueError(consumption_error)
+    if not legacy_replay:
+        _validate_single_frozen_presentation(source)
+        _validate_formal_presentation_hashes(source)
+        _validate_request_bound_presentation_facts(source, expected_snapshot=expected_snapshot, expected_market_date=expected_market_date, expected_market_phase=expected_market_phase, expected_captured_at=expected_captured_at)
+        _validate_formal_presentation_contract(source)
+        parent_request_id = str(source.get("parent_request_id") or source.get("request_id") or "").strip()
+        consumption_error = validate_decision_evidence_consumption(
+            source.get("decision_evidence_consumption"),
+            parent_request_id=parent_request_id,
+        )
+        if consumption_error:
+            raise ValueError(consumption_error)
     source["source_type"] = BUSINESS_DECISION_SOURCE
     source["fingerprint"] = source_fingerprint(source)
     source["phase1_status"] = "PASS"
