@@ -204,6 +204,25 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         self.assertEqual(binding["full_content"], "FROZEN LEGACY SYSTEM REPORT")
         self.assertEqual(binding["content_hash"], hashlib.sha256(b"FROZEN LEGACY SYSTEM REPORT").hexdigest())
 
+    def test_system_review_legacy_top_level_hash_mismatch_fails_closed(self):
+        from scripts import process_state_sync_request as state_sync
+        legacy = {
+            "request_id": "legacy-system-request",
+            "request_type": "SCHEDULED_REVIEW_COMPLETION",
+            "formal_fact_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW",
+            "source": "CHATGPT_SCHEDULED_SYSTEM_REVIEW_ACTOR",
+            "task_id": "ETF系统复核",
+            "task_run_id": "legacy-system-run",
+            "final_content": "FROZEN LEGACY SYSTEM REPORT\n",
+            "content_hash": hashlib.sha256(b"FROZEN LEGACY SYSTEM REPORT").hexdigest(),
+            "system_review": {"status": "PASS"},
+            "requested_at_beijing": "2026-09-26T19:30:00+08:00",
+        }
+        with TemporaryDirectory() as directory:
+            with patch.object(state_sync, "ROOT", Path(directory)):
+                with self.assertRaisesRegex(ValueError, "top-level content_hash mismatch"):
+                    state_sync.record_scheduled_system_review(legacy)
+
     def test_system_completion_publishes_canonical_event_consumed_by_notification_center(self):
         from scripts import notification_center
         from scripts import process_state_sync_request as state_sync
