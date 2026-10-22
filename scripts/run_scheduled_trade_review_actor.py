@@ -12,9 +12,9 @@ import json
 from pathlib import Path
 
 try:
-    from scheduled_review_completion import write_completion_request
+    from scheduled_review_completion import write_completion_request\n    from task_runtime_identity import derive_runtime_identity
 except ModuleNotFoundError:
-    from scripts.scheduled_review_completion import write_completion_request
+    from scripts.scheduled_review_completion import write_completion_request\n    from scripts.task_runtime_identity import derive_runtime_identity
 
 
 def main() -> int:
@@ -27,8 +27,8 @@ def main() -> int:
     parser.add_argument("--output", default="")
     parser.add_argument("--final-content", required=True)
     parser.add_argument("--task-id", default="ETF交易复盘")
-    parser.add_argument("--task-run-id", required=True)
-    parser.add_argument("--occurrence-id", required=True)
+    parser.add_argument("--task-run-id", default="")
+    parser.add_argument("--occurrence-id", default="")
     parser.add_argument(
         "--entry-mode",
         required=True,
@@ -56,8 +56,8 @@ def main() -> int:
     expected_hash = hashlib.sha256(args.final_content.encode("utf-8")).hexdigest()
     checks = {
         "request_id": persisted.get("request_id") == args.request_id,
-        "task_run_id": persisted.get("task_run_id") == args.task_run_id,
-        "occurrence_id": persisted.get("occurrence_id") == args.occurrence_id,
+        "task_run_id": persisted.get("task_run_id") == task_run_id,
+        "occurrence_id": persisted.get("occurrence_id") == occurrence_id,
         "entry_mode": persisted.get("entry_mode") == args.entry_mode,
         "report_type": binding.get("report_type") == "ETF_TRADE_REVIEW",
         "content_hash": binding.get("content_hash") == expected_hash,
