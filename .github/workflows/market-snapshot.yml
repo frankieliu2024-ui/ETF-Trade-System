@@ -764,6 +764,80 @@ jobs:
           else
             request_files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json')
           fi
+          # A Formal Decision refresh may be submitted after a user broker
+          # screenshot ingress.  The screenshot is a separate immutable
+          # account-fact request, but it is a decision-critical prerequisite
+          # for this same run.  Bind the newest unconsumed screenshot whose
+          # account-fact timestamp is not later than the Formal request; do
+          # not silently mark the Formal parent itself as account sync.
+          account_sync_file=""
+          if [ -n "$request_files" ] && [ -n "$TRIGGERING_REQUEST_FILE" ]; then
+            account_sync_file=$(python - "$TRIGGERING_REQUEST_FILE" <<'PY'
+          import json, sys
+          from datetime import datetime, timezone, timedelta
+          from pathlib import Path
+          try:
+              from scripts.process_state_sync_request import is_broker_screenshot_request
+          except ModuleNotFoundError:
+              from process_state_sync_request import is_broker_screenshot_request
+          root = Path('.')
+          formal_path = Path(sys.argv[1])
+          formal = json.loads(formal_path.read_text(encoding='utf-8'))
+          if str(formal.get('source') or '').upper() not in {
+              'CHATGPT_MANUAL_FORMAL_ANALYSIS',
+              'CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS',
+              'CHATGPT_SCHEDULED_FORMAL_ANALYSIS',
+          }:
+              raise SystemExit(0)
+          def parse(value):
+              if not value:
+                  return None
+              try:
+                  dt = datetime.fromisoformat(str(value).replace('Z', '+00:00'))
+              except ValueError:
+                  return None
+              return (dt if dt.tzinfo else dt.replace(tzinfo=timezone(timedelta(hours=8)))).astimezone(timezone.utc)
+          formal_time = parse(formal.get('requested_at_beijing') or formal.get('request_time_beijing'))
+          if formal_time is None:
+              raise SystemExit(0)
+          account_path = root / 'data/state/account_fact.json'
+          try:
+              account = json.loads(account_path.read_text(encoding='utf-8'))
+          except (OSError, json.JSONDecodeError):
+              account = {}
+          account_time = parse(account.get('updated_at'))
+          candidates = []
+          for path in sorted((root / 'requests/live_snapshot').glob('*.json')):
+              try:
+                  request = json.loads(path.read_text(encoding='utf-8'))
+              except (OSError, json.JSONDecodeError):
+                  continue
+              if not is_broker_screenshot_request(request):
+                  continue
+              fact = request.get('account_fact')
+              fact_time = parse(fact.get('updated_at')) if isinstance(fact, dict) else None
+              request_time = parse(request.get('requested_at_beijing') or request.get('request_time_beijing') or request.get('request_time'))
+              if not fact_time or not request_time or request_time > formal_time:
+                  continue
+              if account_time and fact_time <= account_time:
+                  continue
+              candidates.append((fact_time, request_time, str(path)))
+          if candidates:
+              candidates.sort()
+              print(candidates[-1][2])
+          PY
+          )
+          fi
+          if [ -n "$account_sync_file" ]; then
+            request_files="$request_files $account_sync_file"
+            echo "ACCOUNT_SYNC_REQUEST_FILE=$account_sync_file" >> "$GITHUB_ENV"
+            account_sync_id=$(python - "$account_sync_file" <<'PY'
+          import json, sys
+          print(str(json.load(open(sys.argv[1], encoding='utf-8')).get('request_id') or '').strip())
+          PY
+            )
+            echo "ACCOUNT_SYNC_REQUEST_ID=$account_sync_id" >> "$GITHUB_ENV"
+          fi
           # Formal Decision completion is not consumed by market-snapshot.
           # Its canonical event is formed only by the explicit completion
           # handoff into decision-notification. A completion-shaped push must
@@ -1054,9 +1128,11 @@ jobs:
         env:
           ACCOUNT_SYNC_OUTCOME: ${{ steps.state_sync.outcome }}
         run: |
+          sync_request_id="${ACCOUNT_SYNC_REQUEST_ID:-$TRIGGERING_REQUEST_ID}"
+          sync_request_path="${ACCOUNT_SYNC_REQUEST_FILE:-$TRIGGERING_REQUEST_FILE}"
           python scripts/record_account_sync_maintenance.py \
-            --request-id "$TRIGGERING_REQUEST_ID" \
-            --request-path "$TRIGGERING_REQUEST_FILE" \
+            --request-id "$sync_request_id" \
+            --request-path "$sync_request_path" \
             --owner-outcome "$ACCOUNT_SYNC_OUTCOME" \
             --run-id "$GITHUB_RUN_ID"
           git config user.name "github-actions[bot]"
