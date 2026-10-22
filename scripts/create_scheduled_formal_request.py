@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import os
 import secrets
 from datetime import datetime, timezone, timedelta
@@ -115,57 +114,6 @@ def build_scheduled_request(
     }
 
 
-def _active_formal_parent() -> str:
-    """Return the one durable Formal parent that must be resumed before ingress."""
-    gate_path = ROOT / "data" / "state" / "e2e_status.json"
-    try:
-        status = json.loads(gate_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return ""
-    gate = (((status.get("components") or {}).get("decision_context") or {}).get("formal_reply_gate") or {})
-    parent_id = str(gate.get("request_id") or "").strip()
-    if not parent_id:
-        return ""
-    parent_path = REQUEST_DIR / f"{parent_id}.json"
-    try:
-        parent = json.loads(parent_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return ""
-    if str(parent.get("request_id") or "").strip() != parent_id:
-        return ""
-    if str(parent.get("request_type") or "").upper() != "MARKET_QUOTE_REFRESH":
-        return ""
-    if str(parent.get("source") or "") not in set(TRIGGER_SOURCES.values()):
-        return ""
-    gate_status = str(gate.get("status") or "").upper()
-    actor_action = str(gate.get("actor_action") or "").upper()
-    inflight = gate_status in {"BUILDING", "PENDING", "QUEUED", "RUNNING", "IN_PROGRESS", "IN_FLIGHT", "WAIT", "REQUEST_BOUND_FACTS_BUILDING"}
-    if inflight or actor_action == "CONTINUE_SAME_REQUEST_SILENTLY":
-        return parent_id
-    if gate_status in {"READY", "RESOLVED_DEGRADED"}:
-        bds_path = REQUEST_DIR / f"{parent_id}__business_decision_source.json"
-        completion_path = REQUEST_DIR / f"{parent_id}__scheduled_review_completion.json"
-        if not bds_path.exists() or not completion_path.exists():
-            return parent_id
-    return ""
-
-
-def _existing_occurrence(occurrence_id: str) -> str:
-    REQUEST_DIR.mkdir(parents=True, exist_ok=True)
-    for path in REQUEST_DIR.glob("*.json"):
-        try:
-            payload = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            continue
-        if (
-            payload.get("request_type") == "MARKET_QUOTE_REFRESH"
-            and payload.get("source") in set(TRIGGER_SOURCES.values())
-            and payload.get("intent", {}).get("query_intent") == "FORMAL_INTRADAY_ANALYSIS"
-            and payload.get("occurrence_id") == occurrence_id
-        ):
-            return str(payload.get("request_id") or "")
-    return ""
-
 
 def main() -> int:
     mode = os.environ.get("ENTRY_MODE", AUTOMATIC_MODE).strip().upper()
@@ -193,15 +141,8 @@ def main() -> int:
             mode, task_run_id, occurrence
         )
 
-    active = _active_formal_parent()
-    if active:
-        print(f"FORMAL_SCHEDULE_INGRESS=REUSE_ACTIVE_PARENT request_id={active}")
-        return 0
-
-    existing = _existing_occurrence(occurrence)
-    if existing:
-        print(f"FORMAL_SCHEDULE_INGRESS=EXISTS request_id={existing}")
-        return 0
+    # Every legal invocation is a new ingress. Previous gate, READY request,
+    # completion, or failed projection must not replace this run's identity.
 
     payload = build_scheduled_request(
         now=now,
