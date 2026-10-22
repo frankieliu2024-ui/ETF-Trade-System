@@ -183,6 +183,8 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
         sync = (ROOT / "scripts" / "process_state_sync_request.py").read_text(encoding="utf-8")
         self.assertIn('result["canonical_publication"] = f"events/reviews/{market_date}.json"', sync)
         self.assertIn('str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION"', sync)
+        self.assertIn('market_date = str(request.get("market_date") or "").strip()', sync)
+        self.assertIn('SCHEDULED_REVIEW_COMPLETION requires market_date', sync)
 
 
 if __name__ == "__main__":
