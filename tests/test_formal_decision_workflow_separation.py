@@ -30,13 +30,21 @@ class FormalDecisionWorkflowSeparationTests(unittest.TestCase):
     def test_notification_workflow_matches_the_unified_completion_filename(self):
         workflow = (self.root / ".github/workflows/decision-notification.yml").read_text(encoding="utf-8")
         self.assertIn('requests/live_snapshot/*__scheduled_review_completion.json', workflow)
-        self.assertIn(r"^requests/live_snapshot/[^/]+__scheduled_review_completion\\.json$", workflow)
+        self.assertIn(r"^requests/live_snapshot/[^/]+__scheduled_review_completion\.json$", workflow)
         self.assertNotIn("__formal_decision_completion.json", workflow)
 
     def test_market_snapshot_does_not_reconsume_scheduled_review_completion(self):
         workflow = (self.root / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
         self.assertIn("__scheduled_review_completion", workflow)
         self.assertIn("grep -vE", workflow)
+
+    def test_market_snapshot_skips_optional_state_sync_for_completion(self):
+        workflow = (self.root / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
+        marker = 'if [ "$scheduled_review_completion" = "true" ]; then'
+        self.assertIn(marker, workflow)
+        block = workflow.split(marker, 1)[1].split("fi", 1)[0]
+        self.assertIn("skip optional broker/dashboard state sync", block)
+        self.assertIn('echo "processed=false"', block)
 
 
 if __name__ == "__main__":

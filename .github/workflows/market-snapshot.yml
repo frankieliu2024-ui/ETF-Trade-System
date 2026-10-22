@@ -826,6 +826,14 @@ jobs:
             )
           fi
           echo "SCHEDULED_REVIEW_COMPLETION=$scheduled_review_completion" >> "$GITHUB_ENV"
+          # Scheduled Review completion is a notification handoff, not a market
+          # snapshot/state-sync request. Optional broker/dashboard maintenance
+          # must not fail or delay canonical review projection.
+          if [ "$scheduled_review_completion" = "true" ]; then
+            echo "Scheduled Review completion detected; skip optional broker/dashboard state sync."
+            echo "processed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           # Preserve the triggering request before execution-time main resets.
           # REFRESH_BEARING requests skip state sync but still own the exact
           # request identity/time consumed by query and decision contexts.
