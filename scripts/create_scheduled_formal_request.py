@@ -212,8 +212,7 @@ def main() -> int:
     )
     path = REQUEST_DIR / f"{payload['request_id']}.json"
     path.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2) + "
-",
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
     print(f"FORMAL_SCHEDULE_INGRESS=CREATED request_id={payload['request_id']} path={path}")
