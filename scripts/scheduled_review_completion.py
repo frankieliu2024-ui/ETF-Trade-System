@@ -328,6 +328,9 @@ def build_system_review_completion_request(
         raise ValueError("scheduled system review completion requires requested_at_beijing and frozen final_content")
     validate_system_review_presentation(system_review, final_content)
     validate_user_visible_content(str(final_content), canonical_closure_confirmed=False)
+    frozen_content = str(final_content)
+    content_hash = hashlib.sha256(frozen_content.encode("utf-8")).hexdigest()
+    occurrence_id = task_run_id
     return {
         "request_id": request_id,
         "request_type": "SCHEDULED_REVIEW_COMPLETION",
@@ -335,14 +338,26 @@ def build_system_review_completion_request(
         "source": "CHATGPT_SCHEDULED_SYSTEM_REVIEW_ACTOR",
         "interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
         "requested_at_beijing": str(requested_at_beijing),
+        "market_date": str(
+            system_review.get("market_date")
+            or system_review.get("a_share_latest_formal_market_date")
+            or ""
+        ),
+        "task_id": str(task_id or "ETF系统复核"),
+        "task_run_id": task_run_id,
+        "occurrence_id": occurrence_id,
+        "final_content": frozen_content,
         "system_review": system_review,
         "presentation_binding": {
             "report_type": "ETF_SYSTEM_REVIEW",
             "task_id": str(task_id or "ETF系统复核"),
             "task_run_id": task_run_id,
+            "occurrence_id": occurrence_id,
             "request_id": request_id,
             "report_id": f"etf_system_review:{task_run_id}",
-            "full_content": str(final_content),
+            "full_content": frozen_content,
+            "content_hash": content_hash,
+            "content_hash_source": "completion_builder",
         },
     }
 

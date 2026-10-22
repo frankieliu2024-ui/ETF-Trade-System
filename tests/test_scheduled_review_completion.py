@@ -166,12 +166,43 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         self.assertEqual(payload["formal_fact_type"], "FORMAL_SCHEDULED_SYSTEM_REVIEW")
         self.assertEqual(payload["presentation_binding"]["report_type"], "ETF_SYSTEM_REVIEW")
         self.assertEqual(payload["presentation_binding"]["report_id"], "etf_system_review:system-run")
-        self.assertNotIn("content_hash", payload["presentation_binding"])
+        self.assertEqual(
+            payload["presentation_binding"]["content_hash"],
+            hashlib.sha256(b"FROZEN SYSTEM REPORT").hexdigest(),
+        )
+        self.assertEqual(payload["presentation_binding"]["content_hash_source"], "completion_builder")
+        self.assertEqual(payload["occurrence_id"], "system-run")
         self.assertNotIn("report_delivery", payload)
         self.assertNotIn("report_handoff", payload)
         from scripts.runtime_session_gate import classify_live_snapshot_request
         self.assertEqual(classify_live_snapshot_request(payload), "STATE_SYNC_ONLY")
 
+
+    def test_system_review_legacy_top_level_content_is_normalized_at_canonical_owner(self):
+        from scripts import process_state_sync_request as state_sync
+        legacy = {
+            "request_id": "legacy-system-request",
+            "request_type": "SCHEDULED_REVIEW_COMPLETION",
+            "formal_fact_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW",
+            "source": "CHATGPT_SCHEDULED_SYSTEM_REVIEW_ACTOR",
+            "task_id": "ETF系统复核",
+            "task_run_id": "legacy-system-run",
+            "final_content": "FROZEN LEGACY SYSTEM REPORT",
+            "system_review": {"status": "PASS"},
+            "requested_at_beijing": "2026-09-26T19:30:00+08:00",
+        }
+        with TemporaryDirectory() as directory:
+            with patch.object(state_sync, "ROOT", Path(directory)):
+                recorded, replay = state_sync.record_scheduled_system_review(legacy)
+        self.assertTrue(recorded)
+        self.assertFalse(replay)
+        event = json.loads(
+            (Path(directory) / "events" / "reviews" / "system_legacy-system-run.json").read_text(encoding="utf-8")
+        )
+        binding = event["presentation_binding"]
+        self.assertEqual(binding["report_type"], "ETF_SYSTEM_REVIEW")
+        self.assertEqual(binding["full_content"], "FROZEN LEGACY SYSTEM REPORT")
+        self.assertEqual(binding["content_hash"], hashlib.sha256(b"FROZEN LEGACY SYSTEM REPORT").hexdigest())
 
     def test_system_completion_publishes_canonical_event_consumed_by_notification_center(self):
         from scripts import notification_center
