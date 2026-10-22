@@ -7,14 +7,14 @@ import os
 from pathlib import Path
 
 try:
-    from runtime_session_gate import classify_live_snapshot_request
+    from runtime_session_gate import classify_live_snapshot_request\n    from task_runtime_identity import derive_runtime_identity
     from process_state_sync_request import (
         validate_current_lifecycle_contract,
         validate_managed_position_lifecycle,
     )
     from user_visible_presentation import validate_user_visible_content
 except ModuleNotFoundError:
-    from scripts.runtime_session_gate import classify_live_snapshot_request
+    from scripts.runtime_session_gate import classify_live_snapshot_request\n    from scripts.task_runtime_identity import derive_runtime_identity
     from scripts.process_state_sync_request import (
         validate_current_lifecycle_contract,
         validate_managed_position_lifecycle,
@@ -323,7 +323,7 @@ def build_system_review_completion_request(
     if not isinstance(system_review, dict) or not system_review:
         raise ValueError("scheduled system review completion requires system_review")
     request_id = _safe_id(request_id)
-    task_run_id = _safe_id(task_run_id)
+    task_run_id, occurrence_id = derive_runtime_identity(\n        task_id or "ETF系统复核", request_id, requested_at_beijing,\n        "AUTOMATIC_SCHEDULED_TASK", task_run_id, ""\n    )\n    task_run_id = _safe_id(task_run_id)
     if not str(requested_at_beijing or "").strip() or not str(final_content or "").strip():
         raise ValueError("scheduled system review completion requires requested_at_beijing and frozen final_content")
     validate_system_review_presentation(system_review, final_content)
