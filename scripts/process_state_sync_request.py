@@ -4268,6 +4268,9 @@ def main() -> int:
         # The completion projection owner needs the exact event produced by the
         # same request.  Trade Review events are keyed by market_date, unlike
         # System Review events keyed by occurrence/task_run_id.
+        market_date = str(request.get("market_date") or "").strip()
+        if not market_date:
+            raise ValueError("SCHEDULED_REVIEW_COMPLETION requires market_date")
         result["canonical_publication"] = f"events/reviews/{market_date}.json"
     print(json.dumps(result, ensure_ascii=False))
     return 0
