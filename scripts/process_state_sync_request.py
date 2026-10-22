@@ -3750,7 +3750,14 @@ def main() -> int:
         if ROOT not in bds_file.parents or not bds_file.is_file():
             raise ValueError("Formal Decision completion BDS path is not durable")
         bds = load_json(bds_file)
-        if str(bds.get("request_type") or "").strip().upper() != BUSINESS_DECISION_SOURCE:
+        # BUSINESS_DECISION_SOURCE is durably stored under submission_type by
+        # the producer contract. Accept request_type only as a compatibility
+        # alias so the completion projector validates the same BDS contract
+        # that the producer and existing fixtures write.
+        bds_type = str(
+            bds.get("request_type") or bds.get("submission_type") or ""
+        ).strip().upper()
+        if bds_type != BUSINESS_DECISION_SOURCE:
             raise ValueError("Formal Decision completion must reference BUSINESS_DECISION_SOURCE")
         if str(bds.get("parent_request_id") or "").strip() != str(request.get("parent_request_id") or "").strip():
             raise ValueError("Formal Decision completion parent does not match BDS")
