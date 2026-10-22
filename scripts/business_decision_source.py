@@ -1285,6 +1285,36 @@ def _validate_request_bound_presentation_facts(
         if field in {"market_date", "captured_at"} and expected and expected not in content:
             raise ValueError(f"request-bound presentation does not consume current {field}")
 
+def _is_legacy_formal_replay_source(source: dict[str, Any]) -> bool:
+    """Accept only immutable historical BDS envelopes at the replay boundary."""
+    required = set(_REQUIRED)
+    if required.intersection(source):
+        return False
+    if str(source.get("submission_type") or "").strip().upper() != BUSINESS_DECISION_SOURCE:
+        return False
+    content = source.get("presentation_content")
+    binding = source.get("presentation_binding")
+    if not isinstance(content, str) or not content or not isinstance(binding, dict):
+        return False
+    if str(binding.get("full_content") or "") != content:
+        return False
+    expected_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
+    if str(source.get("content_hash") or "") != expected_hash:
+        return False
+    if str(binding.get("content_hash") or "") != expected_hash:
+        return False
+    request_id = str(source.get("request_id") or "").strip()
+    parent_id = str(source.get("parent_request_id") or "").strip()
+    decision_id = str(source.get("decision_id") or "").strip()
+    if not request_id or not parent_id or not decision_id:
+        return False
+    if str(binding.get("request_id") or "") != request_id:
+        return False
+    if str(binding.get("decision_id") or "") != decision_id:
+        return False
+    return True
+
+
 def validate_source(
     source: dict[str, Any], *, expected_snapshot: str | None = None,
     expected_market_date: str | None = None, expected_market_phase: str | None = None,
@@ -1297,7 +1327,8 @@ def validate_source(
     if normalize_presentation:
         _normalize_formal_presentation_source(source)
     if classify_request(source) != BUSINESS_DECISION_SOURCE:
-        raise ValueError("business source requires explicit BUSINESS_DECISION_SOURCE")
+        if not _is_legacy_formal_replay_source(source):
+            raise ValueError("business source requires explicit BUSINESS_DECISION_SOURCE")
     if not str(source.get("request_id") or "").strip():
         raise ValueError("business source requires request_id")
     if not str(source.get("decision_id") or "").strip():
