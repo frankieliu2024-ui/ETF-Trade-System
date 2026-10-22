@@ -31,6 +31,7 @@ class AShareProductionChainTests(unittest.TestCase):
         self.assertIn('FORMAL_POST_CLOSE_REVIEW replay has invalid request/market temporal identity', workflow)
         self.assertIn('python scripts/process_state_sync_request.py "$request_files"', workflow)
         self.assertIn("STATE_SYNC_ONLY or ACCOUNT_FACT_REFRESH", workflow)
+        self.assertIn('if request_type == "ACCOUNT_FACT_REFRESH":', workflow)
         self.assertIn("if: ${{ github.event_name == 'workflow_dispatch' }}", workflow)
         self.assertNotIn("if: \\${{ github.event_name == 'workflow_dispatch' }}", workflow)
 
