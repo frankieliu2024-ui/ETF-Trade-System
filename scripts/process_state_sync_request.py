@@ -4235,6 +4235,11 @@ def main() -> int:
     ) if (formal_decision_current or account_membership_changed) else False
     formal_files_sync = sync_formal_files(ROOT, account)
     result = {"ok": True, "request_id": request.get("request_id"), "interaction_scenario": request.get("interaction_scenario"), "account_updated_at": account.get("updated_at"), "dashboard_updated": True, "formal_decision_recorded": decision_recorded, "formal_decision_id": decision_id, "trade_event_recorded": trade_event_recorded, "post_close_review_recorded": review_recorded, "post_close_review_idempotent_noop": review_idempotent, "review_prerequisite_unavailable_recorded": unavailable_recorded, "review_prerequisite_unavailable_idempotent_noop": unavailable_idempotent, "formal_files_sync": formal_files_sync, "observation_universe_changed": observation_universe_changed, "account_sync_status": account_sync_status, "normalized_non_security_asset_count": normalized_non_security_asset_count, "canonical_ingress_state": canonical_ingress_contract["terminal_state"], "canonical_ingress_failure_reason": None if canonical_ingress_contract["terminal_state"] == CANONICAL_INGRESS_SUBMITTED else canonical_ingress_contract["reason"]}
+    if review_recorded and str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION":
+        # The completion projection owner needs the exact event produced by the
+        # same request.  Trade Review events are keyed by market_date, unlike
+        # System Review events keyed by occurrence/task_run_id.
+        result["canonical_publication"] = f"events/reviews/{market_date}.json"
     print(json.dumps(result, ensure_ascii=False))
     return 0
 
