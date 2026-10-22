@@ -13,7 +13,7 @@ import runtime_self_heal  # noqa: E402
 
 
 class OpeningCurrentSelfHealingTests(unittest.TestCase):
-    def _assess(self, *, current: dict, now: datetime, closed_dates: list[str] | None = None) -> dict:
+    def _assess(self, *, current: dict, now: datetime, closed_dates: list[str] | None = None, review_current: dict | None = None) -> dict:
         values = {
             "config/runtime_policy.json": {
                 "self_healing": {
@@ -34,7 +34,7 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
             "data/state/system_consistency.json": {"status": "PASS"},
             "data/state/query_context.json": {},
             "data/state/decision_context.json": {},
-            "data/state/review_context.json": {"rules_version": "V2.2.31"},
+            "data/state/review_context.json": {"rules_version": "V2.2.31", "current": review_current or {}},
             "data/state/self_healing_status.json": {},
         }
 
@@ -85,6 +85,29 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
         self.assertEqual(status["classification"], "DERIVED_CONTEXT_RULES_VERSION_DRIFT")
         self.assertEqual(status["recommended_action"], "REBUILD_DERIVED_CONTEXTS")
         self.assertEqual(status["review_context_rules_version"], "V2.2.31")
+
+    def test_review_context_identity_drift_rebuilds_existing_derived_contexts(self):
+        status = self._assess(
+            current={
+                "market_date": "2026-10-22",
+                "captured_at": "2026-10-22T12:25:50+08:00",
+                "latest_valid_node": "1130",
+                "latest_snapshot": "data/market/snapshots/2026-10-22_122550.json",
+                "snapshot_commit": "current-snapshot",
+                "node_status": "READY",
+                "rules_version": "V2.2.31",
+            },
+            now=datetime.fromisoformat("2026-10-22T12:30:00+08:00"),
+            review_current={
+                "market_date": "2026-10-22",
+                "latest_valid_node": "close",
+                "latest_snapshot": "data/market/snapshots/2026-10-22_111603.json",
+                "snapshot_commit": "old-snapshot",
+            },
+        )
+        self.assertEqual(status["classification"], "DERIVED_CONTEXT_IDENTITY_DRIFT")
+        self.assertEqual(status["recommended_action"], "REBUILD_DERIVED_CONTEXTS")
+        self.assertTrue(status["review_context_identity_drift"])
 
     def test_previous_day_current_is_an_explicit_opening_recovery(self):
         status = self._assess(
