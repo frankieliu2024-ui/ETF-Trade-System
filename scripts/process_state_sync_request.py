@@ -2471,7 +2471,11 @@ def record_formal_decision_report_event(request: dict, bds: dict) -> tuple[bool,
     # Revalidate the persisted BDS at the canonical owner, including the actual
     # frozen presentation. Idempotent replay must not allow an already-written
     # short/legacy payload to bypass the current Formal Decision contract.
-    validate_source(\n        bds,\n        expected_snapshot=str(bds.get("consumed_snapshot") or "").strip() or None,\n        normalize_presentation=False,\n    )
+    validate_source(
+        bds,
+        expected_snapshot=str(bds.get("consumed_snapshot") or "").strip() or None,
+        normalize_presentation=False,
+    )
     binding = bds.get("presentation_binding") if isinstance(bds.get("presentation_binding"), dict) else {}
     identity = {
         "request_id": str(bds.get("request_id") or "").strip(),
