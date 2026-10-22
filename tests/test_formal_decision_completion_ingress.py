@@ -54,3 +54,9 @@ class FormalDecisionCanonicalChainTests(unittest.TestCase):
 if __name__ == "__main__":
     unittest.main()
 
+
+
+def test_completion_gateway_derives_only_same_parent_bds_path():
+    source = Path("scripts/process_state_sync_request.py").read_text(encoding="utf-8")
+    assert "derived_bds_path = f\"requests/live_snapshot/{parent_id}__business_decision_source.json\"" in source
+    assert "never scan history or choose a lexicographic match" in source
