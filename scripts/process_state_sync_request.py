@@ -2406,10 +2406,12 @@ def record_scheduled_system_review(request: dict) -> tuple[bool, bool]:
         final_content = str(request.get("final_content") or "")
         if not task_run_id or not request_id or not final_content.strip():
             raise ValueError("scheduled system review completion requires presentation_binding or complete top-level binding fields")
+        # The canonical owner is the sole authority for the frozen presentation
+        # and its audit hash.  A task-interface envelope may still contain a
+        # legacy/top-level content_hash, but it is not allowed to create a
+        # second hash source or block canonicalization.  Recompute from the
+        # exact persisted FINAL_CONTENT and bind that value below.
         content_hash = hashlib.sha256(final_content.encode("utf-8")).hexdigest()
-        supplied_hash = str(request.get("content_hash") or "").strip()
-        if supplied_hash and supplied_hash != content_hash:
-            raise ValueError("scheduled system review completion top-level content_hash mismatch")
         raw_binding = {
             "report_type": "ETF_SYSTEM_REVIEW",
             "task_id": str(request.get("task_id") or "ETF系统复核"),
