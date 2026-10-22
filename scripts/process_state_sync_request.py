@@ -2390,6 +2390,27 @@ def _validate_presentation_binding(binding: dict, report_type: str, strict_produ
 
 
 
+def _extract_scheduled_review_final_content(request: dict) -> str:
+    """Return the one canonical frozen body from a completion ingress.
+
+    Task-interface envelopes have historically used both FINAL_CONTENT and
+    final_content.  This is the only compatibility boundary: once extracted,
+    every downstream owner uses this single value and recomputes its hash.
+    """
+    values = [
+        request.get("final_content"),
+        request.get("FINAL_CONTENT"),
+        request.get("full_content"),
+    ]
+    non_empty = [str(value) for value in values if str(value or "").strip()]
+    if not non_empty:
+        return ""
+    if any(value != non_empty[0] for value in non_empty[1:]):
+        raise ValueError("scheduled system review completion contains conflicting frozen content fields")
+    return non_empty[0]
+
+
+
 def record_scheduled_system_review(request: dict) -> tuple[bool, bool]:
     if str(request.get("formal_fact_type") or "") != "FORMAL_SCHEDULED_SYSTEM_REVIEW":
         return False, False
@@ -2403,7 +2424,7 @@ def record_scheduled_system_review(request: dict) -> tuple[bool, bool]:
         # Preserve the frozen body byte-for-byte.  The completion builder hashes
         # the exact FINAL_CONTENT; stripping here changes the body/hash pair and
         # lets the canonical event disagree with the completion envelope.
-        final_content = str(request.get("final_content") or "")
+        final_content = _extract_scheduled_review_final_content(request)
         if not task_run_id or not request_id or not final_content.strip():
             raise ValueError("scheduled system review completion requires presentation_binding or complete top-level binding fields")
         # The canonical owner is the sole authority for the frozen presentation
