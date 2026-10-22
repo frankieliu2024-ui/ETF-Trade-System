@@ -99,6 +99,32 @@ def _presentation_structure_errors(text: str) -> list[str]:
     return list(dict.fromkeys(errors))
 
 
+def _single_item_numbering_errors(text: str) -> list[str]:
+    """Reject artificial numbering when a section has one complete item."""
+    errors: list[str] = []
+    current_heading = ""
+    top_level_count = 0
+
+    def flush() -> None:
+        nonlocal top_level_count
+        if current_heading and top_level_count == 1:
+            errors.append(
+                f"single-item section must not use primary numbering: {current_heading}"
+            )
+        top_level_count = 0
+
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("【") and stripped.endswith("】"):
+            flush()
+            current_heading = stripped
+            continue
+        if re.match(r"^\\d+\\.\\s+", stripped):
+            top_level_count += 1
+    flush()
+    return errors
+
+
 def _time_presentation_errors(text: str) -> list[str]:
     errors: list[str] = []
     for line in text.splitlines():
@@ -113,6 +139,11 @@ def _internal_presentation_terms(text: str) -> list[str]:
         "provider", "content_hash", "BDS", "DWP", "PIT",
         "query_context", "decision_work_package", "系统时钟", "执行环境",
         "UTC+08:00", "DEGRADED", "FULL_REPORT", "STATE_SYNC_ONLY",
+        # Machine-schema fields must never leak into the business report.
+        "state_name", "capital_action", "remaining_deployable_cash",
+        "why_not_selected", "opportunity_cost_if_selected",
+        "zero_amount_decisive_reason_if_zero", "new_amount_yuan",
+        "no_trade_authority", "formal_completion_path",
     )
     return [term for term in terms if re.search(re.escape(term), text, re.IGNORECASE)]
 
@@ -132,6 +163,7 @@ def validate_user_visible_content(
     mapping = security_map if security_map is not None else canonical_security_map(root)
     errors = _security_identity_errors(text, mapping)
     errors.extend(_presentation_structure_errors(text))
+    errors.extend(_single_item_numbering_errors(text))
     errors.extend(_time_presentation_errors(text))
     if not technical_audit_mode:
         for term in _internal_presentation_terms(text):
