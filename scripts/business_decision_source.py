@@ -125,16 +125,16 @@ def _normalize_risk_permission(value: Any) -> str:
             return matches[0]
     return ""
 
-_HOLDING_ACTION_ALIASES = {
-    "HOLD": "HOLD",
-    "持有": "HOLD",
-    "持有管理": "HOLD",
-    "持仓管理": "HOLD",
-    "REDUCE": "REDUCE",
-    "降低风险": "REDUCE",
-    "EXIT": "EXIT",
-    "退出": "EXIT",
-    "全部退出": "EXIT",
+_继续持有ING_ACTION_ALIASES = {
+    "继续持有": "继续持有",
+    "持有": "继续持有",
+    "持有管理": "继续持有",
+    "持仓管理": "继续持有",
+    "减持": "减持",
+    "降低风险": "减持",
+    "全部退出": "全部退出",
+    "退出": "全部退出",
+    "全部退出": "全部退出",
 }
 
 
@@ -145,15 +145,15 @@ def _normalize_holding_action(value: Any) -> str:
     wording used by the verified notification examples without changing it.
     """
     raw = str(value or "").strip()
-    exact = _HOLDING_ACTION_ALIASES.get(raw.upper(), _HOLDING_ACTION_ALIASES.get(raw))
+    exact = _继续持有ING_ACTION_ALIASES.get(raw.upper(), _继续持有ING_ACTION_ALIASES.get(raw))
     if exact:
         return exact
     if raw.startswith(("继续持有", "持有管理", "持仓管理")):
-        return "HOLD"
+        return "继续持有"
     if raw.startswith("降低风险"):
-        return "REDUCE"
+        return "减持"
     if raw.startswith(("全部退出", "退出")):
-        return "EXIT"
+        return "全部退出"
     return raw.upper()
 
 
@@ -275,7 +275,7 @@ def _validate_material_state_transitions(
             prior_action = _normalize_holding_action(prior_holding.get(code))
             current_action = _normalize_holding_action(review.get("current_action"))
             if prior_action and current_action and prior_action != current_action:
-                pid = f"HOLDING:{code}"
+                pid = f"继续持有ING:{code}"
                 error = _transition_attribution_error(answers.get(pid) or {}, problem_id=pid, qualified_requirement_ids=qualified_by_problem.get(pid, set()))
                 if error:
                     raise ValueError(error)
@@ -365,17 +365,17 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
         for field in ("final_action", "capital_comparison", "next_change_condition", "evidence_decision_impact"):
             if answer.get(field) in (None, "", [], {}):
                 raise ValueError(f"decision response missing {pid}.{field}")
-        if pid.startswith("HOLDING:"):
+        if pid.startswith("继续持有ING:"):
             if not answer.get("capital_occupancy_reason") or not answer.get("higher_efficiency_alternative"):
                 raise ValueError(f"decision response missing holding capital rationale: {pid}")
             # Every current holding participates in the same capital competition
             # as cash and qualified alternatives. Do not let the absence of a
-            # DWP flag, a legacy package, or the HOLD default bypass the
+            # DWP flag, a legacy package, or the 继续持有 default bypass the
             # explicit release/retain comparison.
             if not str(answer.get("capital_efficiency_release_assessment") or "").strip():
                 raise ValueError(f"decision response missing capital-efficiency release assessment: {pid}")
             # Capital competition is release-first for current holdings:
-            # HOLD is a conclusion that needs affirmative evidence, not the
+            # 继续持有 is a conclusion that needs affirmative evidence, not the
             # fallback when no independent exit trigger was found.
             release_first = (
                 (work_package.get("response_contract") or {}).get("holding_capital_competition_policy")
@@ -385,17 +385,17 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
                 action = _normalize_holding_action(answer.get("final_action"))
                 if not str(answer.get("strategy_reset_review") or "").strip():
                     raise ValueError(f"decision response holding requires strategy-reset review: {pid}")
-                if action == "HOLD":
+                if action == "继续持有":
                     for field in ("holding_thesis_status", "long_term_outcome_review", "hold_over_release_reason"):
                         if not str(answer.get(field) or "").strip():
-                            raise ValueError(f"decision response HOLD requires {field}: {pid}")
+                            raise ValueError(f"decision response 继续持有 requires {field}: {pid}")
                     if str(answer.get("hold_over_release_reason") or "").strip() in {
                         "无独立退出证据", "未达到独立卖出门槛", "没有独立退出依据",
                     }:
-                        raise ValueError(f"decision response HOLD cannot rely only on absence of exit evidence: {pid}")
-                elif action in {"REDUCE", "EXIT"} and not str(answer.get("exit_or_reduce_evidence") or "").strip():
+                        raise ValueError(f"decision response 继续持有 cannot rely only on absence of exit evidence: {pid}")
+                elif action in {"减持", "全部退出"} and not str(answer.get("exit_or_reduce_evidence") or "").strip():
                     raise ValueError(f"decision response {action} requires exit_or_reduce_evidence: {pid}")
-            if _normalize_holding_action(answer.get("final_action")) in {"REDUCE", "EXIT"}:
+            if _normalize_holding_action(answer.get("final_action")) in {"减持", "全部退出"}:
                 if answer.get("quantity") in (None, "") or not answer.get("capital_destination"):
                     raise ValueError(f"decision response missing action quantity/destination: {pid}")
         if pid == "MAIN_CANDIDATE":
@@ -410,7 +410,7 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
             if not _normalize_opportunity_status(answer.get("opportunity_status")):
                 raise ValueError(f"decision response missing registered opportunity_status: {pid}")
             disposition = str(answer.get("disposition") or "").upper()
-            if disposition not in {"ADMIT", "REJECT", "RETAIN", "EXIT"}:
+            if disposition not in {"ADMIT", "REJECT", "RETAIN", "全部退出"}:
                 raise ValueError(f"decision response missing valid opportunity disposition: {pid}")
             if not str(answer.get("reason") or "").strip():
                 raise ValueError(f"decision response missing opportunity reason: {pid}")
@@ -426,7 +426,7 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
                     for field in ("opportunity_evidence", "buy_over_cash_reason", "execution_gate_reason"):
                         if not str(answer.get(field) or "").strip():
                             raise ValueError(f"decision response buy review requires {pid}.{field}")
-                elif disposition in {"REJECT", "RETAIN", "EXIT"}:
+                elif disposition in {"REJECT", "RETAIN", "全部退出"}:
                     if not str(answer.get("no_buy_review") or "").strip():
                         raise ValueError(f"decision response no-buy review requires {pid}.no_buy_review")
         if pid.startswith(("DISCOVERY:", "OBSERVATION_REVIEW:")) and str(answer.get("disposition") or "").upper() == "ADMIT":
@@ -442,10 +442,10 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
                 for field in ("opportunity_evidence", "buy_over_cash_reason", "execution_gate_reason"):
                     if not str(answer.get(field) or "").strip():
                         raise ValueError(f"decision response active opportunity requires {pid}.{field}")
-        if pid.startswith("OBSERVATION:") and str((by_id.get(pid) or {}).get("role_contract") or "") == "CONTINUOUS_INFORMATION_V1" and str(answer.get("disposition") or "").upper() == "EXIT":
+        if pid.startswith("OBSERVATION:") and str((by_id.get(pid) or {}).get("role_contract") or "") == "CONTINUOUS_INFORMATION_V1" and str(answer.get("disposition") or "").upper() == "全部退出":
             for field in ("information_value_reason", "continuity_cost_assessment"):
                 if not str(answer.get(field) or "").strip():
-                    raise ValueError(f"decision response EXIT requires continuous-information rationale {pid}.{field}")
+                    raise ValueError(f"decision response 全部退出 requires continuous-information rationale {pid}.{field}")
 
     next_answer = answers.get("NEXT_UNIT_CAPITAL_USE") or {}
     compared_capital_states = next_answer.get("compared_capital_states_as_business_state_names")
@@ -503,7 +503,7 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
     # releasing the lowest-efficiency holding against continuing to hold it.
     # This reuses the existing BDS/DWP contract; it does not grant sell or buy
     # authority and does not choose the holding mechanically.
-    has_holding = any(pid.startswith("HOLDING:") for pid in required_ids)
+    has_holding = any(pid.startswith("继续持有ING:") for pid in required_ids)
     opportunity_ids = [
         pid for pid in required_ids
         if pid.startswith(("DISCOVERY:", "OBSERVATION:", "OBSERVATION_REVIEW:"))
@@ -558,24 +558,24 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
         raise ValueError("decision response missing qualified evidence consumption: " + ",".join(missing_qualified))
     consumed.update(domains)
 
-    action_map = {"HOLD": "持有管理", "REDUCE": "降低风险", "EXIT": "退出"}
+    action_map = {"继续持有": "持有管理", "减持": "降低风险", "全部退出": "退出"}
     position_reviews = []
     lifecycle = {}
     for item in graph:
         pid = str(item.get("problem_id") or "")
-        if not pid.startswith("HOLDING:"):
+        if not pid.startswith("继续持有ING:"):
             continue
         answer = answers[pid]
         code = pid.split(":", 1)[1]
         action = _normalize_holding_action(answer.get("final_action"))
         if action not in action_map:
-            raise ValueError(f"holding final_action must be HOLD/REDUCE/EXIT: {pid}")
+            raise ValueError(f"holding final_action must be 继续持有、减持或全部退出: {pid}")
         alternatives = item.get("alternatives") or {}
-        states = {key: str(alternatives.get(key) or "").strip() for key in ("HOLD", "REDUCE", "EXIT")}
+        states = {key: str(alternatives.get(key) or "").strip() for key in ("继续持有", "减持", "全部退出")}
         if any(not states[key] for key in states):
             raise ValueError(f"decision work package missing holding alternatives: {pid}")
-        quantity = answer.get("quantity") if action in {"REDUCE", "EXIT"} else 0
-        destination = answer.get("capital_destination") if action in {"REDUCE", "EXIT"} else "继续持有"
+        quantity = answer.get("quantity") if action in {"减持", "全部退出"} else 0
+        destination = answer.get("capital_destination") if action in {"减持", "全部退出"} else "继续持有"
         lifecycle[f"{item.get('security') or code}（{code}）"] = action_map[action]
         position_reviews.append({
             "security_code": code,
@@ -590,9 +590,9 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
             "higher_efficiency_alternative": answer["higher_efficiency_alternative"],
             "capital_occupancy_reason": answer["capital_occupancy_reason"],
             "continued_holding_opportunity_cost": answer["capital_comparison"],
-            "action_changes_now": action in {"REDUCE", "EXIT"},
+            "action_changes_now": action in {"减持", "全部退出"},
             "next_change_condition": answer["next_change_condition"],
-            "action_detail": answer.get("action_detail") or (f"{action_map[action]} {quantity}" if action in {"REDUCE", "EXIT"} else "继续持有"),
+            "action_detail": answer.get("action_detail") or (f"{action_map[action]} {quantity}" if action in {"减持", "全部退出"} else "继续持有"),
             "capital_use": {
                 "continued_holding_vs_cash": answer["capital_comparison"],
                 "alternative_capital_uses_review": answer["higher_efficiency_alternative"],
@@ -646,10 +646,10 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
                     "information_value_reason": answer["information_value_reason"],
                 })
         else:
-            if disposition not in {"RETAIN", "EXIT"}:
-                raise ValueError(f"Observation disposition must be RETAIN/EXIT: {pid}")
-            if disposition == "EXIT":
-                exit_item = {"code": code, "action": "EXIT", "reason": answer.get("reason")}
+            if disposition not in {"RETAIN", "全部退出"}:
+                raise ValueError(f"Observation disposition must be RETAIN/全部退出: {pid}")
+            if disposition == "全部退出":
+                exit_item = {"code": code, "action": "全部退出", "reason": answer.get("reason")}
                 if str(item.get("role_contract") or "") == "CONTINUOUS_INFORMATION_V1":
                     exit_item["information_value_reason"] = answer.get("information_value_reason")
                     exit_item["continuity_cost_assessment"] = answer.get("continuity_cost_assessment")
@@ -810,12 +810,12 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
     expected_holding_ids = {
         str(item.get("problem_id") or "")
         for item in graph
-        if str(item.get("problem_id") or "").startswith("HOLDING:")
+        if str(item.get("problem_id") or "").startswith("继续持有ING:")
     }
-    reviewed_holding_ids = {f"HOLDING:{item.get('security_code')}" for item in position_reviews}
+    reviewed_holding_ids = {f"继续持有ING:{item.get('security_code')}" for item in position_reviews}
     holding_review_complete = bool(expected_holding_ids) and reviewed_holding_ids == expected_holding_ids and all(
         isinstance(item.get("capital_use"), dict)
-        and all(str(item.get("capital_use", {}).get("position_capital_states", {}).get(key) or "").strip() for key in ("HOLD", "REDUCE", "EXIT"))
+        and all(str(item.get("capital_use", {}).get("position_capital_states", {}).get(key) or "").strip() for key in ("继续持有", "减持", "全部退出"))
         for item in position_reviews
     )
     expected_add_ids = {
@@ -907,13 +907,13 @@ def _normalize_formal_presentation_layout(value: Any) -> Any:
     public_replacements = (
         ("下一合法节点复核", "下一次正式判断将重新评估"),
         ("下一合法节点", "下一次正式判断"),
-        ("HOLD胜过REDUCE/EXIT", "继续持有优于减持或全部退出"),
-        ("HOLD/REDUCE/EXIT", "继续持有、减持或全部退出"),
-        ("HOLD", "继续持有"),
-        ("REDUCE", "减持"),
-        ("EXIT", "全部退出"),
-        ("Discovery转化", "候选方向是否值得进一步研究"),
-        ("现金机会成本", "持有现金可能错过的潜在收益"),
+        ("继续持有优于减持或全部退出", "继续持有优于减持或全部退出"),
+        ("继续持有、减持或全部退出", "继续持有、减持或全部退出"),
+        ("继续持有", "继续持有"),
+        ("减持", "减持"),
+        ("全部退出", "全部退出"),
+        ("候选方向是否值得进一步研究", "候选方向是否值得进一步研究"),
+        ("持有现金可能错过的潜在收益", "持有现金可能错过的潜在收益"),
     )
     for source, target in public_replacements:
         value = value.replace(source, target)
@@ -937,6 +937,29 @@ def _normalize_formal_presentation_layout(value: Any) -> Any:
 
     text = re.sub(r"[ \t]+([（(][0-9]{1,2}[）)])", r"\n\n\1", value)
     lines = text.splitlines()
+    heading_aliases = {
+        "风险许可及其边界": "【风险许可及其边界】",
+        "数据时点与事实性质": "【数据时点与事实性质】",
+        "海外与跨市场": "【海外与跨市场】",
+        "A股内部反馈": "【A股内部反馈】",
+        "ETF机会与资本状态": "【ETF机会与资本状态】",
+        "全市场候选扫描": "【全市场机会发现】",
+        "全市场Discovery": "【全市场机会发现】",
+        "观察ETF": "【观察ETF】",
+        "机会ETF": "【机会ETF】",
+        "全部实际持仓": "【全部实际持仓】",
+        "资本状态与资本竞争": "【资本状态与资本竞争】",
+        "试探性部署资格": "【试探性部署资格】",
+        "确认性部署资格": "【确认性部署资格】",
+        "实际新增部署": "【实际新增部署】",
+        "最终动作": "【最终动作】",
+        "关键风险": "【关键风险】",
+        "改变动作条件": "【改变动作条件】",
+        "信息不足": "【信息不足】",
+        "置信度": "【置信度】",
+        "最可能出错的地方": "【最可能出错的地方】",
+        "实际执行结果": "【实际执行结果】",
+    }
     heading = re.compile(r"^【[^】]+】$")
     primary = re.compile(r"^(\d{1,2})\.\s+(.*)$")
     secondary = re.compile(r"^(?:[（(](\d{1,2})[）)]|(\d{1,2})）)\s+(.*)$")
@@ -964,10 +987,19 @@ def _normalize_formal_presentation_layout(value: Any) -> Any:
                     assert match is not None
                     items[index] = f"{next_number}. {match.group(3)}"
                     next_number += 1
+        elif len(primary_positions) == 0 and len(secondary_positions) == 1:
+            pos = secondary_positions[0]
+            match = secondary.match(items[pos].strip())
+            assert match is not None
+            items[pos] = match.group(3)
         output.extend(items)
 
     for line in lines:
-        if heading.fullmatch(line.strip()):
+        stripped = line.strip()
+        if stripped in heading_aliases:
+            line = heading_aliases[stripped]
+            stripped = line
+        if heading.fullmatch(stripped):
             flush_section(section)
             section = []
             output.append(line)
