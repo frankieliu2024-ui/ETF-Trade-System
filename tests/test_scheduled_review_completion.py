@@ -204,7 +204,7 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         self.assertEqual(binding["full_content"], "FROZEN LEGACY SYSTEM REPORT")
         self.assertEqual(binding["content_hash"], hashlib.sha256(b"FROZEN LEGACY SYSTEM REPORT").hexdigest())
 
-    def test_system_review_legacy_top_level_hash_mismatch_fails_closed(self):
+    def test_system_review_legacy_top_level_hash_is_rebound_from_frozen_content(self):
         from scripts import process_state_sync_request as state_sync
         legacy = {
             "request_id": "legacy-system-request",
@@ -220,8 +220,16 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         }
         with TemporaryDirectory() as directory:
             with patch.object(state_sync, "ROOT", Path(directory)):
-                with self.assertRaisesRegex(ValueError, "top-level content_hash mismatch"):
-                    state_sync.record_scheduled_system_review(legacy)
+                recorded, replay = state_sync.record_scheduled_system_review(legacy)
+                self.assertTrue(recorded)
+                self.assertFalse(replay)
+                event = json.loads(
+                    (Path(directory) / "events" / "reviews" / "system_legacy-system-run.json").read_text(encoding="utf-8")
+                )
+                self.assertEqual(
+                    event["presentation_binding"]["content_hash"],
+                    hashlib.sha256(b"FROZEN LEGACY SYSTEM REPORT\n").hexdigest(),
+                )
 
     def test_system_completion_publishes_canonical_event_consumed_by_notification_center(self):
         from scripts import notification_center
