@@ -8,8 +8,10 @@ from pathlib import Path
 
 try:
     from formal_entry_contract import build_identity
+    from task_runtime_identity import derive_runtime_identity
 except ModuleNotFoundError:  # package import in repository tests
     from scripts.formal_entry_contract import build_identity
+    from scripts.task_runtime_identity import derive_runtime_identity
 
 ROOT = Path(__file__).resolve().parents[1]
 REQUEST_DIR = ROOT / "requests" / "live_snapshot"
@@ -186,12 +188,10 @@ def main() -> int:
     else:
         if cron not in SLOTS:
             raise SystemExit("FORMAL_SCHEDULE_INGRESS=INVALID_AUTOMATIC_SLOT")
-        if not task_run_id or not occurrence:
-            raise SystemExit(
-                "FORMAL_SCHEDULE_INGRESS=MISSING_AUTOMATIC_RUNTIME_IDENTITY"
-            )
-        if not occurrence.startswith("scheduled_"):
-            raise SystemExit("FORMAL_SCHEDULE_INGRESS=INVALID_AUTOMATIC_OCCURRENCE")
+        task_run_id, occurrence = derive_runtime_identity(
+            task_id, "scheduled-formal-entry", now.astimezone(BEIJING).isoformat(),
+            mode, task_run_id, occurrence
+        )
 
     active = _active_formal_parent()
     if active:

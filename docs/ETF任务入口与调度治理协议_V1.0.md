@@ -54,7 +54,7 @@ Trade Review completion必须显式携带并回读本次真实入口身份：自
 
 三类任务的 `task_id` 必须使用本协议登记的任务名称，不得把 source、automation_id、conversation_id、时间戳或运行描述写入 `task_id`。Formal Decision 的 canonical `task_id` 固定为 `ETF正式决策`；`presentation_binding.task_id`、completion、event、REPORT 和 notification 必须逐字段保持一致。
 
-入口身份、task_id、task_run_id、occurrence_id、parent_request_id、request_id、report_id 任一缺失、冲突或与本次运行不一致时，canonical owner 必须 fail-closed，并归类为 `OWNER_REJECTED` 或 `CONFLICT_REQUIRES_REVIEW`；不得用历史对象、任务名称推断结果或成功通知覆盖身份错误。
+入口身份、task_id、parent_request_id、request_id、report_id 任一缺失、冲突或与本次运行不一致时，canonical owner 必须 fail-closed，并归类为 `OWNER_REJECTED` 或 `CONFLICT_REQUIRES_REVIEW`。平台未注入 task_run_id/occurrence_id 时，由本次运行适配器依据已确认的 task_id、request_id、requested_at_beijing、entry_mode 生成唯一运行身份；生成后仍必须逐字段回读并校验，禁止使用历史对象、任务名称单独推断结果或成功通知覆盖身份错误。
 
 每次成功通知验收必须回读正文、completion、event、REPORT、notification_id 和 provider result；“正文已生成”“workflow success”或“provider success”均不是端到端完成条件。
 
@@ -69,7 +69,7 @@ Trade Review completion必须显式携带并回读本次真实入口身份：自
 5. 按任务合同判定交易日、周日、market phase和节点适用性；
 6. 将任务路由到唯一业务主链。
 
-不得根据任务名称、计划时间、普通行情时间、历史消息或缺失的自动化元数据猜测入口身份。身份不明时不得降级猜测，必须fail-closed或要求重新触发。
+不得根据任务名称、计划时间、普通行情时间或历史消息猜测入口身份。入口身份仍必须来自实际触发上下文；仅在入口已确认、而平台漏传运行ID时，允许适配器从本次运行已确认元数据生成 task_run_id/occurrence_id。入口身份不明、字段冲突或生成后回读不一致时仍必须fail-closed。
 
 ## 4. SKIP合同
 
