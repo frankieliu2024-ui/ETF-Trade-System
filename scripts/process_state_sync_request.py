@@ -2393,7 +2393,29 @@ def _validate_presentation_binding(binding: dict, report_type: str, strict_produ
 def record_scheduled_system_review(request: dict) -> tuple[bool, bool]:
     if str(request.get("formal_fact_type") or "") != "FORMAL_SCHEDULED_SYSTEM_REVIEW":
         return False, False
-    binding = _validate_presentation_binding(request.get("presentation_binding"), "ETF_SYSTEM_REVIEW")
+    raw_binding = request.get("presentation_binding")
+    # Some task-interface runs historically wrote the frozen presentation at the
+    # completion envelope level but omitted presentation_binding. Normalize only
+    # when every identity/content field is present; otherwise fail closed.
+    if not isinstance(raw_binding, dict):
+        task_run_id = str(request.get("task_run_id") or "").strip()
+        request_id = str(request.get("request_id") or "").strip()
+        final_content = str(request.get("final_content") or "").strip()
+        if not task_run_id or not request_id or not final_content:
+            raise ValueError("scheduled system review completion requires presentation_binding or complete top-level binding fields")
+        content_hash = hashlib.sha256(final_content.encode("utf-8")).hexdigest()
+        raw_binding = {
+            "report_type": "ETF_SYSTEM_REVIEW",
+            "task_id": str(request.get("task_id") or "ETF系统复核"),
+            "task_run_id": task_run_id,
+            "occurrence_id": str(request.get("occurrence_id") or task_run_id),
+            "request_id": request_id,
+            "report_id": str(request.get("report_id") or f"etf_system_review:{task_run_id}"),
+            "full_content": final_content,
+            "content_hash": content_hash,
+            "content_hash_source": "canonical_owner_normalization",
+        }
+    binding = _validate_presentation_binding(raw_binding, "ETF_SYSTEM_REVIEW")
     occurrence = str(binding["task_run_id"])
     event_path = ROOT / "events" / "reviews" / f"system_{occurrence}.json"
     payload = {
