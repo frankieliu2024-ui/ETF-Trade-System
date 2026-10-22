@@ -1,1 +1,380 @@
-ZnJvbSBfX2Z1dHVyZV9fIGltcG9ydCBhbm5vdGF0aW9ucwoKaW1wb3J0IHVuaXR0ZXN0CmZyb20gZGF0ZXRpbWUgaW1wb3J0IGRhdGV0aW1lCmltcG9ydCB0ZW1wZmlsZQpmcm9tIHBhdGhsaWIgaW1wb3J0IFBhdGgKCmZyb20gc2NyaXB0cy5idWlsZF9lMmVfc3RhdHVzIGltcG9ydCBjb250ZXh0X2NvbXBvbmVudCwgY29udGV4dF9yZWFkX2NvbnRyYWN0LCBmb3JtYWxfZ2F0ZV9yZWNvdmVyeV90aW1lb3V0CgoKY2xhc3MgRTJFRGVjaXNpb25SZWFkaW5lc3NUZXN0cyh1bml0dGVzdC5UZXN0Q2FzZSk6CiAgICBkZWYgdGVzdF9sYXJnZV9xdWVyeV9jb250ZXh0X2NvbnRyYWN0X2V4cG9zZXNfZXhlY3V0YWJsZV9ibG9iX3JlYWRiYWNrKHNlbGYpOgogICAgICAgIHNvdXJjZSA9IChQYXRoKF9fZmlsZV9fKS5wYXJlbnRzWzFdIC8gInNjcmlwdHMiIC8gImJ1aWxkX2UyZV9zdGF0dXMucHkiKS5yZWFkX3RleHQoZW5jb2Rpbmc9InV0Zi04IikKICAgICAgICBzZWxmLmFzc2VydEluKCcibGFyZ2VfcGF5bG9hZF9ibG9iX3NvdXJjZV91cmwiJywgc291cmNlKQogICAgICAgIHNlbGYuYXNzZXJ0SW4oCiAgICAgICAgICAgICciZ2l0X2Jsb2JzX2dldF9iYXNlNjRfY29udGVudCInLAogICAgICAgICAgICBzb3VyY2UsCiAgICAgICAgKQogICAgICAgIHNlbGYuYXNzZXJ0SW4oCiAgICAgICAgICAgICciZGVjb2RlX2FuZF92YWxpZGF0ZV9zYW1lX2Jsb2Jfc2hhMjU2IicsCiAgICAgICAgICAgIHNvdXJjZSwKICAgICAgICApCiAgICBkZWYgdGVzdF9jb250ZXh0X3JlYWRfY29udHJhY3RfZGlzdGluZ3Vpc2hlc192ZXJpZmllZF9lbXB0eV9mcm9tX3JlYWRhYmxlX3BheWxvYWQoc2VsZik6CiAgICAgICAgd2l0aCB0ZW1wZmlsZS5UZW1wb3JhcnlEaXJlY3RvcnkoKSBhcyBkaXJlY3Rvcnk6CiAgICAgICAgICAgIHBhdGggPSBQYXRoKGRpcmVjdG9yeSkgLyAicXVlcnlfY29udGV4dC5qc29uIgogICAgICAgICAgICBwYXRoLndyaXRlX3RleHQoJ3siZGVjaXNpb25fZmFjdF9wYWNrIjogeyJ0cmlnZ2VyIjogeyJyZXF1ZXN0X2lkIjogInIifX19XG4nLCBlbmNvZGluZz0idXRmLTgiKQogICAgICAgICAgICByZWFkYWJsZSA9IGNvbnRleHRfcmVhZF9jb250cmFjdChwYXRoLCB7ImRlY2lzaW9uX2ZhY3RfcGFjayI6IHt9fSkKICAgICAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChyZWFkYWJsZVsic3RhdHVzIl0sICJSRUFEX09LIikKICAgICAgICAgICAgc2VsZi5hc3NlcnRHcmVhdGVyKHJlYWRhYmxlWyJieXRlX2NvdW50Il0sIDApCiAgICAgICAgICAgIHNlbGYuYXNzZXJ0RXF1YWwobGVuKHJlYWRhYmxlWyJzaGEyNTYiXSksIDY0KQoKICAgICAgICAgICAgcGF0aC53cml0ZV90ZXh0KCIiLCBlbmNvZGluZz0idXRmLTgiKQogICAgICAgICAgICBlbXB0eSA9IGNvbnRleHRfcmVhZF9jb250cmFjdChwYXRoLCB7fSkKICAgICAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChlbXB0eVsic3RhdHVzIl0sICJWRVJJRklFRF9FTVBUWSIpCiAgICAgICAgICAgIHNlbGYuYXNzZXJ0RXF1YWwoZW1wdHlbImJ5dGVfY291bnQiXSwgMCkKCiAgICBkZWYgdGVzdF9sZWdhY3lfdW5lc3RhYmxpc2hlZF9ib3VuZGFyeV9pc19kaWFnbm9zdGljX29ubHkoc2VsZik6CiAgICAgICAgcmVzdWx0ID0gY29udGV4dF9jb21wb25lbnQoCiAgICAgICAgICAgIHsicmVxdWVzdF9pZCI6ICJxIn0sCiAgICAgICAgICAgIHsKICAgICAgICAgICAgICAgICJvYnNlcnZhYmlsaXR5IjogewogICAgICAgICAgICAgICAgICAgICJib3VuZGFyeSI6ICJNSU5JTVVNX0RFQ0lTSU9OX0NPTlRFWFRfUkVBRFlfTk9UX0VTVEFCTElTSEVEIgogICAgICAgICAgICAgICAgfQogICAgICAgICAgICB9LAogICAgICAgICkKICAgICAgICBzZWxmLmFzc2VydEVxdWFsKHJlc3VsdFsic3RhdHVzIl0sICJSRUFEWSIpCiAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChyZXN1bHRbIm1pbmltdW1fZGVjaXNpb25fY29udGV4dCJdLCAiUkVBRFlfT1JfTk9UX0FQUExJQ0FCTEUiKQogICAgICAgIHNlbGYuYXNzZXJ0RXF1YWwoCiAgICAgICAgICAgIHJlc3VsdFsib2JzZXJ2YWJpbGl0eV9ib3VuZGFyeSJdLAogICAgICAgICAgICAiTUlOSU1VTV9ERUNJU0lPTl9DT05URVhUX1JFQURZX05PVF9FU1RBQkxJU0hFRCIsCiAgICAgICAgKQoKICAgIGRlZiB0ZXN0X3JlcXVlc3RfYm91bmRfbGVnYWN5X29ic2VydmFiaWxpdHlfaXNfZGlhZ25vc3RpY19vbmx5KHNlbGYpOgogICAgICAgIHJlc3VsdCA9IGNvbnRleHRfY29tcG9uZW50KAogICAgICAgICAgICB7CiAgICAgICAgICAgICAgICAiZGVjaXNpb25fZmFjdF9wYWNrIjogewogICAgICAgICAgICAgICAgICAgICJ0cmlnZ2VyIjogewogICAgICAgICAgICAgICAgICAgICAgICAicmVxdWVzdF9pZCI6ICJyMSIsCiAgICAgICAgICAgICAgICAgICAgICAgICJyZXF1ZXN0ZWRfYXRfYmVpamluZyI6ICIyMDI2LTA5LTIyVDEyOjMwOjAwKzA4OjAwIiwKICAgICAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgIH0sCiAgICAgICAgICAgIHsKICAgICAgICAgICAgICAgICJvYnNlcnZhYmlsaXR5IjogewogICAgICAgICAgICAgICAgICAgICJib3VuZGFyeSI6ICJNSU5JTVVNX0RFQ0lTSU9OX0NPTlRFWFRfUkVBRFlfTk9UX0VTVEFCTElTSEVEIgogICAgICAgICAgICAgICAgfQogICAgICAgICAgICB9LAogICAgICAgICkKICAgICAgICBzZWxmLmFzc2VydEVxdWFsKHJlc3VsdFsic3RhdHVzIl0sICJERUdSQURFRCIpCiAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChyZXN1bHRbIm1pbmltdW1fZGVjaXNpb25fY29udGV4dCJdLCAiSU5DT01QTEVURSIpCiAgICAgICAgc2VsZi5hc3NlcnRUcnVlKHJlc3VsdFsicmVxdWVzdF9ib3VuZCJdKQoKICAgIGRlZiB0ZXN0X3JlcXVlc3RfYm91bmRfb2JzZXJ2ZWRfbGF0ZW5jeV9pZ25vcmVzX2xlZ2FjeV9ib3VuZGFyeShzZWxmKToKICAgICAgICByZXN1bHQgPSBjb250ZXh0X2NvbXBvbmVudCgKICAgICAgICAgICAgewogICAgICAgICAgICAgICAgImRlY2lzaW9uX2ZhY3RfcGFjayI6IHsKICAgICAgICAgICAgICAgICAgICAidHJpZ2dlciI6IHsKICAgICAgICAgICAgICAgICAgICAgICAgInJlcXVlc3RfaWQiOiAicjIiLAogICAgICAgICAgICAgICAgICAgICAgICAicmVxdWVzdGVkX2F0X2JlaWppbmciOiAiMjAyNi0wOS0yMlQxMjozMDowMCswODowMCIsCiAgICAgICAgICAgICAgICAgICAgfQogICAgICAgICAgICAgICAgfSwKICAgICAgICAgICAgICAgICJmYXN0X3BhdGhfbGF0ZW5jeSI6IHsKICAgICAgICAgICAgICAgICAgICAibGF0ZW5jeV9zdGF0dXMiOiAiT0JTRVJWRUQiLAogICAgICAgICAgICAgICAgICAgICJyZXF1ZXN0X3RvX2NvcmVfcmVzdWx0X2xhdGVuY3kiOiA0LjIsCiAgICAgICAgICAgICAgICB9LAogICAgICAgICAgICB9LAogICAgICAgICAgICB7CiAgICAgICAgICAgICAgICAib2JzZXJ2YWJpbGl0eSI6IHsKICAgICAgICAgICAgICAgICAgICAiYm91bmRhcnkiOiAiTUlOSU1VTV9ERUNJU0lPTl9DT05URVhUX1JFQURZX05PVF9FU1RBQkxJU0hFRCIKICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgfSwKICAgICAgICApCiAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChyZXN1bHRbInN0YXR1cyJdLCAiUkVBRFkiKQogICAgICAgIHNlbGYuYXNzZXJ0RXF1YWwocmVzdWx0WyJtaW5pbXVtX2RlY2lzaW9uX2NvbnRleHQiXSwgIlJFQURZX09SX05PVF9BUFBMSUNBQkxFIikKICAgICAgICBzZWxmLmFzc2VydFRydWUocmVzdWx0WyJyZXF1ZXN0X2JvdW5kIl0pCgogICAgZGVmIHRlc3RfZG93bnN0cmVhbV9zdGF0ZV9zeW5jX2xhdGVuY3lfZG9lc19ub3RfZGVncmFkZV9kZWNpc2lvbl9jb250ZXh0KHNlbGYpOgogICAgICAgIHJlc3VsdCA9IGNvbnRleHRfY29tcG9uZW50KAogICAgICAgICAgICB7CiAgICAgICAgICAgICAgICAiZGVjaXNpb25fZmFjdF9wYWNrIjogewogICAgICAgICAgICAgICAgICAgICJ0cmlnZ2VyIjogewogICAgICAgICAgICAgICAgICAgICAgICAicmVxdWVzdF9pZCI6ICJicm9rZXItc3luYyIsCiAgICAgICAgICAgICAgICAgICAgICAgICJyZXF1ZXN0ZWRfYXRfYmVpamluZyI6ICIyMDI2LTA5LTMwVDEzOjI3OjAwKzA4OjAwIiwKICAgICAgICAgICAgICAgICAgICB9LAogICAgICAgICAgICAgICAgICAgICJmb3JtYWxfcmVwbHlfZnJlZXplIjogewogICAgICAgICAgICAgICAgICAgICAgICAic3RhdHVzIjogIk5PVF9BUFBMSUNBQkxFIiwKICAgICAgICAgICAgICAgICAgICAgICAgInJlcGx5X2ZyZWV6YWJsZSI6IFRydWUsCiAgICAgICAgICAgICAgICAgICAgICAgICJibG9ja2VycyI6IFtdLAogICAgICAgICAgICAgICAgICAgIH0sCiAgICAgICAgICAgICAgICB9LAogICAgICAgICAgICAgICAgImZhc3RfcGF0aF9sYXRlbmN5IjogewogICAgICAgICAgICAgICAgICAgICJsYXRlbmN5X3N0YXR1cyI6ICJET1dOU1RSRUFNX05PVF9ERUNJU0lPTl9MQVRFTkNZIiwKICAgICAgICAgICAgICAgICAgICAibGF0ZW5jeV9vYnNlcnZhdGlvbl9yb2xlIjogIkRPV05TVFJFQU1fQ09NUExFVElPTl9OT1RfREVDSVNJT05fUkVRVUVTVCIsCiAgICAgICAgICAgICAgICAgICAgIm1heV9tZWFzdXJlX29yaWdpbmFsX2RlY2lzaW9uX2xhdGVuY3kiOiBGYWxzZSwKICAgICAgICAgICAgICAgIH0sCiAgICAgICAgICAgIH0sCiAgICAgICAgICAgIHsKICAgICAgICAgICAgICAgICJvYnNlcnZhYmlsaXR5IjogewogICAgICAgICAgICAgICAgICAgICJib3VuZGFyeSI6ICJNSU5JTVVNX0RFQ0lTSU9OX0NPTlRFWFRfUkVBRFlfTk9UX0VTVEFCTElTSEVEIgogICAgICAgICAgICAgICAgfSwKICAgICAgICAgICAgICAgICJmb3JtYWxfaW50cmFkYXlfY29udGV4dF9jb21wbGV0ZW5lc3MiOiB7InN0YXR1cyI6ICJSRUFEWSJ9LAogICAgICAgICAgICB9LAogICAgICAgICkKICAgICAgICBzZWxmLmFzc2VydEVxdWFsKHJlc3VsdFsic3RhdHVzIl0sICJSRUFEWSIpCiAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChyZXN1bHRbIm1pbmltdW1fZGVjaXNpb25fY29udGV4dCJdLCAiUkVBRFlfT1JfTk9UX0FQUExJQ0FCTEUiKQogICAgICAgIHNlbGYuYXNzZXJ0RXF1YWwocmVzdWx0WyJmb3JtYWxfcmVwbHlfZ2F0ZSJdWyJyZXF1ZXN0X2lkIl0sICJicm9rZXItc3luYyIpCiAgICAgICAgc2VsZi5hc3NlcnRUcnVlKHJlc3VsdFsiZm9ybWFsX3JlcGx5X2dhdGUiXVsicmVwbHlfZnJlZXphYmxlIl0pCgogICAgZGVmIHRlc3Rfb3JpZ2luYWxfZm9ybWFsX3JlcXVlc3RfbWlzc2luZ19sYXRlbmN5X3N0aWxsX2RlZ3JhZGVzKHNlbGYpOgogICAgICAgIHJlc3VsdCA9IGNvbnRleHRfY29tcG9uZW50KAogICAgICAgICAgICB7CiAgICAgICAgICAgICAgICAiZGVjaXNpb25fZmFjdF9wYWNrIjogewogICAgICAgICAgICAgICAgICAgICJ0cmlnZ2VyIjogewogICAgICAgICAgICAgICAgICAgICAgICAicmVxdWVzdF9pZCI6ICJmb3JtYWwtcGFyZW50IiwKICAgICAgICAgICAgICAgICAgICAgICAgInJlcXVlc3RlZF9hdF9iZWlqaW5nIjogIjIwMjYtMDktMzBUMTM6MTY6MDArMDg6MDAiLAogICAgICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgICAgIH0sCiAgICAgICAgICAgICAgICAiZmFzdF9wYXRoX2xhdGVuY3kiOiB7CiAgICAgICAgICAgICAgICAgICAgImxhdGVuY3lfc3RhdHVzIjogIklOU1RSVU1FTlRBVElPTl9JTkNPTVBMRVRFIiwKICAgICAgICAgICAgICAgICAgICAibGF0ZW5jeV9vYnNlcnZhdGlvbl9yb2xlIjogIkZPUk1BTF9ERUNJU0lPTl9SRVFVRVNUIiwKICAgICAgICAgICAgICAgICAgICAibWF5X21lYXN1cmVfb3JpZ2luYWxfZGVjaXNpb25fbGF0ZW5jeSI6IFRydWUsCiAgICAgICAgICAgICAgICB9LAogICAgICAgICAgICB9LAogICAgICAgICAgICB7ImZvcm1hbF9pbnRyYWRheV9jb250ZXh0X2NvbXBsZXRlbmVzcyI6IHsic3RhdHVzIjogIlJFQURZIn19LAogICAgICAgICkKICAgICAgICBzZWxmLmFzc2VydEVxdWFsKHJlc3VsdFsic3RhdHVzIl0sICJERUdSQURFRCIpCiAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChyZXN1bHRbImxhdGVuY3lfc3RhdHVzIl0sICJJTlNUUlVNRU5UQVRJT05fSU5DT01QTEVURSIpCiAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChyZXN1bHRbImxhdGVuY3lfb2JzZXJ2YXRpb25fcm9sZSJdLCAiRk9STUFMX0RFQ0lTSU9OX1JFUVVFU1QiKQoKICAgIGRlZiB0ZXN0X3JlcXVlc3RfYm91bmRfcmVhZHlfZXhwb3Nlc19jb21wYWN0X2Zvcm1hbF9yZXBseV9nYXRlKHNlbGYpOgogICAgICAgIHJlc3VsdCA9IGNvbnRleHRfY29tcG9uZW50KAogICAgICAgICAgICB7CiAgICAgICAgICAgICAgICAiZGVjaXNpb25fZmFjdF9wYWNrIjogewogICAgICAgICAgICAgICAgICAgICJ0cmlnZ2VyIjogewogICAgICAgICAgICAgICAgICAgICAgICAicmVxdWVzdF9pZCI6ICJyMyIsCiAgICAgICAgICAgICAgICAgICAgICAgICJyZXF1ZXN0ZWRfYXRfYmVpamluZyI6ICIyMDI2LTA5LTI5VDAxOjE2OjAwKzA4OjAwIiwKICAgICAgICAgICAgICAgICAgICB9LAogICAgICAgICAgICAgICAgICAgICJmb3JtYWxfcmVwbHlfZnJlZXplIjogewogICAgICAgICAgICAgICAgICAgICAgICAic3RhdHVzIjogIlJFQURZIiwKICAgICAgICAgICAgICAgICAgICAgICAgInJlcGx5X2ZyZWV6YWJsZSI6IFRydWUsCiAgICAgICAgICAgICAgICAgICAgICAgICJibG9ja2VycyI6IFtdLAogICAgICAgICAgICAgICAgICAgIH0sCiAgICAgICAgICAgICAgICAgICAgImRlY2lzaW9uX3dvcmtfcGFja2FnZSI6IHsKICAgICAgICAgICAgICAgICAgICAgICAgInByb2JsZW1fZ3JhcGgiOiBbeyJwcm9ibGVtX2lkIjogIkRJU0NPVkVSWToxNTkwMjkifV0KICAgICAgICAgICAgICAgICAgICB9LAogICAgICAgICAgICAgICAgfSwKICAgICAgICAgICAgICAgICJmYXN0X3BhdGhfbGF0ZW5jeSI6IHsibGF0ZW5jeV9zdGF0dXMiOiAiT0JTRVJWRUQifSwKICAgICAgICAgICAgfSwKICAgICAgICAgICAgeyJmb3JtYWxfaW50cmFkYXlfY29udGV4dF9jb21wbGV0ZW5lc3MiOiB7InN0YXR1cyI6ICJSRUFEWSJ9fSwKICAgICAgICApCiAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChyZXN1bHRbInN0YXR1cyJdLCAiUkVBRFkiKQogICAgICAgIHNlbGYuYXNzZXJ0RXF1YWwocmVzdWx0WyJmb3JtYWxfcmVwbHlfZ2F0ZSJdWyJyZXF1ZXN0X2lkIl0sICJyMyIpCiAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChyZXN1bHRbImZvcm1hbF9yZXBseV9nYXRlIl1bInN0YXR1cyJdLCAiUkVBRFkiKQogICAgICAgIHNlbGYuYXNzZXJ0VHJ1ZShyZXN1bHRbImZvcm1hbF9yZXBseV9nYXRlIl1bInJlcGx5X2ZyZWV6YWJsZSJdKQogICAgICAgIHNlbGYuYXNzZXJ0RXF1YWwocmVzdWx0WyJmb3JtYWxfcmVwbHlfZ2F0ZSJdWyJibG9ja2VycyJdLCBbXSkKICAgICAgICBtYW5pZmVzdCA9IHJlc3VsdFsiZm9ybWFsX3JlcGx5X2dhdGUiXVsiY29uc3VtZXJfbWFuaWZlc3QiXQogICAgICAgIHNlbGYuYXNzZXJ0RXF1YWwobWFuaWZlc3RbInJlcXVlc3RfaWQiXSwgInIzIikKICAgICAgICBzZWxmLmFzc2VydEVxdWFsKG1hbmlmZXN0WyJyZWFkX3N0cmF0ZWd5Il0sICJHQVRFX0ZJUlNUX0NPTlRFTlRTX01FVEFEQVRBX1RIRU5fR0lUX0JMT0JTX0JBU0U2NCIpCiAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChtYW5pZmVzdFsibGFyZ2VfcGF5bG9hZF9yZWFkX2NvbnRyYWN0Il0sICJVU0VfR0lUSFVCX0FQSV9DT05URU5UU19PUl9CTE9CX0ZPUl9GSUxFU19PVkVSXzFNQiIpCiAgICAgICAgc2VsZi5hc3NlcnRJbigiL2NvbnRlbnRzL2RhdGEvc3RhdGUvcXVlcnlfY29udGV4dC5qc29uP3JlZj1tYWluIiwgbWFuaWZlc3RbImxhcmdlX3BheWxvYWRfc291cmNlX3VybCJdKQogICAgICAgIHNlbGYuYXNzZXJ0RXF1YWwoCiAgICAgICAgICAgIG1hbmlmZXN0WyJsYXJnZV9wYXlsb2FkX2VtcHR5X3JlYWQiXSwKICAgICAgICAgICAgIlJFVkVSSUZZX1NBTUVfR0lUSFVCX1NPVVJDRV9CRUZPUkVfTUlTU0lORyIsCiAgICAgICAgKQoKICAgIGRlZiB0ZXN0X2NvbXBhY3RfZ2F0ZV9wcm9qZWN0aW9uX2lzX3JlcXVlc3RfYm91bmRfYW5kX2Nhbm9uaWNhbChzZWxmKToKICAgICAgICBzb3VyY2UgPSAoUGF0aChfX2ZpbGVfXykucGFyZW50c1sxXSAvICJzY3JpcHRzIiAvICJidWlsZF9lMmVfc3RhdHVzLnB5IikucmVhZF90ZXh0KGVuY29kaW5nPSJ1dGYtOCIpCiAgICAgICAgc2VsZi5hc3NlcnRJbignInJlcXVlc3RfYm91bmRfZmFjdF9wcm9qZWN0aW9uIicsIHNvdXJjZSkKICAgICAgICBzZWxmLmFzc2VydEluKCcic291cmNlX3BhdGgiOiAiZGF0YS9zdGF0ZS9xdWVyeV9jb250ZXh0Lmpzb24iJywgc291cmNlKQogICAgICAgIHNlbGYuYXNzZXJ0SW4oJyJzb3VyY2VfaXNfY2Fub25pY2FsIjogVHJ1ZScsIHNvdXJjZSkKICAgICAgICBzZWxmLmFzc2VydEluKCciZGVjaXNpb25fd29ya19wYWNrYWdlIjogZGVjaXNpb25fd29ya19wYWNrYWdlJywgc291cmNlKQoKICAgIGRlZiB0ZXN0X3JlcXVlc3RfYm91bmRfaW5mbGlnaHRfZ2F0ZV9yZW1haW5zX3Zpc2libGVfd2hlbl9jb250ZXh0X2RlZ3JhZGVkKHNlbGYpOgogICAgICAgIHJlc3VsdCA9IGNvbnRleHRfY29tcG9uZW50KAogICAgICAgICAgICB7CiAgICAgICAgICAgICAgICAiZGVjaXNpb25fZmFjdF9wYWNrIjogewogICAgICAgICAgICAgICAgICAgICJ0cmlnZ2VyIjogewogICAgICAgICAgICAgICAgICAgICAgICAicmVxdWVzdF9pZCI6ICJyNCIsCiAgICAgICAgICAgICAgICAgICAgICAgICJyZXF1ZXN0ZWRfYXRfYmVpamluZyI6ICIyMDI2LTA5LTI5VDAxOjE2OjAwKzA4OjAwIiwKICAgICAgICAgICAgICAgICAgICB9LAogICAgICAgICAgICAgICAgICAgICJmb3JtYWxfcmVwbHlfZnJlZXplIjogewogICAgICAgICAgICAgICAgICAgICAgICAic3RhdHVzIjogIklOX0ZMSUdIVCIsCiAgICAgICAgICAgICAgICAgICAgICAgICJyZXBseV9mcmVlemFibGUiOiBGYWxzZSwKICAgICAgICAgICAgICAgICAgICAgICAgImJsb2NrZXJzIjogWyJGT1JNQUxfRElTQ09WRVJZX0lOX0ZMSUdIVCJdLAogICAgICAgICAgICAgICAgICAgIH0sCiAgICAgICAgICAgICAgICB9LAogICAgICAgICAgICAgICAgImZhc3RfcGF0aF9sYXRlbmN5IjogeyJsYXRlbmN5X3N0YXR1cyI6ICJCVUlMRElORyJ9LAogICAgICAgICAgICB9LAogICAgICAgICAgICB7ImZvcm1hbF9pbnRyYWRheV9jb250ZXh0X2NvbXBsZXRlbmVzcyI6IHsic3RhdHVzIjogIlJFQURZIn19LAogICAgICAgICkKICAgICAgICBzZWxmLmFzc2VydEVxdWFsKHJlc3VsdFsic3RhdHVzIl0sICJERUdSQURFRCIpCiAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChyZXN1bHRbImZvcm1hbF9yZXBseV9nYXRlIl1bInJlcXVlc3RfaWQiXSwgInI0IikKICAgICAgICBzZWxmLmFzc2VydEZhbHNlKHJlc3VsdFsiZm9ybWFsX3JlcGx5X2dhdGUiXVsicmVwbHlfZnJlZXphYmxlIl0pCiAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChyZXN1bHRbImZvcm1hbF9yZXBseV9nYXRlIl1bImJsb2NrZXJzIl0sIFsiRk9STUFMX0RJU0NPVkVSWV9JTl9GTElHSFQiXSkKCiAgICBkZWYgdGVzdF9hY3Rvcl9nYXRlX3Byb2plY3RzX3dhaXRfY29udHJhY3RfZnJvbV9zb2xlX2NvbnN1bWVyKHNlbGYpOgogICAgICAgIHJlc3VsdCA9IGNvbnRleHRfY29tcG9uZW50KAogICAgICAgICAgICB7CiAgICAgICAgICAgICAgICAiZGVjaXNpb25fZmFjdF9wYWNrIjogewogICAgICAgICAgICAgICAgICAgICJ0cmlnZ2VyIjogewogICAgICAgICAgICAgICAgICAgICAgICAicmVxdWVzdF9pZCI6ICJ3YWl0LXBhcmVudCIsCiAgICAgICAgICAgICAgICAgICAgICAgICJyZXF1ZXN0ZWRfYXRfYmVpamluZyI6ICIyMDI2LTEwLTExVDE0OjAwOjAwKzA4OjAwIiwKICAgICAgICAgICAgICAgICAgICB9LAogICAgICAgICAgICAgICAgICAgICJmb3JtYWxfcmVwbHlfZnJlZXplIjogewogICAgICAgICAgICAgICAgICAgICAgICAic3RhdHVzIjogIklOX0ZMSUdIVCIsCiAgICAgICAgICAgICAgICAgICAgICAgICJyZXBseV9mcmVlemFibGUiOiBGYWxzZSwKICAgICAgICAgICAgICAgICAgICAgICAgImJsb2NrZXJzIjogWyJGT1JNQUxfRElTQ09WRVJZX0lOX0ZMSUdIVCJdLAogICAgICAgICAgICAgICAgICAgIH0sCiAgICAgICAgICAgICAgICB9LAogICAgICAgICAgICAgICAgImZhc3RfcGF0aF9sYXRlbmN5IjogeyJsYXRlbmN5X3N0YXR1cyI6ICJCVUlMRElORyJ9LAogICAgICAgICAgICB9LAogICAgICAgICAgICB7ImZvcm1hbF9pbnRyYWRheV9jb250ZXh0X2NvbXBsZXRlbmVzcyI6IHsic3RhdHVzIjogIlJFQURZIn19LAogICAgICAgICkKICAgICAgICBnYXRlID0gcmVzdWx0WyJmb3JtYWxfcmVwbHlfZ2F0ZSJdCiAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChnYXRlWyJjb25zdW1lcl9zdGF0dXMiXSwgIlJFUVVFU1RfQk9VTkRfRkFDVFNfQlVJTERJTkciKQogICAgICAgIHNlbGYuYXNzZXJ0RXF1YWwoZ2F0ZVsiYWN0b3JfYWN0aW9uIl0sICJDT05USU5VRV9TQU1FX1JFUVVFU1RfU0lMRU5UTFkiKQogICAgICAgIHNlbGYuYXNzZXJ0RmFsc2UoZ2F0ZVsidXNlcl9vdXRwdXRfYWxsb3dlZCJdKQogICAgICAgIHNlbGYuYXNzZXJ0RXF1YWwoZ2F0ZVsicmVxdWlyZWRfcHJvYmxlbV9pZHMiXSwgW10pCiAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChnYXRlWyJyZXF1aXJlZF9wcm9ibGVtX2NvdW50Il0sIDApCgogICAgZGVmIHRlc3RfcmVhZHlfZ2F0ZV9pc19ub3RfcmVwbHlfZnJlZXphYmxlX3dpdGhvdXRfc2FtZV9yZXF1ZXN0X2R3cChzZWxmKToKICAgICAgICByZXN1bHQgPSBjb250ZXh0X2NvbXBvbmVudCgKICAgICAgICAgICAgewogICAgICAgICAgICAgICAgImRlY2lzaW9uX2ZhY3RfcGFjayI6IHsKICAgICAgICAgICAgICAgICAgICAidHJpZ2dlciI6IHsKICAgICAgICAgICAgICAgICAgICAgICAgInJlcXVlc3RfaWQiOiAiZW1wdHktZHdwLXBhcmVudCIsCiAgICAgICAgICAgICAgICAgICAgICAgICJyZXF1ZXN0ZWRfYXRfYmVpamluZyI6ICIyMDI2LTEwLTE5VDExOjAwOjAwKzA4OjAwIiwKICAgICAgICAgICAgICAgICAgICB9LAogICAgICAgICAgICAgICAgICAgICJmb3JtYWxfcmVwbHlfZnJlZXplIjogewogICAgICAgICAgICAgICAgICAgICAgICAic3RhdHVzIjogIlJFQURZIiwKICAgICAgICAgICAgICAgICAgICAgICAgInJlcGx5X2ZyZWV6YWJsZSI6IFRydWUsCiAgICAgICAgICAgICAgICAgICAgICAgICJibG9ja2VycyI6IFtdLAogICAgICAgICAgICAgICAgICAgIH0sCiAgICAgICAgICAgICAgICB9LAogICAgICAgICAgICAgICAgImZhc3RfcGF0aF9sYXRlbmN5IjogeyJsYXRlbmN5X3N0YXR1cyI6ICJPQlNFUlZFRCJ9LAogICAgICAgICAgICB9LAogICAgICAgICAgICB7ImZvcm1hbF9pbnRyYWRheV9jb250ZXh0X2NvbXBsZXRlbmVzcyI6IHsic3RhdHVzIjogIlJFQURZIn19LAogICAgICAgICkKICAgICAgICBnYXRlID0gcmVzdWx0WyJmb3JtYWxfcmVwbHlfZ2F0ZSJdCiAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChnYXRlWyJzdGF0dXMiXSwgIklOX0ZMSUdIVCIpCiAgICAgICAgc2VsZi5hc3NlcnRGYWxzZShnYXRlWyJyZXBseV9mcmVlemFibGUiXSkKICAgICAgICBzZWxmLmFzc2VydEluKCJERUNJU0lPTl9XT1JLX1BBQ0tBR0VfTk9UX0NPTlNVTUFCTEUiLCBnYXRlWyJibG9ja2VycyJdKQoKICAgIGRlZiB0ZXN0X2FjdG9yX2dhdGVfcHJvamVjdHNfcmVhZHlfY29udHJhY3RfYW5kX2V4YWN0X2R3cF9jaGVja2xpc3Qoc2VsZik6CiAgICAgICAgcmVzdWx0ID0gY29udGV4dF9jb21wb25lbnQoCiAgICAgICAgICAgIHsKICAgICAgICAgICAgICAgICJkZWNpc2lvbl9mYWN0X3BhY2siOiB7CiAgICAgICAgICAgICAgICAgICAgInRyaWdnZXIiOiB7CiAgICAgICAgICAgICAgICAgICAgICAgICJyZXF1ZXN0X2lkIjogInJlYWR5LXBhcmVudCIsCiAgICAgICAgICAgICAgICAgICAgICAgICJyZXF1ZXN0ZWRfYXRfYmVpamluZyI6ICIyMDI2LTEwLTExVDE0OjAwOjAwKzA4OjAwIiwKICAgICAgICAgICAgICAgICAgICB9LAogICAgICAgICAgICAgICAgICAgICJmb3JtYWxfcmVwbHlfZnJlZXplIjogewogICAgICAgICAgICAgICAgICAgICAgICAic3RhdHVzIjogIlJFQURZIiwKICAgICAgICAgICAgICAgICAgICAgICAgInJlcGx5X2ZyZWV6YWJsZSI6IFRydWUsCiAgICAgICAgICAgICAgICAgICAgICAgICJibG9ja2VycyI6IFtdLAogICAgICAgICAgICAgICAgICAgIH0sCiAgICAgICAgICAgICAgICAgICAgImRlY2lzaW9uX3dvcmtfcGFja2FnZSI6IHsKICAgICAgICAgICAgICAgICAgICAgICAgInByb2JsZW1fZ3JhcGgiOiBbCiAgICAgICAgICAgICAgICAgICAgICAgICAgICB7InByb2JsZW1faWQiOiAiRElTQ09WRVJZOjE1OTAyOSJ9LAogICAgICAgICAgICAgICAgICAgICAgICAgICAgeyJwcm9ibGVtX2lkIjogIkhPTERJTkc6NTEwMzAwIn0sCiAgICAgICAgICAgICAgICAgICAgICAgIF0KICAgICAgICAgICAgICAgICAgICB9LAogICAgICAgICAgICAgICAgfSwKICAgICAgICAgICAgICAgICJmYXN0X3BhdGhfbGF0ZW5jeSI6IHsibGF0ZW5jeV9zdGF0dXMiOiAiT0JTRVJWRUQifSwKICAgICAgICAgICAgfSwKICAgICAgICAgICAgeyJmb3JtYWxfaW50cmFkYXlfY29udGV4dF9jb21wbGV0ZW5lc3MiOiB7InN0YXR1cyI6ICJSRUFEWSJ9fSwKICAgICAgICApCiAgICAgICAgZ2F0ZSA9IHJlc3VsdFsiZm9ybWFsX3JlcGx5X2dhdGUiXQogICAgICAgIHNlbGYuYXNzZXJ0RXF1YWwoZ2F0ZVsiY29uc3VtZXJfc3RhdHVzIl0sICJCVVNJTkVTU19ERUNJU0lPTl9SRUFEWSIpCiAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChnYXRlWyJhY3Rvcl9hY3Rpb24iXSwgIkNPTVBMRVRFX0JVU0lORVNTX0RFQ0lTSU9OX05PVyIpCiAgICAgICAgc2VsZi5hc3NlcnRGYWxzZShnYXRlWyJ1c2VyX291dHB1dF9hbGxvd2VkIl0pCiAgICAgICAgc2VsZi5hc3NlcnRUcnVlKGdhdGVbImJ1c2luZXNzX2RlY2lzaW9uX2FsbG93ZWQiXSkKICAgICAgICBzZWxmLmFzc2VydFRydWUoZ2F0ZVsiZmluYWxfY29udGVudF9nZW5lcmF0aW9uX2FsbG93ZWQiXSkKICAgICAgICBzZWxmLmFzc2VydEVxdWFsKAogICAgICAgICAgICBnYXRlWyJyZXF1aXJlZF9wcm9ibGVtX2lkcyJdLAogICAgICAgICAgICBbIkRJU0NPVkVSWToxNTkwMjkiLCAiSE9MRElORzo1MTAzMDAiXSwKICAgICAgICApCiAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChnYXRlWyJyZXF1aXJlZF9wcm9ibGVtX2NvdW50Il0sIDIpCiAgICAgICAgc2VsZi5hc3NlcnRFcXVhbCgKICAgICAgICAgICAgZ2F0ZVsiYnVzaW5lc3NfYW5zd2VyX2NvbnRyYWN0Il0sCiAgICAgICAgICAgICJEV1BfRVhBQ1RfQ09WRVJBR0VfQkVGT1JFX1BSRVNFTlRBVElPTiIsCiAgICAgICAgKQogICAgICAgIGhhbmRvZmYgPSBnYXRlWyJyZWFkeV9oYW5kb2ZmIl0KICAgICAgICBzZWxmLmFzc2VydFRydWUoaGFuZG9mZlsicmVxdWlyZWQiXSkKICAgICAgICBzZWxmLmFzc2VydEVxdWFsKGhhbmRvZmZbInN1Ym1pc3Npb25fdHlwZSJdLCAiQlVTSU5FU1NfREVDSVNJT05fU09VUkNFIikKICAgICAgICBzZWxmLmFzc2VydEVxdWFsKGhhbmRvZmZbInNvdXJjZSJdLCAiQ0hBVEdQVF9CVVNJTkVTU19ERUNJU0lPTl9SRVNQT05TRSIpCiAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChoYW5kb2ZmWyJwYXJlbnRfcmVxdWVzdF9pZCJdLCAicmVhZHktcGFyZW50IikKICAgICAgICBmb3IgZmllbGQgaW4gKAogICAgICAgICAgICAiZGVjaXNpb25fcmVzcG9uc2UuYW5zd2VycyIsCiAgICAgICAgICAgICJkZWNpc2lvbl9pZCIsCiAgICAgICAgICAgICJjb25zdW1lZF9zbmFwc2hvdCIsCiAgICAgICAgICAgICJwcmVzZW50YXRpb25fY29udGVudCIsCiAgICAgICAgKToKICAgICAgICAgICAgc2VsZi5hc3NlcnRJbihmaWVsZCwgaGFuZG9mZlsicmVxdWlyZWRfcGF5bG9hZF9maWVsZHMiXSkKICAgICAgICBzZWxmLmFzc2VydEVxdWFsKAogICAgICAgICAgICBoYW5kb2ZmWyJ0YXJnZXRfcGF0aCJdLAogICAgICAgICAgICAicmVxdWVzdHMvbGl2ZV9zbmFwc2hvdC9yZWFkeS1wYXJlbnRfX2J1c2luZXNzX2RlY2lzaW9uX3NvdXJjZS5qc29uIiwKICAgICAgICApCiAgICAgICAgc2VsZi5hc3NlcnRUcnVlKGhhbmRvZmZbInVzZXJfcmVwbHlfcHJlY29uZGl0aW9uIl0pCiAgICAgICAgc2VsZi5hc3NlcnRUcnVlKGhhbmRvZmZbInBvc3RfcmVwbHlfYXN5bmMiXSkKICAgICAgICBzZWxmLmFzc2VydFRydWUoaGFuZG9mZlsibXVzdF9yZWFkX2JhY2tfYmVmb3JlX3JlcGx5Il0pCiAgICAgICAgc2VsZi5hc3NlcnRUcnVlKGhhbmRvZmZbImhpc3RvcmljYWxfZmFsbGJhY2tfZm9yYmlkZGVuIl0pCgogICAgZGVmIHRlc3RfdHJ1ZV9pbmNvbXBsZXRlX2Zvcm1hbF9jb250ZXh0X3JlbWFpbnNfbm90X3JlYWR5KHNlbGYpOgogICAgICAgIHJlc3VsdCA9IGNvbnRleHRfY29tcG9uZW50KAogICAgICAgICAgICB7InJlcXVlc3RfaWQiOiAicSJ9LAogICAgICAgICAgICB7CiAgICAgICAgICAgICAgICAib2JzZXJ2YWJpbGl0eSI6IHsKICAgICAgICAgICAgICAgICAgICAiYm91bmRhcnkiOiAiTUlOSU1VTV9ERUNJU0lPTl9DT05URVhUX1JFQURZX05PVF9FU1RBQkxJU0hFRCIKICAgICAgICAgICAgICAgIH0sCiAgICAgICAgICAgICAgICAiZm9ybWFsX2ludHJhZGF5X2NvbnRleHRfY29tcGxldGVuZXNzIjogewogICAgICAgICAgICAgICAgICAgICJzdGF0dXMiOiAiREVDSVNJT05fQ09OVEVYVF9JTkNPTVBMRVRFIgogICAgICAgICAgICAgICAgfSwKICAgICAgICAgICAgfSwKICAgICAgICApCiAgICAgICAgc2VsZi5hc3NlcnRFcXVhbChyZXN1bHRbInN0YXR1cyJdLCAiREVHUkFERUQiKQogICAgICAgIHNlbGYuYXNzZXJ0RXF1YWwocmVzdWx0WyJtaW5pbXVtX2RlY2lzaW9uX2NvbnRleHQiXSwgIklOQ09NUExFVEUiKQoKICAgIGRlZiB0ZXN0X29uZV9taXNzaW5nX2NvbnRleHRfcmVtYWluc19kZWdyYWRlZChzZWxmKToKICAgICAgICByZXN1bHQgPSBjb250ZXh0X2NvbXBvbmVudCh7InJlcXVlc3RfaWQiOiAicSJ9LCB7fSkKICAgICAgICBzZWxmLmFzc2VydEVxdWFsKHJlc3VsdFsic3RhdHVzIl0sICJERUdSQURFRCIpCgogICAgZGVmIHRlc3RfYm90aF9taXNzaW5nX2NvbnRleHRzX3JlbWFpbl9ibG9ja2VkKHNlbGYpOgogICAgICAgIHJlc3VsdCA9IGNvbnRleHRfY29tcG9uZW50KHt9LCB7fSkKICAgICAgICBzZWxmLmFzc2VydEVxdWFsKHJlc3VsdFsic3RhdHVzIl0sICJCTE9DS0VEIikKCiAgICBkZWYgdGVzdF9jb21wbGV0ZV9jb250ZXh0X3JlbWFpbnNfcmVhZHkoc2VsZik6CiAgICAgICAgcmVzdWx0ID0gY29udGV4dF9jb21wb25lbnQoCiAgICAgICAgICAgIHsicmVxdWVzdF9pZCI6ICJxIn0sCiAgICAgICAgICAgIHsiZm9ybWFsX2ludHJhZGF5X2NvbnRleHRfY29tcGxldGVuZXNzIjogeyJzdGF0dXMiOiAiUkVBRFkifX0sCiAgICAgICAgKQogICAgICAgIHNlbGYuYXNzZXJ0RXF1YWwocmVzdWx0WyJzdGF0dXMiXSwgIlJFQURZIikKCiAgICBkZWYgdGVzdF9vcnBoYW5lZF9mb3JtYWxfZ2F0ZV90ZXJtaW5hdGVzX29ubHlfYWZ0ZXJfd29ya2Zsb3dfdGltZW91dChzZWxmKToKICAgICAgICBnYXRlID0geyJyZXF1ZXN0ZWRfYXRfYmVpamluZyI6ICIyMDI2LTEwLTIyVDA5OjI1OjMwKzA4OjAwIn0KICAgICAgICBlbXB0eV9xdWVyeSA9IHsiZGVjaXNpb25fZmFjdF9wYWNrIjogeyJ0cmlnZ2VyIjogeyJyZXF1ZXN0X2lkIjogIiJ9fX0KICAgICAgICBzZWxmLmFzc2VydEZhbHNlKAogICAgICAgICAgICBmb3JtYWxfZ2F0ZV9yZWNvdmVyeV90aW1lb3V0KAogICAgICAgICAgICAgICAgZ2F0ZSwgZGF0ZXRpbWUuZnJvbWlzb2Zvcm1hdCgiMjAyNi0xMC0yMlQwOTozMDowMCswODowMCIpLCBlbXB0eV9xdWVyeQogICAgICAgICAgICApCiAgICAgICAgKQogICAgICAgIHNlbGYuYXNzZXJ0VHJ1ZSgKICAgICAgICAgICAgZm9ybWFsX2dhdGVfcmVjb3ZlcnlfdGltZW91dCgKICAgICAgICAgICAgICAgIGdhdGUsIGRhdGV0aW1lLmZyb21pc29mb3JtYXQoIjIwMjYtMTAtMjJUMDk6MzI6MDArMDg6MDAiKSwgZW1wdHlfcXVlcnkKICAgICAgICAgICAgKQogICAgICAgICkKCiAgICBkZWYgdGVzdF9ib3VuZF9mb3JtYWxfcXVlcnlfbmV2ZXJfdGltZXNfb3V0X3Rocm91Z2hfb3JwaGFuX2d1YXJkKHNlbGYpOgogICAgICAgIGdhdGUgPSB7InJlcXVlc3RlZF9hdF9iZWlqaW5nIjogIjIwMjYtMTAtMjJUMDk6MjU6MzArMDg6MDAifQogICAgICAgIGJvdW5kX3F1ZXJ5ID0geyJkZWNpc2lvbl9mYWN0X3BhY2siOiB7InRyaWdnZXIiOiB7InJlcXVlc3RfaWQiOiAicDEifX19CiAgICAgICAgc2VsZi5hc3NlcnRGYWxzZSgKICAgICAgICAgICAgZm9ybWFsX2dhdGVfcmVjb3ZlcnlfdGltZW91dCgKICAgICAgICAgICAgICAgIGdhdGUsIGRhdGV0aW1lLmZyb21pc29mb3JtYXQoIjIwMjYtMTAtMjJUMTA6MDA6MDArMDg6MDAiKSwgYm91bmRfcXVlcnkKICAgICAgICAgICAgKQogICAgICAgICkKCgppZiBfX25hbWVfXyA9PSAiX19tYWluX18iOgogICAgdW5pdHRlc3QubWFpbigpCgo=
+from __future__ import annotations
+
+import unittest
+from datetime import datetime
+import tempfile
+from pathlib import Path
+
+from scripts.build_e2e_status import context_component, context_read_contract, formal_gate_recovery_timeout
+
+
+class E2EDecisionReadinessTests(unittest.TestCase):
+    def test_large_query_context_contract_exposes_executable_blob_readback(self):
+        source = (Path(__file__).parents[1] / "scripts" / "build_e2e_status.py").read_text(encoding="utf-8")
+        self.assertIn('"large_payload_blob_source_url"', source)
+        self.assertIn(
+            '"git_blobs_get_base64_content"',
+            source,
+        )
+        self.assertIn(
+            '"decode_and_validate_same_blob_sha256"',
+            source,
+        )
+    def test_context_read_contract_distinguishes_verified_empty_from_readable_payload(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "query_context.json"
+            path.write_text('{"decision_fact_pack": {"trigger": {"request_id": "r"}}}\n', encoding="utf-8")
+            readable = context_read_contract(path, {"decision_fact_pack": {}})
+            self.assertEqual(readable["status"], "READ_OK")
+            self.assertGreater(readable["byte_count"], 0)
+            self.assertEqual(len(readable["sha256"]), 64)
+
+            path.write_text("", encoding="utf-8")
+            empty = context_read_contract(path, {})
+            self.assertEqual(empty["status"], "VERIFIED_EMPTY")
+            self.assertEqual(empty["byte_count"], 0)
+
+    def test_legacy_unestablished_boundary_is_diagnostic_only(self):
+        result = context_component(
+            {"request_id": "q"},
+            {
+                "observability": {
+                    "boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED"
+                }
+            },
+        )
+        self.assertEqual(result["status"], "READY")
+        self.assertEqual(result["minimum_decision_context"], "READY_OR_NOT_APPLICABLE")
+        self.assertEqual(
+            result["observability_boundary"],
+            "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
+        )
+
+    def test_request_bound_legacy_observability_is_diagnostic_only(self):
+        result = context_component(
+            {
+                "decision_fact_pack": {
+                    "trigger": {
+                        "request_id": "r1",
+                        "requested_at_beijing": "2026-09-22T12:30:00+08:00",
+                    }
+                }
+            },
+            {
+                "observability": {
+                    "boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED"
+                }
+            },
+        )
+        self.assertEqual(result["status"], "DEGRADED")
+        self.assertEqual(result["minimum_decision_context"], "INCOMPLETE")
+        self.assertTrue(result["request_bound"])
+
+    def test_request_bound_observed_latency_ignores_legacy_boundary(self):
+        result = context_component(
+            {
+                "decision_fact_pack": {
+                    "trigger": {
+                        "request_id": "r2",
+                        "requested_at_beijing": "2026-09-22T12:30:00+08:00",
+                    }
+                },
+                "fast_path_latency": {
+                    "latency_status": "OBSERVED",
+                    "request_to_core_result_latency": 4.2,
+                },
+            },
+            {
+                "observability": {
+                    "boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED"
+                }
+            },
+        )
+        self.assertEqual(result["status"], "READY")
+        self.assertEqual(result["minimum_decision_context"], "READY_OR_NOT_APPLICABLE")
+        self.assertTrue(result["request_bound"])
+
+    def test_downstream_state_sync_latency_does_not_degrade_decision_context(self):
+        result = context_component(
+            {
+                "decision_fact_pack": {
+                    "trigger": {
+                        "request_id": "broker-sync",
+                        "requested_at_beijing": "2026-09-30T13:27:00+08:00",
+                    },
+                    "formal_reply_freeze": {
+                        "status": "NOT_APPLICABLE",
+                        "reply_freezable": True,
+                        "blockers": [],
+                    },
+                },
+                "fast_path_latency": {
+                    "latency_status": "DOWNSTREAM_NOT_DECISION_LATENCY",
+                    "latency_observation_role": "DOWNSTREAM_COMPLETION_NOT_DECISION_REQUEST",
+                    "may_measure_original_decision_latency": False,
+                },
+            },
+            {
+                "observability": {
+                    "boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED"
+                },
+                "formal_intraday_context_completeness": {"status": "READY"},
+            },
+        )
+        self.assertEqual(result["status"], "READY")
+        self.assertEqual(result["minimum_decision_context"], "READY_OR_NOT_APPLICABLE")
+        self.assertEqual(result["formal_reply_gate"]["request_id"], "broker-sync")
+        self.assertTrue(result["formal_reply_gate"]["reply_freezable"])
+
+    def test_original_formal_request_missing_latency_still_degrades(self):
+        result = context_component(
+            {
+                "decision_fact_pack": {
+                    "trigger": {
+                        "request_id": "formal-parent",
+                        "requested_at_beijing": "2026-09-30T13:16:00+08:00",
+                    }
+                },
+                "fast_path_latency": {
+                    "latency_status": "INSTRUMENTATION_INCOMPLETE",
+                    "latency_observation_role": "FORMAL_DECISION_REQUEST",
+                    "may_measure_original_decision_latency": True,
+                },
+            },
+            {"formal_intraday_context_completeness": {"status": "READY"}},
+        )
+        self.assertEqual(result["status"], "DEGRADED")
+        self.assertEqual(result["latency_status"], "INSTRUMENTATION_INCOMPLETE")
+        self.assertEqual(result["latency_observation_role"], "FORMAL_DECISION_REQUEST")
+
+    def test_request_bound_ready_exposes_compact_formal_reply_gate(self):
+        result = context_component(
+            {
+                "decision_fact_pack": {
+                    "trigger": {
+                        "request_id": "r3",
+                        "requested_at_beijing": "2026-09-29T01:16:00+08:00",
+                    },
+                    "formal_reply_freeze": {
+                        "status": "READY",
+                        "reply_freezable": True,
+                        "blockers": [],
+                    },
+                    "decision_work_package": {
+                        "problem_graph": [{"problem_id": "DISCOVERY:159029"}]
+                    },
+                },
+                "fast_path_latency": {"latency_status": "OBSERVED"},
+            },
+            {"formal_intraday_context_completeness": {"status": "READY"}},
+        )
+        self.assertEqual(result["status"], "READY")
+        self.assertEqual(result["formal_reply_gate"]["request_id"], "r3")
+        self.assertEqual(result["formal_reply_gate"]["status"], "READY")
+        self.assertTrue(result["formal_reply_gate"]["reply_freezable"])
+        self.assertEqual(result["formal_reply_gate"]["blockers"], [])
+        manifest = result["formal_reply_gate"]["consumer_manifest"]
+        self.assertEqual(manifest["request_id"], "r3")
+        self.assertEqual(manifest["read_strategy"], "GATE_FIRST_CONTENTS_METADATA_THEN_GIT_BLOBS_BASE64")
+        self.assertEqual(manifest["large_payload_read_contract"], "USE_GITHUB_API_CONTENTS_OR_BLOB_FOR_FILES_OVER_1MB")
+        self.assertIn("/contents/data/state/query_context.json?ref=main", manifest["large_payload_source_url"])
+        self.assertEqual(
+            manifest["large_payload_empty_read"],
+            "REVERIFY_SAME_GITHUB_SOURCE_BEFORE_MISSING",
+        )
+
+    def test_compact_gate_projection_is_request_bound_and_canonical(self):
+        source = (Path(__file__).parents[1] / "scripts" / "build_e2e_status.py").read_text(encoding="utf-8")
+        self.assertIn('"request_bound_fact_projection"', source)
+        self.assertIn('"source_path": "data/state/query_context.json"', source)
+        self.assertIn('"source_is_canonical": True', source)
+        self.assertIn('"decision_work_package": decision_work_package', source)
+
+    def test_request_bound_inflight_gate_remains_visible_when_context_degraded(self):
+        result = context_component(
+            {
+                "decision_fact_pack": {
+                    "trigger": {
+                        "request_id": "r4",
+                        "requested_at_beijing": "2026-09-29T01:16:00+08:00",
+                    },
+                    "formal_reply_freeze": {
+                        "status": "IN_FLIGHT",
+                        "reply_freezable": False,
+                        "blockers": ["FORMAL_DISCOVERY_IN_FLIGHT"],
+                    },
+                },
+                "fast_path_latency": {"latency_status": "BUILDING"},
+            },
+            {"formal_intraday_context_completeness": {"status": "READY"}},
+        )
+        self.assertEqual(result["status"], "DEGRADED")
+        self.assertEqual(result["formal_reply_gate"]["request_id"], "r4")
+        self.assertFalse(result["formal_reply_gate"]["reply_freezable"])
+        self.assertEqual(result["formal_reply_gate"]["blockers"], ["FORMAL_DISCOVERY_IN_FLIGHT"])
+
+    def test_actor_gate_projects_wait_contract_from_sole_consumer(self):
+        result = context_component(
+            {
+                "decision_fact_pack": {
+                    "trigger": {
+                        "request_id": "wait-parent",
+                        "requested_at_beijing": "2026-10-11T14:00:00+08:00",
+                    },
+                    "formal_reply_freeze": {
+                        "status": "IN_FLIGHT",
+                        "reply_freezable": False,
+                        "blockers": ["FORMAL_DISCOVERY_IN_FLIGHT"],
+                    },
+                },
+                "fast_path_latency": {"latency_status": "BUILDING"},
+            },
+            {"formal_intraday_context_completeness": {"status": "READY"}},
+        )
+        gate = result["formal_reply_gate"]
+        self.assertEqual(gate["consumer_status"], "REQUEST_BOUND_FACTS_BUILDING")
+        self.assertEqual(gate["actor_action"], "CONTINUE_SAME_REQUEST_SILENTLY")
+        self.assertFalse(gate["user_output_allowed"])
+        self.assertEqual(gate["required_problem_ids"], [])
+        self.assertEqual(gate["required_problem_count"], 0)
+
+    def test_ready_gate_is_not_reply_freezable_without_same_request_dwp(self):
+        result = context_component(
+            {
+                "decision_fact_pack": {
+                    "trigger": {
+                        "request_id": "empty-dwp-parent",
+                        "requested_at_beijing": "2026-10-19T11:00:00+08:00",
+                    },
+                    "formal_reply_freeze": {
+                        "status": "READY",
+                        "reply_freezable": True,
+                        "blockers": [],
+                    },
+                },
+                "fast_path_latency": {"latency_status": "OBSERVED"},
+            },
+            {"formal_intraday_context_completeness": {"status": "READY"}},
+        )
+        gate = result["formal_reply_gate"]
+        self.assertEqual(gate["status"], "IN_FLIGHT")
+        self.assertFalse(gate["reply_freezable"])
+        self.assertIn("DECISION_WORK_PACKAGE_NOT_CONSUMABLE", gate["blockers"])
+
+    def test_actor_gate_projects_ready_contract_and_exact_dwp_checklist(self):
+        result = context_component(
+            {
+                "decision_fact_pack": {
+                    "trigger": {
+                        "request_id": "ready-parent",
+                        "requested_at_beijing": "2026-10-11T14:00:00+08:00",
+                    },
+                    "formal_reply_freeze": {
+                        "status": "READY",
+                        "reply_freezable": True,
+                        "blockers": [],
+                    },
+                    "decision_work_package": {
+                        "problem_graph": [
+                            {"problem_id": "DISCOVERY:159029"},
+                            {"problem_id": "HOLDING:510300"},
+                        ]
+                    },
+                },
+                "fast_path_latency": {"latency_status": "OBSERVED"},
+            },
+            {"formal_intraday_context_completeness": {"status": "READY"}},
+        )
+        gate = result["formal_reply_gate"]
+        self.assertEqual(gate["consumer_status"], "BUSINESS_DECISION_READY")
+        self.assertEqual(gate["actor_action"], "COMPLETE_BUSINESS_DECISION_NOW")
+        self.assertFalse(gate["user_output_allowed"])
+        self.assertTrue(gate["business_decision_allowed"])
+        self.assertTrue(gate["final_content_generation_allowed"])
+        self.assertEqual(
+            gate["required_problem_ids"],
+            ["DISCOVERY:159029", "HOLDING:510300"],
+        )
+        self.assertEqual(gate["required_problem_count"], 2)
+        self.assertEqual(
+            gate["business_answer_contract"],
+            "DWP_EXACT_COVERAGE_BEFORE_PRESENTATION",
+        )
+        handoff = gate["ready_handoff"]
+        self.assertTrue(handoff["required"])
+        self.assertEqual(handoff["submission_type"], "BUSINESS_DECISION_SOURCE")
+        self.assertEqual(handoff["source"], "CHATGPT_BUSINESS_DECISION_RESPONSE")
+        self.assertEqual(handoff["parent_request_id"], "ready-parent")
+        for field in (
+            "decision_response.answers",
+            "decision_id",
+            "consumed_snapshot",
+            "presentation_content",
+        ):
+            self.assertIn(field, handoff["required_payload_fields"])
+        self.assertEqual(
+            handoff["target_path"],
+            "requests/live_snapshot/ready-parent__business_decision_source.json",
+        )
+        self.assertTrue(handoff["user_reply_precondition"])
+        self.assertTrue(handoff["post_reply_async"])
+        self.assertTrue(handoff["must_read_back_before_reply"])
+        self.assertTrue(handoff["historical_fallback_forbidden"])
+
+    def test_true_incomplete_formal_context_remains_not_ready(self):
+        result = context_component(
+            {"request_id": "q"},
+            {
+                "observability": {
+                    "boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED"
+                },
+                "formal_intraday_context_completeness": {
+                    "status": "DECISION_CONTEXT_INCOMPLETE"
+                },
+            },
+        )
+        self.assertEqual(result["status"], "DEGRADED")
+        self.assertEqual(result["minimum_decision_context"], "INCOMPLETE")
+
+    def test_one_missing_context_remains_degraded(self):
+        result = context_component({"request_id": "q"}, {})
+        self.assertEqual(result["status"], "DEGRADED")
+
+    def test_both_missing_contexts_remain_blocked(self):
+        result = context_component({}, {})
+        self.assertEqual(result["status"], "BLOCKED")
+
+    def test_complete_context_remains_ready(self):
+        result = context_component(
+            {"request_id": "q"},
+            {"formal_intraday_context_completeness": {"status": "READY"}},
+        )
+        self.assertEqual(result["status"], "READY")
+
+    def test_orphaned_formal_gate_terminates_only_after_workflow_timeout(self):
+        gate = {"requested_at_beijing": "2026-10-22T09:25:30+08:00"}
+        empty_query = {"decision_fact_pack": {"trigger": {"request_id": ""}}}
+        self.assertFalse(
+            formal_gate_recovery_timeout(
+                gate, datetime.fromisoformat("2026-10-22T09:30:00+08:00"), empty_query
+            )
+        )
+        self.assertTrue(
+            formal_gate_recovery_timeout(
+                gate, datetime.fromisoformat("2026-10-22T09:32:00+08:00"), empty_query
+            )
+        )
+
+    def test_bound_formal_query_never_times_out_through_orphan_guard(self):
+        gate = {"requested_at_beijing": "2026-10-22T09:25:30+08:00"}
+        bound_query = {"decision_fact_pack": {"trigger": {"request_id": "p1"}}}
+        self.assertFalse(
+            formal_gate_recovery_timeout(
+                gate, datetime.fromisoformat("2026-10-22T10:00:00+08:00"), bound_query
+            )
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()
+
