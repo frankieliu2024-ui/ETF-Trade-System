@@ -45,3 +45,7 @@ READY 且 FINAL_CONTENT 校验通过后，必须在本次运行内严格按以�
 任何身份、请求落地、事实绑定、READY、BDS、completion、event、REPORT、notification 或 provider 证据缺失，只能如实停在对应层级；不得借用旧请求或旧正文。后置链路失败不得重新分析、改写正文、创建第二请求、第二正文或补发历史内容，也不得撤回已经向用户输出的正文。
 
 本任务已启用。自动运行仅在 current main 正式日历允许的交易日09:00、10:00、11:00、13:30、14:30（北京时间）执行，其他情况只 SKIP；手动入口不受自动节点限制。不得执行证券交易、恢复交易权限或改变调度。目标是像【ETF系统复核】和【ETF交易复盘】成功任务一样，在任务上下文直接生成完整正式判断，再沿同一共享 Scheduled Review completion、canonical event、REPORT、notification_center、PushPlus 主链闭环。不得使用独立 FORMAL_DECISION_COMPLETION、CHATGPT_FORMAL_DECISION_COMPLETION、旧 STATE_SYNC_ONLY + FORMAL_SCHEDULED_REVIEW、FORMAL_DECISION_REPORT、第二 completion 或旁路通知链。
+
+
+【用户可见编号的实际层级规则（集中修复）】
+编号只表示同一章节内的并列清单，不表示每一段正文。单独一句、单独一段、章节说明、结论句、状态句和自然语言解释不得添加“1.”、“2.”等编号。只有同一章节确实存在两个或以上并列项目时，才使用连续的一级编号“1.”、“2.”；只有一级项目下确实存在两个或以上子项目时，才使用连续的二级编号“1）”、“2）”。不得为了满足编号格式给单独句子或单独段落强行添加一级编号，也不得在不存在子项目时强行生成二级编号。输出前必须按实际段落层级逐段检查；编号校验不得把“存在合法编号”误认为“所有段落都应编号”。
