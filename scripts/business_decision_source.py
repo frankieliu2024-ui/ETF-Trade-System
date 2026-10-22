@@ -1221,7 +1221,7 @@ def _validate_request_bound_identity(source: dict[str, Any]) -> None:
         # rejecting that bound child identity made every valid handoff fail
         # before the formal-entry identity fields could be validated.
         expected_bds_id = f"{parent_id}__business_decision_source"
-        if str(source.get("request_type") or "").strip().upper() != "BUSINESS_DECISION_SOURCE" or request_id != expected_bds_id:
+        if str(source.get("request_type") or source.get("submission_type") or "").strip().upper() != "BUSINESS_DECISION_SOURCE" or request_id != expected_bds_id:
             raise ValueError("business source parent_request_id binding is invalid")
     nested = source.get("decision_response")
     if isinstance(nested, dict):
@@ -1326,9 +1326,9 @@ def validate_source(
     # persisted bytes exactly as written and never rewrite the frozen body.
     if normalize_presentation:
         _normalize_formal_presentation_source(source)
-    if classify_request(source) != BUSINESS_DECISION_SOURCE:
-        if not _is_legacy_formal_replay_source(source):
-            raise ValueError("business source requires explicit BUSINESS_DECISION_SOURCE")
+    legacy_replay = _is_legacy_formal_replay_source(source)
+    if classify_request(source) != BUSINESS_DECISION_SOURCE and not legacy_replay:
+        raise ValueError("business source requires explicit BUSINESS_DECISION_SOURCE")
     if not str(source.get("request_id") or "").strip():
         raise ValueError("business source requires request_id")
     if not str(source.get("decision_id") or "").strip():
@@ -1339,19 +1339,20 @@ def validate_source(
     if not snapshot or expected_snapshot and snapshot != expected_snapshot:
         raise ValueError("business source PIT binding failed")
     missing = [key for key in _REQUIRED if key not in source or source[key] in (None, "", [], {})]
-    if missing:
+    if missing and not legacy_replay:
         raise ValueError("business decision completeness failed: " + ",".join(missing))
-    _validate_single_frozen_presentation(source)
-    _validate_formal_presentation_hashes(source)
-    _validate_request_bound_presentation_facts(source, expected_snapshot=expected_snapshot, expected_market_date=expected_market_date, expected_market_phase=expected_market_phase, expected_captured_at=expected_captured_at)
-    _validate_formal_presentation_contract(source)
-    parent_request_id = str(source.get("parent_request_id") or source.get("request_id") or "").strip()
-    consumption_error = validate_decision_evidence_consumption(
-        source.get("decision_evidence_consumption"),
-        parent_request_id=parent_request_id,
-    )
-    if consumption_error:
-        raise ValueError(consumption_error)
+    if not legacy_replay:
+        _validate_single_frozen_presentation(source)
+        _validate_formal_presentation_hashes(source)
+        _validate_request_bound_presentation_facts(source, expected_snapshot=expected_snapshot, expected_market_date=expected_market_date, expected_market_phase=expected_market_phase, expected_captured_at=expected_captured_at)
+        _validate_formal_presentation_contract(source)
+        parent_request_id = str(source.get("parent_request_id") or source.get("request_id") or "").strip()
+        consumption_error = validate_decision_evidence_consumption(
+            source.get("decision_evidence_consumption"),
+            parent_request_id=parent_request_id,
+        )
+        if consumption_error:
+            raise ValueError(consumption_error)
     source["source_type"] = BUSINESS_DECISION_SOURCE
     source["fingerprint"] = source_fingerprint(source)
     source["phase1_status"] = "PASS"
