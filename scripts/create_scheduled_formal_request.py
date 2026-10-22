@@ -113,6 +113,41 @@ def build_scheduled_request(
     }
 
 
+def _active_formal_parent() -> str:
+    """Return the one durable Formal parent that must be resumed before ingress."""
+    gate_path = ROOT / "data" / "state" / "e2e_status.json"
+    try:
+        status = json.loads(gate_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return ""
+    gate = (((status.get("components") or {}).get("decision_context") or {}).get("formal_reply_gate") or {})
+    parent_id = str(gate.get("request_id") or "").strip()
+    if not parent_id:
+        return ""
+    parent_path = REQUEST_DIR / f"{parent_id}.json"
+    try:
+        parent = json.loads(parent_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return ""
+    if str(parent.get("request_id") or "").strip() != parent_id:
+        return ""
+    if str(parent.get("request_type") or "").upper() != "MARKET_QUOTE_REFRESH":
+        return ""
+    if str(parent.get("source") or "") not in set(TRIGGER_SOURCES.values()):
+        return ""
+    gate_status = str(gate.get("status") or "").upper()
+    actor_action = str(gate.get("actor_action") or "").upper()
+    inflight = gate_status in {"BUILDING", "PENDING", "QUEUED", "RUNNING", "IN_PROGRESS", "IN_FLIGHT", "WAIT", "REQUEST_BOUND_FACTS_BUILDING"}
+    if inflight or actor_action == "CONTINUE_SAME_REQUEST_SILENTLY":
+        return parent_id
+    if gate_status in {"READY", "RESOLVED_DEGRADED"}:
+        bds_path = REQUEST_DIR / f"{parent_id}__business_decision_source.json"
+        completion_path = REQUEST_DIR / f"{parent_id}__scheduled_review_completion.json"
+        if not bds_path.exists() or not completion_path.exists():
+            return parent_id
+    return ""
+
+
 def _existing_occurrence(occurrence_id: str) -> str:
     REQUEST_DIR.mkdir(parents=True, exist_ok=True)
     for path in REQUEST_DIR.glob("*.json"):
@@ -157,6 +192,11 @@ def main() -> int:
             )
         if not occurrence.startswith("scheduled_"):
             raise SystemExit("FORMAL_SCHEDULE_INGRESS=INVALID_AUTOMATIC_OCCURRENCE")
+
+    active = _active_formal_parent()
+    if active:
+        print(f"FORMAL_SCHEDULE_INGRESS=REUSE_ACTIVE_PARENT request_id={active}")
+        return 0
 
     existing = _existing_occurrence(occurrence)
     if existing:
