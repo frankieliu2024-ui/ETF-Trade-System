@@ -13,7 +13,7 @@ on:
         required: true
         default: "false"
       replay_request:
-        description: "Existing requests/live_snapshot STATE_SYNC_ONLY request to replay from execution-time main"
+        description: "Existing requests/live_snapshot STATE_SYNC_ONLY or ACCOUNT_FACT_REFRESH request to replay from execution-time main"
         required: false
         default: ""
       formal_replay_request:
@@ -881,8 +881,8 @@ jobs:
           if not path.exists():
               raise SystemExit("replay_request does not exist in execution-time main")
           obj = json.loads(path.read_text(encoding="utf-8"))
-          if str(obj.get("request_type") or "").upper() != "STATE_SYNC_ONLY":
-              raise SystemExit("replay_request must be STATE_SYNC_ONLY")
+          if str(obj.get("request_type") or "").upper() not in {"STATE_SYNC_ONLY", "ACCOUNT_FACT_REFRESH"}:
+              raise SystemExit("replay_request must be STATE_SYNC_ONLY or ACCOUNT_FACT_REFRESH")
           formal_fact_type = str(obj.get("formal_fact_type") or "").upper()
           interaction_scenario = str(obj.get("interaction_scenario") or "").upper()
           review = obj.get("formal_review")
