@@ -12,9 +12,11 @@ import json
 from pathlib import Path
 
 try:
-    from scheduled_review_completion import write_completion_request\n    from task_runtime_identity import derive_runtime_identity
+    from scheduled_review_completion import write_completion_request
+    from task_runtime_identity import derive_runtime_identity
 except ModuleNotFoundError:
-    from scripts.scheduled_review_completion import write_completion_request\n    from scripts.task_runtime_identity import derive_runtime_identity
+    from scripts.scheduled_review_completion import write_completion_request
+    from scripts.task_runtime_identity import derive_runtime_identity
 
 
 def main() -> int:
