@@ -133,6 +133,17 @@ def valid_json(path: Path) -> bool:
     return isinstance(load_json(path), dict)
 
 
+def derived_context_identity_drift(current: dict, review_context: dict) -> bool:
+    """Detect a valid-but-stale review projection, not just malformed JSON."""
+    review_current = review_context.get("current") or {}
+    for key in ("market_date", "latest_valid_node", "latest_snapshot", "snapshot_commit"):
+        current_value = str(current.get(key) or "")
+        review_value = str(review_current.get(key) or "")
+        if current_value and review_value and current_value != review_value:
+            return True
+    return False
+
+
 def latest_unfinished_formal_parent() -> tuple[str | None, str | None]:
     """Find the newest durable Formal parent that lacks same-request context.
 
@@ -356,6 +367,7 @@ def assess(now: datetime | None = None) -> dict:
     formal_replay_path, formal_replay_parent_id = latest_unfinished_formal_parent()
     formal_handoff_path, formal_handoff_parent_id, formal_handoff_missing = formal_parent_handoff_gap()
     review_ver = str(review_context.get("rules_version") or "")
+    review_identity_drift = derived_context_identity_drift(current, review_context)
 
     classification = "HEALTHY"
     action = "NONE"
@@ -367,6 +379,8 @@ def assess(now: datetime | None = None) -> dict:
         classification, action, reason = "RULES_VERSION_METADATA_DRIFT", "SYNC_RULES_VERSION_METADATA", f"MASTER={master_ver}, CURRENT={current_ver}"
     elif review_ver and review_ver != master_ver:
         classification, action, reason = "DERIVED_CONTEXT_RULES_VERSION_DRIFT", "REBUILD_DERIVED_CONTEXTS", f"MASTER={master_ver}, REVIEW_CONTEXT={review_ver}"
+    elif review_identity_drift:
+        classification, action, reason = "DERIVED_CONTEXT_IDENTITY_DRIFT", "REBUILD_DERIVED_CONTEXTS", "review_context identity does not match canonical CURRENT market snapshot"
     elif not enabled:
         classification, action, reason = "DISABLED", "NONE", "self-healing disabled by runtime policy"
     elif consistency_gate["blocks_market_recovery"]:
@@ -428,6 +442,7 @@ def assess(now: datetime | None = None) -> dict:
         "master_rules_version": master_ver,
         "current_rules_version": current_ver or None,
         "review_context_rules_version": review_ver or None,
+        "review_context_identity_drift": review_identity_drift,
         "formal_replay_request": formal_replay_path,
         "formal_replay_parent_id": formal_replay_parent_id,
         "formal_handoff_parent_id": formal_handoff_parent_id,
