@@ -231,6 +231,37 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
                     hashlib.sha256(b"FROZEN LEGACY SYSTEM REPORT\n").hexdigest(),
                 )
 
+    def test_system_review_uppercase_final_content_is_normalized_once(self):
+        from scripts import process_state_sync_request as state_sync
+        legacy = {
+            "request_id": "uppercase-system-request",
+            "request_type": "SCHEDULED_REVIEW_COMPLETION",
+            "formal_fact_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW",
+            "source": "CHATGPT_SCHEDULED_SYSTEM_REVIEW_ACTOR",
+            "task_id": "ETF系统复核",
+            "task_run_id": "uppercase-system-run",
+            "FINAL_CONTENT": "FROZEN UPPERCASE SYSTEM REPORT",
+            "content_hash": "not-the-canonical-hash",
+            "system_review": {"status": "PASS"},
+            "requested_at_beijing": "2026-09-26T19:30:00+08:00",
+        }
+        with TemporaryDirectory() as directory:
+            with patch.object(state_sync, "ROOT", Path(directory)):
+                recorded, replay = state_sync.record_scheduled_system_review(legacy)
+                self.assertTrue(recorded)
+                self.assertFalse(replay)
+                event = json.loads(
+                    (Path(directory) / "events" / "reviews" / "system_uppercase-system-run.json").read_text(encoding="utf-8")
+                )
+                self.assertEqual(
+                    event["presentation_binding"]["full_content"],
+                    "FROZEN UPPERCASE SYSTEM REPORT",
+                )
+                self.assertEqual(
+                    event["presentation_binding"]["content_hash"],
+                    hashlib.sha256(b"FROZEN UPPERCASE SYSTEM REPORT").hexdigest(),
+                )
+
     def test_system_completion_publishes_canonical_event_consumed_by_notification_center(self):
         from scripts import notification_center
         from scripts import process_state_sync_request as state_sync
