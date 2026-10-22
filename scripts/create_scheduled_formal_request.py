@@ -7,9 +7,11 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 try:
-    from formal_entry_contract import build_identity\n    from task_runtime_identity import derive_runtime_identity
+    from formal_entry_contract import build_identity
+    from task_runtime_identity import derive_runtime_identity
 except ModuleNotFoundError:  # package import in repository tests
-    from scripts.formal_entry_contract import build_identity\n    from scripts.task_runtime_identity import derive_runtime_identity
+    from scripts.formal_entry_contract import build_identity
+    from scripts.task_runtime_identity import derive_runtime_identity
 
 ROOT = Path(__file__).resolve().parents[1]
 REQUEST_DIR = ROOT / "requests" / "live_snapshot"
@@ -212,7 +214,8 @@ def main() -> int:
     )
     path = REQUEST_DIR / f"{payload['request_id']}.json"
     path.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+        json.dumps(payload, ensure_ascii=False, indent=2) + "
+",
         encoding="utf-8",
     )
     print(f"FORMAL_SCHEDULE_INGRESS=CREATED request_id={payload['request_id']} path={path}")
