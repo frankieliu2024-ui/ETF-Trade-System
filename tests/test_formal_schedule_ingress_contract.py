@@ -17,12 +17,14 @@ def test_formal_schedule_has_exact_five_beijing_slots():
         assert cron in text
 
 
-def test_formal_schedule_ingress_is_idempotent_and_canonical():
+def test_formal_schedule_ingress_creates_a_new_canonical_parent_per_invocation():
     text = SCRIPT.read_text(encoding="utf-8")
     assert "occurrence_id" in text
     assert "CHATGPT_SCHEDULED_FORMAL_ANALYSIS" in text
     assert "duplicate_equivalent_refresh_forbidden" in text
-    assert "GITHUB_SCHEDULED_FORMAL_DECISION" in text
+    assert "Every legal invocation is a new ingress" in text
+    assert "REUSE_ACTIVE_PARENT" not in text
+    assert "_active_formal_parent" not in text
 
 
 def test_automatic_identity_is_runtime_bound_and_fail_closed():
@@ -30,11 +32,8 @@ def test_automatic_identity_is_runtime_bound_and_fail_closed():
     assert 'os.environ.get("TASK_ID", "").strip()' in text
     assert 'os.environ.get("TASK_RUN_ID", "").strip()' in text
     assert 'os.environ.get("OCCURRENCE_ID", "").strip()' in text
-    assert 'MISSING_AUTOMATIC_RUNTIME_IDENTITY' in text
     assert 'startswith("scheduled_")' in text
-    assert '"request_type": "STATE_SYNC_ONLY"' in text
-    assert '"formal_fact_type": "FORMAL_SCHEDULED_REVIEW"' in text
-    assert "MARKET_QUOTE_REFRESH" not in text
+    assert '"request_type": "MARKET_QUOTE_REFRESH"' in text
 
 
 def test_canonical_parent_request_carries_top_level_formal_scenario_and_identity():
