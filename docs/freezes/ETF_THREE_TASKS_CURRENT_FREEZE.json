@@ -1,10 +1,10 @@
 {
   "schema_version": "2.0",
   "freeze_id": "ETF_THREE_TASKS_CURRENT_FREEZE_20261020_V3",
-  "freeze_status": "LIVE_TASK_READBACK_CONFIRMED_PLATFORM_HASH_UNAVAILABLE",
+  "freeze_status": "SEALED_RUNTIME_EVIDENCE_CONFIRMED",
   "authority": "current_main_only",
-  "captured_at_beijing": "2026-10-21",
-  "captured_main_commit": "f56459abc4dbca602479ec60ada32ca7986b44e5",
+  "captured_at_beijing": "2026-10-22",
+  "captured_main_commit": "0158c00b25e20b2e4f8b71ccd4b885fa1c3256cc",
   "current_pointer": "docs/freezes/ETF_THREE_TASKS_CURRENT_FREEZE.json",
   "index_path": "ETF_SYSTEM_INDEX.md",
   "purpose": "唯一当前冻结指针；用于定位、审计、回退和按身份恢复三类ETF任务，不构成第二规则源。",
@@ -191,7 +191,7 @@
     "tests/test_formal_decision_notification_chain_contract.py": "Formal chain contract tests",
     "tests/test_formal_decision_shared_report_chain.py": "shared report chain tests"
   },
-  "latest_selection": "先读取本文件，再读取evidence_index_path、bundle_manifest_path、Prompt快照、schedule_readback_path、code-map和recovery-runbook；同时按ETF_SYSTEM_INDEX.md读取自动维护与运行保障协议，持续核对current main、任务合同、workflow输入和最新运行链。只有三类任务新鲜真实运行证据补齐后才可评估最终封存。",
+  "latest_selection": "三类任务的Prompt、入口、业务边界和共享交接链已完成current main核对；System Review与Trade Review均有新鲜真实运行的用户主动通知证据，Formal Decision已有真实运行、通知投递及用户确认收到证据。后续仅按本清单登记的回归验证，不再因单次偶发失败重写业务规则。",
   "rollback": "回退到captured_main_commit，并使用各任务prompt_snapshot.source中的历史审计材料；任何恢复仍需重新核对current main，不得直接执行历史归档。",
   "acceptance_required": [
     "manifest JSON可解析",
@@ -199,11 +199,14 @@
     "live prompt/schedule readback status明确",
     "相关测试通过",
     "merged main回读",
-    "新鲜真实运行分别回读completion/event/REPORT/notification/provider"
+    "新鲜真实运行分别回读completion/event/REPORT/notification/provider",
+    "System Review新鲜真实运行：正文、completion、event、REPORT、notification_center、provider和用户收到证据",
+    "Trade Review新鲜真实运行：20:30自动节点正文、completion、event、REPORT、notification_center、provider和用户收到证据",
+    "Formal Decision新鲜真实运行：唯一FINAL_CONTENT、BDS、completion、canonical event、REPORT、notification_center、provider和用户确认收到证据"
   ],
-  "evidence_note": "当前 main 已包含 PR #1569（merge c018550e2555ab45dfca08e4c7b4abb282704155）的 Scheduled Review dispatch 输入修复；本次冻结同步记录最新生产基线。最新可回读交易复盘运行仍停在业务复盘/生产交接之前，未形成新的 completion、canonical event、REPORT、notification_center、provider 或用户收到证据，因此状态仍为 RUNTIME_EVIDENCE_PENDING，不能宣称 SEALED。自动维护与运行保障继续按 ETF_SYSTEM_INDEX.md 路由至 docs/ETF自动维护与运行保障协议_V1.0.md，只做检测、回读、登记和失败告警，不自动补造对象或升级状态。",
+  "evidence_note": "截至2026-10-22，三类任务均有新鲜真实运行证据：ETF系统复核任务界面手动运行后收到PushPlus主动通知；ETF交易复盘20:30自动节点形成完整日复盘并收到PushPlus主动通知；ETF正式决策此前已完成canonical event、REPORT、notification_center、provider投递并由用户确认收到。共享Scheduled Review通知链已通过System Review与Trade Review两条真实链路验证。单次运行失败不得覆盖成功运行证据；如后续再失败，须按同一运行身份区分业务正文冻结层与后置交接层，不得创建第二对象。",
   "live_readback": {
-    "captured_at_beijing": "2026-10-20 19:35",
+    "captured_at_beijing": "2026-10-22 20:35",
     "source": "ChatGPT scheduled tasks cloud browser readback",
     "result": "THREE_TASKS_ENABLED_PROMPT_FULL_READBACK_PERSISTED_SCHEDULE_UI_READBACK",
     "platform_hash_status": "NOT_EXPOSED_BY_UI",
@@ -247,7 +250,7 @@
         "prompt_readback_status": "FULL_CURRENT_PROMPT_READ_BACK"
       }
     ],
-    "next_gate": "平台原生hash不可得；在不伪造平台hash的前提下，先以仓库侧内容指纹、可见Schedule字段和新鲜真实运行证据完成审计封存；不得直接宣称SEALED。",
+    "next_gate": "三类任务均已完成当前可取得的Prompt、调度和新鲜真实运行回读；平台不提供原生Prompt hash，因此不伪造平台hash。冻结状态以current main内容、可见调度字段和新鲜真实运行证据共同确定，后续仅做回归验证。",
     "evidence_scope": {
       "readback_completed": [
         "ETF正式决策",
@@ -256,11 +259,12 @@
       ],
       "schedule_readback": "三条任务均显示启用、每日、自定义重复频率；具体平台内部时间配置未由当前界面提供稳定机器指纹",
       "system_review_prompt_length_chars": 3852,
-      "preservation_rule": "不保存或推断平台不可验证的hash；不以历史Prompt替代当前Prompt"
+      "preservation_rule": "不保存或推断平台不可验证的hash；不以历史Prompt替代当前Prompt",
+      "prompt_readback_status": "FULL_CURRENT_PROMPT_READ_BACK_WITH_RUNTIME_CONFIRMATION"
     }
   },
   "bundle_manifest_path": "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/MANIFEST.json",
-  "bundle_manifest_status": "REPOSITORY_EVIDENCE_COMPLETE_RUNTIME_EVIDENCE_PENDING",
+  "bundle_manifest_status": "REPOSITORY_EVIDENCE_COMPLETE_RUNTIME_EVIDENCE_CONFIRMED",
   "evidence_index_path": "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/EVIDENCE_INDEX.md",
   "schedule_readback_path": "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/schedule-readback.json"
 }
