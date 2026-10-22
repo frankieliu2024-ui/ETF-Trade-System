@@ -23,7 +23,7 @@ _REQUIRED = (
 def classify_request(request: dict[str, Any]) -> str:
     if not isinstance(request, dict):
         raise ValueError("request must be an object")
-    explicit = str(request.get("request_type") or "").strip().upper()
+    explicit = str(request.get("request_type") or request.get("submission_type") or "").strip().upper()
     if explicit == BUSINESS_DECISION_SOURCE:
         return BUSINESS_DECISION_SOURCE
     if explicit == STATE_SYNC_ONLY:
