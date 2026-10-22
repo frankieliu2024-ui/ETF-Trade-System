@@ -7,9 +7,9 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 try:
-    from formal_entry_contract import build_identity
+    from formal_entry_contract import build_identity\n    from task_runtime_identity import derive_runtime_identity
 except ModuleNotFoundError:  # package import in repository tests
-    from scripts.formal_entry_contract import build_identity
+    from scripts.formal_entry_contract import build_identity\n    from scripts.task_runtime_identity import derive_runtime_identity
 
 ROOT = Path(__file__).resolve().parents[1]
 REQUEST_DIR = ROOT / "requests" / "live_snapshot"
