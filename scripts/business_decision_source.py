@@ -1257,9 +1257,13 @@ def validate_source(
     source: dict[str, Any], *, expected_snapshot: str | None = None,
     expected_market_date: str | None = None, expected_market_phase: str | None = None,
     expected_captured_at: str | None = None,
+    normalize_presentation: bool = True,
 ) -> dict[str, Any]:
     source = json.loads(json.dumps(source))
-    _normalize_formal_presentation_source(source)
+    # Builders normalize before freezing. Canonical consumers must validate
+    # the persisted bytes exactly as written and must never rewrite them.
+    if normalize_presentation:
+        _normalize_formal_presentation_source(source)
     if classify_request(source) != BUSINESS_DECISION_SOURCE:
         raise ValueError("business source requires explicit BUSINESS_DECISION_SOURCE")
     if not str(source.get("request_id") or "").strip():
