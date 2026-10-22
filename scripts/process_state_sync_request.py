@@ -2482,7 +2482,7 @@ def record_formal_decision_report_event(request: dict, bds: dict) -> tuple[bool,
         "parent_request_id": str(bds.get("parent_request_id") or "").strip(),
         "decision_id": str(bds.get("decision_id") or "").strip(),
         "binding_request_id": str(binding.get("request_id") or "").strip(),
-        "binding_parent_request_id": str(binding.get("parent_request_id") or "").strip(),
+        "binding_parent_request_id": str(binding.get("parent_request_id") or bds.get("parent_request_id") or "").strip(),
         "binding_decision_id": str(binding.get("decision_id") or "").strip(),
     }
     if any(not value for value in identity.values()):
