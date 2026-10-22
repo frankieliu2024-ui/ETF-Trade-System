@@ -207,6 +207,47 @@ def _validate_formal_presentation_layout(content: str) -> str:
     return ""
 
 
+def validate_user_visible_numbering(content: str) -> str:
+    """Validate the shared user-visible 1./1） hierarchy for all three ETF tasks."""
+    import re
+    lines = str(content or "").splitlines()
+    primary_expected = 1
+    secondary_expected = None
+    saw_numbered = False
+    heading = re.compile(r"^【[^】]+】$")
+    primary = re.compile(r"^(\\d+)\\.\\s+")
+    secondary = re.compile(r"^(\\d+)）\\s+")
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+        if heading.fullmatch(stripped):
+            primary_expected = 1
+            secondary_expected = None
+            continue
+        m1 = primary.match(stripped)
+        m2 = secondary.match(stripped)
+        if not (m1 or m2):
+            continue
+        saw_numbered = True
+        if index == 0 or lines[index - 1].strip() != "":
+            return "user_visible_numbered_items_need_blank_line"
+        if m1:
+            number = int(m1.group(1))
+            if number != primary_expected:
+                return "user_visible_primary_numbering_not_sequential"
+            primary_expected += 1
+            secondary_expected = 1
+            continue
+        number = int(m2.group(1))
+        if secondary_expected is None:
+            return "user_visible_secondary_without_primary_parent"
+        if number != secondary_expected:
+            return "user_visible_secondary_numbering_not_sequential"
+        secondary_expected += 1
+    if not saw_numbered:
+        return "user_visible_numbering_missing"
+    return ""
+
+
 def validate_formal_presentation_contract(envelope: dict[str, Any]) -> tuple[bool, str]:
     """Fail closed when a BDS presentation is only a compressed summary.
 
@@ -236,6 +277,9 @@ def validate_formal_presentation_contract(envelope: dict[str, Any]) -> tuple[boo
     layout_error = _validate_formal_presentation_layout(content)
     if layout_error:
         return False, layout_error
+    numbering_error = validate_user_visible_numbering(content)
+    if numbering_error:
+        return False, numbering_error
     if "**" in content or any(term in content for term in ("canonical", "writer", "BDS", "reply_freezable", "control plane")):
         return False, "formal_presentation_internal_term_or_markdown"
     missing_objects = []
@@ -352,6 +396,8 @@ def canonical_scheduled_report_events(event_path: str | None = None) -> list[dic
         report_type = str(binding["report_type"])
         content = str(binding["full_content"])
         if report_type not in ACTIVE_REPORT_TYPES or not content:
+            continue
+        if validate_user_visible_numbering(content):
             continue
         event_type = str(event.get("event_type") or "")
         expected_event_type = {
