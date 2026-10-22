@@ -7,15 +7,15 @@
     "snapshot_commit": "330e8c4c80252d0b17ffe527d72775782b3dbb5f",
     "boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
     "timing": {
-      "state_builder_started_at": "2026-10-22T10:15:25Z",
+      "state_builder_started_at": "2026-10-22T10:34:45Z",
       "current_published_at": "2026-10-22T15:15:27+08:00",
-      "market_regime_ready_at": "2026-10-22T10:15:32Z",
-      "market_structure_ready_at": "2026-10-22T10:15:32Z",
-      "full_state_context_observation_at": "2026-10-22T10:15:32Z",
-      "decision_context_written_at": "2026-10-22T10:15:33Z"
+      "market_regime_ready_at": "2026-10-22T10:34:53Z",
+      "market_structure_ready_at": "2026-10-22T10:34:53Z",
+      "full_state_context_observation_at": "2026-10-22T10:34:53Z",
+      "decision_context_written_at": "2026-10-22T10:34:54Z"
     }
   },
-  "generated_at": "2026-10-22T10:15:32Z",
+  "generated_at": "2026-10-22T10:34:53Z",
   "rules_version": "V2.2.34",
   "market_date": "2026-10-22",
   "latest_node": "close",
@@ -746,7 +746,7 @@
     "last_trade_event_id": "broker-screenshot-20261015-141944-exits_5_5084098f663b90e4",
     "rules_version": "V2.2.34",
     "generated_at": "2026-10-22T07:15:27Z",
-    "account_fact_reference_synced_at": "2026-10-21T20:36:43+08:00",
+    "account_fact_reference_synced_at": "2026-10-22T18:34:39+08:00",
     "account_fact_path": "data/state/account_fact.json",
     "account_fact_updated_at": "2026-10-21T15:00:00+08:00",
     "account_fact_status": "VALID",
@@ -1577,7 +1577,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 12.242,
-    "age_seconds": 10805
+    "age_seconds": 11966
   },
   "freshness_at_context_build": {
     "status": "STALE",
@@ -1593,7 +1593,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 12.242,
-    "age_seconds": 10805
+    "age_seconds": 11966
   },
   "data_quality_summary": {
     "pass_count": 17,
@@ -1694,15 +1694,17 @@
     "account_fact_time": "2026-10-21T15:00:00+08:00",
     "market_snapshot_time": "2026-10-22T15:15:27+08:00",
     "market_phase": "POST_CLOSE_GRACE",
-    "context_generated_time": "2026-10-22T10:15:32Z",
+    "context_generated_time": "2026-10-22T10:34:53Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
   "scheduled_pulse_health": {
     "expected_slots": [],
-    "observed_slots": [],
+    "observed_slots": [
+      "cron:30 5 * * 1-5"
+    ],
     "missing_slots": [],
-    "status": "WARNING",
+    "status": "UNKNOWN",
     "observation_basis": "仅当前runtime记录，未调用Actions API，无法区分cron未触发与触发后未产出。",
     "read_only": true
   },
@@ -1734,7 +1736,7 @@
     "read_only": true
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-10-22T18:15:32+08:00",
+    "generated_at_beijing": "2026-10-22T18:34:53+08:00",
     "refresh_mode": "CACHED_STATE",
     "refresh_failures": [],
     "decision_freshness": {
@@ -1743,8 +1745,8 @@
       "captured_at": "2026-10-22T07:15:27+00:00",
       "provider_as_of": "2026-10-22T07:15:23+00:00",
       "effective_as_of": "2026-10-22T07:15:23+00:00",
-      "request_time": "2026-10-22T10:15:32.471479+00:00",
-      "age_seconds": 10809,
+      "request_time": "2026-10-22T10:34:53.882684+00:00",
+      "age_seconds": 11970,
       "post_request": false,
       "preferred_max_age_seconds": 300,
       "fallback_max_age_seconds": 900,
@@ -2217,8 +2219,8 @@
         "market_status_cn": "美股盘前",
         "data_nature_cn": "盘前行情（附最近正式收盘基准）",
         "source": "yahoo_chart_api",
-        "freshness": "FRESH",
-        "freshness_cn": "时点正常",
+        "freshness": "DEGRADED",
+        "freshness_cn": "存在延迟",
         "quality_status": "FRESH",
         "quality_status_cn": "状态待确认",
         "direct_quote": false,
@@ -2243,8 +2245,8 @@
         "market_status_cn": "美股盘前",
         "data_nature_cn": "盘前行情（附最近正式收盘基准）",
         "source": "yahoo_chart_api",
-        "freshness": "FRESH",
-        "freshness_cn": "时点正常",
+        "freshness": "DEGRADED",
+        "freshness_cn": "存在延迟",
         "quality_status": "FRESH",
         "quality_status_cn": "状态待确认",
         "direct_quote": false,
@@ -2528,7 +2530,7 @@
   },
   "decision_trigger": {
     "schema_version": "1.2",
-    "generated_at": "2026-10-22T18:15:32+08:00",
+    "generated_at": "2026-10-22T18:34:53+08:00",
     "status": "NO_NEW_TRIGGER",
     "trigger_type": "",
     "triggered_at": "",
@@ -2549,7 +2551,7 @@
   },
   "capital_efficiency_ranking": {
     "schema_version": "1.2",
-    "generated_at": "2026-10-22T18:15:32+08:00",
+    "generated_at": "2026-10-22T18:34:53+08:00",
     "as_of": "2026-10-22T15:15:27+08:00",
     "e2e_status": "DEGRADED",
     "risk_zone": "RISK_CONTROL",
@@ -2661,7 +2663,7 @@
         "data_quality_status": "PASS",
         "reason": "当前持仓资本用途，继续比较持有、合法释放与其他用途。",
         "quantity": 12200,
-        "market_value": 20886.4,
+        "market_value": 20520.4,
         "releasable_capital_role": "CURRENT_CAPITAL_CAN_BE_EVALUATED_FOR_RELEASE",
         "comparison_basis": [
           "价格/结构",
@@ -2686,7 +2688,7 @@
         "data_quality_status": "PASS",
         "reason": "当前持仓资本用途，继续比较持有、合法释放与其他用途。",
         "quantity": 8500,
-        "market_value": 15385,
+        "market_value": 15546.5,
         "releasable_capital_role": "CURRENT_CAPITAL_CAN_BE_EVALUATED_FOR_RELEASE",
         "comparison_basis": [
           "价格/结构",
@@ -2711,7 +2713,7 @@
         "data_quality_status": "PASS",
         "reason": "当前持仓资本用途，继续比较持有、合法释放与其他用途。",
         "quantity": 17200,
-        "market_value": 14018,
+        "market_value": 13605.2,
         "releasable_capital_role": "CURRENT_CAPITAL_CAN_BE_EVALUATED_FOR_RELEASE",
         "comparison_basis": [
           "价格/结构",
@@ -3027,7 +3029,7 @@
         "data_quality_status": "PASS",
         "reason": "当前持仓资本用途，继续比较持有、合法释放与其他用途。",
         "quantity": 12200,
-        "market_value": 20886.4,
+        "market_value": 20520.4,
         "releasable_capital_role": "CURRENT_CAPITAL_CAN_BE_EVALUATED_FOR_RELEASE",
         "comparison_basis": [
           "价格/结构",
@@ -3052,7 +3054,7 @@
         "data_quality_status": "PASS",
         "reason": "当前持仓资本用途，继续比较持有、合法释放与其他用途。",
         "quantity": 8500,
-        "market_value": 15385,
+        "market_value": 15546.5,
         "releasable_capital_role": "CURRENT_CAPITAL_CAN_BE_EVALUATED_FOR_RELEASE",
         "comparison_basis": [
           "价格/结构",
@@ -3077,7 +3079,7 @@
         "data_quality_status": "PASS",
         "reason": "当前持仓资本用途，继续比较持有、合法释放与其他用途。",
         "quantity": 17200,
-        "market_value": 14018,
+        "market_value": 13605.2,
         "releasable_capital_role": "CURRENT_CAPITAL_CAN_BE_EVALUATED_FOR_RELEASE",
         "comparison_basis": [
           "价格/结构",
@@ -3308,7 +3310,7 @@
     "observation_eligibility_inputs": []
   },
   "intraday_path_features": {
-    "generated_at": "2026-10-22T10:15:25Z",
+    "generated_at": "2026-10-22T10:34:45Z",
     "market_date": "2026-10-22",
     "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
     "read_only": true,
@@ -4866,7 +4868,7 @@
     },
     "market_structure_context": {
       "schema_version": "1.4",
-      "generated_at": "2026-10-22T10:15:32Z",
+      "generated_at": "2026-10-22T10:34:53Z",
       "market_date": "2026-10-22",
       "as_of_beijing": "2026-10-22T15:15:27+08:00",
       "source_snapshot": "data/market/snapshots/2026-10-22_151527.json",
@@ -7805,13 +7807,13 @@
         "code": "159941",
         "name": "纳指ETF",
         "quantity": 12200.0,
-        "available_quantity": 12200.0,
+        "available_quantity": null,
         "asset_class": "ETF",
         "management_scope": "HELD_ETF",
         "role": "",
         "origin": "",
-        "current_price": 1.712,
-        "market_value": 20886.4,
+        "current_price": 1.682,
+        "market_value": 20520.4,
         "pnl": 0.0,
         "pnl_pct": 0.0,
         "source": "account_fact.positions"
@@ -7820,13 +7822,13 @@
         "code": "159981",
         "name": "能源化工",
         "quantity": 8500.0,
-        "available_quantity": 8500.0,
+        "available_quantity": null,
         "asset_class": "ETF",
         "management_scope": "HELD_ETF",
         "role": "",
         "origin": "",
-        "current_price": 1.81,
-        "market_value": 15385.0,
+        "current_price": 1.829,
+        "market_value": 15546.5,
         "pnl": 0.0,
         "pnl_pct": 0.0,
         "source": "account_fact.positions"
@@ -7835,13 +7837,13 @@
         "code": "159992",
         "name": "创新药",
         "quantity": 17200.0,
-        "available_quantity": 17200.0,
+        "available_quantity": null,
         "asset_class": "ETF",
         "management_scope": "HELD_ETF",
         "role": "",
         "origin": "",
-        "current_price": 0.815,
-        "market_value": 14018.0,
+        "current_price": 0.791,
+        "market_value": 13605.2,
         "pnl": 0.0,
         "pnl_pct": 0.0,
         "source": "account_fact.positions"
