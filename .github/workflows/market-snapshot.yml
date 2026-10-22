@@ -881,8 +881,11 @@ jobs:
           if not path.exists():
               raise SystemExit("replay_request does not exist in execution-time main")
           obj = json.loads(path.read_text(encoding="utf-8"))
-          if str(obj.get("request_type") or "").upper() not in {"STATE_SYNC_ONLY", "ACCOUNT_FACT_REFRESH"}:
+          request_type = str(obj.get("request_type") or "").upper()
+          if request_type not in {"STATE_SYNC_ONLY", "ACCOUNT_FACT_REFRESH"}:
               raise SystemExit("replay_request must be STATE_SYNC_ONLY or ACCOUNT_FACT_REFRESH")
+          if request_type == "ACCOUNT_FACT_REFRESH":
+              raise SystemExit(0)
           formal_fact_type = str(obj.get("formal_fact_type") or "").upper()
           interaction_scenario = str(obj.get("interaction_scenario") or "").upper()
           review = obj.get("formal_review")
