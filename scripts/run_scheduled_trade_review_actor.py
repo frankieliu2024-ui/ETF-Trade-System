@@ -1,7 +1,7 @@
 """Run the canonical Trade Review Actor handoff.
 
 This is the single production adapter between a completed Trade Review run and
-the existing Scheduled Review completion builder.  It does not build a second
+the existing Scheduled Review completion builder. It does not build a second
 payload, publish events, send notifications, or re-analyse the review.
 """
 from __future__ import annotations
@@ -37,6 +37,16 @@ def main() -> int:
         choices=("MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"),
     )
     args = parser.parse_args()
+
+    task_run_id, occurrence_id = derive_runtime_identity(
+        args.task_id,
+        args.request_id,
+        args.requested_at_beijing,
+        args.entry_mode,
+        args.task_run_id,
+        args.occurrence_id,
+    )
+
     target = write_completion_request(
         args.formal_review,
         args.request_id,
@@ -46,8 +56,8 @@ def main() -> int:
         args.output,
         args.final_content,
         args.task_id,
-        args.task_run_id,
-        args.occurrence_id,
+        task_run_id,
+        occurrence_id,
         args.entry_mode,
     )
     completion_path = Path(target)
