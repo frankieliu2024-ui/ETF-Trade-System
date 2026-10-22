@@ -140,9 +140,12 @@ jobs:
                 echo "formal_completion_path=$completion_path" >> "$GITHUB_OUTPUT"
                 ;;
               SCHEDULED_REVIEW)
-                echo "Scheduled Review completion push is not a Formal Decision wake; waiting for explicit scheduled_review_completion_path dispatch."
-                echo "formal_completion=false" >> "$GITHUB_OUTPUT"
-                echo "formal_completion_path=" >> "$GITHUB_OUTPUT"
+                # A Scheduled Review completion is itself the canonical handoff
+                # after the actor freezes FINAL_CONTENT. Consume this exact
+                # completion once through the existing event/report/notification
+                # owner; do not require a second browser dispatch.
+                echo "scheduled_review_completion=true" >> "$GITHUB_OUTPUT"
+                echo "scheduled_review_completion_path=$completion_path" >> "$GITHUB_OUTPUT"
                 ;;
               *)
                 echo "Unknown completion contract in $completion_path; fail closed." >&2
@@ -360,10 +363,10 @@ jobs:
 
       - name: Project Scheduled Review completion to canonical review event
         id: scheduled_completion_event
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path != '' }}
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path != '') || (github.event_name == 'push' && steps.push_kind.outputs.scheduled_review_completion == 'true') }}
         shell: bash
         env:
-          COMPLETION_PATH: ${{ inputs.scheduled_review_completion_path }}
+          COMPLETION_PATH: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path || steps.push_kind.outputs.scheduled_review_completion_path }}
         run: |
           set -euo pipefail
           test -f "$COMPLETION_PATH"
@@ -387,7 +390,7 @@ jobs:
           echo "review_event_path=$event_path" >> "$GITHUB_OUTPUT"
 
       - name: Persist Scheduled Review canonical review event
-        if: ${{ github.event_name == 'workflow_dispatch' && steps.scheduled_completion_event.outputs.review_event_path != '' }}
+        if: ${{ ((github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path != '') || (github.event_name == 'push' && steps.push_kind.outputs.scheduled_review_completion == 'true')) && steps.scheduled_completion_event.outputs.review_event_path != '' }}
         shell: bash
         env:
           EVENT_PATH: ${{ steps.scheduled_completion_event.outputs.review_event_path }}
