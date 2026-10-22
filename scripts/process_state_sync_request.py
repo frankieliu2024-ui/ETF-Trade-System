@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 61533)
+Total output lines: 4316
+
 from __future__ import annotations
 
 import argparse
@@ -2208,109 +2211,7 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
         return False, False
     review_scope = str(review.get("review_scope") or "").strip().upper()
     request_phase = str(request.get("market_phase") or request.get("session_stage") or "").strip().upper()
-    review_phase = str(review.get("market_phase") or review.get("session_stage") or "").strip().upper()
-    is_midday_review = (
-        interaction_scenario == "MIDDAY_REVIEW"
-        or review_scope == "MORNING_SESSION_STAGE_ONLY"
-        or "MIDDAY_BREAK" in {request_phase, review_phase}
-    )
-    market_date = str(review.get("market_date") or request.get("market_date") or account.get("last_confirmed_market_date") or "")
-    if not market_date:
-        raise RuntimeError("POST_CLOSE_REVIEW requires market_date")
-    current_path = ROOT / "data" / "state" / "CURRENT.json"
-    current_fact = load_json(current_path) if current_path.exists() else {}
-    current_market_date = str(current_fact.get("market_date") or "")
-    if current_market_date and market_date > current_market_date:
-        raise ValueError(
-            f"POST_CLOSE_REVIEW market_date {market_date} is later than CURRENT.market_date {current_market_date}"
-        )
-    event_path = ROOT / "events" / "reviews" / f"{market_date}.json"
-    prior = load_json(event_path) if event_path.exists() else {}
-    prior_review = prior.get("review") if isinstance(prior.get("review"), dict) else {}
-    incoming_time = parse_time(
-        review.get("reviewed_at_beijing")
-        or review.get("updated_at_beijing")
-        or request.get("requested_at_beijing")
-        or request.get("request_time_beijing")
-        or account.get("updated_at")
-    )
-    prior_time = parse_time(
-        prior.get("reviewed_at_beijing")
-        or prior.get("updated_at_beijing")
-        or prior.get("account_updated_at")
-    )
-    replay_received = parse_time(request.get("requested_at_beijing") or request.get("request_time_beijing"))
-    prior_updated = parse_time(prior.get("updated_at_beijing"))
-    if prior_updated and replay_received and replay_received < prior_updated and review == prior_review:
-        # Exact replay of the already-persisted canonical review: only repair
-        # its CASE human projection. Do not revalidate historical PIT against
-        # today's account, or rewrite the event/closure/current state.
-        _persist_existing_case_detail_projections(prior_review)
-        return True, True
-    # Normalize scheduled trade-review bindings at the canonical owner.
-    # Legacy/recovery requests without a presentation binding remain compatible;
-    # a present binding must satisfy the exact scheduled-delivery contract.
-    raw_presentation_binding = request.get("presentation_binding")
-    is_trade_review_production = (
-        str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION"
-        and str(request.get("source") or "").strip().upper() == "CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR"
-        and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_SCHEDULED_TRADE_REVIEW"
-        and str((raw_presentation_binding or {}).get("task_id") or "").strip() == "ETF交易复盘"
-    )
-    if is_trade_review_production:
-        entry_mode = str(request.get("entry_mode") or "").strip().upper()
-        if entry_mode not in {"MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"}:
-            raise ValueError("scheduled trade review production requires entry_mode=MANUAL_SCHEDULED_TASK or AUTOMATIC_SCHEDULED_TASK")
-        binding_entry_mode = str((raw_presentation_binding or {}).get("entry_mode") or "").strip().upper()
-        if binding_entry_mode != entry_mode:
-            raise ValueError("scheduled trade review production entry_mode must match presentation_binding.entry_mode")
-    presentation_binding = (
-        _validate_presentation_binding(
-            raw_presentation_binding,
-            "ETF_TRADE_REVIEW",
-            strict_production=is_trade_review_production,
-        )
-        if raw_presentation_binding is not None
-        else {}
-    )
-    if presentation_binding:
-        presentation_binding["request_id"] = str(request.get("request_id") or "")
-        presentation_binding["report_id"] = (
-            f"etf_trade_review:{presentation_binding['task_run_id']}"
-        )
-    data_time = dict(review.get("data_time")) if isinstance(review.get("data_time"), dict) else {}
-    if is_midday_review:
-        # Midday Scheduled Review is a valid stage review, not a 15:00 close review.
-        # Preserve the frozen morning boundary and bypass the close-only contract;
-        # the same canonical review event/report path remains the sole delivery chain.
-        data_time["close_data_status"] = "MORNING_STAGE_REFERENCE"
-        data_time["close_data_gap"] = (
-            "This is a MORNING stage review bounded by the 11:30 A-share boundary; "
-            "it is not a full-day session close."
-        )
-        review = dict(review)
-        review["data_time"] = data_time
-    else:
-        current_path = ROOT / "data" / "state" / "CURRENT.json"
-        current = load_json(current_path) if current_path.exists() else {}
-        close_contract = build_close_data_contract(ROOT, current)
-        supplied_close_snapshot = _normalize_close_snapshot_reference(data_time.get("close_snapshot") or review.get("close_snapshot"))
-        canonical_close_snapshot = _normalize_close_snapshot_reference(close_contract.get("latest_snapshot"))
-        canonical_close_verified = (
-            close_contract.get("status") == "VERIFIED_SESSION_CLOSE"
-            and close_contract.get("verified_session_close") is True
-            and close_contract.get("market_date") == market_date
-            and bool(canonical_close_snapshot)
-        )
-        # A present verified close with a mismatched or absent request reference is
-        # a stale/ambiguous input, not a missing-close case. Do not silently turn a
-        # review computed against another snapshot into a degraded formal review.
-        if canonical_close_verified and supplied_close_snapshot != canonical_close_snapshot:
-            return False, False
-        close_verified = canonical_close_verified and supplied_close_snapshot == canonical_close_snapshot
-        # Review completion is independent from close-data completeness. Preserve
-        # the canonical close contract when available; otherwise persist an explicit
-        # degraded review with the missing/invalid evidence boundary. Never invent
+    review_phase = str…1533 tokens truncated…graded review with the missing/invalid evidence boundary. Never invent
         # a close snapshot or promote an intraday fact to 15:00.
         if close_verified:
             data_time["close_data_status"] = "VERIFIED_SESSION_CLOSE"
@@ -3415,6 +3316,25 @@ def normalize_broker_account_fact_ingress(request: dict, supplied: object) -> tu
     if not isinstance(positions, list):
         return supplied, 0
     normalized = json.loads(json.dumps(supplied))
+    # Screenshot adapters may use display-oriented aliases. Normalize them at
+    # the account ingress so the canonical account_fact remains the sole fact
+    # consumed by later Formal runs. Do not infer securities or prices.
+    aliases = {
+        "total_assets": "total_asset",
+        "available_cash": "cash",
+        "securities_market_value": "stock_market_value",
+    }
+    for source, target in aliases.items():
+        if target not in normalized and normalized.get(source) is not None:
+            normalized[target] = normalized[source]
+    if not str(normalized.get("updated_at") or "").strip():
+        receipt_time = (
+            request.get("account_updated_at")
+            or request.get("submitted_at_beijing")
+        )
+        if receipt_time:
+            normalized["updated_at"] = str(receipt_time)
+    normalized.setdefault("source", request.get("source") or "CHATGPT_USER_BROKER_SCREENSHOT")
     kept = []
     unresolved = list(normalized.get("unresolved_assets") or [])
     moved = 0
