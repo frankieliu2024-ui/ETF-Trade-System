@@ -3415,6 +3415,21 @@ def normalize_broker_account_fact_ingress(request: dict, supplied: object) -> tu
     if not isinstance(positions, list):
         return supplied, 0
     normalized = json.loads(json.dumps(supplied))
+    # Normalize display-oriented screenshot aliases at the account ingress.
+    # Formal Decision later consumes only the latest canonical account_fact.
+    aliases = {
+        "total_assets": "total_asset",
+        "available_cash": "cash",
+        "securities_market_value": "stock_market_value",
+    }
+    for source, target in aliases.items():
+        if target not in normalized and normalized.get(source) is not None:
+            normalized[target] = normalized[source]
+    if not str(normalized.get("updated_at") or "").strip():
+        receipt_time = request.get("account_updated_at") or request.get("submitted_at_beijing")
+        if receipt_time:
+            normalized["updated_at"] = str(receipt_time)
+    normalized.setdefault("source", request.get("source") or "CHATGPT_USER_BROKER_SCREENSHOT")
     kept = []
     unresolved = list(normalized.get("unresolved_assets") or [])
     moved = 0
