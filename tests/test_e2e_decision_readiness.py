@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import unittest
+from datetime import datetime
 import tempfile
 from pathlib import Path
 
-from scripts.build_e2e_status import context_component, context_read_contract
+from scripts.build_e2e_status import context_component, context_read_contract, formal_gate_recovery_timeout
 
 
 class E2EDecisionReadinessTests(unittest.TestCase):
@@ -349,6 +350,29 @@ class E2EDecisionReadinessTests(unittest.TestCase):
             {"formal_intraday_context_completeness": {"status": "READY"}},
         )
         self.assertEqual(result["status"], "READY")
+
+    def test_orphaned_formal_gate_terminates_only_after_workflow_timeout(self):
+        gate = {"requested_at_beijing": "2026-10-22T09:25:30+08:00"}
+        empty_query = {"decision_fact_pack": {"trigger": {"request_id": ""}}}
+        self.assertFalse(
+            formal_gate_recovery_timeout(
+                gate, datetime.fromisoformat("2026-10-22T09:30:00+08:00"), empty_query
+            )
+        )
+        self.assertTrue(
+            formal_gate_recovery_timeout(
+                gate, datetime.fromisoformat("2026-10-22T09:32:00+08:00"), empty_query
+            )
+        )
+
+    def test_bound_formal_query_never_times_out_through_orphan_guard(self):
+        gate = {"requested_at_beijing": "2026-10-22T09:25:30+08:00"}
+        bound_query = {"decision_fact_pack": {"trigger": {"request_id": "p1"}}}
+        self.assertFalse(
+            formal_gate_recovery_timeout(
+                gate, datetime.fromisoformat("2026-10-22T10:00:00+08:00"), bound_query
+            )
+        )
 
 
 if __name__ == "__main__":

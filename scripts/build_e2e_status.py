@@ -98,6 +98,30 @@ def parse_time(value: object) -> datetime | None:
     return dt.astimezone(TZ)
 
 
+def formal_gate_recovery_timeout(gate: dict, now: datetime, query: dict) -> bool:
+    """Return True only for an orphaned Formal gate past the producer bound.
+
+    A missing request-bound context normally means WAIT.  It becomes a
+    terminal recovery boundary only when the durable parent timestamp is past
+    the existing workflow timeout and the canonical query context is still
+    empty/unbound.  This prevents an old gate from blocking every later
+    Formal request while preserving the normal same-request wait contract.
+    """
+    if not isinstance(gate, dict) or not isinstance(query, dict):
+        return False
+    pack = query.get("decision_fact_pack")
+    trigger = pack.get("trigger") if isinstance(pack, dict) else None
+    bound_id = str((trigger or {}).get("request_id") or "").strip() if isinstance(trigger, dict) else ""
+    if bound_id:
+        return False
+    requested = parse_time(gate.get("requested_at_beijing"))
+    if requested is None:
+        return False
+    policy = read_json(ROOT / "config" / "runtime_policy.json")
+    timeout_minutes = int(policy.get("workflow_timeout_minutes") or 6)
+    return (now - requested).total_seconds() >= timeout_minutes * 60
+
+
 def write_json(path: Path, obj: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + ".tmp")
@@ -874,6 +898,24 @@ def main() -> int:
                     "projection_preserved_from_non_formal_runtime_request": True,
                     "projection_scope": "FORMAL_DECISION_REQUEST",
                 }
+                if formal_gate_recovery_timeout(prior_gate, now, data["query"]):
+                    components["decision_context"]["formal_reply_gate"] = {
+                        **components["decision_context"]["formal_reply_gate"],
+                        "status": "TERMINAL_FAILURE",
+                        "reply_freezable": False,
+                        "blockers": ["FORMAL_PARENT_RECOVERY_TIMEOUT"],
+                        "actor_action": "TERMINATE_ON_EXPLICIT_FAILURE",
+                        "user_output_allowed": True,
+                        "consumer_status": "TERMINAL_FAILURE",
+                        "projection_scope": "FORMAL_DECISION_REQUEST",
+                        "terminal_failure": {
+                            "error_class": "MAINTENANCE_INCOMPLETE",
+                            "reason": "request-bound query context remained unbound beyond the existing workflow timeout",
+                            "requested_at_beijing": prior_gate.get("requested_at_beijing"),
+                            "terminated_at_beijing": now.isoformat(timespec="seconds"),
+                            "query_context_request_id": "",
+                        },
+                    }
     # A state-sync run may correctly rebuild the account component while
     # preserving the prior Formal Decision gate because it has no new formal
     # query context.  Once the canonical account fact has converged, remove
