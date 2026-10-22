@@ -438,8 +438,7 @@ def write_completion_request(
     target = (ROOT / output_path).resolve() if output_path else REQUEST_DIR / f"{payload['request_id']}.json"
     if ROOT not in target.parents or target.suffix != ".json":
         raise ValueError("output path must be a repository JSON path")
-    serialized = json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "
-"
+    serialized = json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
     if target.exists():
         if target.read_text(encoding="utf-8") == serialized:
             return target
