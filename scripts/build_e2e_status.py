@@ -839,7 +839,7 @@ def maintenance_component(maintenance: dict) -> dict:
 
 
 def main() -> int:
-    data = {name: read_json(path) for name, path in FILES.items()}
+    # One canonical Beijing clock for all derived lifecycle decisions.\n    # Orphan-gate recovery compares persisted request time with this instant.\n    now = datetime.now(TZ)\n    data = {name: read_json(path) for name, path in FILES.items()}
     query_read = context_read_contract(FILES["query"], data["query"])
     decision_read = context_read_contract(FILES["decision"], data["decision"])
     prior = read_json(OUT)
