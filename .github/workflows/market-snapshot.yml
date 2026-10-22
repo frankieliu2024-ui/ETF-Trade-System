@@ -1054,11 +1054,9 @@ jobs:
         env:
           ACCOUNT_SYNC_OUTCOME: ${{ steps.state_sync.outcome }}
         run: |
-          sync_request_id="${ACCOUNT_SYNC_REQUEST_ID:-$TRIGGERING_REQUEST_ID}"
-          sync_request_path="${ACCOUNT_SYNC_REQUEST_FILE:-$TRIGGERING_REQUEST_FILE}"
           python scripts/record_account_sync_maintenance.py \
-            --request-id "$sync_request_id" \
-            --request-path "$sync_request_path" \
+            --request-id "$TRIGGERING_REQUEST_ID" \
+            --request-path "$TRIGGERING_REQUEST_FILE" \
             --owner-outcome "$ACCOUNT_SYNC_OUTCOME" \
             --run-id "$GITHUB_RUN_ID"
           git config user.name "github-actions[bot]"
