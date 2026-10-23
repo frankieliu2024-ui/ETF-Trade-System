@@ -321,22 +321,28 @@ jobs:
           PY
           mkdir -p "/tmp/etf-triggering-request/$(dirname "$REQUEST_FILE")"
           cp "$REQUEST_FILE" "/tmp/etf-triggering-request/$REQUEST_FILE"
-          # Persist the existing ingress owner's normalized manual-request envelope
-          # into the preserved triggering copy. Downstream query-context construction
-          # must consume the canonical receipt time, not the raw caller payload.
+          # Normalize the recovery envelope in the workspace and in the preserved
+          # copy. The query-context builder consumes REQUEST_FILE from the workspace;
+          # normalizing only the temp copy leaves it reading the raw/shared envelope.
+          # Keep scheduled identity unchanged; normalize both manual entry forms.
           python - "$REQUEST_FILE" "/tmp/etf-triggering-request/$REQUEST_FILE" <<'PY'
           import json
           import sys
           from pathlib import Path
           from scripts.runtime_session_gate import normalize_manual_request_session
           src = Path(sys.argv[1])
-          dst = Path(sys.argv[2])
+          preserved = Path(sys.argv[2])
           request = json.loads(src.read_text(encoding="utf-8"))
-          source = str(request.get("source") or request.get("requested_by") or "").upper()
-          if source == "CHATGPT_MANUAL_FORMAL_ANALYSIS":
+          source = str(request.get("source") or request.get("requested_by") or "").strip().upper()
+          if source in {
+              "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+              "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
+          }:
               policy = json.loads(Path("config/runtime_policy.json").read_text(encoding="utf-8"))
               request = normalize_manual_request_session(request, policy)
-              dst.write_text(json.dumps(request, ensure_ascii=False, indent=2) + "\\n", encoding="utf-8")
+          serialized = json.dumps(request, ensure_ascii=False, indent=2) + "\n"
+          src.write_text(serialized, encoding="utf-8")
+          preserved.write_text(serialized, encoding="utf-8")
           PY
           echo "TRIGGERING_REQUEST_FILE=$REQUEST_FILE" >> "$GITHUB_ENV"
           echo "TRIGGERING_REQUEST_EXPECTED=true" >> "$GITHUB_ENV"
@@ -1202,7 +1208,7 @@ jobs:
           else
             python scripts/build_query_context.py "${REQUEST_ARGS[@]}"
           fi
-          python scripts/refresh_gate.py --annotate-contexts
+          TRIGGERING_REQUEST_FILE="$REQUEST_FILE" python scripts/refresh_gate.py --annotate-contexts
           # A formal request is not complete unless the request-bound query
           # context is materially present before downstream persistence.
           if [ -n "$REQUEST_FILE" ] && [ -f "$REQUEST_FILE" ]; then
@@ -1214,10 +1220,20 @@ jobs:
           context = json.loads(context_path.read_text(encoding="utf-8")) if context_path.exists() and context_path.stat().st_size else {}
           pack = context.get("decision_fact_pack") or {}
           trigger = pack.get("trigger") or {}
-          expected = str(request.get("request_id") or "").strip()
-          actual = str(trigger.get("request_id") or "").strip()
-          if not expected or actual != expected:
-              raise SystemExit(f"request-bound query context missing or mismatched: expected={expected} actual={actual}")
+          expected = {
+              "request_id": str(request.get("request_id") or "").strip(),
+              "source": str(request.get("source") or request.get("requested_by") or "").strip(),
+              "entry_mode": str(request.get("entry_mode") or "").strip(),
+              "requested_at_beijing": str(request.get("requested_at_beijing") or request.get("request_time") or "").strip(),
+          }
+          actual = {
+              "request_id": str(trigger.get("request_id") or "").strip(),
+              "source": str(trigger.get("source") or "").strip(),
+              "entry_mode": str(trigger.get("entry_mode") or "").strip(),
+              "requested_at_beijing": str(trigger.get("requested_at_beijing") or "").strip(),
+          }
+          if any(not expected[key] or actual[key] != expected[key] for key in expected):
+              raise SystemExit(f"request-bound query context identity mismatch: expected={expected} actual={actual}")
           PY
           fi
 
