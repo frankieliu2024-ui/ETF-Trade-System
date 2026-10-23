@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-10-23T18:38:01+08:00",
+  "generated_at": "2026-10-23T18:58:09+08:00",
   "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -51,19 +51,17 @@
       "decision_context": true,
       "minimum_decision_context": "READY_OR_NOT_APPLICABLE",
       "observability_boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
-      "request_bound": false,
+      "request_bound": true,
       "formal_reply_gate": {
-        "request_id": "formal-parent-formal-20261023T181753+0800-x4m8q2",
-        "requested_at_beijing": "2026-10-23T18:17:53+08:00",
-        "status": "TERMINAL_FAILURE",
-        "reply_freezable": false,
-        "blockers": [
-          "FORMAL_PARENT_RECOVERY_TIMEOUT"
-        ],
+        "request_id": "formal-parent-20261023T185715+0800-z8n4c6",
+        "requested_at_beijing": "2026-10-23T18:57:15+08:00",
+        "status": "READY",
+        "reply_freezable": true,
+        "blockers": [],
         "source": "decision_fact_pack.formal_reply_freeze",
         "consumer_manifest": {
-          "request_id": "formal-parent-formal-20261023T181753+0800-x4m8q2",
-          "requested_at_beijing": "2026-10-23T18:17:53+08:00",
+          "request_id": "formal-parent-20261023T185715+0800-z8n4c6",
+          "requested_at_beijing": "2026-10-23T18:57:15+08:00",
           "query_context_path": "data/state/query_context.json",
           "decision_context_path": "data/state/decision_context.json",
           "decision_work_package_present": true,
@@ -86,14 +84,14 @@
         },
         "request_bound_fact_projection": {
           "trigger": {
-            "request_id": "formal-parent-formal-20261023T181753+0800-x4m8q2",
-            "requested_at_beijing": "2026-10-23T18:17:53+08:00"
+            "request_id": "formal-parent-20261023T185715+0800-z8n4c6",
+            "requested_at_beijing": "2026-10-23T18:57:15+08:00"
           },
           "formal_reply_freeze": {
             "status": "READY",
             "reply_freezable": true,
             "blockers": [],
-            "request_id": "formal-parent-formal-20261023T181753+0800-x4m8q2",
+            "request_id": "formal-parent-20261023T185715+0800-z8n4c6",
             "post_request_pit_resolved": true,
             "discovery_status": "READY",
             "rule": "Manual formal replies wait only for same-request action-determinative facts that are still legally forming. Once those facts resolve (including explicit terminal degradation), complete analysis and the first user-visible decision reply must proceed without waiting for Decision Fact persistence/post-write acceptance or any downstream Dashboard/account/E2E/notification/research projection. Persistence failure is disclosed as '正式决策尚未持久化' and repaired separately; it does not suppress an otherwise valid business decision reply."
@@ -142,7 +140,7 @@
                 "decision_object": "159941",
                 "security": "纳指ETF",
                 "current_quantity": 12200,
-                "current_capital_occupation": 20520.4,
+                "current_capital_occupation": 20349.6,
                 "alternatives": {
                   "HOLD": "继续占用当前资本",
                   "REDUCE": "部分释放资本",
@@ -156,7 +154,7 @@
                 "decision_object": "159981",
                 "security": "能源化工",
                 "current_quantity": 8500,
-                "current_capital_occupation": 15546.5,
+                "current_capital_occupation": 15708.0,
                 "alternatives": {
                   "HOLD": "继续占用当前资本",
                   "REDUCE": "部分释放资本",
@@ -170,7 +168,7 @@
                 "decision_object": "159992",
                 "security": "创新药",
                 "current_quantity": 17200,
-                "current_capital_occupation": 13605.2,
+                "current_capital_occupation": 13932.0,
                 "alternatives": {
                   "HOLD": "继续占用当前资本",
                   "REDUCE": "部分释放资本",
@@ -6391,7 +6389,7 @@
                 "price": null,
                 "change_pct": null,
                 "market_phase": "PRE_MARKET",
-                "as_of_beijing": "2026-10-23T18:18:08+08:00",
+                "as_of_beijing": "2026-10-23T18:56:19+08:00",
                 "quality_status": "PASS",
                 "provider": ""
               },
@@ -6401,7 +6399,7 @@
                 "price": null,
                 "change_pct": null,
                 "market_phase": "PRE_MARKET",
-                "as_of_beijing": "2026-10-23T18:17:27+08:00",
+                "as_of_beijing": "2026-10-23T18:57:37+08:00",
                 "quality_status": "PASS",
                 "provider": ""
               },
@@ -6581,7 +6579,7 @@
                 "price": null,
                 "change_pct": null,
                 "market_phase": "PRE_MARKET",
-                "as_of_beijing": "2026-10-23T17:51:27+08:00",
+                "as_of_beijing": "2026-10-23T18:20:13+08:00",
                 "quality_status": "FRESH",
                 "provider": ""
               },
@@ -6591,7 +6589,7 @@
                 "price": null,
                 "change_pct": null,
                 "market_phase": "PRE_MARKET",
-                "as_of_beijing": "2026-10-23T17:50:24+08:00",
+                "as_of_beijing": "2026-10-23T18:20:14+08:00",
                 "quality_status": "FRESH",
                 "provider": ""
               },
@@ -8053,8 +8051,8 @@
                     }
                   },
                   "us_extended_hours_context": {
-                    "generated_at": "2026-10-23T09:51:42Z",
-                    "generated_at_beijing": "2026-10-23T17:51:42+08:00",
+                    "generated_at": "2026-10-23T10:20:30Z",
+                    "generated_at_beijing": "2026-10-23T18:20:30+08:00",
                     "scope": "US_SESSION_CONTEXT",
                     "quality_status": "DEGRADED",
                     "base_proxies": [
@@ -8077,18 +8075,18 @@
                         "market_phase_of_latest": "PRE_MARKET",
                         "quality_status": "FRESH",
                         "freshness_status": "FRESH",
-                        "data_age_seconds": 15,
+                        "data_age_seconds": 17,
                         "current_market_phase": "PRE_MARKET",
                         "latest": {
-                          "open": 704.63,
-                          "high": 704.63,
-                          "low": 704.63,
-                          "close": 704.63,
+                          "open": 705.005,
+                          "high": 705.005,
+                          "low": 705.005,
+                          "close": 705.005,
                           "volume": 0,
-                          "timestamp": 1792749087,
-                          "as_of_utc": "2026-10-23T09:51:27Z",
-                          "as_of_local": "2026-10-23T05:51:27-04:00",
-                          "as_of_beijing": "2026-10-23T17:51:27+08:00",
+                          "timestamp": 1792750813,
+                          "as_of_utc": "2026-10-23T10:20:13Z",
+                          "as_of_local": "2026-10-23T06:20:13-04:00",
+                          "as_of_beijing": "2026-10-23T18:20:13+08:00",
                           "market_date_local": "2026-10-23",
                           "session": "PRE_MARKET"
                         },
@@ -8115,7 +8113,7 @@
                           "late_session_change_pct": -2.0913,
                           "sampling_note": "由Yahoo 5分钟现金盘bar重建日内路径；用于总结高低点、修复/回撤和分段走势，不直接生成A股交易动作。"
                         },
-                        "extended_change_vs_regular_close_pct": 0.0057,
+                        "extended_change_vs_regular_close_pct": 0.0589,
                         "decision_note": "NDX/SOX是正式现金盘指数，只在REGULAR承担直接指数实时语义；其盘前/盘后值仅作最近现金盘SESSION_REFERENCE。QQQ/SOXX用于PRE_MARKET/POST_MARKET前置信号，也可作为现金盘数据异常时的明确代理备份。扩展时段不得把ETF代理涨跌直接等同于NDX/SOX正式指数涨跌，也不得单独生成A股ETF动作。",
                         "object": "QQQ"
                       },
@@ -8129,18 +8127,18 @@
                         "market_phase_of_latest": "PRE_MARKET",
                         "quality_status": "FRESH",
                         "freshness_status": "FRESH",
-                        "data_age_seconds": 78,
+                        "data_age_seconds": 16,
                         "current_market_phase": "PRE_MARKET",
                         "latest": {
-                          "open": 480.88,
-                          "high": 480.88,
-                          "low": 480.88,
-                          "close": 480.88,
+                          "open": 480.7,
+                          "high": 480.7,
+                          "low": 480.7,
+                          "close": 480.7,
                           "volume": 0,
-                          "timestamp": 1792749024,
-                          "as_of_utc": "2026-10-23T09:50:24Z",
-                          "as_of_local": "2026-10-23T05:50:24-04:00",
-                          "as_of_beijing": "2026-10-23T17:50:24+08:00",
+                          "timestamp": 1792750814,
+                          "as_of_utc": "2026-10-23T10:20:14Z",
+                          "as_of_local": "2026-10-23T06:20:14-04:00",
+                          "as_of_beijing": "2026-10-23T18:20:14+08:00",
                           "market_date_local": "2026-10-23",
                           "session": "PRE_MARKET"
                         },
@@ -8167,7 +8165,7 @@
                           "late_session_change_pct": -5.5332,
                           "sampling_note": "由Yahoo 5分钟现金盘bar重建日内路径；用于总结高低点、修复/回撤和分段走势，不直接生成A股交易动作。"
                         },
-                        "extended_change_vs_regular_close_pct": 1.1187,
+                        "extended_change_vs_regular_close_pct": 1.0808,
                         "decision_note": "NDX/SOX是正式现金盘指数，只在REGULAR承担直接指数实时语义；其盘前/盘后值仅作最近现金盘SESSION_REFERENCE。QQQ/SOXX用于PRE_MARKET/POST_MARKET前置信号，也可作为现金盘数据异常时的明确代理备份。扩展时段不得把ETF代理涨跌直接等同于NDX/SOX正式指数涨跌，也不得单独生成A股ETF动作。",
                         "object": "SOXX"
                       },
@@ -8181,7 +8179,7 @@
                         "market_phase_of_latest": "POST_MARKET",
                         "quality_status": "STALE",
                         "freshness_status": "STALE",
-                        "data_age_seconds": 49902,
+                        "data_age_seconds": 51630,
                         "current_market_phase": "PRE_MARKET",
                         "latest": {
                           "open": 28958.6875,
@@ -8233,7 +8231,7 @@
                         "market_phase_of_latest": "POST_MARKET",
                         "quality_status": "STALE",
                         "freshness_status": "STALE",
-                        "data_age_seconds": 49902,
+                        "data_age_seconds": 51630,
                         "current_market_phase": "PRE_MARKET",
                         "latest": {
                           "open": 10731.9775390625,
@@ -8389,7 +8387,7 @@
                 },
                 "market_structure_context": {
                   "schema_version": "1.4",
-                  "generated_at": "2026-10-23T10:06:04Z",
+                  "generated_at": "2026-10-23T10:38:08Z",
                   "market_date": "2026-10-23",
                   "as_of_beijing": "2026-10-23T15:07:07+08:00",
                   "source_snapshot": "data/market/snapshots/2026-10-23_150707.json",
@@ -10929,7 +10927,7 @@
                     "name": "纳指ETF",
                     "asset_type": "",
                     "quantity": 12200,
-                    "market_value": 20520.4,
+                    "market_value": 20349.6,
                     "cost": 1.626
                   },
                   {
@@ -10937,7 +10935,7 @@
                     "name": "能源化工",
                     "asset_type": "",
                     "quantity": 8500,
-                    "market_value": 15546.5,
+                    "market_value": 15708.0,
                     "cost": 1.744
                   },
                   {
@@ -10945,7 +10943,7 @@
                     "name": "创新药",
                     "asset_type": "",
                     "quantity": 17200,
-                    "market_value": 13605.2,
+                    "market_value": 13932.0,
                     "cost": 0.868
                   }
                 ],
@@ -11158,38 +11156,113 @@
         "projection_scope": "FORMAL_DECISION_REQUEST",
         "parent_request_source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
         "parent_request_entry_mode": "MANUAL_CONVERSATION",
-        "actor_action": "TERMINATE_ON_EXPLICIT_FAILURE",
-        "user_output_allowed": true,
+        "actor_action": "COMPLETE_BUSINESS_DECISION_NOW",
+        "user_output_allowed": false,
         "business_decision_allowed": true,
         "final_content_generation_allowed": true,
-        "consumer_status": "TERMINAL_FAILURE",
-        "required_problem_ids": [],
-        "required_problem_count": 0,
-        "business_answer_contract": null,
-        "ready_handoff": null,
-        "request_bound": false,
-        "projection_preserved_from_non_formal_runtime_request": true,
-        "terminal_failure": {
-          "error_class": "MAINTENANCE_INCOMPLETE",
-          "reason": "request-bound query context remained unbound beyond the existing workflow timeout",
-          "requested_at_beijing": "2026-10-23T18:17:53+08:00",
-          "terminated_at_beijing": "2026-10-23T18:37:59+08:00",
-          "query_context_request_id": ""
+        "consumer_status": "BUSINESS_DECISION_READY",
+        "required_problem_ids": [
+          "RISK_PERMISSION",
+          "MAIN_CANDIDATE",
+          "DEPLOYABLE_CASH",
+          "RELEASABLE_CAPITAL",
+          "TRIAL_CONFIRM_CAPACITY",
+          "CONCENTRATION_COMMON_RISK",
+          "NEXT_UNIT_CAPITAL_USE",
+          "HOLDING:159941",
+          "HOLDING:159981",
+          "HOLDING:159992",
+          "OBSERVATION:588000",
+          "OBSERVATION:159781",
+          "OBSERVATION:159941",
+          "OBSERVATION:513180",
+          "OBSERVATION:159561",
+          "OBSERVATION:513520",
+          "OBSERVATION:518880",
+          "OBSERVATION:159992",
+          "OBSERVATION:515880",
+          "OBSERVATION:159326",
+          "OBSERVATION:515220",
+          "OBSERVATION:513350",
+          "OBSERVATION:159981",
+          "OBSERVATION:515080",
+          "DISCOVERY:159248",
+          "DISCOVERY:159565",
+          "DISCOVERY:159663",
+          "DISCOVERY:159667",
+          "DISCOVERY:159805",
+          "DISCOVERY:159855",
+          "DISCOVERY:516270",
+          "DISCOVERY:516520"
+        ],
+        "required_problem_count": 32,
+        "business_answer_contract": "DWP_EXACT_COVERAGE_BEFORE_PRESENTATION",
+        "ready_handoff": {
+          "required": true,
+          "submission_type": "BUSINESS_DECISION_SOURCE",
+          "source": "CHATGPT_BUSINESS_DECISION_RESPONSE",
+          "parent_request_id": "formal-parent-20261023T185715+0800-z8n4c6",
+          "required_payload_fields": [
+            "request_id",
+            "parent_request_id",
+            "entry_mode",
+            "source",
+            "task_id",
+            "task_run_id",
+            "occurrence_id",
+            "market_date",
+            "decision_response.answers",
+            "decision_id",
+            "consumed_snapshot",
+            "presentation_content",
+            "content_hash",
+            "target_path"
+          ],
+          "target_path": "requests/live_snapshot/formal-parent-20261023T185715+0800-z8n4c6__business_decision_source.json",
+          "binding_rules": {
+            "parent_request_id": "formal-parent-20261023T185715+0800-z8n4c6",
+            "allowed_sources": [
+              "CHATGPT_BUSINESS_DECISION_RESPONSE"
+            ],
+            "forbid_historical_fallback": true,
+            "read_back_required": true,
+            "formal_decision_notification_chain_starts_at_bds": false,
+            "completion_and_report_not_required_for_formal_decision_notification": false,
+            "bds_must_be_written_and_read_back_before_user_reply": true,
+            "bds_and_completion_atomic_commit_required": true
+          },
+          "business_decision_allowed": true,
+          "final_content_generation_allowed": true,
+          "user_reply_precondition": true,
+          "notification_attempt_precondition": true,
+          "provider_success_not_required_for_user_reply": true,
+          "user_reply_contract": {
+            "must_be_first_user_visible_message": true,
+            "must_contain_complete_final_content": true,
+            "status_only_reply_forbidden": true,
+            "handoff_status_cannot_replace_content": true,
+            "bds_must_reuse_exact_final_content": true
+          },
+          "post_reply_async": false,
+          "provider_success_async": false,
+          "must_read_back_before_reply": true,
+          "bds_and_completion_atomic_commit_required": true,
+          "historical_fallback_forbidden": true
         }
       },
       "context_read_contract": {
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 1242330,
-          "sha256": "40c21491a48fa89e37ffff4126f803946452704f776f05a508b9f53c28d40efc",
+          "byte_count": 1532036,
+          "sha256": "30602d9341b6b5283c85c7110cab728dbec0ed7cf841a38f4e79df0dd160328e",
           "parsed_object": true
         },
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 423947,
-          "sha256": "95a6a63c9277ab4a0e9dc66f49ec78a2cd75b8497b3eee3543c5b4d5456c2ffd",
+          "byte_count": 496896,
+          "sha256": "69bffdfc01f87ba0cc186d0427950dce3bd2d4e80410b7f05e0ee79ee57155cf",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -11207,7 +11280,7 @@
     "maintenance": {
       "status": "READY",
       "reason": "maintenance guard passed",
-      "checked_at": "2026-10-23T18:18:17+08:00"
+      "checked_at": "2026-10-23T18:57:39+08:00"
     }
   },
   "blockers": [],
@@ -11218,15 +11291,15 @@
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 1242330,
-      "sha256": "40c21491a48fa89e37ffff4126f803946452704f776f05a508b9f53c28d40efc",
+      "byte_count": 1532036,
+      "sha256": "30602d9341b6b5283c85c7110cab728dbec0ed7cf841a38f4e79df0dd160328e",
       "parsed_object": true
     },
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 423947,
-      "sha256": "95a6a63c9277ab4a0e9dc66f49ec78a2cd75b8497b3eee3543c5b4d5456c2ffd",
+      "byte_count": 496896,
+      "sha256": "69bffdfc01f87ba0cc186d0427950dce3bd2d4e80410b7f05e0ee79ee57155cf",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"
