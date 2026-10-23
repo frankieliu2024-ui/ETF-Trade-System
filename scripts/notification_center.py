@@ -249,13 +249,12 @@ def validate_user_visible_numbering(content: str) -> str:
 
 
 def validate_formal_presentation_contract(envelope: dict[str, Any]) -> tuple[bool, str]:
-    """Fail closed when a BDS presentation is only a compressed summary.
+    """Fail closed when a Formal Decision presentation is incomplete.
 
     The notification owner must protect the user-visible contract as well as
     request identity and content hash. Structured answers are the coverage
     source; every coded object must remain visible in the frozen report.
-    Legacy completion fixtures without answers remain compatible because this
-    guard is specifically for the BDS handoff.
+    The guard applies to the current shared completion handoff.
     """
     content = envelope.get("presentation_content")
     answers = (envelope.get("decision_response") or {}).get("answers")
@@ -304,7 +303,7 @@ def validate_formal_presentation_contract(envelope: dict[str, Any]) -> tuple[boo
 
 def formal_presentation_event() -> dict | None:
     """Formal Decision delivery is allowed only from an exact canonical review event."""
-    # The former BDS/FORMAL_PRESENTATION_PATH projection is deliberately
+    # The former direct presentation projection is deliberately
     # disabled.  A completion event must first create and bind
     # events/reviews/formal_<occurrence_id>.json.
     return None
@@ -315,9 +314,8 @@ def report_delivery_event() -> dict | None:
     direct = formal_presentation_event()
     if direct is not None:
         return direct
-    # An explicitly supplied current Formal Decision BDS is authoritative.
-    # Never fall back to legacy REPORT/review scanning or stale notification
-    # state when that direct binding is invalid.
+    # An explicitly supplied current presentation path is authoritative.
+    # Never fall back to stale notification state when that direct binding is invalid.
     if direct_path:
         return None
     # A canonical Scheduled Review push must bind this occurrence to the exact
