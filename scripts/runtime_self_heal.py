@@ -144,7 +144,7 @@ def derived_context_identity_drift(current: dict, review_context: dict) -> bool:
     return False
 
 
-def latest_unfinished_formal_parent() -> tuple[str | None, str | None]:
+def latest_unfinished_formal_parent(*, allow_manual: bool = True) -> tuple[str | None, str | None]:
     """Find the newest durable Formal parent that lacks same-request context.
 
     Reuses the existing market-snapshot producer and formal replay input; it
@@ -152,6 +152,11 @@ def latest_unfinished_formal_parent() -> tuple[str | None, str | None]:
     """
     directory = ROOT / "requests" / "live_snapshot"
     parents: list[tuple[datetime, str, Path]] = []
+    allowed_sources = {
+        "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
+        "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+        "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
+    } if allow_manual else {"CHATGPT_SCHEDULED_FORMAL_ANALYSIS"}
     if not directory.exists():
         return None, None
     for path in directory.glob("*.json"):
@@ -162,11 +167,7 @@ def latest_unfinished_formal_parent() -> tuple[str | None, str | None]:
         # manual Formal Decision. Excluding its actor source makes the
         # self-healer fall back to an older manual parent and can repeatedly
         # steal recovery from the active request.
-        if str(request.get("source") or "").upper() not in {
-            "CHATGPT_MANUAL_FORMAL_ANALYSIS",
-            "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
-            "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
-        }:
+        if str(request.get("source") or "").upper() not in allowed_sources:
             continue
         request_id = str(request.get("request_id") or "").strip()
         stamp = parse_dt(request.get("requested_at_beijing") or request.get("request_time_beijing"))
@@ -187,7 +188,7 @@ def latest_unfinished_formal_parent() -> tuple[str | None, str | None]:
             return None, None
     return str(parent_path.relative_to(ROOT)).replace("\\", "/"), parent_id
 
-def formal_parent_handoff_gap() -> tuple[str | None, str | None, str | None]:
+def formal_parent_handoff_gap(*, allow_manual: bool = True) -> tuple[str | None, str | None, str | None]:
     """Detect a READY Formal parent whose completion projection is still absent.
 
     This is an observability/escalation guard only. It never replays a Formal
@@ -197,15 +198,16 @@ def formal_parent_handoff_gap() -> tuple[str | None, str | None, str | None]:
     """
     directory = ROOT / "requests" / "live_snapshot"
     parents: list[tuple[datetime, str, Path]] = []
+    allowed_sources = {
+        "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
+        "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+        "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
+    } if allow_manual else {"CHATGPT_SCHEDULED_FORMAL_ANALYSIS"}
     for path in directory.glob("*.json") if directory.exists() else []:
         request = load_json(path, {}) or {}
         if str(request.get("request_type") or "").upper() != "MARKET_QUOTE_REFRESH":
             continue
-        if str(request.get("source") or "").upper() not in {
-            "CHATGPT_MANUAL_FORMAL_ANALYSIS",
-            "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
-            "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
-        }:
+        if str(request.get("source") or "").upper() not in allowed_sources:
             continue
         request_id = str(request.get("request_id") or "").strip()
         stamp = parse_dt(request.get("requested_at_beijing") or request.get("request_time_beijing"))
@@ -364,8 +366,11 @@ def assess(now: datetime | None = None) -> dict:
     master_ver = master_version()
     current_ver = str(current.get("rules_version") or "")
     review_context = load_json(REVIEW_CONTEXT_PATH, {}) or {}
-    formal_replay_path, formal_replay_parent_id = latest_unfinished_formal_parent()
-    formal_handoff_path, formal_handoff_parent_id, formal_handoff_missing = formal_parent_handoff_gap()
+    # Automatic watchdog recovery must never let an unfinished manual request
+    # occupy the global formal gate for a later scheduled occurrence. Manual
+    # requests remain recoverable only through their explicit manual path.
+    formal_replay_path, formal_replay_parent_id = latest_unfinished_formal_parent(allow_manual=False)
+    formal_handoff_path, formal_handoff_parent_id, formal_handoff_missing = formal_parent_handoff_gap(allow_manual=False)
     review_ver = str(review_context.get("rules_version") or "")
     review_identity_drift = derived_context_identity_drift(current, review_context)
 
