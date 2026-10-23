@@ -112,7 +112,18 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/state/account_fact.json data/state/etf_strategy_equity.json data/state/trade_fact_correction_receipt.json events/trades ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md ETF当前状态_DASHBOARD.md
           git commit -m "chore: apply confirmed trade fact corrections"
-          git push
+          for attempt in 1 2 3; do
+            git fetch origin main
+            if git rebase origin/main && git push origin HEAD:main; then
+              break
+            fi
+            git rebase --abort || true
+            if [ "$attempt" = "3" ]; then
+              echo "bounded main publication retry exhausted" >&2
+              exit 1
+            fi
+            sleep 2
+          done
 
       - name: Create deterministic Formal Decision schedule ingress
         if: ${{ github.event_name == 'schedule' }}
@@ -131,7 +142,18 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add requests/live_snapshot
           git commit -m "chore: create scheduled formal decision ingress"
-          git push
+          for attempt in 1 2 3; do
+            git fetch origin main
+            if git rebase origin/main && git push origin HEAD:main; then
+              break
+            fi
+            git rebase --abort || true
+            if [ "$attempt" = "3" ]; then
+              echo "bounded main publication retry exhausted" >&2
+              exit 1
+            fi
+            sleep 2
+          done
       - name: Reject ambiguous recovery inputs
         if: ${{ github.event_name == 'workflow_dispatch' }}
         shell: bash
@@ -1065,7 +1087,18 @@ jobs:
             echo "Formal Decision canonical event already present; no producer commit required."
           else
             git commit -m "chore: project formal decision completion"
-            git push
+            for attempt in 1 2 3; do
+            git fetch origin main
+            if git rebase origin/main && git push origin HEAD:main; then
+              break
+            fi
+            git rebase --abort || true
+            if [ "$attempt" = "3" ]; then
+              echo "bounded main publication retry exhausted" >&2
+              exit 1
+            fi
+            sleep 2
+          done
           fi
 
       - name: Record broker account sync maintenance receipt
@@ -1084,7 +1117,18 @@ jobs:
           git add data/state/maintenance_health.json
           if ! git diff --cached --quiet; then
             git commit -m "chore: record broker account sync maintenance receipt"
-            git push
+            for attempt in 1 2 3; do
+            git fetch origin main
+            if git rebase origin/main && git push origin HEAD:main; then
+              break
+            fi
+            git rebase --abort || true
+            if [ "$attempt" = "3" ]; then
+              echo "bounded main publication retry exhausted" >&2
+              exit 1
+            fi
+            sleep 2
+          done
           fi
       - name: Build objective intraday market delta
         # Derived observability must not block the formal decision critical path.
