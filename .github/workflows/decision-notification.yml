@@ -414,6 +414,24 @@ jobs:
           test -f "$EVENT_PATH"
           event_backup="/tmp/scheduled-review-event.json"
           cp -- "$EVENT_PATH" "$event_backup"
+          closure_path=$(python - "$EVENT_PATH" <<'PY'
+import json, sys
+event = json.load(open(sys.argv[1], encoding="utf-8"))
+market_date = str(event.get("market_date") or "").strip()
+print(f"data/state/close_review_closure_{market_date}.json" if market_date else "")
+PY
+)
+          report_path=$(python - "$EVENT_PATH" <<'PY'
+import json, sys
+event = json.load(open(sys.argv[1], encoding="utf-8"))
+report_id = str(event.get("report_id") or "").strip()
+print(f"requests/report_delivery/{report_id.replace(':', '__')}.json" if report_id else "")
+PY
+)
+          closure_backup="/tmp/scheduled-review-closure.json"
+          report_backup="/tmp/scheduled-review-report.json"
+          [ -n "$closure_path" ] && [ -f "$closure_path" ] && cp -- "$closure_path" "$closure_backup" || true
+          [ -n "$report_path" ] && [ -f "$report_path" ] && cp -- "$report_path" "$report_backup" || true
           git config user.name "ETF notification bot"
           git config user.email "etf-notification-bot@users.noreply.github.com"
           for attempt in 1 2 3; do
@@ -421,7 +439,17 @@ jobs:
             git reset --hard origin/main
             mkdir -p "$(dirname "$EVENT_PATH")"
             cp -- "$event_backup" "$EVENT_PATH"
+            if [ -n "$closure_path" ] && [ -f "$closure_backup" ]; then
+              mkdir -p "$(dirname "$closure_path")"
+              cp -- "$closure_backup" "$closure_path"
+            fi
+            if [ -n "$report_path" ] && [ -f "$report_backup" ]; then
+              mkdir -p "$(dirname "$report_path")"
+              cp -- "$report_backup" "$report_path"
+            fi
             git add -- "$EVENT_PATH"
+            [ -n "$closure_path" ] && [ -f "$closure_path" ] && git add -- "$closure_path" || true
+            [ -n "$report_path" ] && [ -f "$report_path" ] && git add -- "$report_path" || true
             if git diff --cached --quiet; then
               echo "Scheduled Review canonical review event already present in current main."
               break
