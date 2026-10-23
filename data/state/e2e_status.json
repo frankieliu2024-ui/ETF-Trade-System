@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-10-23T15:53:07+08:00",
+  "generated_at": "2026-10-23T16:06:55+08:00",
   "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -51,19 +51,17 @@
       "decision_context": true,
       "minimum_decision_context": "READY_OR_NOT_APPLICABLE",
       "observability_boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
-      "request_bound": false,
+      "request_bound": true,
       "formal_reply_gate": {
-        "request_id": "formal-parent-20261023T154739+0800-9q2m4x",
-        "requested_at_beijing": "2026-10-23T15:49:09+08:00",
-        "status": "IN_FLIGHT",
-        "reply_freezable": false,
-        "blockers": [
-          "REQUEST_BOUND_QUERY_CONTEXT_NOT_PUBLISHED"
-        ],
+        "request_id": "formal-parent-20261023T160609+0800-r8v3n1",
+        "requested_at_beijing": "2026-10-23T16:06:09+08:00",
+        "status": "READY",
+        "reply_freezable": true,
+        "blockers": [],
         "source": "decision_fact_pack.formal_reply_freeze",
         "consumer_manifest": {
-          "request_id": "formal-parent-20261023T154739+0800-9q2m4x",
-          "requested_at_beijing": "2026-10-23T15:49:09+08:00",
+          "request_id": "formal-parent-20261023T160609+0800-r8v3n1",
+          "requested_at_beijing": "2026-10-23T16:06:09+08:00",
           "query_context_path": "data/state/query_context.json",
           "decision_context_path": "data/state/decision_context.json",
           "decision_work_package_present": true,
@@ -86,14 +84,14 @@
         },
         "request_bound_fact_projection": {
           "trigger": {
-            "request_id": "formal-parent-20261023T154739+0800-9q2m4x",
-            "requested_at_beijing": "2026-10-23T15:49:09+08:00"
+            "request_id": "formal-parent-20261023T160609+0800-r8v3n1",
+            "requested_at_beijing": "2026-10-23T16:06:09+08:00"
           },
           "formal_reply_freeze": {
             "status": "READY",
             "reply_freezable": true,
             "blockers": [],
-            "request_id": "formal-parent-20261023T154739+0800-9q2m4x",
+            "request_id": "formal-parent-20261023T160609+0800-r8v3n1",
             "post_request_pit_resolved": true,
             "discovery_status": "READY",
             "rule": "Manual formal replies wait only for same-request action-determinative facts that are still legally forming. Once those facts resolve (including explicit terminal degradation), complete analysis and the first user-visible decision reply must proceed without waiting for Decision Fact persistence/post-write acceptance or any downstream Dashboard/account/E2E/notification/research projection. Persistence failure is disclosed as '正式决策尚未持久化' and repaired separately; it does not suppress an otherwise valid business decision reply."
@@ -6386,12 +6384,22 @@
             ],
             "current_evidence": [
               {
-                "code": "HSTECH",
-                "name": "恒生科技指数",
+                "code": "QQQ",
+                "name": "QQQ",
                 "price": null,
                 "change_pct": null,
-                "market_phase": "REGULAR",
-                "as_of_beijing": "2026-10-23T15:49:10+08:00",
+                "market_phase": "PRE_MARKET",
+                "as_of_beijing": "2026-10-23T16:06:38+08:00",
+                "quality_status": "PASS",
+                "provider": ""
+              },
+              {
+                "code": "SOXX",
+                "name": "SOXX",
+                "price": null,
+                "change_pct": null,
+                "market_phase": "PRE_MARKET",
+                "as_of_beijing": "2026-10-23T16:06:23+08:00",
                 "quality_status": "PASS",
                 "provider": ""
               },
@@ -6566,23 +6574,23 @@
                 "provider": ""
               },
               {
-                "code": "^NDX",
+                "code": "NDX",
                 "name": "纳斯达克100指数",
                 "price": null,
                 "change_pct": null,
-                "market_phase": "OFF_SESSION",
-                "as_of_beijing": "2026-10-23T04:00:00+08:00",
-                "quality_status": "PASS",
+                "market_phase": "PRE_MARKET",
+                "as_of_beijing": "2026-10-23T16:01:32+08:00",
+                "quality_status": "FRESH",
                 "provider": ""
               },
               {
-                "code": "^SOX",
+                "code": "SOX",
                 "name": "费城半导体指数",
                 "price": null,
                 "change_pct": null,
-                "market_phase": "OFF_SESSION",
-                "as_of_beijing": "2026-10-23T04:00:00+08:00",
-                "quality_status": "PASS",
+                "market_phase": "PRE_MARKET",
+                "as_of_beijing": "2026-10-23T16:01:41+08:00",
+                "quality_status": "FRESH",
                 "provider": ""
               },
               {
@@ -6616,12 +6624,22 @@
                 "provider": ""
               },
               {
+                "code": "124.HSTECH",
+                "name": "恒生科技指数",
+                "price": null,
+                "change_pct": null,
+                "market_phase": "OFF_SESSION",
+                "as_of_beijing": "2026-10-23T15:50:04+08:00",
+                "quality_status": "PASS",
+                "provider": ""
+              },
+              {
                 "code": "159248",
                 "name": "人工智能ETF万家",
                 "price": null,
                 "change_pct": null,
                 "market_phase": "OFF_SESSION",
-                "as_of_beijing": "2026-10-23T15:49:00+08:00",
+                "as_of_beijing": "2026-10-23T16:06:00+08:00",
                 "quality_status": "PASS",
                 "provider": ""
               },
@@ -6631,7 +6649,7 @@
                 "price": null,
                 "change_pct": null,
                 "market_phase": "OFF_SESSION",
-                "as_of_beijing": "2026-10-23T15:49:12+08:00",
+                "as_of_beijing": "2026-10-23T16:06:15+08:00",
                 "quality_status": "PASS",
                 "provider": ""
               },
@@ -6641,7 +6659,7 @@
                 "price": null,
                 "change_pct": null,
                 "market_phase": "OFF_SESSION",
-                "as_of_beijing": "2026-10-23T15:48:48+08:00",
+                "as_of_beijing": "2026-10-23T16:05:48+08:00",
                 "quality_status": "PASS",
                 "provider": ""
               },
@@ -6651,7 +6669,7 @@
                 "price": null,
                 "change_pct": null,
                 "market_phase": "OFF_SESSION",
-                "as_of_beijing": "2026-10-23T15:49:06+08:00",
+                "as_of_beijing": "2026-10-23T16:06:30+08:00",
                 "quality_status": "PASS",
                 "provider": ""
               },
@@ -6661,7 +6679,7 @@
                 "price": null,
                 "change_pct": null,
                 "market_phase": "OFF_SESSION",
-                "as_of_beijing": "2026-10-23T15:48:30+08:00",
+                "as_of_beijing": "2026-10-23T16:06:30+08:00",
                 "quality_status": "PASS",
                 "provider": ""
               },
@@ -6671,7 +6689,7 @@
                 "price": null,
                 "change_pct": null,
                 "market_phase": "OFF_SESSION",
-                "as_of_beijing": "2026-10-23T15:48:45+08:00",
+                "as_of_beijing": "2026-10-23T16:06:27+08:00",
                 "quality_status": "PASS",
                 "provider": ""
               },
@@ -6681,7 +6699,7 @@
                 "price": null,
                 "change_pct": null,
                 "market_phase": "OFF_SESSION",
-                "as_of_beijing": "2026-10-23T15:48:52+08:00",
+                "as_of_beijing": "2026-10-23T16:06:22+08:00",
                 "quality_status": "PASS",
                 "provider": ""
               },
@@ -6691,7 +6709,7 @@
                 "price": null,
                 "change_pct": null,
                 "market_phase": "OFF_SESSION",
-                "as_of_beijing": "2026-10-23T15:48:59+08:00",
+                "as_of_beijing": "2026-10-23T16:06:29+08:00",
                 "quality_status": "PASS",
                 "provider": ""
               }
@@ -7540,8 +7558,8 @@
               "layer_1_external_cross_market": {
                 "base_evidence": {
                   "overseas_context": {
-                    "generated_at": "2026-10-23T07:22:40Z",
-                    "generated_at_beijing": "2026-10-23T15:22:29+08:00",
+                    "generated_at": "2026-10-23T07:50:09Z",
+                    "generated_at_beijing": "2026-10-23T15:49:58+08:00",
                     "display_timezone": "Asia/Shanghai",
                     "a_share_reference_timezone": "Asia/Shanghai",
                     "scope": "FORMAL_OVERSEAS_AND_ASIA_INDEX_LAYER",
@@ -7604,7 +7622,7 @@
                             "provider_timestamp_field": "chart.timestamp",
                             "as_of_beijing": "2026-10-23T04:00:00+08:00",
                             "market_phase": "PRE_OPEN",
-                            "delay_minutes": 682.5
+                            "delay_minutes": 709.97
                           }
                         ],
                         "direct_source_chain": [
@@ -7613,7 +7631,7 @@
                         ],
                         "configured_primary": "yahoo_chart_api",
                         "freshness_status": "PREVIOUS_SESSION_REFERENCE",
-                        "delay_minutes": 682.5,
+                        "delay_minutes": 709.97,
                         "stable_for_pulse": false,
                         "quality_status_cn": "数据可用",
                         "freshness_status_cn": "上一交易时段参考"
@@ -7649,7 +7667,7 @@
                         "decision_note": "不同市场非同一时点，不得把上一收盘、盘中和当日收盘混为同步信号。",
                         "selection_basis": "configured_primary_yahoo_valid_for_current_market_phase",
                         "freshness_status": "PREVIOUS_SESSION_REFERENCE",
-                        "delay_minutes": 682.5,
+                        "delay_minutes": 709.97,
                         "stable_for_pulse": false,
                         "quality_status_cn": "数据可用",
                         "freshness_status_cn": "上一交易时段参考"
@@ -7705,7 +7723,7 @@
                             "provider_timestamp_field": "f86",
                             "as_of_beijing": "2026-10-23T14:30:00+08:00",
                             "market_phase": "CLOSED",
-                            "delay_minutes": 52.5
+                            "delay_minutes": 79.97
                           }
                         ],
                         "direct_source_chain": [
@@ -7715,7 +7733,7 @@
                         ],
                         "configured_primary": "eastmoney_push2delay:100.N225",
                         "freshness_status": "SESSION_REFERENCE",
-                        "delay_minutes": 52.5,
+                        "delay_minutes": 79.97,
                         "stable_for_pulse": true,
                         "quality_status_cn": "数据可用",
                         "freshness_status_cn": "已结束交易时段参考"
@@ -7773,7 +7791,7 @@
                             "provider_timestamp_field": "localTradedAt",
                             "as_of_beijing": "2026-10-23T15:15:00+08:00",
                             "market_phase": "CLOSED",
-                            "delay_minutes": 7.5
+                            "delay_minutes": 34.97
                           }
                         ],
                         "direct_source_chain": [
@@ -7784,7 +7802,7 @@
                         ],
                         "configured_primary": "naver_finance:KOSPI",
                         "freshness_status": "SESSION_REFERENCE",
-                        "delay_minutes": 7.5,
+                        "delay_minutes": 34.97,
                         "stable_for_pulse": true,
                         "quality_status_cn": "数据可用",
                         "freshness_status_cn": "已结束交易时段参考"
@@ -7836,7 +7854,7 @@
                             "provider_timestamp_field": "tlong",
                             "as_of_beijing": "2026-10-22T13:33:00+08:00",
                             "market_phase": "CLOSED",
-                            "delay_minutes": 1549.5
+                            "delay_minutes": 1576.97
                           },
                           {
                             "provider": "eastmoney_push2delay:100.TWII",
@@ -7855,7 +7873,7 @@
                             "provider_timestamp_field": "f86",
                             "as_of_beijing": "2026-10-22T13:30:00+08:00",
                             "market_phase": "CLOSED",
-                            "delay_minutes": 1552.5
+                            "delay_minutes": 1579.97
                           },
                           {
                             "provider": "eastmoney_push2:100.TWII",
@@ -7874,7 +7892,7 @@
                             "provider_timestamp_field": "f86",
                             "as_of_beijing": "2026-10-22T13:30:00+08:00",
                             "market_phase": "CLOSED",
-                            "delay_minutes": 1552.5
+                            "delay_minutes": 1579.97
                           },
                           {
                             "provider": "yahoo_chart_api",
@@ -7893,7 +7911,7 @@
                             "provider_timestamp_field": "chart.timestamp",
                             "as_of_beijing": "2026-10-22T13:25:00+08:00",
                             "market_phase": "CLOSED",
-                            "delay_minutes": 1557.5
+                            "delay_minutes": 1584.97
                           }
                         ],
                         "direct_source_chain": [
@@ -7904,7 +7922,7 @@
                         ],
                         "configured_primary": "twse_mis:tse_t00.tw",
                         "freshness_status": "PREVIOUS_SESSION_REFERENCE",
-                        "delay_minutes": 1557.5,
+                        "delay_minutes": 1584.97,
                         "stable_for_pulse": false,
                         "quality_status_cn": "数据可用",
                         "freshness_status_cn": "上一交易时段参考"
@@ -7926,14 +7944,14 @@
                           "open": 3813.43,
                           "high": 3896.93,
                           "low": 3781.23,
-                          "close": 3880.83,
-                          "volume": 1497153520,
-                          "amount": 56523135488.0,
+                          "close": 3880.55,
+                          "volume": 1628536544,
+                          "amount": 61235618816.0,
                           "previous_close": 3793.93,
-                          "timestamp": 1792740156,
-                          "as_of_utc": "2026-10-23T07:22:36Z",
-                          "as_of_local": "2026-10-23T15:22:36+08:00",
-                          "as_of_beijing": "2026-10-23T15:22:36+08:00",
+                          "timestamp": 1792741804,
+                          "as_of_utc": "2026-10-23T07:50:04Z",
+                          "as_of_local": "2026-10-23T15:50:04+08:00",
+                          "as_of_beijing": "2026-10-23T15:50:04+08:00",
                           "market_date_local": "2026-10-23",
                           "provider_timezone": "Asia/Hong_Kong",
                           "symbol": "124.HSTECH"
@@ -7951,14 +7969,14 @@
                             "freshness_status": "FRESH",
                             "stable_for_10m_pulse": true,
                             "symbol": "124.HSTECH",
-                            "latest_price": 3880.83,
+                            "latest_price": 3880.55,
                             "open": 3813.43,
                             "high": 3896.93,
                             "low": 3781.23,
-                            "close": 3880.83,
-                            "provider_timestamp": 1792740156,
+                            "close": 3880.55,
+                            "provider_timestamp": 1792741804,
                             "provider_timestamp_field": "f86",
-                            "as_of_beijing": "2026-10-23T15:22:36+08:00",
+                            "as_of_beijing": "2026-10-23T15:50:04+08:00",
                             "market_phase": "OPEN",
                             "delay_minutes": 0.0
                           },
@@ -7970,21 +7988,21 @@
                             "freshness_status": "DELAYED",
                             "stable_for_10m_pulse": false,
                             "symbol": "HSTECH.HK",
-                            "latest_price": 3875.199951171875,
-                            "open": 3875.199951171875,
-                            "high": 3875.199951171875,
-                            "low": 3875.199951171875,
-                            "close": 3875.199951171875,
-                            "provider_timestamp": 1792739254,
+                            "latest_price": 3880.219970703125,
+                            "open": 3880.219970703125,
+                            "high": 3880.219970703125,
+                            "low": 3880.219970703125,
+                            "close": 3880.219970703125,
+                            "provider_timestamp": 1792740904,
                             "provider_timestamp_field": "chart.timestamp",
-                            "as_of_beijing": "2026-10-23T15:07:34+08:00",
+                            "as_of_beijing": "2026-10-23T15:35:04+08:00",
                             "market_phase": "OPEN",
-                            "delay_minutes": 14.93
+                            "delay_minutes": 14.9
                           },
                           {
                             "provider": "hithink-finance:HS2083",
                             "result": "FAILED",
-                            "http_or_cli_result": "CLI exit=2: {\"ok\":false,\"command\":\"index\",\"error\":{\"code\":\"FUYAO_1002\",\"category\":\"validation\",\"message\":\"Invalid parameter format: thscodes\",\"hint\":\"Check the command schema and correct the supplied parameters.\",\"retryable\":false,\"request_id\":\"6ef4b2d9622a438380aa10f56555ace7\"},\"meta\":{\"cli_version\":\"0.1.13\",\"schema_version\":\"1\"}}\n",
+                            "http_or_cli_result": "CLI exit=2: {\"ok\":false,\"command\":\"index\",\"error\":{\"code\":\"FUYAO_1002\",\"category\":\"validation\",\"message\":\"Invalid parameter format: thscodes\",\"hint\":\"Check the command schema and correct the supplied parameters.\",\"retryable\":false,\"request_id\":\"dc6b474a9cec47bd8e56a8bf7413d21f\"},\"meta\":{\"cli_version\":\"0.1.13\",\"schema_version\":\"1\"}}\n",
                             "quality_status": "FAILED",
                             "freshness_status": "MISSING",
                             "stable_for_10m_pulse": false,
@@ -7995,8 +8013,8 @@
                         ],
                         "source_comparison": {
                           "comparable": false,
-                          "time_gap_minutes": 15.03,
-                          "price_gap_pct": 0.1453,
+                          "time_gap_minutes": 15.0,
+                          "price_gap_pct": 0.0085,
                           "reason": "timestamps_not_aligned"
                         },
                         "direct_source_chain": [
@@ -8027,24 +8045,24 @@
                       "yahoo_chart_api:HSTECH.HK": {
                         "status": "ACTIVE",
                         "consecutive_failures": 0,
-                        "last_success_at": "2026-10-23T07:22:29+00:00",
+                        "last_success_at": "2026-10-23T07:49:58+00:00",
                         "failure_class": "UNKNOWN",
                         "bypass_date": "2026-10-19"
                       },
                       "eastmoney_push2:124.HSTECH": {
                         "status": "ACTIVE",
                         "consecutive_failures": 0,
-                        "last_success_at": "2026-10-23T07:22:29+00:00",
+                        "last_success_at": "2026-10-23T07:49:58+00:00",
                         "failure_class": "TRANSIENT",
                         "bypass_date": "2026-10-23"
                       }
                     }
                   },
                   "us_extended_hours_context": {
-                    "generated_at": "2026-10-23T07:41:03Z",
-                    "generated_at_beijing": "2026-10-23T15:41:03+08:00",
+                    "generated_at": "2026-10-23T08:01:44Z",
+                    "generated_at_beijing": "2026-10-23T16:01:44+08:00",
                     "scope": "US_SESSION_CONTEXT",
-                    "quality_status": "PASS",
+                    "quality_status": "DEGRADED",
                     "base_proxies": [
                       "QQQ",
                       "SOXX"
@@ -8062,48 +8080,48 @@
                         "conditional_industry_object": false,
                         "provider": "yahoo_chart_api",
                         "market_timezone": "America/New_York",
-                        "market_phase_of_latest": "POST_MARKET",
-                        "quality_status": "PASS",
-                        "freshness_status": "PREVIOUS_SESSION_REFERENCE",
-                        "data_age_seconds": 27674,
-                        "current_market_phase": "OFF_SESSION",
+                        "market_phase_of_latest": "PRE_MARKET",
+                        "quality_status": "FRESH",
+                        "freshness_status": "FRESH",
+                        "data_age_seconds": 12,
+                        "current_market_phase": "PRE_MARKET",
                         "latest": {
-                          "open": 703.29,
-                          "high": 703.29,
-                          "low": 703.29,
-                          "close": 703.29,
+                          "open": 706.02,
+                          "high": 706.02,
+                          "low": 706.02,
+                          "close": 706.02,
                           "volume": 0,
-                          "timestamp": 1792713589,
-                          "as_of_utc": "2026-10-22T23:59:49Z",
-                          "as_of_local": "2026-10-22T19:59:49-04:00",
-                          "as_of_beijing": "2026-10-23T07:59:49+08:00",
-                          "market_date_local": "2026-10-22",
-                          "session": "POST_MARKET"
+                          "timestamp": 1792742492,
+                          "as_of_utc": "2026-10-23T08:01:32Z",
+                          "as_of_local": "2026-10-23T04:01:32-04:00",
+                          "as_of_beijing": "2026-10-23T16:01:32+08:00",
+                          "market_date_local": "2026-10-23",
+                          "session": "PRE_MARKET"
                         },
                         "previous_regular_close_reference": 725.2,
-                        "regular_session_open_reference": 713.6799926757812,
+                        "regular_session_open_reference": 719.614990234375,
                         "regular_session_close_reference": 704.5900268554688,
                         "regular_session_market_date": "2026-10-22",
                         "regular_session_change_vs_previous_close_pct": -2.842,
-                        "regular_session_change_from_open_pct": -1.2737,
+                        "regular_session_change_from_open_pct": -2.0879,
                         "regular_session_path": {
-                          "sample_count": 78,
-                          "open": 713.6799926757812,
-                          "high": 715.4299926757812,
+                          "sample_count": 312,
+                          "open": 719.614990234375,
+                          "high": 727.9500122070312,
                           "low": 701.9000244140625,
                           "latest_or_close": 704.5900268554688,
-                          "change_from_open_pct": -1.2737,
+                          "change_from_open_pct": -2.0879,
                           "recovery_from_low_pct": 0.3832,
-                          "retreat_from_high_pct": -1.5152,
-                          "range_position": 0.1988,
-                          "high_as_of_beijing": "2026-10-22T22:00:00+08:00",
+                          "retreat_from_high_pct": -3.209,
+                          "range_position": 0.1033,
+                          "high_as_of_beijing": "2026-10-22T01:20:00+08:00",
                           "low_as_of_beijing": "2026-10-23T03:45:00+08:00",
-                          "first_hour_change_pct": -0.709,
-                          "midday_change_pct": -0.5207,
-                          "late_session_change_pct": 0.0,
+                          "first_hour_change_pct": -1.5279,
+                          "midday_change_pct": -2.2533,
+                          "late_session_change_pct": -2.0913,
                           "sampling_note": "由Yahoo 5分钟现金盘bar重建日内路径；用于总结高低点、修复/回撤和分段走势，不直接生成A股交易动作。"
                         },
-                        "extended_change_vs_regular_close_pct": -0.1845,
+                        "extended_change_vs_regular_close_pct": 0.203,
                         "decision_note": "NDX/SOX是正式现金盘指数，只在REGULAR承担直接指数实时语义；其盘前/盘后值仅作最近现金盘SESSION_REFERENCE。QQQ/SOXX用于PRE_MARKET/POST_MARKET前置信号，也可作为现金盘数据异常时的明确代理备份。扩展时段不得把ETF代理涨跌直接等同于NDX/SOX正式指数涨跌，也不得单独生成A股ETF动作。",
                         "object": "QQQ"
                       },
@@ -8114,48 +8132,48 @@
                         "conditional_industry_object": false,
                         "provider": "yahoo_chart_api",
                         "market_timezone": "America/New_York",
-                        "market_phase_of_latest": "POST_MARKET",
-                        "quality_status": "PASS",
-                        "freshness_status": "PREVIOUS_SESSION_REFERENCE",
-                        "data_age_seconds": 27674,
-                        "current_market_phase": "OFF_SESSION",
+                        "market_phase_of_latest": "PRE_MARKET",
+                        "quality_status": "FRESH",
+                        "freshness_status": "FRESH",
+                        "data_age_seconds": 3,
+                        "current_market_phase": "PRE_MARKET",
                         "latest": {
-                          "open": 472.5,
-                          "high": 472.5,
-                          "low": 472.5,
-                          "close": 472.5,
+                          "open": 482.87,
+                          "high": 482.87,
+                          "low": 482.87,
+                          "close": 482.87,
                           "volume": 0,
-                          "timestamp": 1792713589,
-                          "as_of_utc": "2026-10-22T23:59:49Z",
-                          "as_of_local": "2026-10-22T19:59:49-04:00",
-                          "as_of_beijing": "2026-10-23T07:59:49+08:00",
-                          "market_date_local": "2026-10-22",
-                          "session": "POST_MARKET"
+                          "timestamp": 1792742501,
+                          "as_of_utc": "2026-10-23T08:01:41Z",
+                          "as_of_local": "2026-10-23T04:01:41-04:00",
+                          "as_of_beijing": "2026-10-23T16:01:41+08:00",
+                          "market_date_local": "2026-10-23",
+                          "session": "PRE_MARKET"
                         },
                         "previous_regular_close_reference": 510.36,
-                        "regular_session_open_reference": 489.7300109863281,
+                        "regular_session_open_reference": 511.2950134277344,
                         "regular_session_close_reference": 475.55999755859375,
                         "regular_session_market_date": "2026-10-22",
                         "regular_session_change_vs_previous_close_pct": -6.8187,
-                        "regular_session_change_from_open_pct": -2.8934,
+                        "regular_session_change_from_open_pct": -6.9891,
                         "regular_session_path": {
-                          "sample_count": 78,
-                          "open": 489.7300109863281,
-                          "high": 494.0,
+                          "sample_count": 312,
+                          "open": 511.2950134277344,
+                          "high": 513.1199951171875,
                           "low": 472.2099914550781,
                           "latest_or_close": 475.55999755859375,
-                          "change_from_open_pct": -2.8934,
+                          "change_from_open_pct": -6.9891,
                           "recovery_from_low_pct": 0.7094,
-                          "retreat_from_high_pct": -3.7328,
-                          "range_position": 0.1537,
-                          "high_as_of_beijing": "2026-10-22T22:00:00+08:00",
+                          "retreat_from_high_pct": -7.3199,
+                          "range_position": 0.0819,
+                          "high_as_of_beijing": "2026-10-19T23:35:00+08:00",
                           "low_as_of_beijing": "2026-10-23T03:45:00+08:00",
-                          "first_hour_change_pct": -1.6387,
-                          "midday_change_pct": -0.738,
-                          "late_session_change_pct": -0.5479,
+                          "first_hour_change_pct": -5.7873,
+                          "midday_change_pct": -5.7536,
+                          "late_session_change_pct": -5.5332,
                           "sampling_note": "由Yahoo 5分钟现金盘bar重建日内路径；用于总结高低点、修复/回撤和分段走势，不直接生成A股交易动作。"
                         },
-                        "extended_change_vs_regular_close_pct": -0.6435,
+                        "extended_change_vs_regular_close_pct": 1.5371,
                         "decision_note": "NDX/SOX是正式现金盘指数，只在REGULAR承担直接指数实时语义；其盘前/盘后值仅作最近现金盘SESSION_REFERENCE。QQQ/SOXX用于PRE_MARKET/POST_MARKET前置信号，也可作为现金盘数据异常时的明确代理备份。扩展时段不得把ETF代理涨跌直接等同于NDX/SOX正式指数涨跌，也不得单独生成A股ETF动作。",
                         "object": "SOXX"
                       },
@@ -8167,10 +8185,10 @@
                         "provider": "yahoo_chart_api",
                         "market_timezone": "America/New_York",
                         "market_phase_of_latest": "POST_MARKET",
-                        "quality_status": "PASS",
-                        "freshness_status": "PREVIOUS_SESSION_REFERENCE",
-                        "data_age_seconds": 42063,
-                        "current_market_phase": "OFF_SESSION",
+                        "quality_status": "STALE",
+                        "freshness_status": "STALE",
+                        "data_age_seconds": 43304,
+                        "current_market_phase": "PRE_MARKET",
                         "latest": {
                           "open": 28958.6875,
                           "high": 28958.6875,
@@ -8219,10 +8237,10 @@
                         "provider": "yahoo_chart_api",
                         "market_timezone": "America/New_York",
                         "market_phase_of_latest": "POST_MARKET",
-                        "quality_status": "PASS",
-                        "freshness_status": "PREVIOUS_SESSION_REFERENCE",
-                        "data_age_seconds": 42063,
-                        "current_market_phase": "OFF_SESSION",
+                        "quality_status": "STALE",
+                        "freshness_status": "STALE",
+                        "data_age_seconds": 43304,
+                        "current_market_phase": "PRE_MARKET",
                         "latest": {
                           "open": 10731.9775390625,
                           "high": 10731.9775390625,
@@ -8377,7 +8395,7 @@
                 },
                 "market_structure_context": {
                   "schema_version": "1.4",
-                  "generated_at": "2026-10-23T07:41:41Z",
+                  "generated_at": "2026-10-23T07:53:16Z",
                   "market_date": "2026-10-23",
                   "as_of_beijing": "2026-10-23T15:07:07+08:00",
                   "source_snapshot": "data/market/snapshots/2026-10-23_150707.json",
@@ -11146,31 +11164,113 @@
         "projection_scope": "FORMAL_DECISION_REQUEST",
         "parent_request_source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
         "parent_request_entry_mode": "MANUAL_CONVERSATION",
-        "actor_action": "CONTINUE_SAME_REQUEST_SILENTLY",
+        "actor_action": "COMPLETE_BUSINESS_DECISION_NOW",
         "user_output_allowed": false,
         "business_decision_allowed": true,
         "final_content_generation_allowed": true,
-        "consumer_status": "REQUEST_BOUND_FACTS_BUILDING",
-        "required_problem_ids": [],
-        "required_problem_count": 0,
-        "business_answer_contract": null,
-        "ready_handoff": null,
-        "request_bound": false,
-        "projection_preserved_from_non_formal_runtime_request": true
+        "consumer_status": "BUSINESS_DECISION_READY",
+        "required_problem_ids": [
+          "RISK_PERMISSION",
+          "MAIN_CANDIDATE",
+          "DEPLOYABLE_CASH",
+          "RELEASABLE_CAPITAL",
+          "TRIAL_CONFIRM_CAPACITY",
+          "CONCENTRATION_COMMON_RISK",
+          "NEXT_UNIT_CAPITAL_USE",
+          "HOLDING:159941",
+          "HOLDING:159981",
+          "HOLDING:159992",
+          "OBSERVATION:588000",
+          "OBSERVATION:159781",
+          "OBSERVATION:159941",
+          "OBSERVATION:513180",
+          "OBSERVATION:159561",
+          "OBSERVATION:513520",
+          "OBSERVATION:518880",
+          "OBSERVATION:159992",
+          "OBSERVATION:515880",
+          "OBSERVATION:159326",
+          "OBSERVATION:515220",
+          "OBSERVATION:513350",
+          "OBSERVATION:159981",
+          "OBSERVATION:515080",
+          "DISCOVERY:159248",
+          "DISCOVERY:159565",
+          "DISCOVERY:159663",
+          "DISCOVERY:159667",
+          "DISCOVERY:159805",
+          "DISCOVERY:159855",
+          "DISCOVERY:516270",
+          "DISCOVERY:516520"
+        ],
+        "required_problem_count": 32,
+        "business_answer_contract": "DWP_EXACT_COVERAGE_BEFORE_PRESENTATION",
+        "ready_handoff": {
+          "required": true,
+          "submission_type": "BUSINESS_DECISION_SOURCE",
+          "source": "CHATGPT_BUSINESS_DECISION_RESPONSE",
+          "parent_request_id": "formal-parent-20261023T160609+0800-r8v3n1",
+          "required_payload_fields": [
+            "request_id",
+            "parent_request_id",
+            "entry_mode",
+            "source",
+            "task_id",
+            "task_run_id",
+            "occurrence_id",
+            "market_date",
+            "decision_response.answers",
+            "decision_id",
+            "consumed_snapshot",
+            "presentation_content",
+            "content_hash",
+            "target_path"
+          ],
+          "target_path": "requests/live_snapshot/formal-parent-20261023T160609+0800-r8v3n1__business_decision_source.json",
+          "binding_rules": {
+            "parent_request_id": "formal-parent-20261023T160609+0800-r8v3n1",
+            "allowed_sources": [
+              "CHATGPT_BUSINESS_DECISION_RESPONSE"
+            ],
+            "forbid_historical_fallback": true,
+            "read_back_required": true,
+            "formal_decision_notification_chain_starts_at_bds": false,
+            "completion_and_report_not_required_for_formal_decision_notification": false,
+            "bds_must_be_written_and_read_back_before_user_reply": true,
+            "bds_and_completion_atomic_commit_required": true
+          },
+          "business_decision_allowed": true,
+          "final_content_generation_allowed": true,
+          "user_reply_precondition": true,
+          "notification_attempt_precondition": true,
+          "provider_success_not_required_for_user_reply": true,
+          "user_reply_contract": {
+            "must_be_first_user_visible_message": true,
+            "must_contain_complete_final_content": true,
+            "status_only_reply_forbidden": true,
+            "handoff_status_cannot_replace_content": true,
+            "bds_must_reuse_exact_final_content": true
+          },
+          "post_reply_async": false,
+          "provider_success_async": false,
+          "must_read_back_before_reply": true,
+          "bds_and_completion_atomic_commit_required": true,
+          "historical_fallback_forbidden": true
+        }
       },
       "context_read_contract": {
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 1527075,
-          "sha256": "02de83e60b17c30b684db4c6d963df0006dc0be93e302b4fe867e30587eb0770",
+          "byte_count": 1533239,
+          "sha256": "1afa24388aef4fdddb19b1a9e2dc35495467af4476e5d84bb95ed4894e2e232e",
           "parsed_object": true
         },
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 494878,
-          "sha256": "8260b5c679cc7a40bfa0388c14852dcbbfb56151def85cea98fc465add3d09d4",
+          "byte_count": 497180,
+          "sha256": "95c6e77205d34a077576be5ef2490b0ebbdc99810f33daf031fcb3a8ba7e98ce",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -11188,7 +11288,7 @@
     "maintenance": {
       "status": "READY",
       "reason": "maintenance guard passed",
-      "checked_at": "2026-10-23T15:48:03+08:00"
+      "checked_at": "2026-10-23T16:06:37+08:00"
     }
   },
   "blockers": [],
@@ -11199,15 +11299,15 @@
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 1527075,
-      "sha256": "02de83e60b17c30b684db4c6d963df0006dc0be93e302b4fe867e30587eb0770",
+      "byte_count": 1533239,
+      "sha256": "1afa24388aef4fdddb19b1a9e2dc35495467af4476e5d84bb95ed4894e2e232e",
       "parsed_object": true
     },
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 494878,
-      "sha256": "8260b5c679cc7a40bfa0388c14852dcbbfb56151def85cea98fc465add3d09d4",
+      "byte_count": 497180,
+      "sha256": "95c6e77205d34a077576be5ef2490b0ebbdc99810f33daf031fcb3a8ba7e98ce",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"
