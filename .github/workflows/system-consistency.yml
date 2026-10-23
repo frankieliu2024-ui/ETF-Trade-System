@@ -169,7 +169,7 @@ jobs:
       - name: Run full system consistency check
         shell: bash
         env:
-          ETF_CONSISTENCY_REPORT_PATH: ${{ runner.temp }}/system_consistency.json
+          ETF_CONSISTENCY_REPORT_PATH: ${{ github.workspace }}/system_consistency.json
         run: |
           set -euo pipefail
           python scripts/check_system_consistency.py
