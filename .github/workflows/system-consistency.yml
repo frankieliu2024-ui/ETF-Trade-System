@@ -203,15 +203,15 @@ jobs:
             git reset --hard origin/main
             cp "$ETF_CONSISTENCY_REPORT_PATH" data/state/system_consistency.json
             python - <<'PY'
-            import json
-            from datetime import datetime, timezone
-            from pathlib import Path
-            from zoneinfo import ZoneInfo
-            p = Path("data/state/system_consistency.json")
-            report = json.loads(p.read_text(encoding="utf-8"))
-            report["persisted_at_beijing"] = datetime.now(timezone.utc).astimezone(ZoneInfo("Asia/Shanghai")).isoformat()
-            p.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-            PY
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+          from zoneinfo import ZoneInfo
+          p = Path("data/state/system_consistency.json")
+          report = json.loads(p.read_text(encoding="utf-8"))
+          report["persisted_at_beijing"] = datetime.now(timezone.utc).astimezone(ZoneInfo("Asia/Shanghai")).isoformat()
+          p.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          PY
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add data/state/system_consistency.json
