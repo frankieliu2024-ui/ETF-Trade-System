@@ -147,9 +147,9 @@ def classify_formal_request_consumer_state(
                 "CONFIRMED" if canonical_persisted else "PENDING_ASYNC"
             ),
              # This is the single bounded completion handoff contract, not a new
-            # state or producer. The Actor freezes FINAL_CONTENT, writes and
-            # reads back BDS, submits the existing completion ingress, and only
-            # then returns the exact frozen content. Downstream event,
+            # state or producer. The Actor freezes FINAL_CONTENT, submits the
+            # existing shared completion ingress, and only then returns the exact
+            # frozen content. Downstream event,
             # REPORT/notification/provider delivery remains asynchronous.
             "ready_handoff": {
                 "required": True,
