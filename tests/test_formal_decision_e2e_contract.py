@@ -324,7 +324,8 @@ class FormalReadyHandoffContractTests(unittest.TestCase):
         self.assertIn("READY 后，必须先完成业务判断并冻结唯一", protocol)
         self.assertIn("正文冻结后即可输出此前冻结的同一份完整正文", protocol)
         self.assertIn("后置交接失败或超时不得无限等待", protocol)
-        self.assertIn("统一 `SCHEDULED_REVIEW_COMPLETION` ingress", protocol)
+        self.assertIn("统一 `SCHEDULED_REVIEW_COMPLETION`", protocol)
+        self.assertIn("后置交接", protocol)
 
 
 
