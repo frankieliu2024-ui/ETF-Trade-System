@@ -2204,7 +2204,7 @@ def _normalize_close_snapshot_reference(value: object) -> str:
 def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     review = request.get("formal_review")
     interaction_scenario = str(request.get("interaction_scenario") or "").strip().upper()
-    if interaction_scenario not in {"SCHEDULED_TRADE_REVIEW", "POST_CLOSE_REVIEW", "MIDDAY_REVIEW", "WEEKLY_REVIEW"} or not review:
+    if interaction_scenario not in {"SCHEDULED_TRADE_REVIEW", "POST_CLOSE_REVIEW", "FORMAL_DECISION", "MIDDAY_REVIEW", "WEEKLY_REVIEW"} or not review:
         return False, False
     review_scope = str(review.get("review_scope") or "").strip().upper()
     request_phase = str(request.get("market_phase") or request.get("session_stage") or "").strip().upper()
@@ -2267,6 +2267,12 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
         and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_SCHEDULED_TRADE_REVIEW"
         and str((raw_presentation_binding or {}).get("task_id") or "").strip() == "ETF交易复盘"
     )
+    is_formal_decision_production = (
+        str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION"
+        and str(request.get("source") or "").strip().upper() == "CHATGPT_SCHEDULED_REVIEW_ACTOR"
+        and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_POST_CLOSE_REVIEW"
+        and str((raw_presentation_binding or {}).get("task_id") or "").strip() == "ETF正式决策"
+    )
     if is_trade_review_production:
         entry_mode = str(request.get("entry_mode") or "").strip().upper()
         if entry_mode not in {"MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"}:
@@ -2274,11 +2280,18 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
         binding_entry_mode = str((raw_presentation_binding or {}).get("entry_mode") or "").strip().upper()
         if binding_entry_mode != entry_mode:
             raise ValueError("scheduled trade review production entry_mode must match presentation_binding.entry_mode")
+    if is_formal_decision_production:
+        entry_mode = str(request.get("entry_mode") or "").strip().upper()
+        if entry_mode not in {"MANUAL_CONVERSATION", "MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"}:
+            raise ValueError("formal decision production requires a registered entry mode")
+        binding_entry_mode = str((raw_presentation_binding or {}).get("entry_mode") or "").strip().upper()
+        if binding_entry_mode != entry_mode:
+            raise ValueError("formal decision production entry_mode must match presentation_binding.entry_mode")
     presentation_binding = (
         _validate_presentation_binding(
             raw_presentation_binding,
-            "ETF_TRADE_REVIEW",
-            strict_production=is_trade_review_production,
+            "ETF_FORMAL_DECISION" if is_formal_decision_production else "ETF_TRADE_REVIEW",
+            strict_production=is_trade_review_production or is_formal_decision_production,
         )
         if raw_presentation_binding is not None
         else {}
@@ -2286,7 +2299,9 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     if presentation_binding:
         presentation_binding["request_id"] = str(request.get("request_id") or "")
         presentation_binding["report_id"] = (
-            f"etf_trade_review:{presentation_binding['task_run_id']}"
+            f"etf_formal_decision:{presentation_binding['task_run_id']}"
+            if is_formal_decision_production
+            else f"etf_trade_review:{presentation_binding['task_run_id']}"
         )
     data_time = dict(review.get("data_time")) if isinstance(review.get("data_time"), dict) else {}
     if is_midday_review:
@@ -3769,6 +3784,7 @@ def main() -> int:
         and str(request.get("source") or "").strip().upper() == "CHATGPT_SCHEDULED_REVIEW_ACTOR"
         and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_POST_CLOSE_REVIEW"
         and str(request.get("task_id") or "").strip() == "ETF正式决策"
+        and bool(str(request.get("bds_path") or "").strip())
     )
     if completion_dispatch:
         bds_path = str(request.get("bds_path") or "").strip()

@@ -48,10 +48,10 @@
 
 本场景唯一三态合同读取 `docs/Formal Decision执行与用户回复协议.md`；本节只提供执行路由，不复制该协议正文。
 
-当 `formal_reply_freeze.reply_freezable=true` 且父请求、request-bound DWP 和当前 facts 已一致时，`classify_formal_request_consumer_state` 返回 `BUSINESS_DECISION_READY`，即授权完成一次完整业务判断；READY 后不得重新生产、刷新、拉取或重建已经 request-bound 的正式行情／事实，不得重复执行同一份 Discovery，也不得重新审计已通过的生产链。ChatGPT必须先冻结唯一 FINAL_CONTENT 并完成正文校验；随后在同一运行内完成BDS、统一Scheduled Review completion、显式通知dispatch及后续event、REPORT、notification_center、provider回读。后置交接成功或明确到达最后失败层级后，才向用户输出此前冻结的同一份完整FINAL_CONTENT，并附真实交接状态。后置交接不得重新分析、改写或生成第二份正文；失败或超时不得无限等待，必须记录PROJECTION_INCOMPLETE或MAINTENANCE_INCOMPLETE后输出同一正文。有限、按需调用适用的外部研究工具只可补充DWP中机器无法替代的业务判断，必须保留事实时点、来源和用途边界，不得覆盖request-bound/canonical正式事实，不得冒充当前可执行价格或证券身份，不得改变provider优先级、绕过PIT/freshness、扩大交易权限或建立第二producer/state/decision chain；已有request-bound证据足够时不得机械重复查询，外部补证失败、超时或空结果按现有规范合法降级。执行侧必须先以同一GitHub来源回读本次request-bound query_context和formal_reply_gate；若大型上下文暂时空读、仍在发布或request_id尚未匹配，只能继续沿同一父请求静默消费，不得输出停止说明。顶层e2e_status的BLOCKED、close_review未完成、System Review/交易复盘未完成或其他后置投影状态，均不得覆盖同一请求已经确认的`formal_reply_gate=READY`。只有同一请求的gate明确为终止失败，或同一请求的canonical producer明确进入终止且不存在继续路径，才允许终止。
+当 `formal_reply_freeze.reply_freezable=true` 且本次请求绑定事实一致时，ChatGPT必须先冻结唯一 FINAL_CONTENT 并完成正文校验；随后通过统一 Scheduled Review completion owner 写入并回读 completion，再由 canonical owner 形成本次运行唯一 event、REPORT 和通知。正式决策不创建或依赖 BDS，不使用专属完成器，不扫描历史对象。后置交接成功或明确到达最后失败层级后，才向用户输出同一份完整FINAL_CONTENT，并附真实交接状态。后置交接不得重新分析、改写或生成第二份正文；失败或超时必须记录后置未完成状态并输出同一正文。
 正式业务回复只表达业务结论、依据、风险和人工交易边界；不得出现 `canonical`、`writer`、`BDS`、`reply_freezable`、`control plane`、内部 workflow/job、持久化等待或“自动接管”等内部或歧义表述。默认用户可见语义为“本次正式判断已完成；证券交易仍由用户人工确认和下单”。
 
-该规则不缩短长报告、不改变 BUSINESS_DECISION_SOURCE 合同、不新增状态或第二条决策链；它只规定 facts READY 后的执行顺序和展示边界。
+该规则不缩短长报告、不新增状态或第二条决策链；它只规定 facts达到可判断状态后的执行顺序和展示边界。
 
 5. 完成业务判断后，先冻结唯一 FINAL_CONTENT；在返回用户最终消息前，必须在同一执行回合内使用既有 BUSINESS_DECISION_SOURCE 写入并回读同一 request_id、parent_request_id、decision_id、request-bound snapshot、decision_response.answers、presentation_content 和 content_hash，再提交同一请求的统一 Scheduled Review completion ingress，并完成显式通知dispatch及后续可回读的event、REPORT、notification_center和provider层级。交接成功或明确到达最后失败层级后，用户窗口才输出此前冻结的同一份完整FINAL_CONTENT；不得因后置workflow/provider长时间运行无限等待，也不得等待不可取得的用户收件确认，并将该 completion 的唯一当前路径精确交给既有 `decision-notification.yml` 的 `workflow_dispatch(formal_completion_path=...)` 入口，由 canonical owner 形成当前 `events/reviews/formal_<occurrence_id>.json`，再进入 notification_center 和 PushPlus 主链。不得假定 Contents API 提交必然产生 push workflow run，不得由 BDS 或 market-snapshot 被动唤醒，不得扫描历史 completion。后置交接不得阻塞、缩短、改写或撤回正文；不得由 Actor 直接手写 event、REPORT 或通知文件，不得重用历史身份，不得创建第二 request、第二正文、第二 event 或历史回退。provider 成功不是用户回复门禁；任何后置交接或通知失败都必须如实记录，不得声称 notification/provider 成功。
 
@@ -130,9 +130,11 @@ INDEX只负责回答“去哪里读”，不得重新定义以下内容：正式
 
 #### Formal Decision交接可执行性硬门（集中修复）
 
-Formal Decision completion必须使用current main的统一 Scheduled Review completion builder生成：`request_id=<parent_request_id>__scheduled_review_completion`，`parent_request_id=<原始父请求>`，且文件名必须精确为`<request_id>.json`；不得手写、复用父请求ID或使用任意文件名。写入并回读completion后，当前执行器必须在同一handoff中显式调用既有`decision-notification` workflow的`workflow_dispatch(formal_completion_path=<当前唯一completion路径>)`，再由统一canonical owner形成`events/reviews/formal_*.json`并进入notification_center。仅有BDS、completion文件或GitHub Contents push，不构成通知提交；无法完成显式handoff时只能记录FORMAL_PARENT_HANDOFF_INCOMPLETE，不得声称通知成功。
+本节旧版BDS表述已废止。当前正式决策只允许使用统一 Scheduled Review completion owner；以下历史BDS要求仅保留作审计文本，不得作为新运行入口或生产前置条件。
 
-“冻结正文、完成交接后输出”定义用户可见顺序：ChatGPT先冻结唯一FINAL_CONTENT，随后由同一运行完成BUSINESS_DECISION_SOURCE与统一SCHEDULED_REVIEW_COMPLETION的原子写入、回读和既有workflow投影；交接成功或明确记录最后失败层级后，再输出此前冻结的同一FINAL_CONTENT。BDS、completion、event、REPORT、notification_center和PushPlus必须继续使用同一运行身份和正文哈希；后置链路不得无限等待、改写或生成第二正文，失败必须记录PROJECTION_INCOMPLETE或MAINTENANCE_INCOMPLETE。
+Formal Decision completion必须使用current main的统一 Scheduled Review completion builder生成：`request_id=<parent_request_id>__scheduled_review_completion`，`parent_request_id=<原始父请求>`，且文件名必须精确为`<request_id>.json`；不得手写、复用父请求ID或使用任意文件名。正式决策completion不需要BDS；写入并回读completion后由统一canonical owner形成本次运行唯一正式决策event并进入notification_center。不得把BDS文件、历史对象或GitHub Contents push本身当作通知提交；通知失败时必须如实记录。
+
+“冻结正文、完成交接后输出”定义用户可见顺序：ChatGPT先冻结唯一FINAL_CONTENT，随后由同一运行完成统一SCHEDULED_REVIEW_COMPLETION的写入、回读和既有workflow投影；交接成功或明确记录最后失败层级后，再输出此前冻结的同一FINAL_CONTENT。completion、event、REPORT、notification_center和PushPlus必须继续使用同一运行身份和正文哈希；后置链路不得无限等待、改写或生成第二正文，失败必须记录PROJECTION_INCOMPLETE或MAINTENANCE_INCOMPLETE。
 
 只生成完整正文但未完成BDS回读和completion提交，不得视为本次Formal Decision完成；不得以“后置异步”“已生成报告”或其他状态替代交接。若交接失败，必须保留同一请求和正文并明确记录未完成，不得声称主动通知已发送。该硬门适用于对话窗口、手动定时和自动定时三个入口，不改变【ETF系统复核】和【ETF交易复盘】既有链。
 
