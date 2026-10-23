@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-10-23T19:50:18+08:00",
+  "generated_at": "2026-10-23T19:50:50+08:00",
   "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -55,10 +55,10 @@
       "formal_reply_gate": {
         "request_id": "formal-parent-20261023T193201+0800-rerun7k2m",
         "requested_at_beijing": "2026-10-23T19:32:01+08:00",
-        "status": "TERMINAL_FAILURE",
+        "status": "IN_FLIGHT",
         "reply_freezable": false,
         "blockers": [
-          "FORMAL_PARENT_RECOVERY_TIMEOUT"
+          "REQUEST_BOUND_QUERY_CONTEXT_NOT_PUBLISHED"
         ],
         "source": "decision_fact_pack.formal_reply_freeze",
         "consumer_manifest": {
@@ -11158,11 +11158,11 @@
         "projection_scope": "FORMAL_DECISION_REQUEST",
         "parent_request_source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
         "parent_request_entry_mode": "MANUAL_CONVERSATION",
-        "actor_action": "TERMINATE_ON_EXPLICIT_FAILURE",
-        "user_output_allowed": true,
+        "actor_action": "CONTINUE_SAME_REQUEST_SILENTLY",
+        "user_output_allowed": false,
         "business_decision_allowed": true,
         "final_content_generation_allowed": true,
-        "consumer_status": "TERMINAL_FAILURE",
+        "consumer_status": "REQUEST_BOUND_FACTS_BUILDING",
         "required_problem_ids": [],
         "required_problem_count": 0,
         "business_answer_contract": null,
@@ -11173,7 +11173,7 @@
           "error_class": "MAINTENANCE_INCOMPLETE",
           "reason": "request-bound query context remained unbound beyond the existing workflow timeout",
           "requested_at_beijing": "2026-10-23T19:32:01+08:00",
-          "terminated_at_beijing": "2026-10-23T19:50:16+08:00",
+          "terminated_at_beijing": "2026-10-23T19:47:26+08:00",
           "query_context_request_id": ""
         }
       },
@@ -11181,8 +11181,8 @@
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 1530837,
-          "sha256": "27234641ee407db45b39ec698679dff370345868de55cff8c62de0bc4043b11b",
+          "byte_count": 1249063,
+          "sha256": "97c0494a14585dcef7b04e1d463663fa392e24b5a95330dfefe9360cb7e679c8",
           "parsed_object": true
         },
         "decision_context": {
@@ -11207,7 +11207,7 @@
     "maintenance": {
       "status": "READY",
       "reason": "maintenance guard passed",
-      "checked_at": "2026-10-23T19:32:38+08:00"
+      "checked_at": "2026-10-23T19:50:43+08:00"
     }
   },
   "blockers": [],
@@ -11218,8 +11218,8 @@
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 1530837,
-      "sha256": "27234641ee407db45b39ec698679dff370345868de55cff8c62de0bc4043b11b",
+      "byte_count": 1249063,
+      "sha256": "97c0494a14585dcef7b04e1d463663fa392e24b5a95330dfefe9360cb7e679c8",
       "parsed_object": true
     },
     "decision_context": {
