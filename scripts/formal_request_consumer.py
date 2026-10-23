@@ -7,7 +7,7 @@ INFLIGHT_STATUSES = {"BUILDING", "PENDING", "QUEUED", "RUNNING", "IN_PROGRESS", 
 READY_STATUSES = {"READY", "RESOLVED_DEGRADED"}
 TERMINAL_FAILURE_STATUSES = {"FAILED", "TERMINAL_FAILURE", "BLOCKED_TERMINAL"}
 BUSINESS_REPLY_OUTPUT = "COMPLETE_BUSINESS_DECISION_ONLY"
-HANDOFF_BEFORE_REPLY = "BDS_COMPLETION_EVENT_REPORT_NOTIFICATION_BOUNDED"
+HANDOFF_BEFORE_REPLY = "SCHEDULED_REVIEW_COMPLETION_EVENT_REPORT_NOTIFICATION_BOUNDED"
 ACTOR_CONTINUE = "CONTINUE_SAME_REQUEST_SILENTLY"
 ACTOR_DECIDE = "COMPLETE_BUSINESS_DECISION_NOW"
 ACTOR_TERMINATE = "TERMINATE_ON_EXPLICIT_FAILURE"
@@ -25,7 +25,7 @@ def classify_formal_request_consumer_state(
 
     The request-bound formal_reply_freeze is the business decision boundary.
     Global e2e_status and close-review projections are observability or
-    post-decision state and must not override a same-request READY gate. The actor must freeze FINAL_CONTENT, complete the bounded handoff, and output that exact frozen content; BDS, completion, event, REPORT and notification reuse the same frozen content.
+    post-decision state and must not override a same-request READY gate. The actor must freeze FINAL_CONTENT, complete the bounded handoff, and output that exact frozen content; completion, event, REPORT and notification reuse the same frozen content.
     This helper is read-only and interprets the existing request-bound
     query_context/formal_reply_freeze contract for interactive consumers.
     """
@@ -118,7 +118,7 @@ def classify_formal_request_consumer_state(
         response_contract = dwp.get("response_contract") if isinstance(dwp, dict) else {}
         response_contract = response_contract if isinstance(response_contract, dict) else {}
         # Request-bound facts authorize business analysis. FINAL_CONTENT is
-        # frozen once; BDS, completion, event, REPORT, notification and
+        # frozen once; completion, event, REPORT, notification and
         # provider delivery reuse that exact frozen content.
         return {
             "status": "BUSINESS_DECISION_READY",
@@ -126,7 +126,7 @@ def classify_formal_request_consumer_state(
             "analysis_eligible": True,
             # READY authorizes the task context to complete the full business
             # answer and freeze FINAL_CONTENT. It does not authorize exposing
-            # that content until the required BDS/completion handoff succeeds.
+            # that content until the required completion handoff succeeds.
             "reply_eligible": True,
             "business_decision_allowed": True,
             "final_content_generation_allowed": True,
@@ -139,22 +139,19 @@ def classify_formal_request_consumer_state(
             "business_answer_contract": "DWP_EXACT_COVERAGE_BEFORE_PRESENTATION",
             "actor_response_contract": response_contract,
             "control_plane_in_user_reply": False,
-            "reason": (
-                "SAME_REQUEST_FACTS_READY_COMPLETION_HANDOFF_BEFORE_REPLY_"
-                "BDS_AUDIT_AND_PROVIDER_READBACK"
-            ),
+            "reason": "SAME_REQUEST_FACTS_READY_COMPLETION_HANDOFF_BEFORE_REPLY",
             "canonical_persistence_status": (
                 "CONFIRMED" if canonical_persisted else "PENDING_ASYNC"
             ),
              # This is the single bounded completion handoff contract, not a new
             # state or producer. The Actor freezes FINAL_CONTENT, writes and
-            # reads back BDS, submits the existing completion ingress, and only
-            # then returns the exact frozen content. Downstream event,
+            # reads back the shared completion ingress, and only then returns
+            # the exact frozen content. Downstream event,
             # REPORT/notification/provider delivery remains asynchronous.
             "ready_handoff": {
                 "required": True,
-                "submission_type": "BUSINESS_DECISION_SOURCE",
-                "source": "CHATGPT_BUSINESS_DECISION_RESPONSE",
+                "submission_type": "SCHEDULED_REVIEW_COMPLETION",
+                "source": "CHATGPT_SCHEDULED_REVIEW_ACTOR",
                 "parent_request_id": parent,
                 "required_payload_fields": [
                     "request_id",
@@ -165,33 +162,22 @@ def classify_formal_request_consumer_state(
                     "task_run_id",
                     "occurrence_id",
                     "market_date",
-                    "decision_response.answers",
                     "decision_id",
-                    "consumed_snapshot",
-                    "presentation_content",
-                    "content_hash",
-                    "target_path",
+                    "formal_review",
+                    "presentation_binding.full_content",
+                    "presentation_binding.content_hash",
                 ],
-                "target_path": (
-                    "requests/live_snapshot/"
-                    + parent
-                    + "__business_decision_source.json"
-                ),
                 "binding_rules": {
                     "parent_request_id": parent,
                     "allowed_sources": [
-                        "CHATGPT_BUSINESS_DECISION_RESPONSE",
+                        "CHATGPT_SCHEDULED_REVIEW_ACTOR",
                     ],
                     "forbid_historical_fallback": True,
                     "read_back_required": True,
-                    "formal_decision_notification_chain_starts_at_bds": False,
-                    "completion_and_report_not_required_for_formal_decision_notification": False,
-                    "bds_must_be_written_and_read_back_before_user_reply": True,
-                    "bds_and_completion_atomic_commit_required": True,
+                    "completion_must_be_written_and_read_back_before_user_reply": True,
                 },
-                # The task freezes one FINAL_CONTENT, completes the bounded handoff,
-                # user-visible output is gated until BDS and completion are
-                # written and read back. Provider delivery remains async.
+                # The task freezes one FINAL_CONTENT and completes the bounded
+                # handoff. Provider delivery remains a separately read-back layer.
                 "business_decision_allowed": True,
                 "final_content_generation_allowed": True,
                 "user_reply_precondition": True,
@@ -202,12 +188,11 @@ def classify_formal_request_consumer_state(
                     "must_contain_complete_final_content": True,
                     "status_only_reply_forbidden": True,
                     "handoff_status_cannot_replace_content": True,
-                    "bds_must_reuse_exact_final_content": True,
+                    "completion_must_reuse_exact_final_content": True,
                 },
                 "post_reply_async": False,
                 "provider_success_async": False,
                 "must_read_back_before_reply": True,
-                "bds_and_completion_atomic_commit_required": True,
                 "historical_fallback_forbidden": True,
             },
         }
