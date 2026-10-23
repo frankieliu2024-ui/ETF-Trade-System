@@ -287,6 +287,77 @@ def build_formal_decision_completion_request(
     return payload
 
 
+def build_formal_review_completion_request(
+    formal_review: dict,
+    request_id: str,
+    requested_at_beijing: str,
+    market_date: str = "",
+    parent_request_id: str = "",
+    account: dict | None = None,
+    final_content: str = "",
+    task_id: str = "ETF正式决策",
+    task_run_id: str = "",
+    occurrence_id: str = "",
+    entry_mode: str = "",
+) -> dict:
+    """Build a Formal Decision completion on the shared review contract.
+
+    This is the new production path. It deliberately contains no durable
+    business-source envelope and no BDS path. The investment judgment is the
+    frozen presentation carried by the same Scheduled Review completion owner
+    used by Trade Review; only the report identity and fact scope differ.
+    """
+    if str(task_id or "").strip() != "ETF正式决策":
+        raise ValueError("formal review completion requires canonical task_id")
+    if not isinstance(formal_review, dict) or not formal_review:
+        raise ValueError("formal review payload is required")
+    validate_full_day_review(formal_review, account)
+    validate_user_visible_content(str(final_content or ""), canonical_closure_confirmed=False)
+    effective_entry_mode = str(entry_mode or "").strip().upper()
+    if effective_entry_mode not in {"MANUAL_CONVERSATION", "MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"}:
+        raise ValueError("formal review completion requires a registered entry mode")
+    effective_task_run_id = _safe_id(task_run_id or request_id)
+    effective_occurrence_id = _safe_id(occurrence_id or effective_task_run_id)
+    effective_market_date = str(market_date or formal_review.get("market_date") or "").strip()
+    if effective_market_date != str(formal_review.get("market_date") or "").strip():
+        raise ValueError("formal review completion market_date must match formal_review")
+    frozen_content = str(final_content or "")
+    frozen_hash = hashlib.sha256(frozen_content.encode("utf-8")).hexdigest()
+    payload = {
+        "request_id": _safe_id(request_id),
+        "request_type": "SCHEDULED_REVIEW_COMPLETION",
+        "formal_fact_type": "FORMAL_POST_CLOSE_REVIEW",
+        "source": "CHATGPT_SCHEDULED_REVIEW_ACTOR",
+        "interaction_scenario": "FORMAL_DECISION",
+        "formal_entry_source": str(formal_review.get("source") or "").strip(),
+        "entry_mode": effective_entry_mode,
+        "task_id": "ETF正式决策",
+        "task_run_id": effective_task_run_id,
+        "occurrence_id": effective_occurrence_id,
+        "decision_id": f"ETF_FORMAL_DECISION:{effective_task_run_id}",
+        "requested_at_beijing": str(requested_at_beijing or "").strip(),
+        "market_date": effective_market_date,
+        "formal_review": formal_review,
+        "presentation_binding": {
+            "report_type": "ETF_FORMAL_DECISION",
+            "task_id": "ETF正式决策",
+            "task_run_id": effective_task_run_id,
+            "occurrence_id": effective_occurrence_id,
+            "entry_mode": effective_entry_mode,
+            "request_id": str(request_id),
+            "report_id": f"ETF_FORMAL_DECISION:{effective_task_run_id}",
+            "full_content": frozen_content,
+            "content_hash": frozen_hash,
+            "content_hash_source": "completion_builder",
+        },
+    }
+    if parent_request_id:
+        payload["parent_request_id"] = _safe_id(parent_request_id)
+    if not payload["requested_at_beijing"]:
+        raise ValueError("formal review completion requires requested_at_beijing")
+    return payload
+
+
 SYSTEM_REVIEW_FORBIDDEN_AUTHORITY_PHRASES = (
     "继续维持禁止新增",
     "维持禁止新增",
@@ -530,6 +601,11 @@ def write_completion_request(
         )
         if market_date and str(payload.get("market_date") or "") != str(market_date):
             raise ValueError("scheduled system review completion market_date must match the review")
+    elif str(task_id or "").strip() == "ETF正式决策":
+        payload = build_formal_review_completion_request(
+            review, request_id, requested_at_beijing, market_date, parent_request_id, account,
+            final_content, task_id, task_run_id, occurrence_id, entry_mode
+        )
     else:
         payload = build_trade_review_completion_request(
             review, request_id, requested_at_beijing, market_date, parent_request_id, account,
