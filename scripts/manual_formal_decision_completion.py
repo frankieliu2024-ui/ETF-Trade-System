@@ -4,6 +4,7 @@ import argparse
 import json
 import hashlib
 import os
+import tempfile
 from pathlib import Path
 
 try:
@@ -357,6 +358,68 @@ def build_ready_actor_envelope(
     return payload
 
 
+
+def write_completion_from_persisted_bds(
+    source_request_path: str,
+    bds_path: str,
+    consumed_snapshot: str = "",
+    output_path: str = "",
+    completion_request_id: str = "",
+) -> Path:
+    """Continue the canonical handoff from one already persisted BDS.
+
+    This is an adapter into the existing builder, not a second producer. It
+    reconstructs only ephemeral builder inputs from the same persisted BDS and
+    then delegates to write_completion_request(), preserving all existing
+    validation and identity checks.
+    """
+    source_path = (ROOT / source_request_path).resolve()
+    bds_file = (ROOT / bds_path).resolve()
+    if ROOT not in source_path.parents or ROOT not in bds_file.parents:
+        raise ValueError("source and BDS paths must stay inside repository root")
+    if not source_path.exists() or not bds_file.exists():
+        raise ValueError("source request and persisted BDS are required")
+    source = json.loads(source_path.read_text(encoding="utf-8"))
+    bds = json.loads(bds_file.read_text(encoding="utf-8"))
+    parent_id = str(source.get("request_id") or "").strip()
+    if str(bds.get("parent_request_id") or "").strip() != parent_id:
+        raise ValueError("persisted BDS parent_request_id does not match source request")
+    expected_bds_id = f"{parent_id}__business_decision_source"
+    if str(bds.get("request_id") or "").strip() != expected_bds_id:
+        raise ValueError("persisted BDS request_id is not the canonical child identity")
+    decision_response = bds.get("decision_response")
+    if not isinstance(decision_response, dict) or not decision_response:
+        raise ValueError("persisted BDS decision_response is required")
+    final_content = str(
+        bds.get("presentation_content")
+        or decision_response.get("presentation_content")
+        or ""
+    )
+    if not final_content.strip():
+        raise ValueError("persisted BDS frozen presentation_content is required")
+    snapshot = str(consumed_snapshot or bds.get("consumed_snapshot") or "").strip()
+    if not snapshot:
+        raise ValueError("persisted BDS consumed_snapshot is required")
+
+    with tempfile.TemporaryDirectory(prefix="formal-decision-handoff-") as temp_dir:
+        temp_root = Path(temp_dir)
+        response_path = temp_root / "decision_response.json"
+        final_path = temp_root / "final_content.txt"
+        response_path.write_text(
+            json.dumps(decision_response, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        final_path.write_text(final_content, encoding="utf-8")
+        return write_completion_request(
+            source_request_path,
+            "",
+            snapshot,
+            output_path=output_path,
+            completion_request_id=completion_request_id,
+            decision_response_path=str(response_path),
+            final_content_path=str(final_path),
+        )
+
 def write_completion_request(source_request_path: str, decision_path: str, consumed_snapshot: str, output_path: str = "", completion_request_id: str = "", decision_response_path: str = "", final_content_path: str = "") -> Path:
     source_path = (ROOT / source_request_path).resolve()
     decision_file = (ROOT / decision_path).resolve() if decision_path else None
@@ -480,19 +543,30 @@ def write_completion_request(source_request_path: str, decision_path: str, consu
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--source-request", required=True)
+    parser.add_argument("--source-request", default="")
     parser.add_argument("--formal-decision", default="", help="historical compatibility only; new production source is projected from --decision-response")
-    parser.add_argument("--consumed-snapshot", required=True)
+    parser.add_argument("--consumed-snapshot", default="")
     parser.add_argument("--completion-request-id", default="")
-    parser.add_argument("--decision-response", required=True)
-    parser.add_argument("--final-content", required=True, help="path to the exact frozen FINAL_CONTENT from this run")
+    parser.add_argument("--decision-response", default="")
+    parser.add_argument("--final-content", default="", help="path to the exact frozen FINAL_CONTENT from this run")
     parser.add_argument("--output", default="")
+    parser.add_argument("--from-bds", default="", help="continue the canonical handoff from one persisted BUSINESS_DECISION_SOURCE")
     args = parser.parse_args()
-    target = write_completion_request(
-        args.source_request, args.formal_decision, args.consumed_snapshot,
-        args.output, args.completion_request_id, args.decision_response,
-        args.final_content,
-    )
+    if args.from_bds:
+        if not args.source_request:
+            raise ValueError("--source-request is required with --from-bds")
+        target = write_completion_from_persisted_bds(
+            args.source_request, args.from_bds, args.consumed_snapshot,
+            output_path=args.output, completion_request_id=args.completion_request_id,
+        )
+    else:
+        if not args.source_request or not args.consumed_snapshot or not args.decision_response or not args.final_content:
+            raise ValueError("new Formal Decision production requires --source-request, --consumed-snapshot, --decision-response and --final-content")
+        target = write_completion_request(
+            args.source_request, args.formal_decision, args.consumed_snapshot,
+            args.output, args.completion_request_id, args.decision_response,
+            args.final_content,
+        )
     written = json.loads(target.read_text(encoding="utf-8"))
     completion_path = target.parent / f"{written['parent_request_id']}__scheduled_review_completion.json"
     print(json.dumps({
