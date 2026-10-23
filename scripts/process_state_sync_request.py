@@ -1808,18 +1808,7 @@ def record_unrecoverable_review_prerequisite(account: dict, request: dict, trade
     if not ok:
         raise ValueError(f"invalid unrecoverable review prerequisite: {reason}")
     market_date = str(assessment["review_target_market_date"])
-    formal_occurrence = str(request.get("occurrence_id") or "").strip()
-    is_formal_decision_production = (
-        str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION"
-        and str(request.get("source") or "").strip().upper() == "CHATGPT_SCHEDULED_REVIEW_ACTOR"
-        and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_POST_CLOSE_REVIEW"
-        and str((request.get("presentation_binding") or {}).get("task_id") or "").strip() == "ETF正式决策"
-    )
-    event_path = (
-        ROOT / "events" / "reviews" / f"formal_{formal_occurrence}.json"
-        if is_formal_decision_production and formal_occurrence
-        else ROOT / "events" / "reviews" / f"{market_date}.json"
-    )
+    event_path = ROOT / "events" / "reviews" / f"{market_date}.json"
     prior = load_json(event_path) if event_path.exists() else {}
     if prior.get("event_type") in {"FORMAL_POST_CLOSE_REVIEW", "FORMAL_SCHEDULED_TRADE_REVIEW"}:
         raise RuntimeError("normal formal review already exists; cannot overwrite with terminal state")
@@ -2235,7 +2224,18 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
         raise ValueError(
             f"POST_CLOSE_REVIEW market_date {market_date} is later than CURRENT.market_date {current_market_date}"
         )
-    event_path = ROOT / "events" / "reviews" / f"{market_date}.json"
+    formal_occurrence = str(request.get("occurrence_id") or "").strip()
+    is_formal_decision_production = (
+        str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION"
+        and str(request.get("source") or "").strip().upper() == "CHATGPT_SCHEDULED_REVIEW_ACTOR"
+        and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_POST_CLOSE_REVIEW"
+        and str((request.get("presentation_binding") or {}).get("task_id") or "").strip() == "ETF正式决策"
+    )
+    event_path = (
+        ROOT / "events" / "reviews" / f"formal_{formal_occurrence}.json"
+        if is_formal_decision_production and formal_occurrence
+        else ROOT / "events" / "reviews" / f"{market_date}.json"
+    )
     prior = load_json(event_path) if event_path.exists() else {}
     prior_review = prior.get("review") if isinstance(prior.get("review"), dict) else {}
     incoming_time = parse_time(
