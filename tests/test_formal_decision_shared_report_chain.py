@@ -19,8 +19,9 @@ def test_formal_decision_uses_shared_completion_report_binding():
     assert "python scripts/run_guarded_notification.py center --mode event" in text
 
 
-def test_market_snapshot_cannot_project_formal_completion():
+def test_market_snapshot_projects_formal_completion_through_existing_owner():
     snapshot = Path(".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
-    assert "Formal Decision completion push is rejected on market-snapshot" in snapshot
-    assert "request_files=\"$completion_file\"" not in snapshot
-    assert "process_state_sync_request.py \"$request_files\"" in snapshot
+    assert "Project Formal Decision completion through market snapshot owner" in snapshot
+    assert "request_files=\"$completion_file\"" in snapshot
+    assert "python scripts/process_state_sync_request.py \"$TRIGGERING_REQUEST_FILE\"" in snapshot
+    assert "PushPlus" not in snapshot

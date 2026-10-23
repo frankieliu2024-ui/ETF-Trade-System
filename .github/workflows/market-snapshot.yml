@@ -163,7 +163,7 @@ jobs:
         shell: bash
         run: |
           ALL_REQUEST_FILES=$(git show --format= --name-only "$GITHUB_SHA" -- 'requests/live_snapshot/*.json' | sed '/^$/d' || true)
-          REQUEST_FILE=$(printf '%s\n' "$ALL_REQUEST_FILES" | grep -vE '(__business_decision_source|__formal_completion|__scheduled_review_completion)' | head -n 1 || true)
+          REQUEST_FILE=$(printf '%s\n' "$ALL_REQUEST_FILES" | grep -vE '(__business_decision_source)' | head -n 1 || true)
           REQUEST_EXPECTED=false
           if [ -n "$REQUEST_FILE" ]; then
             REQUEST_EXPECTED=true
@@ -768,15 +768,17 @@ jobs:
             FORMAL_REPLAY_DWP_COMMIT="$formal_dwp_commit"
             export FORMAL_REPLAY_SOURCE_COMMIT FORMAL_REPLAY_DWP_COMMIT
           else
-            # Business Decision Source and completion artifacts are downstream
-            # projections. They must not be reclassified as a new market request
-            # or wake the request-bound Formal Decision producer.
-            request_files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json' | grep -vE '(__business_decision_source|__formal_completion|__scheduled_review_completion)' || true)
+            # Business Decision Source is a durable downstream projection and
+            # must not be reclassified as a new market request. A Formal
+            # Decision Scheduled Review completion is different: it is the
+            # canonical handoff that this producer must consume so the same
+            # workflow_run notification path used by System/Trade Review can
+            # wake the existing decision-notification workflow.
+            request_files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json' | grep -vE '(__business_decision_source)' || true)
           fi
-          # Formal Decision completion is not consumed by market-snapshot.
-          # Its canonical event is formed only by the explicit completion
-          # handoff into decision-notification. A completion-shaped push must
-          # never become a passive second producer or a hidden replay path.
+          # Formal Decision completion is a producer-owned post-BDS handoff.
+          # Keep it on this workflow's canonical owner path; do not create a
+          # second event writer or invoke PushPlus here.
           if [ "$GITHUB_EVENT_NAME" = "push" ]; then
             completion_file=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json' | while IFS= read -r candidate; do
               [ -z "$candidate" ] && continue
@@ -785,17 +787,18 @@ jobs:
           from pathlib import Path
           request = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
           if (
-              str(request.get("request_type") or "").upper() == "STATE_SYNC_ONLY"
-              and str(request.get("source") or "").upper() == "CHATGPT_FORMAL_DECISION_COMPLETION"
-              and str(request.get("formal_fact_type") or "").upper() == "FORMAL_DECISION_COMPLETION"
+              str(request.get("request_type") or "").upper() == "SCHEDULED_REVIEW_COMPLETION"
+              and str(request.get("source") or "").upper() == "CHATGPT_SCHEDULED_REVIEW_ACTOR"
+              and str(request.get("formal_fact_type") or "").upper() == "FORMAL_POST_CLOSE_REVIEW"
+              and str(request.get("task_id") or "").strip() == "ETF正式决策"
           ):
               raise SystemExit(0)
           raise SystemExit(1)
           PY
             done | head -n 1 || true)
             if [ -n "$completion_file" ]; then
-              echo "Formal Decision completion push is rejected on market-snapshot; use the explicit decision-notification handoff."
-              request_files=""
+              request_files="$completion_file"
+              echo "Formal Decision completion bound to market-snapshot producer: $completion_file"
             fi
           fi
           triggering_request_file=$(printf '%s\n' "$request_files" | sed '/^$/d' | head -n 1)
@@ -1060,6 +1063,36 @@ jobs:
             fi
           done
           echo "processed=$processed" >> "$GITHUB_OUTPUT"
+      - name: Project Formal Decision completion through market snapshot owner
+        id: formal_completion_projection
+        if: ${{ github.event_name == 'push' && env.FORMAL_COMPLETION == 'true' && env.TRIGGERING_REQUEST_FILE != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Projecting Formal Decision completion through the canonical market-snapshot producer."
+          python scripts/process_state_sync_request.py "$TRIGGERING_REQUEST_FILE" | tee /tmp/formal-completion-result.json
+          python - /tmp/formal-completion-result.json <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+          result = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          if not result.get("ok") or not result.get("formal_decision_event"):
+              raise SystemExit("Formal Decision completion did not produce a canonical review event")
+          path = str(result.get("canonical_publication") or "")
+          if not path.startswith("events/reviews/formal_") or not path.endswith(".json"):
+              raise SystemExit("Formal Decision completion returned an invalid canonical publication path")
+          print(f"canonical publication: {path}")
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add events/reviews
+          if git diff --cached --quiet; then
+            echo "Formal Decision canonical event already present; no producer commit required."
+          else
+            git commit -m "chore: project formal decision completion"
+            git push
+          fi
+
       - name: Record broker account sync maintenance receipt
         if: ${{ always() && github.event_name == 'push' && env.TRIGGERING_REQUEST_ID != '' && env.TRIGGERING_REQUEST_FILE != '' }}
         shell: bash
