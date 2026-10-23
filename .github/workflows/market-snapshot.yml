@@ -1504,7 +1504,14 @@ jobs:
               context = json.loads(path.read_text(encoding="utf-8"))
           except (OSError, json.JSONDecodeError) as exc:
               raise SystemExit(f"final publish query_context.json is invalid: {exc}")
-          request_file = os.environ.get("TRIGGERING_REQUEST_FILE", "") or os.environ.get("FORMAL_CONTEXT_RECOVERY_REQUEST", "")
+          # Formal replay carries a durable BDS child as the triggering envelope,
+          # but query_context remains bound to the canonical parent request.
+          # Validate against that parent during final publish.
+          request_file = (
+              os.environ.get("FORMAL_REPLAY_REQUEST", "")
+              or os.environ.get("FORMAL_CONTEXT_RECOVERY_REQUEST", "")
+              or os.environ.get("TRIGGERING_REQUEST_FILE", "")
+          )
           expected = ""
           if request_file and Path(request_file).is_file():
               expected = str((json.loads(Path(request_file).read_text(encoding="utf-8"))).get("request_id") or "").strip()
