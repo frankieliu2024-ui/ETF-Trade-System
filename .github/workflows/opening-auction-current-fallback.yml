@@ -12,9 +12,9 @@ permissions:
   contents: write
 
 concurrency:
-  # Share the primary workflow concurrency group so the fallback never races a
-  # canonical market-snapshot publish.
-  group: etf-market-snapshot-${{ github.ref }}
+  # Share the repository-wide main-state writer lane so the fallback never races
+  # a canonical market-snapshot or other runtime state publication.
+  group: etf-main-state-writer
   cancel-in-progress: false
 
 jobs:
