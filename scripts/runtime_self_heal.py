@@ -220,7 +220,6 @@ def formal_parent_handoff_gap(*, allow_manual: bool = True) -> tuple[str | None,
     gate = ((e2e.get("components") or {}).get("decision_context") or {}).get("formal_reply_gate") or {}
     if str(gate.get("request_id") or "").strip() != parent_id or not bool(gate.get("reply_freezable")):
         return None, None, None
-    bds = False
     completion = False
     for path in directory.glob("*.json"):
         item = load_json(path, {}) or {}
@@ -229,7 +228,6 @@ def formal_parent_handoff_gap(*, allow_manual: bool = True) -> tuple[str | None,
         request_type = str(item.get("request_type") or "").upper()
         source = str(item.get("source") or "").upper()
         fact_type = str(item.get("formal_fact_type") or "").upper()
-        bds = bds or request_type == "BUSINESS_DECISION_SOURCE"
         completion = completion or (
             request_type == "SCHEDULED_REVIEW_COMPLETION"
             and source == "CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR"
@@ -242,9 +240,9 @@ def formal_parent_handoff_gap(*, allow_manual: bool = True) -> tuple[str | None,
         if str(item.get("parent_request_id") or "").strip() == parent_id or str(item.get("request_id") or "").strip() == parent_id:
             event_found = True
             break
-    if bds and completion and event_found:
+    if completion and event_found:
         return None, None, None
-    missing = ",".join(name for name, present in (("BDS", bds), ("COMPLETION", completion), ("FORMAL_EVENT", event_found)) if not present)
+    missing = ",".join(name for name, present in (("COMPLETION", completion), ("FORMAL_EVENT", event_found)) if not present)
     return str(parent_path.relative_to(ROOT)).replace("\\\\", "/"), parent_id, missing
 
 

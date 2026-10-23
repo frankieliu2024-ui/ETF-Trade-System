@@ -971,9 +971,9 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         "status": "READY" if not capital_unresolved else "EVIDENCE_INCOMPLETE",
         "ready": True,
         "hard_gate": False,
-        "scope": "BUSINESS_ANALYSIS_AND_POSTERIOR_BDS_VALIDATION",
+        "scope": "BUSINESS_ANALYSIS_AND_COMPLETION_VALIDATION",
         "unresolved_required_requirements": capital_unresolved,
-        "rule": "资本竞争必须在正式业务判断中完成；证据不足是可披露的业务结论，不得阻断FINAL_CONTENT。BDS仍须校验资本竞争字段完整性，字段缺失只能阻断BDS及后置投影。",
+        "rule": "资本竞争必须在正式业务判断中完成；证据不足是可披露的业务结论，不得阻断FINAL_CONTENT。完成记录仍须校验资本竞争字段完整性，字段缺失只能阻断后置投影。",
     }
     work_package["capital_competition_action_gate"] = {
         "status": "ADVISORY" if capital_unresolved else "OPEN",

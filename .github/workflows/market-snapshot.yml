@@ -826,30 +826,7 @@ jobs:
             )
           fi
           echo "formal_completion=$formal_completion" >> "$GITHUB_OUTPUT"
-          # A BUSINESS_DECISION_SOURCE commit is the durable first handoff of a
-          # Formal Decision. Complete the same handoff inside this producer so
-          # the resulting producer run can naturally wake decision-notification.
-          business_source_file=""
-          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
-            business_source_file=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json' | while IFS= read -r candidate; do
-              [ -z "$candidate" ] && continue
-              python - "$candidate" <<'PY' 2>/dev/null && echo "$candidate"
-          import json, sys
-          from pathlib import Path
-          request = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-          if (
-              str(request.get("request_type") or request.get("submission_type") or "").upper()
-              == "BUSINESS_DECISION_SOURCE"
-              and str(request.get("parent_request_id") or "").strip()
-          ):
-              raise SystemExit(0)
-          raise SystemExit(1)
-          PY
-            done | head -n 1 || true)
-          fi
-          echo "BUSINESS_SOURCE_FILE=$business_source_file" >> "$GITHUB_ENV"
-          echo "business_source_file=$business_source_file" >> "$GITHUB_OUTPUT"
-          formal_post_close_review=false
+          # Formal Decision completion is created by the Actor and consumed directly.\n          formal_post_close_review=false
           if [ -n "$triggering_request_file" ] && [ -f "$triggering_request_file" ]; then
             formal_post_close_review=$(python - "$triggering_request_file" <<'PY'
           import json, sys
@@ -1060,55 +1037,6 @@ jobs:
             fi
           done
           echo "processed=$processed" >> "$GITHUB_OUTPUT"
-      - name: Build Formal Decision completion from durable business source
-        id: formal_completion_build
-        if: ${{ github.event_name == 'push' && env.BUSINESS_SOURCE_FILE != '' && env.FORMAL_COMPLETION != 'true' }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          parent_request_id=$(python - "$BUSINESS_SOURCE_FILE" <<'PY'
-          import json, sys
-          from pathlib import Path
-          value = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8")).get("parent_request_id")
-          print(str(value or "").strip())
-          PY
-          )
-          if [ -z "$parent_request_id" ]; then
-            echo "BUSINESS_DECISION_SOURCE is missing parent_request_id" >&2
-            exit 1
-          fi
-          source_request="requests/live_snapshot/$parent_request_id.json"
-          if [ ! -f "$source_request" ]; then
-            echo "Formal Decision parent request is not present in execution-time main" >&2
-            exit 1
-          fi
-          consumed_snapshot=$(python - "$BUSINESS_SOURCE_FILE" <<'PY'
-          import json, sys
-          from pathlib import Path
-          obj = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-          print(str(obj.get("consumed_snapshot") or "").strip())
-          PY
-          )
-          if [ -z "$consumed_snapshot" ]; then
-            echo "BUSINESS_DECISION_SOURCE is missing consumed_snapshot" >&2
-            exit 1
-          fi
-          completion_id="${parent_request_id}__scheduled_review_completion"
-          python scripts/manual_formal_decision_completion.py \\
-            --from-bds "$BUSINESS_SOURCE_FILE" \\
-            --source-request "$source_request" \\
-            --consumed-snapshot "$consumed_snapshot" \\
-            --completion-request-id "$completion_id"
-          completion_file="requests/live_snapshot/${completion_id}.json"
-          if [ ! -s "$completion_file" ]; then
-            echo "Formal Decision completion was not created" >&2
-            exit 1
-          fi
-          echo "TRIGGERING_REQUEST_FILE=$completion_file" >> "$GITHUB_ENV"
-          echo "TRIGGERING_REQUEST_ID=$completion_id" >> "$GITHUB_ENV"
-          echo "FORMAL_COMPLETION=true" >> "$GITHUB_ENV"
-          echo "Formal Decision completion created: $completion_file"
-
       - name: Project Formal Decision completion through market snapshot owner
         id: formal_completion_projection
         if: ${{ github.event_name == 'push' && env.FORMAL_COMPLETION == 'true' && env.TRIGGERING_REQUEST_FILE != '' }}
