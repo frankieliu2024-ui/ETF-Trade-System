@@ -64,38 +64,6 @@ def validate_formal_parent_request(payload: dict) -> tuple[bool, str]:
     return True, ""
 
 
-def validate_formal_completion_request(payload: dict) -> tuple[bool, str]:
-    """Validate the canonical post-BDS Formal Decision completion ingress."""
-    if not isinstance(payload, dict):
-        return False, "payload_must_be_object"
-    if str(payload.get("request_type") or "").strip().upper() != CANONICAL_COMPLETION_REQUEST_TYPE:
-        return False, "formal_completion_request_type_must_be_SCHEDULED_REVIEW_COMPLETION"
-    if str(payload.get("formal_fact_type") or "").strip().upper() != CANONICAL_COMPLETION_FACT_TYPE:
-        return False, "formal_fact_type_must_be_FORMAL_POST_CLOSE_REVIEW"
-    if str(payload.get("source") or "").strip().upper() != CANONICAL_COMPLETION_SOURCE:
-        return False, "formal_source_must_be_CHATGPT_SCHEDULED_REVIEW_ACTOR"
-    identity_payload = dict(payload)
-    if payload.get("formal_entry_source"):
-        identity_payload["source"] = payload.get("formal_entry_source")
-    valid, reason = validate_formal_entry_identity(identity_payload)
-    if not valid:
-        return False, reason
-    if not str(payload.get("parent_request_id") or "").strip():
-        return False, "formal_completion_parent_request_id_required"
-    if str(payload.get("request_id") or "").strip() == str(payload.get("parent_request_id") or "").strip():
-        return False, "formal_completion_request_id_must_differ_from_parent"
-    for field, reason in (
-        ("bds_path", "formal_completion_bds_path_required"),
-        ("decision_id", "formal_completion_decision_id_required"),
-    ):
-        if not str(payload.get(field) or "").strip():
-            return False, reason
-    content_hash = str(payload.get("content_hash") or "").strip().lower()
-    if len(content_hash) != 64 or any(ch not in "0123456789abcdef" for ch in content_hash):
-        return False, "formal_completion_content_hash_required"
-    return True, ""
-
-
 @dataclass(frozen=True)
 class FormalEntryIdentity:
     entry_mode: str
@@ -182,7 +150,3 @@ def build_identity(payload: dict) -> FormalEntryIdentity:
         market_date=str(payload["market_date"]).strip(),
     )
 
-
-def validate_canonical_formal_request(payload: dict) -> tuple[bool, str]:
-    """Backward-compatible name for the canonical Formal Decision completion validator."""
-    return validate_formal_completion_request(payload)
