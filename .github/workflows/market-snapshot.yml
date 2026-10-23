@@ -608,7 +608,7 @@ jobs:
           print(str(request.get("request_id") or "").strip())
           PY
             )
-            mapfile -t formal_sources < <(find requests/live_snapshot -maxdepth 1 -type f -name "${parent_request_id}__business_decision_source_*.json" -print | sort)
+            mapfile -t formal_sources < <(find requests/live_snapshot -maxdepth 1 -type f \( -name "${parent_request_id}__business_decision_source.json" -o -name "${parent_request_id}__business_decision_source_*.json" \) -print | sort)
             if [ "${#formal_sources[@]}" -lt 1 ]; then
               echo "formal replay requires at least one durable BUSINESS_DECISION_SOURCE for parent=${parent_request_id}; found=0" >&2
               exit 1
