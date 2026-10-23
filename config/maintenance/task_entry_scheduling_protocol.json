@@ -80,7 +80,7 @@
       ],
       "automatic_entry_mode": "AUTOMATIC_SCHEDULED_TASK",
       "canonical_task_id": "ETF正式决策",
-      "production_adapter_role": "ACTOR_HANDOFF_ADAPTER_NOT_CANONICAL_OWNER",
+      "production_adapter_role": "ACTOR_HANDOFF_ADAPTER_ONLY",
       "handoff_contract": {
         "source": "BUSINESS_DECISION_SOURCE",
         "sequence": [
@@ -97,8 +97,10 @@
           "GitHub Actions cron",
           "persistence metadata"
         ],
-        "stop_before_bds_forbidden": true
-      }
+        "stop_before_bds_forbidden": true,
+        "owner": "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER"
+      },
+      "completion_owner": "scripts/scheduled_review_completion.py::build_formal_decision_completion_request"
     }
   ],
   "invariants": [
