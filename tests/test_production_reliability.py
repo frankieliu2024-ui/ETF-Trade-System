@@ -573,7 +573,8 @@ class NotificationDecisionIdentityTests(unittest.TestCase):
         self.assertIn("actions/upload-artifact@v4", workflow)
         self.assertIn("system-consistency-", workflow)
         self.assertIn("system_consistency.json", workflow)
-        self.assertNotIn("git push origin HEAD:main", workflow)
+        self.assertIn("git add data/state/system_consistency.json", workflow)
+        self.assertIn("git push origin HEAD:main", workflow)
         self.assertNotIn("git push --force", workflow)
         self.assertNotIn("git push -f ", workflow)
 
