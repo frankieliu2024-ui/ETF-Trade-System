@@ -17,7 +17,7 @@ from scripts.build_e2e_status import maintenance_component
 
 
 ROOT = Path(__file__).resolve().parents[1]
-WORKFLOW = ROOT / ".github" / "workflows" / "system-consistency.yml"
+WORKFLOW = ROOT / ".github" / "workflows" / "etf-system-consistency.yml"
 VALIDATOR = ROOT / "scripts" / "check_system_consistency.py"
 ACCEPTANCE = ROOT / "scripts" / "run_production_acceptance.py"
 
