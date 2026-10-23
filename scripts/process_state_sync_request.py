@@ -2247,7 +2247,15 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
         # PIT against today's account or rewriting the canonical review event.
         # This preserves the same request/event identity while allowing a
         # previously interrupted handoff to complete its REPORT and closure.
-        _persist_post_close_review_projections(account, request, prior_review, prior)
+        is_scheduled_trade_review = (
+            str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION"
+            and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_SCHEDULED_TRADE_REVIEW"
+            and str(request.get("interaction_scenario") or "").strip().upper() == "SCHEDULED_TRADE_REVIEW"
+        )
+        if is_scheduled_trade_review:
+            _persist_post_close_review_projections(account, request, prior_review, prior)
+        else:
+            _persist_existing_case_detail_projections(prior_review)
         return True, True
     # Normalize scheduled trade-review bindings at the canonical owner.
     # Legacy/recovery requests without a presentation binding remain compatible;
