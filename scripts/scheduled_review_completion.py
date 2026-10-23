@@ -205,6 +205,88 @@ def build_trade_review_completion_request(
     return payload
 
 
+
+def build_formal_decision_completion_request(
+    source_request: dict,
+    bds_path: str,
+    decision_id: str,
+    content_hash: str,
+    completion_request_id: str = "",
+    bds_payload: dict | None = None,
+) -> dict:
+    """Build the post-BDS completion ingress consumed by the existing owner.
+
+    ``bds_payload`` is an optional inline compatibility projection. BDS remains
+    the durable source and is still required by the canonical owner; the inline
+    fields only allow that owner to verify the same immutable handoff.
+    """
+    if not isinstance(source_request, dict) or not source_request:
+        raise ValueError("Formal Decision completion requires the source request")
+    parent_id = _safe_id(source_request.get("request_id"))
+    bds_path = str(bds_path or "").strip()
+    if not bds_path or not bds_path.endswith(".json") or any(part in bds_path for part in ("/../", "\\\\", "..")):
+        raise ValueError("Formal Decision completion requires a safe BDS path")
+    decision_id = _safe_id(decision_id)
+    content_hash = str(content_hash or "").strip()
+    request_id = _safe_id(completion_request_id or f"{parent_id}__scheduled_review_completion")
+    if request_id == parent_id:
+        raise ValueError("Formal Decision completion identity must differ from its parent")
+    source_mode = str(source_request.get("source") or "").strip().upper()
+    entry_mode = {
+        "CHATGPT_MANUAL_FORMAL_ANALYSIS": "MANUAL_CONVERSATION",
+        "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS": "MANUAL_SCHEDULED_TASK",
+        "CHATGPT_SCHEDULED_FORMAL_ANALYSIS": "AUTOMATIC_SCHEDULED_TASK",
+    }.get(source_mode)
+    if not entry_mode:
+        raise ValueError("Formal Decision completion requires one of the three registered entry identities")
+    task_id = str(source_request.get("task_id") or "ETF正式决策").strip()
+    task_run_id = str(source_request.get("task_run_id") or "").strip()
+    occurrence_id = str(source_request.get("occurrence_id") or "").strip()
+    market_date = str(source_request.get("market_date") or "").strip()
+    if task_id != "ETF正式决策":
+        raise ValueError("Formal Decision completion requires canonical task_id")
+    if not task_run_id:
+        raise ValueError("Formal Decision completion requires task_run_id")
+    if not occurrence_id:
+        raise ValueError("Formal Decision completion requires occurrence_id")
+    if not market_date:
+        raise ValueError("Formal Decision completion requires market_date")
+    payload = {
+        "request_id": request_id,
+        "parent_request_id": parent_id,
+        "request_type": "SCHEDULED_REVIEW_COMPLETION",
+        "source": "CHATGPT_SCHEDULED_REVIEW_ACTOR",
+        "formal_fact_type": "FORMAL_POST_CLOSE_REVIEW",
+        "interaction_scenario": "POST_CLOSE_REVIEW",
+        "formal_entry_source": source_mode,
+        "entry_mode": entry_mode,
+        "task_id": task_id,
+        "task_run_id": task_run_id,
+        "occurrence_id": occurrence_id,
+        "requested_at_beijing": source_request.get("requested_at_beijing") or source_request.get("request_time_beijing"),
+        "market_date": market_date,
+        "bds_path": bds_path,
+        "decision_id": decision_id,
+        "content_hash": content_hash,
+    }
+    if bds_payload is not None:
+        if not isinstance(bds_payload, dict):
+            raise ValueError("Formal Decision completion inline BDS projection must be an object")
+        for field in (
+            "decision_response",
+            "decision_work_package",
+            "consumed_snapshot",
+            "presentation_content",
+            "presentation_binding",
+        ):
+            if field in bds_payload:
+                payload[field] = bds_payload[field]
+    payload = {key: value for key, value in payload.items() if value not in (None, "")}
+    if classify_live_snapshot_request(payload) != "STATE_SYNC_ONLY":
+        raise ValueError("Formal Decision completion must use the shared Scheduled Review ingress")
+    return payload
+
+
 SYSTEM_REVIEW_FORBIDDEN_AUTHORITY_PHRASES = (
     "继续维持禁止新增",
     "维持禁止新增",
