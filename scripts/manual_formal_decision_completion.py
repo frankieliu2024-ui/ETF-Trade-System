@@ -434,7 +434,21 @@ def write_completion_from_persisted_bds(
     if not isinstance(decision_response, dict) or not decision_response:
         raise ValueError("persisted BDS decision_response is required")
     if not isinstance(work_package, dict) or not work_package.get("problem_graph"):
-        raise ValueError("persisted BDS decision_work_package is required")
+        # Compatibility recovery for BDS written by the older projector: use
+        # only the current query context when its trigger is the same parent.
+        query_path = ROOT / "data" / "state" / "query_context.json"
+        if not query_path.exists():
+            raise ValueError("persisted BDS decision_work_package is required")
+        query = json.loads(query_path.read_text(encoding="utf-8"))
+        packet = query.get("decision_fact_pack") or {}
+        trigger = packet.get("trigger") or {}
+        if str(trigger.get("request_id") or "").strip() != parent_id:
+            raise ValueError("persisted BDS decision_work_package is missing and current query context is not same-parent")
+        candidate = packet.get("decision_work_package")
+        if not isinstance(candidate, dict) or not candidate.get("problem_graph"):
+            raise ValueError("persisted BDS decision_work_package is required")
+        work_package = candidate
+        bds["decision_work_package"] = work_package
     final_content = str(
         bds.get("presentation_content")
         or decision_response.get("presentation_content")

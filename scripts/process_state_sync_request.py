@@ -3926,6 +3926,10 @@ def main() -> int:
 
         supplied_decision = request.get("formal_decision")
         source_payload = dict(supplied_decision) if isinstance(supplied_decision, dict) else {}
+        # Preserve the request-bound DWP in the durable BDS. The source
+        # payload is the child handoff, but its validation and completion
+        # recovery require the exact work package that produced the answer.
+        source_payload["decision_work_package"] = json.loads(json.dumps(decision_work_package))
         # BUSINESS_DECISION_SOURCE carries Formal ingress identity at the top level.\n        # Preserve it when projecting the internal source payload; otherwise the\n        # validator sees an empty formal_entry_source even though the durable BDS\n        # is correctly bound to the actual entry.\n        for identity_field in (\n            "formal_entry_source",\n            "entry_mode",\n            "task_id",\n            "task_run_id",\n            "occurrence_id",\n        ):\n            if identity_field in request:\n                source_payload.setdefault(identity_field, request.get(identity_field))\n        current_context = query_context.get("current") or {}
         source_payload.setdefault("request_id", str(request.get("request_id") or f"{parent_id}__business_decision_source"))
         source_payload.setdefault("parent_request_id", parent_id)
