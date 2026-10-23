@@ -13,7 +13,7 @@ class UsPulseScheduleBackstopTests(unittest.TestCase):
         self.assertIn('cron: "*/10 0-1 * * 2-6"', text)
         self.assertIn('cron: "2,22,42 8-23 * * 1-5"', text)
         self.assertIn('cron: "2,22,42 0-1 * * 2-6"', text)
-        self.assertIn("group: etf-us-extended-hours-pulse", text)
+        self.assertIn("group: etf-main-state-writer", text)
         self.assertIn("cancel-in-progress: false", text)
         self.assertEqual(text.count("name: US extended-hours pulse"), 1)
 
