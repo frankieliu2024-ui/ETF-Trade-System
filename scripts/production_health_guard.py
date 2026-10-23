@@ -253,6 +253,24 @@ def classify_consistency_coverage(
     return "PASS", "STATE_ONLY_ADVANCE", []
 
 
+def formal_decision_blockage(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    """Classify only current decision-critical health rows as a formal blocker.
+
+    Global consistency and maintenance failures remain visible in production
+    health, but cannot by themselves block a request-bound Formal Decision.
+    """
+    decision_critical_checks = {"a_share_current", "a_share_runtime", "account_fact"}
+    blocking_rows = [
+        row for row in rows
+        if row.get("name") in decision_critical_checks and row.get("status") == "BLOCKED"
+    ]
+    return {
+        "blocked": bool(blocking_rows),
+        "blocking_checks": [row.get("name") for row in blocking_rows],
+        "rule": "Global consistency or maintenance health failure alone does not block a request-bound Formal Decision; only decision-critical current facts do.",
+    }
+
+
 def main() -> int:
     now_utc = datetime.now(timezone.utc)
     rows: list[dict[str, Any]] = []
@@ -338,20 +356,7 @@ def main() -> int:
     # Global production health and the Formal Decision gate are separate contracts.
     # A consistency failure can require maintenance without proving that the
     # current request-bound market/account/risk decision facts are blocked.
-    decision_critical_checks = {
-        "a_share_current",
-        "a_share_runtime",
-        "account_fact",
-    }
-    decision_blocking_rows = [
-        row for row in rows
-        if row.get("name") in decision_critical_checks and row.get("status") == "BLOCKED"
-    ]
-    decision_gate = {
-        "blocked": bool(decision_blocking_rows),
-        "blocking_checks": [row.get("name") for row in decision_blocking_rows],
-        "rule": "Global consistency or maintenance health failure alone does not block a request-bound Formal Decision; only decision-critical current facts do.",
-    }
+    decision_gate = formal_decision_blockage(rows)
     overall = "BLOCKED" if any(row["status"] == "BLOCKED" for row in rows) else "ATTENTION" if any(row["status"] == "ATTENTION" for row in rows) else "PASS"
     self_healing_age = age_seconds(now_utc, self_healing.get("checked_at"))
     safe_recovery_action = str(self_healing.get("recommended_action") or "NONE").upper()
