@@ -370,7 +370,7 @@ def assess(now: datetime | None = None) -> dict:
     # occupy the global formal gate for a later scheduled occurrence. Manual
     # requests remain recoverable only through their explicit manual path.
     formal_replay_path, formal_replay_parent_id = latest_unfinished_formal_parent(allow_manual=False)
-    formal_handoff_path, formal_handoff_parent_id, formal_handoff_missing = formal_parent_handoff_gap(allow_manual=False)
+    formal_handoff_path, formal_handoff_parent_id, formal_handoff_missing = formal_parent_handoff_gap(allow_manual=True)
     review_ver = str(review_context.get("rules_version") or "")
     review_identity_drift = derived_context_identity_drift(current, review_context)
 
