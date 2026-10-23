@@ -176,3 +176,9 @@ Formal Decision completion只能由current main的builder生成，必须满足`r
 - 对所有旧入口做反向审计：events/decisions、BDS直投影、FORMAL_PRESENTATION_PATH、--formal-content-file、历史 review/report/handoff 扫描和 market-snapshot 被动唤醒；只要仍可达，就必须显式 fail-closed或移除。
 - 最终报告必须分别给出正文生成、BDS写入/回读、completion event、notification、provider成功和用户收达，不能用 workflow success、HTTP 200 或历史通知替代当前事件证据。
 - CI通过后仍不得宣称真实生产闭环完成；只有下一次自然运行才能验证真实定时入口和用户实际收达。
+
+## Scheduled Review交接的唯一执行要求
+
+系统复核和交易复盘使用共享的 `scheduled_review_completion.py`，但必须按任务身份调用对应builder：系统复核调用 `build_system_review_completion_request`，交易复盘调用 `build_trade_review_completion_request`。两者不得交叉。
+
+完成对应completion写入并回读后，执行器必须立即调用既有 `decision-notification.yml` 的 `workflow_dispatch(scheduled_review_completion_path=<当前completion路径>)`。Scheduled Review不得依赖Contents push自动唤醒；workflow运行、canonical event、REPORT、notification_center和provider结果都必须沿同一运行身份逐层回读。任一层未取得回执，只能记录交接未完成，不得把正文生成或自动任务completed表述为系统闭环完成。
