@@ -7,15 +7,15 @@
     "snapshot_commit": "a459097cfd519446ddb9f74f29199a74d3812401",
     "boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
     "timing": {
-      "state_builder_started_at": "2026-10-23T11:17:11Z",
+      "state_builder_started_at": "2026-10-23T11:33:09Z",
       "current_published_at": "2026-10-23T15:07:07+08:00",
-      "market_regime_ready_at": "2026-10-23T11:17:18Z",
-      "market_structure_ready_at": "2026-10-23T11:17:19Z",
-      "full_state_context_observation_at": "2026-10-23T11:17:19Z",
-      "decision_context_written_at": "2026-10-23T11:17:20Z"
+      "market_regime_ready_at": "2026-10-23T11:33:15Z",
+      "market_structure_ready_at": "2026-10-23T11:33:16Z",
+      "full_state_context_observation_at": "2026-10-23T11:33:16Z",
+      "decision_context_written_at": "2026-10-23T11:33:17Z"
     }
   },
-  "generated_at": "2026-10-23T11:17:19Z",
+  "generated_at": "2026-10-23T11:33:16Z",
   "rules_version": "V2.2.34",
   "market_date": "2026-10-23",
   "latest_node": "close",
@@ -1597,7 +1597,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 12.291,
-    "age_seconds": 15012
+    "age_seconds": 15969
   },
   "freshness_at_context_build": {
     "status": "STALE",
@@ -1613,7 +1613,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 12.291,
-    "age_seconds": 15012
+    "age_seconds": 15969
   },
   "data_quality_summary": {
     "pass_count": 17,
@@ -1714,7 +1714,7 @@
     "account_fact_time": "2026-10-23T18:25:00+08:00",
     "market_snapshot_time": "2026-10-23T15:07:07+08:00",
     "market_phase": "POST_CLOSE_GRACE",
-    "context_generated_time": "2026-10-23T11:17:19Z",
+    "context_generated_time": "2026-10-23T11:33:16Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
@@ -1754,24 +1754,16 @@
     "read_only": true
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-10-23T19:17:19+08:00",
+    "generated_at_beijing": "2026-10-23T19:33:16+08:00",
     "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
     "refresh_failures": [
       {
         "symbol": "NDX",
-        "error": "HTTP Error 429: Too Many Requests"
+        "error": "NDX active-market immediate refresh rejected non-FRESH provider result: PREVIOUS_SESSION_REFERENCE"
       },
       {
         "symbol": "SOX",
-        "error": "HTTP Error 429: Too Many Requests"
-      },
-      {
-        "symbol": "QQQ",
-        "error": "HTTP Error 429: Too Many Requests"
-      },
-      {
-        "symbol": "SOXX",
-        "error": "HTTP Error 429: Too Many Requests"
+        "error": "SOX active-market immediate refresh rejected non-FRESH provider result: PREVIOUS_SESSION_REFERENCE"
       }
     ],
     "decision_freshness": {
@@ -1780,8 +1772,8 @@
       "captured_at": "2026-10-23T07:07:07+00:00",
       "provider_as_of": "2026-10-23T07:07:01+00:00",
       "effective_as_of": "2026-10-23T07:07:01+00:00",
-      "request_time": "2026-10-23T11:16:22+00:00",
-      "age_seconds": 15018,
+      "request_time": "2026-10-23T11:32:01+00:00",
+      "age_seconds": 15975,
       "post_request": false,
       "preferred_max_age_seconds": 300,
       "fallback_max_age_seconds": 900,
@@ -1792,11 +1784,60 @@
       "resolved_post_request": true,
       "request_scoped_resolution_mode": "CLOSED_SESSION_CANONICAL_REUSE",
       "request_scoped_resolution_reason": "closed A-share session legally reuses latest canonical close",
-      "a_share_market_phase": "OFF_SESSION"
+      "a_share_market_phase": "OFF_SESSION",
+      "resolved_as_of": "2026-10-23T11:32:44+00:00"
     },
     "route_version": "V1.1",
     "query_entry": "market_quote_router",
     "quotes": [
+      {
+        "market": "US",
+        "market_name": "美国",
+        "symbol": "QQQ",
+        "name": "QQQ",
+        "latest_price": 704.01,
+        "open": 704.01,
+        "high": 704.01,
+        "low": 704.01,
+        "prev_close": 725.2,
+        "volume": 0,
+        "amount": null,
+        "turnover": null,
+        "data_time_beijing": "2026-10-23T19:32:26+08:00",
+        "data_time_local": "2026-10-23T07:32:26-04:00",
+        "market_phase": "PRE_MARKET",
+        "market_status_cn": "美股盘前",
+        "data_nature_cn": "盘前行情（附最近正式收盘基准）",
+        "source": "yahoo_chart_api",
+        "freshness": "FRESH",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "refresh_source": "QUERY_TIME_PROVIDER"
+      },
+      {
+        "market": "US",
+        "market_name": "美国",
+        "symbol": "SOXX",
+        "name": "SOXX",
+        "latest_price": 478.26,
+        "open": 478.26,
+        "high": 478.26,
+        "low": 478.26,
+        "prev_close": 510.36,
+        "volume": 0,
+        "amount": null,
+        "turnover": null,
+        "data_time_beijing": "2026-10-23T19:32:44+08:00",
+        "data_time_local": "2026-10-23T07:32:44-04:00",
+        "market_phase": "PRE_MARKET",
+        "market_status_cn": "美股盘前",
+        "data_nature_cn": "盘前行情（附最近正式收盘基准）",
+        "source": "yahoo_chart_api",
+        "freshness": "FRESH",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "refresh_source": "QUERY_TIME_PROVIDER"
+      },
       {
         "market": "CN",
         "market_name": "中国大陆",
@@ -2244,7 +2285,7 @@
         "market_name": "美国",
         "symbol": "NDX",
         "name": "纳斯达克100指数",
-        "latest_price": 703.77,
+        "latest_price": 704.08,
         "open": null,
         "high": null,
         "low": null,
@@ -2252,14 +2293,14 @@
         "volume": null,
         "amount": null,
         "turnover": null,
-        "data_time_beijing": "2026-10-23T18:58:46+08:00",
+        "data_time_beijing": "2026-10-23T19:28:26+08:00",
         "data_time_local": "",
         "market_phase": "PRE_MARKET",
         "market_status_cn": "美股盘前",
         "data_nature_cn": "盘前行情（附最近正式收盘基准）",
         "source": "yahoo_chart_api",
-        "freshness": "DEGRADED",
-        "freshness_cn": "存在延迟",
+        "freshness": "FRESH",
+        "freshness_cn": "时点正常",
         "quality_status": "FRESH",
         "quality_status_cn": "状态待确认",
         "direct_quote": false,
@@ -2270,7 +2311,7 @@
         "market_name": "美国",
         "symbol": "SOX",
         "name": "费城半导体指数",
-        "latest_price": 479.19,
+        "latest_price": 478.7,
         "open": null,
         "high": null,
         "low": null,
@@ -2278,14 +2319,14 @@
         "volume": null,
         "amount": null,
         "turnover": null,
-        "data_time_beijing": "2026-10-23T18:57:50+08:00",
+        "data_time_beijing": "2026-10-23T19:27:11+08:00",
         "data_time_local": "",
         "market_phase": "PRE_MARKET",
         "market_status_cn": "美股盘前",
         "data_nature_cn": "盘前行情（附最近正式收盘基准）",
         "source": "yahoo_chart_api",
-        "freshness": "DEGRADED",
-        "freshness_cn": "存在延迟",
+        "freshness": "FRESH",
+        "freshness_cn": "时点正常",
         "quality_status": "FRESH",
         "quality_status_cn": "状态待确认",
         "direct_quote": false,
@@ -2569,7 +2610,7 @@
   },
   "decision_trigger": {
     "schema_version": "1.2",
-    "generated_at": "2026-10-23T19:17:19+08:00",
+    "generated_at": "2026-10-23T19:33:16+08:00",
     "status": "NO_NEW_TRIGGER",
     "trigger_type": "",
     "triggered_at": "",
@@ -2590,7 +2631,7 @@
   },
   "capital_efficiency_ranking": {
     "schema_version": "1.2",
-    "generated_at": "2026-10-23T19:17:19+08:00",
+    "generated_at": "2026-10-23T19:33:16+08:00",
     "as_of": "2026-10-23T15:07:07+08:00",
     "e2e_status": "DEGRADED",
     "risk_zone": "RISK_CONTROL",
@@ -4183,7 +4224,7 @@
     ]
   },
   "intraday_path_features": {
-    "generated_at": "2026-10-23T11:17:11Z",
+    "generated_at": "2026-10-23T11:33:09Z",
     "market_date": "2026-10-23",
     "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
     "read_only": true,
@@ -5978,7 +6019,7 @@
     },
     "market_structure_context": {
       "schema_version": "1.4",
-      "generated_at": "2026-10-23T11:17:19Z",
+      "generated_at": "2026-10-23T11:33:16Z",
       "market_date": "2026-10-23",
       "as_of_beijing": "2026-10-23T15:07:07+08:00",
       "source_snapshot": "data/market/snapshots/2026-10-23_150707.json",
@@ -8980,8 +9021,8 @@
       "prefilter_elapsed_seconds": 0.007,
       "history_validation_elapsed_seconds": 0.002,
       "measurement_role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE",
-      "candidate_formal_quote_elapsed_seconds": 6.958,
-      "discovery_pipeline_elapsed_seconds": 6.973,
+      "candidate_formal_quote_elapsed_seconds": 6.3,
+      "discovery_pipeline_elapsed_seconds": 6.313,
       "reuse_mode": "SAME_MARKET_NODE_LEGAL_DISCOVERY_EVIDENCE_REUSE"
     },
     "coverage_status": "COMPLETE",
