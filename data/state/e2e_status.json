@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-10-23T15:37:59+08:00",
+  "generated_at": "2026-10-23T15:39:09+08:00",
   "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -25,14 +25,13 @@
       "settlement_constraint_status": "NONE"
     },
     "risk": {
-      "status": "DEGRADED",
-      "reason": "ETF strategy equity reconstruction is stale for the current market date and Dashboard cannot be used as a fallback",
-      "etf_strategy_risk_pct": null,
+      "status": "READY",
+      "reason": "formal ETF strategy risk metric is available from a fresh canonical reconstruction",
+      "etf_strategy_risk_pct": -13.0089,
       "source": "data/state/etf_strategy_equity.json",
-      "stale_reconstruction_risk_pct": -13.1677,
       "source_updated_at": null,
-      "reconstruction_as_of_transaction_date": "2026-10-22",
-      "reconstruction_fresh_for_market_date": false,
+      "reconstruction_as_of_transaction_date": "2026-10-23",
+      "reconstruction_fresh_for_market_date": true,
       "data_quality": null
     },
     "close_review": {
@@ -55,14 +54,14 @@
       "request_bound": true,
       "formal_reply_gate": {
         "request_id": "formal-parent-20261023T153615+0800-k6m2z8",
-        "requested_at_beijing": "2026-10-23T15:36:15+08:00",
+        "requested_at_beijing": "2026-10-23T15:38:36+08:00",
         "status": "READY",
         "reply_freezable": true,
         "blockers": [],
         "source": "decision_fact_pack.formal_reply_freeze",
         "consumer_manifest": {
           "request_id": "formal-parent-20261023T153615+0800-k6m2z8",
-          "requested_at_beijing": "2026-10-23T15:36:15+08:00",
+          "requested_at_beijing": "2026-10-23T15:38:36+08:00",
           "query_context_path": "data/state/query_context.json",
           "decision_context_path": "data/state/decision_context.json",
           "decision_work_package_present": true,
@@ -86,7 +85,7 @@
         "request_bound_fact_projection": {
           "trigger": {
             "request_id": "formal-parent-20261023T153615+0800-k6m2z8",
-            "requested_at_beijing": "2026-10-23T15:36:15+08:00"
+            "requested_at_beijing": "2026-10-23T15:38:36+08:00"
           },
           "formal_reply_freeze": {
             "status": "READY",
@@ -6385,6 +6384,16 @@
             ],
             "current_evidence": [
               {
+                "code": "HSTECH",
+                "name": "恒生科技指数",
+                "price": null,
+                "change_pct": null,
+                "market_phase": "REGULAR",
+                "as_of_beijing": "2026-10-23T15:38:38+08:00",
+                "quality_status": "PASS",
+                "provider": ""
+              },
+              {
                 "code": "000001",
                 "name": "",
                 "price": null,
@@ -6605,22 +6614,12 @@
                 "provider": ""
               },
               {
-                "code": "124.HSTECH",
-                "name": "恒生科技指数",
-                "price": null,
-                "change_pct": null,
-                "market_phase": "REGULAR",
-                "as_of_beijing": "2026-10-23T15:22:36+08:00",
-                "quality_status": "PASS",
-                "provider": ""
-              },
-              {
                 "code": "159248",
                 "name": "人工智能ETF万家",
                 "price": null,
                 "change_pct": null,
                 "market_phase": "OFF_SESSION",
-                "as_of_beijing": "2026-10-23T15:37:00+08:00",
+                "as_of_beijing": "2026-10-23T15:38:45+08:00",
                 "quality_status": "PASS",
                 "provider": ""
               },
@@ -6630,7 +6629,7 @@
                 "price": null,
                 "change_pct": null,
                 "market_phase": "OFF_SESSION",
-                "as_of_beijing": "2026-10-23T15:37:15+08:00",
+                "as_of_beijing": "2026-10-23T15:38:15+08:00",
                 "quality_status": "PASS",
                 "provider": ""
               },
@@ -6640,7 +6639,7 @@
                 "price": null,
                 "change_pct": null,
                 "market_phase": "OFF_SESSION",
-                "as_of_beijing": "2026-10-23T15:36:48+08:00",
+                "as_of_beijing": "2026-10-23T15:38:48+08:00",
                 "quality_status": "PASS",
                 "provider": ""
               },
@@ -6650,7 +6649,7 @@
                 "price": null,
                 "change_pct": null,
                 "market_phase": "OFF_SESSION",
-                "as_of_beijing": "2026-10-23T15:37:30+08:00",
+                "as_of_beijing": "2026-10-23T15:38:30+08:00",
                 "quality_status": "PASS",
                 "provider": ""
               },
@@ -6660,7 +6659,7 @@
                 "price": null,
                 "change_pct": null,
                 "market_phase": "OFF_SESSION",
-                "as_of_beijing": "2026-10-23T15:37:30+08:00",
+                "as_of_beijing": "2026-10-23T15:38:30+08:00",
                 "quality_status": "PASS",
                 "provider": ""
               },
@@ -6670,7 +6669,7 @@
                 "price": null,
                 "change_pct": null,
                 "market_phase": "OFF_SESSION",
-                "as_of_beijing": "2026-10-23T15:37:27+08:00",
+                "as_of_beijing": "2026-10-23T15:38:45+08:00",
                 "quality_status": "PASS",
                 "provider": ""
               },
@@ -6680,7 +6679,7 @@
                 "price": null,
                 "change_pct": null,
                 "market_phase": "OFF_SESSION",
-                "as_of_beijing": "2026-10-23T15:37:22+08:00",
+                "as_of_beijing": "2026-10-23T15:38:47+08:00",
                 "quality_status": "PASS",
                 "provider": ""
               },
@@ -6690,7 +6689,7 @@
                 "price": null,
                 "change_pct": null,
                 "market_phase": "OFF_SESSION",
-                "as_of_beijing": "2026-10-23T15:37:29+08:00",
+                "as_of_beijing": "2026-10-23T15:38:29+08:00",
                 "quality_status": "PASS",
                 "provider": ""
               }
@@ -11243,15 +11242,15 @@
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 1524811,
-          "sha256": "82b0f8ed42bad271da825b558e43d0e08bed28607270552f421c87d3c4a816a4",
+          "byte_count": 1524115,
+          "sha256": "69686a4b90da6c2d4783a344cd576f060bcfe371a8fb7c44933f2014f1cb7993",
           "parsed_object": true
         },
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 491592,
-          "sha256": "f211ae9c598f6e895fac05c72307cf43f6e6e2546d0b95ede6825d53c6f35549",
+          "byte_count": 491564,
+          "sha256": "f9486daeff045c9137eae0cfce56132e23107a3861536f4887840b94f2144362",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -11274,22 +11273,21 @@
   },
   "blockers": [],
   "degradations": [
-    "risk",
     "close_review"
   ],
   "context_read_contract": {
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 1524811,
-      "sha256": "82b0f8ed42bad271da825b558e43d0e08bed28607270552f421c87d3c4a816a4",
+      "byte_count": 1524115,
+      "sha256": "69686a4b90da6c2d4783a344cd576f060bcfe371a8fb7c44933f2014f1cb7993",
       "parsed_object": true
     },
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 491592,
-      "sha256": "f211ae9c598f6e895fac05c72307cf43f6e6e2546d0b95ede6825d53c6f35549",
+      "byte_count": 491564,
+      "sha256": "f9486daeff045c9137eae0cfce56132e23107a3861536f4887840b94f2144362",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"

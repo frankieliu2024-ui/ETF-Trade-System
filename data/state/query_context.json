@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-10-23T07:37:40Z",
-  "generated_at_beijing": "2026-10-23T15:37:40+08:00",
+  "generated_at": "2026-10-23T07:38:55Z",
+  "generated_at_beijing": "2026-10-23T15:38:55+08:00",
   "market_date": "2026-10-23",
   "latest_valid_node": "close",
   "rules_version": "V2.2.34",
@@ -808,7 +808,7 @@
       "boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
       "timing": {}
     },
-    "generated_at": "2026-10-23T07:37:39Z",
+    "generated_at": "2026-10-23T07:38:54Z",
     "rules_version": "V2.2.34",
     "market_date": "2026-10-23",
     "latest_node": "close",
@@ -2390,7 +2390,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 12.291,
-      "age_seconds": 1832
+      "age_seconds": 1907
     },
     "freshness_at_context_build": {
       "status": "STALE",
@@ -2406,7 +2406,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 12.291,
-      "age_seconds": 1832
+      "age_seconds": 1907
     },
     "data_quality_summary": {
       "pass_count": 17,
@@ -2507,15 +2507,17 @@
       "account_fact_time": "2026-10-22T18:34:15+08:00",
       "market_snapshot_time": "2026-10-23T15:07:07+08:00",
       "market_phase": "POST_CLOSE_GRACE",
-      "context_generated_time": "2026-10-23T07:37:39Z",
+      "context_generated_time": "2026-10-23T07:38:54Z",
       "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
       "read_only": true
     },
     "scheduled_pulse_health": {
       "expected_slots": [],
-      "observed_slots": [],
+      "observed_slots": [
+        "workflow_dispatch"
+      ],
       "missing_slots": [],
-      "status": "WARNING",
+      "status": "UNKNOWN",
       "observation_basis": "仅当前runtime记录，未调用Actions API，无法区分cron未触发与触发后未产出。",
       "read_only": true
     },
@@ -2547,22 +2549,17 @@
       "read_only": true
     },
     "market_quote_router": {
-      "generated_at_beijing": "2026-10-23T15:36:47+08:00",
+      "generated_at_beijing": "2026-10-23T15:38:36+08:00",
       "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
-      "refresh_failures": [
-        {
-          "symbol": "HSTECH",
-          "error": "HSTECH query-time direct chain has no fresh usable quote; eastmoney_push2:124.HSTECH: <urlopen error _ssl.c:999: The handshake operation timed out> | hithink-finance:HS2083: ,\"message\":\"Invalid parameter format: thscodes\",\"hint\":\"Check the command schema and correct the supplied parameters.\",\"retryable\":false,\"request_id\":\"241b13048ab8463ca4749113a473cb09\"},\"meta\":{\"cli_version\":\"0.1.13\",\"schema_version\":\"1\"}}\n"
-        }
-      ],
+      "refresh_failures": [],
       "decision_freshness": {
         "status": "DIRECT",
         "quality_status": "UNKNOWN",
         "captured_at": "2026-10-23T07:07:07+00:00",
         "provider_as_of": "2026-10-23T07:07:01+00:00",
         "effective_as_of": "2026-10-23T07:07:01+00:00",
-        "request_time": "2026-10-23T07:36:15+00:00",
-        "age_seconds": 1786,
+        "request_time": "2026-10-23T07:38:36+00:00",
+        "age_seconds": 1895,
         "post_request": false,
         "preferred_max_age_seconds": 300,
         "fallback_max_age_seconds": 900,
@@ -2573,11 +2570,39 @@
         "resolved_post_request": true,
         "request_scoped_resolution_mode": "CLOSED_SESSION_CANONICAL_REUSE",
         "request_scoped_resolution_reason": "closed A-share session legally reuses latest canonical close",
-        "a_share_market_phase": "OFF_SESSION"
+        "a_share_market_phase": "OFF_SESSION",
+        "resolved_as_of": "2026-10-23T07:38:38+00:00"
       },
       "route_version": "V1.1",
       "query_entry": "market_quote_router",
       "quotes": [
+        {
+          "market": "HK",
+          "market_name": "中国香港",
+          "symbol": "HSTECH",
+          "canonical_object": "HSTECH",
+          "name": "恒生科技指数",
+          "latest_price": 3879.85,
+          "open": 3813.43,
+          "high": 3896.93,
+          "low": 3781.23,
+          "prev_close": 3793.93,
+          "volume": 1572729872,
+          "amount": 59049150720.0,
+          "turnover": 59049150720.0,
+          "data_time_beijing": "2026-10-23T15:38:38+08:00",
+          "data_time_local": "2026-10-23T15:38:38+08:00",
+          "market_phase": "REGULAR",
+          "market_status_cn": "港股交易中",
+          "data_nature_cn": "实时交易行情",
+          "source": "eastmoney_push2:124.HSTECH",
+          "freshness": "FRESH",
+          "quality_status": "PASS",
+          "direct_quote": true,
+          "refresh_source": "QUERY_TIME_FORMAL_PROVIDER_CHAIN",
+          "provider_timestamp_field": "f86",
+          "refresh_contract": "ACTIVE_MARKET_REQUIRES_FRESH_PROVIDER_TIMESTAMP"
+        },
         {
           "market": "CN",
           "market_name": "中国大陆",
@@ -3151,32 +3176,6 @@
           "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
         },
         {
-          "market": "HK",
-          "market_name": "中国香港",
-          "symbol": "124.HSTECH",
-          "name": "恒生科技指数",
-          "latest_price": 3880.83,
-          "open": null,
-          "high": null,
-          "low": null,
-          "prev_close": null,
-          "volume": null,
-          "amount": null,
-          "turnover": null,
-          "data_time_beijing": "2026-10-23T15:22:36+08:00",
-          "data_time_local": "",
-          "market_phase": "REGULAR",
-          "market_status_cn": "港股交易中",
-          "data_nature_cn": "实时交易行情",
-          "source": "eastmoney_push2",
-          "freshness": "FRESH",
-          "freshness_cn": "时点正常",
-          "quality_status": "PASS",
-          "quality_status_cn": "数据可用",
-          "direct_quote": true,
-          "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
-        },
-        {
           "market": "CN",
           "market_name": "中国大陆",
           "symbol": "159248",
@@ -3189,8 +3188,8 @@
           "volume": 19302400.0,
           "amount": 27750000.0,
           "turnover": 27750000.0,
-          "data_time_beijing": "2026-10-23T15:37:00+08:00",
-          "data_time_local": "2026-10-23T15:37:00+08:00",
+          "data_time_beijing": "2026-10-23T15:38:45+08:00",
+          "data_time_local": "2026-10-23T15:38:45+08:00",
           "market_phase": "OFF_SESSION",
           "market_status_cn": "A股收盘",
           "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -3200,7 +3199,7 @@
           "direct_quote": true,
           "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
           "provider_symbol": "sz159248",
-          "provider_timestamp_ms": 1792741020000,
+          "provider_timestamp_ms": 1792741125000,
           "evidence_fitness": {
             "object_fact": true,
             "observation_evaluation": true,
@@ -3223,8 +3222,8 @@
           "volume": 21366600.0,
           "amount": 24840000.0,
           "turnover": 24840000.0,
-          "data_time_beijing": "2026-10-23T15:37:15+08:00",
-          "data_time_local": "2026-10-23T15:37:15+08:00",
+          "data_time_beijing": "2026-10-23T15:38:15+08:00",
+          "data_time_local": "2026-10-23T15:38:15+08:00",
           "market_phase": "OFF_SESSION",
           "market_status_cn": "A股收盘",
           "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -3234,7 +3233,7 @@
           "direct_quote": true,
           "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
           "provider_symbol": "sz159565",
-          "provider_timestamp_ms": 1792741035000,
+          "provider_timestamp_ms": 1792741095000,
           "evidence_fitness": {
             "object_fact": true,
             "observation_evaluation": true,
@@ -3257,8 +3256,8 @@
           "volume": 79377900.0,
           "amount": 60560000.0,
           "turnover": 60560000.0,
-          "data_time_beijing": "2026-10-23T15:36:48+08:00",
-          "data_time_local": "2026-10-23T15:36:48+08:00",
+          "data_time_beijing": "2026-10-23T15:38:48+08:00",
+          "data_time_local": "2026-10-23T15:38:48+08:00",
           "market_phase": "OFF_SESSION",
           "market_status_cn": "A股收盘",
           "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -3268,7 +3267,7 @@
           "direct_quote": true,
           "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
           "provider_symbol": "sz159663",
-          "provider_timestamp_ms": 1792741008000,
+          "provider_timestamp_ms": 1792741128000,
           "evidence_fitness": {
             "object_fact": true,
             "observation_evaluation": true,
@@ -3291,8 +3290,8 @@
           "volume": 351068300.0,
           "amount": 179290000.0,
           "turnover": 179290000.0,
-          "data_time_beijing": "2026-10-23T15:37:30+08:00",
-          "data_time_local": "2026-10-23T15:37:30+08:00",
+          "data_time_beijing": "2026-10-23T15:38:30+08:00",
+          "data_time_local": "2026-10-23T15:38:30+08:00",
           "market_phase": "OFF_SESSION",
           "market_status_cn": "A股收盘",
           "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -3302,7 +3301,7 @@
           "direct_quote": true,
           "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
           "provider_symbol": "sz159667",
-          "provider_timestamp_ms": 1792741050000,
+          "provider_timestamp_ms": 1792741110000,
           "evidence_fitness": {
             "object_fact": true,
             "observation_evaluation": true,
@@ -3325,8 +3324,8 @@
           "volume": 78210500.0,
           "amount": 83510000.0,
           "turnover": 83510000.0,
-          "data_time_beijing": "2026-10-23T15:37:30+08:00",
-          "data_time_local": "2026-10-23T15:37:30+08:00",
+          "data_time_beijing": "2026-10-23T15:38:30+08:00",
+          "data_time_local": "2026-10-23T15:38:30+08:00",
           "market_phase": "OFF_SESSION",
           "market_status_cn": "A股收盘",
           "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -3336,7 +3335,7 @@
           "direct_quote": true,
           "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
           "provider_symbol": "sz159805",
-          "provider_timestamp_ms": 1792741050000,
+          "provider_timestamp_ms": 1792741110000,
           "evidence_fitness": {
             "object_fact": true,
             "observation_evaluation": true,
@@ -3359,8 +3358,8 @@
           "volume": 32244500.0,
           "amount": 24820000.0,
           "turnover": 24820000.0,
-          "data_time_beijing": "2026-10-23T15:37:27+08:00",
-          "data_time_local": "2026-10-23T15:37:27+08:00",
+          "data_time_beijing": "2026-10-23T15:38:45+08:00",
+          "data_time_local": "2026-10-23T15:38:45+08:00",
           "market_phase": "OFF_SESSION",
           "market_status_cn": "A股收盘",
           "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -3370,7 +3369,7 @@
           "direct_quote": true,
           "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
           "provider_symbol": "sz159855",
-          "provider_timestamp_ms": 1792741047000,
+          "provider_timestamp_ms": 1792741125000,
           "evidence_fitness": {
             "object_fact": true,
             "observation_evaluation": true,
@@ -3393,8 +3392,8 @@
           "volume": 28166700.0,
           "amount": 12500000.0,
           "turnover": 12500000.0,
-          "data_time_beijing": "2026-10-23T15:37:22+08:00",
-          "data_time_local": "2026-10-23T15:37:22+08:00",
+          "data_time_beijing": "2026-10-23T15:38:47+08:00",
+          "data_time_local": "2026-10-23T15:38:47+08:00",
           "market_phase": "OFF_SESSION",
           "market_status_cn": "A股收盘",
           "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -3404,7 +3403,7 @@
           "direct_quote": true,
           "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
           "provider_symbol": "sh516270",
-          "provider_timestamp_ms": 1792741042000,
+          "provider_timestamp_ms": 1792741127000,
           "evidence_fitness": {
             "object_fact": true,
             "observation_evaluation": true,
@@ -3427,8 +3426,8 @@
           "volume": 27385300.0,
           "amount": 25880000.0,
           "turnover": 25880000.0,
-          "data_time_beijing": "2026-10-23T15:37:29+08:00",
-          "data_time_local": "2026-10-23T15:37:29+08:00",
+          "data_time_beijing": "2026-10-23T15:38:29+08:00",
+          "data_time_local": "2026-10-23T15:38:29+08:00",
           "market_phase": "OFF_SESSION",
           "market_status_cn": "A股收盘",
           "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -3438,7 +3437,7 @@
           "direct_quote": true,
           "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
           "provider_symbol": "sh516520",
-          "provider_timestamp_ms": 1792741049000,
+          "provider_timestamp_ms": 1792741109000,
           "evidence_fitness": {
             "object_fact": true,
             "observation_evaluation": true,
@@ -4346,7 +4345,7 @@
               "prev_close": 1.44,
               "return_60d_pct": null,
               "return_ytd_pct": null,
-              "provider_timestamp": 1792741020000
+              "provider_timestamp": 1792741080000
             },
             "historical_context": {
               "status": "READY",
@@ -4376,8 +4375,8 @@
               "volume": 19302400.0,
               "amount": 27750000.0,
               "turnover": 27750000.0,
-              "data_time_beijing": "2026-10-23T15:37:00+08:00",
-              "data_time_local": "2026-10-23T15:37:00+08:00",
+              "data_time_beijing": "2026-10-23T15:38:45+08:00",
+              "data_time_local": "2026-10-23T15:38:45+08:00",
               "market_phase": "OFF_SESSION",
               "market_status_cn": "A股收盘",
               "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -4387,7 +4386,7 @@
               "direct_quote": true,
               "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
               "provider_symbol": "sz159248",
-              "provider_timestamp_ms": 1792741020000,
+              "provider_timestamp_ms": 1792741125000,
               "evidence_fitness": {
                 "object_fact": true,
                 "observation_evaluation": true,
@@ -4448,7 +4447,7 @@
               "prev_close": 1.162,
               "return_60d_pct": null,
               "return_ytd_pct": null,
-              "provider_timestamp": 1792741035000
+              "provider_timestamp": 1792741095000
             },
             "historical_context": {
               "status": "READY",
@@ -4478,8 +4477,8 @@
               "volume": 21366600.0,
               "amount": 24840000.0,
               "turnover": 24840000.0,
-              "data_time_beijing": "2026-10-23T15:37:15+08:00",
-              "data_time_local": "2026-10-23T15:37:15+08:00",
+              "data_time_beijing": "2026-10-23T15:38:15+08:00",
+              "data_time_local": "2026-10-23T15:38:15+08:00",
               "market_phase": "OFF_SESSION",
               "market_status_cn": "A股收盘",
               "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -4489,7 +4488,7 @@
               "direct_quote": true,
               "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
               "provider_symbol": "sz159565",
-              "provider_timestamp_ms": 1792741035000,
+              "provider_timestamp_ms": 1792741095000,
               "evidence_fitness": {
                 "object_fact": true,
                 "observation_evaluation": true,
@@ -4550,7 +4549,7 @@
               "prev_close": 0.77,
               "return_60d_pct": null,
               "return_ytd_pct": null,
-              "provider_timestamp": 1792741008000
+              "provider_timestamp": 1792741068000
             },
             "historical_context": {
               "status": "READY",
@@ -4580,8 +4579,8 @@
               "volume": 79377900.0,
               "amount": 60560000.0,
               "turnover": 60560000.0,
-              "data_time_beijing": "2026-10-23T15:36:48+08:00",
-              "data_time_local": "2026-10-23T15:36:48+08:00",
+              "data_time_beijing": "2026-10-23T15:38:48+08:00",
+              "data_time_local": "2026-10-23T15:38:48+08:00",
               "market_phase": "OFF_SESSION",
               "market_status_cn": "A股收盘",
               "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -4591,7 +4590,7 @@
               "direct_quote": true,
               "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
               "provider_symbol": "sz159663",
-              "provider_timestamp_ms": 1792741008000,
+              "provider_timestamp_ms": 1792741128000,
               "evidence_fitness": {
                 "object_fact": true,
                 "observation_evaluation": true,
@@ -4652,7 +4651,7 @@
               "prev_close": 0.511,
               "return_60d_pct": null,
               "return_ytd_pct": null,
-              "provider_timestamp": 1792741026000
+              "provider_timestamp": 1792741110000
             },
             "historical_context": {
               "status": "READY",
@@ -4682,8 +4681,8 @@
               "volume": 351068300.0,
               "amount": 179290000.0,
               "turnover": 179290000.0,
-              "data_time_beijing": "2026-10-23T15:37:30+08:00",
-              "data_time_local": "2026-10-23T15:37:30+08:00",
+              "data_time_beijing": "2026-10-23T15:38:30+08:00",
+              "data_time_local": "2026-10-23T15:38:30+08:00",
               "market_phase": "OFF_SESSION",
               "market_status_cn": "A股收盘",
               "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -4693,7 +4692,7 @@
               "direct_quote": true,
               "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
               "provider_symbol": "sz159667",
-              "provider_timestamp_ms": 1792741050000,
+              "provider_timestamp_ms": 1792741110000,
               "evidence_fitness": {
                 "object_fact": true,
                 "observation_evaluation": true,
@@ -4754,7 +4753,7 @@
               "prev_close": 1.058,
               "return_60d_pct": null,
               "return_ytd_pct": null,
-              "provider_timestamp": 1792741041000
+              "provider_timestamp": 1792741110000
             },
             "historical_context": {
               "status": "READY",
@@ -4784,8 +4783,8 @@
               "volume": 78210500.0,
               "amount": 83510000.0,
               "turnover": 83510000.0,
-              "data_time_beijing": "2026-10-23T15:37:30+08:00",
-              "data_time_local": "2026-10-23T15:37:30+08:00",
+              "data_time_beijing": "2026-10-23T15:38:30+08:00",
+              "data_time_local": "2026-10-23T15:38:30+08:00",
               "market_phase": "OFF_SESSION",
               "market_status_cn": "A股收盘",
               "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -4795,7 +4794,7 @@
               "direct_quote": true,
               "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
               "provider_symbol": "sz159805",
-              "provider_timestamp_ms": 1792741050000,
+              "provider_timestamp_ms": 1792741110000,
               "evidence_fitness": {
                 "object_fact": true,
                 "observation_evaluation": true,
@@ -4873,7 +4872,7 @@
               "prev_close": 0.77,
               "return_60d_pct": null,
               "return_ytd_pct": null,
-              "provider_timestamp": 1792741047000
+              "provider_timestamp": 1792741107000
             },
             "historical_context": {
               "status": "READY",
@@ -4903,8 +4902,8 @@
               "volume": 32244500.0,
               "amount": 24820000.0,
               "turnover": 24820000.0,
-              "data_time_beijing": "2026-10-23T15:37:27+08:00",
-              "data_time_local": "2026-10-23T15:37:27+08:00",
+              "data_time_beijing": "2026-10-23T15:38:45+08:00",
+              "data_time_local": "2026-10-23T15:38:45+08:00",
               "market_phase": "OFF_SESSION",
               "market_status_cn": "A股收盘",
               "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -4914,7 +4913,7 @@
               "direct_quote": true,
               "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
               "provider_symbol": "sz159855",
-              "provider_timestamp_ms": 1792741047000,
+              "provider_timestamp_ms": 1792741125000,
               "evidence_fitness": {
                 "object_fact": true,
                 "observation_evaluation": true,
@@ -4975,7 +4974,7 @@
               "prev_close": 0.442,
               "return_60d_pct": null,
               "return_ytd_pct": null,
-              "provider_timestamp": 1792741042000
+              "provider_timestamp": 1792741127000
             },
             "historical_context": {
               "status": "READY",
@@ -5005,8 +5004,8 @@
               "volume": 28166700.0,
               "amount": 12500000.0,
               "turnover": 12500000.0,
-              "data_time_beijing": "2026-10-23T15:37:22+08:00",
-              "data_time_local": "2026-10-23T15:37:22+08:00",
+              "data_time_beijing": "2026-10-23T15:38:47+08:00",
+              "data_time_local": "2026-10-23T15:38:47+08:00",
               "market_phase": "OFF_SESSION",
               "market_status_cn": "A股收盘",
               "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -5016,7 +5015,7 @@
               "direct_quote": true,
               "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
               "provider_symbol": "sh516270",
-              "provider_timestamp_ms": 1792741042000,
+              "provider_timestamp_ms": 1792741127000,
               "evidence_fitness": {
                 "object_fact": true,
                 "observation_evaluation": true,
@@ -5077,7 +5076,7 @@
               "prev_close": 0.939,
               "return_60d_pct": null,
               "return_ytd_pct": null,
-              "provider_timestamp": 1792741045000
+              "provider_timestamp": 1792741109000
             },
             "historical_context": {
               "status": "READY",
@@ -5107,8 +5106,8 @@
               "volume": 27385300.0,
               "amount": 25880000.0,
               "turnover": 25880000.0,
-              "data_time_beijing": "2026-10-23T15:37:29+08:00",
-              "data_time_local": "2026-10-23T15:37:29+08:00",
+              "data_time_beijing": "2026-10-23T15:38:29+08:00",
+              "data_time_local": "2026-10-23T15:38:29+08:00",
               "market_phase": "OFF_SESSION",
               "market_status_cn": "A股收盘",
               "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -5118,7 +5117,7 @@
               "direct_quote": true,
               "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
               "provider_symbol": "sh516520",
-              "provider_timestamp_ms": 1792741049000,
+              "provider_timestamp_ms": 1792741109000,
               "evidence_fitness": {
                 "object_fact": true,
                 "observation_evaluation": true,
@@ -6965,7 +6964,7 @@
     "formal_etf_discovery": {
       "schema_version": "1.0",
       "status": "READY",
-      "generated_at_beijing": "2026-10-23T15:37:11+08:00",
+      "generated_at_beijing": "2026-10-23T15:38:39+08:00",
       "market_date": "2026-10-23",
       "required_history_end_date": "2026-10-22",
       "source": "EASTMONEY_HITHINK_DUAL_SOURCE_UNIVERSE_PLUS_BOUNDED_HISTORY_REPAIR",
@@ -6979,17 +6978,17 @@
         "universe_mode": "HITHINK_ONLY",
         "eastmoney_count": 0,
         "hithink_identity_count": 1770,
-        "eastmoney_error": "<urlopen error _ssl.c:999: The handshake operation timed out>",
+        "eastmoney_error": "HTTP Error 502: Bad Gateway",
         "hithink_error": null,
         "hithink_only_identity_count": 1770,
         "fallback_used": true,
         "fallback_source": "HITHINK_ETF_MASTER_PLUS_TENCENT",
         "reconciled_count": 1770,
         "source_elapsed_seconds": {
-          "hithink": 4.529,
-          "eastmoney": 16.398
+          "eastmoney": 1.235,
+          "hithink": 4.246
         },
-        "source_join_elapsed_seconds": 16.398
+        "source_join_elapsed_seconds": 4.246
       },
       "source_role": "DISCOVERY_ONLY; formal trade decision remains MASTER-owned",
       "broad_universe_count": 1770,
@@ -7008,12 +7007,12 @@
       "history_failure_count": 0,
       "history_elapsed_seconds": 0.003,
       "latency_observability": {
-        "broad_acquisition_elapsed_seconds": 21.918,
+        "broad_acquisition_elapsed_seconds": 9.492,
         "prefilter_elapsed_seconds": 0.009,
         "history_validation_elapsed_seconds": 0.003,
         "measurement_role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE",
-        "candidate_formal_quote_elapsed_seconds": 6.088,
-        "discovery_pipeline_elapsed_seconds": 28.039,
+        "candidate_formal_quote_elapsed_seconds": 5.829,
+        "discovery_pipeline_elapsed_seconds": 15.354,
         "reuse_mode": "FRESH_DISCOVERY"
       },
       "coverage_status": "COMPLETE",
@@ -7051,7 +7050,7 @@
             "prev_close": 1.44,
             "return_60d_pct": null,
             "return_ytd_pct": null,
-            "provider_timestamp": 1792741020000
+            "provider_timestamp": 1792741080000
           },
           "historical_context": {
             "status": "READY",
@@ -7081,8 +7080,8 @@
             "volume": 19302400.0,
             "amount": 27750000.0,
             "turnover": 27750000.0,
-            "data_time_beijing": "2026-10-23T15:37:00+08:00",
-            "data_time_local": "2026-10-23T15:37:00+08:00",
+            "data_time_beijing": "2026-10-23T15:38:45+08:00",
+            "data_time_local": "2026-10-23T15:38:45+08:00",
             "market_phase": "OFF_SESSION",
             "market_status_cn": "A股收盘",
             "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -7092,7 +7091,7 @@
             "direct_quote": true,
             "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
             "provider_symbol": "sz159248",
-            "provider_timestamp_ms": 1792741020000,
+            "provider_timestamp_ms": 1792741125000,
             "evidence_fitness": {
               "object_fact": true,
               "observation_evaluation": true,
@@ -7144,7 +7143,7 @@
             "prev_close": 1.162,
             "return_60d_pct": null,
             "return_ytd_pct": null,
-            "provider_timestamp": 1792741035000
+            "provider_timestamp": 1792741095000
           },
           "historical_context": {
             "status": "READY",
@@ -7174,8 +7173,8 @@
             "volume": 21366600.0,
             "amount": 24840000.0,
             "turnover": 24840000.0,
-            "data_time_beijing": "2026-10-23T15:37:15+08:00",
-            "data_time_local": "2026-10-23T15:37:15+08:00",
+            "data_time_beijing": "2026-10-23T15:38:15+08:00",
+            "data_time_local": "2026-10-23T15:38:15+08:00",
             "market_phase": "OFF_SESSION",
             "market_status_cn": "A股收盘",
             "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -7185,7 +7184,7 @@
             "direct_quote": true,
             "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
             "provider_symbol": "sz159565",
-            "provider_timestamp_ms": 1792741035000,
+            "provider_timestamp_ms": 1792741095000,
             "evidence_fitness": {
               "object_fact": true,
               "observation_evaluation": true,
@@ -7237,7 +7236,7 @@
             "prev_close": 0.77,
             "return_60d_pct": null,
             "return_ytd_pct": null,
-            "provider_timestamp": 1792741008000
+            "provider_timestamp": 1792741068000
           },
           "historical_context": {
             "status": "READY",
@@ -7267,8 +7266,8 @@
             "volume": 79377900.0,
             "amount": 60560000.0,
             "turnover": 60560000.0,
-            "data_time_beijing": "2026-10-23T15:36:48+08:00",
-            "data_time_local": "2026-10-23T15:36:48+08:00",
+            "data_time_beijing": "2026-10-23T15:38:48+08:00",
+            "data_time_local": "2026-10-23T15:38:48+08:00",
             "market_phase": "OFF_SESSION",
             "market_status_cn": "A股收盘",
             "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -7278,7 +7277,7 @@
             "direct_quote": true,
             "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
             "provider_symbol": "sz159663",
-            "provider_timestamp_ms": 1792741008000,
+            "provider_timestamp_ms": 1792741128000,
             "evidence_fitness": {
               "object_fact": true,
               "observation_evaluation": true,
@@ -7330,7 +7329,7 @@
             "prev_close": 0.511,
             "return_60d_pct": null,
             "return_ytd_pct": null,
-            "provider_timestamp": 1792741026000
+            "provider_timestamp": 1792741110000
           },
           "historical_context": {
             "status": "READY",
@@ -7360,8 +7359,8 @@
             "volume": 351068300.0,
             "amount": 179290000.0,
             "turnover": 179290000.0,
-            "data_time_beijing": "2026-10-23T15:37:30+08:00",
-            "data_time_local": "2026-10-23T15:37:30+08:00",
+            "data_time_beijing": "2026-10-23T15:38:30+08:00",
+            "data_time_local": "2026-10-23T15:38:30+08:00",
             "market_phase": "OFF_SESSION",
             "market_status_cn": "A股收盘",
             "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -7371,7 +7370,7 @@
             "direct_quote": true,
             "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
             "provider_symbol": "sz159667",
-            "provider_timestamp_ms": 1792741050000,
+            "provider_timestamp_ms": 1792741110000,
             "evidence_fitness": {
               "object_fact": true,
               "observation_evaluation": true,
@@ -7423,7 +7422,7 @@
             "prev_close": 1.058,
             "return_60d_pct": null,
             "return_ytd_pct": null,
-            "provider_timestamp": 1792741041000
+            "provider_timestamp": 1792741110000
           },
           "historical_context": {
             "status": "READY",
@@ -7453,8 +7452,8 @@
             "volume": 78210500.0,
             "amount": 83510000.0,
             "turnover": 83510000.0,
-            "data_time_beijing": "2026-10-23T15:37:30+08:00",
-            "data_time_local": "2026-10-23T15:37:30+08:00",
+            "data_time_beijing": "2026-10-23T15:38:30+08:00",
+            "data_time_local": "2026-10-23T15:38:30+08:00",
             "market_phase": "OFF_SESSION",
             "market_status_cn": "A股收盘",
             "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -7464,7 +7463,7 @@
             "direct_quote": true,
             "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
             "provider_symbol": "sz159805",
-            "provider_timestamp_ms": 1792741050000,
+            "provider_timestamp_ms": 1792741110000,
             "evidence_fitness": {
               "object_fact": true,
               "observation_evaluation": true,
@@ -7533,7 +7532,7 @@
             "prev_close": 0.77,
             "return_60d_pct": null,
             "return_ytd_pct": null,
-            "provider_timestamp": 1792741047000
+            "provider_timestamp": 1792741107000
           },
           "historical_context": {
             "status": "READY",
@@ -7563,8 +7562,8 @@
             "volume": 32244500.0,
             "amount": 24820000.0,
             "turnover": 24820000.0,
-            "data_time_beijing": "2026-10-23T15:37:27+08:00",
-            "data_time_local": "2026-10-23T15:37:27+08:00",
+            "data_time_beijing": "2026-10-23T15:38:45+08:00",
+            "data_time_local": "2026-10-23T15:38:45+08:00",
             "market_phase": "OFF_SESSION",
             "market_status_cn": "A股收盘",
             "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -7574,7 +7573,7 @@
             "direct_quote": true,
             "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
             "provider_symbol": "sz159855",
-            "provider_timestamp_ms": 1792741047000,
+            "provider_timestamp_ms": 1792741125000,
             "evidence_fitness": {
               "object_fact": true,
               "observation_evaluation": true,
@@ -7626,7 +7625,7 @@
             "prev_close": 0.442,
             "return_60d_pct": null,
             "return_ytd_pct": null,
-            "provider_timestamp": 1792741042000
+            "provider_timestamp": 1792741127000
           },
           "historical_context": {
             "status": "READY",
@@ -7656,8 +7655,8 @@
             "volume": 28166700.0,
             "amount": 12500000.0,
             "turnover": 12500000.0,
-            "data_time_beijing": "2026-10-23T15:37:22+08:00",
-            "data_time_local": "2026-10-23T15:37:22+08:00",
+            "data_time_beijing": "2026-10-23T15:38:47+08:00",
+            "data_time_local": "2026-10-23T15:38:47+08:00",
             "market_phase": "OFF_SESSION",
             "market_status_cn": "A股收盘",
             "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -7667,7 +7666,7 @@
             "direct_quote": true,
             "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
             "provider_symbol": "sh516270",
-            "provider_timestamp_ms": 1792741042000,
+            "provider_timestamp_ms": 1792741127000,
             "evidence_fitness": {
               "object_fact": true,
               "observation_evaluation": true,
@@ -7719,7 +7718,7 @@
             "prev_close": 0.939,
             "return_60d_pct": null,
             "return_ytd_pct": null,
-            "provider_timestamp": 1792741045000
+            "provider_timestamp": 1792741109000
           },
           "historical_context": {
             "status": "READY",
@@ -7749,8 +7748,8 @@
             "volume": 27385300.0,
             "amount": 25880000.0,
             "turnover": 25880000.0,
-            "data_time_beijing": "2026-10-23T15:37:29+08:00",
-            "data_time_local": "2026-10-23T15:37:29+08:00",
+            "data_time_beijing": "2026-10-23T15:38:29+08:00",
+            "data_time_local": "2026-10-23T15:38:29+08:00",
             "market_phase": "OFF_SESSION",
             "market_status_cn": "A股收盘",
             "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -7760,7 +7759,7 @@
             "direct_quote": true,
             "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
             "provider_symbol": "sh516520",
-            "provider_timestamp_ms": 1792741049000,
+            "provider_timestamp_ms": 1792741109000,
             "evidence_fitness": {
               "object_fact": true,
               "observation_evaluation": true,
@@ -7994,15 +7993,17 @@
     "account_fact_time": "2026-10-22T18:34:15+08:00",
     "market_snapshot_time": "2026-10-23T15:07:07+08:00",
     "market_phase": "POST_CLOSE_GRACE",
-    "context_generated_time": "2026-10-23T07:37:39Z",
+    "context_generated_time": "2026-10-23T07:38:54Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
   "scheduled_pulse_health": {
     "expected_slots": [],
-    "observed_slots": [],
+    "observed_slots": [
+      "workflow_dispatch"
+    ],
     "missing_slots": [],
-    "status": "WARNING",
+    "status": "UNKNOWN",
     "observation_basis": "仅当前runtime记录，未调用Actions API，无法区分cron未触发与触发后未产出。",
     "read_only": true
   },
@@ -8097,7 +8098,7 @@
       "runtime_policy": "config/runtime_policy.json",
       "freshness_at_context_build": {
         "status": "STALE",
-        "age_seconds": 1804,
+        "age_seconds": 1892,
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500
       },
@@ -8115,7 +8116,7 @@
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500,
         "acquisition_seconds": 12.291,
-        "age_seconds": 1804
+        "age_seconds": 1892
       },
       "query_time_rule": "行情获取固定顺序为：查询时立即补采 → 最近一次有效快照 → 明确降级/缺失。最近快照只有在即时补采失败或不可执行时才作为第二顺位；使用前必须按查询时刻重新判断为“时点正常／存在延迟／时点过旧”。",
       "partial_refresh_rule": "逐对象采用最新有效证据：补采成功对象使用新数据，失败对象才回退最近有效快照；不得为了统一时点把成功补采对象整体退回旧快照。",
@@ -8151,8 +8152,8 @@
       "query_intent": "",
       "request_file": "requests/live_snapshot/formal-parent-20261023T153615+0800-k6m2z8.json",
       "request_id": "formal-parent-20261023T153615+0800-k6m2z8",
-      "requested_at_beijing": "2026-10-23T15:36:15+08:00",
-      "requested_market_time": "2026-10-23T15:36:15+08:00",
+      "requested_at_beijing": "2026-10-23T15:38:36+08:00",
+      "requested_market_time": "2026-10-23T15:38:36+08:00",
       "current_snapshot_time": "2026-10-23T15:07:07+08:00",
       "resolved_snapshot_time": "2026-10-23T15:07:07+08:00",
       "latest_snapshot": "data/market/snapshots/2026-10-23_150707.json",
@@ -8166,22 +8167,17 @@
     }
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-10-23T15:36:47+08:00",
+    "generated_at_beijing": "2026-10-23T15:38:36+08:00",
     "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
-    "refresh_failures": [
-      {
-        "symbol": "HSTECH",
-        "error": "HSTECH query-time direct chain has no fresh usable quote; eastmoney_push2:124.HSTECH: <urlopen error _ssl.c:999: The handshake operation timed out> | hithink-finance:HS2083: ,\"message\":\"Invalid parameter format: thscodes\",\"hint\":\"Check the command schema and correct the supplied parameters.\",\"retryable\":false,\"request_id\":\"241b13048ab8463ca4749113a473cb09\"},\"meta\":{\"cli_version\":\"0.1.13\",\"schema_version\":\"1\"}}\n"
-      }
-    ],
+    "refresh_failures": [],
     "decision_freshness": {
       "status": "DIRECT",
       "quality_status": "UNKNOWN",
       "captured_at": "2026-10-23T07:07:07+00:00",
       "provider_as_of": "2026-10-23T07:07:01+00:00",
       "effective_as_of": "2026-10-23T07:07:01+00:00",
-      "request_time": "2026-10-23T07:36:15+00:00",
-      "age_seconds": 1786,
+      "request_time": "2026-10-23T07:38:36+00:00",
+      "age_seconds": 1895,
       "post_request": false,
       "preferred_max_age_seconds": 300,
       "fallback_max_age_seconds": 900,
@@ -8192,11 +8188,39 @@
       "resolved_post_request": true,
       "request_scoped_resolution_mode": "CLOSED_SESSION_CANONICAL_REUSE",
       "request_scoped_resolution_reason": "closed A-share session legally reuses latest canonical close",
-      "a_share_market_phase": "OFF_SESSION"
+      "a_share_market_phase": "OFF_SESSION",
+      "resolved_as_of": "2026-10-23T07:38:38+00:00"
     },
     "route_version": "V1.1",
     "query_entry": "market_quote_router",
     "quotes": [
+      {
+        "market": "HK",
+        "market_name": "中国香港",
+        "symbol": "HSTECH",
+        "canonical_object": "HSTECH",
+        "name": "恒生科技指数",
+        "latest_price": 3879.85,
+        "open": 3813.43,
+        "high": 3896.93,
+        "low": 3781.23,
+        "prev_close": 3793.93,
+        "volume": 1572729872,
+        "amount": 59049150720.0,
+        "turnover": 59049150720.0,
+        "data_time_beijing": "2026-10-23T15:38:38+08:00",
+        "data_time_local": "2026-10-23T15:38:38+08:00",
+        "market_phase": "REGULAR",
+        "market_status_cn": "港股交易中",
+        "data_nature_cn": "实时交易行情",
+        "source": "eastmoney_push2:124.HSTECH",
+        "freshness": "FRESH",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "refresh_source": "QUERY_TIME_FORMAL_PROVIDER_CHAIN",
+        "provider_timestamp_field": "f86",
+        "refresh_contract": "ACTIVE_MARKET_REQUIRES_FRESH_PROVIDER_TIMESTAMP"
+      },
       {
         "market": "CN",
         "market_name": "中国大陆",
@@ -8770,32 +8794,6 @@
         "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
       },
       {
-        "market": "HK",
-        "market_name": "中国香港",
-        "symbol": "124.HSTECH",
-        "name": "恒生科技指数",
-        "latest_price": 3880.83,
-        "open": null,
-        "high": null,
-        "low": null,
-        "prev_close": null,
-        "volume": null,
-        "amount": null,
-        "turnover": null,
-        "data_time_beijing": "2026-10-23T15:22:36+08:00",
-        "data_time_local": "",
-        "market_phase": "REGULAR",
-        "market_status_cn": "港股交易中",
-        "data_nature_cn": "实时交易行情",
-        "source": "eastmoney_push2",
-        "freshness": "FRESH",
-        "freshness_cn": "时点正常",
-        "quality_status": "PASS",
-        "quality_status_cn": "数据可用",
-        "direct_quote": true,
-        "route_rule": "按对象所在市场阶段返回最新有效行情；休市/开盘前使用最近正式收盘"
-      },
-      {
         "market": "CN",
         "market_name": "中国大陆",
         "symbol": "159248",
@@ -8808,8 +8806,8 @@
         "volume": 19302400.0,
         "amount": 27750000.0,
         "turnover": 27750000.0,
-        "data_time_beijing": "2026-10-23T15:37:00+08:00",
-        "data_time_local": "2026-10-23T15:37:00+08:00",
+        "data_time_beijing": "2026-10-23T15:38:45+08:00",
+        "data_time_local": "2026-10-23T15:38:45+08:00",
         "market_phase": "OFF_SESSION",
         "market_status_cn": "A股收盘",
         "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -8819,7 +8817,7 @@
         "direct_quote": true,
         "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
         "provider_symbol": "sz159248",
-        "provider_timestamp_ms": 1792741020000,
+        "provider_timestamp_ms": 1792741125000,
         "evidence_fitness": {
           "object_fact": true,
           "observation_evaluation": true,
@@ -8842,8 +8840,8 @@
         "volume": 21366600.0,
         "amount": 24840000.0,
         "turnover": 24840000.0,
-        "data_time_beijing": "2026-10-23T15:37:15+08:00",
-        "data_time_local": "2026-10-23T15:37:15+08:00",
+        "data_time_beijing": "2026-10-23T15:38:15+08:00",
+        "data_time_local": "2026-10-23T15:38:15+08:00",
         "market_phase": "OFF_SESSION",
         "market_status_cn": "A股收盘",
         "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -8853,7 +8851,7 @@
         "direct_quote": true,
         "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
         "provider_symbol": "sz159565",
-        "provider_timestamp_ms": 1792741035000,
+        "provider_timestamp_ms": 1792741095000,
         "evidence_fitness": {
           "object_fact": true,
           "observation_evaluation": true,
@@ -8876,8 +8874,8 @@
         "volume": 79377900.0,
         "amount": 60560000.0,
         "turnover": 60560000.0,
-        "data_time_beijing": "2026-10-23T15:36:48+08:00",
-        "data_time_local": "2026-10-23T15:36:48+08:00",
+        "data_time_beijing": "2026-10-23T15:38:48+08:00",
+        "data_time_local": "2026-10-23T15:38:48+08:00",
         "market_phase": "OFF_SESSION",
         "market_status_cn": "A股收盘",
         "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -8887,7 +8885,7 @@
         "direct_quote": true,
         "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
         "provider_symbol": "sz159663",
-        "provider_timestamp_ms": 1792741008000,
+        "provider_timestamp_ms": 1792741128000,
         "evidence_fitness": {
           "object_fact": true,
           "observation_evaluation": true,
@@ -8910,8 +8908,8 @@
         "volume": 351068300.0,
         "amount": 179290000.0,
         "turnover": 179290000.0,
-        "data_time_beijing": "2026-10-23T15:37:30+08:00",
-        "data_time_local": "2026-10-23T15:37:30+08:00",
+        "data_time_beijing": "2026-10-23T15:38:30+08:00",
+        "data_time_local": "2026-10-23T15:38:30+08:00",
         "market_phase": "OFF_SESSION",
         "market_status_cn": "A股收盘",
         "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -8921,7 +8919,7 @@
         "direct_quote": true,
         "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
         "provider_symbol": "sz159667",
-        "provider_timestamp_ms": 1792741050000,
+        "provider_timestamp_ms": 1792741110000,
         "evidence_fitness": {
           "object_fact": true,
           "observation_evaluation": true,
@@ -8944,8 +8942,8 @@
         "volume": 78210500.0,
         "amount": 83510000.0,
         "turnover": 83510000.0,
-        "data_time_beijing": "2026-10-23T15:37:30+08:00",
-        "data_time_local": "2026-10-23T15:37:30+08:00",
+        "data_time_beijing": "2026-10-23T15:38:30+08:00",
+        "data_time_local": "2026-10-23T15:38:30+08:00",
         "market_phase": "OFF_SESSION",
         "market_status_cn": "A股收盘",
         "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -8955,7 +8953,7 @@
         "direct_quote": true,
         "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
         "provider_symbol": "sz159805",
-        "provider_timestamp_ms": 1792741050000,
+        "provider_timestamp_ms": 1792741110000,
         "evidence_fitness": {
           "object_fact": true,
           "observation_evaluation": true,
@@ -8978,8 +8976,8 @@
         "volume": 32244500.0,
         "amount": 24820000.0,
         "turnover": 24820000.0,
-        "data_time_beijing": "2026-10-23T15:37:27+08:00",
-        "data_time_local": "2026-10-23T15:37:27+08:00",
+        "data_time_beijing": "2026-10-23T15:38:45+08:00",
+        "data_time_local": "2026-10-23T15:38:45+08:00",
         "market_phase": "OFF_SESSION",
         "market_status_cn": "A股收盘",
         "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -8989,7 +8987,7 @@
         "direct_quote": true,
         "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
         "provider_symbol": "sz159855",
-        "provider_timestamp_ms": 1792741047000,
+        "provider_timestamp_ms": 1792741125000,
         "evidence_fitness": {
           "object_fact": true,
           "observation_evaluation": true,
@@ -9012,8 +9010,8 @@
         "volume": 28166700.0,
         "amount": 12500000.0,
         "turnover": 12500000.0,
-        "data_time_beijing": "2026-10-23T15:37:22+08:00",
-        "data_time_local": "2026-10-23T15:37:22+08:00",
+        "data_time_beijing": "2026-10-23T15:38:47+08:00",
+        "data_time_local": "2026-10-23T15:38:47+08:00",
         "market_phase": "OFF_SESSION",
         "market_status_cn": "A股收盘",
         "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -9023,7 +9021,7 @@
         "direct_quote": true,
         "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
         "provider_symbol": "sh516270",
-        "provider_timestamp_ms": 1792741042000,
+        "provider_timestamp_ms": 1792741127000,
         "evidence_fitness": {
           "object_fact": true,
           "observation_evaluation": true,
@@ -9046,8 +9044,8 @@
         "volume": 27385300.0,
         "amount": 25880000.0,
         "turnover": 25880000.0,
-        "data_time_beijing": "2026-10-23T15:37:29+08:00",
-        "data_time_local": "2026-10-23T15:37:29+08:00",
+        "data_time_beijing": "2026-10-23T15:38:29+08:00",
+        "data_time_local": "2026-10-23T15:38:29+08:00",
         "market_phase": "OFF_SESSION",
         "market_status_cn": "A股收盘",
         "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -9057,7 +9055,7 @@
         "direct_quote": true,
         "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
         "provider_symbol": "sh516520",
-        "provider_timestamp_ms": 1792741049000,
+        "provider_timestamp_ms": 1792741109000,
         "evidence_fitness": {
           "object_fact": true,
           "observation_evaluation": true,
@@ -9402,7 +9400,7 @@
   "formal_etf_discovery": {
     "schema_version": "1.0",
     "status": "READY",
-    "generated_at_beijing": "2026-10-23T15:37:11+08:00",
+    "generated_at_beijing": "2026-10-23T15:38:39+08:00",
     "market_date": "2026-10-23",
     "required_history_end_date": "2026-10-22",
     "source": "EASTMONEY_HITHINK_DUAL_SOURCE_UNIVERSE_PLUS_BOUNDED_HISTORY_REPAIR",
@@ -9416,17 +9414,17 @@
       "universe_mode": "HITHINK_ONLY",
       "eastmoney_count": 0,
       "hithink_identity_count": 1770,
-      "eastmoney_error": "<urlopen error _ssl.c:999: The handshake operation timed out>",
+      "eastmoney_error": "HTTP Error 502: Bad Gateway",
       "hithink_error": null,
       "hithink_only_identity_count": 1770,
       "fallback_used": true,
       "fallback_source": "HITHINK_ETF_MASTER_PLUS_TENCENT",
       "reconciled_count": 1770,
       "source_elapsed_seconds": {
-        "hithink": 4.529,
-        "eastmoney": 16.398
+        "eastmoney": 1.235,
+        "hithink": 4.246
       },
-      "source_join_elapsed_seconds": 16.398
+      "source_join_elapsed_seconds": 4.246
     },
     "source_role": "DISCOVERY_ONLY; formal trade decision remains MASTER-owned",
     "broad_universe_count": 1770,
@@ -9445,12 +9443,12 @@
     "history_failure_count": 0,
     "history_elapsed_seconds": 0.003,
     "latency_observability": {
-      "broad_acquisition_elapsed_seconds": 21.918,
+      "broad_acquisition_elapsed_seconds": 9.492,
       "prefilter_elapsed_seconds": 0.009,
       "history_validation_elapsed_seconds": 0.003,
       "measurement_role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE",
-      "candidate_formal_quote_elapsed_seconds": 6.088,
-      "discovery_pipeline_elapsed_seconds": 28.039,
+      "candidate_formal_quote_elapsed_seconds": 5.829,
+      "discovery_pipeline_elapsed_seconds": 15.354,
       "reuse_mode": "FRESH_DISCOVERY"
     },
     "coverage_status": "COMPLETE",
@@ -9488,7 +9486,7 @@
           "prev_close": 1.44,
           "return_60d_pct": null,
           "return_ytd_pct": null,
-          "provider_timestamp": 1792741020000
+          "provider_timestamp": 1792741080000
         },
         "historical_context": {
           "status": "READY",
@@ -9518,8 +9516,8 @@
           "volume": 19302400.0,
           "amount": 27750000.0,
           "turnover": 27750000.0,
-          "data_time_beijing": "2026-10-23T15:37:00+08:00",
-          "data_time_local": "2026-10-23T15:37:00+08:00",
+          "data_time_beijing": "2026-10-23T15:38:45+08:00",
+          "data_time_local": "2026-10-23T15:38:45+08:00",
           "market_phase": "OFF_SESSION",
           "market_status_cn": "A股收盘",
           "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -9529,7 +9527,7 @@
           "direct_quote": true,
           "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
           "provider_symbol": "sz159248",
-          "provider_timestamp_ms": 1792741020000,
+          "provider_timestamp_ms": 1792741125000,
           "evidence_fitness": {
             "object_fact": true,
             "observation_evaluation": true,
@@ -9581,7 +9579,7 @@
           "prev_close": 1.162,
           "return_60d_pct": null,
           "return_ytd_pct": null,
-          "provider_timestamp": 1792741035000
+          "provider_timestamp": 1792741095000
         },
         "historical_context": {
           "status": "READY",
@@ -9611,8 +9609,8 @@
           "volume": 21366600.0,
           "amount": 24840000.0,
           "turnover": 24840000.0,
-          "data_time_beijing": "2026-10-23T15:37:15+08:00",
-          "data_time_local": "2026-10-23T15:37:15+08:00",
+          "data_time_beijing": "2026-10-23T15:38:15+08:00",
+          "data_time_local": "2026-10-23T15:38:15+08:00",
           "market_phase": "OFF_SESSION",
           "market_status_cn": "A股收盘",
           "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -9622,7 +9620,7 @@
           "direct_quote": true,
           "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
           "provider_symbol": "sz159565",
-          "provider_timestamp_ms": 1792741035000,
+          "provider_timestamp_ms": 1792741095000,
           "evidence_fitness": {
             "object_fact": true,
             "observation_evaluation": true,
@@ -9674,7 +9672,7 @@
           "prev_close": 0.77,
           "return_60d_pct": null,
           "return_ytd_pct": null,
-          "provider_timestamp": 1792741008000
+          "provider_timestamp": 1792741068000
         },
         "historical_context": {
           "status": "READY",
@@ -9704,8 +9702,8 @@
           "volume": 79377900.0,
           "amount": 60560000.0,
           "turnover": 60560000.0,
-          "data_time_beijing": "2026-10-23T15:36:48+08:00",
-          "data_time_local": "2026-10-23T15:36:48+08:00",
+          "data_time_beijing": "2026-10-23T15:38:48+08:00",
+          "data_time_local": "2026-10-23T15:38:48+08:00",
           "market_phase": "OFF_SESSION",
           "market_status_cn": "A股收盘",
           "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -9715,7 +9713,7 @@
           "direct_quote": true,
           "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
           "provider_symbol": "sz159663",
-          "provider_timestamp_ms": 1792741008000,
+          "provider_timestamp_ms": 1792741128000,
           "evidence_fitness": {
             "object_fact": true,
             "observation_evaluation": true,
@@ -9767,7 +9765,7 @@
           "prev_close": 0.511,
           "return_60d_pct": null,
           "return_ytd_pct": null,
-          "provider_timestamp": 1792741026000
+          "provider_timestamp": 1792741110000
         },
         "historical_context": {
           "status": "READY",
@@ -9797,8 +9795,8 @@
           "volume": 351068300.0,
           "amount": 179290000.0,
           "turnover": 179290000.0,
-          "data_time_beijing": "2026-10-23T15:37:30+08:00",
-          "data_time_local": "2026-10-23T15:37:30+08:00",
+          "data_time_beijing": "2026-10-23T15:38:30+08:00",
+          "data_time_local": "2026-10-23T15:38:30+08:00",
           "market_phase": "OFF_SESSION",
           "market_status_cn": "A股收盘",
           "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -9808,7 +9806,7 @@
           "direct_quote": true,
           "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
           "provider_symbol": "sz159667",
-          "provider_timestamp_ms": 1792741050000,
+          "provider_timestamp_ms": 1792741110000,
           "evidence_fitness": {
             "object_fact": true,
             "observation_evaluation": true,
@@ -9860,7 +9858,7 @@
           "prev_close": 1.058,
           "return_60d_pct": null,
           "return_ytd_pct": null,
-          "provider_timestamp": 1792741041000
+          "provider_timestamp": 1792741110000
         },
         "historical_context": {
           "status": "READY",
@@ -9890,8 +9888,8 @@
           "volume": 78210500.0,
           "amount": 83510000.0,
           "turnover": 83510000.0,
-          "data_time_beijing": "2026-10-23T15:37:30+08:00",
-          "data_time_local": "2026-10-23T15:37:30+08:00",
+          "data_time_beijing": "2026-10-23T15:38:30+08:00",
+          "data_time_local": "2026-10-23T15:38:30+08:00",
           "market_phase": "OFF_SESSION",
           "market_status_cn": "A股收盘",
           "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -9901,7 +9899,7 @@
           "direct_quote": true,
           "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
           "provider_symbol": "sz159805",
-          "provider_timestamp_ms": 1792741050000,
+          "provider_timestamp_ms": 1792741110000,
           "evidence_fitness": {
             "object_fact": true,
             "observation_evaluation": true,
@@ -9970,7 +9968,7 @@
           "prev_close": 0.77,
           "return_60d_pct": null,
           "return_ytd_pct": null,
-          "provider_timestamp": 1792741047000
+          "provider_timestamp": 1792741107000
         },
         "historical_context": {
           "status": "READY",
@@ -10000,8 +9998,8 @@
           "volume": 32244500.0,
           "amount": 24820000.0,
           "turnover": 24820000.0,
-          "data_time_beijing": "2026-10-23T15:37:27+08:00",
-          "data_time_local": "2026-10-23T15:37:27+08:00",
+          "data_time_beijing": "2026-10-23T15:38:45+08:00",
+          "data_time_local": "2026-10-23T15:38:45+08:00",
           "market_phase": "OFF_SESSION",
           "market_status_cn": "A股收盘",
           "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -10011,7 +10009,7 @@
           "direct_quote": true,
           "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
           "provider_symbol": "sz159855",
-          "provider_timestamp_ms": 1792741047000,
+          "provider_timestamp_ms": 1792741125000,
           "evidence_fitness": {
             "object_fact": true,
             "observation_evaluation": true,
@@ -10063,7 +10061,7 @@
           "prev_close": 0.442,
           "return_60d_pct": null,
           "return_ytd_pct": null,
-          "provider_timestamp": 1792741042000
+          "provider_timestamp": 1792741127000
         },
         "historical_context": {
           "status": "READY",
@@ -10093,8 +10091,8 @@
           "volume": 28166700.0,
           "amount": 12500000.0,
           "turnover": 12500000.0,
-          "data_time_beijing": "2026-10-23T15:37:22+08:00",
-          "data_time_local": "2026-10-23T15:37:22+08:00",
+          "data_time_beijing": "2026-10-23T15:38:47+08:00",
+          "data_time_local": "2026-10-23T15:38:47+08:00",
           "market_phase": "OFF_SESSION",
           "market_status_cn": "A股收盘",
           "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -10104,7 +10102,7 @@
           "direct_quote": true,
           "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
           "provider_symbol": "sh516270",
-          "provider_timestamp_ms": 1792741042000,
+          "provider_timestamp_ms": 1792741127000,
           "evidence_fitness": {
             "object_fact": true,
             "observation_evaluation": true,
@@ -10156,7 +10154,7 @@
           "prev_close": 0.939,
           "return_60d_pct": null,
           "return_ytd_pct": null,
-          "provider_timestamp": 1792741045000
+          "provider_timestamp": 1792741109000
         },
         "historical_context": {
           "status": "READY",
@@ -10186,8 +10184,8 @@
           "volume": 27385300.0,
           "amount": 25880000.0,
           "turnover": 25880000.0,
-          "data_time_beijing": "2026-10-23T15:37:29+08:00",
-          "data_time_local": "2026-10-23T15:37:29+08:00",
+          "data_time_beijing": "2026-10-23T15:38:29+08:00",
+          "data_time_local": "2026-10-23T15:38:29+08:00",
           "market_phase": "OFF_SESSION",
           "market_status_cn": "A股收盘",
           "data_nature_cn": "最近合法已完成A股交易时段ETF正式参考行情",
@@ -10197,7 +10195,7 @@
           "direct_quote": true,
           "refresh_source": "QUERY_TIME_PROVIDER_ETF_SESSION_REFERENCE",
           "provider_symbol": "sh516520",
-          "provider_timestamp_ms": 1792741049000,
+          "provider_timestamp_ms": 1792741109000,
           "evidence_fitness": {
             "object_fact": true,
             "observation_evaluation": true,
@@ -10274,11 +10272,11 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 12.291,
-    "age_seconds": 1804
+    "age_seconds": 1892
   },
   "freshness_at_context_build": {
     "status": "STALE",
-    "age_seconds": 1804,
+    "age_seconds": 1892,
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500
   },
@@ -10288,8 +10286,8 @@
     "captured_at": "2026-10-23T07:07:07+00:00",
     "provider_as_of": "2026-10-23T07:07:01+00:00",
     "effective_as_of": "2026-10-23T07:07:01+00:00",
-    "request_time": "2026-10-23T07:36:15+00:00",
-    "age_seconds": 1786,
+    "request_time": "2026-10-23T07:38:36+00:00",
+    "age_seconds": 1895,
     "post_request": false,
     "preferred_max_age_seconds": 300,
     "fallback_max_age_seconds": 900,
@@ -10300,7 +10298,8 @@
     "resolved_post_request": true,
     "request_scoped_resolution_mode": "CLOSED_SESSION_CANONICAL_REUSE",
     "request_scoped_resolution_reason": "closed A-share session legally reuses latest canonical close",
-    "a_share_market_phase": "OFF_SESSION"
+    "a_share_market_phase": "OFF_SESSION",
+    "resolved_as_of": "2026-10-23T07:38:38+00:00"
   },
   "trading_day_status": {
     "market_date": "2026-10-23",
@@ -10326,7 +10325,7 @@
   },
   "runtime_health": {
     "generated_at": "2026-10-23T07:24:39Z",
-    "workflow_run_id": "39918880491",
+    "workflow_run_id": "39918976582",
     "workflow_run_attempt": "1",
     "target_cadence_seconds": 600,
     "fresh_max_age_seconds": 900,
@@ -10337,14 +10336,14 @@
     "provider_max_workers": 1,
     "etf_universe_count": 14,
     "status": "SKIPPED",
-    "reason": "query_time_refresh_separate_global_path",
+    "reason": "outside_a_share_capture_window",
     "market_date": "2026-10-23",
     "run_started_at": "2026-10-23T07:24:39Z",
     "capture_started_at_beijing": "2026-10-23T15:24:39+08:00",
     "market_phase": "OUTSIDE_SESSION",
     "latest_snapshot": "data/market/snapshots/2026-10-23_150707.json",
     "provider_as_of": "",
-    "scheduled_for": "query_time_push",
+    "scheduled_for": "workflow_dispatch",
     "scheduled_cron": "",
     "scheduled_slot_at": null,
     "schedule_delay_seconds": null,
@@ -10352,11 +10351,11 @@
     "natural_pulse_identity": null,
     "natural_pulse_identity_status": "NOT_SCHEDULED",
     "natural_pulse_eligible": false,
-    "trigger_mode": "QUERY_TIME_PUSH",
-    "started_at": "2026-10-23T15:36:41+08:00",
-    "finished_at": "2026-10-23T15:36:41+08:00",
-    "run_id": "39918880491",
-    "input_commit": "dc4a685a577726152bf6771e296773dc0650740f",
+    "trigger_mode": "SCHEDULE_OR_DISPATCH",
+    "started_at": "2026-10-23T15:38:36+08:00",
+    "finished_at": "2026-10-23T15:38:36+08:00",
+    "run_id": "39918976582",
+    "input_commit": "37b76f2bccb7101b536008891eaeb730ae2ecc0a",
     "data_commit": "",
     "failure_stage": "session_gate",
     "quality_status": "SKIPPED"
@@ -10394,7 +10393,7 @@
     "trigger": {
       "source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
       "request_id": "formal-parent-20261023T153615+0800-k6m2z8",
-      "requested_at_beijing": "2026-10-23T15:36:15+08:00",
+      "requested_at_beijing": "2026-10-23T15:38:36+08:00",
       "entry_mode": "MANUAL_CONVERSATION",
       "task_id": "ETF正式决策",
       "task_run_id": "formal-run-20261023T153615+0800-k6m2z8",
@@ -10447,6 +10446,16 @@
       "provider": "tencent_qq"
     },
     "qualified_market_facts": [
+      {
+        "code": "HSTECH",
+        "name": "恒生科技指数",
+        "price": null,
+        "change_pct": null,
+        "market_phase": "REGULAR",
+        "as_of_beijing": "2026-10-23T15:38:38+08:00",
+        "quality_status": "PASS",
+        "provider": ""
+      },
       {
         "code": "000001",
         "name": "",
@@ -10668,22 +10677,12 @@
         "provider": ""
       },
       {
-        "code": "124.HSTECH",
-        "name": "恒生科技指数",
-        "price": null,
-        "change_pct": null,
-        "market_phase": "REGULAR",
-        "as_of_beijing": "2026-10-23T15:22:36+08:00",
-        "quality_status": "PASS",
-        "provider": ""
-      },
-      {
         "code": "159248",
         "name": "人工智能ETF万家",
         "price": null,
         "change_pct": null,
         "market_phase": "OFF_SESSION",
-        "as_of_beijing": "2026-10-23T15:37:00+08:00",
+        "as_of_beijing": "2026-10-23T15:38:45+08:00",
         "quality_status": "PASS",
         "provider": ""
       },
@@ -10693,7 +10692,7 @@
         "price": null,
         "change_pct": null,
         "market_phase": "OFF_SESSION",
-        "as_of_beijing": "2026-10-23T15:37:15+08:00",
+        "as_of_beijing": "2026-10-23T15:38:15+08:00",
         "quality_status": "PASS",
         "provider": ""
       },
@@ -10703,7 +10702,7 @@
         "price": null,
         "change_pct": null,
         "market_phase": "OFF_SESSION",
-        "as_of_beijing": "2026-10-23T15:36:48+08:00",
+        "as_of_beijing": "2026-10-23T15:38:48+08:00",
         "quality_status": "PASS",
         "provider": ""
       },
@@ -10713,7 +10712,7 @@
         "price": null,
         "change_pct": null,
         "market_phase": "OFF_SESSION",
-        "as_of_beijing": "2026-10-23T15:37:30+08:00",
+        "as_of_beijing": "2026-10-23T15:38:30+08:00",
         "quality_status": "PASS",
         "provider": ""
       },
@@ -10723,7 +10722,7 @@
         "price": null,
         "change_pct": null,
         "market_phase": "OFF_SESSION",
-        "as_of_beijing": "2026-10-23T15:37:30+08:00",
+        "as_of_beijing": "2026-10-23T15:38:30+08:00",
         "quality_status": "PASS",
         "provider": ""
       },
@@ -10733,7 +10732,7 @@
         "price": null,
         "change_pct": null,
         "market_phase": "OFF_SESSION",
-        "as_of_beijing": "2026-10-23T15:37:27+08:00",
+        "as_of_beijing": "2026-10-23T15:38:45+08:00",
         "quality_status": "PASS",
         "provider": ""
       },
@@ -10743,7 +10742,7 @@
         "price": null,
         "change_pct": null,
         "market_phase": "OFF_SESSION",
-        "as_of_beijing": "2026-10-23T15:37:22+08:00",
+        "as_of_beijing": "2026-10-23T15:38:47+08:00",
         "quality_status": "PASS",
         "provider": ""
       },
@@ -10753,13 +10752,13 @@
         "price": null,
         "change_pct": null,
         "market_phase": "OFF_SESSION",
-        "as_of_beijing": "2026-10-23T15:37:29+08:00",
+        "as_of_beijing": "2026-10-23T15:38:29+08:00",
         "quality_status": "PASS",
         "provider": ""
       }
     ],
     "decision_context": {
-      "generated_at_beijing": "2026-10-23T07:37:39Z",
+      "generated_at_beijing": "2026-10-23T07:38:54Z",
       "source": "scripts/state_manager.py::build_decision_context",
       "analysis_coverage": {
         "indices_total": 3,
@@ -10949,8 +10948,8 @@
         "captured_at": "2026-10-23T07:07:07+00:00",
         "provider_as_of": "2026-10-23T07:07:01+00:00",
         "effective_as_of": "2026-10-23T07:07:01+00:00",
-        "request_time": "2026-10-23T07:36:15+00:00",
-        "age_seconds": 1786,
+        "request_time": "2026-10-23T07:38:36+00:00",
+        "age_seconds": 1895,
         "post_request": false,
         "preferred_max_age_seconds": 300,
         "fallback_max_age_seconds": 900,
@@ -10961,7 +10960,8 @@
         "resolved_post_request": true,
         "request_scoped_resolution_mode": "CLOSED_SESSION_CANONICAL_REUSE",
         "request_scoped_resolution_reason": "closed A-share session legally reuses latest canonical close",
-        "a_share_market_phase": "OFF_SESSION"
+        "a_share_market_phase": "OFF_SESSION",
+        "resolved_as_of": "2026-10-23T07:38:38+00:00"
       },
       "quotes_as_of_beijing": [
         "2026-10-22T13:25:00+08:00",
@@ -10978,14 +10978,13 @@
         "2026-10-23T15:07:00+08:00",
         "2026-10-23T15:07:01+08:00",
         "2026-10-23T15:15:00+08:00",
-        "2026-10-23T15:22:36+08:00",
-        "2026-10-23T15:36:48+08:00",
-        "2026-10-23T15:37:00+08:00",
-        "2026-10-23T15:37:15+08:00",
-        "2026-10-23T15:37:22+08:00",
-        "2026-10-23T15:37:27+08:00",
-        "2026-10-23T15:37:29+08:00",
-        "2026-10-23T15:37:30+08:00"
+        "2026-10-23T15:38:15+08:00",
+        "2026-10-23T15:38:29+08:00",
+        "2026-10-23T15:38:30+08:00",
+        "2026-10-23T15:38:38+08:00",
+        "2026-10-23T15:38:45+08:00",
+        "2026-10-23T15:38:47+08:00",
+        "2026-10-23T15:38:48+08:00"
       ],
       "source": "scripts/market_quote_router.py"
     },
@@ -17403,6 +17402,16 @@
       ],
       "current_evidence": [
         {
+          "code": "HSTECH",
+          "name": "恒生科技指数",
+          "price": null,
+          "change_pct": null,
+          "market_phase": "REGULAR",
+          "as_of_beijing": "2026-10-23T15:38:38+08:00",
+          "quality_status": "PASS",
+          "provider": ""
+        },
+        {
           "code": "000001",
           "name": "",
           "price": null,
@@ -17623,22 +17632,12 @@
           "provider": ""
         },
         {
-          "code": "124.HSTECH",
-          "name": "恒生科技指数",
-          "price": null,
-          "change_pct": null,
-          "market_phase": "REGULAR",
-          "as_of_beijing": "2026-10-23T15:22:36+08:00",
-          "quality_status": "PASS",
-          "provider": ""
-        },
-        {
           "code": "159248",
           "name": "人工智能ETF万家",
           "price": null,
           "change_pct": null,
           "market_phase": "OFF_SESSION",
-          "as_of_beijing": "2026-10-23T15:37:00+08:00",
+          "as_of_beijing": "2026-10-23T15:38:45+08:00",
           "quality_status": "PASS",
           "provider": ""
         },
@@ -17648,7 +17647,7 @@
           "price": null,
           "change_pct": null,
           "market_phase": "OFF_SESSION",
-          "as_of_beijing": "2026-10-23T15:37:15+08:00",
+          "as_of_beijing": "2026-10-23T15:38:15+08:00",
           "quality_status": "PASS",
           "provider": ""
         },
@@ -17658,7 +17657,7 @@
           "price": null,
           "change_pct": null,
           "market_phase": "OFF_SESSION",
-          "as_of_beijing": "2026-10-23T15:36:48+08:00",
+          "as_of_beijing": "2026-10-23T15:38:48+08:00",
           "quality_status": "PASS",
           "provider": ""
         },
@@ -17668,7 +17667,7 @@
           "price": null,
           "change_pct": null,
           "market_phase": "OFF_SESSION",
-          "as_of_beijing": "2026-10-23T15:37:30+08:00",
+          "as_of_beijing": "2026-10-23T15:38:30+08:00",
           "quality_status": "PASS",
           "provider": ""
         },
@@ -17678,7 +17677,7 @@
           "price": null,
           "change_pct": null,
           "market_phase": "OFF_SESSION",
-          "as_of_beijing": "2026-10-23T15:37:30+08:00",
+          "as_of_beijing": "2026-10-23T15:38:30+08:00",
           "quality_status": "PASS",
           "provider": ""
         },
@@ -17688,7 +17687,7 @@
           "price": null,
           "change_pct": null,
           "market_phase": "OFF_SESSION",
-          "as_of_beijing": "2026-10-23T15:37:27+08:00",
+          "as_of_beijing": "2026-10-23T15:38:45+08:00",
           "quality_status": "PASS",
           "provider": ""
         },
@@ -17698,7 +17697,7 @@
           "price": null,
           "change_pct": null,
           "market_phase": "OFF_SESSION",
-          "as_of_beijing": "2026-10-23T15:37:22+08:00",
+          "as_of_beijing": "2026-10-23T15:38:47+08:00",
           "quality_status": "PASS",
           "provider": ""
         },
@@ -17708,7 +17707,7 @@
           "price": null,
           "change_pct": null,
           "market_phase": "OFF_SESSION",
-          "as_of_beijing": "2026-10-23T15:37:29+08:00",
+          "as_of_beijing": "2026-10-23T15:38:29+08:00",
           "quality_status": "PASS",
           "provider": ""
         }
@@ -32275,32 +32274,32 @@
   "freshness_assurance": {
     "status": "DIRECT",
     "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
-    "decision_request_time": "2026-10-23T07:36:15+00:00",
+    "decision_request_time": "2026-10-23T07:38:36+00:00",
     "decision_request_post_current": false,
     "rule": "freshness assurance precedes full decision-context construction; post-refresh CURRENT is re-read before formal decision context construction."
   },
   "fast_path_latency": {
-    "t0": "2026-10-23T15:36:15+08:00",
+    "t0": "2026-10-23T15:38:36+08:00",
     "manual_request_identity": "formal-parent-20261023T153615+0800-k6m2z8",
     "latency_observation_role": "DOWNSTREAM_COMPLETION_NOT_DECISION_REQUEST",
     "original_decision_request_identity": "formal-parent-20261023T153615+0800-k6m2z8",
     "may_measure_original_decision_latency": false,
-    "manual_request_received_at": "2026-10-23T15:36:15+08:00",
-    "user_request_received": "2026-10-23T15:36:15+08:00",
+    "manual_request_received_at": "2026-10-23T15:38:36+08:00",
+    "user_request_received": "2026-10-23T15:38:36+08:00",
     "screenshot_account_fact_available": "UNKNOWN",
     "screenshot_account_fact_available_at": "UNKNOWN",
     "t_refresh_start_or_reuse": "",
     "market_refresh_identity": "UNKNOWN",
-    "first_qualified_market_fact_identity": "000001",
-    "first_qualified_market_fact_as_of": "2026-10-23T15:07:00+08:00",
+    "first_qualified_market_fact_identity": "HSTECH",
+    "first_qualified_market_fact_as_of": "2026-10-23T15:38:38+08:00",
     "first_qualified_market_fact_quality": "PASS",
     "t_new_current": "2026-10-23T15:07:07+08:00",
-    "t_minimum_legal_inputs_ready": "2026-10-23T15:37:40+08:00",
-    "minimum_legal_inputs_ready_at": "2026-10-23T15:37:40+08:00",
-    "t_decision_ready": "2026-10-23T07:37:39Z",
-    "final_answer_identity": "2026-10-23T15:37:40+08:00",
-    "final_analysis_identity": "2026-10-23T15:37:40+08:00",
-    "t_reply_or_output_ready": "2026-10-23T15:37:40+08:00",
+    "t_minimum_legal_inputs_ready": "2026-10-23T15:38:55+08:00",
+    "minimum_legal_inputs_ready_at": "2026-10-23T15:38:55+08:00",
+    "t_decision_ready": "2026-10-23T07:38:54Z",
+    "final_answer_identity": "2026-10-23T15:38:55+08:00",
+    "final_analysis_identity": "2026-10-23T15:38:55+08:00",
+    "t_reply_or_output_ready": "2026-10-23T15:38:55+08:00",
     "minimum_legal_inputs_ready_role": "NON_TERMINAL_READINESS_MARKER",
     "minimum_legal_inputs_ready_is_stop_boundary": false,
     "canonical_chain_status": "FORMAL_COMPLETION_PENDING",
@@ -32308,8 +32307,8 @@
     "required_account_persistence_identity": "UNKNOWN",
     "refresh_start_latency": null,
     "refresh_duration": null,
-    "post_current_decision_latency": 1832.0,
-    "total_fast_path_latency": 85.0,
+    "post_current_decision_latency": 1907.0,
+    "total_fast_path_latency": 19.0,
     "measurement_status": "OBSERVED_FIELDS_ONLY; MISSING_TIMESTAMPS_REMAIN_EXPLICIT",
     "trace_metadata_is_non_authoritative": true,
     "trace_metadata_is_decision_gate": false,
@@ -32320,9 +32319,9 @@
       "final_answer_delivered_at"
     ],
     "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
-    "request_bound_at": "2026-10-23T15:36:15+08:00",
+    "request_bound_at": "2026-10-23T15:38:36+08:00",
     "pit_ready_at": "2026-10-23T15:07:07+08:00",
-    "core_result_at": "2026-10-23T07:37:39Z",
+    "core_result_at": "2026-10-23T07:38:54Z",
     "request_to_core_result_latency": null,
     "request_to_canonical_ingress_latency": null,
     "canonical_ingress_to_decision_latency": null,
@@ -32330,11 +32329,11 @@
     "latency_status": "DOWNSTREAM_NOT_DECISION_LATENCY",
     "latency_contract": "Only the original Formal Decision Request may measure REQUEST_RECEIVED_TO_CORE_RESULT; downstream completion/projection rebuilds must not redefine or masquerade as original decision latency.",
     "user_visible_decision_waterfall": {
-      "request_received_at_beijing": "2026-10-23T15:36:15+08:00",
+      "request_received_at_beijing": "2026-10-23T15:38:36+08:00",
       "canonical_ingress_at_beijing": "UNKNOWN",
-      "first_qualified_market_fact_as_of_beijing": "2026-10-23T15:07:00+08:00",
-      "minimum_legal_inputs_ready_at_beijing": "2026-10-23T15:37:40+08:00",
-      "business_decision_ready_at_beijing": "2026-10-23T07:37:39Z",
+      "first_qualified_market_fact_as_of_beijing": "2026-10-23T15:38:38+08:00",
+      "minimum_legal_inputs_ready_at_beijing": "2026-10-23T15:38:55+08:00",
+      "business_decision_ready_at_beijing": "2026-10-23T07:38:54Z",
       "business_decision_source": {
         "status": "NOT_APPLICABLE",
         "requested_at_beijing": "UNKNOWN",
@@ -32353,17 +32352,17 @@
       "role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE"
     },
     "in_process_stage_durations_seconds": {
-      "freshness_assurance_and_quote_context": 23.713,
-      "discovery_pipeline": 28.039,
-      "decision_context_build": 0.748,
-      "decision_fact_pack_build": 0.272,
-      "query_context_build_total": 52.775
+      "freshness_assurance_and_quote_context": 2.518,
+      "discovery_pipeline": 15.354,
+      "decision_context_build": 0.774,
+      "decision_fact_pack_build": 0.256,
+      "query_context_build_total": 18.904
     },
     "workflow_runtime_observation": {
       "run_started_at_beijing": "2026-10-23T07:24:39Z",
-      "core_snapshot_finished_at_beijing": "2026-10-23T15:36:41+08:00",
-      "workflow_run_id": "39918880491",
-      "runtime_health_workflow_run_id": "39918880491",
+      "core_snapshot_finished_at_beijing": "2026-10-23T15:38:36+08:00",
+      "workflow_run_id": "39918976582",
+      "runtime_health_workflow_run_id": "39918976582",
       "correlation_status": "MATCHED_CURRENT_RUN",
       "role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE"
     },
@@ -32382,8 +32381,8 @@
     "query_intent": "",
     "request_file": "requests/live_snapshot/formal-parent-20261023T153615+0800-k6m2z8.json",
     "request_id": "formal-parent-20261023T153615+0800-k6m2z8",
-    "requested_at_beijing": "2026-10-23T15:36:15+08:00",
-    "requested_market_time": "2026-10-23T15:36:15+08:00",
+    "requested_at_beijing": "2026-10-23T15:38:36+08:00",
+    "requested_market_time": "2026-10-23T15:38:36+08:00",
     "current_snapshot_time": "2026-10-23T15:07:07+08:00",
     "resolved_snapshot_time": "2026-10-23T15:07:07+08:00",
     "latest_snapshot": "data/market/snapshots/2026-10-23_150707.json",
