@@ -85,7 +85,9 @@ concurrency:
   # PR prechecks must never queue behind or delay the production consistency
   # lane. Within one PR, a newer head supersedes the stale precheck; production
   # keeps its existing serialized lane and is never cancelled by this rule.
-  group: ${{ github.event_name == 'pull_request' && format('etf-system-consistency-pr-{0}', github.event.pull_request.number) || 'etf-system-consistency' }}
+  # All main-mutating runtime producers share one repository-wide writer lane.
+  # PR validation remains independently cancellable; production writes never overlap.
+  group: ${{ github.ref == 'refs/heads/main' && 'etf-main-state-writer' || format('etf-system-consistency-pr-{0}', github.event.pull_request.number) }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
