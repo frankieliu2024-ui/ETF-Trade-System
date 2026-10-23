@@ -421,14 +421,14 @@ jobs:
           market_date = str(event.get("market_date") or "").strip()
           print(f"data/state/close_review_closure_{market_date}.json" if market_date else "")
           PY
-)
+          )
                     report_path=$(python - "$EVENT_PATH" <<'PY'
           import json, sys
           event = json.load(open(sys.argv[1], encoding="utf-8"))
           report_id = str(event.get("report_id") or "").strip()
           print(f"requests/report_delivery/{report_id.replace(':', '__')}.json" if report_id else "")
           PY
-)
+          )
           closure_backup="/tmp/scheduled-review-closure.json"
           report_backup="/tmp/scheduled-review-report.json"
           [ -n "$closure_path" ] && [ -f "$closure_path" ] && cp -- "$closure_path" "$closure_backup" || true
