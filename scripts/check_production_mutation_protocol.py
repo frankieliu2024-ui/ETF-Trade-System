@@ -653,7 +653,7 @@ def run(root: Path = ROOT) -> dict:
     )
 
     check("mutation_protocol:direct_writers_discovered", bool(writer_rows), f"writers={writer_rows}")
-    consistency_workflow = workflow_texts.get(".github/workflows/etf-system-consistency.yml", "")
+    consistency_workflow = workflow_texts.get(".github/workflows/system-consistency.yml", "")
     check(
         "system_consistency:independent_health_only",
         bool(consistency_workflow)
