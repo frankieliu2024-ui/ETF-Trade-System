@@ -208,11 +208,15 @@ jobs:
           import json, sys
           from pathlib import Path
           request = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-          is_completion = (
-              str(request.get("source") or "").upper() in {"CHATGPT_FORMAL_DECISION_COMPLETION", "CHATGPT_MANUAL_FORMAL_COMPLETION"}
-              or str(request.get("formal_fact_type") or "").upper() in {"FORMAL_POST_CLOSE_REVIEW", "FORMAL_SCHEDULED_SYSTEM_REVIEW", "FORMAL_SCHEDULED_TRADE_REVIEW"}
+          is_formal_decision_completion = (
+              str(request.get("source") or "").upper()
+              in {"CHATGPT_FORMAL_DECISION_COMPLETION", "CHATGPT_MANUAL_FORMAL_COMPLETION"}
+              or (
+                  str(request.get("formal_fact_type") or "").upper() == "FORMAL_POST_CLOSE_REVIEW"
+                  and str(request.get("task_id") or "").strip() == "ETF正式决策"
+              )
           )
-          raise SystemExit(0 if is_completion else 1)
+          raise SystemExit(0 if is_formal_decision_completion else 1)
           PY
             then
               FORMAL_COMPLETION=true
@@ -809,11 +813,15 @@ jobs:
             formal_completion=$(python - "$triggering_request_file" <<'PY'
           import json, sys
           request = json.load(open(sys.argv[1], encoding="utf-8"))
-          is_completion = (
-              str(request.get("source") or "").upper() in {"CHATGPT_FORMAL_DECISION_COMPLETION", "CHATGPT_MANUAL_FORMAL_COMPLETION"}
-              or str(request.get("formal_fact_type") or "").upper() in {"FORMAL_POST_CLOSE_REVIEW", "FORMAL_SCHEDULED_SYSTEM_REVIEW", "FORMAL_SCHEDULED_TRADE_REVIEW"}
+          is_formal_decision_completion = (
+              str(request.get("source") or "").upper()
+              in {"CHATGPT_FORMAL_DECISION_COMPLETION", "CHATGPT_MANUAL_FORMAL_COMPLETION"}
+              or (
+                  str(request.get("formal_fact_type") or "").upper() == "FORMAL_POST_CLOSE_REVIEW"
+                  and str(request.get("task_id") or "").strip() == "ETF正式决策"
+              )
           )
-          print("true" if is_completion else "false")
+          print("true" if is_formal_decision_completion else "false")
           PY
             )
           fi
