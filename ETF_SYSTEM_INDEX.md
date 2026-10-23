@@ -53,9 +53,9 @@
 
 该规则不缩短长报告、不新增状态或第二条决策链；它只规定 facts达到可判断状态后的执行顺序和展示边界。
 
-5. 完成业务判断后，先冻结唯一 FINAL_CONTENT；在返回用户最终消息前，必须在同一执行回合内使用既有 BUSINESS_DECISION_SOURCE 写入并回读同一 request_id、parent_request_id、decision_id、request-bound snapshot、decision_response.answers、presentation_content 和 content_hash，再提交同一请求的统一 Scheduled Review completion ingress，并完成显式通知dispatch及后续可回读的event、REPORT、notification_center和provider层级。交接成功或明确到达最后失败层级后，用户窗口才输出此前冻结的同一份完整FINAL_CONTENT；不得因后置workflow/provider长时间运行无限等待，也不得等待不可取得的用户收件确认，并将该 completion 的唯一当前路径精确交给既有 `decision-notification.yml` 的 `workflow_dispatch(formal_completion_path=...)` 入口，由 canonical owner 形成当前 `events/reviews/formal_<occurrence_id>.json`，再进入 notification_center 和 PushPlus 主链。不得假定 Contents API 提交必然产生 push workflow run，不得由 BDS 或 market-snapshot 被动唤醒，不得扫描历史 completion。后置交接不得阻塞、缩短、改写或撤回正文；不得由 Actor 直接手写 event、REPORT 或通知文件，不得重用历史身份，不得创建第二 request、第二正文、第二 event 或历史回退。provider 成功不是用户回复门禁；任何后置交接或通知失败都必须如实记录，不得声称 notification/provider 成功。
+5. 完成业务判断后，先冻结唯一 FINAL_CONTENT；随后调用 current main 登记的 Formal Decision Actor，由共享 Scheduled Review completion owner 写入并回读唯一完成记录，再由 canonical owner 形成当前 `events/reviews/formal_<occurrence_id>.json`，进入 REPORT、notification_center 和 PushPlus 主链。不得创建任何中间业务决策对象，不得由 Actor直接手写event、REPORT或通知文件，不得扫描历史对象或创建第二条通知链。后置交接必须有界等待；交接成功或明确到达最后失败层级后，用户窗口才输出此前冻结的同一份完整FINAL_CONTENT。后置失败不得重新分析、改写或生成第二份正文；provider成功不等于用户已收到。
 
-正式决策生产闭环的ChatGPT写入入口固定为现有 BUSINESS_DECISION_SOURCE 路由：后置 handoff 只能使用本次父请求绑定、唯一BDS/decision identity、实际消费的request-bound snapshot，以及与本次 decision_work_package.problem_graph 对齐的 decision_response.answers；若本次需要PushPlus完整报告，必须携带同一份冻结用户可见正文到既有 presentation_content 字段，由正式决策事件保存其正文指纹并交给现有通知owner投递。GitHub Contents只负责把这个Actor业务回答envelope提交到 requests/live_snapshot/，不执行投影、不生成交易判断。现有 scripts/process_state_sync_request.py 在execution-time main上读取同一父请求的request-bound DWP，并调用 scripts/business_decision_source.py 完成确定性 project_decision_response → validate_source 后再进入canonical single writer；parent/DWP/snapshot不匹配或业务回答不合法必须在该owner处fail-closed。现有 scripts/manual_formal_decision_completion.py 仅保留为同合同的 preflight、builder 适配与人工恢复工具，不是Actor的第二生产入口，也不得绕过现有BUSINESS_DECISION_SOURCE和canonical owner。Formal Decision 的合法后置交接必须使用与系统复核、交易复盘相同的 `request_type=SCHEDULED_REVIEW_COMPLETION`、`source=CHATGPT_SCHEDULED_REVIEW_ACTOR` 和共享 completion owner；Formal 仅通过 `formal_fact_type=FORMAL_POST_CLOSE_REVIEW`、`report_type=ETF_FORMAL_DECISION`、同一 parent request、BDS path、decision_id、FINAL_CONTENT 和 content_hash 保留业务身份。不得构造旧的 `STATE_SYNC_ONLY + CHATGPT_FORMAL_DECISION_COMPLETION + FORMAL_DECISION_COMPLETION` 生产对象；历史对象只作审计，禁止恢复器、扫描器或通知链重新消费。不得手写 `events/reviews/formal_*.json`、REPORT 或 notification canonical nesting；Formal review event只能由共享 completion owner形成并持久化。
+Formal Decision 的统一交接字段为：`request_type=SCHEDULED_REVIEW_COMPLETION`、`source=CHATGPT_SCHEDULED_REVIEW_ACTOR`、`formal_fact_type=FORMAL_POST_CLOSE_REVIEW`、`interaction_scenario=FORMAL_DECISION` 和 `presentation_binding.report_type=ETF_FORMAL_DECISION`。completion必须绑定同一父请求、同一运行身份、同一market_date、同一FINAL_CONTENT和正文哈希。GitHub Contents写入只用于既有请求或完成记录入口，不执行投影、不生成交易判断；事件、报告和通知只能由既有canonical owner生成。
 
 盘前、集合竞价、盘中、午间、盘后、风险许可、生命周期、金额、卖出和资本比较：
 
@@ -130,13 +130,11 @@ INDEX只负责回答“去哪里读”，不得重新定义以下内容：正式
 
 #### Formal Decision交接可执行性硬门（集中修复）
 
-本节旧版BDS表述已废止。当前正式决策只允许使用统一 Scheduled Review completion owner；以下历史BDS要求仅保留作审计文本，不得作为新运行入口或生产前置条件。
-
-Formal Decision completion必须使用current main的统一 Scheduled Review completion builder生成：`request_id=<parent_request_id>__scheduled_review_completion`，`parent_request_id=<原始父请求>`，且文件名必须精确为`<request_id>.json`；不得手写、复用父请求ID或使用任意文件名。正式决策completion不需要BDS；写入并回读completion后由统一canonical owner形成本次运行唯一正式决策event并进入notification_center。不得把BDS文件、历史对象或GitHub Contents push本身当作通知提交；通知失败时必须如实记录。
+当前正式决策只允许使用统一 Scheduled Review completion owner。completion必须使用current main登记的统一构建器生成：`request_id=<parent_request_id>__scheduled_review_completion`，`parent_request_id=<原始父请求>`，且文件名必须精确为`<request_id>.json`；不得手写、复用父请求ID或使用任意文件名。写入并回读completion后，由统一canonical owner形成本次运行唯一正式决策event并进入notification_center；不得把历史对象或GitHub Contents push本身当作通知提交。
 
 “冻结正文、完成交接后输出”定义用户可见顺序：ChatGPT先冻结唯一FINAL_CONTENT，随后由同一运行完成统一SCHEDULED_REVIEW_COMPLETION的写入、回读和既有workflow投影；交接成功或明确记录最后失败层级后，再输出此前冻结的同一FINAL_CONTENT。completion、event、REPORT、notification_center和PushPlus必须继续使用同一运行身份和正文哈希；后置链路不得无限等待、改写或生成第二正文，失败必须记录PROJECTION_INCOMPLETE或MAINTENANCE_INCOMPLETE。
 
-只生成完整正文但未完成BDS回读和completion提交，不得视为本次Formal Decision完成；不得以“后置异步”“已生成报告”或其他状态替代交接。若交接失败，必须保留同一请求和正文并明确记录未完成，不得声称主动通知已发送。该硬门适用于对话窗口、手动定时和自动定时三个入口，不改变【ETF系统复核】和【ETF交易复盘】既有链。
+只生成完整正文但未完成completion回读和后置交接，不得视为本次Formal Decision完整完成；不得以“后置异步”“已生成报告”或其他状态替代交接。若交接失败，必须保留同一请求和正文并明确记录未完成，不得声称主动通知已发送。该硬门适用于对话窗口、手动定时和自动定时三个入口，不改变【ETF系统复核】和【ETF交易复盘】既有链。
 
 ## 6. 冻结、封存与回退登记
 
