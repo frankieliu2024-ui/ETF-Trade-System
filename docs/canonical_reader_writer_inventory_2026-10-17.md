@@ -11,7 +11,7 @@
 | provider有效策略 | `scripts/provider_policy.py` + `config/market/provider_priority.json` | `cloud_runner_snapshot.py`、`check_system_consistency_core.py` | 已有统一resolver，但尚未证明所有生产消费者均已接入 |
 | 市场正式事实 | `.github/workflows/market-snapshot.yml`及其market-data writer | `CURRENT.json`、`query_time_market_refresh.py` | workflow明确触发；查询补采必须继续复核是否只回到同一writer |
 | 风险证据 | `build_state_context.py`调用 `build_skfolio_risk_evidence.py` | risk evidence state、e2e projection | 已确认属于状态重建链；需核对旧估值截止日如何阻断下游 |
-| 系统状态投影 | `build_e2e_status.py`、`system-consistency.yml` | `e2e_status.json`、Dashboard | 生产可达；不得重新推断上游事实或掩盖降级 |
+| 系统状态投影 | `build_e2e_status.py`、`etf-system-consistency.yml` | `e2e_status.json`、Dashboard | 生产可达；不得重新推断上游事实或掩盖降级 |
 | REPORT/通知 | `decision-notification.yml`、`notification_center.py` | REPORT、notification_center、PushPlus | 生产可达；三类任务共享transport但不共享业务身份/正文 |
 
 ## 生产可达性审计结果
@@ -32,7 +32,7 @@
 1. `market-snapshot.yml`明确包含请求、行情脚本、provider配置和查询时补采路径；这是行情主链的生产入口。
 2. `build_state_context.py`调用风险证据builder；风险证据不是孤立文件，而是状态上下文重建的一部分。
 3. `process_state_sync_request.py`导入应急行情证据校验；该路径与Formal Decision请求处理相关，不能直接演变为第二事实生产链。
-4. `system-consistency.yml`将查询刷新测试和脚本变更纳入一致性检查，但测试引用不等于生产可达。
+4. `etf-system-consistency.yml`将查询刷新测试和脚本变更纳入一致性检查，但测试引用不等于生产可达。
 5. `cloud_runner_snapshot.py`和一致性核心已接入provider resolver；这只覆盖已确认的两个消费者，不能代表所有读取者已收敛。
 
 ## 必须补齐的字段

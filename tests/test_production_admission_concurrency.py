@@ -14,7 +14,7 @@ from scripts.acceptance_scope import (
 ROOT = Path(__file__).resolve().parents[1]
 PROTOCOL = ROOT / "docs" / "生产变更与并发写入协议_V1.0.md"
 MIRROR = ROOT / "config" / "maintenance" / "production_mutation_protocol.json"
-WORKFLOW = ROOT / ".github" / "workflows" / "system-consistency.yml"
+WORKFLOW = ROOT / ".github" / "workflows" / "etf-system-consistency.yml"
 
 
 class ProductionAdmissionConcurrencyContractTests(unittest.TestCase):

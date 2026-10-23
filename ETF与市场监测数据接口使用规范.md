@@ -319,7 +319,7 @@ A股ETF、A股指数和账户截图均优先按北京时间标注。海外/亚�
 7. **跨市场扩展时段链**：美股现金盘、POST_MARKET、PRE_MARKET必须可区分；QQQ/SOXX扩展时段脚本、状态文件、workflow和query读取入口必须一致，不能只写在文档中；
 8. **恒生科技直接源链**：配置和代码必须同时包含 `HS2083 → HSTECH.HK → 124.HSTECH` 的直接指数降级顺序；任何把 `^HSTECH` 恢复为Yahoo生产代码、或在仍有直接源可用时直接跳到513180代理，都属于一致性错误。
 
-`scripts/check_system_consistency.py` 是基础自动验收脚本；`.github/workflows/system-consistency.yml` 负责维护后自动重算并持久化结果；生产行情workflow在采集前再次预检。硬冲突必须判FAIL并阻断生产；账户事实缺失等正常状态只记WARNING。
+`scripts/check_system_consistency.py` 是基础自动验收脚本；`.github/workflows/etf-system-consistency.yml` 负责维护后自动重算并持久化结果；生产行情workflow在采集前再次预检。硬冲突必须判FAIL并阻断生产；账户事实缺失等正常状态只记WARNING。
 
 一致性检查的对象包括但不限于文本、配置、脚本、workflow、Git跟踪状态、当前commit标识、运行状态文件、自动检查状态和真实生产脉冲。不能以“文档相同”替代系统一致性。
 

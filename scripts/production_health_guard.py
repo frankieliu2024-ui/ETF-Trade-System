@@ -12,7 +12,7 @@ from zoneinfo import ZoneInfo
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 STATE = ROOT / "data" / "state"
 POLICY = ROOT / "config" / "runtime_policy.json"
-CONSISTENCY_WORKFLOW = ROOT / ".github" / "workflows" / "system-consistency.yml"
+CONSISTENCY_WORKFLOW = ROOT / ".github" / "workflows" / "etf-system-consistency.yml"
 SYSTEM_INDEX = ROOT / "ETF_SYSTEM_INDEX.md"
 BJ = ZoneInfo("Asia/Shanghai")
 ET = ZoneInfo("America/New_York")
