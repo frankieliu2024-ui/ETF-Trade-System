@@ -4,9 +4,47 @@ import argparse
 import json
 from pathlib import Path
 
+from business_decision_source import BUSINESS_DECISION_SOURCE
 from manual_formal_decision_completion import write_completion_from_persisted_bds
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def _repair_legacy_bds_type(bds_file: Path, bds: dict) -> dict:
+    """Repair only the missing classifier on this already-bound BDS.
+
+    Older Formal Decision sources contain the canonical child identity and the
+    complete decision payload but omit the explicit classifier required by the
+    notification consumer. Repair that one field in place; never create a
+    second source or weaken the downstream validator.
+    """
+    supplied = str(
+        bds.get("request_type") or bds.get("submission_type") or ""
+    ).strip().upper()
+    if supplied and supplied != BUSINESS_DECISION_SOURCE:
+        raise SystemExit("BDS contains a conflicting request type")
+    if supplied == BUSINESS_DECISION_SOURCE:
+        return bds
+
+    if str(bds.get("source") or "").strip() != "CHATGPT_BUSINESS_DECISION_RESPONSE":
+        raise SystemExit("legacy BDS source is not eligible for type repair")
+    if not isinstance(bds.get("decision_response"), dict):
+        raise SystemExit("legacy BDS decision_response is missing")
+    if not isinstance(bds.get("decision_work_package"), dict):
+        raise SystemExit("legacy BDS decision_work_package is missing")
+    if not isinstance(bds.get("presentation_content"), str) or not bds.get("presentation_content").strip():
+        raise SystemExit("legacy BDS presentation_content is missing")
+
+    repaired = json.loads(json.dumps(bds))
+    repaired["request_type"] = BUSINESS_DECISION_SOURCE
+    bds_file.write_text(
+        json.dumps(repaired, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    reread = json.loads(bds_file.read_text(encoding="utf-8"))
+    if str(reread.get("request_type") or "").strip().upper() != BUSINESS_DECISION_SOURCE:
+        raise SystemExit("repaired BDS type could not be read back")
+    return reread
 
 
 def main() -> int:
@@ -33,6 +71,8 @@ def main() -> int:
         raise SystemExit("BDS parent does not match the source request")
     if bds_id != f"{parent_id}__business_decision_source":
         raise SystemExit("BDS identity is not the canonical child identity")
+
+    bds = _repair_legacy_bds_type(bds_file, bds)
 
     completion = write_completion_from_persisted_bds(
         source_path,
