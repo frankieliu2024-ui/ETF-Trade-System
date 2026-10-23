@@ -56,9 +56,10 @@ def main() -> int:
         entry_mode=("MANUAL_SCHEDULED_TASK" if args.entry_mode == "MANUAL_CONVERSATION"
                     else args.entry_mode),
     )
-    payload["formal_fact_type"] = "FORMAL_SCHEDULED_DECISION"
-    payload["interaction_scenario"] = "SCHEDULED_FORMAL_DECISION"
-    payload["source"] = "CHATGPT_SCHEDULED_FORMAL_DECISION_ACTOR"
+    payload["formal_fact_type"] = "FORMAL_POST_CLOSE_REVIEW"
+    payload["interaction_scenario"] = "POST_CLOSE_REVIEW"
+    payload["source"] = "CHATGPT_SCHEDULED_REVIEW_ACTOR"
+    payload["formal_entry_source"] = "CHATGPT_SCHEDULED_FORMAL_ANALYSIS"
     binding = payload["presentation_binding"]
     binding["report_type"] = "ETF_FORMAL_DECISION"
     binding["report_id"] = f"ETF_FORMAL_DECISION:{task_run_id}"
