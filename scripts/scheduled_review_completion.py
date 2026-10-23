@@ -152,6 +152,7 @@ def build_trade_review_completion_request(
         validate_midday_review(formal_review, account)
     else:
         validate_full_day_review(formal_review, account)
+    coverage = validate_formal_object_coverage(formal_review, account)
     validate_user_visible_content(str(final_content or ""), canonical_closure_confirmed=False)
     effective_entry_mode = str(entry_mode or "").strip().upper()
     if effective_entry_mode not in {"MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"}:
@@ -177,6 +178,7 @@ def build_trade_review_completion_request(
         "task_run_id": effective_task_run_id,
         "occurrence_id": effective_occurrence_id,
         "formal_review": formal_review,
+        "formal_object_coverage": coverage,
         "presentation_binding": {
             "report_type": "ETF_TRADE_REVIEW",
             "task_id": str(task_id or "ETF交易复盘"),
@@ -286,6 +288,83 @@ def build_formal_decision_completion_request(
         raise ValueError("Formal Decision completion must use the shared Scheduled Review ingress")
     return payload
 
+
+
+FORMAL_OBJECT_COLLECTION_ALIASES = {
+    "discovery": ("discovery_items", "discovery_objects", "discovery"),
+    "observation": ("observation_items", "observation_objects", "observations", "watchlist"),
+    "opportunity": ("opportunity_items", "opportunity_objects", "opportunities"),
+    "holdings": ("holding_items", "holdings", "managed_positions", "positions"),
+}
+
+
+def _formal_object_collection(review: dict, kind: str):
+    for key in FORMAL_OBJECT_COLLECTION_ALIASES[kind]:
+        if key in review:
+            value = review[key]
+            if isinstance(value, dict):
+                return list(value.values())
+            if isinstance(value, list):
+                return value
+            raise ValueError(f"formal_review.{key} must be an object or list")
+    raise ValueError(f"formal_review missing object-level collection for {kind}")
+
+
+def _validate_formal_object_item(item: object, kind: str, index: int) -> None:
+    if not isinstance(item, dict):
+        raise ValueError(f"formal_review.{kind}[{index}] must be an object")
+    code = str(item.get("code") or item.get("symbol") or item.get("etf_code") or "").strip()
+    name = str(item.get("name") or item.get("etf_name") or "").strip()
+    if not code or not name:
+        raise ValueError(f"formal_review.{kind}[{index}] requires name and code")
+    conclusion = str(
+        item.get("conclusion") or item.get("management_conclusion")
+        or item.get("qualification") or item.get("status") or item.get("reason") or ""
+    ).strip()
+    if not conclusion:
+        raise ValueError(f"formal_review.{kind}[{index}] requires an auditable conclusion")
+
+
+def validate_formal_object_coverage(formal_review: dict, account: dict | None = None) -> dict:
+    """Require one auditable record for every formal object layer.
+
+    Empty layers are valid only when the review explicitly records why the layer
+    is empty. This validation is used only by Formal Decision; Trade Review and
+    System Review keep their existing contracts.
+    """
+    collections = {}
+    for kind in FORMAL_OBJECT_COLLECTION_ALIASES:
+        items = _formal_object_collection(formal_review, kind)
+        for index, item in enumerate(items):
+            _validate_formal_object_item(item, kind, index)
+        if not items:
+            reason = str(
+                formal_review.get(f"{kind}_empty_reason")
+                or formal_review.get(f"{kind}_status") or ""
+            ).strip()
+            if not reason:
+                raise ValueError(f"formal_review.{kind} is empty but no reason was supplied")
+        collections[kind] = items
+
+    if account and isinstance(account, dict):
+        account_positions = account.get("positions") or []
+        account_codes = {
+            str(item.get("code") or item.get("symbol") or "").strip()
+            for item in account_positions if isinstance(item, dict)
+        }
+        holding_codes = {
+            str(item.get("code") or item.get("symbol") or item.get("etf_code") or "").strip()
+            for item in collections["holdings"]
+        }
+        account_codes.discard("")
+        if account_codes != holding_codes:
+            missing = sorted(account_codes - holding_codes)
+            extra = sorted(holding_codes - account_codes)
+            raise ValueError(
+                "formal_review holdings do not cover account positions: "
+                f"missing={missing}, extra={extra}"
+            )
+    return {kind: len(items) for kind, items in collections.items()}
 
 def build_formal_review_completion_request(
     formal_review: dict,
