@@ -51,109 +51,6 @@ class FormalDecisionE2EContractTests(unittest.TestCase):
             self.assertIn(source, workflow)
             self.assertIn(source, builder)
             self.assertIn(source, healer)
-    def test_bds_is_not_a_notification_wake_without_completion_event(self):
-        import scripts.notification_center as center
-        with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "bds.json"
-            body = "【ETF正式决策】当前请求正式报告"
-            digest = hashlib.sha256(body.encode("utf-8")).hexdigest()
-            bds = {
-                "request_type": "BUSINESS_DECISION_SOURCE",
-                "request_id": "fd_current",
-                "parent_request_id": "fd_current",
-                "entry_mode": "MANUAL_CONVERSATION",
-                "source": "CHATGPT_BUSINESS_DECISION_RESPONSE",
-                "decision_id": "decision_current",
-                "presentation_content": body,
-                "content_hash": digest,
-                "content_sha256": digest,
-                "presentation_binding": {
-                    "request_id": "fd_current",
-                    "parent_request_id": "fd_current",
-                    "decision_id": "decision_current",
-                    "report_id": "report_current",
-                    "full_content": body,
-                    "content_hash": digest,
-                },
-            }
-            path.write_text(json.dumps(bds, ensure_ascii=False), encoding="utf-8")
-            with patch.object(center, "ROOT", Path(tmp)), patch.dict(
-                os.environ,
-                {"EXPECTED_FORMAL_REQUEST_ID": "fd_current", "DECISION_EVENT_PATH": ""},
-                clear=False,
-            ):
-                self.assertIsNone(center.formal_decision_report_event())
-
-    def test_formal_bds_builder_persists_complete_presentation_binding(self):
-        from scripts.manual_formal_decision_completion import build_structured_completion_request
-        body = "【ETF正式决策】当前请求正式报告"
-        source = {
-            "request_id": "fd_current",
-            "parent_request_id": "fd_current",
-            "source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
-            "entry_mode": "MANUAL_CONVERSATION",
-            "requested_at_beijing": "2026-10-15T13:37:50+08:00",
-            "market_date": "2026-10-15",
-        }
-        with patch(
-            "scripts.manual_formal_decision_completion.project_decision_response",
-            return_value={"request_id": "fd_current", "decision_response": {"answers": {"RISK_PERMISSION": {"final_action": "禁止新增"}}}},
-        ), patch(
-            "scripts.manual_formal_decision_completion.validate_source",
-            return_value=None,
-        ):
-            payload = build_structured_completion_request(
-                source, {}, {"answers": {"RISK_PERMISSION": {"final_action": "禁止新增"}, "presentation_content": body}},
-                {"problem_graph": [{"problem_id": "RISK_PERMISSION"}]}, "data/market/snapshots/current.json",
-                presentation_content=body,
-            )
-        binding = payload["presentation_binding"]
-        self.assertEqual(binding["request_id"], payload["request_id"])
-        self.assertEqual(binding["parent_request_id"], "fd_current")
-        self.assertEqual(binding["full_content"], body)
-        self.assertEqual(binding["content_hash"], payload["content_hash"])
-        from scripts.user_visible_presentation import build_formal_decision_presentation_binding
-        expected = build_formal_decision_presentation_binding(
-            body,
-            request_id=payload["request_id"],
-            decision_id=payload["decision_id"],
-            parent_request_id=payload["parent_request_id"],
-            report_id=f"etf-formal-decision:{payload['decision_id']}",
-        )
-        self.assertEqual(binding, expected)
-
-    def test_bds_notification_rejects_compressed_presentation_with_structured_answers(self):
-        import scripts.notification_center as center
-        with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "bds.json"
-            body = "【ETF正式决策】短摘要"
-            digest = hashlib.sha256(body.encode("utf-8")).hexdigest()
-            bds = {
-                "request_type": "BUSINESS_DECISION_SOURCE",
-                "request_id": "fd_current",
-                "parent_request_id": "fd_current",
-                "entry_mode": "MANUAL_CONVERSATION",
-                "source": "CHATGPT_BUSINESS_DECISION_RESPONSE",
-                "decision_id": "decision_current",
-                "decision_response": {"answers": {
-                    "HOLDING:300750": {"final_action": "EXIT"},
-                    "OBSERVATION:515080": {"final_action": "RETAIN"},
-                    "DISCOVERY:159110": {"final_action": "RETAIN"},
-                }},
-                "presentation_content": body,
-                "content_hash": digest,
-                "presentation_binding": {
-                    "request_id": "fd_current",
-                    "parent_request_id": "fd_current",
-                    "decision_id": "decision_current",
-                    "full_content": body,
-                    "content_hash": digest,
-                },
-            }
-            path.write_text(json.dumps(bds, ensure_ascii=False), encoding="utf-8")
-            with patch.dict(os.environ, {"EXPECTED_FORMAL_REQUEST_ID": "fd_current"}, clear=False):
-                self.assertIsNone(center.formal_content_event(path))
-
     def test_formal_report_requires_request_bound_completion_and_hash(self):
         import scripts.notification_center as center
         with tempfile.TemporaryDirectory() as tmp:
@@ -263,12 +160,12 @@ class FormalDecisionLessonsProtocolTests(unittest.TestCase):
     def test_protocol_uses_one_formal_chain_for_three_entries(self):
         root = Path(__file__).parents[1]
         text = (root / "docs/Formal Decision执行与用户回复协议.md").read_text(encoding="utf-8")
-        self.assertIn("三个入口统一执行以下链条", text)
-        self.assertIn("不得再使用旧的", text)
+        self.assertIn("三入口统一执行同一条生产链", text)
+        self.assertIn("历史 BDS", text)
         self.assertIn("SCHEDULED_REVIEW_COMPLETION", text)
         self.assertIn("MARKET_QUOTE_REFRESH", text)
-        self.assertIn("PushPlus/微信原文投递回读", text)
-        self.assertIn("不得产生不同的业务判断、正文、completion、event、REPORT 或通知链", text)
+        self.assertIn("服务商投递结果", text)
+        self.assertIn("不得创建第二请求、第二正文、第二完成记录", text)
         index_text = (root / "ETF_SYSTEM_INDEX.md").read_text(encoding="utf-8")
         self.assertIn("request_type=SCHEDULED_REVIEW_COMPLETION", index_text)
         self.assertIn("source=CHATGPT_SCHEDULED_REVIEW_ACTOR", index_text)
@@ -284,8 +181,8 @@ class FormalDecisionLessonsProtocolTests(unittest.TestCase):
         formal_text = (root / "docs/Formal Decision执行与用户回复协议.md").read_text(encoding="utf-8")
         self.assertIn("system-consistency属于独立生产健康检查", health_text)
         self.assertIn("不得作为Formal Decision业务PR的硬门禁", health_text)
-        self.assertIn("当前事实已读取", formal_text)
-        self.assertIn("当前provider result已回读", formal_text)
+        self.assertIn("最新正式事实", formal_text)
+        self.assertIn("服务商投递结果", formal_text)
         routing = json.loads((root / "config/maintenance/task_entry_scheduling_protocol.json").read_text(encoding="utf-8"))
         invariants = routing["invariants"]
         self.assertIn("scheduled_review_formal_projection_must_preserve_formal_report_type", invariants)
@@ -296,28 +193,24 @@ class FormalDecisionLessonsProtocolTests(unittest.TestCase):
     def test_protocol_preserves_current_request_fail_closed_and_send_boundary(self):
         root = Path(__file__).parents[1]
         text = (root / "docs/Formal Decision执行与用户回复协议.md").read_text(encoding="utf-8")
-        self.assertIn("当前事实存在合法降级时", text)
-        self.assertIn("通知失败不撤回用户已经看到的正文", text)
-        self.assertIn("不得扫描历史对象、补发历史正文", text)
+        self.assertIn("合法准入", text)
+        self.assertIn("后置交接失败", text)
+        self.assertIn("不得扫描历史对象", text)
 
 class FormalReadyHandoffContractTests(unittest.TestCase):
-    def test_ready_gate_exposes_one_shot_bds_handoff_contract(self):
+    def test_ready_gate_exposes_shared_completion_handoff_contract(self):
         root = Path(__file__).parents[1]
         text = (root / "scripts/formal_request_consumer.py").read_text(encoding="utf-8")
-        self.assertIn('"submission_type": "BUSINESS_DECISION_SOURCE"', text)
-        self.assertIn('"source": "CHATGPT_BUSINESS_DECISION_RESPONSE"', text)
-        self.assertIn('"decision_response.answers"', text)
-        self.assertIn('"presentation_content"', text)
+        self.assertIn('"submission_type": "SCHEDULED_REVIEW_COMPLETION"', text)
+        self.assertIn('"source": "CHATGPT_SCHEDULED_REVIEW_ACTOR"', text)
         self.assertIn('"notification_attempt_precondition": True', text)
         self.assertIn('"provider_success_not_required_for_user_reply": True', text)
         self.assertIn('"historical_fallback_forbidden": True', text)
-        self.assertIn('"formal_decision_notification_chain_starts_at_bds": False', text)
         self.assertIn('"post_reply_async": False', text)
         self.assertIn('"provider_success_async": False', text)
         self.assertIn('"must_read_back_before_reply": True', text)
-        self.assertIn('HANDOFF_BEFORE_REPLY = "BDS_COMPLETION_EVENT_REPORT_NOTIFICATION_BOUNDED"', text)
-        self.assertIn('"bds_and_completion_atomic_commit_required": True', text)
-        self.assertNotIn('BDS_AND_COMPLETION_BEFORE_USER_REPLY', text)
+        self.assertIn('HANDOFF_BEFORE_REPLY = "SCHEDULED_REVIEW_COMPLETION_EVENT_REPORT_NOTIFICATION_BOUNDED"', text)
+        self.assertNotIn("BDS_AUDIT_AND_PROVIDER_READBACK", text)
 
     def test_protocol_completes_handoff_before_user_reply(self):
         protocol = (Path(__file__).parents[1] / "docs/Formal Decision执行与用户回复协议.md").read_text(encoding="utf-8")
