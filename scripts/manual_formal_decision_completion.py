@@ -109,6 +109,44 @@ def build_completion_request(source_request: dict, formal_decision: dict, consum
     return payload
 
 
+def _hydrate_observation_thesis_from_registry(work_package: dict) -> dict:
+    """Compatibility projection for legacy/current work packages.
+
+    The durable observation-thesis registry is the canonical source for an
+    already admitted observation ETF. If a request-bound work package omits
+    that state, fill only missing fields from the registry; never invent or
+    overwrite supplied values. A missing/incomplete registry entry remains a
+    hard validation failure in the canonical business-decision contract.
+    """
+    projected = json.loads(json.dumps(work_package, ensure_ascii=False))
+    registry_path = ROOT / "config" / "market" / "etf_observation_thesis_registry.json"
+    if not registry_path.exists():
+        return projected
+    registry = json.loads(registry_path.read_text(encoding="utf-8"))
+    objects = registry.get("objects") if isinstance(registry, dict) else {}
+    if not isinstance(objects, dict):
+        return projected
+    required = ("name", "thscode", "thesis", "falsifier", "next_decision_information", "information_value_reason")
+    for item in projected.get("problem_graph") or []:
+        if not isinstance(item, dict):
+            continue
+        problem_id = str(item.get("problem_id") or "")
+        if not problem_id.startswith("OBSERVATION:"):
+            continue
+        code = problem_id.split(":", 1)[1].strip()
+        canonical = objects.get(code)
+        if not isinstance(canonical, dict):
+            continue
+        existing = item.get("existing_thesis_state")
+        if not isinstance(existing, dict):
+            existing = {}
+            item["existing_thesis_state"] = existing
+        for field in required:
+            if not str(existing.get(field) or "").strip() and str(canonical.get(field) or "").strip():
+                existing[field] = canonical[field]
+    return projected
+
+
 def build_structured_completion_request(
     source_request: dict,
     formal_decision: dict | None,
@@ -123,6 +161,7 @@ def build_structured_completion_request(
     """Build the production actor envelope without canonical Formal Decision nesting."""
     if not isinstance(source_request, dict) or not source_request:
         raise ValueError("source Formal Decision request is required")
+    decision_work_package = _hydrate_observation_thesis_from_registry(decision_work_package)
     parent_id = _safe_id(source_request.get("request_id"))
     scenario = _source_interaction_scenario(source_request)
     if not isinstance(decision_response, dict) or not decision_response.get("answers"):
