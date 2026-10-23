@@ -3435,11 +3435,37 @@ def normalize_broker_account_fact_ingress(request: dict, supplied: object) -> tu
     for source, target in aliases.items():
         if target not in normalized and normalized.get(source) is not None:
             normalized[target] = normalized[source]
-    if not str(normalized.get("updated_at") or "").strip():
-        receipt_time = request.get("account_updated_at") or request.get("submitted_at_beijing")
-        if receipt_time:
-            normalized["updated_at"] = str(receipt_time)
+    # A broker screenshot is a new authoritative observation for the
+    # screenshot-scoped account fields. Refresh the observation timestamp and
+    # derived aliases from this request instead of carrying stale metadata from
+    # the prior account snapshot. Historical trade, lifecycle, and settlement
+    # records remain preserved by merge_account_fact.
+    receipt_time = request.get("account_updated_at") or request.get("submitted_at_beijing")
+    if receipt_time:
+        normalized["updated_at"] = str(receipt_time)
+    market_date = str(request.get("market_date") or "").strip()
+    market_boundary = str(request.get("market_fact_boundary_beijing") or "").strip()
+    if market_date:
+        normalized["market_date"] = market_date
+        normalized["last_confirmed_market_date"] = market_date
+    if market_boundary:
+        normalized["broker_displayed_at_beijing"] = market_boundary
+        normalized["screenshot_display_time"] = market_boundary
+    if receipt_time:
+        normalized["account_screenshot_captured_at_beijing"] = str(receipt_time)
+    normalized["account_fact_derivation_note"] = (
+        "当前账户金额、现金和持仓来自本次用户提供的券商截图；"
+        "未显示代码的可见资产保持未确认，不并入正式ETF持仓。"
+    )
     normalized.setdefault("source", request.get("source") or "CHATGPT_USER_BROKER_SCREENSHOT")
+    # Keep display aliases synchronized with the current screenshot facts.
+    if normalized.get("total_asset") is not None:
+        normalized["total_assets"] = normalized["total_asset"]
+    if normalized.get("cash") is not None:
+        normalized["available_cash"] = normalized["cash"]
+        normalized["deployable_cash_before_settlement"] = normalized["cash"]
+    if normalized.get("stock_market_value") is not None:
+        normalized["total_market_value"] = normalized["stock_market_value"]
     kept = []
     unresolved = list(normalized.get("unresolved_assets") or [])
     moved = 0
