@@ -188,11 +188,14 @@ jobs:
           echo "post-close and global health checks remain informational for ordinary PR CI"
           echo "they do not gate the Formal Decision business-chain contract"
       - name: Persist current consistency report
-        if: ${{ success() }}
+        if: ${{ always() }}
         shell: bash
         run: |
           set -euo pipefail
-          test -s "$ETF_CONSISTENCY_REPORT_PATH"
+          if [[ ! -s "$ETF_CONSISTENCY_REPORT_PATH" ]]; then
+            echo "Consistency report was not produced; cannot persist a current result." >&2
+            exit 1
+          fi
           cp "$ETF_CONSISTENCY_REPORT_PATH" data/state/system_consistency.json
           python - <<'PY'
           import json
