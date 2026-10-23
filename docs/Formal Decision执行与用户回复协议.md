@@ -3,7 +3,7 @@
 版本：统一三入口单链 V5  
 适用范围：每一次【ETF正式决策】的对话窗口运行、任务界面手动运行和系统日历自动运行。
 
-本协议是 Formal Decision 的唯一现行执行合同。交易规则、数据资格、通知服务商优先级和生产变更规则分别服从 INDEX 路由的 MASTER、数据规范、主动通知协议和生产治理协议。本协议不创建新的 workflow、producer、checker、state、writer、交易权限或通知链。
+本协议是 Formal Decision 的唯一现行执行合同。三个入口统一执行同一条生产链。交易规则、数据资格、通知服务商优先级和生产变更规则分别服从 INDEX 路由的 MASTER、数据规范、主动通知协议和生产治理协议。本协议不创建新的 workflow、producer、checker、state、writer、交易权限或通知链。
 
 ## 一、唯一目标与边界
 
@@ -98,7 +98,7 @@ READY只表示可以开始业务判断，不表示正文、完成记录、事件
 
 ## 五、唯一 FINAL_CONTENT
 
-准入后必须立即锁定本次 request-bound 事实，生成并冻结唯一 FINAL_CONTENT，不得停在“已达到准入状态”。
+准入后必须立即锁定本次 request-bound 事实，生成并冻结唯一 FINAL_CONTENT，不得停在“已达到准入状态”。READY 后，必须先完成业务判断并冻结唯一 FINAL_CONTENT，再进入后置交接。正文冻结只表示正文内容已经不可修改。
 
 正文首行必须严格为：
 
