@@ -130,6 +130,8 @@ INDEX只负责回答“去哪里读”，不得重新定义以下内容：正式
 
 #### Formal Decision交接可执行性硬门（集中修复）
 
+本节旧版BDS表述已废止。当前正式决策只允许使用统一 Scheduled Review completion owner；以下历史BDS要求仅保留作审计文本，不得作为新运行入口或生产前置条件。
+
 Formal Decision completion必须使用current main的统一 Scheduled Review completion builder生成：`request_id=<parent_request_id>__scheduled_review_completion`，`parent_request_id=<原始父请求>`，且文件名必须精确为`<request_id>.json`；不得手写、复用父请求ID或使用任意文件名。正式决策completion不需要BDS；写入并回读completion后由统一canonical owner形成本次运行唯一正式决策event并进入notification_center。不得把BDS文件、历史对象或GitHub Contents push本身当作通知提交；通知失败时必须如实记录。
 
 “冻结正文、完成交接后输出”定义用户可见顺序：ChatGPT先冻结唯一FINAL_CONTENT，随后由同一运行完成统一SCHEDULED_REVIEW_COMPLETION的写入、回读和既有workflow投影；交接成功或明确记录最后失败层级后，再输出此前冻结的同一FINAL_CONTENT。completion、event、REPORT、notification_center和PushPlus必须继续使用同一运行身份和正文哈希；后置链路不得无限等待、改写或生成第二正文，失败必须记录PROJECTION_INCOMPLETE或MAINTENANCE_INCOMPLETE。
