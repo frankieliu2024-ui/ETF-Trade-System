@@ -3,7 +3,7 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-WORKFLOW = ROOT / ".github/workflows/system-consistency.yml"
+WORKFLOW = ROOT / ".github/workflows/etf-system-consistency.yml"
 
 
 class SystemConsistencyCandidatePathTests(unittest.TestCase):
