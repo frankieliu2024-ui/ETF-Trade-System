@@ -368,10 +368,11 @@ def write_completion_from_persisted_bds(
 ) -> Path:
     """Continue the canonical handoff from one already persisted BDS.
 
-    This is an adapter into the existing builder, not a second producer. It
-    reconstructs only ephemeral builder inputs from the same persisted BDS and
-    then delegates to write_completion_request(), preserving all existing
-    validation and identity checks.
+    The persisted BDS is the authoritative request-bound handoff for this
+    recovery path. Do not re-read the mutable global query_context here:
+    doing so can reject a valid BDS when the shared fact projection has moved
+    to a later request. This adapter validates the BDS identity and delegates
+    completion-envelope construction to the canonical builder.
     """
     source_path = (ROOT / source_request_path).resolve()
     bds_file = (ROOT / bds_path).resolve()
@@ -382,14 +383,19 @@ def write_completion_from_persisted_bds(
     source = json.loads(source_path.read_text(encoding="utf-8"))
     bds = json.loads(bds_file.read_text(encoding="utf-8"))
     parent_id = str(source.get("request_id") or "").strip()
+    if not parent_id:
+        raise ValueError("source request identity is required")
     if str(bds.get("parent_request_id") or "").strip() != parent_id:
         raise ValueError("persisted BDS parent_request_id does not match source request")
     expected_bds_id = f"{parent_id}__business_decision_source"
     if str(bds.get("request_id") or "").strip() != expected_bds_id:
         raise ValueError("persisted BDS request_id is not the canonical child identity")
     decision_response = bds.get("decision_response")
+    work_package = bds.get("decision_work_package")
     if not isinstance(decision_response, dict) or not decision_response:
         raise ValueError("persisted BDS decision_response is required")
+    if not isinstance(work_package, dict) or not work_package.get("problem_graph"):
+        raise ValueError("persisted BDS decision_work_package is required")
     final_content = str(
         bds.get("presentation_content")
         or decision_response.get("presentation_content")
@@ -400,25 +406,33 @@ def write_completion_from_persisted_bds(
     snapshot = str(consumed_snapshot or bds.get("consumed_snapshot") or "").strip()
     if not snapshot:
         raise ValueError("persisted BDS consumed_snapshot is required")
-
-    with tempfile.TemporaryDirectory(prefix="formal-decision-handoff-") as temp_dir:
-        temp_root = Path(temp_dir)
-        response_path = temp_root / "decision_response.json"
-        final_path = temp_root / "final_content.txt"
-        response_path.write_text(
-            json.dumps(decision_response, ensure_ascii=False, indent=2) + "\n",
-            encoding="utf-8",
-        )
-        final_path.write_text(final_content, encoding="utf-8")
-        return write_completion_request(
-            source_request_path,
-            "",
-            snapshot,
-            output_path=output_path,
-            completion_request_id=completion_request_id,
-            decision_response_path=str(response_path),
-            final_content_path=str(final_path),
-        )
+    if str(bds.get("consumed_snapshot") or "").strip() != snapshot:
+        raise ValueError("persisted BDS consumed_snapshot does not match requested snapshot")
+    decision_id = str(bds.get("decision_id") or "").strip()
+    content_hash = str(bds.get("content_hash") or "").strip()
+    if not decision_id or not content_hash:
+        raise ValueError("persisted BDS decision_id and content_hash are required")
+    completion_payload = build_formal_decision_completion_request(
+        source,
+        str(bds_file.relative_to(ROOT)).replace("\\\\", "/"),
+        decision_id,
+        content_hash,
+        completion_request_id=completion_request_id,
+        bds_payload=bds,
+    )
+    target = (ROOT / output_path).resolve() if output_path else REQUEST_DIR / f"{completion_payload['request_id']}.json"
+    if ROOT not in target.parents or target.suffix != ".json":
+        raise ValueError("completion output path must be a repository JSON path")
+    if target.name != f"{completion_payload['request_id']}.json":
+        raise ValueError("completion filename must equal its envelope request_id")
+    serialized = json.dumps(completion_payload, ensure_ascii=False, indent=2, sort_keys=True) + "\\n"
+    if target.exists():
+        if target.read_text(encoding="utf-8") != serialized:
+            raise FileExistsError("completion path already contains a different payload")
+    else:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(serialized, encoding="utf-8")
+    return target
 
 def write_completion_request(source_request_path: str, decision_path: str, consumed_snapshot: str, output_path: str = "", completion_request_id: str = "", decision_response_path: str = "", final_content_path: str = "") -> Path:
     source_path = (ROOT / source_request_path).resolve()
