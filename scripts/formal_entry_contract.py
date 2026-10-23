@@ -65,7 +65,7 @@ def validate_formal_parent_request(payload: dict) -> tuple[bool, str]:
 
 
 def validate_formal_completion_request(payload: dict) -> tuple[bool, str]:
-    """Validate the canonical post-BDS Formal Decision completion ingress."""
+    """Validate the legacy compatibility completion contract only."""
     if not isinstance(payload, dict):
         return False, "payload_must_be_object"
     if str(payload.get("request_type") or "").strip().upper() != CANONICAL_COMPLETION_REQUEST_TYPE:
