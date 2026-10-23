@@ -90,16 +90,14 @@ class ProductionHealthCoverageTest(unittest.TestCase):
 
 
     def test_global_consistency_failure_does_not_equal_formal_decision_block(self):
-        rows = [{"name": "system_consistency", "status": "BLOCKED"}]
-        decision_critical_checks = {"a_share_current", "a_share_runtime", "account_fact"}
-        blocking = [row for row in rows if row["name"] in decision_critical_checks and row["status"] == "BLOCKED"]
-        self.assertEqual(blocking, [])
+        result = health.formal_decision_blockage([{"name": "system_consistency", "status": "BLOCKED"}])
+        self.assertFalse(result["blocked"])
+        self.assertEqual(result["blocking_checks"], [])
 
     def test_current_decision_critical_fact_failure_blocks_formal_decision(self):
-        rows = [{"name": "a_share_current", "status": "BLOCKED"}]
-        decision_critical_checks = {"a_share_current", "a_share_runtime", "account_fact"}
-        blocking = [row for row in rows if row["name"] in decision_critical_checks and row["status"] == "BLOCKED"]
-        self.assertEqual([row["name"] for row in blocking], ["a_share_current"])
+        result = health.formal_decision_blockage([{"name": "a_share_current", "status": "BLOCKED"}])
+        self.assertTrue(result["blocked"])
+        self.assertEqual(result["blocking_checks"], ["a_share_current"])
 
 
 if __name__ == "__main__":
