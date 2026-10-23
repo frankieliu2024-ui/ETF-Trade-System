@@ -24,6 +24,12 @@ class MarketLevelAndRefreshContractTest(unittest.TestCase):
         self.assertIn("上证指数（000001）", text)
         self.assertIn("创业板指（399006）", text)
 
+    def test_scheduled_formal_ingress_is_identity_based(self):
+        text = (ROOT / "scripts" / "refresh_gate.py").read_text(encoding="utf-8")
+        self.assertIn('source == "CHATGPT_SCHEDULED_FORMAL_ANALYSIS"', text)
+        self.assertIn('task_id == "ETF正式决策"', text)
+        self.assertIn('entry_mode == "AUTOMATIC_SCHEDULED_TASK"', text)
+
     def test_explicit_latest_rejects_pre_request_decision(self):
         text = (ROOT / "scripts" / "refresh_gate.py").read_text(encoding="utf-8")
         self.assertIn("FORMAL_DECISION_PREDATES_REQUESTED_REFRESH", text)
