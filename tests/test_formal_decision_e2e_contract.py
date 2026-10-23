@@ -290,7 +290,8 @@ class FormalDecisionLessonsProtocolTests(unittest.TestCase):
         invariants = routing["invariants"]
         self.assertIn("scheduled_review_formal_projection_must_preserve_formal_report_type", invariants)
         self.assertNotIn("scheduled_review_cannot_use_formal_decision_projection", invariants)
-        self.assertIn("交接成功或明确到达最后失败层级后，才向用户窗口输出", formal_text)
+        self.assertIn("正文冻结后即可输出此前冻结的同一份完整正文", formal_text)
+        self.assertIn("后置交接失败或超时不得无限等待", formal_text)
 
     def test_protocol_preserves_current_request_fail_closed_and_send_boundary(self):
         root = Path(__file__).parents[1]
@@ -321,9 +322,10 @@ class FormalReadyHandoffContractTests(unittest.TestCase):
     def test_protocol_completes_handoff_before_user_reply(self):
         protocol = (Path(__file__).parents[1] / "docs/Formal Decision执行与用户回复协议.md").read_text(encoding="utf-8")
         self.assertIn("READY 后，必须先完成业务判断并冻结唯一", protocol)
-        self.assertNotIn("立即向用户窗口输出此前冻结的同一份完整正文", protocol)
-        self.assertIn("交接成功或明确到达最后失败层级后，才向用户窗口输出", protocol)
-        self.assertIn("统一 `SCHEDULED_REVIEW_COMPLETION` ingress", protocol)
+        self.assertIn("正文冻结后即可输出此前冻结的同一份完整正文", protocol)
+        self.assertIn("后置交接失败或超时不得无限等待", protocol)
+        self.assertIn("统一 `SCHEDULED_REVIEW_COMPLETION`", protocol)
+        self.assertIn("后置交接", protocol)
 
 
 

@@ -30,13 +30,16 @@ class FormalDecisionCanonicalChainTests(unittest.TestCase):
         self.assertIn('"formal_entry_source"', source)
         self.assertIn("source_payload.setdefault(identity_field, request.get(identity_field))", source)
 
-    def test_completion_builder_binds_registered_entry_identity(self):
-        text = Path("scripts/manual_formal_decision_completion.py").read_text(encoding="utf-8")
-        self.assertIn("Formal Decision completion requires one of the three registered entry identities", text)
-        self.assertIn('"formal_entry_source": source_mode', text)
-        self.assertIn('"entry_mode": entry_mode', text)
-        self.assertIn('"bds_path": bds_path', text)
-        self.assertIn('"content_hash": content_hash', text)
+    def test_formal_adapter_delegates_to_shared_completion_owner(self):
+        adapter = Path("scripts/manual_formal_decision_completion.py").read_text(encoding="utf-8")
+        shared = Path("scripts/scheduled_review_completion.py").read_text(encoding="utf-8")
+        self.assertIn("Compatibility facade delegating Formal completion to the shared owner", adapter)
+        self.assertIn("from scheduled_review_completion import build_formal_decision_completion_request as shared_builder", adapter)
+        self.assertIn("def build_formal_decision_completion_request(", shared)
+        self.assertIn('"formal_fact_type": "FORMAL_POST_CLOSE_REVIEW"', shared)
+        self.assertIn('"source": "CHATGPT_SCHEDULED_REVIEW_ACTOR"', shared)
+        self.assertIn('"bds_path": bds_path', shared)
+        self.assertIn('"content_hash": content_hash', shared)
 
     def test_notification_workflow_requires_exact_formal_completion_path(self):
         workflow = Path(".github/workflows/decision-notification.yml").read_text(encoding="utf-8")
