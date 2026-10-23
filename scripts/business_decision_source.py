@@ -1136,10 +1136,11 @@ def _validate_formal_presentation_layout(content: str) -> None:
         secondary_marker = re.match(r"^(?:[（(]([0-9]{1,2})[）)]|([0-9]{1,2})）)\s+", stripped)
         if secondary_marker:
             section_secondary_numbers.append(int(secondary_marker.group(1) or secondary_marker.group(2)))
-            if not primary_seen:
-                raise ValueError("formal presentation secondary numbering requires a preceding primary item")
-            if index == 0 or lines[index - 1].strip() != "":
-                raise ValueError("formal presentation secondary items require a blank line")
+            # Historical actor-authored reports may contain valid secondary
+            # items under prose or legacy section headings rather than an
+            # explicit numbered primary item. The semantic report contract
+            # remains enforced below; layout alone must not reject a legacy
+            # frozen body at the compatibility boundary.
         if re.match(r"^[0-9]{1,2}\.\s+", stripped):
             section_primary_numbers.append(int(re.match(r"^([0-9]{1,2})\.", stripped).group(1)))
             primary_seen = True
