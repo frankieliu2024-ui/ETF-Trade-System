@@ -1,67 +1,107 @@
 {
-  "generated_at": "2026-10-23T06:58:27Z",
-  "generated_at_beijing": "2026-10-23T14:58:27+08:00",
+  "generated_at": "2026-10-23T07:07:51Z",
+  "generated_at_beijing": "2026-10-23T15:07:51+08:00",
   "repository": {
-    "head_sha": "0bf0197ffad45a29c65f48c95b1c73bb2e373c8d",
-    "github_sha": "0bf0197ffad45a29c65f48c95b1c73bb2e373c8d",
-    "github_run_id": "39914747669",
+    "head_sha": "3846fc5b5fac5b30e10f4acfa4bb62cc1bdb3d2b",
+    "github_sha": "3846fc5b5fac5b30e10f4acfa4bb62cc1bdb3d2b",
+    "github_run_id": "39915771078",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "0bf0197ffad45a29c65f48c95b1c73bb2e373c8d",
-    "workflow_sha": "0bf0197ffad45a29c65f48c95b1c73bb2e373c8d",
+    "checked_commit": "3846fc5b5fac5b30e10f4acfa4bb62cc1bdb3d2b",
+    "workflow_sha": "3846fc5b5fac5b30e10f4acfa4bb62cc1bdb3d2b",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
   "semantic_freshness": {
-    "base": "2d0c084f0b488338d1f337ca26718b9a42c2c526",
-    "head": "0bf0197ffad45a29c65f48c95b1c73bb2e373c8d",
+    "base": "0bf0197ffad45a29c65f48c95b1c73bb2e373c8d",
+    "head": "3846fc5b5fac5b30e10f4acfa4bb62cc1bdb3d2b",
     "changed_paths": [
-      "data/state/system_consistency.json",
-      "requests/live_snapshot/formal-parent-20261023T145752+0800-q9n4v6.json"
+      ".github/workflows/self-healing-watchdog.yml",
+      "data/market/discovery_history/2026-10-23.json",
+      "data/market/snapshots/2026-10-23_145827.json",
+      "data/market/snapshots/2026-10-23_150707.json",
+      "data/state/CURRENT.json",
+      "data/state/capital_efficiency_ranking.json",
+      "data/state/dashboard_update_candidate.json",
+      "data/state/decision_context.json",
+      "data/state/decision_trigger.json",
+      "data/state/e2e_status.json",
+      "data/state/intraday_path_features.json",
+      "data/state/maintenance_health.json",
+      "data/state/market_delta.json",
+      "data/state/market_regime_context.json",
+      "data/state/market_structure_context.json",
+      "data/state/query_context.json",
+      "data/state/review_context.json",
+      "data/state/runtime_health.json",
+      "data/state/self_healing_status.json",
+      "data/state/stock_context.json",
+      "data/state/stock_market_context.json",
+      "data/state/system_consistency.json"
     ],
     "categories": {
-      "STABLE_PRODUCTION_CHANGE": [],
+      "STABLE_PRODUCTION_CHANGE": [
+        ".github/workflows/self-healing-watchdog.yml"
+      ],
       "DYNAMIC_RUNTIME_FACT": [
+        "data/market/discovery_history/2026-10-23.json",
+        "data/market/snapshots/2026-10-23_145827.json",
+        "data/market/snapshots/2026-10-23_150707.json",
+        "data/state/CURRENT.json",
+        "data/state/capital_efficiency_ranking.json",
+        "data/state/dashboard_update_candidate.json",
+        "data/state/decision_context.json",
+        "data/state/decision_trigger.json",
+        "data/state/e2e_status.json",
+        "data/state/intraday_path_features.json",
+        "data/state/maintenance_health.json",
+        "data/state/market_delta.json",
+        "data/state/market_regime_context.json",
+        "data/state/market_structure_context.json",
+        "data/state/query_context.json",
+        "data/state/review_context.json",
+        "data/state/runtime_health.json",
+        "data/state/self_healing_status.json",
+        "data/state/stock_context.json",
+        "data/state/stock_market_context.json",
         "data/state/system_consistency.json"
       ],
       "FORMAL_FACT_MUTATION": [],
-      "REQUEST_OR_TRIGGER_FACT": [
-        "requests/live_snapshot/formal-parent-20261023T145752+0800-q9n4v6.json"
-      ],
+      "REQUEST_OR_TRIGGER_FACT": [],
       "UNKNOWN": []
     },
-    "decision": "REVIEW_REQUIRED",
-    "integration_action": "REVIEW_MAIN_DELTA",
-    "validated_commit": "2d0c084f0b488338d1f337ca26718b9a42c2c526",
-    "current_head": "0bf0197ffad45a29c65f48c95b1c73bb2e373c8d",
+    "decision": "REPLAY_REQUIRED",
+    "integration_action": "REPLAY_REQUIRED",
+    "validated_commit": "0bf0197ffad45a29c65f48c95b1c73bb2e373c8d",
+    "current_head": "3846fc5b5fac5b30e10f4acfa4bb62cc1bdb3d2b",
     "head_advanced": true,
     "stable_contract_freshness": "REVIEW_REQUIRED",
     "runtime_fact_freshness": "CURRENT"
   },
-  "status": "WARNING",
-  "hard_error_count": 0,
-  "warning_count": 1,
+  "status": "FAIL",
+  "hard_error_count": 2,
+  "warning_count": 0,
   "checks": [
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "{\"status\": \"BATCHED\", \"results\": [{\"status\": \"SENT\"}]}\n{\"status\": \"RETRYING_REPORT_DELIVERY\", \"retry_number\": 1, \"delay_seconds\": 2.0, \"source_event_id\": \"report-delivery:test\"}\n{\"status\": \"RETRYING_REPORT_DELIVERY\", \"retry_number\": 2, \"delay_seconds\": 8.0, \"source_event_id\": \"report-delivery:test\"}\n{\"status\": \"RETRYING_REPORT_DELIVERY\", \"retry_number\": 1, \"delay_seconds\": 2.0, \"source_event_id\": \"report-delivery:test\"}\n{\"status\": \"RETRYING_REPORT_DELIVERY\", \"retry_number\": 2, \"delay_seconds\": 8.0, \"source_event_id\": \"report-delivery:test\"}\nFORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-09-23:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-09-23\",\"provider\":\"EASTMONEY_PUSH2HIS\",\"pattern_match\":false,\"reason\":null}}\n...................................................................................................................../opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpytkpd6ag'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmped_ana8x'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpi9tyz2sr'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmp6uiw9gkd'>\n  _warnings.warn(warn_message, ResourceWarning)\n....../opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpl24l0qu0'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpouykt11w'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmp2mrw_3xa'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpr5uzc_66'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpo_igc8c4'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpw81brsf8'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpl7wag39p'>\n  _warnings.warn(warn_message, ResourceWarning)\n................................................./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmp7pkk5pfc'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpcylztr3y'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmp8kg32ggo'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpj2pinf7y'>\n  _warnings.warn(warn_message, ResourceWarning)\n....../opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpzbxv1foo'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpunv1e2lc'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpjt5pnfds'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpqz_yrheg'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmp4x21pbm1'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmp3cos74c_'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpao8bnnay'>\n  _warnings.warn(warn_message, ResourceWarning)\n..................................................................................................................................\n----------------------------------------------------------------------\nRan 326 tests in 2.830s\n\nOK\n"
+      "detail": "{\"status\": \"BATCHED\", \"results\": [{\"status\": \"SENT\"}]}\n{\"status\": \"RETRYING_REPORT_DELIVERY\", \"retry_number\": 1, \"delay_seconds\": 2.0, \"source_event_id\": \"report-delivery:test\"}\n{\"status\": \"RETRYING_REPORT_DELIVERY\", \"retry_number\": 2, \"delay_seconds\": 8.0, \"source_event_id\": \"report-delivery:test\"}\n{\"status\": \"RETRYING_REPORT_DELIVERY\", \"retry_number\": 1, \"delay_seconds\": 2.0, \"source_event_id\": \"report-delivery:test\"}\n{\"status\": \"RETRYING_REPORT_DELIVERY\", \"retry_number\": 2, \"delay_seconds\": 8.0, \"source_event_id\": \"report-delivery:test\"}\nFORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-09-23:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-09-23\",\"provider\":\"EASTMONEY_PUSH2HIS\",\"pattern_match\":false,\"reason\":null}}\n...................................................................................................................../opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpezbte4wg'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpqvyt91y0'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpcvfja92r'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmp5zp8868v'>\n  _warnings.warn(warn_message, ResourceWarning)\n....../opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpolzlex68'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpjtn_f6y3'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmp7jjzx_21'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmp5jzkeota'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpdwgn8vpd'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpc_wci780'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmp2qud5gm7'>\n  _warnings.warn(warn_message, ResourceWarning)\n................................................./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpebpcyh36'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmptqxk5quk'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpb8a0zk6v'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpj2m5x80k'>\n  _warnings.warn(warn_message, ResourceWarning)\n....../opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpgw796om4'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpaokvgrv6'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmp0l2yka28'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpzi0qah4g'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpunudyv7a'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpoit32go_'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmp563mop9_'>\n  _warnings.warn(warn_message, ResourceWarning)\n..................................................................................................................................\n----------------------------------------------------------------------\nRan 326 tests in 2.853s\n\nOK\n"
     },
     {
       "name": "tests:opening_current_self_healing",
-      "status": "PASS",
-      "detail": "............................\n----------------------------------------------------------------------\nRan 28 tests in 0.692s\n\nOK\n"
+      "status": "FAIL",
+      "detail": "..........................F.\n======================================================================\nFAIL: test_successful_healthy_assessment_is_persisted_without_staging_repair_state (tests.test_opening_current_self_healing.OpeningCurrentSelfHealingTests.test_successful_healthy_assessment_is_persisted_without_staging_repair_state)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/tests/test_opening_current_self_healing.py\", line 352, in test_successful_healthy_assessment_is_persisted_without_staging_repair_state\n    self.assertIn('if [ \"$action\" != \"NONE\" ]; then', persist)\nAssertionError: 'if [ \"$action\" != \"NONE\" ]; then' not found in '\\n        # The assessment artifact is itself canonical runtime state. Persist it\\n        # whenever the calculated status differs from main, including a return\\n        # to HEALTHY/NONE, so downstream consistency never consumes stale\\n        # self-healing metadata after a successful recovery.\\n        if: ${{ always() && steps.assess.outcome == \\'success\\' }}\\n        shell: bash\\n        run: |\\n          set -euo pipefail\\n          # Drop any rebuildable working-tree changes produced by earlier steps\\n          # before synchronizing this persistence attempt to execution-time latest main.\\n          git restore --worktree --staged .\\n          git config user.name \"github-actions[bot]\"\\n          git config user.email \"41898282+github-actions[bot]@users.noreply.github.com\"\\n\\n          # self_healing_status and the optional derived contexts are rebuildable\\n          # runtime state. Never rebase a stale locally-computed state commit over\\n          # a concurrently advanced main. Re-sync first, rebuild from that exact\\n          # main, and use a bounded compare-and-push retry if main moves again.\\n          max_attempts=3\\n          for attempt in $(seq 1 \"$max_attempts\"); do\\n            git fetch origin main\\n            git reset --hard origin/main\\n\\n            python scripts/runtime_self_heal.py --assess\\n            action=\"$(python - <<\\'PY\\'\\n          import json\\n          from pathlib import Path\\n          data = json.loads(Path(\\'data/state/self_healing_status.json\\').read_text(encoding=\\'utf-8\\'))\\n          print(data.get(\\'recommended_action\\', \\'NONE\\'))\\n          PY\\n            )\"\\n\\n            if [ \"$action\" = \"REBUILD_DERIVED_CONTEXTS\" ]; then\\n              python scripts/build_state_context.py\\n              python scripts/build_query_context.py\\n              python scripts/build_post_market_review.py\\n              python scripts/runtime_self_heal.py --assess\\n            elif [ \"$action\" = \"SYNC_RULES_VERSION_METADATA\" ]; then\\n              python scripts/runtime_self_heal.py --repair-safe\\n              python scripts/build_state_context.py\\n              python scripts/build_query_context.py\\n              python scripts/build_post_market_review.py\\n              python scripts/runtime_self_heal.py --assess\\n            fi\\n\\n            # checked_at and age counters are observations, not state transitions.\\n            # Do not turn every watchdog wake into a main commit. Persist the\\n            # status only when its stable classification/decision evidence changes.\\n            status_changed=\"$(python - <<\\'PY\\'\\n          import json, subprocess\\n          from pathlib import Path\\n          def stable(raw):\\n              try:\\n                  value=json.loads(raw)\\n              except Exception:\\n                  return None\\n              for key in (\"checked_at\", \"current_capture_age_seconds\"):\\n                  value.pop(key, None)\\n              return value\\n          current=stable(Path(\"data/state/self_healing_status.json\").read_text(encoding=\"utf-8\"))\\n          try:\\n              previous_raw=subprocess.check_output(\\n                  [\"git\",\"show\",\"origin/main:data/state/self_healing_status.json\"],\\n                  text=True, stderr=subprocess.DEVNULL\\n              )\\n              previous=stable(previous_raw)\\n          except Exception:\\n              previous=None\\n          print(\"true\" if current != previous else \"false\")\\n          PY\\n            )\"\\n            if [ \"$status_changed\" = \"true\" ]; then\\n              git add -A -- data/state/self_healing_status.json\\n            else\\n              git restore --worktree -- data/state/self_healing_status.json\\n            fi\\n            # Formal request-bound contexts are owned by the canonical market\\n            # snapshot producer. A watchdog assessment/recovery/escalation must\\n            # never publish its global or empty rebuild over that handoff.\\n            # Only the two explicit metadata/derived-context repair actions may\\n            # persist these files, and those actions are not selected while an\\n            # unfinished Formal parent is present.\\n            if [ \"$action\" = \"REBUILD_DERIVED_CONTEXTS\" ] || [ \"$action\" = \"SYNC_RULES_VERSION_METADATA\" ]; then\\n              git add -A -- data/state/CURRENT.json data/state/query_context.json data/state/decision_context.json data/state/review_context.json data/state/intraday_path_features.json data/state/decision_trigger.json data/state/capital_efficiency_ranking.json post_market_review/post_market_review_event.json\\n            elif [ \"$action\" = \"__REGISTERED_DERIVED_CONTEXT_WRITER_CONTRACT__\" ]; then\\n              # Static production-contract marker; unreachable by runtime policy.\\n              git add -A -- data/state/CURRENT.json data/state/query_context.json data/state/decision_context.json data/state/review_context.json data/state/intraday_path_features.json data/state/decision_trigger.json data/state/capital_efficiency_ranking.json post_market_review/post_market_review_event.json\\n            fi\\n            if git diff --cached --quiet; then\\n              exit 0\\n            fi\\n\\n            git commit -m \"ops: record deterministic runtime self-healing\"\\n            parent=\"$(git rev-parse HEAD^)\"\\n            remote=\"$(git ls-remote origin refs/heads/main | cut -f1)\"\\n            if [ \"$parent\" != \"$remote\" ]; then\\n              echo \"main advanced during self-healing persistence; rebuilding from latest main (attempt $attempt/$max_attempts).\"\\n              continue\\n            fi\\n            if git push origin HEAD:main; then\\n              exit 0\\n            fi\\n            echo \"main advanced before push; rebuilding from latest main (attempt $attempt/$max_attempts).\"\\n          done\\n\\n          echo \"Self-healing persistence exhausted bounded latest-main retries; fail closed.\"\\n          exit 1\\n\\n      - name: Escalate persistent or structural failure\\n        if: ${{ steps.assess.outputs.action == \\'ESCALATE\\' }}\\n        run: |\\n          echo \"Self-healing stopped at the safety boundary. Manual/Codex diagnosis is required.\"\\n          cat data/state/self_healing_status.json\\n          exit 1\\n'\n\n----------------------------------------------------------------------\nRan 28 tests in 0.750s\n\nFAILED (failures=1)\n"
     },
     {
       "name": "tests:semantic_latest_main",
       "status": "PASS",
-      "detail": "........\n----------------------------------------------------------------------\nRan 8 tests in 0.179s\n\nOK\n"
+      "detail": "........\n----------------------------------------------------------------------\nRan 8 tests in 0.183s\n\nOK\n"
     },
     {
       "name": "tests:research_artifact_contract",
       "status": "PASS",
-      "detail": ".......\n----------------------------------------------------------------------\nRan 7 tests in 1.238s\n\nOK\n"
+      "detail": ".......\n----------------------------------------------------------------------\nRan 7 tests in 1.345s\n\nOK\n"
     },
     {
       "name": "tests:research_historical_stop_gate",
@@ -71,7 +111,7 @@
     {
       "name": "tests:lifecycle_state",
       "status": "PASS",
-      "detail": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.007s\n\nOK\n"
+      "detail": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.011s\n\nOK\n"
     },
     {
       "name": "tests:historical_market_fact_recovery",
@@ -81,7 +121,7 @@
     {
       "name": "tests:executed_trade_case_lifecycle",
       "status": "PASS",
-      "detail": "{\"schema_version\": \"1.1\", \"generated_at\": \"2026-10-23T14:58:26+08:00\", \"status\": \"RECONCILED\", \"lookback_days\": 5, \"supported_intents\": [\"正式正金额买入\", \"明确份额减持/卖出\", \"全部退出/清仓（仅在事实足够时匹配）\"], \"matches\": [{\"status\": \"CONFIRMED_BY_TRADE_EVENT\", \"requires_user_confirmation\": false, \"intent\": {\"decision_id\": \"20260902_141753_trade_159326\", \"decision_time\": \"2026-10-23T14:48:26+08:00\", \"decision_market_date\": \"2026-10-23\", \"source_event\": \"events/decisions/20260902_141753_trade_159326.json\", \"code\": \"159326\", \"name\": \"电网设备ETF\", \"side\": \"BUY\", \"lifecycle\": \"Trial\", \"planned_amount_yuan\": 4953, \"planned_quantity\": 3000}, \"trade_event_ids\": [\"20260902_141753_trade_159326\"], \"fill_status\": \"FULL_OR_ROUNDING_MATCH\", \"fill_ratio\": 1.0, \"execution_date\": \"2026-10-23\", \"confirmation_date\": \"\", \"lifecycle_t_date\": \"2026-10-23\"}], \"actionable_count\": 0, \"account_fact_updated_at\": \"2026-10-22T18:34:15+08:00\", \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n{\"schema_version\": \"1.1\", \"generated_at\": \"2026-09-07T22:00:00+08:00\", \"status\": \"NO_MATCH\", \"lookback_days\": 5, \"supported_intents\": [\"正式正金额买入\", \"明确份额减持/卖出\", \"全部退出/清仓（仅在事实足够时匹配）\"], \"matches\": [], \"actionable_count\": 0, \"account_fact_updated_at\": null, \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n{\"schema_version\": \"1.1\", \"generated_at\": \"2026-09-07T22:01:00+08:00\", \"status\": \"RECONCILED\", \"lookback_days\": 5, \"supported_intents\": [\"正式正金额买入\", \"明确份额减持/卖出\", \"全部退出/清仓（仅在事实足够时匹配）\"], \"matches\": [{\"status\": \"CONFIRMED_BY_TRADE_EVENT\", \"requires_user_confirmation\": false, \"intent\": {\"decision_id\": \"20260907_220500_trade_159326\", \"decision_time\": \"2026-10-23T14:48:26+08:00\", \"decision_market_date\": \"2026-10-23\", \"source_event\": \"events/decisions/20260907_220500_trade_159326.json\", \"code\": \"159326\", \"name\": \"电网设备ETF\", \"side\": \"BUY\", \"lifecycle\": \"Trial\", \"planned_amount_yuan\": 4953, \"planned_quantity\": 3000}, \"trade_event_ids\": [\"20260907_220500_trade_159326\"], \"fill_status\": \"FULL_OR_ROUNDING_MATCH\", \"fill_ratio\": 1.0, \"execution_date\": \"2026-10-23\", \"confirmation_date\": \"\", \"lifecycle_t_date\": \"2026-10-23\"}], \"actionable_count\": 0, \"account_fact_updated_at\": null, \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n{\"schema_version\": \"1.1\", \"generated_at\": \"2026-09-07T22:00:00+08:00\", \"status\": \"NO_MATCH\", \"lookback_days\": 5, \"supported_intents\": [\"正式正金额买入\", \"明确份额减持/卖出\", \"全部退出/清仓（仅在事实足够时匹配）\"], \"matches\": [], \"actionable_count\": 0, \"account_fact_updated_at\": null, \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n{\"schema_version\": \"1.1\", \"generated_at\": \"2026-09-07T22:00:00+08:00\", \"status\": \"NO_MATCH\", \"lookback_days\": 5, \"supported_intents\": [\"正式正金额买入\", \"明确份额减持/卖出\", \"全部退出/清仓（仅在事实足够时匹配）\"], \"matches\": [], \"actionable_count\": 0, \"account_fact_updated_at\": null, \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n...............\n----------------------------------------------------------------------\nRan 15 tests in 0.019s\n\nOK\n"
+      "detail": "{\"schema_version\": \"1.1\", \"generated_at\": \"2026-10-23T15:07:50+08:00\", \"status\": \"RECONCILED\", \"lookback_days\": 5, \"supported_intents\": [\"正式正金额买入\", \"明确份额减持/卖出\", \"全部退出/清仓（仅在事实足够时匹配）\"], \"matches\": [{\"status\": \"CONFIRMED_BY_TRADE_EVENT\", \"requires_user_confirmation\": false, \"intent\": {\"decision_id\": \"20260902_141753_trade_159326\", \"decision_time\": \"2026-10-23T14:57:50+08:00\", \"decision_market_date\": \"2026-10-23\", \"source_event\": \"events/decisions/20260902_141753_trade_159326.json\", \"code\": \"159326\", \"name\": \"电网设备ETF\", \"side\": \"BUY\", \"lifecycle\": \"Trial\", \"planned_amount_yuan\": 4953, \"planned_quantity\": 3000}, \"trade_event_ids\": [\"20260902_141753_trade_159326\"], \"fill_status\": \"FULL_OR_ROUNDING_MATCH\", \"fill_ratio\": 1.0, \"execution_date\": \"2026-10-23\", \"confirmation_date\": \"\", \"lifecycle_t_date\": \"2026-10-23\"}], \"actionable_count\": 0, \"account_fact_updated_at\": \"2026-10-22T18:34:15+08:00\", \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n{\"schema_version\": \"1.1\", \"generated_at\": \"2026-09-07T22:00:00+08:00\", \"status\": \"NO_MATCH\", \"lookback_days\": 5, \"supported_intents\": [\"正式正金额买入\", \"明确份额减持/卖出\", \"全部退出/清仓（仅在事实足够时匹配）\"], \"matches\": [], \"actionable_count\": 0, \"account_fact_updated_at\": null, \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n{\"schema_version\": \"1.1\", \"generated_at\": \"2026-09-07T22:01:00+08:00\", \"status\": \"RECONCILED\", \"lookback_days\": 5, \"supported_intents\": [\"正式正金额买入\", \"明确份额减持/卖出\", \"全部退出/清仓（仅在事实足够时匹配）\"], \"matches\": [{\"status\": \"CONFIRMED_BY_TRADE_EVENT\", \"requires_user_confirmation\": false, \"intent\": {\"decision_id\": \"20260907_220500_trade_159326\", \"decision_time\": \"2026-10-23T14:57:50+08:00\", \"decision_market_date\": \"2026-10-23\", \"source_event\": \"events/decisions/20260907_220500_trade_159326.json\", \"code\": \"159326\", \"name\": \"电网设备ETF\", \"side\": \"BUY\", \"lifecycle\": \"Trial\", \"planned_amount_yuan\": 4953, \"planned_quantity\": 3000}, \"trade_event_ids\": [\"20260907_220500_trade_159326\"], \"fill_status\": \"FULL_OR_ROUNDING_MATCH\", \"fill_ratio\": 1.0, \"execution_date\": \"2026-10-23\", \"confirmation_date\": \"\", \"lifecycle_t_date\": \"2026-10-23\"}], \"actionable_count\": 0, \"account_fact_updated_at\": null, \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n{\"schema_version\": \"1.1\", \"generated_at\": \"2026-09-07T22:00:00+08:00\", \"status\": \"NO_MATCH\", \"lookback_days\": 5, \"supported_intents\": [\"正式正金额买入\", \"明确份额减持/卖出\", \"全部退出/清仓（仅在事实足够时匹配）\"], \"matches\": [], \"actionable_count\": 0, \"account_fact_updated_at\": null, \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n{\"schema_version\": \"1.1\", \"generated_at\": \"2026-09-07T22:00:00+08:00\", \"status\": \"NO_MATCH\", \"lookback_days\": 5, \"supported_intents\": [\"正式正金额买入\", \"明确份额减持/卖出\", \"全部退出/清仓（仅在事实足够时匹配）\"], \"matches\": [], \"actionable_count\": 0, \"account_fact_updated_at\": null, \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n...............\n----------------------------------------------------------------------\nRan 15 tests in 0.023s\n\nOK\n"
     },
     {
       "name": "tests:settlement_obligations",
@@ -96,7 +136,7 @@
     {
       "name": "tests:post_close_review_canonical",
       "status": "PASS",
-      "detail": ".......................\n----------------------------------------------------------------------\nRan 23 tests in 0.053s\n\nOK\n"
+      "detail": ".......................\n----------------------------------------------------------------------\nRan 23 tests in 0.068s\n\nOK\n"
     },
     {
       "name": "tests:review_prerequisite_lifecycle",
@@ -106,7 +146,7 @@
     {
       "name": "tests:production_reliability",
       "status": "PASS",
-      "detail": "{\"status\": \"FAILED\", \"notification_id\": \"notification_727be442ac3d8174d19c\", \"lifecycle_status\": \"FAILED\"}\n......................................\n----------------------------------------------------------------------\nRan 38 tests in 0.026s\n\nOK\n"
+      "detail": "{\"status\": \"FAILED\", \"notification_id\": \"notification_727be442ac3d8174d19c\", \"lifecycle_status\": \"FAILED\"}\n......................................\n----------------------------------------------------------------------\nRan 38 tests in 0.031s\n\nOK\n"
     },
     {
       "name": "tests:workflow_sha_snapshot",
@@ -386,17 +426,17 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=0bf0197ffad45a29c65f48c95b1c73bb2e373c8d"
+      "detail": "HEAD=3846fc5b5fac5b30e10f4acfa4bb62cc1bdb3d2b"
     },
     {
       "name": "git:semantic_latest_main",
       "status": "PASS",
-      "detail": "{\"base\": \"2d0c084f0b488338d1f337ca26718b9a42c2c526\", \"head\": \"0bf0197ffad45a29c65f48c95b1c73bb2e373c8d\", \"changed_paths\": [\"data/state/system_consistency.json\", \"requests/live_snapshot/formal-parent-20261023T145752+0800-q9n4v6.json\"], \"categories\": {\"STABLE_PRODUCTION_CHANGE\": [], \"DYNAMIC_RUNTIME_FACT\": [\"data/state/system_consistency.json\"], \"FORMAL_FACT_MUTATION\": [], \"REQUEST_OR_TRIGGER_FACT\": [\"requests/live_snapshot/formal-parent-20261023T145752+0800-q9n4v6.json\"], \"UNKNOWN\": []}, \"decision\": \"REVIEW_REQUIRED\", \"integration_action\": \"REVIEW_MAIN_DELTA\"}"
+      "detail": "{\"base\": \"0bf0197ffad45a29c65f48c95b1c73bb2e373c8d\", \"head\": \"3846fc5b5fac5b30e10f4acfa4bb62cc1bdb3d2b\", \"changed_paths\": [\".github/workflows/self-healing-watchdog.yml\", \"data/market/discovery_history/2026-10-23.json\", \"data/market/snapshots/2026-10-23_145827.json\", \"data/market/snapshots/2026-10-23_150707.json\", \"data/state/CURRENT.json\", \"data/state/capital_efficiency_ranking.json\", \"data/state/dashboard_update_candidate.json\", \"data/state/decision_context.json\", \"data/state/decision_trigger.json\", \"data/state/e2e_status.json\", \"data/state/intraday_path_features.json\", \"data/state/maintenance_health.json\", \"data/state/market_delta.json\", \"data/state/market_regime_context.json\", \"data/state/market_structure_context.json\", \"data/state/query_context.json\", \"data/state/review_context.json\", \"data/state/runtime_health.json\", \"data/state/self_healing_status.json\", \"data/state/stock_context.json\", \"data/state/stock_market_context.json\", \"data/state/system_consistency.json\"], \"categories\": {\"STABLE_PRODUCTION_CHANGE\": [\".github/workflows/self-healing-watchdog.yml\"], \"DYNAMIC_RUNTIME_FACT\": [\"data/market/discovery_history/2026-10-23.json\", \"data/market/snapshots/2026-10-23_145827.json\", \"data/market/snapshots/2026-10-23_150707.json\", \"data/state/CURRENT.json\", \"data/state/capital_efficiency_ranking.json\", \"data/state/dashboard_update_candidate.json\", \"data/state/decision_context.json\", \"data/state/decision_trigger.json\", \"data/state/e2e_status.json\", \"data/state/intraday_path_features.json\", \"data/state/maintenance_health.json\", \"data/state/market_delta.json\", \"data/state/market_regime_context.json\", \"data/state/market_structure_context.json\", \"data/state/query_context.json\", \"data/state/review_context.json\", \"data/state/runtime_health.json\", \"data/state/self_healing_status.json\", \"data/state/stock_context.json\", \"data/state/stock_market_context.json\", \"data/state/system_consistency.json\"], \"FORMAL_FACT_MUTATION\": [], \"REQUEST_OR_TRIGGER_FACT\": [], \"UNKNOWN\": []}, \"decision\": \"REPLAY_REQUIRED\", \"integration_action\": \"REPLAY_REQUIRED\"}"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=0bf0197ffad45a29c65f48c95b1c73bb2e373c8d GITHUB_SHA=0bf0197ffad45a29c65f48c95b1c73bb2e373c8d"
+      "detail": "HEAD=3846fc5b5fac5b30e10f4acfa4bb62cc1bdb3d2b GITHUB_SHA=3846fc5b5fac5b30e10f4acfa4bb62cc1bdb3d2b"
     },
     {
       "name": "git:critical_files_tracked",
@@ -976,12 +1016,12 @@
     {
       "name": "dynamic_freshness:query_recalculated",
       "status": "PASS",
-      "detail": "declared=FRESH expected=FRESH age_seconds=215"
+      "detail": "declared=FRESH expected=FRESH age_seconds=139"
     },
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=FRESH expected=FRESH age_seconds=178"
+      "detail": "declared=FRESH expected=FRESH age_seconds=114"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -1016,12 +1056,12 @@
     {
       "name": "decision:query_decision_current_aligned",
       "status": "PASS",
-      "detail": "query=data/market/snapshots/2026-10-23_144759.json decision=data/market/snapshots/2026-10-23_144759.json"
+      "detail": "query=data/market/snapshots/2026-10-23_145827.json decision=data/market/snapshots/2026-10-23_145827.json"
     },
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-10-23T06:50:57Z market=2026-10-23T14:47:59+08:00"
+      "detail": "context=2026-10-23T07:00:21Z market=2026-10-23T14:58:27+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -1156,22 +1196,22 @@
     {
       "name": "runtime_health:pass_requires_snapshot",
       "status": "PASS",
-      "detail": "runtime_snapshot=data/market/snapshots/2026-10-23_144759.json current_snapshot=data/market/snapshots/2026-10-23_144759.json"
+      "detail": "runtime_snapshot=data/market/snapshots/2026-10-23_150707.json current_snapshot=data/market/snapshots/2026-10-23_150707.json"
     },
     {
       "name": "a_share_runtime:live_state_available",
       "status": "PASS",
-      "detail": "runtime_status=PASS current_snapshot=data/market/snapshots/2026-10-23_144759.json"
+      "detail": "runtime_status=PASS current_snapshot=data/market/snapshots/2026-10-23_150707.json"
     },
     {
       "name": "a_share_runtime:current_ready",
       "status": "PASS",
-      "detail": "market_date=2026-10-23 node=live status=READY"
+      "detail": "market_date=2026-10-23 node=close status=READY"
     },
     {
       "name": "a_share_runtime:snapshot_exists",
       "status": "PASS",
-      "detail": "path=data/market/snapshots/2026-10-23_144759.json"
+      "detail": "path=data/market/snapshots/2026-10-23_150707.json"
     },
     {
       "name": "a_share_runtime:snapshot_count",
@@ -1196,7 +1236,7 @@
     {
       "name": "a_share_runtime:beijing_capture",
       "status": "PASS",
-      "detail": "captured_at_beijing=2026-10-23T14:47:59+08:00 timezone=Asia/Shanghai"
+      "detail": "captured_at_beijing=2026-10-23T15:07:07+08:00 timezone=Asia/Shanghai"
     },
     {
       "name": "state_coherence:current_account_mirror",
@@ -1260,8 +1300,8 @@
     },
     {
       "name": "review:post_close_canonical_chain",
-      "status": "WARNING",
-      "detail": "canonical review and closure valid; CURRENT pointer projection pending current-session close"
+      "status": "FAIL",
+      "detail": "CURRENT.close_review_closure_is_stale"
     },
     {
       "name": "formal_files:executed_trade_event_sync",
@@ -2199,10 +2239,11 @@
       "detail": "registered writer persists data/state/capital_efficiency_ranking.json"
     }
   ],
-  "errors": [],
-  "warnings": [
-    "post_close_review:CURRENT.close_review_closure_projection_lag=expected_market_date=2026-10-22,current_node=live"
+  "errors": [
+    "tests:opening_current_self_healing: ..........................F.\n======================================================================\nFAIL: test_successful_healthy_assessment_is_persisted_without_staging_repair_state (tests.test_opening_current_self_healing.OpeningCurrentSelfHealingTests.test_successful_healthy_assessment_is_persisted_without_staging_repair_state)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/tests/test_opening_current_self_healing.py\", line 352, in test_successful_healthy_assessment_is_persisted_without_staging_repair_state\n    self.assertIn('if [ \"$action\" != \"NONE\" ]; then', persist)\nAssertionError: 'if [ \"$action\" != \"NONE\" ]; then' not found in '\\n        # The assessment artifact is itself canonical runtime state. Persist it\\n        # whenever the calculated status differs from main, including a return\\n        # to HEALTHY/NONE, so downstream consistency never consumes stale\\n        # self-healing metadata after a successful recovery.\\n        if: ${{ always() && steps.assess.outcome == \\'success\\' }}\\n        shell: bash\\n        run: |\\n          set -euo pipefail\\n          # Drop any rebuildable working-tree changes produced by earlier steps\\n          # before synchronizing this persistence attempt to execution-time latest main.\\n          git restore --worktree --staged .\\n          git config user.name \"github-actions[bot]\"\\n          git config user.email \"41898282+github-actions[bot]@users.noreply.github.com\"\\n\\n          # self_healing_status and the optional derived contexts are rebuildable\\n          # runtime state. Never rebase a stale locally-computed state commit over\\n          # a concurrently advanced main. Re-sync first, rebuild from that exact\\n          # main, and use a bounded compare-and-push retry if main moves again.\\n          max_attempts=3\\n          for attempt in $(seq 1 \"$max_attempts\"); do\\n            git fetch origin main\\n            git reset --hard origin/main\\n\\n            python scripts/runtime_self_heal.py --assess\\n            action=\"$(python - <<\\'PY\\'\\n          import json\\n          from pathlib import Path\\n          data = json.loads(Path(\\'data/state/self_healing_status.json\\').read_text(encoding=\\'utf-8\\'))\\n          print(data.get(\\'recommended_action\\', \\'NONE\\'))\\n          PY\\n            )\"\\n\\n            if [ \"$action\" = \"REBUILD_DERIVED_CONTEXTS\" ]; then\\n              python scripts/build_state_context.py\\n              python scripts/build_query_context.py\\n              python scripts/build_post_market_review.py\\n              python scripts/runtime_self_heal.py --assess\\n            elif [ \"$action\" = \"SYNC_RULES_VERSION_METADATA\" ]; then\\n              python scripts/runtime_self_heal.py --repair-safe\\n              python scripts/build_state_context.py\\n              python scripts/build_query_context.py\\n              python scripts/build_post_market_review.py\\n              python scripts/runtime_self_heal.py --assess\\n            fi\\n\\n            # checked_at and age counters are observations, not state transitions.\\n            # Do not turn every watchdog wake into a main commit. Persist the\\n            # status only when its stable classification/decision evidence changes.\\n            status_changed=\"$(python - <<\\'PY\\'\\n          import json, subprocess\\n          from pathlib import Path\\n          def stable(raw):\\n              try:\\n                  value=json.loads(raw)\\n              except Exception:\\n                  return None\\n              for key in (\"checked_at\", \"current_capture_age_seconds\"):\\n                  value.pop(key, None)\\n              return value\\n          current=stable(Path(\"data/state/self_healing_status.json\").read_text(encoding=\"utf-8\"))\\n          try:\\n              previous_raw=subprocess.check_output(\\n                  [\"git\",\"show\",\"origin/main:data/state/self_healing_status.json\"],\\n                  text=True, stderr=subprocess.DEVNULL\\n              )\\n              previous=stable(previous_raw)\\n          except Exception:\\n              previous=None\\n          print(\"true\" if current != previous else \"false\")\\n          PY\\n            )\"\\n            if [ \"$status_changed\" = \"true\" ]; then\\n              git add -A -- data/state/self_healing_status.json\\n            else\\n              git restore --worktree -- data/state/self_healing_status.json\\n            fi\\n            # Formal request-bound contexts are owned by the canonical market\\n            # snapshot producer. A watchdog assessment/recovery/escalation must\\n            # never publish its global or empty rebuild over that handoff.\\n            # Only the two explicit metadata/derived-context repair actions may\\n            # persist these files, and those actions are not selected while an\\n            # unfinished Formal parent is present.\\n            if [ \"$action\" = \"REBUILD_DERIVED_CONTEXTS\" ] || [ \"$action\" = \"SYNC_RULES_VERSION_METADATA\" ]; then\\n              git add -A -- data/state/CURRENT.json data/state/query_context.json data/state/decision_context.json data/state/review_context.json data/state/intraday_path_features.json data/state/decision_trigger.json data/state/capital_efficiency_ranking.json post_market_review/post_market_review_event.json\\n            elif [ \"$action\" = \"__REGISTERED_DERIVED_CONTEXT_WRITER_CONTRACT__\" ]; then\\n              # Static production-contract marker; unreachable by runtime policy.\\n              git add -A -- data/state/CURRENT.json data/state/query_context.json data/state/decision_context.json data/state/review_context.json data/state/intraday_path_features.json data/state/decision_trigger.json data/state/capital_efficiency_ranking.json post_market_review/post_market_review_event.json\\n            fi\\n            if git diff --cached --quiet; then\\n              exit 0\\n            fi\\n\\n            git commit -m \"ops: record deterministic runtime self-healing\"\\n            parent=\"$(git rev-parse HEAD^)\"\\n            remote=\"$(git ls-remote origin refs/heads/main | cut -f1)\"\\n            if [ \"$parent\" != \"$remote\" ]; then\\n              echo \"main advanced during self-healing persistence; rebuilding from latest main (attempt $attempt/$max_attempts).\"\\n              continue\\n            fi\\n            if git push origin HEAD:main; then\\n              exit 0\\n            fi\\n            echo \"main advanced before push; rebuilding from latest main (attempt $attempt/$max_attempts).\"\\n          done\\n\\n          echo \"Self-healing persistence exhausted bounded latest-main retries; fail closed.\"\\n          exit 1\\n\\n      - name: Escalate persistent or structural failure\\n        if: ${{ steps.assess.outputs.action == \\'ESCALATE\\' }}\\n        run: |\\n          echo \"Self-healing stopped at the safety boundary. Manual/Codex diagnosis is required.\"\\n          cat data/state/self_healing_status.json\\n          exit 1\\n'\n\n----------------------------------------------------------------------\nRan 28 tests in 0.750s\n\nFAILED (failures=1)\n",
+    "post_close_review:CURRENT.close_review_closure_is_stale"
   ],
+  "warnings": [],
   "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段、美股扩展时段链和自动验收结果；硬冲突不得进入生产。",
   "production_mutation_protocol": {
     "status": "PASS",
@@ -2224,5 +2265,5 @@
       "最新main上的正式源文件 > 旧分支生成的动态状态"
     ]
   },
-  "persisted_at_beijing": "2026-10-23T14:58:39.325166+08:00"
+  "persisted_at_beijing": "2026-10-23T15:07:58.376637+08:00"
 }
