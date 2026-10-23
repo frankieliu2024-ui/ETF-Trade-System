@@ -347,7 +347,7 @@ class FormalBusinessHealthBoundaryTests(unittest.TestCase):
 
     def test_system_consistency_is_not_a_pull_request_business_gate(self):
         root = Path(__file__).parents[1]
-        workflow = (root / ".github/workflows/system-consistency.yml").read_text(encoding="utf-8")
+        workflow = (root / ".github/workflows/etf-system-consistency.yml").read_text(encoding="utf-8")
         self.assertNotIn("\n  pull_request:", workflow)
         self.assertNotIn("pr_production_acceptance:", workflow)
         self.assertIn("\n  push:", workflow)
