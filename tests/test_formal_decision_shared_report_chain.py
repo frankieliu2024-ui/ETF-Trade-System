@@ -25,3 +25,10 @@ def test_market_snapshot_projects_formal_completion_through_existing_owner():
     assert "request_files=\"$completion_file\"" in snapshot
     assert "python scripts/process_state_sync_request.py \"$TRIGGERING_REQUEST_FILE\"" in snapshot
     assert "PushPlus" not in snapshot
+
+def test_market_snapshot_builds_completion_from_durable_formal_bds():
+    snapshot = Path(".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
+    assert "Build Formal Decision completion from durable business source" in snapshot
+    assert "--from-bds \\\"$BUSINESS_SOURCE_FILE\\\"" in snapshot
+    assert 'completion_id="${parent_request_id}__scheduled_review_completion"' in snapshot
+    assert "git add events/reviews requests/live_snapshot" in snapshot
