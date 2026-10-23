@@ -419,7 +419,7 @@ def write_completion_from_persisted_bds(
         raise ValueError("completion output path must be a repository JSON path")
     if target.name != f"{completion_payload['request_id']}.json":
         raise ValueError("completion filename must equal its envelope request_id")
-    serialized = json.dumps(completion_payload, ensure_ascii=False, indent=2, sort_keys=True) + "\\n"
+    serialized = json.dumps(completion_payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
     if target.exists():
         if target.read_text(encoding="utf-8") != serialized:
             raise FileExistsError("completion path already contains a different payload")
