@@ -138,7 +138,7 @@ FINAL_CONTENT冻结后，必须调用 current main 登记的 ETF 正式决策 Ac
 
 Actor不得创建第二请求、第二正文、第二完成记录、第二事件、第二报告或第二通知链；不得直接手写事件、报告、通知或调用服务商。
 
-完成记录必须由统一生产者生成并回读，至少核对：
+完成记录必须由统一生产者生成并回读；生产入口接收并校验本次唯一 `formal_completion_path`，且该路径必须属于当前父请求。至少核对：
 
 - task_id、task_run_id、occurrence_id、request_id；
 - parent_request_id、source、entry_mode、market_date；
