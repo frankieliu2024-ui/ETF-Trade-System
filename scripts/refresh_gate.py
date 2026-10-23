@@ -307,7 +307,11 @@ def guard_request(path: Path) -> int:
         return 0
     if req.get("allow_wait_refresh_fallback") is True and _query_intent(req) != _explicit_latest_intent():
         return 0
-    gate = build_gate()
+    # Guard the exact request being processed; never select a different
+
+    # request from the shared live-snapshot directory.
+
+    gate = build_gate(request_file=path)
     if not gate.get("formal_decision_persist_allowed", True):
         if _manual_completion_request_bound_pit_ready(req):
             return 0
