@@ -428,13 +428,34 @@ def _validate_post_close_review_contract(report: dict, now=None) -> None:
         _recount(report)
         return
     pointer = current.get("close_review_closure") or {}
-    if pointer.get("market_date") != market_date or pointer.get("formal_review_path") != f"events/reviews/{market_date}.json":
+    pointer_stale = (
+        pointer.get("market_date") != market_date
+        or pointer.get("formal_review_path") != f"events/reviews/{market_date}.json"
+    )
+    # During an active trading day, the canonical close-review artifact for the
+    # previous session may already exist while CURRENT still points to the last
+    # fully projected closure.  That is a non-blocking projection lag until the
+    # current session reaches the close node; after close it remains a hard
+    # consistency failure.
+    current_node = str(current.get("latest_valid_node") or "").strip().lower()
+    current_market_date = str(current.get("market_date") or "").strip()
+    projection_lag = pointer_stale and current_node != "close" and current_market_date >= market_date
+    if pointer_stale and not projection_lag:
         errors.append("CURRENT.close_review_closure_is_stale")
+    if projection_lag:
+        warning = (
+            "post_close_review:CURRENT.close_review_closure_projection_lag="
+            f"expected_market_date={market_date},current_node={current_node or 'UNKNOWN'}"
+        )
+        if warning not in report.setdefault("warnings", []):
+            report["warnings"].append(warning)
     report.setdefault("checks", []).append({
         "name": "review:post_close_canonical_chain",
-        "status": "FAIL" if errors else "PASS",
+        "status": "FAIL" if errors else ("WARNING" if projection_lag else "PASS"),
         "detail": "canonical post-close review, closure and CURRENT pointer validated"
-                if not errors else "; ".join(errors),
+                if not errors and not projection_lag
+                else ("canonical review and closure valid; CURRENT pointer projection pending current-session close"
+                      if projection_lag else "; ".join(errors)),
     })
     if errors:
         report.setdefault("errors", []).extend(f"post_close_review:{x}" for x in errors)
