@@ -2242,10 +2242,12 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     replay_received = parse_time(request.get("requested_at_beijing") or request.get("request_time_beijing"))
     prior_updated = parse_time(prior.get("updated_at_beijing"))
     if prior_updated and replay_received and replay_received < prior_updated and review == prior_review:
-        # Exact replay of the already-persisted canonical review: only repair
-        # its CASE human projection. Do not revalidate historical PIT against
-        # today's account, or rewrite the event/closure/current state.
-        _persist_existing_case_detail_projections(prior_review)
+        # Exact replay of the already-persisted canonical review: repair all
+        # downstream projections idempotently without revalidating historical
+        # PIT against today's account or rewriting the canonical review event.
+        # This preserves the same request/event identity while allowing a
+        # previously interrupted handoff to complete its REPORT and closure.
+        _persist_post_close_review_projections(account, request, prior_review, prior)
         return True, True
     # Normalize scheduled trade-review bindings at the canonical owner.
     # Legacy/recovery requests without a presentation binding remain compatible;
