@@ -1,7 +1,7 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-10-23T16:08:36+08:00",
-  "last_status": "SENT",
+  "updated_at": "2026-10-23T16:09:51+08:00",
+  "last_status": "AGGREGATED_INTO_EXISTING",
   "last_type": "MARKET_VALUE_ALERT",
   "last_title": "【市场异动】半导体ETF代理（SOXX）出现极端波动 +1.69%",
   "notifications": [
@@ -35453,7 +35453,16 @@
         "market_as_of_beijing": "2026-10-23T16:08:06+08:00",
         "source_fact_id": "2026-10-23:SOXX:EXTREME:UP:2026-10-23T16:08:06+08:00",
         "session": "PRE_MARKET",
-        "event_family_id": "US:2026-10-23:PRE_MARKET:SOXX:EXTREME:UP:"
+        "event_family_id": "US:2026-10-23:PRE_MARKET:SOXX:EXTREME:UP:",
+        "event_tags": [
+          "EXTREME",
+          "DIVERGENCE"
+        ],
+        "aggregation_status": "MERGED_SAME_OBJECT_CONTINUOUS_FACT",
+        "source_fact_ids": [
+          "2026-10-23:US_TECH_DIVERGENCE:DIVERGENCE:DIVERGED:2026-10-23T16:09:30+08:00"
+        ],
+        "family_peak_magnitude_pct": 1.6906
       },
       "response": {
         "http_status": 200,
@@ -35461,27 +35470,50 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-10-23T16:08:36+08:00"
-    }
-  ],
-  "recent": [
+    },
     {
-      "key": "market-value:us:2026-10-14:SOXX:DOWN:EXTREME:2026-10-14T20:45:17+08:00",
-      "type": "MARKET_VALUE_ALERT",
-      "title": "【市场异动】半导体ETF代理（SOXX）出现极端波动 -1.81%",
-      "content": "### 核心结论\n- **事件类型**：极端波动\n- **对象/结构**：半导体ETF代理（SOXX）\n- **扩展时段较最近现金盘收盘**：-1.81%\n\n**判断**：当前幅度已进入通知层的非常规区间，可能实质改变风险偏好、风险收益或资本比较。\n\n### 对ETF系统的影响\n半导体ETF代理（SOXX）属于海外/区域结构证据。先看A股本地价格是否接受、减弱或背离，再复核纳指ETF（159941）及A股科技风险篮子的自身反馈、当前主候选和边际资本效率；若海外与A股背离，以A股自身反馈为主。\n\n### 当前动作\n**把该信号纳入最近A股正式节点复核，不因单一海外/区域对象机械调整A股仓位。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-10-14 20:45:17\n- **边界**：市场归属只用于数据时点和传导解释，不决定通知资格。门槛已适度放宽；同一事实依靠去重和升级识别控制重复。",
-      "source": "data/state/us_extended_hours_context.json",
+      "notification_id": "notification_56555b954207252eb73f",
+      "event_type": "APAC_SESSION_SUMMARY",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "apac-session-summary:2026-10-23:HK_LATE_UPDATE",
+      "request_id": "",
+      "parent_request_id": "",
+      "report_id": "",
+      "content_hash": "",
+      "related_decision_id": "",
+      "security_code": "",
+      "security_name": "",
       "user_severity": "需要关注",
-      "user_action": "纳入最近A股决策节点重新验证，不机械交易",
-      "status": "SENT",
-      "attempted_at": "2026-10-14T20:45:45+08:00",
+      "user_action": "纳入下一A股交易节点，不反向改写当日A股事实",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-10-23T16:09:49+08:00",
+      "sent_at": "2026-10-23T16:09:50+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-10-25T16:09:49+08:00",
+      "title": "【收盘总结】亚太香港收盘后主总结兜底",
+      "content": "### 核心结论\n- **节点**：香港16:00收盘后的价值更新\n- **区域最终判断**：区域分化/相对平稳\n- **此前判断变化**：主总结缺失，本条作为兜底\n- **日经225指数（N225）**：较前收-0.34%\n- **韩国综合指数（KOSPI）**：较前收+0.30%\n\n### 关键路径\n- **日经225指数（N225）**：开盘62,667.05，日内高62,786.89、低61,462.61，收/现价62,693.16；较开盘+0.04%，自低点修复+2.00%，距高点-0.15%，收于日内区间高位。\n- **韩国综合指数（KOSPI）**：开盘5,403.17，日内高5,550.30、低5,305.98，收/现价5,550.30；较开盘+2.72%，自低点修复+4.60%，距高点+0.00%，收于日内区间高位。\n- **恒生科技指数（HSTECH）**：开盘3,813.43，日内高3,896.93、低3,781.23，收/现价3,871.66；较开盘+1.53%，自低点修复+2.39%，距高点-0.65%，收于日内区间中部。\n\n### 对ETF系统的影响\n香港收盘只在实质改变此前亚太判断时追加；属于A股收盘后的新证据，不能反向改写15:00已形成事实。\n\n### 当前动作\n**把更新后的亚太结构纳入下一A股交易节点。**\n\n### 数据与边界\n- **各市场最新有效时点上限**：2026-10-23 16:08:30\n- **通知生成**：2026-10-23 16:09:49\n- **边界**：本节点价值驱动，不是形式化第二次收盘总结；约0.8个百分点的香港增量变化只控制注意力。",
+      "source": "overseas_context",
+      "confirmation_context": {
+        "market_date": "2026-10-23",
+        "session_node": "HK_LATE_UPDATE",
+        "tone": "区域分化/相对平稳",
+        "previous_tone": "",
+        "hstech_change_pct": 2.048799002617341,
+        "hstech_change_since_primary_pct": null,
+        "market_as_of_beijing": "2026-10-23T16:08:30+08:00",
+        "event_family_id": ":2026-10-23:HK_LATE_UPDATE::::"
+      },
       "response": {
         "http_status": 200,
         "pushplus_code": 200,
         "pushplus_message": "执行成功"
       },
-      "notification_id": "notification_a51534a225c2324a69dc",
-      "lifecycle_status": "SENT"
-    },
+      "last_attempted_at": "2026-10-23T16:09:50+08:00"
+    }
+  ],
+  "recent": [
     {
       "key": "market-value:us:2026-10-14:US_TECH_DIVERGENCE:DIVERGED:DIVERGENCE:2026-10-14T21:13:10+08:00",
       "type": "MARKET_VALUE_ALERT",
@@ -39062,6 +39094,24 @@
         "pushplus_message": "执行成功"
       },
       "notification_id": "notification_dcb6fa42a1662b242fa6",
+      "lifecycle_status": "SENT"
+    },
+    {
+      "key": "apac-session-summary:2026-10-23:HK_LATE_UPDATE",
+      "type": "APAC_SESSION_SUMMARY",
+      "title": "【收盘总结】亚太香港收盘后主总结兜底",
+      "content": "### 核心结论\n- **节点**：香港16:00收盘后的价值更新\n- **区域最终判断**：区域分化/相对平稳\n- **此前判断变化**：主总结缺失，本条作为兜底\n- **日经225指数（N225）**：较前收-0.34%\n- **韩国综合指数（KOSPI）**：较前收+0.30%\n\n### 关键路径\n- **日经225指数（N225）**：开盘62,667.05，日内高62,786.89、低61,462.61，收/现价62,693.16；较开盘+0.04%，自低点修复+2.00%，距高点-0.15%，收于日内区间高位。\n- **韩国综合指数（KOSPI）**：开盘5,403.17，日内高5,550.30、低5,305.98，收/现价5,550.30；较开盘+2.72%，自低点修复+4.60%，距高点+0.00%，收于日内区间高位。\n- **恒生科技指数（HSTECH）**：开盘3,813.43，日内高3,896.93、低3,781.23，收/现价3,871.66；较开盘+1.53%，自低点修复+2.39%，距高点-0.65%，收于日内区间中部。\n\n### 对ETF系统的影响\n香港收盘只在实质改变此前亚太判断时追加；属于A股收盘后的新证据，不能反向改写15:00已形成事实。\n\n### 当前动作\n**把更新后的亚太结构纳入下一A股交易节点。**\n\n### 数据与边界\n- **各市场最新有效时点上限**：2026-10-23 16:08:30\n- **通知生成**：2026-10-23 16:09:49\n- **边界**：本节点价值驱动，不是形式化第二次收盘总结；约0.8个百分点的香港增量变化只控制注意力。",
+      "source": "overseas_context",
+      "user_severity": "需要关注",
+      "user_action": "纳入下一A股交易节点，不反向改写当日A股事实",
+      "status": "SENT",
+      "attempted_at": "2026-10-23T16:09:50+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_56555b954207252eb73f",
       "lifecycle_status": "SENT"
     }
   ],
