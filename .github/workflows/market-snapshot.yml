@@ -1168,10 +1168,17 @@ jobs:
         # step failure suppress request binding and PIT qualification.
         if: ${{ always() && steps.state_sync.outcome != 'failure' && (steps.state_sync.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (steps.triggering_request.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (github.event_name == 'push' || steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true' || github.event.inputs.formal_context_recovery_request != '') && github.event.inputs.probe_only != 'true' }}
         run: |
-          REQUEST_FILE="${TRIGGERING_REQUEST_FILE:-}"
-          REQUEST_FILE="$(printf '%s' "$REQUEST_FILE" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
-          if [ -z "$REQUEST_FILE" ] && [ -n "${FORMAL_CONTEXT_RECOVERY_REQUEST:-}" ]; then REQUEST_FILE="$FORMAL_CONTEXT_RECOVERY_REQUEST"; fi
-          if [ -z "$REQUEST_FILE" ] && [ -n "${REPLAY_REQUEST:-}" ]; then REQUEST_FILE="$REPLAY_REQUEST"; fi
+          # Formal replay must use the canonical parent request. The state-sync
+          # producer may expose the BDS child through TRIGGERING_REQUEST_FILE;
+          # that child is not the request-bound Formal Decision context.
+          if [ -n "${FORMAL_REPLAY_REQUEST:-}" ]; then
+            REQUEST_FILE="$FORMAL_REPLAY_REQUEST"
+          else
+            REQUEST_FILE="${TRIGGERING_REQUEST_FILE:-}"
+            REQUEST_FILE="$(printf '%s' "$REQUEST_FILE" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+            if [ -z "$REQUEST_FILE" ] && [ -n "${FORMAL_CONTEXT_RECOVERY_REQUEST:-}" ]; then REQUEST_FILE="$FORMAL_CONTEXT_RECOVERY_REQUEST"; fi
+            if [ -z "$REQUEST_FILE" ] && [ -n "${REPLAY_REQUEST:-}" ]; then REQUEST_FILE="$REPLAY_REQUEST"; fi
+          fi
           if [ -z "$REQUEST_FILE" ]; then
             REQUEST_FILE=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json' | grep -vE '(__business_decision_source|__formal_completion|__scheduled_review_completion)' | head -n 1 || true)
           fi
