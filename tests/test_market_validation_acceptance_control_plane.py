@@ -69,7 +69,8 @@ class ValidationAcceptanceControlPlaneTest(unittest.TestCase):
         source = WORKFLOW.read_text(encoding="utf-8")
         self.assertNotIn("git add data/state/CURRENT.json", source)
         self.assertNotIn("git add -A", source)
-        self.assertNotIn("git push origin HEAD:main", source)
+        self.assertIn("git add data/state/system_consistency.json", source)
+        self.assertIn("git push origin HEAD:main", source)
 
     def test_acceptance_scope_is_class_based(self):
         formal = classify_paths(["ETF当前状态_DASHBOARD.md"])
