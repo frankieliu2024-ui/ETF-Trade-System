@@ -89,5 +89,16 @@ class ProductionHealthCoverageTest(unittest.TestCase):
         self.assertEqual((status, detail, count), ("ATTENTION", "notifications_collection_unusable", 0))
 
 
+    def test_global_consistency_failure_does_not_equal_formal_decision_block(self):
+        result = health.formal_decision_blockage([{"name": "system_consistency", "status": "BLOCKED"}])
+        self.assertFalse(result["blocked"])
+        self.assertEqual(result["blocking_checks"], [])
+
+    def test_current_decision_critical_fact_failure_blocks_formal_decision(self):
+        result = health.formal_decision_blockage([{"name": "a_share_current", "status": "BLOCKED"}])
+        self.assertTrue(result["blocked"])
+        self.assertEqual(result["blocking_checks"], ["a_share_current"])
+
+
 if __name__ == "__main__":
     unittest.main()
