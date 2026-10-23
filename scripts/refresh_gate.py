@@ -63,7 +63,19 @@ def _query_intent(req: dict) -> str:
         value = intent
     return str(req.get("query_intent") or value or req.get("request_kind") or "").upper()
 def _is_scheduled_formal_decision(req: dict) -> bool:
-    return _query_intent(req) == SCHEDULED_FORMAL_DECISION_INTENT
+    """Identify scheduled Formal Decision from its request identity.
+
+    The scheduled actor stores its business query intent as
+    FORMAL_INTRADAY_ANALYSIS, so intent alone is insufficient.
+    """
+    source = str(req.get("source") or "").upper()
+    task_id = str(req.get("task_id") or "").strip()
+    entry_mode = str(req.get("entry_mode") or "").upper()
+    return bool(
+        source == "CHATGPT_SCHEDULED_FORMAL_ANALYSIS"
+        and task_id == "ETF正式决策"
+        and entry_mode == "AUTOMATIC_SCHEDULED_TASK"
+    )
 
 
 def _requires_wait(req: dict) -> bool:
