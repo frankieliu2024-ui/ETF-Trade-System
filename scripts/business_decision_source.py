@@ -887,6 +887,12 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
         "position_capital_states": {x["security_code"]: x["capital_use"]["position_capital_states"] for x in position_reviews},
         "capital_destinations": {x["security_code"]: x["capital_use"]["capital_destination"] for x in position_reviews},
     }
+    # Durable BDS is the recovery boundary. Preserve the exact request-bound
+    # work package so a later completion recovery can validate the same
+    # problem graph without depending on mutable shared query_context.
+    projected["decision_work_package"] = json.loads(
+        json.dumps(work_package, ensure_ascii=False)
+    )
     return projected
 
 def _normalize_formal_presentation_layout(value: Any) -> Any:
@@ -900,6 +906,33 @@ def _normalize_formal_presentation_layout(value: Any) -> Any:
     if not isinstance(value, str):
         return value
     import re
+
+    # Chat-generated bodies sometimes carry literal line-continuation
+    # backslashes or Chinese ordinal headings. Normalize only these
+    # presentation artifacts before hashing/persistence; do not rewrite the
+    # business meaning.
+    value = re.sub(r"[ \t]*\\\\(?=\r?\n|$)", "", value)
+    ordinal_headings = {
+        "风险许可及边界": "【风险许可及边界】",
+        "数据时点与事实性质": "【数据时点与事实性质】",
+        "海外与跨市场": "【海外与跨市场】",
+        "A股内部反馈": "【A股内部反馈】",
+        "全市场机会发现": "【全市场机会发现】",
+        "观察ETF": "【观察ETF】",
+        "机会ETF": "【机会ETF】",
+        "实际持仓及比较": "【全部实际持仓】",
+        "全部实际持仓": "【全部实际持仓】",
+        "现金、资本与部署资格": "【资本状态与资本竞争】",
+        "最终动作": "【最终动作】",
+        "关键风险与改变动作条件": "【关键风险】",
+        "信息不足、置信度与最可能出错处": "【信息不足】",
+        "实际执行结果": "【实际执行结果】",
+    }
+    value = re.sub(
+        r"(?m)^[ \t]*[一二三四五六七八九十]+、[ \t]*([^\\r\\n]+?)\\s*$",
+        lambda match: ordinal_headings.get(match.group(1).strip(), match.group(0)),
+        value,
+    )
 
     # Keep user-facing prose in business language. These are execution-model
     # labels, not investment conclusions; normalize the common actor wording
