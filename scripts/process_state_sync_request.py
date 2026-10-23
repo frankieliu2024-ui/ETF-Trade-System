@@ -3466,6 +3466,11 @@ def normalize_broker_account_fact_ingress(request: dict, supplied: object) -> tu
         normalized["deployable_cash_before_settlement"] = normalized["cash"]
     if normalized.get("stock_market_value") is not None:
         normalized["total_market_value"] = normalized["stock_market_value"]
+    # Keep legacy account readers aligned with the current screenshot aliases.
+    if normalized.get("daily_pnl") is not None:
+        normalized["day_pnl"] = normalized["daily_pnl"]
+    if normalized.get("daily_pnl_pct") is not None:
+        normalized["day_pnl_pct"] = normalized["daily_pnl_pct"]
     kept = []
     unresolved = list(normalized.get("unresolved_assets") or [])
     moved = 0
