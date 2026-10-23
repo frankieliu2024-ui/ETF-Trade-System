@@ -4,7 +4,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 DECISION = ROOT / ".github" / "workflows" / "decision-notification.yml"
-CONSISTENCY = ROOT / ".github" / "workflows" / "system-consistency.yml"
+CONSISTENCY = ROOT / ".github" / "workflows" / "etf-system-consistency.yml"
 
 
 class WorkflowCostConservationTests(unittest.TestCase):
