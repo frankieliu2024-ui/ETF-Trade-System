@@ -261,12 +261,25 @@ def _validate_formal_risk_precedence(report: dict) -> None:
     mismatches = []
     if dashboard_risk is None or abs(dashboard_risk - formal_risk) > 0.03:
         mismatches.append(f"dashboard={dashboard_risk}")
+    # A missing E2E risk value is a valid degraded state when the
+    # current-date risk reconstruction is unavailable.  It must not be
+    # promoted to a hard consistency failure, while a READY component with
+    # no value remains a contract violation.
+    e2e_component = {}
     try:
-        if e2e_risk is None or abs(float(e2e_risk) - formal_risk) > 0.03:
+        e2e_component = _read_json("data/state/e2e_status.json").get("components", {}).get("risk") or {}
+    except (OSError, json.JSONDecodeError):
+        e2e_component = {}
+    e2e_state = str(e2e_component.get("status") or "").upper()
+    try:
+        if e2e_risk is None:
+            if e2e_state not in {"DEGRADED", "UNAVAILABLE", "MISSING"}:
+                mismatches.append(f"e2e={e2e_risk}")
+        elif abs(float(e2e_risk) - formal_risk) > 0.03:
             mismatches.append(f"e2e={e2e_risk}")
     except (TypeError, ValueError):
         mismatches.append(f"e2e={e2e_risk}")
-    report.setdefault("checks", []).append({"name": "risk:formal_precedence", "status": "FAIL" if mismatches else "PASS", "detail": f"formal={formal_risk:.4f} source={source} " + (" ".join(mismatches) if mismatches else "dashboard/e2e aligned")})
+    report.setdefault("checks", []).append({"name": "risk:formal_precedence", "status": "FAIL" if mismatches else "PASS", "detail": f"formal={formal_risk:.4f} source={source} " + (" ".join(mismatches) if mismatches else f"dashboard/e2e aligned e2e_state={e2e_state or 'UNKNOWN'}")})
     if mismatches:
         message = "risk:formal_precedence:" + ";".join(mismatches)
         if message not in report.setdefault("errors", []):
