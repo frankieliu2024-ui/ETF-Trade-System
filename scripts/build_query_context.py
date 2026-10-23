@@ -796,10 +796,19 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         "rule": "Formal reasoning continues under explicit local limitations. Exact executable/canonical action qualification is owned by formal_action_readiness.",
     }
 
-    held_etf_codes = {str(item.get("code") or "") for item in positions if str(item.get("asset_type") or "").upper() == "ETF"}
+    def _normalize_security_code(value: object) -> str:
+        return str(value or "").upper().replace(".SH", "").replace(".SZ", "").strip()
+
+    held_etf_codes = {
+        _normalize_security_code(item.get("code"))
+        for item in positions
+        if str(item.get("asset_type") or "").upper() == "ETF"
+        and _normalize_security_code(item.get("code"))
+    }
     raw_observations = [
         item for item in (universe.get("objects") or [])
-        if str(item.get("code") or "") and str(item.get("code") or "") not in held_etf_codes
+        if _normalize_security_code(item.get("code"))
+        and _normalize_security_code(item.get("code")) not in held_etf_codes
     ]
     observation_codes = {str(item.get("code") or "") for item in raw_observations}
     observation_thesis = _latest_observation_thesis_state(root, observation_codes)
