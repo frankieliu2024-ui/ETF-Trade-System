@@ -9,14 +9,53 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
+from urllib import request as urllib_request
 
 try:
     from scheduled_review_completion import write_completion_request
-    from task_runtime_identity import derive_runtime_identity
 except ModuleNotFoundError:
     from scripts.scheduled_review_completion import write_completion_request
+
+try:
+    from task_runtime_identity import derive_runtime_identity
+except ModuleNotFoundError:
     from scripts.task_runtime_identity import derive_runtime_identity
+
+
+def _dispatch_notification(completion_path: str) -> dict[str, object]:
+    """Explicitly wake the existing notification workflow for this completion."""
+    token = os.environ.get("GITHUB_TOKEN", "").strip()
+    repository = os.environ.get("GITHUB_REPOSITORY", "").strip()
+    if not token or not repository:
+        return {"submitted": False, "reason": "missing GITHUB_TOKEN or GITHUB_REPOSITORY"}
+
+    owner, separator, repo = repository.partition("/")
+    if not separator or not owner or not repo:
+        return {"submitted": False, "reason": "invalid GITHUB_REPOSITORY"}
+
+    payload = json.dumps({
+        "ref": "main",
+        "inputs": {"formal_completion_path": completion_path},
+    }).encode("utf-8")
+    endpoint = f"https://api.github.com/repos/{owner}/{repo}/actions/workflows/decision-notification.yml/dispatches"
+    req = urllib_request.Request(
+        endpoint,
+        data=payload,
+        method="POST",
+        headers={
+            "Accept": "application/vnd.github+json",
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+            "X-GitHub-Api-Version": "2022-11-28",
+        },
+    )
+    try:
+        with urllib_request.urlopen(req, timeout=30) as response:
+            return {"submitted": response.status == 204, "status": response.status}
+    except Exception as exc:
+        return {"submitted": False, "reason": str(exc)}
 
 
 def main() -> int:
@@ -63,7 +102,14 @@ def main() -> int:
     if not all(checks.values()):
         failed = ", ".join(key for key, ok in checks.items() if not ok)
         raise RuntimeError(f"formal decision completion readback mismatch: {failed}")
-    print(json.dumps({"ok": True, "completion_path": str(target), "readback": checks}, ensure_ascii=False))
+
+    dispatch = _dispatch_notification(str(target))
+    print(json.dumps({
+        "ok": True,
+        "completion_path": str(target),
+        "readback": checks,
+        "notification_dispatch": dispatch,
+    }, ensure_ascii=False))
     return 0
 
 
