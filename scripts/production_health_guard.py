@@ -335,6 +335,23 @@ def main() -> int:
     diagnostic_status = str(workflow_diag.get("classification") or "NONE")
     add_check(rows, "workflow_diagnostic", "ATTENTION" if diagnostic_status not in {"", "NONE", "NO_FAILURE"} else "PASS", f"classification={diagnostic_status}")
 
+    # Global production health and the Formal Decision gate are separate contracts.
+    # A consistency failure can require maintenance without proving that the
+    # current request-bound market/account/risk decision facts are blocked.
+    decision_critical_checks = {
+        "a_share_current",
+        "a_share_runtime",
+        "account_fact",
+    }
+    decision_blocking_rows = [
+        row for row in rows
+        if row.get("name") in decision_critical_checks and row.get("status") == "BLOCKED"
+    ]
+    decision_gate = {
+        "blocked": bool(decision_blocking_rows),
+        "blocking_checks": [row.get("name") for row in decision_blocking_rows],
+        "rule": "Global consistency or maintenance health failure alone does not block a request-bound Formal Decision; only decision-critical current facts do.",
+    }
     overall = "BLOCKED" if any(row["status"] == "BLOCKED" for row in rows) else "ATTENTION" if any(row["status"] == "ATTENTION" for row in rows) else "PASS"
     self_healing_age = age_seconds(now_utc, self_healing.get("checked_at"))
     safe_recovery_action = str(self_healing.get("recommended_action") or "NONE").upper()
@@ -348,6 +365,7 @@ def main() -> int:
         "generated_at_beijing": now_utc.astimezone(BJ).isoformat(timespec="seconds"),
         "status": overall,
         "checks": rows,
+        "formal_decision_gate": decision_gate,
         "notification_center_count": notification_count,
         "safe_recovery_gate": {
             "admitted": safe_recovery_admitted,
