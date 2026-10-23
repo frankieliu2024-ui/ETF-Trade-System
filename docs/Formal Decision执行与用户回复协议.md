@@ -99,7 +99,7 @@
 - `reuse_inflight_refresh=true`
 - `duplicate_equivalent_refresh_forbidden=true`
 
-READY 后，必须先完成业务判断并冻结唯一 `FINAL_CONTENT`，随后在同一运行内完成BDS、统一 `SCHEDULED_REVIEW_COMPLETION` ingress、显式通知dispatch及后续event、REPORT、notification和provider回读。交接成功或明确到达最后失败层级后，才向用户窗口输出此前冻结的同一份完整正文，并附真实交接状态；后置交接不得重新分析、改写或生成第二份正文，失败或超时不得无限等待：
+READY 后，必须先完成业务判断并冻结唯一 `FINAL_CONTENT`。正文冻结后即可输出此前冻结的同一份完整正文；BDS、统一 `SCHEDULED_REVIEW_COMPLETION`、显式通知dispatch及后续event、REPORT、notification和provider属于同一运行的后置交接，不得阻塞、改写或撤回正文。后置交接失败或超时不得无限等待，必须附真实最后完成层级和未完成层级：
 
 1. 使用同一父请求、同一DWP、同一request-bound snapshot和同一`decision_id`，形成 `BUSINESS_DECISION_SOURCE` envelope；
 2. 将BDS写入并回读 `requests/live_snapshot/<parent_request_id>__business_decision_source.json`；
@@ -180,7 +180,7 @@ READY 后，必须先完成业务判断并冻结唯一 `FINAL_CONTENT`，随后�
 
 ## 七、后置交接和通知
 
-FINAL_CONTENT 冻结后，先在同一运行上下文中以原子 BDS+completion 提交并完成显式通知dispatch，继续完成 canonical event、REPORT 和通知，全部复用该正文；交接成功或明确记录最后失败层级后，再向用户输出此前冻结的同一份 `FINAL_CONTENT`。后置交接失败不得改写或生成第二份正文，且不得无限等待：
+FINAL_CONTENT 冻结后，在同一运行上下文中以同一BDS、同一completion和同一正文继续完成显式通知dispatch、canonical event、REPORT和通知；正文可以先行输出，后置交接失败不得改写或生成第二份正文，且不得无限等待，必须记录最后完成层级和未完成层级：
 
 1. BDS与统一 Scheduled Review completion 以同一 Git tree/commit 原子写入并分别回读；
 3. 显式调用既有 `decision-notification` workflow的 `workflow_dispatch(formal_completion_path=...)`；
