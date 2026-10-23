@@ -1,8 +1,9 @@
 """Run the shared Scheduled Review Actor handoff for Formal Decision.
 
-The actor freezes one user-visible investment judgment and delegates persistence
-to the same completion owner used by Trade Review. It does not create a BDS,
-publish an event, send a notification, or execute a trade.
+The actor freezes one user-visible investment judgment, delegates persistence
+to the same completion owner used by Trade Review, and explicitly wakes the
+existing notification workflow after completion readback. It does not create
+a BDS, publish an event, or execute a trade.
 """
 from __future__ import annotations
 
