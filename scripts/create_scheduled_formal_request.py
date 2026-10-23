@@ -4,6 +4,7 @@ import json
 
 import os
 import secrets
+from urllib import request as urllib_request
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
@@ -116,6 +117,42 @@ def build_scheduled_request(
     }
 
 
+def dispatch_market_snapshot(request_path: Path) -> dict[str, object]:
+    """Explicitly start the canonical snapshot producer for this request."""
+    token = os.environ.get("GITHUB_TOKEN", "").strip()
+    repository = os.environ.get("GITHUB_REPOSITORY", "").strip()
+    if not token or not repository:
+        return {"submitted": False, "reason": "missing GITHUB_TOKEN or GITHUB_REPOSITORY"}
+    owner, separator, repo = repository.partition("/")
+    if not separator or not owner or not repo:
+        return {"submitted": False, "reason": "invalid GITHUB_REPOSITORY"}
+    payload = json.dumps({
+        "ref": "main",
+        "inputs": {
+            "node": "scheduled",
+            "probe_only": "false",
+            "formal_context_recovery_request": str(request_path.relative_to(ROOT)),
+        },
+    }).encode("utf-8")
+    endpoint = f"https://api.github.com/repos/{owner}/{repo}/actions/workflows/market-snapshot.yml/dispatches"
+    req = urllib_request.Request(
+        endpoint,
+        data=payload,
+        method="POST",
+        headers={
+            "Accept": "application/vnd.github+json",
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+            "X-GitHub-Api-Version": "2022-11-28",
+        },
+    )
+    try:
+        with urllib_request.urlopen(req, timeout=30) as response:
+            return {"submitted": response.status == 204, "status": response.status}
+    except Exception as exc:
+        return {"submitted": False, "reason": str(exc)}
+
+
 
 def main() -> int:
     mode = os.environ.get("ENTRY_MODE", AUTOMATIC_MODE).strip().upper()
@@ -158,7 +195,18 @@ def main() -> int:
         json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
-    print(f"FORMAL_SCHEDULE_INGRESS=CREATED request_id={payload['request_id']} path={path}")
+    dispatch = dispatch_market_snapshot(path)
+    if not dispatch.get("submitted"):
+        raise SystemExit(
+            "FORMAL_SCHEDULE_INGRESS=SNAPSHOT_DISPATCH_FAILED "
+            + json.dumps(dispatch, ensure_ascii=False)
+        )
+    print(json.dumps({
+        "status": "CREATED",
+        "request_id": payload["request_id"],
+        "path": str(path),
+        "market_snapshot_dispatch": dispatch,
+    }, ensure_ascii=False))
     return 0
 
 
