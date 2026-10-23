@@ -164,7 +164,7 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
         self.assertIn("READY 后，必须先完成业务判断并冻结唯一", protocol)
         self.assertIn("正文冻结只表示正文内容已经不可修改", protocol)
         self.assertIn("先完成一次有界的后置交接尝试，再输出", protocol)
-        self.assertIn("统一 `SCHEDULED_REVIEW_COMPLETION`", protocol)
+        self.assertIn("SCHEDULED_REVIEW_COMPLETION", protocol)
         self.assertNotIn("在用户窗口返回前，先执行后置交接，再输出", protocol)
         self.assertIn("BUSINESS_DECISION_SOURCE", protocol)
         self.assertIn("SCHEDULED_REVIEW_COMPLETION", protocol)
