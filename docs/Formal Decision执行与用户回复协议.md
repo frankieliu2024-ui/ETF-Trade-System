@@ -98,7 +98,7 @@ READY只表示可以开始业务判断，不表示正文、完成记录、事件
 
 ## 五、唯一 FINAL_CONTENT
 
-准入后必须立即锁定本次 request-bound 事实，生成并冻结唯一 FINAL_CONTENT，不得停在“已达到准入状态”。READY 后，必须先完成业务判断并冻结唯一 FINAL_CONTENT，再进入后置交接。正文冻结只表示正文内容已经不可修改。
+准入后必须立即锁定本次 request-bound 事实，生成并冻结唯一 FINAL_CONTENT，不得停在“已达到准入状态”。READY 后，必须先完成业务判断并冻结唯一 FINAL_CONTENT，再进入后置交接。正文冻结只表示正文内容已经不可修改。用户窗口必须先完成一次有界的后置交接尝试，再输出此前冻结的同一份完整正文。
 
 正文首行必须严格为：
 
@@ -142,6 +142,7 @@ Actor不得创建第二请求、第二正文、第二完成记录、第二事件
 - task_id、task_run_id、occurrence_id、request_id；
 - parent_request_id、source、entry_mode、market_date；
 - interaction_scenario、report_type=ETF_FORMAL_DECISION；
+- 统一完成记录的请求类型固定为 `SCHEDULED_REVIEW_COMPLETION`；
 - 完整 FINAL_CONTENT 和 content_hash。
 
 完成记录形成不等于事件、报告、通知或用户收到形成。
