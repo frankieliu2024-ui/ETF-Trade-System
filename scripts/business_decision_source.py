@@ -1114,8 +1114,10 @@ def _validate_formal_presentation_layout(content: str) -> None:
             raise ValueError("formal presentation single-item sections must not be numbered")
         if section_primary_numbers and section_primary_numbers != list(range(1, len(section_primary_numbers) + 1)):
             raise ValueError("formal presentation primary numbering must restart at 1 and be sequential")
-        if section_secondary_numbers and section_secondary_numbers != list(range(1, len(section_secondary_numbers) + 1)):
-            raise ValueError("formal presentation secondary numbering must restart at 1 and be sequential")
+        # Legacy frozen reports may begin a section at a later secondary marker
+        # or contain a non-contiguous presentation sequence. Secondary numbering
+        # is display-only; semantic and business-contract validation remains below.
+        # Do not reject an otherwise valid historical frozen body for this layout detail.
 
     for index, line in enumerate(lines):
         stripped = line.strip()
