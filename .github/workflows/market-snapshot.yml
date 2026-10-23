@@ -768,7 +768,10 @@ jobs:
             FORMAL_REPLAY_DWP_COMMIT="$formal_dwp_commit"
             export FORMAL_REPLAY_SOURCE_COMMIT FORMAL_REPLAY_DWP_COMMIT
           else
-            request_files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json')
+            # Business Decision Source and completion artifacts are downstream
+            # projections. They must not be reclassified as a new market request
+            # or wake the request-bound Formal Decision producer.
+            request_files=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json' | grep -vE '(__business_decision_source|__formal_completion|__scheduled_review_completion)' || true)
           fi
           # Formal Decision completion is not consumed by market-snapshot.
           # Its canonical event is formed only by the explicit completion
@@ -1098,7 +1101,9 @@ jobs:
           REQUEST_FILE="$(printf '%s' "$REQUEST_FILE" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
           if [ -z "$REQUEST_FILE" ] && [ -n "${FORMAL_CONTEXT_RECOVERY_REQUEST:-}" ]; then REQUEST_FILE="$FORMAL_CONTEXT_RECOVERY_REQUEST"; fi
           if [ -z "$REQUEST_FILE" ] && [ -n "${REPLAY_REQUEST:-}" ]; then REQUEST_FILE="$REPLAY_REQUEST"; fi
-          if [ -z "$REQUEST_FILE" ]; then REQUEST_FILE=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json' | head -n 1); fi
+          if [ -z "$REQUEST_FILE" ]; then
+            REQUEST_FILE=$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json' | grep -vE '(__business_decision_source|__formal_completion|__scheduled_review_completion)' | head -n 1 || true)
+          fi
           # Core publish may reset the worktree to execution-time main before
           # this step. Restore the triggering request envelope so the canonical
           # builder can bind request_id/requested_at_beijing. On push requests
