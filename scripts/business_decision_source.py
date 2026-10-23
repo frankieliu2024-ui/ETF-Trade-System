@@ -887,6 +887,12 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
         "position_capital_states": {x["security_code"]: x["capital_use"]["position_capital_states"] for x in position_reviews},
         "capital_destinations": {x["security_code"]: x["capital_use"]["capital_destination"] for x in position_reviews},
     }
+    # Durable BDS is the recovery boundary. Preserve the exact request-bound
+    # work package so a later completion recovery can validate the same
+    # problem graph without depending on mutable shared query_context.
+    projected["decision_work_package"] = json.loads(
+        json.dumps(work_package, ensure_ascii=False)
+    )
     return projected
 
 def _normalize_formal_presentation_layout(value: Any) -> Any:
