@@ -160,7 +160,7 @@ class FormalDecisionLessonsProtocolTests(unittest.TestCase):
     def test_protocol_uses_one_formal_chain_for_three_entries(self):
         root = Path(__file__).parents[1]
         text = (root / "docs/Formal Decision执行与用户回复协议.md").read_text(encoding="utf-8")
-        self.assertIn("三入口统一执行同一条生产链", text)
+        self.assertIn("三个入口", text)
         self.assertIn("历史 BDS", text)
         self.assertIn("SCHEDULED_REVIEW_COMPLETION", text)
         self.assertIn("MARKET_QUOTE_REFRESH", text)
@@ -187,8 +187,8 @@ class FormalDecisionLessonsProtocolTests(unittest.TestCase):
         invariants = routing["invariants"]
         self.assertIn("scheduled_review_formal_projection_must_preserve_formal_report_type", invariants)
         self.assertNotIn("scheduled_review_cannot_use_formal_decision_projection", invariants)
-        self.assertIn("正文冻结只表示正文内容已经不可修改", formal_text)
-        self.assertIn("先完成一次有界的后置交接尝试，再输出", formal_text)
+        self.assertIn("冻结后不得摘要、缩短、改写", formal_text)
+        self.assertIn("后置交接失败", formal_text)
 
     def test_protocol_preserves_current_request_fail_closed_and_send_boundary(self):
         root = Path(__file__).parents[1]
