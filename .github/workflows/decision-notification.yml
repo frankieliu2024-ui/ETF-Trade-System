@@ -71,7 +71,8 @@ permissions:
 # merges against latest main with bounded retries. A global group here serialized
 # unrelated task runs and caused avoidable queue/cancel/retry noise.
 concurrency:
-  group: etf-decision-notification-${{ github.run_id }}
+  # Notification state and reports also publish to main; serialize with all state writers.
+  group: etf-main-state-writer
   cancel-in-progress: false
 
 jobs:
