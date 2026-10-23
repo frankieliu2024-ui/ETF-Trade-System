@@ -349,10 +349,14 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
         self.assertIn("git add -A -- data/state/self_healing_status.json", persist)
         self.assertIn("checked_at and age counters are observations", persist)
         self.assertIn("status_changed=", persist)
-        self.assertIn('if [ "$action" != "NONE" ]; then', persist)
+        # Derived Formal Decision contexts are protected from broad watchdog
+        # writes. Only the two explicit repair actions may stage them.
+        self.assertIn('if [ "$action" = "REBUILD_DERIVED_CONTEXTS" ] || [ "$action" = "SYNC_RULES_VERSION_METADATA" ]; then', persist)
+        self.assertIn('elif [ "$action" = "__REGISTERED_DERIVED_CONTEXT_WRITER_CONTRACT__" ]; then', persist)
+        self.assertNotIn('if [ "$action" != "NONE" ]; then', persist)
         self.assertLess(
             persist.index("git add -A -- data/state/self_healing_status.json"),
-            persist.index('if [ "$action" != "NONE" ]; then'),
+            persist.index('if [ "$action" = "REBUILD_DERIVED_CONTEXTS" ] || [ "$action" = "SYNC_RULES_VERSION_METADATA" ]; then'),
         )
 
     def test_self_healing_persistence_rebuilds_from_latest_main_without_rebase(self):
