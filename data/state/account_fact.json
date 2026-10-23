@@ -1,18 +1,18 @@
 {
   "status": "VALID",
-  "updated_at": "2026-10-22T18:34:15+08:00",
+  "updated_at": "2026-10-23T18:25:00+08:00",
   "source": "CHATGPT_USER_BROKER_SCREENSHOT",
   "fee_fact_updated_at": "2026-10-16T17:34:33+08:00",
   "fee_fact_source": "BROKER_STATEMENT_SCREENSHOT_20261016_173433_USER_CONFIRMED",
   "account_reconciled_at": "2026-10-16T17:34:33+08:00",
   "account_reconciliation_source": "BROKER_HOLDINGS_AND_STATEMENT_SCREENSHOTS_20261016_USER_CONFIRMED",
   "last_confirmed_market_date": "2026-10-21",
-  "total_asset": 170868.97,
-  "stock_market_value": 50672.1,
+  "total_asset": 171186.47,
+  "stock_market_value": 50989.6,
   "cash": 120196.87,
   "holding_pnl": 644.4,
-  "daily_pnl": 159.2,
-  "daily_pnl_pct": 0.09,
+  "daily_pnl": 317.5,
+  "daily_pnl_pct": 0.19,
   "orders": [],
   "trades": [
     {
@@ -42,25 +42,31 @@
       "name": "纳指ETF",
       "code": "159941",
       "quantity": 12200,
-      "market_value": 20520.4,
+      "market_value": 20349.6,
       "cost_price": 1.626,
-      "current_price": 1.682
+      "current_price": 1.668,
+      "holding_pnl": 513.0,
+      "holding_pnl_pct": 2.586
     },
     {
       "name": "能源化工",
       "code": "159981",
       "quantity": 8500,
-      "market_value": 15546.5,
+      "market_value": 15708.0,
       "cost_price": 1.744,
-      "current_price": 1.829
+      "current_price": 1.848,
+      "holding_pnl": 887.4,
+      "holding_pnl_pct": 5.988
     },
     {
       "name": "创新药",
       "code": "159992",
       "quantity": 17200,
-      "market_value": 13605.2,
+      "market_value": 13932.0,
       "cost_price": 0.868,
-      "current_price": 0.791
+      "current_price": 0.81,
+      "holding_pnl": -994.8,
+      "holding_pnl_pct": -6.665
     }
   ],
   "validity_mode": "EVENT_DRIVEN_CARRY_FORWARD",
@@ -1755,6 +1761,20 @@
       "reconciliation_status": "UNRECONCILED_ACCOUNT_CHANGE",
       "source": "CHATGPT_USER_BROKER_SCREENSHOT",
       "read_only": true
+    },
+    {
+      "event_id": "account_change_eef4a7592606563f320a",
+      "idempotency_key": "account_change_eef4a7592606563f320a",
+      "event_type": "BROKER_SCREENSHOT_CHANGE",
+      "event_time": "2026-10-23T18:25:00+08:00",
+      "object": "total_asset",
+      "change_summary": "total_asset变化 +317.50",
+      "amount_before": 170868.97,
+      "amount_after": 171186.47,
+      "amount_delta": 317.5,
+      "reconciliation_status": "UNRECONCILED_ACCOUNT_CHANGE",
+      "source": "CHATGPT_USER_BROKER_SCREENSHOT",
+      "read_only": true
     }
   ],
   "settlement_obligations": [
@@ -1796,12 +1816,12 @@
   "settlement_constraint_status": "NONE",
   "account_fact_derivation_note": "Positions/prices/PnL are directly visible in the user-provided post-trade broker screenshot. Cash is derived from prior broker-confirmed cash 11197.47 minus confirmed execution amount 4953.00 and 5.00 fee implied by broker position cost/PnL, yielding 6239.47; total asset is displayed market value 174405.50 plus derived cash. This derived cash must be replaced by a later broker-displayed cash fact if one is provided.",
   "broker_displayed_at_beijing": "2026-10-20T17:09:00+08:00",
-  "total_assets": 170868.97,
+  "total_assets": 171186.47,
   "total_market_value": 174802.5,
   "available_cash": 120196.87,
   "day_pnl": -4203.7,
   "day_pnl_pct": -2.19,
-  "floating_pnl": -29361.76,
+  "floating_pnl": 405.6,
   "exposure_pct": 29.4,
   "carry_forward_reason": "User-provided 2026-09-15 16:18 broker screenshot reflects the 2026-09-15 15:00 close; no account-changing trade was reported and position quantities are unchanged.",
   "no_new_trade_observed": true,
@@ -1813,11 +1833,13 @@
   "account_name": "中国银河证券",
   "account_suffix": "1636",
   "currency": "CNY",
-  "securities_market_value": 50672.1,
+  "securities_market_value": 50989.6,
   "unconfirmed_visible_items": [
     {
       "name": "华纬发债",
-      "reason": "截图未显示证券代码，未纳入已确认证券身份"
+      "quantity": 10,
+      "market_value": 1000.0,
+      "reason": "截图显示名称、数量和市值，但当前截图未显示证券代码；不擅自确认证券身份或并入正式ETF持仓"
     }
   ]
 }
