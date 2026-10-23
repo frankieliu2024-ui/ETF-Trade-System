@@ -128,6 +128,7 @@ FINAL_CONTENT冻结后，必须调用 current main 登记的 ETF 正式决策 Ac
 → 合法准入
 → 唯一 FINAL_CONTENT
 → ETF正式决策 Actor
+→ 唯一业务决策源（BUSINESS_DECISION_SOURCE）
 → current main 统一完成记录生产者
 → 正式事件
 → 正式报告
