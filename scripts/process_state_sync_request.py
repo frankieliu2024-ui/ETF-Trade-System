@@ -3994,6 +3994,15 @@ def main() -> int:
             if not isinstance(decision_response, dict):
                 raise ValueError("business decision source requires actor-only structured decision_response")
             source_payload = project_decision_response(source_payload, decision_response, decision_work_package, forensic_historical_replay=forensic_historical_replay)
+            # The canonical projection contains the derived business fields, but
+            # the exact request-bound work package is also part of the durable
+            # handoff contract. Preserve it explicitly so the completion builder
+            # can validate the same problem graph without consulting shared state
+            # or reconstructing the package from a stale query context.
+            source_payload["decision_work_package"] = json.loads(json.dumps(decision_work_package))
+            source_payload["problem_graph"] = json.loads(json.dumps(
+                decision_work_package.get("problem_graph") or []
+            ))
             # The projection builder returns a canonical source object, but
             # ingress identity belongs to the immutable request envelope. Keep
             # that identity bound across the same-run projection boundary;
