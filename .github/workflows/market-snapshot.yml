@@ -132,7 +132,7 @@ jobs:
           git commit -m "chore: create scheduled formal decision ingress"
           git push
       - name: Reject ambiguous recovery inputs
-        if: \${{ github.event_name == 'workflow_dispatch' }}
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         shell: bash
         run: |
           # Use the already-bound job-level environment values. Re-evaluating
@@ -1295,7 +1295,30 @@ jobs:
           # A formal request is not complete unless the request-bound query
           # context is materially present before downstream persistence.
           if [ -n "$REQUEST_FILE" ] && [ -f "$REQUEST_FILE" ]; then
-            python - "$REQUEST_FILE" <<'PY'
+            REQUEST_IS_FORMAL=$(python - "$REQUEST_FILE" <<'PY'
+          import json, sys
+          from pathlib import Path
+          request = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          intent = request.get("intent")
+          query_intent = (
+              intent.get("query_intent") if isinstance(intent, dict)
+              else request.get("query_intent") or intent
+          )
+          formal_sources = {
+              "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+              "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
+              "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
+          }
+          is_formal = (
+              str(request.get("request_type") or "").upper() == "MARKET_QUOTE_REFRESH"
+              and str(request.get("source") or "").upper() in formal_sources
+              and str(query_intent or "").upper() == "FORMAL_INTRADAY_ANALYSIS"
+          )
+          print("true" if is_formal else "false")
+          PY
+            )
+            if [ "$REQUEST_IS_FORMAL" = "true" ]; then
+              python - "$REQUEST_FILE" <<'PY'
           import json, sys
           from pathlib import Path
           request = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
@@ -1318,6 +1341,9 @@ jobs:
           if any(not expected[key] or actual[key] != expected[key] for key in expected):
               raise SystemExit(f"request-bound query context identity mismatch: expected={expected} actual={actual}")
           PY
+            else
+              echo "Non-formal request; skip Formal Decision identity validator."
+            fi
           fi
 
       - name: Refresh close-derived research and risk evidence
