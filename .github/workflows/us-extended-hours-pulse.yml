@@ -32,7 +32,8 @@ permissions:
   contents: write
 
 concurrency:
-  group: etf-us-extended-hours-pulse
+  # Serialize main state publication with consistency, watchdog and snapshot writers.
+  group: etf-main-state-writer
   cancel-in-progress: false
 
 jobs:
