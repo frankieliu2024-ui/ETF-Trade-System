@@ -151,7 +151,7 @@ Actor不得创建第二请求、第二正文、第二完成记录、第二事件
 
 完成记录成功写入并回读后，必须沿 current main 既有正式决策生产路径继续处理。
 
-每层必须绑定本次父请求、occurrence_id、decision_id、正文和正文指纹，并分别回读：
+每层必须绑定本次父请求、occurrence_id、decision_id、正文和正文指纹，并分别回读。正式事件按本次 occurrence_id 写入 `events/reviews/formal_<occurrence_id>.json`，再回读：
 
 - 完成记录；
 - 正式事件；
