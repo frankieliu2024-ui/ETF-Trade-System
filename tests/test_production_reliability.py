@@ -568,7 +568,7 @@ class NotificationDecisionIdentityTests(unittest.TestCase):
 
 
     def test_system_consistency_acceptance_uses_artifact_evidence_without_main_publication(self):
-        workflow = (Path(__file__).resolve().parents[1] / ".github/workflows/etf-system-consistency.yml").read_text(encoding="utf-8")
+        workflow = (Path(__file__).resolve().parents[1] / ".github/workflows/system-consistency.yml").read_text(encoding="utf-8")
         self.assertIn("- name: Run full system consistency check", workflow)
         self.assertIn("actions/upload-artifact@v4", workflow)
         self.assertIn("system-consistency-", workflow)
@@ -580,7 +580,7 @@ class NotificationDecisionIdentityTests(unittest.TestCase):
 
 class PrAcceptancePathCoverageTests(unittest.TestCase):
     def test_failure_guard_workflow_changes_trigger_pr_acceptance(self):
-        workflow = (Path(__file__).resolve().parents[1] / ".github/workflows/etf-system-consistency.yml").read_text(encoding="utf-8")
+        workflow = (Path(__file__).resolve().parents[1] / ".github/workflows/system-consistency.yml").read_text(encoding="utf-8")
         pull_request_block = workflow
         self.assertIn('".github/workflows/**"', workflow)
 
