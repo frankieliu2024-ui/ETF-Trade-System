@@ -328,9 +328,37 @@ def report_delivery_event() -> dict | None:
         return None
     canonical = canonical_scheduled_report_events(review_event_path or None)
     if review_event_path:
-        # An invalid or ambiguous exact binding is fail-closed and must not
-        # fall through to compatibility report/handoff scanning.
-        return canonical[0] if len(canonical) == 1 else None
+        # Prefer the exact canonical event. If the event was persisted but its
+        # projection is not yet visible to the notifier, resolve only the
+        # report request referenced by that same event; never scan history.
+        if len(canonical) == 1:
+            return canonical[0]
+        candidate = Path(review_event_path)
+        candidate = candidate if candidate.is_absolute() else ROOT / candidate
+        event = read_json(candidate, {})
+        binding = event.get("presentation_binding") or {}
+        report_id = str(binding.get("report_id") or event.get("report_id") or "").strip()
+        if report_id:
+            report_path = REPORT_REQUEST_DIR / f"{report_id.replace(':', '__')}.json"
+            request = read_json(report_path, {})
+            valid, _ = validate_report_delivery_request(request)
+            if valid:
+                key = str(request["idempotency_key"])
+                return {"key": f"report-delivery:{key}", "source_event_id": f"report-delivery:{key}",
+                        "event_type": "REPORT_DELIVERY_REQUEST", "notification_channel": "REPORT",
+                        "delivery_mode": "FULL_REPORT", "type": "正式报告",
+                        "title": str(request["title"]), "content": str(request["full_content"]),
+                        "source": str(request["source_reference"]),
+                        "user_severity": "正式报告",
+                        "user_action": "阅读已完成的正式ETF报告；无需交易操作",
+                        "report_type": str(request["report_type"]),
+                        "report_id": str(request["report_id"]),
+                        "request_id": str(request["request_id"]),
+                        "task_id": str(request["task_id"]),
+                        "task_run_id": str(request["task_run_id"]),
+                        "idempotency_key": key, "no_trade_authority": True,
+                        "content_hash": hashlib.sha256(str(request["full_content"]).encode("utf-8")).hexdigest()}
+        return None
     if canonical:
         return canonical[-1]
     handoff_path = _report_handoff_path()
