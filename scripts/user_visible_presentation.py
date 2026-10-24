@@ -161,7 +161,7 @@ def _single_item_numbering_errors(text: str) -> list[str]:
 
 
 def _formal_object_numbering_errors(text: str) -> list[str]:
-    """Keep Formal Decision object lists aligned with the review contract."""
+    """Require per-object coverage and section-local Chinese numbering for Formal Decision."""
     target_headings = {
         "【全市场发现逐只评估】",
         "【观察ETF逐只评估】",
@@ -175,16 +175,38 @@ def _formal_object_numbering_errors(text: str) -> list[str]:
         stripped = line.strip()
         if stripped.startswith("【") and stripped.endswith("】"):
             if current in target_headings:
-                if any(re.match(r"^\d+\.\d+\s+", item) for item in entries):
-                    errors.append(f"object section must use review numbering 1. and 1）, not decimal numbering: {current}")
-                if any(re.match(r"^\d+\.\s+", item) for item in entries):
+                numbered = [item for item in entries if re.match(r"^\d+）(?:\s+)?\S", item)]
+                bad_primary = [item for item in entries if re.match(r"^\d+\.\s+", item)]
+                bad_decimal = [item for item in entries if re.match(r"^\d+\.\d+\s+", item)]
+                if bad_decimal:
+                    errors.append(f"object section must not use decimal numbering: {current}")
+                if bad_primary:
                     errors.append(f"object list must use secondary numbering 1）、2）、3）：{current}")
+                if entries and not numbered:
+                    errors.append(f"object section requires one separately numbered paragraph per object: {current}")
+                if numbered:
+                    nums = [int(re.match(r"^(\d+)）", item).group(1)) for item in numbered]
+                    if nums != list(range(1, len(nums) + 1)):
+                        errors.append(f"object numbering must restart at 1 and be sequential: {current}")
             current = stripped
             entries = []
             continue
         if current in target_headings and stripped:
             entries.append(stripped)
     return errors
+
+
+def _formal_required_sections_errors(text: str) -> list[str]:
+    if not text.startswith("【ETF正式决策】"):
+        return []
+    required = (
+        "【判断时点与事实边界】", "【当前正式判断】", "【风险与市场状态】",
+        "【三层监测】", "【全市场发现逐只评估】", "【观察ETF逐只评估】",
+        "【机会ETF逐只评估】", "【全市场机会与资本竞争】", "【现金管理】",
+        "【全部实际持仓】", "【最终管理动作】", "【关键风险与改变判断的条件】",
+        "【信息不足在哪里】", "【执行边界】", "【置信度】", "【最可能出错的地方】",
+    )
+    return [f"Formal Decision missing required section: {heading}" for heading in required if heading not in text]
 
 
 def _time_presentation_errors(text: str) -> list[str]:
@@ -227,6 +249,7 @@ def validate_user_visible_content(
     errors.extend(_presentation_structure_errors(text))
     errors.extend(_single_item_numbering_errors(text))
     errors.extend(_formal_object_numbering_errors(text))
+    errors.extend(_formal_required_sections_errors(text))
     errors.extend(_time_presentation_errors(text))
     if not technical_audit_mode:
         for term in _internal_presentation_terms(text):
