@@ -62,7 +62,9 @@ def load_json(path: Path, default: Any) -> Any:
 
 def save_json(path: Path, value: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    tmp.replace(path)
 
 
 def normalize_input(value: str) -> tuple[str, str, str, str]:
@@ -236,7 +238,25 @@ def system_quote(root: Path, obj: dict, now: datetime, force_refresh: bool) -> d
 
 def write_query_context(root: Path, result: dict) -> None:
     path = root / "data/state/query_context.json"
-    context = load_json(path, {})
+
+    # This auxiliary single-object query must never destroy a canonical
+    # request-bound context. A transient empty/invalid read is not permission
+    # to replace the producer's multi-megabyte state with a partial object.
+    if path.exists():
+        try:
+            raw = path.read_text(encoding="utf-8")
+            if raw.strip():
+                context = json.loads(raw)
+                if not isinstance(context, dict):
+                    return
+            else:
+                return
+        except (OSError, json.JSONDecodeError):
+            return
+    else:
+        context = {}
+
+    # Preserve request-bound decision facts and all producer-owned fields.
     context["system_objects"] = context.get("system_objects", [])
     context["user_requested_objects"] = [result]
     context["last_market_query"] = {
