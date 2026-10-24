@@ -180,6 +180,35 @@ def build_gate(now: datetime | None = None, request_file: str | Path | None = No
         and finished >= requested
         and not ready
     )
+    # A formal gate may not become READY from CURRENT alone. The canonical
+    # request-bound query context must already exist and contain the same
+    # request identity plus a consumable decision work package.
+    formal_request = (
+        str(req.get("request_type") or "").upper() == "MARKET_QUOTE_REFRESH"
+        and str(req.get("source") or "").upper() in {
+            "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+            "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
+            "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
+        }
+    )
+    query_context_ready = True
+    if formal_request:
+        query_context_ready = False
+        try:
+            if QUERY_CONTEXT.is_file() and QUERY_CONTEXT.stat().st_size > 0:
+                query = load_json(QUERY_CONTEXT)
+                pack = query.get("decision_fact_pack") or {}
+                trigger = pack.get("trigger") or {}
+                query_context_ready = (
+                    str(trigger.get("request_id") or "").strip()
+                    == str(req.get("request_id") or "").strip()
+                    and isinstance(pack.get("decision_work_package"), dict)
+                    and bool(pack.get("decision_work_package", {}).get("problem_graph"))
+                )
+        except (OSError, json.JSONDecodeError):
+            query_context_ready = False
+        if not query_context_ready:
+            ready = False
     status = "READY" if ready else ("FAILED" if terminal_unavailable_after_request else "PENDING")
     explicit_latest = _query_intent(req) == _explicit_latest_intent()
     allow_fallback = req.get("allow_wait_refresh_fallback") is True and not explicit_latest
@@ -206,10 +235,15 @@ def build_gate(now: datetime | None = None, request_file: str | Path | None = No
         "request_result": request_result,
         "request_result_terminal": request_result_terminal,
         "request_result_reason": (
-            "closed_session_canonical_reference_ready"
-            if closed_reference_ready
-            else ("post_request_snapshot_ready" if ready else (health.get("reason", "") if terminal_unavailable_after_request else "awaiting_post_request_snapshot"))
+            "formal_query_context_not_published"
+            if formal_request and not query_context_ready
+            else (
+                "closed_session_canonical_reference_ready"
+                if closed_reference_ready
+                else ("post_request_snapshot_ready" if ready else (health.get("reason", "") if terminal_unavailable_after_request else "awaiting_post_request_snapshot"))
+            )
         ),
+        "formal_query_context_ready": bool(query_context_ready),
         # Compatibility: this legacy field means that analysis which depends on
         # the requested fresh/current PIT may proceed. It is not a blanket ban
         # on clearly-labelled degraded reasoning from other still-legal facts.
