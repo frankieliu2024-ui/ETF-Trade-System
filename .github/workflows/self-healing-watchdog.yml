@@ -318,15 +318,53 @@ jobs:
           PY
             )"
 
+            # A live Formal Decision parent owns the request-bound query
+            # context until its same-request handoff is complete. Watchdog
+            # maintenance must not rebuild global context and overwrite that
+            # large handoff with an empty/unbound projection.
+            formal_handoff_active="$(python - <<'PY'
+          import json
+          from pathlib import Path
+          formal_sources = {
+              "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+              "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
+              "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
+          }
+          query = {}
+          query_path = Path("data/state/query_context.json")
+          if query_path.exists() and query_path.stat().st_size:
+              try:
+                  query = json.loads(query_path.read_text(encoding="utf-8"))
+              except Exception:
+                  query = {}
+          bound = str((((query.get("decision_fact_pack") or {}).get("trigger") or {}).get("request_id")) or "").strip()
+          active = False
+          for path in sorted(Path("requests/live_snapshot").glob("*.json")):
+              try:
+                  request = json.loads(path.read_text(encoding="utf-8"))
+              except Exception:
+                  continue
+              source = str(request.get("source") or "").upper()
+              request_type = str(request.get("request_type") or "").upper()
+              request_id = str(request.get("request_id") or "").strip()
+              if request_type == "MARKET_QUOTE_REFRESH" and source in formal_sources and request_id and request_id != bound:
+                  active = True
+          print("true" if active else "false")
+          PY
+            )"
             if [ "$action" = "REBUILD_DERIVED_CONTEXTS" ]; then
               python scripts/build_state_context.py
-              python scripts/build_query_context.py
+              if [ "$formal_handoff_active" != "true" ]; then
+                python scripts/build_query_context.py
+              fi
               python scripts/build_post_market_review.py
               python scripts/runtime_self_heal.py --assess
             elif [ "$action" = "SYNC_RULES_VERSION_METADATA" ]; then
               python scripts/runtime_self_heal.py --repair-safe
               python scripts/build_state_context.py
-              python scripts/build_query_context.py
+              if [ "$formal_handoff_active" != "true" ]; then
+                python scripts/build_query_context.py
+              fi
               python scripts/build_post_market_review.py
               python scripts/runtime_self_heal.py --assess
             fi
@@ -369,7 +407,10 @@ jobs:
             # persist these files, and those actions are not selected while an
             # unfinished Formal parent is present.
             if [ "$action" = "REBUILD_DERIVED_CONTEXTS" ] || [ "$action" = "SYNC_RULES_VERSION_METADATA" ]; then
-              git add -A -- data/state/CURRENT.json data/state/query_context.json data/state/decision_context.json data/state/review_context.json data/state/intraday_path_features.json data/state/decision_trigger.json data/state/capital_efficiency_ranking.json post_market_review/post_market_review_event.json
+              git add -A -- data/state/CURRENT.json data/state/decision_context.json data/state/review_context.json data/state/intraday_path_features.json data/state/decision_trigger.json data/state/capital_efficiency_ranking.json post_market_review/post_market_review_event.json
+              if [ "$formal_handoff_active" != "true" ]; then
+                git add -A -- data/state/query_context.json
+              fi
             elif [ "$action" = "__REGISTERED_DERIVED_CONTEXT_WRITER_CONTRACT__" ]; then
               # Static production-contract marker; unreachable by runtime policy.
               git add -A -- data/state/CURRENT.json data/state/query_context.json data/state/decision_context.json data/state/review_context.json data/state/intraday_path_features.json data/state/decision_trigger.json data/state/capital_efficiency_ranking.json post_market_review/post_market_review_event.json
