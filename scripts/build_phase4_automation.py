@@ -120,7 +120,19 @@ def _latest_formal_request() -> dict:
         requested_at = str(item.get("requested_at_beijing") or item.get("request_time_beijing") or "").strip()
         if request_id and requested_at:
             candidates.append((requested_at, request_id, item))
-    return max(candidates, key=lambda row: row[0])[2] if candidates else {}
+    if not candidates:
+        return {}
+    latest = max(candidates, key=lambda row: row[0])[2]
+    query = _read(STATE / "query_context.json", {})
+    trigger = ((query.get("decision_fact_pack") or {}).get("trigger") or {}) if isinstance(query, dict) else {}
+    # A request may trigger Formal Decision only after the canonical producer
+    # has bound the same request into query_context. This prevents an unrelated
+    # scheduled rebuild from consuming a merely written ingress envelope.
+    if str(trigger.get("request_id") or "").strip() != str(latest.get("request_id") or "").strip():
+        return {}
+    if str(trigger.get("requested_at_beijing") or "").strip() != str(latest.get("requested_at_beijing") or latest.get("request_time_beijing") or "").strip():
+        return {}
+    return latest
 
 
 def _latest_trade_is_recent(account: dict, max_age_minutes: int = 45) -> bool:
