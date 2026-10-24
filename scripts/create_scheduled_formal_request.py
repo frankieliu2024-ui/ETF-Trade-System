@@ -118,6 +118,62 @@ def build_scheduled_request(
     }
 
 
+\ndef persist_request_to_main(path: Path, payload: dict) -> dict[str, object]:
+    """Persist the request on current main and prove the exact path is readable."""
+    token = (os.environ.get("GITHUB_TOKEN", "").strip()
+             or os.environ.get("GH_TOKEN", "").strip())
+    repository = (os.environ.get("GITHUB_REPOSITORY", "").strip()
+                  or os.environ.get("ETF_TRADE_SYSTEM_REPOSITORY", "").strip()
+                  or "frankieliu2024-ui/ETF-Trade-System")
+    relative = str(path.relative_to(ROOT))
+    if not token:
+        return {"written": False, "reason": "missing GitHub Contents token", "path": relative}
+    owner, separator, repo = repository.partition("/")
+    if not separator or not owner or not repo:
+        return {"written": False, "reason": "invalid repository", "path": relative}
+    base = f"https://api.github.com/repos/{owner}/{repo}"
+    endpoint = f"{base}/contents/{relative}"
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+    body = json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
+    encoded = __import__("base64").b64encode(body.encode("utf-8")).decode("ascii")
+    request_body = json.dumps({
+        "message": f"ETF formal decision request: {payload['request_id']}",
+        "content": encoded,
+        "branch": "main",
+    }).encode("utf-8")
+    try:
+        req = urllib_request.Request(endpoint, data=request_body, method="PUT", headers=headers)
+        with urllib_request.urlopen(req, timeout=30) as response:
+            result = json.loads(response.read().decode("utf-8"))
+        commit_sha = str((result.get("commit") or {}).get("sha") or "")
+        blob_sha = str((result.get("content") or {}).get("sha") or "")
+        if not commit_sha or not blob_sha:
+            return {"written": False, "reason": "Contents write returned no commit/blob SHA", "path": relative}
+        read_req = urllib_request.Request(endpoint + "?ref=main", method="GET", headers=headers)
+        with urllib_request.urlopen(read_req, timeout=30) as response:
+            readback = json.loads(response.read().decode("utf-8"))
+        read_content = __import__("base64").b64decode(
+            str(readback.get("content") or "").replace("\n", "")
+        ).decode("utf-8")
+        expected = json.loads(body)
+        actual = json.loads(read_content)
+        identity_keys = (
+            "request_id", "task_id", "task_run_id", "occurrence_id",
+            "market_date", "requested_at_beijing", "source", "entry_mode",
+        )
+        if any(actual.get(key) != expected.get(key) for key in identity_keys):
+            return {"written": False, "reason": "same-path current-main readback identity mismatch",
+                    "path": relative, "commit_sha": commit_sha, "blob_sha": blob_sha}
+        return {"written": True, "path": relative, "commit_sha": commit_sha,
+                "blob_sha": blob_sha, "read_back": True}
+    except Exception as exc:
+        return {"written": False, "reason": str(exc), "path": relative}
+
 def dispatch_market_snapshot(request_path: Path) -> dict[str, object]:
     """Dispatch the canonical snapshot producer and read back its run identity."""
     token = (os.environ.get("GITHUB_TOKEN", "").strip()
@@ -247,10 +303,12 @@ def main() -> int:
         entry_mode=mode,
     )
     path = REQUEST_DIR / f"{payload['request_id']}.json"
-    path.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    persisted = persist_request_to_main(path, payload)
+    if not persisted.get("written"):
+        raise SystemExit(
+            "FORMAL_SCHEDULE_INGRESS=REQUEST_PERSIST_FAILED "
+            + json.dumps(persisted, ensure_ascii=False)
+        )
     dispatch = dispatch_market_snapshot(path)
     if not dispatch.get("submitted"):
         raise SystemExit(
@@ -261,6 +319,7 @@ def main() -> int:
         "status": "CREATED",
         "request_id": payload["request_id"],
         "path": str(path),
+        "request_persistence": persisted,
         "market_snapshot_dispatch": dispatch,
     }, ensure_ascii=False))
     return 0
