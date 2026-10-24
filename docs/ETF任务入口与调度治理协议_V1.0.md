@@ -134,7 +134,7 @@ ETF交易复盘 → CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR → formal_review → `
 - presentation_binding.report_type=ETF_TRADE_REVIEW；
 - 本次task_id、task_run_id、occurrence_id、request_id、report_id及完整full_content。
 
-Actor在目标时段核心事实足以形成合法复盘后，必须先生成并冻结本次唯一FINAL_CONTENT；随后使用同一份冻结正文提交并回读唯一completion。completion写入或回读失败，不得阻止已经冻结的FINAL_CONTENT向用户输出；必须在正文之后如实标明完成记录、事件、报告、通知和服务商投递的实际完成层级，并沿同一请求继续恢复。completion失败时不得重新分析、改写正文、创建第二正文、第二completion或第二请求。provider、REPORT和notification仍属于completion之后的后置投影，必须继续沿同一正文和同一运行身份处理。该顺序只修正ETF交易复盘的正文与交接时序，不改变ETF系统复核、ETF正式决策或共享通知owner的业务合同。
+completion写入或回读未完成时，Actor不得输出完整用户正文，也不得用“正文已生成、completion未执行”作为本次运行的正常终态；只能继续当前运行，或在真实终止边界后登记失败。provider、REPORT和notification属于completion之后的后置投影，不得生成第二正文、第二completion或第二请求。该硬门只适用于ETF交易复盘，不改变ETF系统复核、ETF正式决策或共享通知owner的业务合同。
 
 生产写入统一使用SCHEDULED_TRADE_REVIEW；POST_CLOSE_REVIEW、MIDDAY_REVIEW、WEEKLY_REVIEW仅允许canonical owner历史兼容读取，不得由当前Trade Review Actor写出。
 
