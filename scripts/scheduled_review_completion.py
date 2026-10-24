@@ -209,6 +209,28 @@ def build_trade_review_completion_request(
 
 
 
+def validate_formal_decision_fact_binding(formal_review: dict, request_id: str) -> None:
+    """Fail closed unless the frozen decision names the completed same-request fact chain."""
+    binding = formal_review.get("fact_binding")
+    if not isinstance(binding, dict):
+        binding = formal_review.get("request_binding")
+    if not isinstance(binding, dict):
+        raise ValueError("formal decision requires a same-request fact_binding before completion")
+    expected = str(request_id or "").strip()
+    checks = {
+        "request_id": str(binding.get("request_id") or "").strip() == expected,
+        "market_snapshot_status": str(binding.get("market_snapshot_status") or "").upper() in {"CONSUMED", "COMPLETE", "READY"},
+        "fact_chain_status": str(binding.get("fact_chain_status") or "").upper() in {"COMPLETE", "READY"},
+        "query_context_status": str(binding.get("query_context_status") or "").upper() in {"BOUND", "COMPLETE", "READY"},
+        "decision_context_status": str(binding.get("decision_context_status") or "").upper() in {"BOUND", "COMPLETE", "READY"},
+        "objects_status": str(binding.get("objects_status") or "").upper() in {"BOUND", "COMPLETE", "READY"},
+        "gate_status": str(binding.get("gate_status") or "").upper() in {"READY", "REPLY_FREEZABLE"},
+    }
+    failed = [key for key, ok in checks.items() if not ok]
+    if failed:
+        raise ValueError("formal decision same-request fact chain is not complete: " + ", ".join(failed))
+
+
 def build_formal_review_completion_request(
     formal_review: dict,
     request_id: str,
@@ -234,6 +256,7 @@ def build_formal_review_completion_request(
     if not isinstance(formal_review, dict) or not formal_review:
         raise ValueError("formal review payload is required")
     validate_full_day_review(formal_review, account)
+    validate_formal_decision_fact_binding(formal_review, request_id)
     validate_user_visible_content(str(final_content or ""), canonical_closure_confirmed=False)
     effective_entry_mode = str(entry_mode or "").strip().upper()
     if effective_entry_mode not in {"MANUAL_CONVERSATION", "MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"}:
