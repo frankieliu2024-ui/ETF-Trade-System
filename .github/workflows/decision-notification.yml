@@ -372,8 +372,28 @@ jobs:
           COMPLETION_PATH: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path || steps.push_kind.outputs.scheduled_review_completion_path }}
         run: |
           set -euo pipefail
-          test -f "$COMPLETION_PATH"
-          result=$(python scripts/process_state_sync_request.py "$COMPLETION_PATH")
+          # Normalize canonical paths and legacy basenames before reading.
+          completion_path="$COMPLETION_PATH"
+          case "$completion_path" in
+            requests/live_snapshot/*)
+              ;;
+            /*)
+              completion_path="requests/live_snapshot/${completion_path##*/}"
+              ;;
+            *)
+              completion_path="requests/live_snapshot/$completion_path"
+              ;;
+          esac
+          case "$completion_path" in
+            requests/live_snapshot/*__scheduled_review_completion.json|requests/live_snapshot/scheduled_review_completion_*.json)
+              ;;
+            *)
+              echo "Scheduled Review completion path is outside the allowed completion namespace: $completion_path" >&2
+              exit 1
+              ;;
+          esac
+          test -f "$completion_path"
+          result=$(python scripts/process_state_sync_request.py "$completion_path")
           echo "$result"
           event_path=$(python -c 'import json,sys; print(json.loads(sys.argv[1]).get("canonical_publication",""))' "$result")
           case "$event_path" in
