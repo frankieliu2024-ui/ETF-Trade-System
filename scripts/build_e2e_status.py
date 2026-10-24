@@ -372,6 +372,28 @@ def context_component(query: dict, decision: dict) -> dict:
     """Expose current-product usability while preserving diagnostic observability."""
     query_ok = bool(query)
     decision_ok = bool(decision)
+    # A non-empty decision context or projected gate cannot substitute for
+    # the canonical request-bound query context. Fail closed if the handoff
+    # is empty or lacks a consumable fact pack.
+    query_pack = query.get("decision_fact_pack") if isinstance(query, dict) else None
+    query_trigger = query_pack.get("trigger") if isinstance(query_pack, dict) else None
+    query_has_request_facts = bool(
+        isinstance(query_pack, dict)
+        and isinstance(query_trigger, dict)
+        and str(query_trigger.get("request_id") or "").strip()
+        and isinstance(query_pack.get("decision_work_package"), dict)
+        and bool(query_pack.get("decision_work_package", {}).get("problem_graph"))
+    )
+    if query_ok and not query_has_request_facts:
+        query_ok = False
+    if not query_ok:
+        return {
+            "status": "BLOCKED",
+            "reason": "canonical request-bound query context is empty, invalid, or missing a consumable fact pack",
+            "query_context": False,
+            "decision_context": decision_ok,
+            "formal_reply_gate": None,
+        }
     if not query_ok and not decision_ok:
         return {
             "status": "BLOCKED",
