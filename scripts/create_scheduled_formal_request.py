@@ -120,10 +120,18 @@ def build_scheduled_request(
 
 def dispatch_market_snapshot(request_path: Path) -> dict[str, object]:
     """Dispatch the canonical snapshot producer and read back its run identity."""
-    token = os.environ.get("GITHUB_TOKEN", "").strip()
-    repository = os.environ.get("GITHUB_REPOSITORY", "").strip()
-    if not token or not repository:
-        return {"submitted": False, "reason": "missing GITHUB_TOKEN or GITHUB_REPOSITORY"}
+    token = (os.environ.get("GITHUB_TOKEN", "").strip()
+             or os.environ.get("GH_TOKEN", "").strip())
+    repository = (os.environ.get("GITHUB_REPOSITORY", "").strip()
+                  or os.environ.get("ETF_TRADE_SYSTEM_REPOSITORY", "").strip()
+                  or "frankieliu2024-ui/ETF-Trade-System")
+    if not token:
+        return {
+            "submitted": False,
+            "reason": "missing GitHub Actions token (GITHUB_TOKEN or GH_TOKEN)",
+            "repository": repository,
+            "request_path": str(request_path.relative_to(ROOT)),
+        }
     owner, separator, repo = repository.partition("/")
     if not separator or not owner or not repo:
         return {"submitted": False, "reason": "invalid GITHUB_REPOSITORY"}
