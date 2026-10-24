@@ -18,7 +18,7 @@ class TaskEntrySchedulingGovernanceTests(unittest.TestCase):
         trade = data["tasks"][1]
         self.assertEqual(trade["completion_owner"], "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER")
         self.assertNotIn("entry_adapter", trade)
-        self.assertNotIn("production_adapter", trade)
+        self.assertEqual(trade["production_adapter"], "scripts/run_scheduled_trade_review_actor.py")
         self.assertNotIn("completion_builder", trade)
         self.assertEqual(trade["handoff_contract"]["owner"], "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER")
         decision = data["tasks"][2]
