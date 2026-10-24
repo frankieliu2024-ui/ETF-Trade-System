@@ -43,8 +43,14 @@
       "sunday_rule": "20:30周复盘",
       "manual_allowed": true,
       "route": "TRADE_REVIEW",
+      "entry_adapter": "scripts/run_scheduled_trade_review_actor.py",
       "production_adapter": "scripts/run_scheduled_trade_review_actor.py",
       "completion_builder": "build_trade_review_completion_request",
+      "handoff_contract": {
+        "input": ["formal_review", "final_content", "request_id", "requested_at_beijing", "market_date", "task_run_id", "occurrence_id", "entry_mode"],
+        "sequence": ["freeze_FINAL_CONTENT", "invoke_entry_adapter", "write_read_SCHEDULED_REVIEW_COMPLETION", "dispatch_decision_notification", "read_back_event_REPORT_notification_provider"],
+        "user_display_gate": "completion_readback_required"
+      },
       "entry_modes": {
         "automatic": {
           "source": "CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR",
