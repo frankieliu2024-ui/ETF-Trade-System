@@ -91,6 +91,38 @@ def _quality(row: dict) -> str:
     return str(row.get("quality_status") or row.get("status") or "").upper()
 
 
+def _latest_formal_request() -> dict:
+    """Return the newest durable Formal Decision parent request, if any.
+
+    A newly ingressed parent is itself a valid idempotent wake signal. It does
+    not grant permission or create an action; it only enables the formal
+    decision actor to consume the request-bound facts once.
+    """
+    directory = ROOT / "requests" / "live_snapshot"
+    candidates = []
+    if not directory.exists():
+        return {}
+    for path in directory.glob("*.json"):
+        item = _read(path, {})
+        if not isinstance(item, dict):
+            continue
+        if str(item.get("request_type") or "").upper() != "MARKET_QUOTE_REFRESH":
+            continue
+        if str(item.get("task_id") or "").strip() != "ETF正式决策":
+            continue
+        if str(item.get("source") or "").upper() not in {
+            "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
+            "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+            "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
+        }:
+            continue
+        request_id = str(item.get("request_id") or "").strip()
+        requested_at = str(item.get("requested_at_beijing") or item.get("request_time_beijing") or "").strip()
+        if request_id and requested_at:
+            candidates.append((requested_at, request_id, item))
+    return max(candidates, key=lambda row: row[0])[2] if candidates else {}
+
+
 def _latest_trade_is_recent(account: dict, max_age_minutes: int = 45) -> bool:
     trades = [x for x in (account.get("trades") or []) if x.get("trade_time")]
     if not trades:
@@ -115,8 +147,16 @@ def _build_trigger(current: dict, account: dict, e2e: dict, equity: dict, prior:
     applicable = ""
     evidence_time = str(current.get("captured_at") or account.get("updated_at") or now)
     evidence_change = ""
+    formal_request = _latest_formal_request()
+    formal_request_id = str(formal_request.get("request_id") or "").strip()
+    prior_formal_request_id = str(prior.get("request_id") or "").strip()
     account_changes = _material_unreconciled_account_changes(account)
-    if account_changes:
+    if formal_request_id and formal_request_id != prior_formal_request_id:
+        event_type = "FORMAL_REQUEST"
+        applicable = formal_request_id
+        evidence_time = str(formal_request.get("requested_at_beijing") or evidence_time)
+        evidence_change = "new request-bound Formal Decision parent entered the canonical fact chain"
+    elif account_changes:
         event = account_changes[-1]
         event_type = "ACCOUNT_STRUCTURE_CHANGED"
         applicable = str(event.get("object") or event.get("code") or "")
@@ -150,6 +190,7 @@ def _build_trigger(current: dict, account: dict, e2e: dict, equity: dict, prior:
             "risk_zone": zone, "enhanced_risk_review_required": _enhanced_risk_review(risk),
             "risk_zone_semantics": "REVIEW_CONTEXT_ONLY_NOT_TRADING_PERMISSION",
             "last_trade_event_id": str(current.get("last_trade_event_id") or ""),
+            "request_id": formal_request_id,
             "safety_boundary": "确定性识别仅生成重评请求，不生成风险许可、金额、份额或交易动作。", "read_only": True,
         }
     previous_decision = str((account.get("formal_action") or {}).get("decision_id") or "")
@@ -167,7 +208,8 @@ def _build_trigger(current: dict, account: dict, e2e: dict, equity: dict, prior:
         "idempotency_key": key, "risk_zone": zone, "enhanced_risk_review_required": _enhanced_risk_review(risk),
         "risk_zone_semantics": "REVIEW_CONTEXT_ONLY_NOT_TRADING_PERMISSION",
         "last_trade_event_id": str(current.get("last_trade_event_id") or ""),
-        "cooldown_rule": "同一事件类型、对象、证据窗口、上一正式决策不重复生成；普通10分钟行情变化不触发。",
+        "request_id": formal_request_id,
+        "safety_boundary": "同一事件类型、对象、证据窗口、上一正式决策不重复生成；普通10分钟行情变化不触发。",
         "safety_boundary": "确定性识别仅生成重评请求，不生成风险许可、金额、份额或交易动作。", "read_only": True,
     }
 
