@@ -192,12 +192,11 @@ jobs:
             REQUEST_EXPECTED=true
             mkdir -p "/tmp/etf-triggering-request/$(dirname "$REQUEST_FILE")"
             cp "$REQUEST_FILE" "/tmp/etf-triggering-request/$REQUEST_FILE"
-            # Manual ChatGPT requests may carry a producer/client timestamp that
-            # is ahead of the actual GitHub runner receipt time. Normalize the
-            # canonical ingress clock before any PIT routing or query-context
-            # construction, while preserving the supplied value as audit-only
-            # interaction_requested_at_beijing. Scheduled ingress already owns a
-            # runner-generated timestamp and is left unchanged.
+            # Manual requests may contain a producer/client timestamp that is
+            # ahead of the GitHub runner receipt time. Normalize the request before
+            # any PIT routing or query-context construction, and use the normalized
+            # envelope for the entire run. Preserve the supplied time only as audit
+            # metadata; requested_at_beijing is the runner receipt clock.
             python - "$REQUEST_FILE" "/tmp/etf-triggering-request/$REQUEST_FILE" <<'PY'
           import json
           import sys
@@ -214,10 +213,9 @@ jobs:
           }:
               policy = json.loads(Path("config/runtime_policy.json").read_text(encoding="utf-8"))
               request = normalize_manual_request_session(request, policy)
-              dst.write_text(
-                  json.dumps(request, ensure_ascii=False, indent=2) + "\n",
-                  encoding="utf-8",
-              )
+          serialized = json.dumps(request, ensure_ascii=False, indent=2) + "\n"
+          src.write_text(serialized, encoding="utf-8")
+          dst.write_text(serialized, encoding="utf-8")
           PY
           fi
           {
