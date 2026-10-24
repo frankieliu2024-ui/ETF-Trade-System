@@ -29,10 +29,12 @@ except ModuleNotFoundError:
 
 def _dispatch_notification(completion_path: str) -> dict[str, object]:
     """Dispatch notification and read back the matching workflow run."""
-    token = os.environ.get("GITHUB_TOKEN", "").strip()
-    repository = os.environ.get("GITHUB_REPOSITORY", "").strip()
-    if not token or not repository:
-        return {"submitted": False, "reason": "missing GITHUB_TOKEN or GITHUB_REPOSITORY"}
+    token = (os.environ.get("GITHUB_TOKEN", "").strip()
+             or os.environ.get("GH_TOKEN", "").strip())
+    repository = (os.environ.get("GITHUB_REPOSITORY", "").strip()
+                  or "frankieliu2024-ui/ETF-Trade-System")
+    if not token:
+        return {"submitted": False, "reason": "missing GitHub API token (GITHUB_TOKEN or GH_TOKEN)"}
     owner, separator, repo = repository.partition("/")
     if not separator or not owner or not repo:
         return {"submitted": False, "reason": "invalid GITHUB_REPOSITORY"}
