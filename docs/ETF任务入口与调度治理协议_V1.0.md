@@ -126,7 +126,13 @@ Trade Review仅允许使用唯一业务主链：
 
 ETF交易复盘 → CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR → formal_review → `scripts/run_scheduled_trade_review_actor.py` → build_trade_review_completion_request → SCHEDULED_REVIEW_COMPLETION → GitHub Contents写入与同文件回读 → 用户显示FINAL_CONTENT → canonical review event → REPORT → notification_center → provider
 
-对ETF交易复盘，Actor在形成任何用户可见正文前，必须完成本次运行的完整formal_review，使用同一份冻结正文调用scripts/scheduled_review_completion.py的build_trade_review_completion_request，并完成唯一completion文件写入和回读。completion必须使用：
+对ETF交易复盘，Actor必须严格分离“正文冻结”和“用户展示”两个时点，并按以下顺序执行：
+
+1. 先完成本次运行的formal_review，生成并冻结唯一FINAL_CONTENT；此时只在运行上下文内部保存，不向用户展示。
+2. 再使用同一份已冻结FINAL_CONTENT调用scripts/scheduled_review_completion.py的build_trade_review_completion_request，建立、写入并回读唯一completion。
+3. 仅在completion写入和回读成功后，才允许向用户展示此前冻结的同一份FINAL_CONTENT，并继续形成event、REPORT和notification。
+
+运行身份、正文冻结和completion写入是连续但不同的步骤：运行身份或completion失败，不得把“正文尚未冻结”作为替代性结论；如果核心事实已足够，必须先完成正文冻结，再在真实交接失败处停止用户展示并记录失败。不得使用另一份正文补齐。completion必须使用：
 
 - request_type=SCHEDULED_REVIEW_COMPLETION；
 - source=CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR；
