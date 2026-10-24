@@ -32,6 +32,7 @@ on:
   push:
     paths:
       - "requests/live_snapshot/**"
+      - "data/requests/**"
       - "requests/trade_fact_correction/**"
       - "scripts/cloud_runner_snapshot.py"
       - "scripts/query_time_market_refresh.py"
@@ -87,6 +88,44 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
+
+      - name: Canonicalize legacy formal request ingress
+        if: ${{ github.event_name == 'push' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          legacy_files="$(git diff --name-only "$EVENT_BEFORE" "$GITHUB_SHA" -- 'data/requests/*.json' || true)"
+          if [ -z "$legacy_files" ]; then
+            exit 0
+          fi
+          mkdir -p requests/live_snapshot
+          while IFS= read -r legacy_file; do
+            [ -n "$legacy_file" ] || continue
+            python - "$legacy_file" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+          path = Path(sys.argv[1])
+          payload = json.loads(path.read_text(encoding="utf-8"))
+          if payload.get("task_id") != "ETF正式决策" or payload.get("request_type") != "MARKET_QUOTE_REFRESH":
+              raise SystemExit("unsupported legacy request ingress: " + str(path))
+          target = Path("requests/live_snapshot") / path.name
+          target.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          path.unlink()
+          PY
+          done <<< "$legacy_files"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add requests/live_snapshot data/requests
+          git commit -m "fix: canonicalize legacy formal request ingress"
+          for attempt in 1 2 3; do
+            git fetch origin main
+            if git rebase origin/main && git push origin HEAD:main; then
+              exit 0
+            fi
+            git rebase --abort || true
+          done
+          exit 1
       - name: Apply confirmed trade fact corrections
         if: ${{ github.event_name == 'push' }}
         shell: bash
