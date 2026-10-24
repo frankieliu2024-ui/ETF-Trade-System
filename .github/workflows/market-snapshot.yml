@@ -1393,12 +1393,12 @@ jobs:
 
       - name: Promote formal request gate after full context validation
         id: formal_gate_promotion
-        if: ${{ steps.query_context.outcome == 'success' && steps.state_context.outcome == 'success' && github.event.inputs.formal_context_recovery_request != '' && github.event.inputs.probe_only != 'true' }}
+        if: ${{ steps.query_context.outcome == 'success' && steps.state_context.outcome == 'success' && env.TRIGGERING_REQUEST_EXPECTED == 'true' && github.event.inputs.probe_only != 'true' }}
         run: |
           test -s data/state/query_context.json
           test -s data/state/decision_context.json
           python -c 'import json; from pathlib import Path; p=json.loads(Path("data/state/query_context.json").read_text()); assert isinstance(p.get("decision_fact_pack",{}).get("decision_work_package"),dict); d=json.loads(Path("data/state/decision_context.json").read_text()); assert d.get("generated_at")'
-          TRIGGERING_REQUEST_FILE="$FORMAL_CONTEXT_RECOVERY_REQUEST" python scripts/refresh_gate.py --annotate-contexts
+          TRIGGERING_REQUEST_FILE="$TRIGGERING_REQUEST_FILE" python scripts/refresh_gate.py --annotate-contexts
       - name: Build post-market review context
         # Review is a close/state-sync consumer, not a generic intraday pulse
         # responsibility. Explicit/manual close remains a legal recovery path.
