@@ -72,7 +72,15 @@
         "bds_required": false,
         "owner": "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER"
       },
-      "production_adapter": "scripts/run_scheduled_trade_review_actor.py"
+      "production_adapter": "scripts/run_scheduled_trade_review_actor.py",
+      "handoff_execution": {
+        "owner": "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER",
+        "primary_mode": "DIRECT_GITHUB_CONTENTS_COMPLETION_WRITE_AND_READBACK",
+        "adapter_role": "OPTIONAL_COMPATIBILITY_ADAPTER_ONLY",
+        "notification_wake": "COMPLETION_PUSH_OR_EXPLICIT_DISPATCH",
+        "adapter_unavailable_must_not_block_completion": true,
+        "same_run_required": true
+      }
     },
     {
       "id": "ETF_FORMAL_DECISION",
