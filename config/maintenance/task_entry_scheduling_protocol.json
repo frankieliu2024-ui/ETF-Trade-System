@@ -123,7 +123,16 @@
         "bds_required": false,
         "owner": "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER"
       },
-      "completion_owner": "scripts/scheduled_review_completion.py::build_formal_review_completion_request"
+      "completion_owner": "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER",
+      "handoff_execution": {
+        "owner": "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER",
+        "primary_mode": "DIRECT_GITHUB_CONTENTS_COMPLETION_WRITE_AND_READBACK",
+        "adapter_role": "OPTIONAL_COMPATIBILITY_ADAPTER_ONLY",
+        "notification_wake": "COMPLETION_PUSH_OR_EXPLICIT_DISPATCH",
+        "adapter_unavailable_must_not_block_completion": true,
+        "same_run_required": true,
+        "report_identity": "ETF_FORMAL_DECISION"
+      }
     }
   ],
   "invariants": [
