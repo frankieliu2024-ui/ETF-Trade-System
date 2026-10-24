@@ -55,7 +55,7 @@
 
 5. 完成业务判断后，先冻结唯一 FINAL_CONTENT；随后调用 current main 登记的 Formal Decision Actor，由共享 Scheduled Review completion owner 写入并回读唯一完成记录，再由 canonical owner 形成当前 `events/reviews/formal_<occurrence_id>.json`，进入 REPORT、notification_center 和 PushPlus 主链。不得创建任何中间业务决策对象，不得由 Actor直接手写event、REPORT或通知文件，不得扫描历史对象或创建第二条通知链。后置交接必须有界等待；交接成功或明确到达最后失败层级后，用户窗口才输出此前冻结的同一份完整FINAL_CONTENT。后置失败不得重新分析、改写或生成第二份正文；provider成功不等于用户已收到。
 
-Formal Decision 的统一交接字段为：`request_type=SCHEDULED_REVIEW_COMPLETION`、`source=CHATGPT_SCHEDULED_REVIEW_ACTOR`、`formal_fact_type=FORMAL_POST_CLOSE_REVIEW`、`interaction_scenario=FORMAL_DECISION` 和 `presentation_binding.report_type=ETF_FORMAL_DECISION`。completion必须绑定同一父请求、同一运行身份、同一market_date、同一FINAL_CONTENT和正文哈希。GitHub Contents写入只用于既有请求或完成记录入口，不执行投影、不生成交易判断；事件、报告和通知只能由既有canonical owner生成。
+Formal Decision 的统一交接字段为：`request_type=SCHEDULED_REVIEW_COMPLETION`、`source=CHATGPT_SCHEDULED_REVIEW_ACTOR`、`formal_fact_type=FORMAL_POST_CLOSE_REVIEW`、`interaction_scenario=FORMAL_DECISION` 和 `presentation_binding.report_type=ETF_FORMAL_DECISION`。completion必须绑定同一父请求、同一运行身份、同一market_date、同一FINAL_CONTENT和正文哈希。GitHub Contents写入只用于既有请求或完成记录入口，不执行投影、不生成交易判断；事件、报告和通知只能由既有canonical owner生成。完成记录写入并回读后，既有完成记录事件唤起是正式通知路径；若当前运行环境实际提供显式workflow_dispatch，可作为同一运行的补充唤起，但不得把显式派发能力作为完成记录写入或通知投影成立的唯一硬前置。
 
 盘前、集合竞价、盘中、午间、盘后、风险许可、生命周期、金额、卖出和资本比较：
 
