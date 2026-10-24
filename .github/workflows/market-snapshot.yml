@@ -1278,9 +1278,10 @@ jobs:
           else
             python scripts/build_query_context.py "${REQUEST_ARGS[@]}"
           fi
-          TRIGGERING_REQUEST_FILE="$REQUEST_FILE" python scripts/refresh_gate.py --annotate-contexts
           # A formal request is not complete unless the request-bound query
-          # context is materially present before downstream persistence.
+          # context and decision context are materially present before the
+          # gate is annotated. Gate promotion must be the last step.
+          REQUEST_IS_FORMAL=false
           if [ -n "$REQUEST_FILE" ] && [ -f "$REQUEST_FILE" ]; then
             REQUEST_IS_FORMAL=$(python - "$REQUEST_FILE" <<'PY'
           import json, sys
@@ -1331,6 +1332,38 @@ jobs:
             else
               echo "Non-formal request; skip Formal Decision identity validator."
             fi
+          fi
+          if [ "$REQUEST_IS_FORMAL" = "true" ]; then
+            python - "$REQUEST_FILE" <<'PY'
+          import json, sys
+          from pathlib import Path
+          request = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          expected = {
+              "request_id": str(request.get("request_id") or "").strip(),
+              "source": str(request.get("source") or "").strip(),
+              "entry_mode": str(request.get("entry_mode") or "").strip(),
+              "market_date": str(request.get("market_date") or "").strip(),
+          }
+          context_path = Path("data/state/query_context.json")
+          if not context_path.is_file() or context_path.stat().st_size == 0:
+              raise SystemExit("formal request cannot promote gate with empty query_context.json")
+          context = json.loads(context_path.read_text(encoding="utf-8"))
+          pack = context.get("decision_fact_pack") or {}
+          trigger = pack.get("trigger") or {}
+          actual = {key: str(trigger.get(key) or "").strip() for key in expected}
+          if actual != expected:
+              raise SystemExit(f"formal request query_context identity mismatch before gate promotion: expected={expected} actual={actual}")
+          if not isinstance(pack.get("decision_work_package"), dict):
+              raise SystemExit("formal request cannot promote gate without decision_work_package")
+          decision_path = Path("data/state/decision_context.json")
+          if not decision_path.is_file() or decision_path.stat().st_size == 0:
+              raise SystemExit("formal request cannot promote gate with empty decision_context.json")
+          decision = json.loads(decision_path.read_text(encoding="utf-8"))
+          decision_request = str((((decision.get("observability") or {}).get("trigger") or {}).get("request_id")) or decision.get("request_id") or "").strip()
+          if decision_request and decision_request != expected["request_id"]:
+              raise SystemExit(f"formal request decision_context identity mismatch before gate promotion: expected={expected['request_id']} actual={decision_request}")
+          PY
+            TRIGGERING_REQUEST_FILE="$REQUEST_FILE" python scripts/refresh_gate.py --annotate-contexts
           fi
 
       - name: Refresh close-derived research and risk evidence
