@@ -144,15 +144,8 @@ def main() -> int:
     if not all(checks.values()):
         failed = ", ".join(key for key, ok in checks.items() if not ok)
         raise RuntimeError(f"trade review completion readback mismatch: {failed}")
-    repo_root = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
-    try:
-        canonical_completion_path = completion_path.resolve().relative_to(repo_root).as_posix()
-    except ValueError as exc:
-        raise RuntimeError("trade review completion path is outside ETF_SYSTEM_ROOT") from exc
-    if not canonical_completion_path.startswith("requests/live_snapshot/"):
-        raise RuntimeError("trade review completion path must be repository-relative under requests/live_snapshot/")
-    dispatch = _dispatch_notification(canonical_completion_path)
-    print(json.dumps({"ok": True, "completion_path": canonical_completion_path, "readback": checks, "notification_dispatch": dispatch}, ensure_ascii=False))
+    dispatch = _dispatch_notification(str(target))
+    print(json.dumps({"ok": True, "completion_path": str(target), "readback": checks, "notification_dispatch": dispatch}, ensure_ascii=False))
     return 0
 
 
