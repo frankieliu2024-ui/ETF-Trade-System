@@ -2286,8 +2286,8 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     )
     if is_trade_review_production:
         entry_mode = str(request.get("entry_mode") or "").strip().upper()
-        if entry_mode not in {"MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"}:
-            raise ValueError("scheduled trade review production requires entry_mode=MANUAL_SCHEDULED_TASK or AUTOMATIC_SCHEDULED_TASK")
+        if entry_mode not in {"MANUAL_CONVERSATION", "MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"}:
+            raise ValueError("scheduled trade review production requires a registered manual or automatic entry mode")
         binding_entry_mode = str((raw_presentation_binding or {}).get("entry_mode") or "").strip().upper()
         if binding_entry_mode != entry_mode:
             raise ValueError("scheduled trade review production entry_mode must match presentation_binding.entry_mode")
