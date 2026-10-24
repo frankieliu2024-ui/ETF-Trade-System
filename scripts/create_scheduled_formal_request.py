@@ -174,97 +174,63 @@ def build_scheduled_request(
     except Exception as exc:
         return {"written": False, "reason": str(exc), "path": relative}
 
-def dispatch_market_snapshot(request_path: Path) -> dict[str, object]:
-    """Dispatch the canonical snapshot producer and read back its run identity."""
+def dispatch_market_snapshot(request_path: Path, commit_sha: str) -> dict[str, object]:
+    """Read back the single push-triggered snapshot run for this request commit."""
     token = (os.environ.get("GITHUB_TOKEN", "").strip()
              or os.environ.get("GH_TOKEN", "").strip())
     repository = (os.environ.get("GITHUB_REPOSITORY", "").strip()
                   or os.environ.get("ETF_TRADE_SYSTEM_REPOSITORY", "").strip()
                   or "frankieliu2024-ui/ETF-Trade-System")
+    request_relpath = str(request_path.relative_to(ROOT))
     if not token:
-        return {
-            "submitted": False,
-            "reason": "missing GitHub Actions token (GITHUB_TOKEN or GH_TOKEN)",
-            "repository": repository,
-            "request_path": str(request_path.relative_to(ROOT)),
-        }
+        return {"submitted": False, "reason": "missing GitHub Actions token (GITHUB_TOKEN or GH_TOKEN)",
+                "request_path": request_relpath}
     owner, separator, repo = repository.partition("/")
     if not separator or not owner or not repo:
         return {"submitted": False, "reason": "invalid GITHUB_REPOSITORY"}
-
-    request_relpath = str(request_path.relative_to(ROOT))
-    payload = json.dumps({
-        "ref": "main",
-        "inputs": {
-            "node": "scheduled",
-            "probe_only": "false",
-            "formal_context_recovery_request": request_relpath,
-        },
-    }).encode("utf-8")
     base = f"https://api.github.com/repos/{owner}/{repo}"
-    dispatch_endpoint = f"{base}/actions/workflows/market-snapshot.yml/dispatches"
     runs_endpoint = (
         f"{base}/actions/workflows/market-snapshot.yml/runs"
-        "?event=workflow_dispatch&branch=main&per_page=20"
+        "?event=push&branch=main&per_page=20"
     )
     headers = {
         "Accept": "application/vnd.github+json",
         "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json",
         "X-GitHub-Api-Version": "2022-11-28",
     }
-    dispatched_at = datetime.now(timezone.utc)
-
-    try:
-        req = urllib_request.Request(
-            dispatch_endpoint, data=payload, method="POST", headers=headers
-        )
-        with urllib_request.urlopen(req, timeout=30) as response:
-            if response.status != 204:
-                return {"submitted": False, "status": response.status}
-    except Exception as exc:
-        return {"submitted": False, "reason": str(exc)}
-
-    # A 204 only acknowledges submission. Do not treat it as producer start.
-    # Read back the run created by this dispatch before reporting success.
-    deadline = datetime.now(timezone.utc) + timedelta(seconds=60)
+    deadline = datetime.now(timezone.utc) + timedelta(seconds=90)
     while datetime.now(timezone.utc) < deadline:
         try:
             req = urllib_request.Request(runs_endpoint, method="GET", headers=headers)
             with urllib_request.urlopen(req, timeout=30) as response:
                 data = json.loads(response.read().decode("utf-8"))
             for run in data.get("workflow_runs", []):
-                created_at = str(run.get("created_at") or "")
-                if not created_at:
-                    continue
-                created = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
                 if (
-                    created >= dispatched_at
-                    and str(run.get("event") or "") == "workflow_dispatch"
+                    str(run.get("head_sha") or "") == str(commit_sha)
+                    and str(run.get("event") or "") == "push"
                     and str(run.get("head_branch") or "") == "main"
                 ):
                     return {
                         "submitted": True,
-                        "status": 204,
+                        "trigger": "push",
                         "run_id": run.get("id"),
                         "run_url": run.get("html_url"),
                         "run_status": run.get("status"),
                         "run_conclusion": run.get("conclusion"),
                         "request_path": request_relpath,
+                        "commit_sha": commit_sha,
                         "read_back": True,
                     }
         except Exception:
             pass
         time.sleep(3)
-
     return {
         "submitted": False,
-        "reason": "workflow_dispatch accepted but matching workflow run was not read back",
+        "reason": "request commit succeeded but matching push workflow run was not read back",
         "request_path": request_relpath,
+        "commit_sha": commit_sha,
         "read_back": False,
     }
-
-
 
 def main() -> int:
     mode = os.environ.get("ENTRY_MODE", AUTOMATIC_MODE).strip().upper()
@@ -309,7 +275,7 @@ def main() -> int:
             "FORMAL_SCHEDULE_INGRESS=REQUEST_PERSIST_FAILED "
             + json.dumps(persisted, ensure_ascii=False)
         )
-    dispatch = dispatch_market_snapshot(path)
+    dispatch = dispatch_market_snapshot(path, str(persisted.get("commit_sha") or ""))
     if not dispatch.get("submitted"):
         raise SystemExit(
             "FORMAL_SCHEDULE_INGRESS=SNAPSHOT_DISPATCH_FAILED "
