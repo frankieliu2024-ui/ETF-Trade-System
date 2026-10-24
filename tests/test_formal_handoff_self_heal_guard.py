@@ -54,7 +54,11 @@ class FormalHandoffSelfHealGuardTests(unittest.TestCase):
                     json.dumps(payload), encoding="utf-8"
                 )
             (temp / "events" / "reviews" / "formal_occurrence.json").write_text(
-                json.dumps({"parent_request_id": "formal-current"}), encoding="utf-8"
+                json.dumps({
+                    "parent_request_id": "formal-current",
+                    "event_type": "FORMAL_POST_CLOSE_REVIEW",
+                    "report_type": "ETF_FORMAL_DECISION",
+                }), encoding="utf-8"
             )
         return temp
 
