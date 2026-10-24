@@ -124,7 +124,7 @@ def _single_item_numbering_errors(text: str) -> list[str]:
 
 
 def _formal_object_numbering_errors(text: str) -> list[str]:
-    """Require stable two-level numbering for the four object sections."""
+    """Keep Formal Decision object lists aligned with the review contract."""
     target_headings = {
         "【全市场发现逐只评估】",
         "【观察ETF逐只评估】",
@@ -138,10 +138,10 @@ def _formal_object_numbering_errors(text: str) -> list[str]:
         stripped = line.strip()
         if stripped.startswith("【") and stripped.endswith("】"):
             if current in target_headings:
-                if entries and not any(re.match(r"^\d+\.\d+\s+", item) for item in entries):
-                    errors.append(f"object section requires secondary numbering: {current}")
+                if any(re.match(r"^\d+\.\d+\s+", item) for item in entries):
+                    errors.append(f"object section must use review numbering 1. and 1）, not decimal numbering: {current}")
                 if any(re.match(r"^\d+\.\s+", item) for item in entries):
-                    errors.append(f"object section must not use primary-only numbering: {current}")
+                    errors.append(f"object list must use secondary numbering 1）、2）、3）：{current}")
             current = stripped
             entries = []
             continue
