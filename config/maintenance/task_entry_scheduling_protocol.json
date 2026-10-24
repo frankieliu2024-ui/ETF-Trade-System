@@ -43,14 +43,6 @@
       "sunday_rule": "20:30周复盘",
       "manual_allowed": true,
       "route": "TRADE_REVIEW",
-      "entry_adapter": "scripts/run_scheduled_trade_review_actor.py",
-      "production_adapter": "scripts/run_scheduled_trade_review_actor.py",
-      "completion_builder": "build_trade_review_completion_request",
-      "handoff_contract": {
-        "input": ["formal_review", "final_content", "request_id", "requested_at_beijing", "market_date", "task_run_id", "occurrence_id", "entry_mode"],
-        "sequence": ["freeze_FINAL_CONTENT", "invoke_entry_adapter", "write_read_SCHEDULED_REVIEW_COMPLETION", "dispatch_decision_notification", "read_back_event_REPORT_notification_provider"],
-        "user_display_gate": "completion_readback_required"
-      },
       "entry_modes": {
         "automatic": {
           "source": "CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR",
@@ -61,7 +53,25 @@
           "entry_mode": "MANUAL_SCHEDULED_TASK"
         }
       },
-      "canonical_task_id": "ETF交易复盘"
+      "canonical_task_id": "ETF交易复盘",
+      "completion_owner": "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER",
+      "handoff_contract": {
+        "source": "SCHEDULED_REVIEW_COMPLETION",
+        "sequence": [
+          "freeze_FINAL_CONTENT",
+          "compute_content_hash",
+          "write_read_SCHEDULED_REVIEW_COMPLETION",
+          "read_back_canonical_review_event_REPORT_notification_provider"
+        ],
+        "same_run_runtime_clock": "requested_at_beijing",
+        "timezone": "Asia/Shanghai",
+        "utc_only_for": [
+          "GitHub Actions cron",
+          "persistence metadata"
+        ],
+        "bds_required": false,
+        "owner": "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER"
+      }
     },
     {
       "id": "ETF_FORMAL_DECISION",
