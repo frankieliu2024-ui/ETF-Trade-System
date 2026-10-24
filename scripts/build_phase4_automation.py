@@ -209,8 +209,9 @@ def _build_trigger(current: dict, account: dict, e2e: dict, equity: dict, prior:
         "risk_zone_semantics": "REVIEW_CONTEXT_ONLY_NOT_TRADING_PERMISSION",
         "last_trade_event_id": str(current.get("last_trade_event_id") or ""),
         "request_id": formal_request_id,
-        "safety_boundary": "同一事件类型、对象、证据窗口、上一正式决策不重复生成；普通10分钟行情变化不触发。",
-        "safety_boundary": "确定性识别仅生成重评请求，不生成风险许可、金额、份额或交易动作。", "read_only": True,
+        "safety_boundary": "确定性识别仅生成重评请求，不生成风险许可、金额、份额或交易动作。",
+        "cooldown_rule": "同一正式请求只触发一次；普通10分钟行情变化不触发。",
+        "read_only": True,
     }
 
 
