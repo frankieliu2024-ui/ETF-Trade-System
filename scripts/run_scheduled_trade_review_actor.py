@@ -9,7 +9,11 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
+import time
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from urllib import request as urllib_request
 
 try:
     from scheduled_review_completion import write_completion_request
@@ -17,6 +21,68 @@ try:
 except ModuleNotFoundError:
     from scripts.scheduled_review_completion import write_completion_request
     from scripts.task_runtime_identity import derive_runtime_identity
+
+
+
+def _dispatch_notification(completion_path: str) -> dict[str, object]:
+    token = os.environ.get("GITHUB_TOKEN", "").strip()
+    repository = os.environ.get("GITHUB_REPOSITORY", "").strip()
+    if not token or not repository:
+        return {"submitted": False, "reason": "missing GITHUB_TOKEN or GITHUB_REPOSITORY"}
+    owner, separator, repo = repository.partition("/")
+    if not separator or not owner or not repo:
+        return {"submitted": False, "reason": "invalid GITHUB_REPOSITORY"}
+    payload = json.dumps({
+        "ref": "main",
+        "inputs": {"scheduled_review_completion_path": completion_path},
+    }).encode("utf-8")
+    base = "https://api.github.com/repos/" + owner + "/" + repo
+    dispatch_endpoint = base + "/actions/workflows/decision-notification.yml/dispatches"
+    runs_endpoint = base + "/actions/workflows/decision-notification.yml/runs?event=workflow_dispatch&branch=main&per_page=20"
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "Authorization": "Bearer " + token,
+        "Content-Type": "application/json",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+    dispatched_at = datetime.now(timezone.utc)
+    try:
+        req = urllib_request.Request(dispatch_endpoint, data=payload, method="POST", headers=headers)
+        with urllib_request.urlopen(req, timeout=30) as response:
+            if response.status != 204:
+                return {"submitted": False, "status": response.status}
+    except Exception as exc:
+        return {"submitted": False, "reason": str(exc)}
+    deadline = datetime.now(timezone.utc) + timedelta(seconds=60)
+    while datetime.now(timezone.utc) < deadline:
+        try:
+            req = urllib_request.Request(runs_endpoint, method="GET", headers=headers)
+            with urllib_request.urlopen(req, timeout=30) as response:
+                data = json.loads(response.read().decode("utf-8"))
+            for run in data.get("workflow_runs", []):
+                created_at = str(run.get("created_at") or "")
+                if not created_at:
+                    continue
+                created = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+                if created >= dispatched_at and str(run.get("event") or "") == "workflow_dispatch" and str(run.get("head_branch") or "") == "main":
+                    return {
+                        "submitted": True,
+                        "run_id": run.get("id"),
+                        "run_url": run.get("html_url"),
+                        "run_status": run.get("status"),
+                        "run_conclusion": run.get("conclusion"),
+                        "completion_path": completion_path,
+                        "read_back": True,
+                    }
+        except Exception:
+            pass
+        time.sleep(3)
+    return {
+        "submitted": False,
+        "reason": "notification workflow dispatch accepted but matching run was not read back",
+        "completion_path": completion_path,
+        "read_back": False,
+    }
 
 
 def main() -> int:
@@ -78,7 +144,8 @@ def main() -> int:
     if not all(checks.values()):
         failed = ", ".join(key for key, ok in checks.items() if not ok)
         raise RuntimeError(f"trade review completion readback mismatch: {failed}")
-    print(json.dumps({"ok": True, "completion_path": str(target), "readback": checks}, ensure_ascii=False))
+    dispatch = _dispatch_notification(str(target))
+    print(json.dumps({"ok": True, "completion_path": str(target), "readback": checks, "notification_dispatch": dispatch}, ensure_ascii=False))
     return 0
 
 
