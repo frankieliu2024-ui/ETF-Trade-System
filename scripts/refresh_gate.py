@@ -211,7 +211,19 @@ def build_gate(now: datetime | None = None, request_file: str | Path | None = No
             ready = False
     status = "READY" if ready else ("FAILED" if terminal_unavailable_after_request else "PENDING")
     explicit_latest = _query_intent(req) == _explicit_latest_intent()
-    allow_fallback = req.get("allow_wait_refresh_fallback") is True and not explicit_latest
+    # Degraded Formal Decision is legal only after the full wait window has
+    # elapsed. A fallback flag alone must never let the actor race the
+    # request-bound producer and publish an older CURRENT too early.
+    wait_started = requested
+    fallback_wait_elapsed = bool(
+        wait_started is not None and (_utc_now(now) - wait_started).total_seconds() >= 360
+    )
+    allow_fallback = (
+        req.get("allow_wait_refresh_fallback") is True
+        and not explicit_latest
+        and fallback_wait_elapsed
+        and not query_context_ready
+    )
     # Expose one business-level result independently of the legacy gate status.
     # READY means the request has a legal post-request CURRENT; DEGRADED means
     # an explicitly permitted fallback is usable; NOT_READY means no formal
