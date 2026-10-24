@@ -16,8 +16,11 @@ class TaskEntrySchedulingGovernanceTests(unittest.TestCase):
         self.assertTrue(data["tasks"][0]["content_contract"]["manual_and_automatic_same_contract"])
         self.assertTrue(data["tasks"][0]["content_contract"]["validation_only_report_forbidden"])
         trade = data["tasks"][1]
-        self.assertEqual(trade["production_adapter"], "scripts/run_scheduled_trade_review_actor.py")
-        self.assertEqual(trade["completion_builder"], "build_trade_review_completion_request")
+        self.assertEqual(trade["completion_owner"], "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER")
+        self.assertNotIn("entry_adapter", trade)
+        self.assertNotIn("production_adapter", trade)
+        self.assertNotIn("completion_builder", trade)
+        self.assertEqual(trade["handoff_contract"]["owner"], "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER")
         decision = data["tasks"][2]
         self.assertEqual(decision["entry_adapter"], "scripts/create_scheduled_formal_request.py")
         self.assertEqual(decision["entry_builder"], "build_scheduled_request")
@@ -36,16 +39,14 @@ class TaskEntrySchedulingGovernanceTests(unittest.TestCase):
         self.assertIn("Scheduled Review后置交接合同", text)
         self.assertIn("SCHEDULED_REVIEW_COMPLETION", text)
 
-    def test_trade_review_production_gate_and_canonical_scenario_are_explicit(self):
-        text = (ROOT / "docs/ETF任务入口与调度治理协议_V1.0.md").read_text(encoding="utf-8")
-        self.assertIn("Trade Review生产入口与用户显示硬门", text)
-        self.assertIn("CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR", text)
-        self.assertIn("build_trade_review_completion_request", text)
-        self.assertIn("request_type=SCHEDULED_REVIEW_COMPLETION", text)
-        self.assertIn("interaction_scenario=SCHEDULED_TRADE_REVIEW", text)
-        self.assertIn("POST_CLOSE_REVIEW", text)
-        self.assertIn("仅允许canonical owner历史兼容读取", text)
-
+        def test_trade_review_uses_shared_completion_contract(self):
+        data = json.loads((ROOT / "config/maintenance/task_entry_scheduling_protocol.json").read_text(encoding="utf-8"))
+        trade = data["tasks"][1]
+        self.assertEqual(trade["route"], "TRADE_REVIEW")
+        self.assertEqual(trade["completion_owner"], "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER")
+        self.assertEqual(trade["handoff_contract"]["owner"], "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER")
+        self.assertEqual(trade["entry_modes"]["manual"]["entry_mode"], "MANUAL_SCHEDULED_TASK")
+        self.assertEqual(trade["entry_modes"]["automatic"]["entry_mode"], "AUTOMATIC_SCHEDULED_TASK")
 
 if __name__ == "__main__":
     unittest.main()
