@@ -74,29 +74,66 @@ def _security_identity_errors(content: str, security_map: dict[str, str]) -> lis
 
 
 def _presentation_structure_errors(text: str) -> list[str]:
+    """Validate section-local numbering without forcing single paragraphs to be numbered."""
     errors: list[str] = []
-    lines = text.splitlines()
-    section_seen = False
-    top_numbers: list[int] = []
-    for line in lines:
+    current_heading = ""
+    section_top: list[int] = []
+    parent_top: int | None = None
+    parent_secondary: list[int] = []
+
+    def flush_parent() -> None:
+        nonlocal parent_secondary
+        if parent_secondary:
+            expected = list(range(1, len(parent_secondary) + 1))
+            if parent_secondary != expected:
+                errors.append(
+                    f"secondary numbering must restart at 1 and be sequential under one primary item: {current_heading}"
+                )
+        parent_secondary = []
+
+    def flush_section() -> None:
+        nonlocal section_top, parent_top
+        flush_parent()
+        if section_top and section_top != list(range(1, len(section_top) + 1)):
+            errors.append(
+                f"primary numbering must restart at 1 and be sequential within one section: {current_heading}"
+            )
+        section_top = []
+        parent_top = None
+
+    for line in text.splitlines():
         stripped = line.strip()
-        if stripped.startswith("【") and stripped.endswith("】"):
-            section_seen = True
+        if not stripped:
             continue
-        m = re.match(r"^(\d+)\.\s+", stripped)
-        if m:
-            if not section_seen:
-                errors.append("numbered items must follow a section heading")
-            top_numbers.append(int(m.group(1)))
-        if re.match(r"^\d+）\S", stripped):
-            errors.append("secondary numbering requires a space after the marker")
-        if re.match(r"^\d+\.\S", stripped):
+        if stripped.startswith("【") and stripped.endswith("】"):
+            flush_section()
+            current_heading = stripped
+            continue
+        if re.match(r"^\\d+\\.\\S", stripped):
             errors.append("primary numbering requires a space after the marker")
-    if len(top_numbers) >= 3 and top_numbers == list(range(1, len(top_numbers) + 1)):
-        errors.append("primary numbering must not run globally across sections")
+        if re.match(r"^\\d+）\\S", stripped):
+            # The frozen presentation contract permits the compact Chinese
+            # marker 1） as well as 1） followed by a space.
+            pass
+
+        primary = re.match(r"^(\\d+)\\.\\s+", stripped)
+        secondary = re.match(r"^(\\d+)）(?:\\s+)?\\S", stripped)
+        if primary:
+            if not current_heading:
+                errors.append("numbered items must follow a section heading")
+            flush_parent()
+            value = int(primary.group(1))
+            section_top.append(value)
+            parent_top = value
+            continue
+        if secondary:
+            if parent_top is None:
+                errors.append("secondary numbering must follow a primary item")
+            parent_secondary.append(int(secondary.group(1)))
+            continue
+
+    flush_section()
     return list(dict.fromkeys(errors))
-
-
 def _single_item_numbering_errors(text: str) -> list[str]:
     """Reject artificial numbering when a section has one complete item."""
     errors: list[str] = []
