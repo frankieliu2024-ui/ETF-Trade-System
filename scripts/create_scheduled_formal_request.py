@@ -4,6 +4,7 @@ import json
 
 import os
 import secrets
+import time
 from urllib import request as urllib_request
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
@@ -118,7 +119,7 @@ def build_scheduled_request(
 
 
 def dispatch_market_snapshot(request_path: Path) -> dict[str, object]:
-    """Explicitly start the canonical snapshot producer for this request."""
+    """Dispatch the canonical snapshot producer and read back its run identity."""
     token = os.environ.get("GITHUB_TOKEN", "").strip()
     repository = os.environ.get("GITHUB_REPOSITORY", "").strip()
     if not token or not repository:
@@ -126,31 +127,78 @@ def dispatch_market_snapshot(request_path: Path) -> dict[str, object]:
     owner, separator, repo = repository.partition("/")
     if not separator or not owner or not repo:
         return {"submitted": False, "reason": "invalid GITHUB_REPOSITORY"}
+
+    request_relpath = str(request_path.relative_to(ROOT))
     payload = json.dumps({
         "ref": "main",
         "inputs": {
             "node": "scheduled",
             "probe_only": "false",
-            "formal_context_recovery_request": str(request_path.relative_to(ROOT)),
+            "formal_context_recovery_request": request_relpath,
         },
     }).encode("utf-8")
-    endpoint = f"https://api.github.com/repos/{owner}/{repo}/actions/workflows/market-snapshot.yml/dispatches"
-    req = urllib_request.Request(
-        endpoint,
-        data=payload,
-        method="POST",
-        headers={
-            "Accept": "application/vnd.github+json",
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json",
-            "X-GitHub-Api-Version": "2022-11-28",
-        },
+    base = f"https://api.github.com/repos/{owner}/{repo}"
+    dispatch_endpoint = f"{base}/actions/workflows/market-snapshot.yml/dispatches"
+    runs_endpoint = (
+        f"{base}/actions/workflows/market-snapshot.yml/runs"
+        "?event=workflow_dispatch&branch=main&per_page=20"
     )
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+    dispatched_at = datetime.now(timezone.utc)
+
     try:
+        req = urllib_request.Request(
+            dispatch_endpoint, data=payload, method="POST", headers=headers
+        )
         with urllib_request.urlopen(req, timeout=30) as response:
-            return {"submitted": response.status == 204, "status": response.status}
+            if response.status != 204:
+                return {"submitted": False, "status": response.status}
     except Exception as exc:
         return {"submitted": False, "reason": str(exc)}
+
+    # A 204 only acknowledges submission. Do not treat it as producer start.
+    # Read back the run created by this dispatch before reporting success.
+    deadline = datetime.now(timezone.utc) + timedelta(seconds=60)
+    while datetime.now(timezone.utc) < deadline:
+        try:
+            req = urllib_request.Request(runs_endpoint, method="GET", headers=headers)
+            with urllib_request.urlopen(req, timeout=30) as response:
+                data = json.loads(response.read().decode("utf-8"))
+            for run in data.get("workflow_runs", []):
+                created_at = str(run.get("created_at") or "")
+                if not created_at:
+                    continue
+                created = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+                if (
+                    created >= dispatched_at
+                    and str(run.get("event") or "") == "workflow_dispatch"
+                    and str(run.get("head_branch") or "") == "main"
+                ):
+                    return {
+                        "submitted": True,
+                        "status": 204,
+                        "run_id": run.get("id"),
+                        "run_url": run.get("html_url"),
+                        "run_status": run.get("status"),
+                        "run_conclusion": run.get("conclusion"),
+                        "request_path": request_relpath,
+                        "read_back": True,
+                    }
+        except Exception:
+            pass
+        time.sleep(3)
+
+    return {
+        "submitted": False,
+        "reason": "workflow_dispatch accepted but matching workflow run was not read back",
+        "request_path": request_relpath,
+        "read_back": False,
+    }
 
 
 
