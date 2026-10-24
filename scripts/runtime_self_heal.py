@@ -239,14 +239,20 @@ def formal_parent_handoff_gap(*, allow_manual: bool = True) -> tuple[str | None,
         )
     event_found = False
     review_dir = ROOT / "events" / "reviews"
-    for path in review_dir.glob("formal_*.json") if review_dir.exists() else []:
+    for path in review_dir.glob("*.json") if review_dir.exists() else []:
         item = load_json(path, {}) or {}
-        if str(item.get("parent_request_id") or "").strip() == parent_id or str(item.get("request_id") or "").strip() == parent_id:
+        event_type = str(item.get("event_type") or item.get("formal_fact_type") or "").upper()
+        report_type = str(item.get("report_type") or ((item.get("presentation_binding") or {}).get("report_type") or "")).upper()
+        if (
+            (str(item.get("parent_request_id") or "").strip() == parent_id or str(item.get("request_id") or "").strip() == parent_id)
+            and event_type == "FORMAL_POST_CLOSE_REVIEW"
+            and report_type == "ETF_FORMAL_DECISION"
+        ):
             event_found = True
             break
-    if completion and event_found:
+    if bds and completion and event_found:
         return None, None, None
-    missing = ",".join(name for name, present in (("COMPLETION", completion), ("FORMAL_EVENT", event_found)) if not present)
+    missing = ",".join(name for name, present in (("BDS", bds), ("COMPLETION", completion), ("FORMAL_EVENT", event_found)) if not present)
     return str(parent_path.relative_to(ROOT)).replace("\\\\", "/"), parent_id, missing
 
 
