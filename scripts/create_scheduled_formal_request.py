@@ -118,7 +118,8 @@ def build_scheduled_request(
     }
 
 
-\ndef persist_request_to_main(path: Path, payload: dict) -> dict[str, object]:
+
+def persist_request_to_main(path: Path, payload: dict) -> dict[str, object]:
     """Persist the request on current main and prove the exact path is readable."""
     token = (os.environ.get("GITHUB_TOKEN", "").strip()
              or os.environ.get("GH_TOKEN", "").strip())
