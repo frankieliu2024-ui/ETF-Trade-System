@@ -27,6 +27,66 @@ except ModuleNotFoundError:
     from scripts.task_runtime_identity import derive_runtime_identity
 
 
+def _persist_completion_to_main(target: Path) -> tuple[str, dict[str, object]]:
+    """Persist the single completion through GitHub Contents and read it back from main."""
+    token = (os.environ.get("GITHUB_TOKEN", "").strip()
+             or os.environ.get("GH_TOKEN", "").strip())
+    repository = (os.environ.get("GITHUB_REPOSITORY", "").strip()
+                  or "frankieliu2024-ui/ETF-Trade-System")
+    if not token:
+        raise RuntimeError("formal decision completion requires GITHUB_TOKEN or GH_TOKEN for current-main write")
+    owner, separator, repo = repository.partition("/")
+    if not separator or not owner or not repo:
+        raise RuntimeError("invalid GITHUB_REPOSITORY")
+    relative_path = str(target.relative_to(ROOT)).replace("\\\\", "/")
+    content = target.read_bytes()
+    base = f"https://api.github.com/repos/{owner}/{repo}/contents/{relative_path}"
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+    existing_sha = ""
+    try:
+        req = urllib_request.Request(base + "?ref=main", method="GET", headers=headers)
+        with urllib_request.urlopen(req, timeout=30) as response:
+            existing = json.loads(response.read().decode("utf-8"))
+        existing_sha = str(existing.get("sha") or "")
+        if existing_sha:
+            existing_content = str(existing.get("content") or "").replace("\\n", "")
+            import base64
+            if base64.b64decode(existing_content) != content:
+                raise RuntimeError("completion path already contains a different current-main payload")
+            return relative_path, {"written": False, "already_present": True, "sha": existing_sha, "read_back": True}
+    except Exception as exc:
+        if isinstance(exc, RuntimeError):
+            raise
+        if getattr(exc, "code", None) != 404:
+            raise RuntimeError(f"current-main completion read failed: {exc}") from exc
+    import base64
+    payload = {"message": "Persist Formal Decision Scheduled Review completion", "content": base64.b64encode(content).decode("ascii"), "branch": "main"}
+    if existing_sha:
+        payload["sha"] = existing_sha
+    req = urllib_request.Request(base, data=json.dumps(payload).encode("utf-8"), method="PUT", headers=headers)
+    try:
+        with urllib_request.urlopen(req, timeout=30) as response:
+            result = json.loads(response.read().decode("utf-8"))
+    except Exception as exc:
+        raise RuntimeError(f"current-main completion write failed: {exc}") from exc
+    commit_sha = str((result.get("commit") or {}).get("sha") or "")
+    if not commit_sha:
+        raise RuntimeError("current-main completion write returned no commit SHA")
+    req = urllib_request.Request(base + "?ref=main", method="GET", headers=headers)
+    with urllib_request.urlopen(req, timeout=30) as response:
+        read_back = json.loads(response.read().decode("utf-8"))
+    import base64
+    remote_content = base64.b64decode(str(read_back.get("content") or "").replace("\\n", ""))
+    if remote_content != content:
+        raise RuntimeError("current-main completion readback content mismatch")
+    return relative_path, {"written": True, "commit_sha": commit_sha, "blob_sha": read_back.get("sha"), "read_back": True}
+
+
 def _dispatch_notification(completion_path: str) -> dict[str, object]:
     """Dispatch notification and read back the matching workflow run."""
     token = (os.environ.get("GITHUB_TOKEN", "").strip()
@@ -154,10 +214,12 @@ def main() -> int:
         failed = ", ".join(key for key, ok in checks.items() if not ok)
         raise RuntimeError(f"formal decision completion readback mismatch: {failed}")
 
-    dispatch = _dispatch_notification(str(target))
+    completion_path, persistence = _persist_completion_to_main(Path(target))
+    dispatch = _dispatch_notification(completion_path)
     print(json.dumps({
         "ok": True,
-        "completion_path": str(target),
+        "completion_path": completion_path,
+        "persistence": persistence,
         "readback": checks,
         "notification_dispatch": dispatch,
     }, ensure_ascii=False))
