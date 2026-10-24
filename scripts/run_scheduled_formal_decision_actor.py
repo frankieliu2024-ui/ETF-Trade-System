@@ -12,6 +12,7 @@ import hashlib
 import json
 import os
 import time
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from urllib import request as urllib_request
 
@@ -52,7 +53,7 @@ def _dispatch_notification(completion_path: str) -> dict[str, object]:
         "Content-Type": "application/json",
         "X-GitHub-Api-Version": "2022-11-28",
     }
-    dispatched_at = __import__("datetime").datetime.now(__import__("datetime").timezone.utc)
+    dispatched_at = datetime.now(timezone.utc)
 
     try:
         req = urllib_request.Request(
@@ -64,8 +65,8 @@ def _dispatch_notification(completion_path: str) -> dict[str, object]:
     except Exception as exc:
         return {"submitted": False, "reason": str(exc)}
 
-    deadline = __import__("datetime").datetime.now(__import__("datetime").timezone.utc) + __import__("datetime").timedelta(seconds=60)
-    while __import__("datetime").datetime.now(__import__("datetime").timezone.utc) < deadline:
+    deadline = datetime.now(timezone.utc) + timedelta(seconds=60)
+    while datetime.now(timezone.utc) < deadline:
         try:
             req = urllib_request.Request(runs_endpoint, method="GET", headers=headers)
             with urllib_request.urlopen(req, timeout=30) as response:
@@ -74,7 +75,7 @@ def _dispatch_notification(completion_path: str) -> dict[str, object]:
                 created_at = str(run.get("created_at") or "")
                 if not created_at:
                     continue
-                created = __import__("datetime").datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+                created = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
                 if (
                     created >= dispatched_at
                     and str(run.get("event") or "") == "workflow_dispatch"
