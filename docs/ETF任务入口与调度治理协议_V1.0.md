@@ -120,32 +120,16 @@ Trade Review completion必须显式携带并回读本次真实入口身份：自
 
 System Review和Trade Review在生成唯一完整FINAL_CONTENT后，不得以“正文已生成”作为任务完成。必须在同一运行中提交并回读唯一的`SCHEDULED_REVIEW_COMPLETION`，并继续形成canonical review event、REPORT、notification_id和provider result。任一对象缺失、错绑或回读失败，任务状态必须保持未闭环；不得补绑历史对象、补发历史正文或创建第二请求、第二event、第二通知。provider success只能记录为provider接口成功，不得表述为用户已收到。
 
-## 6.3 Trade Review生产入口与用户显示硬门
+## 6.3 Trade Review专属重复协议已移除
 
-Trade Review仅允许使用唯一业务主链：
+Trade Review不在本协议中重复规定正文生成、完成记录、用户展示或通知交接顺序。上述内容唯一以【ETF交易复盘】任务指令、current main正式通知合同和统一生产合同为准。
 
-ETF交易复盘 → CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR → formal_review → 唯一FINAL_CONTENT → SCHEDULED_REVIEW_COMPLETION → GitHub Contents写入与同文件回读 → decision-notification.yml显式派发 → canonical review event → REPORT → notification_center → provider
+本节不得新增或恢复以下独立硬门：
 
-对ETF交易复盘，必须在同一运行中连续完成正文和后置交接：
-
-1. 先完成本次运行的formal_review，生成并冻结唯一FINAL_CONTENT。
-2. 直接依据本次运行身份、formal_review、完整FINAL_CONTENT和正文指纹，构造唯一SCHEDULED_REVIEW_COMPLETION。不得以“未能调用本地Python构建器”为理由跳过GitHub写入。
-3. 使用GitHub Contents将唯一completion写入current main，并立即读取同一文件，核对本次身份、request_type、report_type、report_id、content_hash和完整full_content。
-4. completion写入及回读成功后，显式派发decision-notification.yml，并在同一运行内回读本次workflow、event、REPORT、notification和provider状态。
-5. 如果仅通知派发不可用，不得否定已经形成的completion；必须保留同一FINAL_CONTENT和同一completion，并将阻断登记在通知阶段。
-6. 如果completion写入或回读失败，必须保留已冻结的同一FINAL_CONTENT，并在正文后说明完成记录未形成；不得生成第二正文、第二completion或第二请求。
-
-completion必须使用：
-
-- request_type=SCHEDULED_REVIEW_COMPLETION；
-- source=CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR；
-- interaction_scenario=SCHEDULED_TRADE_REVIEW；
-- presentation_binding.report_type=ETF_TRADE_REVIEW；
-- 本次task_id、task_run_id、occurrence_id、request_id、report_id及完整full_content。
-
-正文冻结、completion写入回读和通知投影是连续但不同的状态，不得混写。completion、event、REPORT、notification和provider均必须绑定同一正文指纹。该规则只适用于ETF交易复盘，不改变ETF系统复核、ETF正式决策或共享通知owner的业务合同。
-
-生产写入统一使用SCHEDULED_TRADE_REVIEW；POST_CLOSE_REVIEW、MIDDAY_REVIEW、WEEKLY_REVIEW仅允许canonical owner历史兼容读取，不得由当前Trade Review Actor写出。
+- 强制调用本地completion builder；
+- 以某个本地脚本是否执行作为用户正文展示前提；
+- 创建第二份completion、event、REPORT或notification；
+- 使用本协议覆盖本次运行实际读取到的任务指令。
 
 ## 7. 统一完成边界
 
