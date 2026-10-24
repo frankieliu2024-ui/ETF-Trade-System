@@ -399,7 +399,10 @@ def assess(now: datetime | None = None) -> dict:
     elif consistency_gate["blocks_market_recovery"]:
         classification, action, reason = "CONSISTENCY_REGRESSION", "ESCALATE", "system consistency has a hard failure that is not proven orthogonal to canonical market recovery"
     elif formal_handoff_path:
-        classification, action, reason = "FORMAL_PARENT_HANDOFF_INCOMPLETE", "ESCALATE", f"READY Formal Decision parent {formal_handoff_parent_id} is missing required post-reply projection: {formal_handoff_missing}; no replay is permitted"
+        # Formal Decision completion is owned by the decision actor/canonical
+        # completion owner. Watchdog observes this projection gap but must not
+        # turn it into a runtime recovery failure or block the next decision.
+        classification, action, reason = "FORMAL_PARENT_HANDOFF_PENDING", "NONE", f"Formal Decision parent {formal_handoff_parent_id} lacks post-reply projection: {formal_handoff_missing}; observation only, no replay and no decision gate"
     elif formal_replay_path:
         classification, action, reason = "FORMAL_PARENT_RECOVERY_REQUIRED", "ESCALATE", f"durable Formal Decision parent {formal_replay_parent_id} has no same-request derived context and no BUSINESS_DECISION_SOURCE; automatic replay is prohibited"
     elif same_day_missing:
