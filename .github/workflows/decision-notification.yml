@@ -71,7 +71,9 @@ permissions:
 # producers in the repository-wide writer lane. Each persistence step below
 # re-reads latest main and retries boundedly before publishing.
 concurrency:
-  group: etf-notification-state-writer
+  # Each notification wake gets an independent lane. Canonical persistence
+  # retries latest main, so no notification run may replace another pending wake.
+  group: etf-decision-notification-${{ github.run_id }}
   cancel-in-progress: false
 
 jobs:
