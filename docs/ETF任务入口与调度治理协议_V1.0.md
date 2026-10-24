@@ -124,15 +124,18 @@ System Review和Trade Review在生成唯一完整FINAL_CONTENT后，不得以“
 
 Trade Review仅允许使用唯一业务主链：
 
-ETF交易复盘 → CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR → formal_review → `scripts/run_scheduled_trade_review_actor.py` → build_trade_review_completion_request → SCHEDULED_REVIEW_COMPLETION → GitHub Contents写入与同文件回读 → 用户显示FINAL_CONTENT → canonical review event → REPORT → notification_center → provider
+ETF交易复盘 → CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR → formal_review → 唯一FINAL_CONTENT → SCHEDULED_REVIEW_COMPLETION → GitHub Contents写入与同文件回读 → decision-notification.yml显式派发 → canonical review event → REPORT → notification_center → provider
 
-对ETF交易复盘，Actor必须严格分离“正文冻结”和“用户展示”两个时点，并按以下顺序执行：
+对ETF交易复盘，必须在同一运行中连续完成正文和后置交接：
 
-1. 先完成本次运行的formal_review，生成并冻结唯一FINAL_CONTENT；此时只在运行上下文内部保存，不向用户展示。
-2. 再使用同一份已冻结FINAL_CONTENT调用scripts/scheduled_review_completion.py的build_trade_review_completion_request，建立、写入并回读唯一completion。
-3. 仅在completion写入和回读成功后，才允许向用户展示此前冻结的同一份FINAL_CONTENT，并继续形成event、REPORT和notification。
+1. 先完成本次运行的formal_review，生成并冻结唯一FINAL_CONTENT。
+2. 直接依据本次运行身份、formal_review、完整FINAL_CONTENT和正文指纹，构造唯一SCHEDULED_REVIEW_COMPLETION。不得以“未能调用本地Python构建器”为理由跳过GitHub写入。
+3. 使用GitHub Contents将唯一completion写入current main，并立即读取同一文件，核对本次身份、request_type、report_type、report_id、content_hash和完整full_content。
+4. completion写入及回读成功后，显式派发decision-notification.yml，并在同一运行内回读本次workflow、event、REPORT、notification和provider状态。
+5. 如果仅通知派发不可用，不得否定已经形成的completion；必须保留同一FINAL_CONTENT和同一completion，并将阻断登记在通知阶段。
+6. 如果completion写入或回读失败，必须保留已冻结的同一FINAL_CONTENT，并在正文后说明完成记录未形成；不得生成第二正文、第二completion或第二请求。
 
-运行身份、正文冻结和completion写入是连续但不同的步骤：运行身份或completion失败，不得把“正文尚未冻结”作为替代性结论；如果核心事实已足够，必须先完成正文冻结，再在真实交接失败处停止用户展示并记录失败。不得使用另一份正文补齐。completion必须使用：
+completion必须使用：
 
 - request_type=SCHEDULED_REVIEW_COMPLETION；
 - source=CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR；
@@ -140,7 +143,7 @@ ETF交易复盘 → CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR → formal_review → `
 - presentation_binding.report_type=ETF_TRADE_REVIEW；
 - 本次task_id、task_run_id、occurrence_id、request_id、report_id及完整full_content。
 
-completion写入或回读未完成时，Actor不得输出完整用户正文，也不得用“正文已生成、completion未执行”作为本次运行的正常终态；只能继续当前运行，或在真实终止边界后登记失败。provider、REPORT和notification属于completion之后的后置投影，不得生成第二正文、第二completion或第二请求。该硬门只适用于ETF交易复盘，不改变ETF系统复核、ETF正式决策或共享通知owner的业务合同。
+正文冻结、completion写入回读和通知投影是连续但不同的状态，不得混写。completion、event、REPORT、notification和provider均必须绑定同一正文指纹。该规则只适用于ETF交易复盘，不改变ETF系统复核、ETF正式决策或共享通知owner的业务合同。
 
 生产写入统一使用SCHEDULED_TRADE_REVIEW；POST_CLOSE_REVIEW、MIDDAY_REVIEW、WEEKLY_REVIEW仅允许canonical owner历史兼容读取，不得由当前Trade Review Actor写出。
 
