@@ -65,10 +65,8 @@ def _security_identity_errors(content: str, security_map: dict[str, str]) -> lis
     errors: list[str] = []
     for code, name in security_map.items():
         for match in re.finditer(rf"(?<!\d){re.escape(code)}(?!\d)", content):
-            start, end = match.span()
             expected = f"{name}（{code}）"
-            left = max(0, end - len(expected))
-            if content[left:end] == expected:
+            if expected in content:
                 continue
             errors.append(f"known security must use canonical display identity: {expected}")
             break
@@ -125,10 +123,37 @@ def _single_item_numbering_errors(text: str) -> list[str]:
     return errors
 
 
+def _formal_object_numbering_errors(text: str) -> list[str]:
+    """Keep Formal Decision object lists aligned with the review contract."""
+    target_headings = {
+        "【全市场发现逐只评估】",
+        "【观察ETF逐只评估】",
+        "【机会ETF逐只评估】",
+        "【全部实际持仓】",
+    }
+    errors: list[str] = []
+    current = ""
+    entries: list[str] = []
+    for line in text.splitlines() + ["【__END__】"]:
+        stripped = line.strip()
+        if stripped.startswith("【") and stripped.endswith("】"):
+            if current in target_headings:
+                if any(re.match(r"^\d+\.\d+\s+", item) for item in entries):
+                    errors.append(f"object section must use review numbering 1. and 1）, not decimal numbering: {current}")
+                if any(re.match(r"^\d+\.\s+", item) for item in entries):
+                    errors.append(f"object list must use secondary numbering 1）、2）、3）：{current}")
+            current = stripped
+            entries = []
+            continue
+        if current in target_headings and stripped:
+            entries.append(stripped)
+    return errors
+
+
 def _time_presentation_errors(text: str) -> list[str]:
     errors: list[str] = []
     for line in text.splitlines():
-        if "北京时间" in line and len(line.strip()) > 90:
+        if "北京时间" in line and len(line.strip()) > 70:
             errors.append("Beijing-time statement is too verbose")
     return errors
 
@@ -164,6 +189,7 @@ def validate_user_visible_content(
     errors = _security_identity_errors(text, mapping)
     errors.extend(_presentation_structure_errors(text))
     errors.extend(_single_item_numbering_errors(text))
+    errors.extend(_formal_object_numbering_errors(text))
     errors.extend(_time_presentation_errors(text))
     if not technical_audit_mode:
         for term in _internal_presentation_terms(text):
