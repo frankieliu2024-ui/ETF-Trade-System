@@ -1117,6 +1117,11 @@ jobs:
           git add data/state/maintenance_health.json
           if ! git diff --cached --quiet; then
             git commit -m "chore: record broker account sync maintenance receipt"
+            STASHED_WORKTREE=false
+            if ! git diff --quiet || [ -n "$(git ls-files --others --exclude-standard)" ]; then
+              git stash push --include-untracked -m "preserve downstream snapshot worktree before maintenance publication"
+              STASHED_WORKTREE=true
+            fi
             for attempt in 1 2 3; do
             git fetch origin main
             if git rebase origin/main && git push origin HEAD:main; then
@@ -1129,6 +1134,9 @@ jobs:
             fi
             sleep 2
           done
+            if [ "$STASHED_WORKTREE" = "true" ]; then
+              git stash pop
+            fi
           fi
       - name: Build objective intraday market delta
         # Derived observability must not block the formal decision critical path.
