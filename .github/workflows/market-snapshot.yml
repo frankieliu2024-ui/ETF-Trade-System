@@ -974,7 +974,14 @@ jobs:
               and interaction_scenario == "POST_CLOSE_REVIEW"
               and isinstance(review, dict)
           )
-          if is_formal_post_close_review:
+          # Broker account screenshot synchronization may include a
+          # subscription/allotment record without an ETF execution event. It is
+          # state synchronization, not an ETF trade-event replay.
+          is_broker_account_fact_sync = (
+              formal_fact_type == "BROKER_SCREENSHOT_ACCOUNT_FACT"
+              and interaction_scenario == "BROKER_SCREENSHOT_SYNC"
+          )
+          if is_formal_post_close_review or is_broker_account_fact_sync:
               # Historical post-close review replay is a canonical review
               # request, not a trade-event request.  Keep it bounded to the
               # existing durable review identity and temporal envelope.
