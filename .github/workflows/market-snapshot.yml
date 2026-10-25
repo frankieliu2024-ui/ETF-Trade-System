@@ -1571,7 +1571,10 @@ jobs:
             # the canonical Phase4-derived trigger/ranking from execution-time
             # latest-main CURRENT after the final reset so a stale staged
             # decision_trigger cannot overwrite a newer trade/account fact.
-            if [ "${{ steps.query_context.outcome }}" = "success" ] &&                ( grep -zqxF 'data/state/decision_trigger.json' /tmp/etf-downstream-files ||                  grep -zqxF 'data/state/capital_efficiency_ranking.json' /tmp/etf-downstream-files ||                  { [ -n "${TRIGGERING_REQUEST_FILE:-}" ] && [ "${SCHEDULED_REVIEW_COMPLETION:-false}" != "true" ]; } ); then
+            if [ "${{ steps.query_context.outcome }}" = "success" ] && \
+               ( grep -zqxF 'data/state/decision_trigger.json' /tmp/etf-downstream-files || \
+                 grep -zqxF 'data/state/capital_efficiency_ranking.json' /tmp/etf-downstream-files || \
+                 { [ -n "${TRIGGERING_REQUEST_FILE:-}" ] && [ "${SCHEDULED_REVIEW_COMPLETION:-false}" != "true" ]; } ); then
               python scripts/build_state_context.py --decision-ready-only
             fi
             # query_context is the request-bound Formal Decision handoff. Keep it
