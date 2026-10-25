@@ -176,7 +176,12 @@ def persist_request_to_main(path: Path, payload: dict) -> dict[str, object]:
         return {"written": False, "reason": str(exc), "path": relative}
 
 def dispatch_market_snapshot(request_path: Path, commit_sha: str) -> dict[str, object]:
-    """Explicitly dispatch one snapshot run after the request is durable on main."""
+    """Bind one durable request to dispatch or push-triggered snapshot execution.
+
+    Contents commits may trigger market-snapshot through the repository push path.
+    Explicit workflow_dispatch is preferred when available, but is not the only
+    legal trigger. The same request commit is matched for at most six minutes.
+    """
     token = (os.environ.get("GITHUB_TOKEN", "").strip()
              or os.environ.get("GH_TOKEN", "").strip())
     repository = (os.environ.get("GITHUB_REPOSITORY", "").strip()
@@ -191,16 +196,16 @@ def dispatch_market_snapshot(request_path: Path, commit_sha: str) -> dict[str, o
         return {"submitted": False, "reason": "invalid GITHUB_REPOSITORY"}
     base = f"https://api.github.com/repos/{owner}/{repo}"
     dispatch_endpoint = f"{base}/actions/workflows/market-snapshot.yml/dispatches"
-    runs_endpoint = (
-        f"{base}/actions/workflows/market-snapshot.yml/runs"
-        "?event=workflow_dispatch&branch=main&per_page=20"
-    )
+    runs_endpoint = f"{base}/actions/workflows/market-snapshot.yml/runs?branch=main&per_page=100"
     headers = {
         "Accept": "application/vnd.github+json",
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json",
         "X-GitHub-Api-Version": "2022-11-28",
     }
+    observed_at = datetime.now(timezone.utc)
+    dispatch_accepted_at: datetime | None = None
+    dispatch_error = ""
     dispatch_body = json.dumps({
         "ref": "main",
         "inputs": {
@@ -209,19 +214,19 @@ def dispatch_market_snapshot(request_path: Path, commit_sha: str) -> dict[str, o
             "formal_context_recovery_request": request_relpath,
         },
     }).encode("utf-8")
-    dispatched_at = datetime.now(timezone.utc)
     try:
         req = urllib_request.Request(
             dispatch_endpoint, data=dispatch_body, method="POST", headers=headers
         )
         with urllib_request.urlopen(req, timeout=30) as response:
-            if response.status != 204:
-                return {"submitted": False, "status": response.status,
-                        "request_path": request_relpath, "commit_sha": commit_sha}
+            if response.status == 204:
+                dispatch_accepted_at = datetime.now(timezone.utc)
+            else:
+                dispatch_error = f"workflow_dispatch returned HTTP {response.status}"
     except Exception as exc:
-        return {"submitted": False, "reason": str(exc),
-                "request_path": request_relpath, "commit_sha": commit_sha}
-    deadline = datetime.now(timezone.utc) + timedelta(seconds=90)
+        dispatch_error = str(exc)
+
+    deadline = observed_at + timedelta(minutes=6)
     while datetime.now(timezone.utc) < deadline:
         try:
             req = urllib_request.Request(runs_endpoint, method="GET", headers=headers)
@@ -232,26 +237,41 @@ def dispatch_market_snapshot(request_path: Path, commit_sha: str) -> dict[str, o
                 if not created_at:
                     continue
                 created = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
-                if (
-                    created >= dispatched_at
-                    and str(run.get("event") or "") == "workflow_dispatch"
-                    and str(run.get("head_branch") or "") == "main"
-                ):
+                event = str(run.get("event") or "")
+                head_sha = str(run.get("head_sha") or "")
+                is_dispatch = (
+                    dispatch_accepted_at is not None
+                    and event == "workflow_dispatch"
+                    and created >= dispatch_accepted_at
+                )
+                is_push = (
+                    event == "push"
+                    and head_sha == str(commit_sha)
+                    and created >= observed_at
+                )
+                if is_dispatch or is_push:
                     return {
-                        "submitted": True, "trigger": "workflow_dispatch",
-                        "run_id": run.get("id"), "run_url": run.get("html_url"),
+                        "submitted": True,
+                        "trigger": "workflow_dispatch" if is_dispatch else "push",
+                        "run_id": run.get("id"),
+                        "run_url": run.get("html_url"),
                         "run_status": run.get("status"),
                         "run_conclusion": run.get("conclusion"),
                         "request_path": request_relpath,
-                        "commit_sha": commit_sha, "read_back": True,
+                        "commit_sha": commit_sha,
+                        "read_back": True,
+                        "dispatch_error": dispatch_error,
                     }
         except Exception:
             pass
-        time.sleep(3)
+        time.sleep(15)
     return {
         "submitted": False,
-        "reason": "workflow_dispatch accepted but matching run was not read back",
-        "request_path": request_relpath, "commit_sha": commit_sha, "read_back": False,
+        "reason": "no matching workflow_dispatch or push run was read back within six minutes",
+        "request_path": request_relpath,
+        "commit_sha": commit_sha,
+        "read_back": False,
+        "dispatch_error": dispatch_error,
     }
 
 def main() -> int:
