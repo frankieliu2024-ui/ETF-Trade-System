@@ -5,7 +5,7 @@ from datetime import datetime
 import tempfile
 from pathlib import Path
 
-from scripts.build_e2e_status import context_component, context_read_contract, formal_gate_recovery_timeout
+from scripts.build_e2e_status import context_component, context_read_contract, formal_gate_recovery_timeout, latest_formal_parent_request
 
 
 class E2EDecisionReadinessTests(unittest.TestCase):
@@ -374,6 +374,12 @@ class E2EDecisionReadinessTests(unittest.TestCase):
             )
         )
 
+
+    def test_newer_durable_parent_supersedes_stale_projection(self):
+        source = (Path(__file__).parents[1] / "scripts" / "build_e2e_status.py").read_text(encoding="utf-8")
+        self.assertIn("newer durable parent supersedes every older derived gate", source)
+        self.assertIn("CURRENT_REQUEST_BOUND_CONTEXT_NOT_PUBLISHED", source)
+        self.assertTrue(callable(latest_formal_parent_request))
 
 if __name__ == "__main__":
     unittest.main()
