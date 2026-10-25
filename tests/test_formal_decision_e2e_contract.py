@@ -127,6 +127,14 @@ class FormalDecisionE2EContractTests(unittest.TestCase):
             with patch.object(center, "ROOT", root), patch.dict(os.environ, {"DECISION_EVENT_PATH": "events/decisions/missing.json"}):
                 self.assertIsNone(center.formal_decision_report_event())
 
+    def test_notification_classifier_accepts_direct_formal_report_type(self):
+        root = Path(__file__).parents[1]
+        workflow = (root / ".github/workflows/decision-notification.yml").read_text(encoding="utf-8")
+        self.assertIn('payload.get("report_type") or binding.get("report_type")', workflow)
+        self.assertIn('payload.get("formal_fact_type")', workflow)
+        self.assertIn('payload.get("task_id")', workflow)
+        self.assertIn('print("FORMAL")', workflow)
+
     def test_formal_context_validation_fails_closed_for_empty_or_wrong_request(self):
         from scripts.build_query_context import validate_request_bound_context
         with tempfile.TemporaryDirectory() as tmp:
