@@ -981,10 +981,10 @@ jobs:
               formal_fact_type == "BROKER_SCREENSHOT_ACCOUNT_FACT"
               and interaction_scenario == "BROKER_SCREENSHOT_SYNC"
           )
-          if is_formal_post_close_review or is_broker_account_fact_sync:
+          if is_formal_post_close_review:
               # Historical post-close review replay is a canonical review
-              # request, not a trade-event request.  Keep it bounded to the
-              # existing durable review identity and temporal envelope.
+              # request, not a trade-event request. Keep its own temporal
+              # identity checks isolated from account-fact synchronization.
               required = (
                   str(obj.get("request_id") or "").strip()
                   and str(obj.get("requested_at_beijing") or "").strip()
@@ -994,6 +994,12 @@ jobs:
               )
               if not required:
                   raise SystemExit("FORMAL_POST_CLOSE_REVIEW replay has invalid request/market temporal identity")
+          elif is_broker_account_fact_sync:
+              # Broker account-fact synchronization may contain a
+              # subscription/allotment record without an ETF execution event.
+              # It is state synchronization only; do not require or fabricate
+              # a canonical ETF trade event.
+              pass
           else:
             trade = obj.get("trade_event")
             if not isinstance(trade, dict):
