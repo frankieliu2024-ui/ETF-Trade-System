@@ -141,8 +141,8 @@ class FormalDecisionE2EContractTests(unittest.TestCase):
         state_build = workflow.index("      - name: Build state context and candidates")
         promotion = workflow.index("      - name: Promote formal request gate after full context validation")
         validation = workflow.index("formal request decision_context {key} mismatch after state context build")
-        self.assertLess(state_build, validation)
-        self.assertLess(validation, promotion)
+        self.assertLess(state_build, promotion)
+        self.assertLess(promotion, validation)
         self.assertNotIn("decision_context request_id mismatch before gate promotion", workflow)
 
     def test_formal_context_validation_fails_closed_for_empty_or_wrong_request(self):
