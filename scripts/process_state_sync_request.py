@@ -413,6 +413,7 @@ def build_dashboard_block(account: dict, decision: dict | None, request: dict) -
     membership = active_account_asset_codes(ROOT, account)
     etfs = [p for p in positions if normalize_code(p.get("code")) in membership["etf"]]
     stocks = [p for p in positions if normalize_code(p.get("code")) in membership["stocks"]]
+    others = [p for p in positions if normalize_code(p.get("code")) in membership.get("other", set())]
     etf_pnl = sum(position_metric(p, "pnl", "holding_pnl") for p in etfs)
     # Current formal risk is projected from the shared Gross canonical owner.
     # Review Known-net facts remain historical PIT compatibility evidence only.
@@ -430,7 +431,8 @@ def build_dashboard_block(account: dict, decision: dict | None, request: dict) -
     universe = load_json(ROOT / "config/market/etf_monitor_universe.json")
     names = {str(item.get("code")): str(item.get("name") or item.get("code")) for item in (universe.get("objects") or []) if item.get("code")}
     observed = [f"{name}（{code}）" for code, name in names.items() if code not in membership["etf"]]
-    lines += ["", f"持仓ETF：{'、'.join(display_name(p) for p in etfs) or '无'}。", f"账户个股：{'、'.join(display_name(p) for p in stocks) or '无'}。", f"观察ETF：{'、'.join(observed) or '无'}。"]
+    lines += ["", f"持仓ETF：{'、'.join(display_name(p) for p in etfs) or '无'}。", f"账户个股：{'、'.join(display_name(p) for p in stocks) or '无'}。",
+        f"账户其他证券：{'、'.join(display_name(p) for p in others) or '无'}。", f"观察ETF：{'、'.join(observed) or '无'}。"]
     if decision:
         title = "最近一次正式决策"
         lifecycle_lines = _managed_lifecycle_lines(decision.get("lifecycle"), account)
