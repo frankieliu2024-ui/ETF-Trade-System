@@ -118,5 +118,14 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
         )
 
 
+    def test_formal_notification_binds_run_identity_and_exact_dispatch(self):
+        center = (ROOT / "scripts" / "notification_center.py").read_text(encoding="utf-8")
+        actor = (ROOT / "scripts" / "run_scheduled_formal_decision_actor.py").read_text(encoding="utf-8")
+        workflow = (ROOT / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
+        for field in ("task_run_id", "request_id", "occurrence_id", "content_hash"):
+            self.assertIn(field, center)
+        self.assertIn("expected_run_name", actor)
+        self.assertIn("run-name:", workflow)
+
 if __name__ == "__main__":
     unittest.main()
