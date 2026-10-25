@@ -2233,12 +2233,7 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
             f"POST_CLOSE_REVIEW market_date {market_date} is later than CURRENT.market_date {current_market_date}"
         )
     formal_occurrence = str(request.get("occurrence_id") or "").strip()
-    is_formal_decision_production = (
-        str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION"
-        and str(request.get("source") or "").strip().upper() == "CHATGPT_SCHEDULED_REVIEW_ACTOR"
-        and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_POST_CLOSE_REVIEW"
-        and str((request.get("presentation_binding") or {}).get("task_id") or "").strip() == "ETF正式决策"
-    )
+    is_formal_decision_production = is_formal_decision_completion(request)
     event_path = (
         ROOT / "events" / "reviews" / f"formal_{formal_occurrence}.json"
         if is_formal_decision_production and formal_occurrence
@@ -2286,12 +2281,7 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
         and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_SCHEDULED_TRADE_REVIEW"
         and str((raw_presentation_binding or {}).get("task_id") or "").strip() == "ETF交易复盘"
     )
-    is_formal_decision_production = (
-        str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION"
-        and str(request.get("source") or "").strip().upper() == "CHATGPT_SCHEDULED_REVIEW_ACTOR"
-        and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_POST_CLOSE_REVIEW"
-        and str((raw_presentation_binding or {}).get("task_id") or "").strip() == "ETF正式决策"
-    )
+    is_formal_decision_production = is_formal_decision_completion(request)
     if is_trade_review_production:
         entry_mode = str(request.get("entry_mode") or "").strip().upper()
         if entry_mode not in {"MANUAL_CONVERSATION", "MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"}:
@@ -3305,6 +3295,17 @@ def _trade_event_id(request: dict, trade: dict, idempotency_key: str, ordinal: i
     suffix = hashlib.sha256(idempotency_key.encode("utf-8")).hexdigest()[:16]
     return f"{request_id}_{ordinal + 1}_{suffix}"
 
+def is_formal_decision_completion(request: dict) -> bool:
+    """Recognize the shared Formal Decision completion contract independent of actor label."""
+    return (
+        str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION"
+        and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_POST_CLOSE_REVIEW"
+        and str(request.get("task_id") or "").strip() == "ETF正式决策"
+        and str(request.get("report_type") or request.get("report_kind") or "").strip().upper() == "ETF_FORMAL_DECISION"
+        and str(request.get("interaction_scenario") or "").strip().upper() == "FORMAL_DECISION"
+    )
+
+
 def canonical_ingress_contract_for_request(request: dict) -> dict:
     """Return the actor-side terminal canonical ingress contract for formal facts."""
 
@@ -3325,11 +3326,22 @@ def canonical_ingress_contract_for_request(request: dict) -> dict:
     # label. An explicit formal_decision payload remains a Decision Fact and
     # must not be diverted into the review-ingress contract merely because the
     # user requested the decision after A-share close.
+    is_formal_completion = is_formal_decision_completion(request)
     is_review_fact = (
-        fact_type in {"FORMAL_POST_CLOSE_REVIEW", "FORMAL_SCHEDULED_TRADE_REVIEW", "POST_CLOSE_REVIEW"}
-        or (scenario == "POST_CLOSE_REVIEW" and not is_decision_fact and not is_trade_fact)
+        (
+            fact_type in {"FORMAL_POST_CLOSE_REVIEW", "FORMAL_SCHEDULED_TRADE_REVIEW", "POST_CLOSE_REVIEW"}
+            and not is_formal_completion
+        )
+        or (scenario == "POST_CLOSE_REVIEW" and not is_decision_fact and not is_trade_fact and not is_formal_completion)
     )
     is_report_delivery = channel in {"REPORT", "REPORT_DELIVERY"} or report_type in {"ETF_TRADE_REVIEW", "SCHEDULED_TRADE_REVIEW"}
+
+    if is_formal_completion:
+        return {
+            "required": False,
+            "terminal_state": CANONICAL_INGRESS_NOT_APPLICABLE,
+            "reason": "formal_decision_completion_projection",
+        }
 
     if not any([is_broker_fact, is_review_fact, is_trade_fact, is_decision_fact]):
         return {
@@ -3798,13 +3810,7 @@ def main() -> int:
     # Formal Decision completion is a separate post-BDS ingress. It reuses the
     # same canonical owner but never lets the BDS push itself create a Decision event.
     original_source_dispatch = str(request.get("request_type") or "").strip().upper() == BUSINESS_DECISION_SOURCE
-    completion_dispatch = (
-        str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION"
-        and str(request.get("source") or "").strip().upper() == "CHATGPT_SCHEDULED_REVIEW_ACTOR"
-        and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_POST_CLOSE_REVIEW"
-        and str(request.get("task_id") or "").strip() == "ETF正式决策"
-        and bool(str(request.get("bds_path") or "").strip())
-    )
+    completion_dispatch = is_formal_decision_completion(request)
     if completion_dispatch:
         bds_path = str(request.get("bds_path") or "").strip()
         # Older task runners may have written the completion envelope without
