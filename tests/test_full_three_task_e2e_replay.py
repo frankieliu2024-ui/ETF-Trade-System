@@ -67,6 +67,8 @@ class SimulatedCanonicalChain:
     def publish_report(self):
         if self.event is None:
             raise RuntimeError("event_required")
+        if self.event["request_id"] != self.completion["request_id"]:
+            raise RuntimeError("event_request_identity_mismatch")
         self.report = notification_center.build_report_from_handoff({
             "schema_version": "1.0",
             "report_type": self.event["report_type"],
