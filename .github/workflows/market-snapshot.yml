@@ -1152,7 +1152,7 @@ jobs:
           fi
 
       - name: Record broker account sync maintenance receipt
-        if: ${{ always() && github.event_name == 'push' && env.TRIGGERING_REQUEST_ID != '' && env.TRIGGERING_REQUEST_FILE != '' }}
+        if: ${{ always() && env.TRIGGERING_REQUEST_ID != '' && env.TRIGGERING_REQUEST_FILE != '' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.replay_request != '')) }}
         shell: bash
         env:
           ACCOUNT_SYNC_OUTCOME: ${{ steps.state_sync.outcome }}
