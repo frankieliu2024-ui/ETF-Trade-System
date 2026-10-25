@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-10-25T16:50:39+08:00",
+  "generated_at": "2026-10-25T21:22:49+08:00",
   "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -15,10 +15,10 @@
     "account": {
       "status": "READY",
       "reason": "confirmed account facts remain valid; historical audit deltas are not pending updates",
-      "updated_at": "2026-10-23T18:25:00+08:00",
-      "source": "CHATGPT_USER_BROKER_SCREENSHOT",
+      "updated_at": "2026-10-25T20:51:00+08:00",
+      "source": "BROKER_HOLDINGS_AND_TRANSACTION_SCREENSHOTS_20261025_2051_USER_CONFIRMED",
       "pending_change_events": [],
-      "historical_audit_event_count": 118,
+      "historical_audit_event_count": 119,
       "cash": 120196.87,
       "reserved_cash_for_settlement": 0,
       "deployable_cash": 120196.87,
@@ -51,13 +51,15 @@
       "decision_context": true,
       "minimum_decision_context": "READY_OR_NOT_APPLICABLE",
       "observability_boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
-      "request_bound": true,
+      "request_bound": false,
       "formal_reply_gate": {
         "request_id": "fd_20261025_164920_manual_formal_analysis_9d7e3c1a",
         "requested_at_beijing": "2026-10-25T16:50:22+08:00",
-        "status": "READY",
-        "reply_freezable": true,
-        "blockers": [],
+        "status": "IN_FLIGHT",
+        "reply_freezable": false,
+        "blockers": [
+          "REQUEST_BOUND_QUERY_CONTEXT_NOT_PUBLISHED"
+        ],
         "source": "decision_fact_pack.formal_reply_freeze",
         "consumer_manifest": {
           "request_id": "fd_20261025_164920_manual_formal_analysis_9d7e3c1a",
@@ -10369,102 +10371,31 @@
         "projection_scope": "FORMAL_DECISION_REQUEST",
         "parent_request_source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
         "parent_request_entry_mode": "MANUAL_CONVERSATION",
-        "actor_action": "COMPLETE_BUSINESS_DECISION_NOW",
+        "actor_action": "CONTINUE_SAME_REQUEST_SILENTLY",
         "user_output_allowed": false,
         "business_decision_allowed": true,
         "final_content_generation_allowed": true,
-        "consumer_status": "BUSINESS_DECISION_READY",
-        "required_problem_ids": [
-          "RISK_PERMISSION",
-          "MAIN_CANDIDATE",
-          "DEPLOYABLE_CASH",
-          "RELEASABLE_CAPITAL",
-          "TRIAL_CONFIRM_CAPACITY",
-          "CONCENTRATION_COMMON_RISK",
-          "NEXT_UNIT_CAPITAL_USE",
-          "HOLDING:159941",
-          "HOLDING:159981",
-          "HOLDING:159992",
-          "OBSERVATION:588000",
-          "OBSERVATION:159781",
-          "OBSERVATION:159941",
-          "OBSERVATION:513180",
-          "OBSERVATION:159561",
-          "OBSERVATION:513520",
-          "OBSERVATION:518880",
-          "OBSERVATION:159992",
-          "OBSERVATION:515880",
-          "OBSERVATION:159326",
-          "OBSERVATION:515220",
-          "OBSERVATION:513350",
-          "OBSERVATION:159981",
-          "OBSERVATION:515080",
-          "DISCOVERY:159248",
-          "DISCOVERY:159805",
-          "DISCOVERY:516270",
-          "DISCOVERY:516520"
-        ],
-        "required_problem_count": 28,
-        "business_answer_contract": "DWP_EXACT_COVERAGE_BEFORE_PRESENTATION",
-        "ready_handoff": {
-          "required": true,
-          "submission_type": "SCHEDULED_REVIEW_COMPLETION",
-          "source": "CHATGPT_SCHEDULED_REVIEW_ACTOR",
-          "parent_request_id": "fd_20261025_164920_manual_formal_analysis_9d7e3c1a",
-          "required_payload_fields": [
-            "request_id",
-            "parent_request_id",
-            "entry_mode",
-            "source",
-            "task_id",
-            "task_run_id",
-            "occurrence_id",
-            "market_date",
-            "decision_id",
-            "formal_review",
-            "presentation_binding.full_content",
-            "presentation_binding.content_hash"
-          ],
-          "binding_rules": {
-            "parent_request_id": "fd_20261025_164920_manual_formal_analysis_9d7e3c1a",
-            "allowed_sources": [
-              "CHATGPT_SCHEDULED_REVIEW_ACTOR"
-            ],
-            "forbid_historical_fallback": true,
-            "read_back_required": true,
-            "completion_must_be_written_and_read_back_before_user_reply": true
-          },
-          "business_decision_allowed": true,
-          "final_content_generation_allowed": true,
-          "user_reply_precondition": true,
-          "notification_attempt_precondition": true,
-          "provider_success_not_required_for_user_reply": true,
-          "user_reply_contract": {
-            "must_be_first_user_visible_message": true,
-            "must_contain_complete_final_content": true,
-            "status_only_reply_forbidden": true,
-            "handoff_status_cannot_replace_content": true,
-            "completion_must_reuse_exact_final_content": true
-          },
-          "post_reply_async": false,
-          "provider_success_async": false,
-          "must_read_back_before_reply": true,
-          "historical_fallback_forbidden": true
-        }
+        "consumer_status": "REQUEST_BOUND_FACTS_BUILDING",
+        "required_problem_ids": [],
+        "required_problem_count": 0,
+        "business_answer_contract": null,
+        "ready_handoff": null,
+        "request_bound": false,
+        "projection_preserved_from_non_formal_runtime_request": true
       },
       "context_read_contract": {
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 1398586,
-          "sha256": "3c9fe40b3aa824ca3ec08a1d8ee6a6140f1452ff62aca5e20acc6db1b905cee6",
+          "byte_count": 1270995,
+          "sha256": "69b903899d1a2624e5c170edb21cff8e62df04c3962937bee498a229805b707f",
           "parsed_object": true
         },
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 462803,
-          "sha256": "acb341b58704564446b005fd53cbf50ad572b1fdd3741ea29c89e5aacb94702e",
+          "byte_count": 427136,
+          "sha256": "325bdf44ac1d43bfe9e4338bd66f63d9104e295a5c9f370ce035c705ce6e39ce",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -10482,7 +10413,7 @@
     "maintenance": {
       "status": "READY",
       "reason": "maintenance guard passed",
-      "checked_at": "2026-10-25T16:50:23+08:00"
+      "checked_at": "2026-10-25T21:01:05+08:00"
     }
   },
   "blockers": [],
@@ -10493,15 +10424,15 @@
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 1398586,
-      "sha256": "3c9fe40b3aa824ca3ec08a1d8ee6a6140f1452ff62aca5e20acc6db1b905cee6",
+      "byte_count": 1270995,
+      "sha256": "69b903899d1a2624e5c170edb21cff8e62df04c3962937bee498a229805b707f",
       "parsed_object": true
     },
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 462803,
-      "sha256": "acb341b58704564446b005fd53cbf50ad572b1fdd3741ea29c89e5aacb94702e",
+      "byte_count": 427136,
+      "sha256": "325bdf44ac1d43bfe9e4338bd66f63d9104e295a5c9f370ce035c705ce6e39ce",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"
