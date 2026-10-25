@@ -2220,7 +2220,15 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     current_path = ROOT / "data" / "state" / "CURRENT.json"
     current_fact = load_json(current_path) if current_path.exists() else {}
     current_market_date = str(current_fact.get("market_date") or "")
-    if current_market_date and market_date > current_market_date:
+    # market_date is the formal run/review date; CURRENT.market_date is the
+    # latest valid market-fact date. A weekend formal decision may therefore
+    # legitimately have market_date later than CURRENT.market_date. Weekdays
+    # remain strict so an actually future trading date cannot pass this guard.
+    try:
+        is_weekend_formal_date = datetime.strptime(market_date, "%Y-%m-%d").date().weekday() >= 5
+    except ValueError:
+        is_weekend_formal_date = False
+    if current_market_date and market_date > current_market_date and not is_weekend_formal_date:
         raise ValueError(
             f"POST_CLOSE_REVIEW market_date {market_date} is later than CURRENT.market_date {current_market_date}"
         )
