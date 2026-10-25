@@ -21,6 +21,7 @@ try:
 except ModuleNotFoundError:
     from scripts.scheduled_review_completion import write_completion_request
     from scripts.task_runtime_identity import derive_runtime_identity
+    from scripts.scheduled_review_completion_recovery import persist_completion_with_recovery
 
 
 
@@ -204,9 +205,9 @@ def main() -> int:
     if not all(checks.values()):
         failed = ", ".join(key for key, ok in checks.items() if not ok)
         raise RuntimeError(f"trade review completion readback mismatch: {failed}")
-    persisted_path = _persist_completion_to_main(str(target))
+    persisted_path, persistence = persist_completion_with_recovery(Path(target))
     dispatch = _dispatch_notification(persisted_path)
-    print(json.dumps({"ok": True, "completion_path": persisted_path, "readback": checks, "notification_dispatch": dispatch}, ensure_ascii=False))
+    print(json.dumps({"ok": True, "completion_path": persisted_path, "persistence": persistence, "readback": checks, "notification_dispatch": dispatch}, ensure_ascii=False))
     return 0
 
 
