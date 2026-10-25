@@ -147,10 +147,12 @@ def _dispatch_notification(completion_path: str) -> dict[str, object]:
                 if not created_at:
                     continue
                 created = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+                expected_run_name = f"ETF decision notification — {completion_path}"
                 if (
                     created >= dispatched_at
                     and str(run.get("event") or "") == "workflow_dispatch"
                     and str(run.get("head_branch") or "") == "main"
+                    and str(run.get("name") or "") == expected_run_name
                 ):
                     candidates.append((created, run))
             if candidates:
