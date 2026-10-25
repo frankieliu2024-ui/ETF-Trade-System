@@ -860,6 +860,22 @@ def maintenance_component(maintenance: dict) -> dict:
     return {"status": status, "reason": reason, "checked_at": maintenance.get("checked_at")}
 
 
+def latest_formal_parent_request() -> dict:
+    """Return the newest durable Formal Decision parent request."""
+    directory = ROOT / "requests" / "live_snapshot"
+    candidates = []
+    if not directory.exists():
+        return {}
+    for path in directory.glob("*.json"):
+        request = read_json(path)
+        if not request or not formal_parent_request(str(request.get("request_id") or "")):
+            continue
+        stamp = parse_time(request.get("requested_at_beijing") or request.get("request_time_beijing"))
+        if stamp is not None:
+            candidates.append((stamp, request))
+    return max(candidates, key=lambda item: item[0])[1] if candidates else {}
+
+
 def main() -> int:
     # One canonical Beijing clock for all derived lifecycle decisions.
     # Orphan-gate recovery compares persisted request time with this instant.
@@ -877,6 +893,34 @@ def main() -> int:
         "lifecycle": lifecycle_component(data["current"]),
         "maintenance": maintenance_component(data["maintenance"]),
     }
+    # A newer durable parent supersedes every older derived gate. Projections
+    # may lag after market-snapshot; never expose the old request as READY.
+    active_parent = latest_formal_parent_request()
+    active_id = str(active_parent.get("request_id") or "").strip()
+    projected_gate = components["decision_context"].get("formal_reply_gate")
+    projected_id = str((projected_gate or {}).get("request_id") or "").strip() if isinstance(projected_gate, dict) else ""
+    if active_id and projected_id and projected_id != active_id:
+        components["decision_context"] = {
+            **components["decision_context"],
+            "status": "DEGRADED",
+            "reason": "current durable Formal Decision request is newer than the derived gate projection",
+            "request_bound": False,
+            "formal_reply_gate": {
+                "request_id": active_id,
+                "requested_at_beijing": active_parent.get("requested_at_beijing"),
+                "status": "IN_FLIGHT",
+                "reply_freezable": False,
+                "blockers": ["CURRENT_REQUEST_BOUND_CONTEXT_NOT_PUBLISHED"],
+                "source": "durable_parent_request_waiting_for_request_bound_projection",
+                "actor_action": "CONTINUE_SAME_REQUEST_SILENTLY",
+                "user_output_allowed": False,
+                "business_decision_allowed": False,
+                "final_content_generation_allowed": False,
+                "consumer_status": "REQUEST_BOUND_FACTS_BUILDING",
+                "projection_scope": "FORMAL_DECISION_REQUEST",
+                "superseded_request_id": projected_id,
+            },
+        }
     # A non-Formal runtime request (System Review, trade review, or a
     # market wake) must not erase the last request-bound Formal Decision gate.
     # Preserve it only when the durable parent still exists and is still a
