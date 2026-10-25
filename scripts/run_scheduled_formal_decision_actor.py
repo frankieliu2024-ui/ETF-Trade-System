@@ -167,7 +167,7 @@ def _dispatch_notification(completion_path: str) -> dict[str, object]:
                         "run_conclusion": run_conclusion,
                         "completion_path": completion_path,
                         "read_back": True,
-                        "workflow_input_readback": "NOT_EXPOSED_BY_GITHUB_RUN_API",
+                        "workflow_input_readback": "VERIFIED_BY_RUN_NAME_BINDING",
                     }
         except Exception as exc:
             last_read_error = str(exc)

@@ -1141,31 +1141,20 @@ def expire_notifications(items: list[dict]) -> list[dict]:
 
 
 def find_existing_notification(items: list[dict], event: dict) -> dict | None:
-    """Find an active notification without letting stale Formal Decision state block delivery.
-
-    Scheduled Review and legacy interrupt matching retain their existing contracts.
-    Formal Decision delivery is stricter: a historical notification is reusable only
-    when it matches the current request/parent/decision identity and, when present,
-    the exact frozen body. Hashes remain audit metadata.
-    """
+    """Find an active notification using the exact Formal Decision run identity."""
     report_type = str(event.get("report_type") or "")
     if report_type == "ETF_FORMAL_DECISION":
-        current = {
-            "request_id": str(event.get("request_id") or ""),
-            "parent_request_id": str(event.get("parent_request_id") or ""),
-            "related_decision_id": str(event.get("related_decision_id") or ""),
-            "content_hash": str(event.get("content_hash") or ""),
-            "content": str(event.get("content") or ""),
-        }
-        if not all(current[key] for key in ("request_id", "parent_request_id", "related_decision_id")):
+        keys = ("task_run_id", "request_id", "occurrence_id", "content_hash")
+        current = {key: str(event.get(key) or "").strip() for key in keys}
+        # Formal Decision notifications are never reusable without the complete
+        # current-run identity. This prevents NO_NOTIFICATION_NEEDED or an old
+        # ALREADY_MANAGED record from suppressing a new run with identical text.
+        if not all(current.values()):
             return None
         for item in items:
             if (
                 str(item.get("report_type") or "") == report_type
-                and str(item.get("request_id") or "") == current["request_id"]
-                and str(item.get("parent_request_id") or "") == current["parent_request_id"]
-                and str(item.get("related_decision_id") or "") == current["related_decision_id"]
-                and (not current["content"] or str(item.get("content") or "") == current["content"])
+                and all(str(item.get(key) or "").strip() == current[key] for key in keys)
             ):
                 return item
         return None
@@ -1261,7 +1250,10 @@ def formal_content_event(source_path: Path) -> dict | None:
     decision_id = str(binding.get("decision_id") or event.get("decision_id") or "").strip()
     report_id = str(binding.get("report_id") or event.get("report_id") or "").strip()
     content_hash = str(binding.get("content_hash") or binding.get("content_sha256") or "").strip()
-    if not content or not request_id or not decision_id or not report_id:
+    parent_request_id = str(event.get("parent_request_id") or binding.get("parent_request_id") or request_id).strip()
+    task_run_id = str(event.get("task_run_id") or binding.get("task_run_id") or "").strip()
+    occurrence_id = str(event.get("occurrence_id") or binding.get("occurrence_id") or "").strip()
+    if not content or not request_id or not parent_request_id or not task_run_id or not occurrence_id or not content_hash or not decision_id or not report_id:
         return None
     if not isinstance(content, str) or not content:
         return None
@@ -1281,7 +1273,10 @@ def formal_content_event(source_path: Path) -> dict | None:
         "report_type": "ETF_FORMAL_DECISION",
         "report_id": report_id,
         "related_decision_id": decision_id,
-        "parent_request_id": request_id,
+        "parent_request_id": parent_request_id,
+        "task_run_id": task_run_id,
+        "occurrence_id": occurrence_id,
+        "request_id": request_id,
         "content_hash": content_hash,
         "idempotency_key": f"ETF_FORMAL_DECISION:{report_id}",
         "no_trade_authority": True,
