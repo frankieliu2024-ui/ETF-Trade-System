@@ -1250,7 +1250,10 @@ def formal_content_event(source_path: Path) -> dict | None:
     decision_id = str(binding.get("decision_id") or event.get("decision_id") or "").strip()
     report_id = str(binding.get("report_id") or event.get("report_id") or "").strip()
     content_hash = str(binding.get("content_hash") or binding.get("content_sha256") or "").strip()
-    if not content or not request_id or not decision_id or not report_id:
+    parent_request_id = str(event.get("parent_request_id") or binding.get("parent_request_id") or request_id).strip()
+    task_run_id = str(event.get("task_run_id") or binding.get("task_run_id") or "").strip()
+    occurrence_id = str(event.get("occurrence_id") or binding.get("occurrence_id") or "").strip()
+    if not content or not request_id or not parent_request_id or not task_run_id or not occurrence_id or not content_hash or not decision_id or not report_id:
         return None
     if not isinstance(content, str) or not content:
         return None
@@ -1270,7 +1273,10 @@ def formal_content_event(source_path: Path) -> dict | None:
         "report_type": "ETF_FORMAL_DECISION",
         "report_id": report_id,
         "related_decision_id": decision_id,
-        "parent_request_id": request_id,
+        "parent_request_id": parent_request_id,
+        "task_run_id": task_run_id,
+        "occurrence_id": occurrence_id,
+        "request_id": request_id,
         "content_hash": content_hash,
         "idempotency_key": f"ETF_FORMAL_DECISION:{report_id}",
         "no_trade_authority": True,
