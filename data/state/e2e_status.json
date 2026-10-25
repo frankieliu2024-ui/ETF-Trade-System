@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-10-25T14:36:06+08:00",
+  "generated_at": "2026-10-25T14:38:17+08:00",
   "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -53,15 +53,15 @@
       "observability_boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
       "request_bound": true,
       "formal_reply_gate": {
-        "request_id": "formal-20261025T143406+0800-auto-9a7f",
-        "requested_at_beijing": "2026-10-25T14:34:06+08:00",
+        "request_id": "fd_20261025_143635_scheduled_formal_review_c7a4e9d2",
+        "requested_at_beijing": "2026-10-25T14:38:03+08:00",
         "status": "READY",
         "reply_freezable": true,
         "blockers": [],
         "source": "decision_fact_pack.formal_reply_freeze",
         "consumer_manifest": {
-          "request_id": "formal-20261025T143406+0800-auto-9a7f",
-          "requested_at_beijing": "2026-10-25T14:34:06+08:00",
+          "request_id": "fd_20261025_143635_scheduled_formal_review_c7a4e9d2",
+          "requested_at_beijing": "2026-10-25T14:38:03+08:00",
           "query_context_path": "data/state/query_context.json",
           "decision_context_path": "data/state/decision_context.json",
           "decision_work_package_present": true,
@@ -84,14 +84,14 @@
         },
         "request_bound_fact_projection": {
           "trigger": {
-            "request_id": "formal-20261025T143406+0800-auto-9a7f",
-            "requested_at_beijing": "2026-10-25T14:34:06+08:00"
+            "request_id": "fd_20261025_143635_scheduled_formal_review_c7a4e9d2",
+            "requested_at_beijing": "2026-10-25T14:38:03+08:00"
           },
           "formal_reply_freeze": {
             "status": "READY",
             "reply_freezable": true,
             "blockers": [],
-            "request_id": "formal-20261025T143406+0800-auto-9a7f",
+            "request_id": "fd_20261025_143635_scheduled_formal_review_c7a4e9d2",
             "post_request_pit_resolved": true,
             "discovery_status": "READY",
             "rule": "Manual formal replies wait only for same-request action-determinative facts that are still legally forming. Once those facts resolve (including explicit terminal degradation), complete analysis and the first user-visible decision reply must proceed without waiting for Decision Fact persistence/post-write acceptance or any downstream Dashboard/account/E2E/notification/research projection. Persistence failure is disclosed as '正式决策尚未持久化' and repaired separately; it does not suppress an otherwise valid business decision reply."
@@ -7628,7 +7628,7 @@
                 },
                 "market_structure_context": {
                   "schema_version": "1.4",
-                  "generated_at": "2026-10-25T05:53:11Z",
+                  "generated_at": "2026-10-25T06:36:13Z",
                   "market_date": "2026-10-23",
                   "as_of_beijing": "2026-10-23T15:07:07+08:00",
                   "source_snapshot": "data/market/snapshots/2026-10-23_150707.json",
@@ -10367,8 +10367,8 @@
           "source_is_canonical": true
         },
         "projection_scope": "FORMAL_DECISION_REQUEST",
-        "parent_request_source": "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
-        "parent_request_entry_mode": "AUTOMATIC_SCHEDULED_TASK",
+        "parent_request_source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+        "parent_request_entry_mode": "MANUAL_CONVERSATION",
         "actor_action": "COMPLETE_BUSINESS_DECISION_NOW",
         "user_output_allowed": false,
         "business_decision_allowed": true,
@@ -10410,7 +10410,7 @@
           "required": true,
           "submission_type": "SCHEDULED_REVIEW_COMPLETION",
           "source": "CHATGPT_SCHEDULED_REVIEW_ACTOR",
-          "parent_request_id": "formal-20261025T143406+0800-auto-9a7f",
+          "parent_request_id": "fd_20261025_143635_scheduled_formal_review_c7a4e9d2",
           "required_payload_fields": [
             "request_id",
             "parent_request_id",
@@ -10426,7 +10426,7 @@
             "presentation_binding.content_hash"
           ],
           "binding_rules": {
-            "parent_request_id": "formal-20261025T143406+0800-auto-9a7f",
+            "parent_request_id": "fd_20261025_143635_scheduled_formal_review_c7a4e9d2",
             "allowed_sources": [
               "CHATGPT_SCHEDULED_REVIEW_ACTOR"
             ],
@@ -10456,15 +10456,15 @@
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 1397742,
-          "sha256": "63f8a3ec28be4b6dd47b927aa14d62436459d8695b1d96576156294f2cf92838",
+          "byte_count": 1398638,
+          "sha256": "034f4691d3ca213ec705c9eab61258350e7a711377d3d67bb15ea75c37bee525",
           "parsed_object": true
         },
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 462406,
-          "sha256": "30397bfbab6a5cd8133f20ad980f8139ff7f82a9c2c27d50f2004fee4bca6c28",
+          "byte_count": 462839,
+          "sha256": "9150cfef44f510535a948aedfddda44d8d6ef9f97170049b84dfcd2f2ef2c8e8",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -10493,15 +10493,15 @@
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 1397742,
-      "sha256": "63f8a3ec28be4b6dd47b927aa14d62436459d8695b1d96576156294f2cf92838",
+      "byte_count": 1398638,
+      "sha256": "034f4691d3ca213ec705c9eab61258350e7a711377d3d67bb15ea75c37bee525",
       "parsed_object": true
     },
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 462406,
-      "sha256": "30397bfbab6a5cd8133f20ad980f8139ff7f82a9c2c27d50f2004fee4bca6c28",
+      "byte_count": 462839,
+      "sha256": "9150cfef44f510535a948aedfddda44d8d6ef9f97170049b84dfcd2f2ef2c8e8",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"
