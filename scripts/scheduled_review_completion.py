@@ -154,6 +154,7 @@ def build_trade_review_completion_request(
         validate_full_day_review(formal_review, account)
     coverage = validate_formal_object_coverage(formal_review, account)
     validate_user_visible_content(str(final_content or ""), canonical_closure_confirmed=False)
+    validate_formal_decision_presentation_timestamp(final_content, requested_at_beijing)
     effective_entry_mode = str(entry_mode or "").strip().upper()
     if effective_entry_mode not in {"MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"}:
         raise ValueError("scheduled trade review completion requires entry_mode=MANUAL_SCHEDULED_TASK or AUTOMATIC_SCHEDULED_TASK")
@@ -229,6 +230,21 @@ def validate_formal_decision_fact_binding(formal_review: dict, request_id: str) 
     failed = [key for key, ok in checks.items() if not ok]
     if failed:
         raise ValueError("formal decision same-request fact chain is not complete: " + ", ".join(failed))
+
+
+def validate_formal_decision_presentation_timestamp(final_content: str, requested_at_beijing: str) -> None:
+    """Reject a frozen Formal Decision body copied from another run."""
+    content = str(final_content or "")
+    requested = str(requested_at_beijing or "").strip()
+    if not requested:
+        raise ValueError("formal decision completion requires requested_at_beijing")
+    request_minute = requested[:16].replace("T", " ")
+    first_line = content.splitlines()[0].strip() if content.splitlines() else ""
+    expected_prefix = f"【ETF正式决策】{request_minute} "
+    if not first_line.startswith(expected_prefix):
+        raise ValueError("formal decision presentation title does not match current request timestamp")
+    if not first_line.endswith(("正式判断", "降级正式判断")):
+        raise ValueError("formal decision presentation title has invalid decision path")
 
 
 def build_formal_review_completion_request(
