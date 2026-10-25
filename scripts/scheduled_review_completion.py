@@ -154,7 +154,6 @@ def build_trade_review_completion_request(
         validate_full_day_review(formal_review, account)
     coverage = validate_formal_object_coverage(formal_review, account)
     validate_user_visible_content(str(final_content or ""), canonical_closure_confirmed=False)
-    validate_formal_decision_presentation_timestamp(final_content, requested_at_beijing)
     effective_entry_mode = str(entry_mode or "").strip().upper()
     if effective_entry_mode not in {"MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"}:
         raise ValueError("scheduled trade review completion requires entry_mode=MANUAL_SCHEDULED_TASK or AUTOMATIC_SCHEDULED_TASK")
@@ -274,6 +273,7 @@ def build_formal_review_completion_request(
     validate_full_day_review(formal_review, account)
     validate_formal_decision_fact_binding(formal_review, request_id)
     validate_user_visible_content(str(final_content or ""), canonical_closure_confirmed=False)
+    validate_formal_decision_presentation_timestamp(final_content, requested_at_beijing)
     effective_entry_mode = str(entry_mode or "").strip().upper()
     if effective_entry_mode not in {"MANUAL_CONVERSATION", "MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"}:
         raise ValueError("formal review completion requires a registered entry mode")
