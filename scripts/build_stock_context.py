@@ -70,13 +70,16 @@ def active_account_asset_codes(root: Path | None = None, account: dict | None = 
     root = root or ROOT
     account = account if account is not None else read_account_fact(root)
     etf_codes = load_etf_codes(root)
-    membership = {"etf": set(), "stocks": set()}
+    membership = {"etf": set(), "stocks": set(), "other": set()}
     for position in account.get("positions") or []:
         if not isinstance(position, dict): continue
         code = normalize_code(first(position, "code", "symbol", "security_code", "instrument_code"))
         quantity = numeric(first(position, "quantity", "qty", "position", "shares", "volume"))
         if not code or quantity is None or quantity <= 0: continue
-        membership["etf" if looks_like_etf(position, code, etf_codes) else "stocks"].add(code)
+        if str(position.get("asset_type") or "").upper() == "OTHER" or str(position.get("security_type") or "").upper() in {"CONVERTIBLE_BOND", "BOND"}:
+            membership["other"].add(code)
+        else:
+            membership["etf" if looks_like_etf(position, code, etf_codes) else "stocks"].add(code)
     return membership
 
 def position_metric(position: dict, current_key: str, legacy_key: str, default: float = 0.0) -> float:
