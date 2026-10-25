@@ -130,7 +130,7 @@ def _dispatch_notification(completion_path: str) -> dict[str, object]:
     except Exception as exc:
         return {"submitted": False, "reason": str(exc)}
 
-    deadline = datetime.now(timezone.utc) + timedelta(seconds=360)
+    deadline = datetime.now(timezone.utc) + timedelta(seconds=60)
     while datetime.now(timezone.utc) < deadline:
         try:
             req = urllib_request.Request(runs_endpoint, method="GET", headers=headers)
@@ -162,7 +162,7 @@ def _dispatch_notification(completion_path: str) -> dict[str, object]:
 
     return {
         "submitted": False,
-        "reason": "notification workflow dispatch accepted but matching run was not read back within bounded polling window",
+        "reason": "notification workflow dispatch accepted but matching run was not read back",
         "completion_path": completion_path,
         "read_back": False,
     }
