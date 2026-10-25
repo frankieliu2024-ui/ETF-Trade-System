@@ -1368,9 +1368,8 @@ jobs:
           if any(not expected[key] or actual[key] != expected[key] for key in expected):
               raise SystemExit(f"request-bound query context identity mismatch: expected={expected} actual={actual}")
           PY
-            else
-              echo "Non-formal request; skip Formal Decision identity validator."
             fi
+          fi
           fi
           if [ "$REQUEST_IS_FORMAL" = "true" ]; then
             # decision_context is produced by the subsequent state-context step.
