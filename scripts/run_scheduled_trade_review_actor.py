@@ -21,6 +21,10 @@ try:
 except ModuleNotFoundError:
     from scripts.scheduled_review_completion import write_completion_request
     from scripts.task_runtime_identity import derive_runtime_identity
+
+try:
+    from scheduled_review_completion_recovery import persist_completion_with_recovery
+except ModuleNotFoundError:
     from scripts.scheduled_review_completion_recovery import persist_completion_with_recovery
 
 
