@@ -16,6 +16,8 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from urllib import request as urllib_request
 
+ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
+
 try:
     from scheduled_review_completion import write_completion_request
 except ModuleNotFoundError:
