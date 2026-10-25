@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-10-25T09:11:48+08:00",
+  "generated_at": "2026-10-25T10:03:22+08:00",
   "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -51,17 +51,17 @@
       "decision_context": true,
       "minimum_decision_context": "READY_OR_NOT_APPLICABLE",
       "observability_boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
-      "request_bound": false,
+      "request_bound": true,
       "formal_reply_gate": {
-        "request_id": "fd_20261025_090736_scheduled_formal_review_51ea2014",
-        "requested_at_beijing": "2026-10-25T09:08:35+08:00",
+        "request_id": "formal-202610251000360800-scheduled",
+        "requested_at_beijing": "2026-10-25 10:00:36 +0800",
         "status": "READY",
         "reply_freezable": true,
         "blockers": [],
         "source": "decision_fact_pack.formal_reply_freeze",
         "consumer_manifest": {
-          "request_id": "fd_20261025_090736_scheduled_formal_review_51ea2014",
-          "requested_at_beijing": "2026-10-25T09:08:35+08:00",
+          "request_id": "formal-202610251000360800-scheduled",
+          "requested_at_beijing": "2026-10-25 10:00:36 +0800",
           "query_context_path": "data/state/query_context.json",
           "decision_context_path": "data/state/decision_context.json",
           "decision_work_package_present": true,
@@ -84,14 +84,14 @@
         },
         "request_bound_fact_projection": {
           "trigger": {
-            "request_id": "fd_20261025_090736_scheduled_formal_review_51ea2014",
-            "requested_at_beijing": "2026-10-25T09:08:35+08:00"
+            "request_id": "formal-202610251000360800-scheduled",
+            "requested_at_beijing": "2026-10-25 10:00:36 +0800"
           },
           "formal_reply_freeze": {
             "status": "READY",
             "reply_freezable": true,
             "blockers": [],
-            "request_id": "fd_20261025_090736_scheduled_formal_review_51ea2014",
+            "request_id": "formal-202610251000360800-scheduled",
             "post_request_pit_resolved": true,
             "discovery_status": "READY",
             "rule": "Manual formal replies wait only for same-request action-determinative facts that are still legally forming. Once those facts resolve (including explicit terminal degradation), complete analysis and the first user-visible decision reply must proceed without waiting for Decision Fact persistence/post-write acceptance or any downstream Dashboard/account/E2E/notification/research projection. Persistence failure is disclosed as '正式决策尚未持久化' and repaired separately; it does not suppress an otherwise valid business decision reply."
@@ -8460,7 +8460,7 @@
                 },
                 "market_structure_context": {
                   "schema_version": "1.4",
-                  "generated_at": "2026-10-25T01:00:52Z",
+                  "generated_at": "2026-10-25T01:09:07Z",
                   "market_date": "2026-10-23",
                   "as_of_beijing": "2026-10-23T15:07:07+08:00",
                   "source_snapshot": "data/market/snapshots/2026-10-23_150707.json",
@@ -11227,8 +11227,8 @@
           "source_is_canonical": true
         },
         "projection_scope": "FORMAL_DECISION_REQUEST",
-        "parent_request_source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
-        "parent_request_entry_mode": "MANUAL_CONVERSATION",
+        "parent_request_source": "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
+        "parent_request_entry_mode": "AUTOMATIC_SCHEDULED_TASK",
         "actor_action": "COMPLETE_BUSINESS_DECISION_NOW",
         "user_output_allowed": false,
         "business_decision_allowed": true,
@@ -11274,7 +11274,7 @@
           "required": true,
           "submission_type": "SCHEDULED_REVIEW_COMPLETION",
           "source": "CHATGPT_SCHEDULED_REVIEW_ACTOR",
-          "parent_request_id": "fd_20261025_090736_scheduled_formal_review_51ea2014",
+          "parent_request_id": "formal-202610251000360800-scheduled",
           "required_payload_fields": [
             "request_id",
             "parent_request_id",
@@ -11290,7 +11290,7 @@
             "presentation_binding.content_hash"
           ],
           "binding_rules": {
-            "parent_request_id": "fd_20261025_090736_scheduled_formal_review_51ea2014",
+            "parent_request_id": "formal-202610251000360800-scheduled",
             "allowed_sources": [
               "CHATGPT_SCHEDULED_REVIEW_ACTOR"
             ],
@@ -11314,23 +11314,21 @@
           "provider_success_async": false,
           "must_read_back_before_reply": true,
           "historical_fallback_forbidden": true
-        },
-        "request_bound": true,
-        "projection_preserved_from_non_formal_runtime_request": true
+        }
       },
       "context_read_contract": {
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 1248620,
-          "sha256": "7d1c1e625f3631321cfde9b17892ffcccb413de6dcc77e61c5a6fe1ddfed15e1",
+          "byte_count": 1535834,
+          "sha256": "256695ec1e58ded34ef207181359088cfab4c7a54993d4cba294e40c28c99853",
           "parsed_object": true
         },
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 495450,
-          "sha256": "dfb0dcc415315683c95147a10454488d911a752f3eeb34f46936413a21663217",
+          "byte_count": 496510,
+          "sha256": "c49554ebf0088415a8ee87da6b9a33bd78c3723f9509043f707f43004bbee3d9",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -11348,7 +11346,7 @@
     "maintenance": {
       "status": "READY",
       "reason": "maintenance guard passed",
-      "checked_at": "2026-10-25T09:11:43+08:00"
+      "checked_at": "2026-10-25T10:02:40+08:00"
     }
   },
   "blockers": [],
@@ -11359,15 +11357,15 @@
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 1248620,
-      "sha256": "7d1c1e625f3631321cfde9b17892ffcccb413de6dcc77e61c5a6fe1ddfed15e1",
+      "byte_count": 1535834,
+      "sha256": "256695ec1e58ded34ef207181359088cfab4c7a54993d4cba294e40c28c99853",
       "parsed_object": true
     },
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 495450,
-      "sha256": "dfb0dcc415315683c95147a10454488d911a752f3eeb34f46936413a21663217",
+      "byte_count": 496510,
+      "sha256": "c49554ebf0088415a8ee87da6b9a33bd78c3723f9509043f707f43004bbee3d9",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"
