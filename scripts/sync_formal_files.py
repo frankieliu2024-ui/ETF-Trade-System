@@ -332,6 +332,7 @@ def build_dashboard_block(account: dict, equity: dict, existing: str, root: Path
     membership = active_account_asset_codes(root, account)
     etfs = [p for p in positions if normalize_code(p.get("code")) in membership["etf"]]
     stocks = [p for p in positions if normalize_code(p.get("code")) in membership["stocks"]]
+    others = [p for p in positions if normalize_code(p.get("code")) in membership.get("other", set())]
     total_asset = float(account.get("total_asset") or 0)
     exposure = float(account.get("stock_market_value") or 0) / total_asset * 100 if total_asset else 0
     risk = canonical_risk(equity, latest_formal_risk())
@@ -383,6 +384,7 @@ def build_dashboard_block(account: dict, equity: dict, existing: str, root: Path
     lines += [
         "", f"持仓ETF：{'、'.join(display_name(p) for p in etfs) or '无'}。",
         f"账户个股：{'、'.join(display_name(p) for p in stocks) or '无'}。",
+        f"账户其他证券：{'、'.join(display_name(p) for p in others) or '无'}。",
         f"观察ETF：{'、'.join(observed) or '无'}。",
         "观察ETF说明：仅展示经正式决策准入/保留、当前无持仓且仍值得跨节点持续监测的ETF；本节点池外发现对象不会因被发现而自动进入本列表。",
     ]
