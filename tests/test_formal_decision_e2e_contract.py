@@ -140,7 +140,7 @@ class FormalDecisionE2EContractTests(unittest.TestCase):
         workflow = (root / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
         state_build = workflow.index("      - name: Build state context and candidates")
         promotion = workflow.index("      - name: Promote formal request gate after full context validation")
-        validation = workflow.index("decision_context request_id mismatch after state context build")
+        validation = workflow.index("formal request decision_context {key} mismatch after state context build")
         self.assertLess(state_build, validation)
         self.assertLess(validation, promotion)
         self.assertNotIn("decision_context request_id mismatch before gate promotion", workflow)
