@@ -1543,7 +1543,7 @@ jobs:
           # Never publish stale request-bound projections after a formal
           # query-context build failure. Core market facts remain publishable,
           # but derived decision state must wait for the same request to rebuild.
-          if [ -n "${TRIGGERING_REQUEST_ID:-}" ] && [ "${{ steps.query_context.outcome }}" != "success" ]; then
+          if { [ -n "${TRIGGERING_REQUEST_ID:-}" ] || [ -n "${FORMAL_CONTEXT_RECOVERY_REQUEST:-}" ]; } && [ "${{ steps.query_context.outcome }}" != "success" ]; then
             git reset -- data/state/query_context.json data/state/decision_context.json data/state/e2e_status.json data/state/decision_trigger.json data/state/capital_efficiency_ranking.json || true
           fi
           git add -f -- data/state/query_context.json
@@ -1571,9 +1571,7 @@ jobs:
             # the canonical Phase4-derived trigger/ranking from execution-time
             # latest-main CURRENT after the final reset so a stale staged
             # decision_trigger cannot overwrite a newer trade/account fact.
-            if grep -zqxF 'data/state/decision_trigger.json' /tmp/etf-downstream-files || \
-               grep -zqxF 'data/state/capital_efficiency_ranking.json' /tmp/etf-downstream-files || \
-               { [ -n "${TRIGGERING_REQUEST_FILE:-}" ] && [ "${SCHEDULED_REVIEW_COMPLETION:-false}" != "true" ]; }; then
+            if [ "${{ steps.query_context.outcome }}" = "success" ] &&                ( grep -zqxF 'data/state/decision_trigger.json' /tmp/etf-downstream-files ||                  grep -zqxF 'data/state/capital_efficiency_ranking.json' /tmp/etf-downstream-files ||                  { [ -n "${TRIGGERING_REQUEST_FILE:-}" ] && [ "${SCHEDULED_REVIEW_COMPLETION:-false}" != "true" ]; } ); then
               python scripts/build_state_context.py --decision-ready-only
             fi
             # query_context is the request-bound Formal Decision handoff. Keep it
