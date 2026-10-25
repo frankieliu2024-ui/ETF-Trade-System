@@ -135,6 +135,16 @@ class FormalDecisionE2EContractTests(unittest.TestCase):
         self.assertIn('payload.get("task_id")', workflow)
         self.assertIn('print("FORMAL")', workflow)
 
+    def test_decision_context_is_validated_after_state_context_build(self):
+        root = Path(__file__).parents[1]
+        workflow = (root / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
+        state_build = workflow.index("      - name: Build state context and candidates")
+        promotion = workflow.index("      - name: Promote formal request gate after full context validation")
+        validation = workflow.index("decision_context request_id mismatch after state context build")
+        self.assertLess(state_build, validation)
+        self.assertLess(validation, promotion)
+        self.assertNotIn("decision_context request_id mismatch before gate promotion", workflow)
+
     def test_formal_context_validation_fails_closed_for_empty_or_wrong_request(self):
         from scripts.build_query_context import validate_request_bound_context
         with tempfile.TemporaryDirectory() as tmp:
