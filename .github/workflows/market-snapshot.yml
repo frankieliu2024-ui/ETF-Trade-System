@@ -1398,9 +1398,17 @@ jobs:
           if not decision_path.is_file() or decision_path.stat().st_size == 0:
               raise SystemExit("formal request cannot promote gate with empty decision_context.json")
           decision = json.loads(decision_path.read_text(encoding="utf-8"))
-          decision_request = str((((decision.get("observability") or {}).get("trigger") or {}).get("request_id")) or decision.get("request_id") or "").strip()
-          if decision_request and decision_request != expected["request_id"]:
+          decision_trigger = (decision.get("observability") or {}).get("trigger") or {}
+          decision_request = str(decision_trigger.get("request_id") or decision.get("request_id") or "").strip()
+          if not decision_request:
+              raise SystemExit("formal request cannot promote gate with empty decision_context request_id")
+          if decision_request != expected["request_id"]:
               raise SystemExit(f"formal request decision_context identity mismatch before gate promotion: expected={expected['request_id']} actual={decision_request}")
+          for identity_key in ("parent_request_id", "task_run_id", "occurrence_id"):
+              actual_value = str(decision_trigger.get(identity_key) or decision.get(identity_key) or "").strip()
+              expected_value = str(request.get(identity_key) or "").strip()
+              if not expected_value or actual_value != expected_value:
+                  raise SystemExit(f"formal request decision_context {identity_key} mismatch before gate promotion: expected={expected_value} actual={actual_value}")
           PY
             # Gate promotion is performed after downstream context validation.
           fi
