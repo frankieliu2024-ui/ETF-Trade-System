@@ -131,11 +131,15 @@ def _dispatch_notification(completion_path: str) -> dict[str, object]:
         return {"submitted": False, "reason": str(exc)}
 
     deadline = datetime.now(timezone.utc) + timedelta(seconds=360)
+    last_read_error = ""
+    matched_run = None
+    poll_seconds = 3
     while datetime.now(timezone.utc) < deadline:
         try:
             req = urllib_request.Request(runs_endpoint, method="GET", headers=headers)
             with urllib_request.urlopen(req, timeout=30) as response:
                 data = json.loads(response.read().decode("utf-8"))
+            candidates = []
             for run in data.get("workflow_runs", []):
                 created_at = str(run.get("created_at") or "")
                 if not created_at:
@@ -146,26 +150,47 @@ def _dispatch_notification(completion_path: str) -> dict[str, object]:
                     and str(run.get("event") or "") == "workflow_dispatch"
                     and str(run.get("head_branch") or "") == "main"
                 ):
+                    candidates.append((created, run))
+            if candidates:
+                candidates.sort(key=lambda item: item[0])
+                matched_run = candidates[0][1]
+                run_status = str(matched_run.get("status") or "").lower()
+                run_conclusion = matched_run.get("conclusion")
+                if run_status == "completed":
                     return {
                         "submitted": True,
-                        "status": 204,
-                        "run_id": run.get("id"),
-                        "run_url": run.get("html_url"),
-                        "run_status": run.get("status"),
-                        "run_conclusion": run.get("conclusion"),
+                        "run_id": matched_run.get("id"),
+                        "run_url": matched_run.get("html_url"),
+                        "run_status": run_status,
+                        "run_conclusion": run_conclusion,
                         "completion_path": completion_path,
                         "read_back": True,
+                        "workflow_input_readback": "NOT_EXPOSED_BY_GITHUB_RUN_API",
                     }
-        except Exception:
-            pass
-        time.sleep(3)
+        except Exception as exc:
+            last_read_error = str(exc)
+        time.sleep(poll_seconds)
 
-    return {
-        "submitted": False,
-        "reason": "notification workflow dispatch accepted but matching run was not read back within bounded polling window",
+    result = {
+        "submitted": bool(matched_run),
+        "reason": (
+            "notification workflow run did not complete within bounded polling window"
+            if matched_run
+            else "notification workflow dispatch accepted but matching run was not read back within bounded polling window"
+        ),
         "completion_path": completion_path,
         "read_back": False,
+        "last_read_error": last_read_error,
     }
+    if matched_run:
+        result.update({
+            "run_id": matched_run.get("id"),
+            "run_url": matched_run.get("html_url"),
+            "run_status": matched_run.get("status"),
+            "run_conclusion": matched_run.get("conclusion"),
+            "workflow_input_readback": "NOT_EXPOSED_BY_GITHUB_RUN_API",
+        })
+    return result
 
 
 
