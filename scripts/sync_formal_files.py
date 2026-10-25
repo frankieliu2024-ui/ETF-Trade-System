@@ -332,6 +332,7 @@ def build_dashboard_block(account: dict, equity: dict, existing: str, root: Path
     membership = active_account_asset_codes(root, account)
     etfs = [p for p in positions if normalize_code(p.get("code")) in membership["etf"]]
     stocks = [p for p in positions if normalize_code(p.get("code")) in membership["stocks"]]
+    other_positions = [p for p in positions if p not in etfs and p not in stocks]
     total_asset = float(account.get("total_asset") or 0)
     exposure = float(account.get("stock_market_value") or 0) / total_asset * 100 if total_asset else 0
     risk = canonical_risk(equity, latest_formal_risk())
