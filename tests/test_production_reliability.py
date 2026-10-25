@@ -85,6 +85,7 @@ class PushPlusNotificationClosureTests(unittest.TestCase):
                     "report_type": "ETF_FORMAL_DECISION",
                     "task_id": "ETF正式决策",
                     "task_run_id": "scheduled-20261012-110000",
+                    "occurrence_id": "scheduled-20261012-110000-occurrence",
                     "full_content": "【ETF正式决策】测试正文",
                     "request_id": "scheduled-20261012-110000",
                     "decision_id": "scheduled-20261012-110000_decision",
