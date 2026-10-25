@@ -262,11 +262,17 @@ def validate_formal_presentation_contract(envelope: dict[str, Any]) -> tuple[boo
         return True, ""
     if not isinstance(content, str) or not content.strip():
         return False, "formal_presentation_missing_content"
+    # Formal Decision's user-visible contract is defined by the current
+    # task prompt. Keep this validator aligned with that contract; the former
+    # generic headings (业务结论/资本用途/后续安排) rejected valid formal
+    # decisions before REPORT delivery and caused a false no-notification path.
     required_headings = (
-        "【业务结论】", "【数据时点与必要依据】", "【三层监测】",
-        "【持仓动作】", "【资本用途】", "【全市场机会发现】", "【机会ETF】",
-        "【观察ETF】", "【关键风险】", "【后续安排】",
-        "【置信度】", "【最可能出错的地方】",
+        "【判断时点与事实边界】", "【当前正式判断】", "【风险与市场状态】",
+        "【三层监测】", "【全市场发现逐只评估】", "【观察ETF逐只评估】",
+        "【机会ETF逐只评估】", "【全市场机会与资本竞争】", "【现金管理】",
+        "【全部实际持仓】", "【最终管理动作】", "【关键风险与改变判断的条件】",
+        "【信息不足在哪里】", "【执行边界】", "【置信度】",
+        "【最可能出错的地方】", "【后置交接状态】",
     )
     missing_headings = [heading for heading in required_headings if heading not in content]
     if missing_headings:
