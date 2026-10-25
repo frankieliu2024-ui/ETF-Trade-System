@@ -409,6 +409,24 @@ def main() -> None:
         formal_discovery=formal_discovery,
         decision_request_time=request_time,
     )
+    # Preserve the canonical request identity in every derived decision context.
+    # The query context is the request-bound source for this build; an empty or
+    # mismatched identity must never be allowed to look READY downstream.
+    decision_trigger = (query_context.get("decision_fact_pack") or {}).get("trigger") or {}
+    trigger_identity = {
+        key: str(decision_trigger.get(key) or "").strip()
+        for key in ("request_id", "parent_request_id", "task_run_id", "occurrence_id", "source", "entry_mode", "requested_at_beijing", "market_date")
+    }
+    context["request_id"] = trigger_identity["request_id"]
+    context["parent_request_id"] = trigger_identity["parent_request_id"]
+    context["task_run_id"] = trigger_identity["task_run_id"]
+    context["occurrence_id"] = trigger_identity["occurrence_id"]
+    context.setdefault("observability", {})["trigger"] = trigger_identity
+    context["decision_trigger"] = {
+        **(context.get("decision_trigger") or {}),
+        **trigger_identity,
+        "request_bound": bool(trigger_identity["request_id"]),
+    }
     context["managed_position_sell_review"] = build_managed_position_projection(ROOT)
     context.setdefault("research_evidence", {})["market_regime_context"] = market_regime
     context["research_evidence"]["market_structure_context"] = market_structure

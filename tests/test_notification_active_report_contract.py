@@ -240,6 +240,8 @@ class FormalFinalContentNotificationTests(unittest.TestCase):
             "report_type": "ETF_FORMAL_DECISION",
             "request_id": "fd-current",
             "parent_request_id": "fd-parent-current",
+            "task_run_id": "run-current",
+            "occurrence_id": "occurrence-current",
             "related_decision_id": "decision-current",
             "content_hash": "hash-current",
         }
