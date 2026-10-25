@@ -128,9 +128,19 @@ jobs:
           with open(sys.argv[1], encoding="utf-8") as handle:
               payload = json.load(handle)
           binding = payload.get("presentation_binding") or {}
+          # Shared Scheduled Review completion has two valid current-main
+          # representations: the original nested presentation binding and the
+          # direct completion contract emitted by the Formal Decision consumer.
+          # Classify from both shapes so a Formal Decision cannot fall through
+          # to the Scheduled Review no-op guard.
+          report_type = str(
+              payload.get("report_type") or binding.get("report_type") or ""
+          ).strip().upper()
           if (
-              payload.get("formal_fact_type") == "FORMAL_POST_CLOSE_REVIEW"
-              and binding.get("report_type") == "ETF_FORMAL_DECISION"
+              str(payload.get("formal_fact_type") or "").strip().upper()
+              == "FORMAL_POST_CLOSE_REVIEW"
+              and report_type == "ETF_FORMAL_DECISION"
+              and str(payload.get("task_id") or "").strip() == "ETF正式决策"
           ):
               print("FORMAL")
           elif payload.get("request_type") == "SCHEDULED_REVIEW_COMPLETION":
