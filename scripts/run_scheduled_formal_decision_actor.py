@@ -28,6 +28,11 @@ try:
 except ModuleNotFoundError:
     from scripts.task_runtime_identity import derive_runtime_identity
 
+try:
+    from scheduled_review_completion_recovery import persist_completion_with_recovery
+except ModuleNotFoundError:
+    from scripts.scheduled_review_completion_recovery import persist_completion_with_recovery
+
 
 def _persist_completion_to_main(target: Path) -> tuple[str, dict[str, object]]:
     """Persist the single completion through GitHub Contents and read it back from main."""
@@ -243,7 +248,7 @@ def main() -> int:
         failed = ", ".join(key for key, ok in checks.items() if not ok)
         raise RuntimeError(f"formal decision completion readback mismatch: {failed}")
 
-    completion_path, persistence = _persist_completion_to_main(Path(target))
+    completion_path, persistence = persist_completion_with_recovery(Path(target))
     dispatch = _dispatch_notification(completion_path)
     print(json.dumps({
         "ok": True,
