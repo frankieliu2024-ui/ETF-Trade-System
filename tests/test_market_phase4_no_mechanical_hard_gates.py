@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 from scripts import build_phase4_automation as phase4
@@ -87,7 +88,8 @@ class Phase4NoMechanicalHardGatesTest(unittest.TestCase):
         account = {"positions": [], "formal_action": {}}
         e2e = {"status": "READY", "components": {"risk": {"etf_strategy_risk_pct": -8.01}}}
         prior = {"risk_zone": "RISK_OBSERVATION", "pending_trigger": False}
-        trigger = phase4._build_trigger(current, account, e2e, {}, prior, {}, {})
+        with patch.object(phase4, "_latest_formal_request", return_value={}):
+            trigger = phase4._build_trigger(current, account, e2e, {}, prior, {}, {})
         self.assertEqual(trigger["trigger_type"], "RISK_BOUNDARY_CROSSED")
         self.assertTrue(trigger["requires_formal_reassessment"])
         self.assertEqual(trigger["risk_zone_semantics"], "REVIEW_CONTEXT_ONLY_NOT_TRADING_PERMISSION")
