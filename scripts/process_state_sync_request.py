@@ -3473,6 +3473,17 @@ def normalize_broker_account_fact_ingress(request: dict, supplied: object) -> tu
     if not isinstance(positions, list):
         return supplied, 0
     normalized = json.loads(json.dumps(supplied))
+    # Explicit screenshot-scoped fields are authoritative for this ingress.
+    # Do not let stale uncertainty or timestamps survive a newer confirmed
+    # screenshot when the request supplies the replacement value.
+    for field in (
+        "unconfirmed_visible_items",
+        "broker_displayed_at_beijing",
+        "account_screenshot_captured_at_beijing",
+        "account_fact_derivation_note",
+    ):
+        if field in supplied:
+            normalized[field] = supplied[field]
     # Normalize display-oriented screenshot aliases at the account ingress.
     # Formal Decision later consumes only the latest canonical account_fact.
     aliases = {
