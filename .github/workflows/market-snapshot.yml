@@ -1157,6 +1157,19 @@ jobs:
         env:
           ACCOUNT_SYNC_OUTCOME: ${{ steps.state_sync.outcome }}
         run: |
+          # Explicit replay runs do not pass through push-trigger detection.
+          # Bind the maintenance receipt directly to the replay request before
+          # recording it, so the receipt cannot retain an older run identity.
+          if [ -z "${TRIGGERING_REQUEST_ID:-}" ] && [ -n "${REPLAY_REQUEST:-}" ]; then
+            TRIGGERING_REQUEST_FILE="$REPLAY_REQUEST"
+            TRIGGERING_REQUEST_ID="$(python - "$TRIGGERING_REQUEST_FILE" <<'PY'
+          import json, sys
+          from pathlib import Path
+          print(str(json.loads(Path(sys.argv[1]).read_text(encoding="utf-8")).get("request_id") or "").strip())
+          PY
+            )"
+            export TRIGGERING_REQUEST_FILE TRIGGERING_REQUEST_ID
+          fi
           python scripts/record_account_sync_maintenance.py \
             --request-id "$TRIGGERING_REQUEST_ID" \
             --request-path "$TRIGGERING_REQUEST_FILE" \
