@@ -399,14 +399,14 @@ jobs:
           # otherwise both projections consume the same path and the Formal
           # Decision safety guard rejects the handoff as a misrouted review.
           if python - "$completion_path" <<'PY'
-import json, sys
-with open(sys.argv[1], encoding="utf-8") as handle:
-    payload = json.load(handle)
-raise SystemExit(
-    0 if str(payload.get("formal_fact_type") or "").strip().upper()
-    == "FORMAL_POST_CLOSE_REVIEW" else 1
-)
-PY
+          import json, sys
+          with open(sys.argv[1], encoding="utf-8") as handle:
+              payload = json.load(handle)
+          raise SystemExit(
+              0 if str(payload.get("formal_fact_type") or "").strip().upper()
+              == "FORMAL_POST_CLOSE_REVIEW" else 1
+          )
+          PY
           then
             echo "Formal Decision completion routed to Formal Decision projection."
             echo "review_event_path=" >> "$GITHUB_OUTPUT"
