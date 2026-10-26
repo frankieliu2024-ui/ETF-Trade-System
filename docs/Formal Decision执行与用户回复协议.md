@@ -132,7 +132,6 @@ FINAL_CONTENT冻结后，必须调用 current main 登记的 ETF 正式决策 Ac
 → 合法准入
 → 唯一 FINAL_CONTENT
 → ETF正式决策 Actor
-→ 唯一业务决策源（BUSINESS_DECISION_SOURCE）
 → current main 统一完成记录生产者
 → 正式事件
 → 正式报告
@@ -144,7 +143,7 @@ FINAL_CONTENT冻结后，必须调用 current main 登记的 ETF 正式决策 Ac
 
 Actor不得创建第二请求、第二正文、第二完成记录、第二事件、第二报告或第二通知链；不得直接手写事件、报告、通知或调用服务商。
 
-完成记录必须由统一生产者生成并回读；生产入口接收并校验本次唯一 `formal_completion_path`，且该路径必须属于当前父请求。至少核对：
+完成记录必须由统一生产者生成并回读；生产入口接收并校验本次唯一 Formal Decision completion，且该记录必须属于当前父请求。至少核对：
 
 - task_id、task_run_id、occurrence_id、request_id；
 - parent_request_id、source、entry_mode、market_date；
@@ -203,4 +202,5 @@ workflow成功不等于上述任何后续状态成功；服务商成功不等于
 Formal Decision 的 Actor、workflow、测试和治理检查不得创建、读取或依赖 BDS。若共享状态同步模块暂时保留历史兼容读取，其作用域必须限于非 Formal Decision 的历史状态同步，不得被 Formal Decision 请求、完成记录、事件或通知链调用。历史档案不属于当前生产链。
 
 本协议不新增生产链；它只约束当前已有的 Formal Decision Actor、统一完成记录生产者、正式事件、报告和通知链。
+
 
