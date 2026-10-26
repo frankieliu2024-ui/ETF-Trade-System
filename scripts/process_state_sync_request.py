@@ -2338,14 +2338,12 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
             and close_contract.get("market_date") == market_date
             and bool(canonical_close_snapshot)
         )
-        # A mismatched close reference is an evidence warning, not a reason
-        # to discard an otherwise complete review. Keep the review body and
-        # disclose the close-data boundary in the canonical projection.
-        close_reference_mismatch = (
-            canonical_close_verified
-            and supplied_close_snapshot != canonical_close_snapshot
-        )
-        close_verified = canonical_close_verified and not close_reference_mismatch
+        # A present verified close with a mismatched or absent request reference
+        # is a stale/ambiguous input. Do not turn a review computed against
+        # another snapshot into a degraded formal review.
+        if canonical_close_verified and supplied_close_snapshot != canonical_close_snapshot:
+            return False, False
+        close_verified = canonical_close_verified and supplied_close_snapshot == canonical_close_snapshot
         # Review completion is independent from close-data completeness. Preserve
         # the canonical close contract when available; otherwise persist an explicit
         # degraded review with the missing/invalid evidence boundary. Never invent
@@ -2416,6 +2414,7 @@ def _validate_presentation_binding(binding: dict, report_type: str, strict_produ
     expected_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
     supplied_hash = str(binding.get("content_hash") or "").strip()
     supplied_hash_source = str(binding.get("content_hash_source") or "").strip()
+    binding_warning = ""
     if strict_production:
         if not str(binding.get("occurrence_id") or "").strip():
             raise ValueError("scheduled trade review production binding requires occurrence_id")
