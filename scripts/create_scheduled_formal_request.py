@@ -64,6 +64,16 @@ def build_scheduled_request(
     occurrence_id: str,
     entry_mode: str = AUTOMATIC_MODE,
 ) -> dict:
+    # The request timestamp is the lower bound for every request-bound market
+    # fact.  Never allow a caller or task adapter to write a future timestamp;
+    # otherwise a successfully produced snapshot can be rejected forever as
+    # being earlier than the request.  Historical fixtures may still pass an
+    # explicitly old `now` value, but a future value is always invalid.
+    actual_now = datetime.now(BEIJING)
+    if now.astimezone(BEIJING) > actual_now + timedelta(seconds=5):
+        raise ValueError(
+            "scheduled formal request timestamp cannot be in the future"
+        )
     mode = str(entry_mode or "").strip().upper()
     if mode not in TRIGGER_SOURCES:
         raise ValueError("unsupported scheduled task entry_mode")
@@ -284,6 +294,8 @@ def main() -> int:
     if decision == "TERMINAL":
         raise SystemExit("FORMAL_SCHEDULE_INGRESS=INVALID_ENTRY_MODE")
 
+    # Capture the clock once and pass that exact value through identity,
+    # request persistence, snapshot dispatch, and readback.
     now = datetime.now(BEIJING)
     task_id = os.environ.get("TASK_ID", "").strip() or "ETF正式决策"
     task_run_id = os.environ.get("TASK_RUN_ID", "").strip()
