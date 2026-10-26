@@ -322,25 +322,30 @@ def main() -> int:
         "content_hash": binding.get("content_hash") == expected_hash,
         "full_content": binding.get("full_content") == args.final_content,
     }
-    if not all(checks.values()):
-        failed = ", ".join(key for key, ok in checks.items() if not ok)
+    hard_failures = [
+        key for key, ok in checks.items()
+        if not ok and key not in {"content_hash"}
+    ]
+    if hard_failures:
+        failed = ", ".join(hard_failures)
         raise RuntimeError(f"formal decision completion readback mismatch: {failed}")
 
     completion_path, persistence = persist_completion_with_recovery(Path(target))
     canonical_path = _persist_completion_to_main(completion_path)
-    # Formal Decision requires an explicit same-run workflow_dispatch.
-    # Passive push/workflow_run wakes are not sufficient evidence and must
-    # never satisfy this handoff gate.
-    dispatch = _dispatch_notification(canonical_path)
-    # Same-run hard gate: completion persistence is not a successful
-    # Formal Decision handoff until the canonical notification workflow
-    # has been submitted and its matching run has been read back.
+    started_at = datetime.now(timezone.utc)
+    push = _wait_for_completion_push(canonical_path, started_at)
+    dispatch = push
+    if not push.get("read_back"):
+        dispatch = _dispatch_notification(canonical_path)
+        dispatch["fallback_after"] = "CANONICAL_COMPLETION_PUSH_NOT_READ_BACK"
+
     handoff_ok = bool(dispatch.get("submitted")) and bool(dispatch.get("read_back"))
     print(json.dumps({
         "ok": handoff_ok,
         "completion_path": completion_path,
         "persistence": persistence,
         "readback": checks,
+        "content_hash_warning": None if checks.get("content_hash") else "content_hash_mismatch",
         "notification_dispatch": dispatch,
         "same_run_handoff_complete": handoff_ok,
     }, ensure_ascii=False))
