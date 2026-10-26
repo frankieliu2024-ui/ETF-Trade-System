@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 63442)
+Total output lines: 4436
+
 from __future__ import annotations
 
 import argparse
@@ -2207,215 +2210,7 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     review = request.get("formal_review")
     interaction_scenario = str(request.get("interaction_scenario") or "").strip().upper()
     if interaction_scenario not in {"SCHEDULED_TRADE_REVIEW", "POST_CLOSE_REVIEW", "FORMAL_DECISION", "MIDDAY_REVIEW", "WEEKLY_REVIEW"} or not review:
-        return False, False
-    review_scope = str(review.get("review_scope") or "").strip().upper()
-    request_phase = str(request.get("market_phase") or request.get("session_stage") or "").strip().upper()
-    review_phase = str(review.get("market_phase") or review.get("session_stage") or "").strip().upper()
-    is_midday_review = (
-        interaction_scenario == "MIDDAY_REVIEW"
-        or review_scope == "MORNING_SESSION_STAGE_ONLY"
-        or "MIDDAY_BREAK" in {request_phase, review_phase}
-    )
-    market_date = str(review.get("market_date") or request.get("market_date") or account.get("last_confirmed_market_date") or "")
-    if not market_date:
-        raise RuntimeError("POST_CLOSE_REVIEW requires market_date")
-    current_path = ROOT / "data" / "state" / "CURRENT.json"
-    current_fact = load_json(current_path) if current_path.exists() else {}
-    current_market_date = str(current_fact.get("market_date") or "")
-    # market_date is the formal run/review date; CURRENT.market_date is the
-    # latest valid market-fact date. A weekend formal decision may therefore
-    # legitimately have market_date later than CURRENT.market_date. Weekdays
-    # remain strict so an actually future trading date cannot pass this guard.
-    try:
-        is_weekend_formal_date = datetime.strptime(market_date, "%Y-%m-%d").date().weekday() >= 5
-    except ValueError:
-        is_weekend_formal_date = False
-    if current_market_date and market_date > current_market_date and not is_weekend_formal_date:
-        raise ValueError(
-            f"POST_CLOSE_REVIEW market_date {market_date} is later than CURRENT.market_date {current_market_date}"
-        )
-    formal_occurrence = str(request.get("occurrence_id") or "").strip()
-    is_formal_decision_production = is_formal_decision_completion(request)
-    event_path = (
-        ROOT / "events" / "reviews" / f"formal_{formal_occurrence}.json"
-        if is_formal_decision_production and formal_occurrence
-        else ROOT / "events" / "reviews" / f"{market_date}.json"
-    )
-    prior = load_json(event_path) if event_path.exists() else {}
-    prior_review = prior.get("review") if isinstance(prior.get("review"), dict) else {}
-    incoming_time = parse_time(
-        review.get("reviewed_at_beijing")
-        or review.get("updated_at_beijing")
-        or request.get("requested_at_beijing")
-        or request.get("request_time_beijing")
-        or account.get("updated_at")
-    )
-    prior_time = parse_time(
-        prior.get("reviewed_at_beijing")
-        or prior.get("updated_at_beijing")
-        or prior.get("account_updated_at")
-    )
-    replay_received = parse_time(request.get("requested_at_beijing") or request.get("request_time_beijing"))
-    prior_updated = parse_time(prior.get("updated_at_beijing"))
-    if prior_updated and replay_received and replay_received < prior_updated and review == prior_review:
-        # Exact replay of the already-persisted canonical review: repair all
-        # downstream projections idempotently without revalidating historical
-        # PIT against today's account or rewriting the canonical review event.
-        # This preserves the same request/event identity while allowing a
-        # previously interrupted handoff to complete its REPORT and closure.
-        is_scheduled_trade_review = (
-            str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION"
-            and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_SCHEDULED_TRADE_REVIEW"
-            and str(request.get("interaction_scenario") or "").strip().upper() == "SCHEDULED_TRADE_REVIEW"
-        )
-        if is_scheduled_trade_review:
-            _persist_post_close_review_projections(account, request, prior_review, prior)
-        else:
-            _persist_existing_case_detail_projections(prior_review)
-        return True, True
-    # Normalize scheduled trade-review bindings at the canonical owner.
-    # Legacy/recovery requests without a presentation binding remain compatible;
-    # a present binding must satisfy the exact scheduled-delivery contract.
-    raw_presentation_binding = request.get("presentation_binding")
-    is_trade_review_production = (
-        str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION"
-        and str(request.get("source") or "").strip().upper() == "CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR"
-        and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_SCHEDULED_TRADE_REVIEW"
-        and str((raw_presentation_binding or {}).get("task_id") or "").strip() == "ETF交易复盘"
-    )
-    is_formal_decision_production = is_formal_decision_completion(request)
-    if is_trade_review_production:
-        entry_mode = str(request.get("entry_mode") or "").strip().upper()
-        if entry_mode not in {"MANUAL_CONVERSATION", "MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"}:
-            raise ValueError("scheduled trade review production requires a registered manual or automatic entry mode")
-        binding_entry_mode = str((raw_presentation_binding or {}).get("entry_mode") or "").strip().upper()
-        if binding_entry_mode != entry_mode:
-            raise ValueError("scheduled trade review production entry_mode must match presentation_binding.entry_mode")
-    if is_formal_decision_production:
-        entry_mode = str(request.get("entry_mode") or "").strip().upper()
-        if entry_mode not in {"MANUAL_CONVERSATION", "MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"}:
-            raise ValueError("formal decision production requires a registered entry mode")
-        binding_entry_mode = str((raw_presentation_binding or {}).get("entry_mode") or "").strip().upper()
-        if binding_entry_mode != entry_mode:
-            raise ValueError("formal decision production entry_mode must match presentation_binding.entry_mode")
-    presentation_binding = (
-        _validate_presentation_binding(
-            raw_presentation_binding,
-            "ETF_FORMAL_DECISION" if is_formal_decision_production else "ETF_TRADE_REVIEW",
-            strict_production=is_trade_review_production or is_formal_decision_production,
-        )
-        if raw_presentation_binding is not None
-        else {}
-    )
-    if presentation_binding:
-        presentation_binding["request_id"] = str(request.get("request_id") or "")
-        presentation_binding["report_id"] = (
-            f"etf_formal_decision:{presentation_binding['task_run_id']}"
-            if is_formal_decision_production
-            else f"etf_trade_review:{presentation_binding['task_run_id']}"
-        )
-    data_time = dict(review.get("data_time")) if isinstance(review.get("data_time"), dict) else {}
-    if is_midday_review:
-        # Midday Scheduled Review is a valid stage review, not a 15:00 close review.
-        # Preserve the frozen morning boundary and bypass the close-only contract;
-        # the same canonical review event/report path remains the sole delivery chain.
-        data_time["close_data_status"] = "MORNING_STAGE_REFERENCE"
-        data_time["close_data_gap"] = (
-            "This is a MORNING stage review bounded by the 11:30 A-share boundary; "
-            "it is not a full-day session close."
-        )
-        review = dict(review)
-        review["data_time"] = data_time
-    else:
-        current_path = ROOT / "data" / "state" / "CURRENT.json"
-        current = load_json(current_path) if current_path.exists() else {}
-        close_contract = build_close_data_contract(ROOT, current)
-        supplied_close_snapshot = _normalize_close_snapshot_reference(data_time.get("close_snapshot") or review.get("close_snapshot"))
-        canonical_close_snapshot = _normalize_close_snapshot_reference(close_contract.get("latest_snapshot"))
-        canonical_close_verified = (
-            close_contract.get("status") == "VERIFIED_SESSION_CLOSE"
-            and close_contract.get("verified_session_close") is True
-            and close_contract.get("market_date") == market_date
-            and bool(canonical_close_snapshot)
-        )
-        # A present verified close with a mismatched or absent request reference is
-        # a stale/ambiguous input, not a missing-close case. Do not silently turn a
-        # review computed against another snapshot into a degraded formal review.
-        if canonical_close_verified and supplied_close_snapshot != canonical_close_snapshot:
-            return False, False
-        close_verified = canonical_close_verified and supplied_close_snapshot == canonical_close_snapshot
-        # Review completion is independent from close-data completeness. Preserve
-        # the canonical close contract when available; otherwise persist an explicit
-        # degraded review with the missing/invalid evidence boundary. Never invent
-        # a close snapshot or promote an intraday fact to 15:00.
-        if close_verified:
-            data_time["close_data_status"] = "VERIFIED_SESSION_CLOSE"
-            data_time["close_snapshot"] = canonical_close_snapshot
-            data_time.pop("close_data_gap", None)
-        else:
-            data_time["close_data_status"] = str(close_contract.get("status") or "UNVERIFIED")
-            data_time["close_data_gap"] = (
-                "VERIFIED_SESSION_CLOSE unavailable for this market date; review completed "
-                "with degraded/incomplete evidence and no inferred close."
-            )
-            data_time.pop("close_snapshot", None)
-        review = dict(review)
-        review["data_time"] = data_time
-    lifecycle_error = validate_current_lifecycle_contract(review.get("lifecycle"), account)
-    if lifecycle_error:
-        raise ValueError(f"invalid formal review lifecycle contract: {lifecycle_error}")
-    review_lifecycle = review.get("holding_actions") or review.get("lifecycle")
-    managed_error = validate_managed_position_lifecycle(review_lifecycle, account, "formal_review.managed_positions")
-    if managed_error:
-        raise ValueError(f"invalid formal review managed-position contract: {managed_error}")
-    managed_projection = build_managed_position_projection(ROOT, account)
-    review = _normalize_executed_trade_case_mapping(review, market_date)
-    payload = {"market_date": market_date, "account_updated_at": account.get("updated_at"), "formal_review": review, "presentation_binding": presentation_binding}
-    fingerprint = hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
-    prior = load_json(event_path) if event_path.exists() else {}
-    if prior.get("fingerprint") == fingerprint:
-        # Event existence is not proof that downstream projections completed.
-        persisted_review = prior.get("review") if isinstance(prior.get("review"), dict) else review
-        _persist_post_close_review_projections(account, request, persisted_review, prior)
-        return True, True
-    if prior_time and incoming_time and incoming_time < prior_time:
-        # A stale review cannot replace canonical event/PIT facts, but its
-        # already-canonical lifecycle mapping may still repair human CASE
-        # projections through the same formal-file gateway.
-        prior_review = prior.get("review") if isinstance(prior.get("review"), dict) else {}
-        _persist_existing_case_detail_projections(prior_review)
-        return True, True
-    review_time = (incoming_time or datetime.now(SHANGHAI)).isoformat(timespec="seconds")
-    event = {"event_type": "FORMAL_SCHEDULED_TRADE_REVIEW" if is_trade_review_production else "FORMAL_POST_CLOSE_REVIEW", "source": request.get("source"), "entry_mode": request.get("entry_mode"), "market_date": market_date, "account_updated_at": account.get("updated_at"), "fingerprint": fingerprint, "request_id": request.get("request_id"), "report_id": presentation_binding.get("report_id", ""), "content_hash": presentation_binding.get("content_hash", ""), "review": review, "presentation_binding": presentation_binding, "managed_position_sell_review": managed_projection, "updated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds")}
-    event["reviewed_at_beijing"] = review_time
-    event_path.parent.mkdir(parents=True, exist_ok=True)
-    atomic_json_write(event_path, event)
-    _persist_post_close_review_projections(account, request, review, event)
-    return True, False
-
-
-def _validate_presentation_binding(binding: dict, report_type: str, strict_production: bool = False) -> dict:
-    if not isinstance(binding, dict):
-        raise ValueError("scheduled completion presentation_binding must be an object")
-    required = ("task_id", "task_run_id", "request_id", "report_id", "full_content")
-    missing = [key for key in required if not str(binding.get(key) or "").strip()]
-    if missing:
-        raise ValueError("scheduled completion presentation_binding missing:" + ",".join(missing))
-    if str(binding.get("report_type") or "") != report_type:
-        raise ValueError("scheduled completion presentation_binding report_type mismatch")
-    content = str(binding["full_content"])
-    expected_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
-    supplied_hash = str(binding.get("content_hash") or "").strip()
-    supplied_hash_source = str(binding.get("content_hash_source") or "").strip()
-    if strict_production:
-        if not str(binding.get("occurrence_id") or "").strip():
-            raise ValueError("scheduled trade review production binding requires occurrence_id")
-        if not supplied_hash:
-            raise ValueError("scheduled trade review production binding requires content_hash")
-        if supplied_hash != expected_hash:
-            raise ValueError("scheduled trade review production binding content_hash mismatch")
-        if supplied_hash_source != "completion_builder":
-            raise ValueError("scheduled trade review production binding requires content_hash_source=completion_builder")
+        return Fa…3442 tokens truncated…ValueError("scheduled trade review production binding requires content_hash_source=completion_builder")
     # Historical/recovery compatibility remains available when strict_production
     # is false. Current Trade Review production must use the builder-produced
     # immutable hash and source contract above.
@@ -2502,24 +2297,20 @@ def record_scheduled_system_review(request: dict) -> tuple[bool, bool]:
     return True, True
 
 
-def record_formal_decision_report_event(request: dict, bds: dict) -> tuple[bool, bool, str]:
+def record_formal_decision_report_event(request: dict, bds: dict | None = None) -> tuple[bool, bool, str]:
     """Project one frozen Formal Decision body directly to the shared review-event notification chain."""
-    # Revalidate the persisted BDS at the canonical owner, including the actual
-    # frozen presentation. Idempotent replay must not allow an already-written
-    # short/legacy payload to bypass the current Formal Decision contract.
-    validate_source(
-        bds,
-        expected_snapshot=str(bds.get("consumed_snapshot") or "").strip() or None,
-        normalize_presentation=False,
-    )
-    binding = bds.get("presentation_binding") if isinstance(bds.get("presentation_binding"), dict) else {}
+    # Project the exact frozen presentation at the canonical owner. Historical
+    # BDS callers may still pass their source envelope, but new completion
+    # callers are validated from the completion itself.
+    source = bds if isinstance(bds, dict) else request
+    binding = source.get("presentation_binding") if isinstance(source.get("presentation_binding"), dict) else {}
     identity = {
-        "request_id": str(bds.get("request_id") or "").strip(),
-        "parent_request_id": str(bds.get("parent_request_id") or "").strip(),
-        "decision_id": str(bds.get("decision_id") or "").strip(),
-        "binding_request_id": str(binding.get("request_id") or "").strip(),
-        "binding_parent_request_id": str(binding.get("parent_request_id") or bds.get("parent_request_id") or "").strip(),
-        "binding_decision_id": str(binding.get("decision_id") or "").strip(),
+        "request_id": str(source.get("request_id") or request.get("request_id") or "").strip(),
+        "parent_request_id": str(source.get("parent_request_id") or request.get("parent_request_id") or source.get("request_id") or "").strip(),
+        "decision_id": str(source.get("decision_id") or request.get("decision_id") or "").strip(),
+        "binding_request_id": str(binding.get("request_id") or source.get("request_id") or request.get("request_id") or "").strip(),
+        "binding_parent_request_id": str(binding.get("parent_request_id") or source.get("parent_request_id") or source.get("request_id") or "").strip(),
+        "binding_decision_id": str(binding.get("decision_id") or source.get("decision_id") or request.get("decision_id") or "").strip(),
     }
     if any(not value for value in identity.values()):
         raise ValueError("Formal Decision canonical event requires complete request/parent/decision identity")
@@ -2531,21 +2322,21 @@ def record_formal_decision_report_event(request: dict, bds: dict) -> tuple[bool,
         raise ValueError("Formal Decision canonical event presentation identity mismatch")
     if str(request.get("parent_request_id") or "").strip() != identity["parent_request_id"]:
         raise ValueError("Formal Decision canonical event completion parent mismatch")
-    full_content = str(bds.get("presentation_content") or binding.get("full_content") or "")
-    task_run_id = str(bds.get("task_run_id") or binding.get("task_run_id") or "").strip()
+    full_content = str(source.get("presentation_content") or binding.get("full_content") or "")
+    task_run_id = str(source.get("task_run_id") or binding.get("task_run_id") or "").strip()
     if not full_content or not task_run_id:
         raise ValueError("Formal Decision canonical event requires frozen content and task_run_id")
     content_hash = hashlib.sha256(full_content.encode("utf-8")).hexdigest()
-    supplied_bds_hash = str(bds.get("content_hash") or "").strip()
+    supplied_bds_hash = str(source.get("content_hash") or "").strip()
     supplied_binding_hash = str(binding.get("content_hash") or "").strip()
     # Formal Decision uses the same single-owner rule as Scheduled Review:
     # derive the audit hash from the already frozen presentation content.
     hash_source = "audit_supplied" if (supplied_bds_hash or supplied_binding_hash) else "canonical_owner"
     binding = {
         "report_type": "ETF_FORMAL_DECISION",
-        "task_id": str(bds.get("task_id") or binding.get("task_id") or "ETF正式决策"),
+        "task_id": str(source.get("task_id") or binding.get("task_id") or "ETF正式决策"),
         "task_run_id": task_run_id,
-        "report_id": str(bds.get("report_id") or binding.get("report_id") or f"ETF_FORMAL_DECISION:{task_run_id}"),
+        "report_id": str(source.get("report_id") or binding.get("report_id") or f"ETF_FORMAL_DECISION:{task_run_id}"),
         "request_id": identity["request_id"],
         "parent_request_id": identity["parent_request_id"],
         "decision_id": identity["decision_id"],
@@ -2554,17 +2345,17 @@ def record_formal_decision_report_event(request: dict, bds: dict) -> tuple[bool,
         "content_hash": content_hash,
         "content_hash_source": hash_source,
     }
-    occurrence = str(bds.get("occurrence_id") or binding.get("occurrence_id") or task_run_id)
+    occurrence = str(source.get("occurrence_id") or binding.get("occurrence_id") or task_run_id)
     payload = {
         "event_type": "FORMAL_DECISION_REPORT",
         "occurrence_id": occurrence,
         "request_id": identity["request_id"],
         "parent_request_id": identity["parent_request_id"],
         "decision_id": identity["decision_id"],
-        "reviewed_at_beijing": str(bds.get("requested_at_beijing") or request.get("requested_at_beijing") or ""),
+        "reviewed_at_beijing": str(source.get("requested_at_beijing") or request.get("requested_at_beijing") or ""),
         "presentation_binding": binding,
-        "formal_decision": bds.get("decision_response") or bds.get("formal_decision") or {},
-        "source_bds_path": str(bds.get("target_path") or ""),
+        "formal_decision": source.get("decision_response") or source.get("formal_decision") or {},
+        "source_bds_path": str(source.get("target_path") or ""),
     }
     payload["fingerprint"] = hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
     event_path = ROOT / "events" / "reviews" / f"formal_{occurrence}.json"
@@ -3826,6 +3617,21 @@ def main() -> int:
     completion_dispatch = is_formal_decision_completion(request)
     if completion_dispatch:
         bds_path = str(request.get("bds_path") or "").strip()
+        # A new completion is already the frozen request-bound handoff. Do not
+        # create or recover a second BDS before projecting its canonical event.
+        if not bds_path:
+            request.setdefault("parent_request_id", str(request.get("request_id") or "").strip())
+            recorded, idempotent, event_path = record_formal_decision_report_event(request)
+            print(json.dumps({
+                "ok": True,
+                "request_id": request.get("request_id"),
+                "decision_id": request.get("decision_id"),
+                "formal_decision_event": True,
+                "canonical_publication": event_path,
+                "idempotent_replay": idempotent,
+                "bds_required": False,
+            }, ensure_ascii=False))
+            return 0
         # Older task runners may have written the completion envelope without
         # bds_path. Recover only the deterministic BDS belonging to this same
         # parent request; never scan history or choose a lexicographic match.
