@@ -34,8 +34,39 @@ except ModuleNotFoundError:
     from scripts.scheduled_review_completion_recovery import persist_completion_with_recovery
 
 
+
+def _wait_for_completion_push(completion_path: str, started_at: datetime) -> dict[str, object]:
+    """Wait for the canonical push-triggered notification run for this completion."""
+    token = os.environ.get("GITHUB_TOKEN", "").strip()
+    repository = os.environ.get("GITHUB_REPOSITORY", "").strip()
+    if not token or not repository:
+        return {"submitted": False, "read_back": False, "reason": "missing GitHub credentials"}
+    owner, separator, repo = repository.partition("/")
+    if not separator or not owner or not repo:
+        return {"submitted": False, "read_back": False, "reason": "invalid GITHUB_REPOSITORY"}
+    endpoint = f"https://api.github.com/repos/{owner}/{repo}/actions/workflows/decision-notification.yml/runs?event=push&branch=main&per_page=20"
+    headers = {"Accept": "application/vnd.github+json", "Authorization": f"Bearer {token}", "X-GitHub-Api-Version": "2022-11-28"}
+    deadline = datetime.now(timezone.utc) + timedelta(seconds=120)
+    while datetime.now(timezone.utc) < deadline:
+        try:
+            req = urllib_request.Request(endpoint, method="GET", headers=headers)
+            with urllib_request.urlopen(req, timeout=30) as response:
+                data = json.loads(response.read().decode("utf-8"))
+            for run in data.get("workflow_runs", []):
+                created_at = str(run.get("created_at") or "")
+                if not created_at:
+                    continue
+                created = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+                if created >= started_at and str(run.get("event") or "") == "push" and str(run.get("head_branch") or "") == "main":
+                    return {"submitted": True, "read_back": True, "wake": "CANONICAL_COMPLETION_PUSH", "run_id": run.get("id"), "run_url": run.get("html_url"), "run_status": run.get("status"), "run_conclusion": run.get("conclusion"), "completion_path": completion_path}
+        except Exception:
+            pass
+        time.sleep(3)
+    return {"submitted": False, "read_back": False, "wake": "CANONICAL_COMPLETION_PUSH", "completion_path": completion_path, "reason": "canonical completion push notification run not read back"}
+
+
 def _dispatch_notification(completion_path: str) -> dict[str, object]:
-    """Dispatch notification and read back the matching workflow run."""
+    """Use explicit dispatch only as same-run recovery after canonical push readback is absent."""
     token = (os.environ.get("GITHUB_TOKEN", "").strip()
              or os.environ.get("GH_TOKEN", "").strip())
     repository = (os.environ.get("GITHUB_REPOSITORY", "").strip()
@@ -234,7 +265,10 @@ def main() -> int:
         raise RuntimeError(f"formal decision completion readback mismatch: {failed}")
 
     completion_path, persistence = persist_completion_with_recovery(Path(target))
-    dispatch = _dispatch_notification(completion_path)
+    push_started_at = datetime.now(timezone.utc)
+    canonical_path = _persist_completion_to_main(completion_path)
+    push = _wait_for_completion_push(canonical_path, push_started_at)
+    dispatch = push if push.get("read_back") else _dispatch_notification(canonical_path)
     # Same-run hard gate: completion persistence is not a successful
     # Formal Decision handoff until the canonical notification workflow
     # has been submitted and its matching run has been read back.
