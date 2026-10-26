@@ -327,10 +327,11 @@ def main() -> int:
         raise RuntimeError(f"formal decision completion readback mismatch: {failed}")
 
     completion_path, persistence = persist_completion_with_recovery(Path(target))
-    push_started_at = datetime.now(timezone.utc)
     canonical_path = _persist_completion_to_main(completion_path)
-    push = _wait_for_completion_push(canonical_path, push_started_at)
-    dispatch = push if push.get("read_back") else _dispatch_notification(canonical_path)
+    # Formal Decision requires an explicit same-run workflow_dispatch.
+    # Passive push/workflow_run wakes are not sufficient evidence and must
+    # never satisfy this handoff gate.
+    dispatch = _dispatch_notification(canonical_path)
     # Same-run hard gate: completion persistence is not a successful
     # Formal Decision handoff until the canonical notification workflow
     # has been submitted and its matching run has been read back.
