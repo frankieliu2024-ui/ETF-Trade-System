@@ -169,6 +169,8 @@ class FormalParentSelfHealingTests(unittest.TestCase):
         source = Path("scripts/runtime_self_heal.py").read_text(encoding="utf-8")
         self.assertIn('"REPLAY_FORMAL_REQUEST"', source)
         self.assertIn("latest_unfinished_formal_parent", source)
+        self.assertIn('"FORMAL_PARENT_RECOVERY_REQUIRED", "REPLAY_FORMAL_REQUEST"', source)
+        self.assertNotIn("automatic replay is prohibited", source)
 
 
 if __name__ == "__main__":
