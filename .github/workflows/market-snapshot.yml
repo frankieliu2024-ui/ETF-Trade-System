@@ -1485,6 +1485,21 @@ jobs:
           test -s data/state/decision_context.json
           python -c 'import json; from pathlib import Path; p=json.loads(Path("data/state/query_context.json").read_text()); assert isinstance(p.get("decision_fact_pack",{}).get("decision_work_package"),dict); d=json.loads(Path("data/state/decision_context.json").read_text()); assert d.get("generated_at")'
           if [ "$TRIGGERING_REQUEST_EXPECTED" = "true" ]; then
+            formal_request_source=$(python - "$TRIGGERING_REQUEST_FILE" <<'PY'
+          import json, sys
+          from pathlib import Path
+          request = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          print(str(request.get("source") or "").strip().upper())
+          PY
+            )
+            case "$formal_request_source" in
+              CHATGPT_MANUAL_FORMAL_ANALYSIS|CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS|CHATGPT_SCHEDULED_FORMAL_ANALYSIS)
+                ;;
+              *)
+                echo "Non-Formal request; skip Formal Decision gate projection."
+                exit 0
+                ;;
+            esac
             python - "$TRIGGERING_REQUEST_FILE" <<'PY'
           import json
           import sys
