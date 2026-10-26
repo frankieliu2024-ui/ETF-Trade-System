@@ -5,13 +5,13 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class FormalDecisionNotificationChainContractTests(unittest.TestCase):
-    def test_completion_push_reaches_event_notification(self):
+    def test_completion_push_is_the_primary_formal_notification_path(self):
         workflow = (ROOT / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
+        actor = (ROOT / "scripts" / "run_scheduled_formal_decision_actor.py").read_text(encoding="utf-8")
         self.assertIn("steps.workflow_review.outputs.review_event_path", workflow)
-        self.assertIn("formal_completion_path:", workflow)
-        self.assertIn("inputs.formal_completion_path", workflow)
         self.assertIn("github.event_name == 'workflow_run'", workflow)
-        self.assertNotIn("\\n      - name: Send material user-action notification", workflow)
+        self.assertIn("_wait_for_completion_push(canonical_path, started_at)", actor)
+        self.assertIn("if not push.get(\"read_back\"):", actor)
 
     def test_completion_push_classifies_scheduled_review_by_contract(self):
         workflow = (ROOT / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
