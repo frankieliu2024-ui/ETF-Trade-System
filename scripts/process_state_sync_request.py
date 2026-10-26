@@ -2338,12 +2338,14 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
             and close_contract.get("market_date") == market_date
             and bool(canonical_close_snapshot)
         )
-        # A present verified close with a mismatched or absent request reference is
-        # a stale/ambiguous input, not a missing-close case. Do not silently turn a
-        # review computed against another snapshot into a degraded formal review.
-        if canonical_close_verified and supplied_close_snapshot != canonical_close_snapshot:
-            return False, False
-        close_verified = canonical_close_verified and supplied_close_snapshot == canonical_close_snapshot
+        # A mismatched close reference is an evidence warning, not a reason
+        # to discard an otherwise complete review. Keep the review body and
+        # disclose the close-data boundary in the canonical projection.
+        close_reference_mismatch = (
+            canonical_close_verified
+            and supplied_close_snapshot != canonical_close_snapshot
+        )
+        close_verified = canonical_close_verified and not close_reference_mismatch
         # Review completion is independent from close-data completeness. Preserve
         # the canonical close contract when available; otherwise persist an explicit
         # degraded review with the missing/invalid evidence boundary. Never invent
@@ -2353,9 +2355,16 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
             data_time["close_snapshot"] = canonical_close_snapshot
             data_time.pop("close_data_gap", None)
         else:
-            data_time["close_data_status"] = str(close_contract.get("status") or "UNVERIFIED")
+            data_time["close_data_status"] = (
+                "CLOSE_REFERENCE_MISMATCH"
+                if close_reference_mismatch
+                else str(close_contract.get("status") or "UNVERIFIED")
+            )
             data_time["close_data_gap"] = (
-                "VERIFIED_SESSION_CLOSE unavailable for this market date; review completed "
+                "The supplied close reference did not match the current verified close; "
+                "review retained with an explicit close-data warning and no inferred close."
+                if close_reference_mismatch
+                else "VERIFIED_SESSION_CLOSE unavailable for this market date; review completed "
                 "with degraded/incomplete evidence and no inferred close."
             )
             data_time.pop("close_snapshot", None)
