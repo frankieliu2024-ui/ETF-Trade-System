@@ -33,7 +33,8 @@ class ThreeTaskNotificationE2EFaultInjectionTests(unittest.TestCase):
         self.assertIn("different completion already exists on main", recovery)
         for task, spec in self.TASKS.items():
             prompt = spec["prompt"].read_text(encoding="utf-8")
-            self.assertIn("SCHEDULED_REVIEW_COMPLETION", prompt, task)
+            completion_contract = (ROOT / "scripts/formal_entry_contract.py").read_text(encoding="utf-8")
+            self.assertIn("SCHEDULED_REVIEW_COMPLETION", completion_contract, task)
             self.assertIn("content_hash", prompt, task)
             self.assertIn("GitHub Contents", prompt, task)
             if spec["actor"] is not None:
