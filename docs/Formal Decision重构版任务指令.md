@@ -58,7 +58,7 @@ Discovery、观察ETF、机会ETF和实际持仓必须分开核验。缺失对�
 
 或：
 
-【ETF正式决策】YYYY-MM-DD HH:MM 降级正式判断
+【ETF正式决策】YYYY-MM-DD HH:MM 降级判断
 
 时间使用本次实际北京时间。
 
