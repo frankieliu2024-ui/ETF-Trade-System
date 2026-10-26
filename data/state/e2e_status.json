@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-10-26T14:52:43+08:00",
+  "generated_at": "2026-10-26T15:48:30+08:00",
   "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -15,13 +15,13 @@
     "account": {
       "status": "READY",
       "reason": "confirmed account facts remain valid; historical audit deltas are not pending updates",
-      "updated_at": "2026-10-25T20:51:00+08:00",
-      "source": "BROKER_HOLDINGS_AND_TRANSACTION_SCREENSHOTS_20261025_2051_USER_CONFIRMED",
+      "updated_at": "2026-10-26T15:40:00+08:00",
+      "source": "BROKER_SCREENSHOT_20261026_1540_USER_PROVIDED",
       "pending_change_events": [],
-      "historical_audit_event_count": 119,
-      "cash": 120196.87,
+      "historical_audit_event_count": 122,
+      "cash": 115293.47,
       "reserved_cash_for_settlement": 0,
-      "deployable_cash": 120196.87,
+      "deployable_cash": 115293.47,
       "settlement_constraint_status": "NONE"
     },
     "risk": {
@@ -51,13 +51,15 @@
       "decision_context": true,
       "minimum_decision_context": "READY_OR_NOT_APPLICABLE",
       "observability_boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
-      "request_bound": true,
+      "request_bound": false,
       "formal_reply_gate": {
         "request_id": "fd_20261026_144323_scheduled_formal_review_b7e14c92",
         "requested_at_beijing": "2026-10-26T14:52:22+08:00",
-        "status": "NOT_APPLICABLE",
-        "reply_freezable": true,
-        "blockers": [],
+        "status": "IN_FLIGHT",
+        "reply_freezable": false,
+        "blockers": [
+          "REQUEST_BOUND_QUERY_CONTEXT_NOT_PUBLISHED"
+        ],
         "source": "decision_fact_pack.formal_reply_freeze",
         "consumer_manifest": {
           "request_id": "fd_20261026_144323_scheduled_formal_review_b7e14c92",
@@ -9650,21 +9652,23 @@
         "required_problem_ids": [],
         "required_problem_count": 0,
         "business_answer_contract": null,
-        "ready_handoff": null
+        "ready_handoff": null,
+        "request_bound": false,
+        "projection_preserved_from_non_formal_runtime_request": true
       },
       "context_read_contract": {
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 1270484,
-          "sha256": "7bff62986fd5e7fec4b928a544eb9768b87674ff35a782856620f7b443724cd1",
+          "byte_count": 1310703,
+          "sha256": "497913d18e4f32cb3b1e8be8cb8afccd16cfe416a15042d97dd0c9a941292194",
           "parsed_object": true
         },
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 666771,
-          "sha256": "c704f2fd1c04cdcbe3bb357fb89adb3da55042120340fbe9a977a5d16abf7e82",
+          "byte_count": 423712,
+          "sha256": "6fc9395b30cfa5cc05eb73d9fdcab7bcbf676dfefa671da019bddcebc109ab77",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -9682,7 +9686,7 @@
     "maintenance": {
       "status": "READY",
       "reason": "maintenance guard passed",
-      "checked_at": "2026-10-26T14:52:23+08:00"
+      "checked_at": "2026-10-26T15:48:09+08:00"
     }
   },
   "blockers": [],
@@ -9693,15 +9697,15 @@
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 1270484,
-      "sha256": "7bff62986fd5e7fec4b928a544eb9768b87674ff35a782856620f7b443724cd1",
+      "byte_count": 1310703,
+      "sha256": "497913d18e4f32cb3b1e8be8cb8afccd16cfe416a15042d97dd0c9a941292194",
       "parsed_object": true
     },
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 666771,
-      "sha256": "c704f2fd1c04cdcbe3bb357fb89adb3da55042120340fbe9a977a5d16abf7e82",
+      "byte_count": 423712,
+      "sha256": "6fc9395b30cfa5cc05eb73d9fdcab7bcbf676dfefa671da019bddcebc109ab77",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"
