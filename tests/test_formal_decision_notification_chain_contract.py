@@ -5,13 +5,13 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class FormalDecisionNotificationChainContractTests(unittest.TestCase):
-    def test_completion_push_reaches_event_notification(self):
+    def test_completion_push_is_the_primary_formal_notification_path(self):
         workflow = (ROOT / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
+        actor = (ROOT / "scripts" / "run_scheduled_formal_decision_actor.py").read_text(encoding="utf-8")
         self.assertIn("steps.workflow_review.outputs.review_event_path", workflow)
-        self.assertIn("formal_completion_path:", workflow)
-        self.assertIn("inputs.formal_completion_path", workflow)
         self.assertIn("github.event_name == 'workflow_run'", workflow)
-        self.assertNotIn("\\n      - name: Send material user-action notification", workflow)
+        self.assertIn("_wait_for_completion_push(canonical_path, started_at)", actor)
+        self.assertIn("if not push.get(\"read_back\"):", actor)
 
     def test_completion_push_classifies_scheduled_review_by_contract(self):
         workflow = (ROOT / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
@@ -135,20 +135,19 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
         self.assertIn('"same_run_handoff_complete"', actor)
         self.assertIn("return 0 if handoff_ok else 2", actor)
 
-    def test_formal_prompt_uses_snapshot_age_normal_and_degraded_windows(self):
+    def test_formal_prompt_uses_simplified_handoff_contract(self):
         prompt = (ROOT / "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/prompts/正式决策.txt").read_text(encoding="utf-8")
-        self.assertIn("不超过15分钟（900秒）", prompt)
-        self.assertIn("不超过25分钟（900秒＜年龄≤1500秒）", prompt)
-        self.assertIn("不得使用BDS或BUSINESS_DECISION_SOURCE", prompt)
-        self.assertIn("本次同一运行中实际提交decision-notification.yml", prompt)
+        self.assertIn("completion push是默认主路径", prompt)
+        self.assertIn("content_hash只用于审计", prompt)
+        self.assertNotIn("正文交接恢复合同", prompt)
+        self.assertNotIn("运行中的FINAL_CONTENT原文", prompt)
 
-    def test_formal_prompt_separates_intraday_close_and_discovery_freshness(self):
+    def test_formal_prompt_preserves_business_admission_boundaries(self):
         prompt = (ROOT / "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/prompts/正式决策.txt").read_text(encoding="utf-8")
-        self.assertIn("盘中与收盘后快照匹配", prompt)
-        self.assertIn("正式收盘快照的行情时点是15:00", prompt)
-        self.assertIn("全市场发现与对象层级准入", prompt)
+        self.assertIn("盘中快照年龄不超过15分钟", prompt)
+        self.assertIn("超过25分钟且不存在合法降级事实", prompt)
         self.assertIn("Discovery候选必须经过本次有效市场快照重新核验", prompt)
-        self.assertIn("机会ETF明确为0时可以正常判断", prompt)
+        self.assertIn("机会ETF明确确认为0时", prompt)
 
     def test_formal_protocol_declares_independent_freshness_contracts(self):
         import json
