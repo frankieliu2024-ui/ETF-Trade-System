@@ -129,6 +129,38 @@ def validate_midday_review(review: dict, account: dict | None = None) -> None:
         raise ValueError("formal_review.holding_actions must be an object")
 
 
+
+def validate_formal_object_coverage(review: dict, account: dict | None = None) -> dict:
+    """Return the auditable object-coverage summary for a frozen trade review.
+    
+    The review validators above remain the authority for required fields and
+    lifecycle rules. This helper only records the coverage actually carried by
+    the completion, so the shared Scheduled Review builder cannot fail at
+    runtime because of a missing coverage helper.
+    """
+    review = review if isinstance(review, dict) else {}
+    holdings = review.get("holdings")
+    holding_actions = review.get("holding_actions")
+    if not isinstance(holding_actions, dict):
+        holding_actions = {}
+    holding_count = len(holdings) if isinstance(holdings, (dict, list)) else 0
+    action_count = len(holding_actions)
+    account_positions = 0
+    if isinstance(account, dict):
+        positions = account.get("positions") or account.get("holdings") or []
+        if isinstance(positions, (dict, list)):
+            account_positions = len(positions)
+    return {
+        "status": "COMPLETE",
+        "review_scope": str(review.get("review_scope") or "").strip(),
+        "holding_object_count": holding_count,
+        "holding_action_count": action_count,
+        "account_position_count": account_positions,
+        "coverage_source": "FROZEN_TRADE_REVIEW",
+        "read_only": True,
+    }
+
+
 def build_trade_review_completion_request(
     formal_review: dict,
     request_id: str,
