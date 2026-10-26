@@ -417,6 +417,11 @@ def main() -> None:
         key: str(decision_trigger.get(key) or "").strip()
         for key in ("request_id", "parent_request_id", "task_run_id", "occurrence_id", "source", "entry_mode", "requested_at_beijing", "market_date")
     }
+    # Canonical Formal Decision requests use the request itself as their parent
+    # when the upstream query projection omits only parent_request_id. Preserve
+    # all other identity fields and let the gate reject any conflicting value.
+    if not trigger_identity["parent_request_id"] and trigger_identity["request_id"]:
+        trigger_identity["parent_request_id"] = trigger_identity["request_id"]
     context["request_id"] = trigger_identity["request_id"]
     context["parent_request_id"] = trigger_identity["parent_request_id"]
     context["task_run_id"] = trigger_identity["task_run_id"]
