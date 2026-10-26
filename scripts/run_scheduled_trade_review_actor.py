@@ -211,8 +211,20 @@ def main() -> int:
         raise RuntimeError(f"trade review completion readback mismatch: {failed}")
     persisted_path, persistence = persist_completion_with_recovery(Path(target))
     dispatch = _dispatch_notification(persisted_path)
-    print(json.dumps({"ok": True, "completion_path": persisted_path, "persistence": persistence, "readback": checks, "notification_dispatch": dispatch}, ensure_ascii=False))
-    return 0
+    # Same-run hard gate: completion persistence alone is not a successful
+    # handoff. The actor must dispatch the canonical notification workflow and
+    # read back the matching run before reporting success.
+    handoff_ok = bool(dispatch.get("submitted")) and bool(dispatch.get("read_back"))
+    result = {
+        "ok": handoff_ok,
+        "completion_path": persisted_path,
+        "persistence": persistence,
+        "readback": checks,
+        "notification_dispatch": dispatch,
+        "same_run_handoff_complete": handoff_ok,
+    }
+    print(json.dumps(result, ensure_ascii=False))
+    return 0 if handoff_ok else 2
 
 
 if __name__ == "__main__":
