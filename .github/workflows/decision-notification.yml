@@ -547,10 +547,10 @@ jobs:
 
       - name: Project Formal Decision completion to canonical review event
         id: formal_completion_event
-        if: ${{ (github.event_name == 'push' && steps.push_kind.outputs.formal_completion == 'true') || (github.event_name == 'workflow_dispatch' && inputs.formal_completion_path != '') }}
+        if: ${{ (github.event_name == 'push' && steps.push_kind.outputs.formal_completion == 'true') || (github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path != '' && steps.dispatch_completion_kind.outputs.formal == 'true') }}
         shell: bash
         env:
-          COMPLETION_PATH: ${{ github.event_name == 'workflow_dispatch' && inputs.formal_completion_path || steps.push_kind.outputs.formal_completion_path }}
+          COMPLETION_PATH: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path || steps.push_kind.outputs.formal_completion_path }}
         run: |
           set -euo pipefail
           test -f "$COMPLETION_PATH"
