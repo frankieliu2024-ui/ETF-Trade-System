@@ -1,28 +1,29 @@
 {
   "schema_version": "1.1",
-  "checked_at": "2026-10-26T10:11:19+08:00",
+  "checked_at": "2026-10-26T10:17:05+08:00",
   "mode": "DETERMINISTIC_RUNTIME_SELF_HEALING",
   "enabled": true,
-  "classification": "CONSISTENCY_REGRESSION",
-  "recommended_action": "ESCALATE",
-  "reason": "system consistency has a hard failure that is not proven orthogonal to canonical market recovery",
+  "classification": "FORMAL_PARENT_HANDOFF_PENDING",
+  "recommended_action": "NONE",
+  "reason": "Formal Decision parent fd_20261026_100303_scheduled_formal_review_b4e71a2c lacks post-reply projection: BDS,COMPLETION,FORMAL_EVENT; observation only, no replay and no decision gate",
   "market_open_date": true,
   "watch_window_active": true,
   "same_day_current_required": true,
   "same_day_current_missing": false,
   "current_capture_at": "2026-10-26T10:04:30+08:00",
-  "current_capture_age_seconds": 409,
+  "current_capture_age_seconds": 755,
   "expected_pulse_at": null,
   "expected_pulse_missing": false,
   "runtime_health_status": "PASS",
   "system_consistency_status": "FAIL",
   "market_recovery_consistency_gate": {
     "global_status": "FAIL",
-    "blocks_market_recovery": true,
-    "classification": "GLOBAL_FAIL_BLOCKS_MARKET_RECOVERY_FAIL_SAFE",
+    "blocks_market_recovery": false,
+    "classification": "GLOBAL_FAIL_REPAIRABLE_DERIVED_MEMBERSHIP",
     "errors": [
       "stock_runtime:dynamic_account_membership: detected=['127118'] expected=[]"
-    ]
+    ],
+    "recovery_note": "canonical market recovery may rebuild stale stock_context; consistency remains FAIL until rechecked"
   },
   "master_rules_version": "V2.2.34",
   "current_rules_version": "V2.2.34",
