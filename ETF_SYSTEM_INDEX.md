@@ -42,13 +42,13 @@ Formal Decision通知交接使用 source=CHATGPT_SCHEDULED_REVIEW_ACTOR。\n\nFo
 
 正式判断直接读取current main最近合法固定时段事实，并先判断快照路径：
 
-- 盘中快照年龄不超过15分钟，进入正常正式判断；
-- 盘中快照年龄超过15分钟且不超过25分钟，进入降级正式判断；
-- 超过25分钟且无合法降级事实，不形成正式判断；
+- 盘中快照年龄不超过15分钟，标记为正式判断；
+- 盘中快照年龄超过15分钟且不超过25分钟，标记为降级判断；
+- 超过25分钟，标记为超时判断；三种路径均继续任务运行、正文交接和通知链，不因快照时间阻断。
 - 收盘后优先使用当前交易日15:00、质量和PIT验收通过的正式收盘快照；采集时间距运行时间超过15分钟不自动降级；
 - Discovery、观察ETF、机会ETF和实际持仓分别核验，不得互相替代；对象层缺失时可形成受限判断，但不得把缺失写成0或声称全市场比较已完成。
 
-正式判断必须读取MASTER、数据与市场监测规范、账户与成交事实、风险与生命周期事实、Discovery、观察ETF、机会ETF、实际持仓和主动通知规范。事实足以判断时直接形成唯一FINAL_CONTENT，不等待下一时段、不刷新市场事实、不建立第二请求。
+正式判断必须读取MASTER、数据与市场监测规范、账户与成交事实、风险与生命周期事实、Discovery、观察ETF、机会ETF、实际持仓和主动通知规范。事实足以判断时直接形成唯一FINAL_CONTENT；超时判断必须披露事实时点和限制，但不因此停止任务、正文交接或通知链。
 
 正文冻结并立即发布后，completion的请求类型固定为 `request_type=SCHEDULED_REVIEW_COMPLETION`，source固定为 `CHATGPT_SCHEDULED_REVIEW_ACTOR`，并沿统一Scheduled Review链完成；不创建Formal专属completion、事件、报告或通知链。completion写入、completion回读、completion push、事件、REPORT、notification、服务商投递和用户收到必须分别核验，后置交接失败不得改写已形成的业务判断，也不得重新生成正文。
 
