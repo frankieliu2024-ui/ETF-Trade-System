@@ -166,9 +166,9 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
         self.assertIn("后置交接不得阻断正文发布", protocol)
         self.assertIn("SCHEDULED_REVIEW_COMPLETION", protocol)
         self.assertNotIn("在用户窗口返回前，先执行后置交接，再输出", protocol)
-        self.assertIn("BUSINESS_DECISION_SOURCE", protocol)
+        self.assertNotIn("BUSINESS_DECISION_SOURCE", protocol)
         self.assertIn("SCHEDULED_REVIEW_COMPLETION", protocol)
-        self.assertIn("formal_completion_path", protocol)
+        self.assertNotIn("formal_completion_path", protocol)
         self.assertIn("def formal_decision_report_event", center)
         self.assertIn("return None", center[center.index("def formal_decision_report_event"):center.index("def formal_decision_report_event")+220])
         self.assertIn("DECISION_EVENT_PATH", center)
@@ -189,3 +189,4 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
