@@ -209,15 +209,23 @@ def main() -> int:
     persisted = json.loads(Path(target).read_text(encoding="utf-8"))
     binding = persisted.get("presentation_binding") or {}
     expected_hash = hashlib.sha256(args.final_content.encode("utf-8")).hexdigest()
+    expected_decision_id = f"ETF_FORMAL_DECISION:{task_run_id}"
+    expected_parent_request_id = args.parent_request_id or args.request_id
+    binding = persisted.get("presentation_binding") or {}
     checks = {
         "request_id": persisted.get("request_id") == args.request_id,
         "task_id": persisted.get("task_id") == "ETF正式决策",
         "task_run_id": persisted.get("task_run_id") == task_run_id,
         "occurrence_id": persisted.get("occurrence_id") == occurrence_id,
+        "parent_request_id": persisted.get("parent_request_id") == expected_parent_request_id,
+        "decision_id": persisted.get("decision_id") == expected_decision_id,
         "entry_mode": persisted.get("entry_mode") == args.entry_mode,
         "request_type": persisted.get("request_type") == "SCHEDULED_REVIEW_COMPLETION",
         "no_bds_path": "bds_path" not in persisted,
         "report_type": binding.get("report_type") == "ETF_FORMAL_DECISION",
+        "binding_parent_request_id": binding.get("parent_request_id") == expected_parent_request_id,
+        "binding_decision_id": binding.get("decision_id") == expected_decision_id,
+        "binding_report_id": binding.get("report_id") == expected_decision_id,
         "content_hash": binding.get("content_hash") == expected_hash,
         "full_content": binding.get("full_content") == args.final_content,
     }
