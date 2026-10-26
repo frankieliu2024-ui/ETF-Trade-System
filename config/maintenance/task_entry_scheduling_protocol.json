@@ -132,7 +132,18 @@
         "adapter_unavailable_must_not_block_completion": true,
         "completion_readback_must_continue_to_notification_dispatch": true,
         "same_run_required": true,
-        "report_identity": "ETF_FORMAL_DECISION"
+        "report_identity": "ETF_FORMAL_DECISION",
+        "snapshot_freshness_contract": {
+          "intraday_fresh_max_age_seconds": 900,
+          "intraday_degraded_max_age_seconds": 1500,
+          "close_snapshot_preferred": true,
+          "close_snapshot_market_phase": "CLOSE",
+          "close_snapshot_market_boundary": "15:00",
+          "discovery_freshness_unit": "completed_trading_day",
+          "discovery_fallback_max_completed_trading_days": 1,
+          "discovery_requires_current_snapshot_revalidation": true,
+          "object_layers_independently_gated": true
+        }
       }
     }
   ],
