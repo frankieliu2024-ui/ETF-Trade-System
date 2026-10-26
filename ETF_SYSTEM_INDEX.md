@@ -50,7 +50,7 @@ Formal Decision不是市场事实生产任务。它不为本次判断创建新�
 
 正式判断必须读取MASTER、数据与市场监测规范、账户与成交事实、风险与生命周期事实、Discovery、观察ETF、机会ETF、实际持仓和主动通知规范。事实足以判断时直接形成唯一FINAL_CONTENT，不等待下一时段、不刷新市场事实、不建立第二请求。
 
-正文冻结并立即发布后，completion的请求类型固定为 `request_type=SCHEDULED_REVIEW_COMPLETION`，并沿统一Scheduled Review链完成；不创建Formal专属completion、事件、报告或通知链。completion写入、completion回读、completion push、事件、REPORT、notification、服务商投递和用户收到必须分别核验，后置交接失败不得改写已形成的业务判断，也不得重新生成正文。
+正文冻结并立即发布后，completion的请求类型固定为 `request_type=SCHEDULED_REVIEW_COMPLETION`，source固定为 `CHATGPT_SCHEDULED_REVIEW_ACTOR`，并沿统一Scheduled Review链完成；不创建Formal专属completion、事件、报告或通知链。completion写入、completion回读、completion push、事件、REPORT、notification、服务商投递和用户收到必须分别核验，后置交接失败不得改写已形成的业务判断，也不得重新生成正文。
 
 普通交易判断仍按MASTER和所属数据规范读取；用户上传的账户截图按既有账户事实入口处理，不改变Formal Decision的事实消费边界。
 
