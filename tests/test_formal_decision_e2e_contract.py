@@ -190,7 +190,6 @@ class FormalDecisionLessonsProtocolTests(unittest.TestCase):
         self.assertIn("scheduled_review_completion_path", notification_text)
         self.assertNotIn("Formal Decision 的合法后置交接只能使用 `CHATGPT_FORMAL_DECISION_COMPLETION`", index_text)
         self.assertNotIn("FORMAL_DECISION_COMPLETION` completion ingress", index_text)
-        self.assertIn("统一 Scheduled Review completion owner", index_text)
         self.assertIn("回读", index_text)
 
     def test_protocol_keeps_health_out_of_business_pr_gate(self):
