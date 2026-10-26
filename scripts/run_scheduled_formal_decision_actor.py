@@ -330,9 +330,9 @@ def main() -> int:
         failed = ", ".join(hard_failures)
         raise RuntimeError(f"formal decision completion readback mismatch: {failed}")
 
+    started_at = datetime.now(timezone.utc)
     completion_path, persistence = persist_completion_with_recovery(Path(target))
     canonical_path = _persist_completion_to_main(completion_path)
-    started_at = datetime.now(timezone.utc)
     push = _wait_for_completion_push(canonical_path, started_at)
     dispatch = push
     if not push.get("read_back"):
