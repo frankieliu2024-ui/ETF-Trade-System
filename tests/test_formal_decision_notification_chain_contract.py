@@ -127,5 +127,40 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
         self.assertIn("expected_run_name", actor)
         self.assertIn("run-name:", workflow)
 
+
+    def test_formal_actor_requires_same_run_notification_readback(self):
+        actor = (ROOT / "scripts" / "run_scheduled_formal_decision_actor.py").read_text(encoding="utf-8")
+        self.assertIn("handoff_ok = bool(dispatch.get(\"submitted\"))", actor)
+        self.assertIn('bool(dispatch.get("read_back"))', actor)
+        self.assertIn('"same_run_handoff_complete"', actor)
+        self.assertIn("return 0 if handoff_ok else 2", actor)
+
+    def test_formal_prompt_uses_snapshot_age_normal_and_degraded_windows(self):
+        prompt = (ROOT / "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/prompts/正式决策.txt").read_text(encoding="utf-8")
+        self.assertIn("不超过15分钟（900秒）", prompt)
+        self.assertIn("不超过25分钟（900秒＜年龄≤1500秒）", prompt)
+        self.assertIn("不得使用BDS或BUSINESS_DECISION_SOURCE", prompt)
+        self.assertIn("本次同一运行中实际提交decision-notification.yml", prompt)
+
+    def test_formal_prompt_separates_intraday_close_and_discovery_freshness(self):
+        prompt = (ROOT / "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/prompts/正式决策.txt").read_text(encoding="utf-8")
+        self.assertIn("盘中与收盘后快照匹配", prompt)
+        self.assertIn("正式收盘快照的行情时点是15:00", prompt)
+        self.assertIn("全市场发现与对象层级准入", prompt)
+        self.assertIn("Discovery候选必须经过本次有效市场快照重新核验", prompt)
+        self.assertIn("机会ETF明确为0时可以正常判断", prompt)
+
+    def test_formal_protocol_declares_independent_freshness_contracts(self):
+        import json
+        protocol = json.loads((ROOT / "config/maintenance/task_entry_scheduling_protocol.json").read_text(encoding="utf-8"))
+        formal = next(item for item in protocol["tasks"] if item["id"] == "ETF_FORMAL_DECISION")
+        contract = formal["handoff_execution"]["snapshot_freshness_contract"]
+        self.assertEqual(contract["intraday_fresh_max_age_seconds"], 900)
+        self.assertEqual(contract["intraday_degraded_max_age_seconds"], 1500)
+        self.assertTrue(contract["close_snapshot_preferred"])
+        self.assertEqual(contract["discovery_fallback_max_completed_trading_days"], 1)
+        self.assertTrue(contract["discovery_requires_current_snapshot_revalidation"])
+        self.assertTrue(contract["object_layers_independently_gated"])
+
 if __name__ == "__main__":
     unittest.main()
