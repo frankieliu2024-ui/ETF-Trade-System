@@ -235,14 +235,19 @@ def main() -> int:
 
     completion_path, persistence = persist_completion_with_recovery(Path(target))
     dispatch = _dispatch_notification(completion_path)
+    # Same-run hard gate: completion persistence is not a successful
+    # Formal Decision handoff until the canonical notification workflow
+    # has been submitted and its matching run has been read back.
+    handoff_ok = bool(dispatch.get("submitted")) and bool(dispatch.get("read_back"))
     print(json.dumps({
-        "ok": True,
+        "ok": handoff_ok,
         "completion_path": completion_path,
         "persistence": persistence,
         "readback": checks,
         "notification_dispatch": dispatch,
+        "same_run_handoff_complete": handoff_ok,
     }, ensure_ascii=False))
-    return 0
+    return 0 if handoff_ok else 2
 
 
 if __name__ == "__main__":
