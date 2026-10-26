@@ -152,7 +152,7 @@ class FormalParentSelfHealingTests(unittest.TestCase):
 
     def test_existing_bds_and_state_sync_routes_are_unchanged(self):
         workflow = Path(".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
-        self.assertIn("formal replay requires exactly one durable BUSINESS_DECISION_SOURCE", workflow)
+        self.assertIn("formal replay requires at least one durable BUSINESS_DECISION_SOURCE", workflow)
         self.assertIn("REPLAY_REQUEST", workflow)
         self.assertIn("Reject ambiguous recovery inputs", workflow)
         self.assertIn("mutually exclusive", workflow)
