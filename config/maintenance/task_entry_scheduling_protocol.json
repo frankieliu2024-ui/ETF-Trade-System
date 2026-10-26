@@ -77,9 +77,11 @@
         "owner": "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER",
         "primary_mode": "DIRECT_GITHUB_CONTENTS_COMPLETION_WRITE_AND_READBACK",
         "adapter_role": "OPTIONAL_COMPATIBILITY_ADAPTER_ONLY",
-        "notification_wake": "COMPLETION_PUSH_OR_EXPLICIT_DISPATCH",
+        "notification_wake": "CANONICAL_COMPLETION_PUSH_PRIMARY_EXPLICIT_DISPATCH_RECOVERY",
         "adapter_unavailable_must_not_block_completion": true,
-        "same_run_required": true
+        "same_run_required": true,
+        "completion_push_required_in_same_run": true,
+        "explicit_dispatch_role": "SAME_RUN_RECOVERY_ONLY"
       }
     },
     {
@@ -128,7 +130,7 @@
         "owner": "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER",
         "primary_mode": "DIRECT_GITHUB_CONTENTS_COMPLETION_WRITE_AND_READBACK",
         "adapter_role": "OPTIONAL_COMPATIBILITY_ADAPTER_ONLY",
-        "notification_wake": "EXPLICIT_WORKFLOW_DISPATCH_REQUIRED_IN_SAME_RUN",
+        "notification_wake": "CANONICAL_COMPLETION_PUSH_PRIMARY_EXPLICIT_DISPATCH_RECOVERY",
         "adapter_unavailable_must_not_block_completion": true,
         "completion_readback_must_continue_to_notification_dispatch": true,
         "same_run_required": true,
@@ -143,7 +145,9 @@
           "discovery_fallback_max_completed_trading_days": 1,
           "discovery_requires_current_snapshot_revalidation": true,
           "object_layers_independently_gated": true
-        }
+        },
+        "completion_push_required_in_same_run": true,
+        "explicit_dispatch_role": "SAME_RUN_RECOVERY_ONLY"
       }
     }
   ],
