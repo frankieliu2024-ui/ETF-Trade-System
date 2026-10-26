@@ -156,7 +156,15 @@ def build() -> dict:
         quantity = numeric(first(position, "quantity", "qty", "position", "shares", "volume"))
         if quantity is not None and quantity <= 0:
             continue
-        if looks_like_etf(position, code, etf_codes):
+        security_type = str(first(position, "security_type", "asset_type", "type", "instrument_type") or "").upper()
+        # Convertible bonds and other non-stock account assets remain in the
+        # account fact, but must not enter the stock runtime membership check.
+        # Their presence must not block market recovery or formal ETF analysis.
+        is_other_account_asset = (
+            security_type in {"OTHER", "BOND", "CONVERTIBLE_BOND"}
+            or str(position.get("asset_type") or "").upper() == "OTHER"
+        )
+        if is_other_account_asset or looks_like_etf(position, code, etf_codes):
             continue
 
         item = {
