@@ -162,13 +162,13 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
         self.assertTrue(contract["discovery_requires_current_snapshot_revalidation"])
         self.assertTrue(contract["object_layers_independently_gated"])
 
-    def test_formal_actor_requires_explicit_dispatch_after_completion_readback(self):
+    def test_formal_actor_prefers_completion_push_and_uses_one_fallback(self):
         actor = (ROOT / "scripts" / "run_scheduled_formal_decision_actor.py").read_text(encoding="utf-8")
-        handoff = actor.split("completion_path, persistence = persist_completion_with_recovery", 1)[1]
+        handoff = actor.split("started_at = datetime.now(timezone.utc)", 1)[1]
         self.assertIn("canonical_path = _persist_completion_to_main(completion_path)", handoff)
+        self.assertIn("push = _wait_for_completion_push(canonical_path, started_at)", handoff)
+        self.assertIn("if not push.get(\"read_back\"):", handoff)
         self.assertIn("dispatch = _dispatch_notification(canonical_path)", handoff)
-        self.assertNotIn("dispatch = push if push.get(\"read_back\") else _dispatch_notification", handoff)
-        self.assertNotIn("_wait_for_completion_push(canonical_path", handoff)
 
 
 if __name__ == "__main__":
