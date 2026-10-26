@@ -107,6 +107,29 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Classify manually dispatched completion
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path != '' }}
+        id: dispatch_completion_kind
+        shell: bash
+        env:
+          COMPLETION_PATH: ${{ inputs.scheduled_review_completion_path }}
+        run: |
+          set -euo pipefail
+          case "$COMPLETION_PATH" in
+            requests/live_snapshot/*) ;;
+            *) COMPLETION_PATH="requests/live_snapshot/$COMPLETION_PATH" ;;
+          esac
+          test -f "$COMPLETION_PATH"
+          python - "$COMPLETION_PATH" <<'PY'
+          import json, os, sys
+          payload = json.load(open(sys.argv[1], encoding="utf-8"))
+          binding = payload.get("presentation_binding") or {}
+          report_type = str(payload.get("report_type") or binding.get("report_type") or "").strip().upper()
+          formal = (str(payload.get("formal_fact_type") or "").strip().upper() == "FORMAL_POST_CLOSE_REVIEW" and report_type == "ETF_FORMAL_DECISION" and str(payload.get("task_id") or "").strip() == "ETF正式决策")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+              out.write("formal=%s\\n" % ("true" if formal else "false"))
+              out.write("scheduled=%s\\n" % ("false" if formal else "true"))
+          PY
 
       - name: Detect push notification kind
         if: ${{ github.event_name == 'push' }}
@@ -382,7 +405,7 @@ jobs:
 
       - name: Project Scheduled Review completion to canonical review event
         id: scheduled_completion_event
-        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path != '') || (github.event_name == 'push' && steps.push_kind.outputs.scheduled_review_completion == 'true') }}
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path != '' && steps.dispatch_completion_kind.outputs.scheduled == 'true') || (github.event_name == 'push' && steps.push_kind.outputs.scheduled_review_completion == 'true') }}
         shell: bash
         env:
           COMPLETION_PATH: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path || steps.push_kind.outputs.scheduled_review_completion_path }}
@@ -523,7 +546,7 @@ jobs:
 
       - name: Project Formal Decision completion to canonical review event
         id: formal_completion_event
-        if: ${{ (github.event_name == 'push' && steps.push_kind.outputs.formal_completion == 'true') || (github.event_name == 'workflow_dispatch' && (inputs.scheduled_review_completion_path != '' || inputs.formal_completion_path != '')) }}
+        if: ${{ (github.event_name == 'push' && steps.push_kind.outputs.formal_completion == 'true') || (github.event_name == 'workflow_dispatch' && (inputs.formal_completion_path != '' || (inputs.scheduled_review_completion_path != '' && steps.dispatch_completion_kind.outputs.formal == 'true'))) }}
         shell: bash
         env:
           COMPLETION_PATH: ${{ github.event_name == 'workflow_dispatch' && (inputs.scheduled_review_completion_path || inputs.formal_completion_path) || steps.push_kind.outputs.formal_completion_path }}
