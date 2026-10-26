@@ -139,7 +139,7 @@ Trade Review不在本协议中重复规定正文生成、完成记录、用户�
 
 - System Review按Scheduled Review合同；
 - Trade Review按Trade Review合同；
-- Formal Decision按唯一FINAL_CONTENT、BDS、completion、canonical event、REPORT、notification和provider合同；
+- Formal Decision按唯一FINAL_CONTENT、completion、canonical event、REPORT、notification和provider合同；实时Formal Decision不要求BDS；
 - provider success不得表述为用户已收到。
 
 ## 8. 禁止事项
@@ -172,3 +172,4 @@ Trade Review不在本协议中重复规定正文生成、完成记录、用户�
 ## 10. 规则归属
 
 节点、入口枚举和任务身份由本协议登记；交易日历、market phase、数据资格、业务判断、正文、完成事件、通知和生产变更分别由所属唯一规范负责。若本协议与current main机器事实或所属业务协议冲突，必须修复协议镜像或实现，不得由任务Prompt自行覆盖。
+
