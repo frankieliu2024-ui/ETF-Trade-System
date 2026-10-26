@@ -31,6 +31,27 @@ class RuntimeRecoveryConsistencyGateTests(unittest.TestCase):
         self.assertTrue(gate["blocks_market_recovery"])
         self.assertEqual(gate["classification"], "GLOBAL_FAIL_BLOCKS_MARKET_RECOVERY_FAIL_SAFE")
 
+    def test_repairable_other_asset_membership_drift_allows_rebuild_but_preserves_fail(self):
+        with mock.patch.object(runtime_self_heal, "_repairable_derived_membership_mismatch", return_value=True):
+            gate = runtime_self_heal.consistency_market_recovery_gate({
+                "status": "FAIL",
+                "errors": ["stock_runtime:dynamic_account_membership: detected=['127118'] expected=[]"],
+            })
+        self.assertEqual(gate["global_status"], "FAIL")
+        self.assertFalse(gate["blocks_market_recovery"])
+        self.assertEqual(gate["classification"], "GLOBAL_FAIL_REPAIRABLE_DERIVED_MEMBERSHIP")
+        self.assertIn("remains FAIL", gate["recovery_note"])
+
+    def test_unknown_membership_drift_remains_blocking(self):
+        with mock.patch.object(runtime_self_heal, "_repairable_derived_membership_mismatch", return_value=False):
+            gate = runtime_self_heal.consistency_market_recovery_gate({
+                "status": "FAIL",
+                "errors": ["stock_runtime:dynamic_account_membership: detected=['300750'] expected=[]"],
+            })
+        self.assertTrue(gate["blocks_market_recovery"])
+        self.assertEqual(gate["classification"], "GLOBAL_FAIL_BLOCKS_MARKET_RECOVERY_FAIL_SAFE")
+
+
     def _assess(self, consistency: dict) -> dict:
         now = datetime.fromisoformat("2026-09-10T10:24:00+08:00")
         current = {
