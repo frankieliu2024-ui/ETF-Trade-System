@@ -211,9 +211,9 @@ def _dispatch_notification(completion_path: str) -> dict[str, object]:
 
     payload = json.dumps({
         "ref": "main",
-        # Bind Formal Decision explicitly. Trade Review keeps the shared Scheduled Review input;
-        # Formal must not depend on dynamic cross-task classification.
-        "inputs": {"formal_completion_path": completion_path},
+        # Formal Decision uses the same Scheduled Review completion owner and input as Trade Review;
+        # the completion payload remains the sole business-type discriminator.
+        "inputs": {"scheduled_review_completion_path": completion_path},
     }).encode("utf-8")
     base = f"https://api.github.com/repos/{owner}/{repo}"
     dispatch_endpoint = f"{base}/actions/workflows/decision-notification.yml/dispatches"
