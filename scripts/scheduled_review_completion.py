@@ -664,3 +664,69 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+
+
+def build_formal_runtime_completion_request(
+    *,
+    run_identity: dict,
+    market_date: str,
+    final_content: str,
+    decision_path: str,
+    fact_summary: dict | None = None,
+) -> dict:
+    """Build Formal Decision completion from current-main facts.
+
+    This handoff identity is not a market-fact request. It carries only the
+    already-frozen user-visible content and runtime identity needed by the
+    shared Scheduled Review notification chain.
+    """
+    identity = run_identity if isinstance(run_identity, dict) else {}
+    task_run_id = _safe_id(identity.get("task_run_id") or identity.get("occurrence_id"))
+    occurrence_id = _safe_id(identity.get("occurrence_id") or task_run_id)
+    requested_at = str(identity.get("requested_at_beijing") or "").strip()
+    entry_mode = str(identity.get("entry_mode") or "").strip().upper()
+    market_date = str(market_date or "").strip()
+    content = str(final_content or "")
+    path = str(decision_path or "").strip().lower()
+    if not task_run_id or not occurrence_id or not requested_at or not market_date:
+        raise ValueError("formal runtime completion requires runtime identity and market_date")
+    if entry_mode not in {"MANUAL_CONVERSATION", "MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"}:
+        raise ValueError("formal runtime completion requires a registered entry mode")
+    if path not in {"formal", "degraded", "timeout"}:
+        raise ValueError("formal runtime completion requires formal, degraded, or timeout decision_path")
+    validate_user_visible_content(content, canonical_closure_confirmed=False)
+    validate_formal_decision_presentation_timestamp(content, requested_at)
+    frozen_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
+    decision_id = f"ETF_FORMAL_DECISION:{task_run_id}"
+    payload = {
+        "request_id": task_run_id,
+        "request_type": "SCHEDULED_REVIEW_COMPLETION",
+        "formal_fact_type": "FORMAL_CURRENT_MAIN_DECISION",
+        "source": "CHATGPT_SCHEDULED_REVIEW_ACTOR",
+        "interaction_scenario": "FORMAL_DECISION",
+        "task_id": "ETF正式决策",
+        "task_run_id": task_run_id,
+        "occurrence_id": occurrence_id,
+        "entry_mode": entry_mode,
+        "requested_at_beijing": requested_at,
+        "market_date": market_date,
+        "decision_path": path,
+        "fact_source": "CURRENT_MAIN_LATEST_VALID_FIXED_PERIOD_FACTS",
+        "fact_summary": fact_summary if isinstance(fact_summary, dict) else {},
+        "decision_id": decision_id,
+        "presentation_binding": {
+            "report_type": "ETF_FORMAL_DECISION",
+            "task_id": "ETF正式决策",
+            "task_run_id": task_run_id,
+            "occurrence_id": occurrence_id,
+            "entry_mode": entry_mode,
+            "request_id": task_run_id,
+            "decision_id": decision_id,
+            "report_id": decision_id,
+            "full_content": content,
+            "content_hash": frozen_hash,
+            "content_hash_source": "completion_builder",
+        },
+    }
+    return payload

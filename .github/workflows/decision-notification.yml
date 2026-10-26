@@ -108,7 +108,7 @@ jobs:
           python-version: "3.11"
 
       - name: Classify manually dispatched Scheduled Review completion
-        # Formal Decision dispatches use formal_completion_path directly.
+        # Formal Decision and Trade Review use the shared scheduled_review_completion_path.
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path != '' }}
         id: dispatch_completion_kind
         shell: bash

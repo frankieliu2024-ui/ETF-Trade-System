@@ -344,63 +344,75 @@ def _dispatch_notification(completion_path: str) -> dict[str, object]:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--formal-review", required=True)
-    parser.add_argument("--request-id", required=True)
-    parser.add_argument("--requested-at-beijing", required=True)
-    parser.add_argument("--market-date", required=True)
-    parser.add_argument("--parent-request-id", default="")
-    parser.add_argument("--output", default="")
     parser.add_argument("--final-content", required=True)
-    parser.add_argument("--task-run-id", default="")
-    parser.add_argument("--occurrence-id", default="")
+    parser.add_argument("--market-date", required=True)
+    parser.add_argument("--requested-at-beijing", required=True)
     parser.add_argument("--entry-mode", required=True, choices=(
         "MANUAL_CONVERSATION", "MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"
     ))
+    parser.add_argument("--decision-path", default="formal", choices=("formal", "degraded", "timeout"))
+    parser.add_argument("--task-run-id", default="")
+    parser.add_argument("--occurrence-id", default="")
+    parser.add_argument("--output", default="")
+    # Compatibility-only input. It is a completion identity, not a market-fact request.
+    parser.add_argument("--request-id", default="")
     args = parser.parse_args()
 
     task_run_id, occurrence_id = derive_runtime_identity(
-        "ETF正式决策", args.request_id, args.requested_at_beijing,
-        args.entry_mode, args.task_run_id, args.occurrence_id,
-    )
-    target = write_completion_request(
-        args.formal_review, args.request_id, args.requested_at_beijing,
-        args.market_date, args.parent_request_id, args.output,
-        args.final_content, "ETF正式决策", task_run_id, occurrence_id,
+        "ETF正式决策",
+        args.request_id or args.task_run_id or args.occurrence_id or "formal-runtime",
+        args.requested_at_beijing,
         args.entry_mode,
+        args.task_run_id,
+        args.occurrence_id,
     )
-    persisted = json.loads(Path(target).read_text(encoding="utf-8"))
+    from scheduled_review_completion import build_formal_runtime_completion_request
+    identity = {
+        "task_run_id": task_run_id,
+        "occurrence_id": occurrence_id,
+        "requested_at_beijing": args.requested_at_beijing,
+        "entry_mode": args.entry_mode,
+    }
+    payload = build_formal_runtime_completion_request(
+        run_identity=identity,
+        market_date=args.market_date,
+        final_content=args.final_content,
+        decision_path=args.decision_path,
+    )
+    target = (
+        Path(args.output).resolve()
+        if args.output
+        else ROOT / "requests" / "live_snapshot" / f"{task_run_id}__scheduled_review_completion.json"
+    )
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    persisted = json.loads(target.read_text(encoding="utf-8"))
     binding = persisted.get("presentation_binding") or {}
     expected_hash = hashlib.sha256(args.final_content.encode("utf-8")).hexdigest()
     expected_decision_id = f"ETF_FORMAL_DECISION:{task_run_id}"
-    expected_parent_request_id = args.parent_request_id or args.request_id
-    binding = persisted.get("presentation_binding") or {}
     checks = {
-        "request_id": persisted.get("request_id") == args.request_id,
+        "request_id": persisted.get("request_id") == task_run_id,
         "task_id": persisted.get("task_id") == "ETF正式决策",
         "task_run_id": persisted.get("task_run_id") == task_run_id,
         "occurrence_id": persisted.get("occurrence_id") == occurrence_id,
-        "parent_request_id": persisted.get("parent_request_id") == expected_parent_request_id,
-        "decision_id": persisted.get("decision_id") == expected_decision_id,
-        "entry_mode": persisted.get("entry_mode") == args.entry_mode,
         "request_type": persisted.get("request_type") == "SCHEDULED_REVIEW_COMPLETION",
-        "no_bds_path": "bds_path" not in persisted,
+        "fact_source": persisted.get("fact_source") == "CURRENT_MAIN_LATEST_VALID_FIXED_PERIOD_FACTS",
+        "decision_path": persisted.get("decision_path") == args.decision_path,
+        "no_parent_fact_request": "parent_request_id" not in persisted,
         "report_type": binding.get("report_type") == "ETF_FORMAL_DECISION",
-        "binding_parent_request_id": binding.get("parent_request_id") == expected_parent_request_id,
+        "binding_request_id": binding.get("request_id") == task_run_id,
         "binding_decision_id": binding.get("decision_id") == expected_decision_id,
         "binding_report_id": binding.get("report_id") == expected_decision_id,
         "content_hash": binding.get("content_hash") == expected_hash,
         "full_content": binding.get("full_content") == args.final_content,
     }
-    hard_failures = [
-        key for key, ok in checks.items()
-        if not ok and key not in {"content_hash"}
-    ]
+    hard_failures = [key for key, ok in checks.items() if not ok and key != "content_hash"]
     if hard_failures:
-        failed = ", ".join(hard_failures)
-        raise RuntimeError(f"formal decision completion readback mismatch: {failed}")
+        raise RuntimeError("formal runtime completion readback mismatch: " + ", ".join(hard_failures))
 
     started_at = datetime.now(timezone.utc)
-    completion_path, persistence = persist_completion_with_recovery(Path(target))
+    completion_path, persistence = persist_completion_with_recovery(target)
     canonical_path = _persist_completion_to_main(completion_path)
     push = _wait_for_completion_push(canonical_path, started_at)
     dispatch = push
@@ -408,10 +420,7 @@ def main() -> int:
         dispatch = _dispatch_notification(canonical_path)
         dispatch["fallback_after"] = "CANONICAL_COMPLETION_PUSH_NOT_READ_BACK"
 
-    projection = _wait_for_projection(
-        str(persisted.get("occurrence_id") or occurrence_id),
-        str(binding.get("report_id") or expected_decision_id),
-    )
+    projection = _wait_for_projection(occurrence_id, expected_decision_id)
     handoff_ok = (
         bool(dispatch.get("submitted"))
         and bool(dispatch.get("read_back"))
