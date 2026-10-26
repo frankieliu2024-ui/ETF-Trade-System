@@ -126,10 +126,12 @@ class FormalParentSelfHealingTests(unittest.TestCase):
     def test_workflow_preserves_normalized_manual_formal_envelope(self):
         workflow = Path(".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
         self.assertIn("normalize_manual_request_session", workflow)
-        self.assertIn('dst.write_text(json.dumps(request, ensure_ascii=False, indent=2)', workflow)
+        self.assertIn('serialized = json.dumps(request, ensure_ascii=False, indent=2) + "\\n"', workflow)
+        self.assertIn('src.write_text(serialized, encoding="utf-8")', workflow)
+        self.assertIn('preserved.write_text(serialized, encoding="utf-8")', workflow)
         preserve = workflow.index("Preserve triggering request envelope before core publish")
-        normalize = workflow.index("normalize_manual_request_session", preserve)
-        context = workflow.index("python scripts/build_query_context.py --run-discovery", normalize)
+        normalize = workflow.rindex("normalize_manual_request_session")
+        context = workflow.index("python scripts/build_query_context.py --run-discovery", preserve)
         self.assertLess(normalize, context)
 
     def test_normalizer_recovers_missing_requested_at_beijing_at_existing_ingress_owner(self):

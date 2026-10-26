@@ -72,7 +72,7 @@ class SimulatedCanonicalChain:
         self.report = notification_center.build_report_from_handoff({
             "schema_version": "1.0",
             "report_type": self.event["report_type"],
-            "task_id": self.completion["task_id"],
+            "task_id": self.completion.get("task_id", self.completion["presentation_binding"]["task_id"]),
             "task_run_id": self.event["task_run_id"],
             "generated_at": self.completion["requested_at_beijing"],
             "effective_market_date": self.completion["market_date"],
@@ -91,7 +91,7 @@ class SimulatedCanonicalChain:
 class FullThreeTaskE2EReplayTests(unittest.TestCase):
     def _system(self):
         request_id = "sim-system-request"
-        review = {"status": "PASS", "request_id": request_id}
+        review = {"status": "PASS", "request_id": request_id, "market_date": "2026-09-23"}
         return completion.build_system_review_completion_request(
             review, request_id, "2026-09-23T19:30:00+08:00",
             "ETF系统复核", "sim-system-run", "FROZEN SYSTEM CONTENT",
@@ -110,6 +110,12 @@ class FullThreeTaskE2EReplayTests(unittest.TestCase):
     def _formal(self):
         request_id = "sim-formal-request"
         content = """【ETF正式决策】2026-09-23 20:30 正式判断\n\n【判断时点与事实边界】\n模拟事实边界。\n\n【当前正式判断】\n模拟判断。\n\n【风险与市场状态】\n模拟风险与市场状态。\n\n【三层监测】\n模拟三层监测。\n\n【全市场发现逐只评估】\n模拟发现评估。\n\n【观察ETF逐只评估】\n模拟观察评估。\n\n【机会ETF逐只评估】\n模拟机会评估。\n\n【全市场机会与资本竞争】\n模拟资本竞争。\n\n【现金管理】\n模拟现金管理。\n\n【全部实际持仓】\n模拟持仓评估。\n\n【最终管理动作】\n模拟最终动作。\n\n【关键风险与改变判断的条件】\n模拟风险条件。\n\n【信息不足在哪里】\n无。\n\n【执行边界】\n不自动交易。\n\n【置信度】\n中等。\n\n【最可能出错的地方】\n模拟测试。"""
+        content = content.replace("【全市场发现逐只评估】\n模拟发现评估。", "【全市场发现逐只评估】\n1. 模拟发现对象（159148）：模拟评估。")
+        content = content.replace("【观察ETF逐只评估】\n模拟观察评估。", "【观察ETF逐只评估】\n1. 模拟观察对象（588000）：模拟评估。")
+        content = content.replace("【机会ETF逐只评估】\n模拟机会评估。", "【机会ETF逐只评估】\n1. 模拟机会对象（159148）：模拟评估。")
+        content = content.replace("【全部实际持仓】\n模拟持仓评估。", "【全部实际持仓】\n1. 纳指ETF（159941）：模拟持仓评估。")
+        content = content.replace("1. ", "1）")
+        content = content.replace("模拟观察对象（588000）", "科创50ETF（588000）")
         return completion.build_formal_review_completion_request(
             full_review(), request_id, "2026-09-23T20:30:00+08:00",
             "2026-09-23", "", None, content, "ETF正式决策",
