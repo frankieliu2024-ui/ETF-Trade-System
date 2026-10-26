@@ -3816,105 +3816,15 @@ def main() -> int:
                 "use BUSINESS_DECISION_SOURCE with structured decision_response"
             )
 
-    # Formal Decision completion is a separate post-BDS ingress. It reuses the
-    # same canonical owner but never lets the BDS push itself create a Decision event.
+    # Formal Decision completion is the frozen, request-bound Scheduled Review
+    # handoff. New live completions are self-contained and must not depend on a
+    # BUSINESS_DECISION_SOURCE/BDS artifact. Historical BDS replay is handled by
+    # the explicit source_dispatch path below and is not part of live completion.
     original_source_dispatch = str(request.get("request_type") or "").strip().upper() == BUSINESS_DECISION_SOURCE
     completion_dispatch = is_formal_decision_completion(request)
     if completion_dispatch:
-        bds_path = str(request.get("bds_path") or "").strip()
-        # A new completion is already the frozen request-bound handoff. Do not
-        # create or recover a second BDS before projecting its canonical event.
-        if not bds_path:
-            request.setdefault("parent_request_id", str(request.get("request_id") or "").strip())
-            recorded, idempotent, event_path = record_formal_decision_report_event(request)
-            print(json.dumps({
-                "ok": True,
-                "request_id": request.get("request_id"),
-                "decision_id": request.get("decision_id"),
-                "formal_decision_event": True,
-                "canonical_publication": event_path,
-                "idempotent_replay": idempotent,
-                "bds_required": False,
-            }, ensure_ascii=False))
-            return 0
-        # Older task runners may have written the completion envelope without
-        # bds_path. Recover only the deterministic BDS belonging to this same
-        # parent request; never scan history or choose a lexicographic match.
-        if not bds_path:
-            parent_id = str(request.get("parent_request_id") or "").strip()
-            if not parent_id or any(part in parent_id for part in ("/", "\\", "..")):
-                raise ValueError("Formal Decision completion is missing a safe parent identity for BDS recovery")
-            derived_bds_path = f"requests/live_snapshot/{parent_id}__business_decision_source.json"
-            derived_bds_file = (ROOT / derived_bds_path).resolve()
-            if ROOT not in derived_bds_file.parents or not derived_bds_file.is_file():
-                raise ValueError("Formal Decision completion is missing its same-request BDS")
-            bds_path = derived_bds_path
-            request["bds_path"] = bds_path
-        if ".." in bds_path or bds_path.startswith(("/", "\\")):
-            raise ValueError("Formal Decision completion requires a safe BDS path")
-        bds_file = (ROOT / bds_path).resolve()
-        if ROOT not in bds_file.parents or not bds_file.is_file():
-            raise ValueError("Formal Decision completion BDS path is not durable")
-        bds = load_json(bds_file)
-        # BUSINESS_DECISION_SOURCE is durably stored under submission_type by
-        # the producer contract. Accept request_type only as a compatibility
-        # alias so the completion projector validates the same BDS contract
-        # that the producer and existing fixtures write.
-        bds_type = str(
-            bds.get("request_type") or bds.get("submission_type") or ""
-        ).strip().upper()
-        if bds_type != BUSINESS_DECISION_SOURCE:
-            raise ValueError("Formal Decision completion must reference BUSINESS_DECISION_SOURCE")
-        if str(source.get("parent_request_id") or request.get("parent_request_id") or source.get("request_id") or "").strip() != str(request.get("parent_request_id") or "").strip():
-            raise ValueError("Formal Decision completion parent does not match BDS")
-        if str(source.get("decision_id") or request.get("decision_id") or "").strip() != str(request.get("decision_id") or "").strip():
-            raise ValueError("Formal Decision completion decision_id does not match BDS")
-        content = bds.get("presentation_content")
-        if not isinstance(content, str) or not content:
-            raise ValueError("Formal Decision completion content binding is invalid")
-        # The live actor historically wrote a fresh top-level presentation
-        # while carrying forward the nested binding from an older run.  The
-        # top-level presentation is the durable BDS source; rebuild the
-        # derived binding from those exact bytes before projection, and persist
-        # the repaired BDS so the read-back contract is true as well.
-        expected_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
-        if str(source.get("content_hash") or "").strip() != expected_hash:
-            raise ValueError("Formal Decision completion content binding is invalid")
-        binding = bds.get("presentation_binding") if isinstance(bds.get("presentation_binding"), dict) else {}
-        if str(binding.get("full_content") or "") != content:
-            repaired_binding = build_formal_decision_presentation_binding(
-                content,
-                request_id=str(source.get("request_id") or request.get("request_id") or "").strip(),
-                decision_id=str(source.get("decision_id") or request.get("decision_id") or "").strip(),
-                parent_request_id=str(source.get("parent_request_id") or request.get("parent_request_id") or source.get("request_id") or "").strip(),
-                report_id=str(bds.get("report_id") or "").strip(),
-            )
-            if repaired_binding.get("full_content") != content:
-                raise ValueError("Formal Decision completion content binding is invalid")
-            bds["presentation_binding"] = repaired_binding
-            atomic_json_write(bds_file, bds)
-            bds = load_json(bds_file)
-            binding = bds.get("presentation_binding") if isinstance(bds.get("presentation_binding"), dict) else {}
-            if str(binding.get("full_content") or "") != content:
-                raise ValueError("Formal Decision completion content binding is invalid")
-        # BDS is the sole durable business source. The completion ingress is
-        # only the Scheduled Review handoff and must not re-validate a second
-        # copy of the decision work package or decision answers. Those copies
-        # can differ after canonical normalization/recovery even when the
-        # frozen presentation and identity are valid; the shared review chain
-        # deliberately projects from presentation_binding.full_content.
-        inline_content = request.get("presentation_content")
-        if inline_content not in (None, "") and inline_content != content:
-            raise ValueError("Formal Decision completion presentation content does not match BDS")
-        inline_binding = request.get("presentation_binding")
-        if isinstance(inline_binding, dict):
-            if str(inline_binding.get("full_content") or "") != content:
-                raise ValueError("Formal Decision completion presentation binding does not match BDS")
-        request.update({key: value for key, value in bds.items() if key not in {"request_id", "request_type", "source"}})
-        request["request_type"] = BUSINESS_DECISION_SOURCE
-        request["request_id"] = str(source.get("request_id") or request.get("request_id") or "").strip()
-        request["presentation_content"] = content
-        recorded, idempotent, event_path = record_formal_decision_report_event(request, bds)
+        request.setdefault("parent_request_id", str(request.get("request_id") or "").strip())
+        recorded, idempotent, event_path = record_formal_decision_report_event(request)
         print(json.dumps({
             "ok": True,
             "request_id": request.get("request_id"),
@@ -3922,6 +3832,7 @@ def main() -> int:
             "formal_decision_event": True,
             "canonical_publication": event_path,
             "idempotent_replay": idempotent,
+            "bds_required": False,
         }, ensure_ascii=False))
         return 0
 
