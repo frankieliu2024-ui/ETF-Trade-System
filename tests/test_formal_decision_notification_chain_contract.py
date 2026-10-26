@@ -127,5 +127,20 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
         self.assertIn("expected_run_name", actor)
         self.assertIn("run-name:", workflow)
 
+
+    def test_formal_actor_requires_same_run_notification_readback(self):
+        actor = (ROOT / "scripts" / "run_scheduled_formal_decision_actor.py").read_text(encoding="utf-8")
+        self.assertIn("handoff_ok = bool(dispatch.get(\"submitted\"))", actor)
+        self.assertIn('bool(dispatch.get("read_back"))', actor)
+        self.assertIn('"same_run_handoff_complete"', actor)
+        self.assertIn("return 0 if handoff_ok else 2", actor)
+
+    def test_formal_prompt_uses_snapshot_age_normal_and_degraded_windows(self):
+        prompt = (ROOT / "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/prompts/正式决策.txt").read_text(encoding="utf-8")
+        self.assertIn("不超过15分钟（900秒）", prompt)
+        self.assertIn("不超过25分钟（900秒＜年龄≤1500秒）", prompt)
+        self.assertIn("不得使用BDS或BUSINESS_DECISION_SOURCE", prompt)
+        self.assertIn("本次同一运行中实际提交decision-notification.yml", prompt)
+
 if __name__ == "__main__":
     unittest.main()
