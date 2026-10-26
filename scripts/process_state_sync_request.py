@@ -2353,16 +2353,9 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
             data_time["close_snapshot"] = canonical_close_snapshot
             data_time.pop("close_data_gap", None)
         else:
-            data_time["close_data_status"] = (
-                "CLOSE_REFERENCE_MISMATCH"
-                if close_reference_mismatch
-                else str(close_contract.get("status") or "UNVERIFIED")
-            )
+            data_time["close_data_status"] = str(close_contract.get("status") or "UNVERIFIED")
             data_time["close_data_gap"] = (
-                "The supplied close reference did not match the current verified close; "
-                "review retained with an explicit close-data warning and no inferred close."
-                if close_reference_mismatch
-                else "VERIFIED_SESSION_CLOSE unavailable for this market date; review completed "
+                "VERIFIED_SESSION_CLOSE unavailable for this market date; review completed "
                 "with degraded/incomplete evidence and no inferred close."
             )
             data_time.pop("close_snapshot", None)
