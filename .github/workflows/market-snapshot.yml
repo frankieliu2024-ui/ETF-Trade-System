@@ -404,6 +404,23 @@ jobs:
           }:
               policy = json.loads(Path("config/runtime_policy.json").read_text(encoding="utf-8"))
               request = normalize_manual_request_session(request, policy)
+          # Every Formal Decision parent is its own canonical parent. Normalize
+          # the identity before any request-bound context or derived state is
+          # built; an empty parent must never reach the later projection check.
+          formal_sources = {
+              "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+              "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
+              "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
+          }
+          if source in formal_sources:
+              request_id = str(request.get("request_id") or "").strip()
+              parent_id = str(request.get("parent_request_id") or "").strip() or request_id
+              if not request_id or parent_id != request_id:
+                  raise SystemExit(
+                      f"formal parent identity missing or conflicting: "
+                      f"request_id={request_id} parent_request_id={parent_id}"
+                  )
+              request["parent_request_id"] = parent_id
           serialized = json.dumps(request, ensure_ascii=False, indent=2) + "\n"
           src.write_text(serialized, encoding="utf-8")
           preserved.write_text(serialized, encoding="utf-8")
@@ -1293,6 +1310,38 @@ jobs:
             if [ -s /tmp/latest-query-context.json ]; then
               cp /tmp/latest-query-context.json data/state/query_context.json
             fi
+          fi
+          # The request envelope is the single identity source for all
+          # request-bound builders. Repair only the canonical parent field when
+          # it is absent; reject a conflicting value before any derived state is
+          # produced. This does not change formal admission or notification rules.
+          if [ -n "$REQUEST_FILE" ] && [ -f "$REQUEST_FILE" ]; then
+            python - "$REQUEST_FILE" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+          path = Path(sys.argv[1])
+          request = json.loads(path.read_text(encoding="utf-8"))
+          formal_sources = {
+              "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+              "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
+              "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
+          }
+          source = str(request.get("source") or request.get("requested_by") or "").strip().upper()
+          if source in formal_sources:
+              request_id = str(request.get("request_id") or "").strip()
+              parent_id = str(request.get("parent_request_id") or "").strip() or request_id
+              if not request_id or parent_id != request_id:
+                  raise SystemExit(
+                      f"formal parent identity missing or conflicting: "
+                      f"request_id={request_id} parent_request_id={parent_id}"
+                  )
+              request["parent_request_id"] = parent_id
+              path.write_text(
+                  json.dumps(request, ensure_ascii=False, indent=2) + "\n",
+                  encoding="utf-8",
+              )
+          PY
           fi
           REQUEST_ARGS=()
           if [ -n "$REQUEST_FILE" ]; then REQUEST_ARGS+=(--request-file "$REQUEST_FILE"); fi
