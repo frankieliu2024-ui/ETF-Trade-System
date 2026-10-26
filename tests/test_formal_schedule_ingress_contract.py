@@ -2,7 +2,6 @@ from pathlib import Path
 
 
 WORKFLOW = Path(__file__).parents[1] / ".github" / "workflows" / "market-snapshot.yml"
-SCRIPT = Path(__file__).parents[1] / "scripts" / "create_scheduled_formal_request.py"
 
 
 def test_formal_schedule_has_exact_five_beijing_slots():
@@ -17,44 +16,8 @@ def test_formal_schedule_has_exact_five_beijing_slots():
         assert cron in text
 
 
-def test_formal_schedule_ingress_creates_a_new_canonical_parent_per_invocation():
-    text = SCRIPT.read_text(encoding="utf-8")
-    assert "occurrence_id" in text
-    assert "CHATGPT_SCHEDULED_FORMAL_ANALYSIS" in text
-    assert "duplicate_equivalent_refresh_forbidden" in text
-    assert "Every legal invocation is a new ingress" in text
-    assert "REUSE_ACTIVE_PARENT" not in text
-    assert "_active_formal_parent" not in text
-
-
-def test_automatic_identity_is_runtime_bound_and_fail_closed():
-    text = SCRIPT.read_text(encoding="utf-8")
-    assert 'os.environ.get("TASK_ID", "").strip()' in text
-    assert 'os.environ.get("TASK_RUN_ID", "").strip()' in text
-    assert 'os.environ.get("OCCURRENCE_ID", "").strip()' in text
-    assert 'startswith("scheduled_")' in text
-    assert '"request_type": "MARKET_QUOTE_REFRESH"' in text
-
-
-def test_canonical_parent_request_carries_top_level_formal_scenario_and_identity():
-    from datetime import datetime, timezone, timedelta
-    from scripts.create_scheduled_formal_request import build_scheduled_request
-
-    request = build_scheduled_request(
-        now=datetime(2026, 10, 20, 13, 0, tzinfo=timezone(timedelta(hours=8))),
-        task_id="ETF正式决策",
-        task_run_id="manual-run-1",
-        occurrence_id="conversation-20261020T130000+0800-test",
-        entry_mode="MANUAL_CONVERSATION",
-    )
-    assert request["interaction_scenario"] == "FORMAL_DECISION"
-    assert request["intent"]["interaction_scenario"] == "FORMAL_DECISION"
-    for field in ("task_run_id", "occurrence_id", "market_date"):
-        assert request[field]
-
-
-def test_manual_entry_is_not_created_by_automatic_ingress_script():
-    text = SCRIPT.read_text(encoding="utf-8")
-    assert 'ENTRY_MODE' in text
-    assert 'MANUAL_SCHEDULED_TASK' in text
-    assert 'AUTOMATIC_SCHEDULED_TASK' in text
+def test_formal_schedule_is_market_data_pulse_only():
+    text = WORKFLOW.read_text(encoding="utf-8")
+    assert "Formal Decision consumes current main facts directly" in text
+    assert "Create deterministic Formal Decision schedule ingress" not in text
+    assert "create_scheduled_formal_request.py" not in text
