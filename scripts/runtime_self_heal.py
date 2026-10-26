@@ -308,6 +308,30 @@ def recent_attempts(previous: dict, now: datetime) -> list[str]:
     return result
 
 
+def _repairable_derived_membership_mismatch() -> bool:
+    """Allow canonical recovery to rebuild a stale derived membership projection.
+
+    This is narrow: every unexpected detected member must be an explicitly
+    classified OTHER account asset, and no expected stock member may be missing.
+    Unknown or genuine stock mismatches remain blocking.
+    """
+    try:
+        from scripts.build_stock_context import active_account_asset_codes
+    except ModuleNotFoundError:
+        from build_stock_context import active_account_asset_codes
+    account = load_json(ROOT / "data" / "state" / "account_fact.json", {}) or {}
+    stock_context = load_json(ROOT / "data" / "state" / "stock_context.json", {}) or {}
+    membership = active_account_asset_codes(ROOT, account)
+    detected = {
+        str(item.get("code") or "").strip()
+        for item in ((stock_context.get("default_stock_layer") or {}).get("detected_non_etf_stocks") or [])
+        if isinstance(item, dict) and str(item.get("code") or "").strip()
+    }
+    expected = set(membership.get("stocks") or set())
+    other = set(membership.get("other") or set())
+    return bool(detected - expected) and not (expected - detected) and (detected - expected) <= other
+
+
 def consistency_market_recovery_gate(consistency: dict) -> dict:
     """Classify whether a global consistency FAIL blocks safe market recovery.
 
@@ -334,6 +358,18 @@ def consistency_market_recovery_gate(consistency: dict) -> dict:
             "blocks_market_recovery": False,
             "classification": "GLOBAL_FAIL_KNOWN_NONBLOCKING_FOR_MARKET_RECOVERY",
             "errors": errors,
+        }
+    if (
+        errors
+        and all(error.startswith("stock_runtime:dynamic_account_membership:") for error in errors)
+        and _repairable_derived_membership_mismatch()
+    ):
+        return {
+            "global_status": status,
+            "blocks_market_recovery": False,
+            "classification": "GLOBAL_FAIL_REPAIRABLE_DERIVED_MEMBERSHIP",
+            "errors": errors,
+            "recovery_note": "canonical market recovery may rebuild stale stock_context; consistency remains FAIL until rechecked",
         }
     return {
         "global_status": status,
