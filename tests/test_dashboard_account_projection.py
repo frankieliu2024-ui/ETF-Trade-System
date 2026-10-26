@@ -230,4 +230,16 @@ class DashboardAccountProjectionTests(unittest.TestCase):
   with patch.object(process_sync,"ROOT",self.root):
    self.assertEqual(process_sync.validate_managed_position_lifecycle(lifecycle,account),"")
 
+ def test_convertible_bond_is_account_other_not_stock_runtime_member(self):
+  account={"status":"VALID","positions":[
+   {"code":"159941","name":"纳指ETF","quantity":12200,"asset_type":"ETF"},
+   {"code":"127118","name":"华纬转债（待上市可转债）","quantity":10,
+    "security_type":"CONVERTIBLE_BOND","asset_type":"OTHER"},
+  ]}
+  with patch.object(stock_context_builder,"ROOT",self.root), \
+       patch.object(stock_context_builder,"read_account_fact",return_value=account):
+   context=stock_context_builder.build()
+  self.assertEqual({x["code"] for x in context["default_stock_layer"]["detected_non_etf_stocks"]}, set())
+  self.assertEqual(active_account_asset_codes(self.root,account)["other"], {"127118"})
+
 if __name__=="__main__": unittest.main()
