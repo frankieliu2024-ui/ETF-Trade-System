@@ -127,6 +127,63 @@ def _wait_for_completion_push(completion_path: str, started_at: datetime) -> dic
     return {"submitted": False, "read_back": False, "wake": "CANONICAL_COMPLETION_PUSH", "completion_path": completion_path, "reason": "canonical completion push notification run not read back"}
 
 
+def _read_main_json(relative_path: str) -> dict[str, object] | None:
+    """Read one canonical JSON object from current main."""
+    token = os.environ.get("GITHUB_TOKEN", "").strip()
+    repository = os.environ.get("GITHUB_REPOSITORY", "").strip()
+    if not token or "/" not in repository:
+        return None
+    owner, repo = repository.split("/", 1)
+    endpoint = f"https://api.github.com/repos/{owner}/{repo}/contents/{relative_path}?ref=main"
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "Authorization": f"Bearer {token}",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+    try:
+        req = urllib_request.Request(endpoint, method="GET", headers=headers)
+        with urllib_request.urlopen(req, timeout=30) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+        raw = __import__("base64").b64decode(str(payload.get("content") or "").replace("\\n", ""))
+        value = json.loads(raw.decode("utf-8"))
+        return value if isinstance(value, dict) else None
+    except Exception:
+        return None
+
+
+def _wait_for_projection(occurrence_id: str, report_id: str) -> dict[str, object]:
+    """Require canonical event and REPORT before declaring notification handoff complete."""
+    event_path = f"events/reviews/formal_{occurrence_id}.json"
+    deadline = datetime.now(timezone.utc) + timedelta(seconds=120)
+    last = ""
+    while datetime.now(timezone.utc) < deadline:
+        event = _read_main_json(event_path)
+        if isinstance(event, dict):
+            actual_report_id = str(event.get("report_id") or report_id).strip()
+            report_path = (
+                f"requests/report_delivery/{actual_report_id.replace(':', '__')}.json"
+                if actual_report_id else ""
+            )
+            report = _read_main_json(report_path) if report_path else None
+            if isinstance(report, dict):
+                return {
+                    "verified": True,
+                    "event_path": event_path,
+                    "report_path": report_path,
+                    "report_id": actual_report_id,
+                    "reason": "canonical event and REPORT read back from current main",
+                }
+            last = "canonical event exists but REPORT is not yet readable"
+        else:
+            last = "canonical Formal Decision event is not yet readable"
+        time.sleep(3)
+    return {
+        "verified": False,
+        "event_path": event_path,
+        "reason": last or "canonical event and REPORT were not read back within bounded window",
+    }
+
+
 def _dispatch_notification(completion_path: str) -> dict[str, object]:
     """Use explicit dispatch only as same-run recovery after canonical push readback is absent."""
     token = (os.environ.get("GITHUB_TOKEN", "").strip()
@@ -339,7 +396,15 @@ def main() -> int:
         dispatch = _dispatch_notification(canonical_path)
         dispatch["fallback_after"] = "CANONICAL_COMPLETION_PUSH_NOT_READ_BACK"
 
-    handoff_ok = bool(dispatch.get("submitted")) and bool(dispatch.get("read_back"))
+    projection = _wait_for_projection(
+        str(persisted.get("occurrence_id") or occurrence_id),
+        str(binding.get("report_id") or expected_decision_id),
+    )
+    handoff_ok = (
+        bool(dispatch.get("submitted"))
+        and bool(dispatch.get("read_back"))
+        and bool(projection.get("verified"))
+    )
     print(json.dumps({
         "ok": handoff_ok,
         "completion_path": completion_path,
@@ -347,6 +412,7 @@ def main() -> int:
         "readback": checks,
         "content_hash_warning": None if checks.get("content_hash") else "content_hash_mismatch",
         "notification_dispatch": dispatch,
+        "projection": projection,
         "same_run_handoff_complete": handoff_ok,
     }, ensure_ascii=False))
     return 0 if handoff_ok else 2
