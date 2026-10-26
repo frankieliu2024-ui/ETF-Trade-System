@@ -17,6 +17,9 @@ on:
   # Read-only precheck for changes that can redefine consistency semantics.
   # It reuses the same production checks before merge, but never executes
   # mutation requests or persists generated state back to main.
+  workflow_run:
+    workflows: ["ETF market snapshot"]
+    types: [completed]
   push:
     branches: [main]
     paths:
@@ -92,6 +95,7 @@ concurrency:
 
 jobs:
   consistency:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 12
     env:
