@@ -266,9 +266,31 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          active=$(gh run list --workflow market-snapshot.yml --limit 10 --json status --jq '[.[] | select(.status == "queued" or .status == "in_progress")] | length')
-          if [ "$active" != "0" ]; then
-            echo "Canonical market snapshot already queued/in progress; reuse it for the existing Formal parent."
+          parent_id="$(python - <<'PY'
+          import json
+          from pathlib import Path
+          request = json.loads(Path("${{ steps.assess.outputs.formal_replay_request }}").read_text(encoding="utf-8"))
+          print(str(request.get("request_id") or "").strip())
+          PY
+          )"
+          for attempt in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16; do
+            git fetch origin main --quiet
+            bound_id="$(git show origin/main:data/state/query_context.json 2>/dev/null | python -c 'import json,sys; d=json.load(sys.stdin); print(str((((d.get("decision_fact_pack") or {}).get("trigger") or {}).get("request_id")) or "").strip())' 2>/dev/null || true)"
+            if [ "$bound_id" = "$parent_id" ]; then
+              echo "Current Formal parent is already request-bound on main; no replay needed."
+              exit 0
+            fi
+            active=$(gh run list --workflow market-snapshot.yml --limit 10 --json status --jq '[.[] | select(.status == "queued" or .status == "in_progress")] | length')
+            if [ "$active" = "0" ]; then
+              break
+            fi
+            echo "An existing market snapshot is active but is not yet proven to consume parent=$parent_id; waiting before bounded same-parent recovery (${attempt}/16)."
+            sleep 15
+          done
+          git fetch origin main --quiet
+          bound_id="$(git show origin/main:data/state/query_context.json 2>/dev/null | python -c 'import json,sys; d=json.load(sys.stdin); print(str((((d.get("decision_fact_pack") or {}).get("trigger") or {}).get("request_id")) or "").strip())' 2>/dev/null || true)"
+          if [ "$bound_id" = "$parent_id" ]; then
+            echo "Current Formal parent became request-bound on main; no replay needed."
             exit 0
           fi
           gh workflow run market-snapshot.yml --ref main -f node=scheduled -f probe_only=false -f formal_context_recovery_request="${{ steps.assess.outputs.formal_replay_request }}"
