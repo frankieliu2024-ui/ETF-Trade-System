@@ -96,10 +96,9 @@ def classify_formal_request_consumer_state(
         for item in graph
         if isinstance(item, dict) and str(item.get("problem_id") or "").strip()
     ]
-    # READY is valid only when the same request has a complete, non-empty
-    # request-bound work package.  A stale gate, an empty connector read, or a
-    # projection containing only status metadata must remain WAIT.  This is a
-    # consumer boundary, not a second readiness algorithm.
+    # READY is valid only when the same request has a request-bound work
+    # package.  The gate is the business readiness boundary; the consumer must
+    # not add a second "read every object" or post-handoff readiness gate.
     dwp_complete = bool(
         same_request
         and isinstance(context, dict)
@@ -107,7 +106,6 @@ def classify_formal_request_consumer_state(
         and isinstance(pack.get("trigger"), dict)
         and bound_request == parent
         and isinstance(dwp, dict)
-        and required_problem_ids
         and isinstance(dwp.get("response_contract"), dict)
     )
     if dwp_complete and freeze_status in READY_STATUSES and reply_freezable:
@@ -124,19 +122,19 @@ def classify_formal_request_consumer_state(
             "status": "BUSINESS_DECISION_READY",
             "continue_same_request": False,
             "analysis_eligible": True,
-            # READY authorizes the task context to complete the full business
-            # answer and freeze FINAL_CONTENT. It does not authorize exposing
-            # that content until the required completion handoff succeeds.
+            # READY authorizes the task context to complete, freeze and publish
+            # FINAL_CONTENT. Completion and notification are post-publication
+            # delivery layers and must never block the business answer.
             "reply_eligible": True,
             "business_decision_allowed": True,
             "final_content_generation_allowed": True,
             "user_visible_output": BUSINESS_REPLY_OUTPUT,
             "actor_action": ACTOR_DECIDE,
-            "user_output_allowed": False,
-            "handoff_before_reply": HANDOFF_BEFORE_REPLY,
+            "user_output_allowed": True,
+            "handoff_before_reply": False,
             "required_problem_ids": required_problem_ids,
             "required_problem_count": len(required_problem_ids),
-            "business_answer_contract": "DWP_EXACT_COVERAGE_BEFORE_PRESENTATION",
+            "business_answer_contract": "DWP_COVERAGE_FOR_JUDGMENT",
             "actor_response_contract": response_contract,
             "control_plane_in_user_reply": False,
             "reason": (
@@ -152,7 +150,7 @@ def classify_formal_request_consumer_state(
             # frozen content. Downstream event,
             # REPORT/notification/provider delivery remains asynchronous.
             "ready_handoff": {
-                "required": True,
+                "required": False,
                 "submission_type": "SCHEDULED_REVIEW_COMPLETION",
                 "source": "CHATGPT_SCHEDULED_REVIEW_ACTOR",
                 "parent_request_id": parent,
@@ -177,13 +175,13 @@ def classify_formal_request_consumer_state(
                     ],
                     "forbid_historical_fallback": True,
                     "read_back_required": True,
-                    "completion_must_be_written_and_read_back_before_user_reply": True,
+                    "completion_must_be_written_and_read_back_before_user_reply": False,
                 },
                 # The task freezes one FINAL_CONTENT and completes the bounded
                 # handoff. Provider delivery remains a separately read-back layer.
                 "business_decision_allowed": True,
                 "final_content_generation_allowed": True,
-                "user_reply_precondition": True,
+                "user_reply_precondition": False,
                 "notification_attempt_precondition": True,
                 "provider_success_not_required_for_user_reply": True,
                 "user_reply_contract": {
@@ -193,9 +191,9 @@ def classify_formal_request_consumer_state(
                     "handoff_status_cannot_replace_content": True,
                     "completion_must_reuse_exact_final_content": True,
                 },
-                "post_reply_async": False,
-                "provider_success_async": False,
-                "must_read_back_before_reply": True,
+                "post_reply_async": True,
+                "provider_success_async": True,
+                "must_read_back_before_reply": False,
                 "historical_fallback_forbidden": True,
             },
         }
