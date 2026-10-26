@@ -404,7 +404,11 @@ def assess(now: datetime | None = None) -> dict:
         # turn it into a runtime recovery failure or block the next decision.
         classification, action, reason = "FORMAL_PARENT_HANDOFF_PENDING", "NONE", f"Formal Decision parent {formal_handoff_parent_id} lacks post-reply projection: {formal_handoff_missing}; observation only, no replay and no decision gate"
     elif formal_replay_path:
-        classification, action, reason = "FORMAL_PARENT_RECOVERY_REQUIRED", "ESCALATE", f"durable Formal Decision parent {formal_replay_parent_id} has no same-request derived context and no BUSINESS_DECISION_SOURCE; automatic replay is prohibited"
+        # The durable parent already exists and the canonical watchdog has an
+        # existing recovery input. Continue the same parent through the same
+        # market-snapshot producer; do not escalate a recoverable handoff gap
+        # and do not create a replacement request.
+        classification, action, reason = "FORMAL_PARENT_RECOVERY_REQUIRED", "REPLAY_FORMAL_REQUEST", f"durable Formal Decision parent {formal_replay_parent_id} has no same-request derived context and no BUSINESS_DECISION_SOURCE; continue the existing parent through the canonical producer"
     elif same_day_missing:
         last_trigger = parse_dt(previous.get("last_snapshot_refresh_trigger_at"))
         seconds_since_trigger = int((now - last_trigger).total_seconds()) if last_trigger else None
@@ -514,16 +518,3 @@ def main() -> int:
 
     previous = previous_status()
     status = assess()
-    if args.repair_safe:
-        status = repair_safe(status)
-    if args.record_trigger:
-        status = record_trigger(status)
-    explicit_mutation = args.repair_safe or args.record_trigger
-    if explicit_mutation or semantic_status_changed(previous, status):
-        atomic_write_json(STATUS_PATH, status)
-    print(json.dumps(status, ensure_ascii=False))
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
