@@ -97,8 +97,6 @@
       "sunday_rule": "按current main正式日历判定",
       "manual_allowed": true,
       "route": "FORMAL_DECISION",
-      "entry_adapter": "scripts/create_scheduled_formal_request.py",
-      "entry_builder": "build_scheduled_request",
       "production_adapter": "scripts/run_scheduled_formal_decision_actor.py",
       "completion_builder": "build_formal_review_completion_request",
       "manual_entry_modes": [
@@ -111,12 +109,14 @@
       "handoff_contract": {
         "source": "SCHEDULED_REVIEW_COMPLETION",
         "sequence": [
+          "identify_real_entry_and_unique_run_identity",
+          "read_current_main_latest_valid_fixed_period_facts",
+          "evaluate_snapshot_freshness_and_formal_or_degraded_path",
           "freeze_FINAL_CONTENT",
-          "compute_content_hash",
           "write_read_SCHEDULED_REVIEW_COMPLETION",
           "read_back_canonical_review_event_REPORT_notification_provider"
         ],
-        "same_run_runtime_clock": "requested_at_beijing",
+        "same_run_runtime_clock": "runtime_now",
         "timezone": "Asia/Shanghai",
         "utc_only_for": [
           "GitHub Actions cron",
@@ -148,6 +148,17 @@
         },
         "completion_push_required_in_same_run": true,
         "explicit_dispatch_role": "SAME_RUN_RECOVERY_ONLY"
+      },
+      "fact_consumption": {
+        "source": "CURRENT_MAIN_LATEST_VALID_FIXED_PERIOD_FACTS",
+        "request_required": false,
+        "parent_request_required": false,
+        "market_snapshot_request_required": false,
+        "request_bound_context_required": false,
+        "freshness_decision": "intraday_snapshot_age_0_to_900_seconds_normal; age_901_to_1500_seconds_degraded; age_over_1500_without_legal_degradation_blocked",
+        "close_snapshot_rule": "prefer_current_trading_day_15_00_quality_and_PIT_accepted_close_snapshot",
+        "stale_fact_reuse_forbidden": true,
+        "historical_fact_reuse_forbidden": true
       }
     }
   ],
