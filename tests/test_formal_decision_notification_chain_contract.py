@@ -162,6 +162,12 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
         self.assertTrue(contract["discovery_requires_current_snapshot_revalidation"])
         self.assertTrue(contract["object_layers_independently_gated"])
 
+    def test_manual_shared_completion_is_classified_before_formal_projection(self):
+        workflow = (ROOT / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
+        self.assertIn("Classify manually dispatched completion", workflow)
+        self.assertIn("steps.dispatch_completion_kind.outputs.formal", workflow)
+        self.assertIn("steps.dispatch_completion_kind.outputs.scheduled", workflow)
+
     def test_formal_actor_prefers_completion_push_and_uses_one_fallback(self):
         actor = (ROOT / "scripts" / "run_scheduled_formal_decision_actor.py").read_text(encoding="utf-8")
         handoff = actor.split("started_at = datetime.now(timezone.utc)", 1)[1]
