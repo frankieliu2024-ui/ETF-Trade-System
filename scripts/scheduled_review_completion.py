@@ -302,7 +302,11 @@ def build_formal_review_completion_request(
         raise ValueError("formal review completion requires canonical task_id")
     if not isinstance(formal_review, dict) or not formal_review:
         raise ValueError("formal review payload is required")
-    validate_full_day_review(formal_review, account)
+    scope = str(formal_review.get("review_scope") or "").strip().upper()
+    if scope == "MORNING_SESSION_STAGE_ONLY":
+        validate_midday_review(formal_review, account)
+    else:
+        validate_full_day_review(formal_review, account)
     validate_formal_decision_fact_binding(formal_review, request_id)
     validate_user_visible_content(str(final_content or ""), canonical_closure_confirmed=False)
     validate_formal_decision_presentation_timestamp(final_content, requested_at_beijing)
