@@ -426,8 +426,13 @@ def main() -> int:
         and bool(dispatch.get("read_back"))
         and bool(projection.get("verified"))
     )
+    # Emit the frozen body as a first-class user-visible output contract.
+    # The caller must publish this exact string verbatim; the handoff status
+    # below must never replace or summarize it.
+    print(args.final_content)
     print(json.dumps({
         "ok": handoff_ok,
+        "user_visible_content": args.final_content,
         "completion_path": completion_path,
         "persistence": persistence,
         "readback": checks,
