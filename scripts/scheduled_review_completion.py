@@ -320,6 +320,9 @@ def build_formal_review_completion_request(
         raise ValueError("formal review completion market_date must match formal_review")
     frozen_content = str(final_content or "")
     frozen_hash = hashlib.sha256(frozen_content.encode("utf-8")).hexdigest()
+    effective_parent_request_id = _safe_id(parent_request_id or request_id)
+    decision_id = f"ETF_FORMAL_DECISION:{effective_task_run_id}"
+    report_id = f"ETF_FORMAL_DECISION:{effective_task_run_id}"
     payload = {
         "request_id": _safe_id(request_id),
         "request_type": "SCHEDULED_REVIEW_COMPLETION",
@@ -331,7 +334,8 @@ def build_formal_review_completion_request(
         "task_id": "ETF正式决策",
         "task_run_id": effective_task_run_id,
         "occurrence_id": effective_occurrence_id,
-        "decision_id": f"ETF_FORMAL_DECISION:{effective_task_run_id}",
+        "parent_request_id": effective_parent_request_id,
+        "decision_id": decision_id,
         "requested_at_beijing": str(requested_at_beijing or "").strip(),
         "market_date": effective_market_date,
         "formal_review": formal_review,
@@ -342,14 +346,14 @@ def build_formal_review_completion_request(
             "occurrence_id": effective_occurrence_id,
             "entry_mode": effective_entry_mode,
             "request_id": str(request_id),
-            "report_id": f"ETF_FORMAL_DECISION:{effective_task_run_id}",
+            "parent_request_id": effective_parent_request_id,
+            "decision_id": decision_id,
+            "report_id": report_id,
             "full_content": frozen_content,
             "content_hash": frozen_hash,
             "content_hash_source": "completion_builder",
         },
     }
-    if parent_request_id:
-        payload["parent_request_id"] = _safe_id(parent_request_id)
     if not payload["requested_at_beijing"]:
         raise ValueError("formal review completion requires requested_at_beijing")
     return payload
