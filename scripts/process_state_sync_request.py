@@ -2507,11 +2507,12 @@ def record_formal_decision_report_event(request: dict, bds: dict | None = None) 
     # Project the exact frozen presentation at the canonical owner. Historical
     # BDS callers may still pass their source envelope, but new completion
     # callers are validated from the completion itself.
+    direct_completion = bds is None
     source = bds if isinstance(bds, dict) else request
     binding = source.get("presentation_binding") if isinstance(source.get("presentation_binding"), dict) else {}
     identity = {
         "request_id": str(source.get("request_id") or request.get("request_id") or "").strip(),
-        "parent_request_id": str(source.get("parent_request_id") or request.get("parent_request_id") or source.get("request_id") or "").strip(),
+        "parent_request_id": str(source.get("parent_request_id") or request.get("parent_request_id") or ("" if direct_completion else source.get("request_id")) or "").strip(),
         "decision_id": str(source.get("decision_id") or request.get("decision_id") or "").strip(),
         "binding_request_id": str(binding.get("request_id") or source.get("request_id") or request.get("request_id") or "").strip(),
         "binding_parent_request_id": str(binding.get("parent_request_id") or source.get("parent_request_id") or source.get("request_id") or "").strip(),
@@ -2519,6 +2520,8 @@ def record_formal_decision_report_event(request: dict, bds: dict | None = None) 
     }
     if any(not value for value in identity.values()):
         raise ValueError("Formal Decision canonical event requires complete request/parent/decision identity")
+    if direct_completion and identity["request_id"] == identity["parent_request_id"]:
+        raise ValueError("Formal Decision completion request_id must differ from parent_request_id")
     if (
         identity["binding_request_id"] != identity["request_id"]
         or identity["binding_parent_request_id"] != identity["parent_request_id"]
@@ -2560,7 +2563,8 @@ def record_formal_decision_report_event(request: dict, bds: dict | None = None) 
         "reviewed_at_beijing": str(source.get("requested_at_beijing") or request.get("requested_at_beijing") or ""),
         "presentation_binding": binding,
         "formal_decision": source.get("decision_response") or source.get("formal_decision") or {},
-        "source_bds_path": str(source.get("target_path") or ""),
+        "source_completion_path": str(source.get("_ingress_path") or "") if direct_completion else "",
+        "source_bds_path": "" if direct_completion else str(source.get("target_path") or ""),
     }
     payload["fingerprint"] = hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
     event_path = ROOT / "events" / "reviews" / f"formal_{occurrence}.json"
@@ -3295,11 +3299,12 @@ def _trade_event_id(request: dict, trade: dict, idempotency_key: str, ordinal: i
 
 def is_formal_decision_completion(request: dict) -> bool:
     """Recognize the shared Formal Decision completion contract independent of actor label."""
+    binding = request.get("presentation_binding") if isinstance(request.get("presentation_binding"), dict) else {}
     return (
         str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION"
         and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_POST_CLOSE_REVIEW"
         and str(request.get("task_id") or "").strip() == "ETF正式决策"
-        and str(request.get("report_type") or request.get("report_kind") or "").strip().upper() == "ETF_FORMAL_DECISION"
+        and str(request.get("report_type") or request.get("report_kind") or binding.get("report_type") or "").strip().upper() == "ETF_FORMAL_DECISION"
         and str(request.get("interaction_scenario") or "").strip().upper() == "FORMAL_DECISION"
     )
 
@@ -4345,3 +4350,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

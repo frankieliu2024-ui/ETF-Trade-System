@@ -130,8 +130,8 @@
     },
     {
       "task_id": "ETF正式决策",
-      "business_chain": "entry identity → parent request → request-bound facts/DWP → gate → FINAL_CONTENT → BDS → SCHEDULED_REVIEW_COMPLETION → decision-notification → formal canonical event → REPORT → notification_center → PushPlus",
-      "interaction_scenario": "FORMAL_DECISION_CANONICAL_SCENARIO_PER_CURRENT_MAIN",
+      "business_chain": "entry identity → parent request → request-bound facts/DWP → gate → FINAL_CONTENT → SCHEDULED_REVIEW_COMPLETION → decision-notification → formal canonical event → REPORT → notification_center → PushPlus",
+      "interaction_scenario": "FORMAL_DECISION",
       "prompt_snapshot": {
         "status": "PERSISTED_CURRENT_LIVE_PROMPT",
         "source": "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/prompts/正式决策.txt",
@@ -163,7 +163,6 @@
       "invariants": [
         "one parent request",
         "one FINAL_CONTENT",
-        "one BDS",
         "one completion",
         "one event",
         "one REPORT",
@@ -202,7 +201,7 @@
     "新鲜真实运行分别回读completion/event/REPORT/notification/provider",
     "System Review新鲜真实运行：正文、completion、event、REPORT、notification_center、provider和用户收到证据",
     "Trade Review新鲜真实运行：20:30自动节点正文、completion、event、REPORT、notification_center、provider和用户收到证据",
-    "Formal Decision新鲜真实运行：唯一FINAL_CONTENT、BDS、completion、canonical event、REPORT、notification_center、provider和用户确认收到证据"
+    "Formal Decision新鲜真实运行：唯一FINAL_CONTENT、completion、canonical event、REPORT、notification_center、provider和用户确认收到证据"
   ],
   "evidence_note": "截至2026-10-22，三类任务均有新鲜真实运行证据：ETF系统复核任务界面手动运行后收到PushPlus主动通知；ETF交易复盘20:30自动节点形成完整日复盘并收到PushPlus主动通知；ETF正式决策此前已完成canonical event、REPORT、notification_center、provider投递并由用户确认收到。共享Scheduled Review通知链已通过System Review与Trade Review两条真实链路验证。单次运行失败不得覆盖成功运行证据；如后续再失败，须按同一运行身份区分业务正文冻结层与后置交接层，不得创建第二对象。",
   "live_readback": {
@@ -268,3 +267,4 @@
   "evidence_index_path": "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/EVIDENCE_INDEX.md",
   "schedule_readback_path": "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/schedule-readback.json"
 }
+

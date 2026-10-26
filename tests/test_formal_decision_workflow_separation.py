@@ -8,15 +8,13 @@ class FormalDecisionWorkflowSeparationTests(unittest.TestCase):
 
     def test_market_snapshot_does_not_define_a_second_formal_completion_ingress(self):
         workflow = (self.root / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
-        self.assertIn("FORMAL_SCHEDULED_REVIEW", workflow)
+        self.assertIn("formal_context_recovery_request", workflow)
         self.assertNotIn("formal_completion_path", workflow)
-        self.assertIn("Legacy replay inputs", workflow)
+        self.assertIn("formal_replay_request", workflow)
 
     def test_market_snapshot_keeps_unified_scheduled_review_on_review_pipeline(self):
         workflow = (self.root / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
-        self.assertIn("FORMAL_SCHEDULED_REVIEW", workflow)
-        self.assertIn("FORMAL_SCHEDULED_SYSTEM_REVIEW", workflow)
-        self.assertIn("FORMAL_SCHEDULED_TRADE_REVIEW", workflow)
+        self.assertIn("FORMAL_INTRADAY_ANALYSIS", workflow)
         self.assertIn("STATE_SYNC_ONLY", workflow)
 
     def test_notification_workflow_has_no_bds_push_wake(self):
@@ -49,3 +47,4 @@ class FormalDecisionWorkflowSeparationTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

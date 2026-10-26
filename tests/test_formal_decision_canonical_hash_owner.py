@@ -59,6 +59,38 @@ class FormalDecisionCanonicalHashOwnerTests(unittest.TestCase):
         self.assertFalse(replay)
         self.assertTrue(path.endswith(".json"))
 
+    def test_live_completion_projects_without_bds(self):
+        body = "【ETF正式决策】2026-10-17 00:00 正式判断\n\n正文"
+        completion = {
+            "request_type": "SCHEDULED_REVIEW_COMPLETION",
+            "formal_fact_type": "FORMAL_POST_CLOSE_REVIEW",
+            "task_id": "ETF正式决策",
+            "interaction_scenario": "FORMAL_DECISION",
+            "request_id": "completion-2",
+            "parent_request_id": "parent-2",
+            "decision_id": "ETF_FORMAL_DECISION:run-2",
+            "task_run_id": "run-2",
+            "occurrence_id": "occ-2",
+            "requested_at_beijing": "2026-10-17T00:00:00+08:00",
+            "presentation_content": body,
+            "presentation_binding": {
+                "report_type": "ETF_FORMAL_DECISION",
+                "request_id": "completion-2",
+                "parent_request_id": "parent-2",
+                "decision_id": "ETF_FORMAL_DECISION:run-2",
+                "task_run_id": "run-2",
+                "occurrence_id": "occ-2",
+                "report_id": "ETF_FORMAL_DECISION:run-2",
+                "full_content": body,
+            },
+        }
+        ok, replay, path = state_sync.record_formal_decision_report_event(completion)
+        self.assertEqual((ok, replay), (True, False))
+        event = json.loads((self.root / path).read_text(encoding="utf-8"))
+        self.assertEqual(event.get("source_bds_path"), "")
+        self.assertEqual(event["presentation_binding"]["parent_request_id"], "parent-2")
+
 
 if __name__ == "__main__":
     unittest.main()
+
