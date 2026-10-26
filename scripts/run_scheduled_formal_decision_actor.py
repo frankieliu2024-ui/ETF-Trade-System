@@ -151,6 +151,14 @@ def _read_main_json(relative_path: str) -> dict[str, object] | None:
         return None
 
 
+def _contains_text(value: object, needle: str) -> bool:
+    if isinstance(value, dict):
+        return any(_contains_text(item, needle) for item in value.values())
+    if isinstance(value, list):
+        return any(_contains_text(item, needle) for item in value)
+    return needle in str(value) if value is not None else False
+
+
 def _wait_for_projection(occurrence_id: str, report_id: str) -> dict[str, object]:
     """Require canonical event and REPORT before declaring notification handoff complete."""
     event_path = f"events/reviews/formal_{occurrence_id}.json"
@@ -165,15 +173,20 @@ def _wait_for_projection(occurrence_id: str, report_id: str) -> dict[str, object
                 if actual_report_id else ""
             )
             report = _read_main_json(report_path) if report_path else None
-            if isinstance(report, dict):
+            notification_center = _read_main_json("data/state/notification_center.json")
+            if isinstance(report, dict) and isinstance(notification_center, dict) and _contains_text(notification_center, actual_report_id):
                 return {
                     "verified": True,
                     "event_path": event_path,
                     "report_path": report_path,
                     "report_id": actual_report_id,
-                    "reason": "canonical event and REPORT read back from current main",
+                    "notification_center": "BOUND_RECORD_READ_BACK",
+                    "reason": "canonical event, REPORT, and bound notification record read back from current main",
                 }
-            last = "canonical event exists but REPORT is not yet readable"
+            if isinstance(report, dict):
+                last = "event and REPORT exist but bound notification record is not yet readable"
+            elif isinstance(event, dict):
+                last = "canonical event exists but REPORT is not yet readable"
         else:
             last = "canonical Formal Decision event is not yet readable"
         time.sleep(3)
