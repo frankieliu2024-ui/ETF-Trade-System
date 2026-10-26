@@ -187,7 +187,7 @@ class FormalDecisionLessonsProtocolTests(unittest.TestCase):
         index_text = (root / "ETF_SYSTEM_INDEX.md").read_text(encoding="utf-8")
         self.assertIn("request_type=SCHEDULED_REVIEW_COMPLETION", index_text)
         notification_text = (root / ".github/workflows/decision-notification.yml").read_text(encoding="utf-8")
-        self.assertIn("CHATGPT_SCHEDULED_REVIEW_ACTOR", notification_text)
+        self.assertIn("scheduled_review_completion_path", notification_text)
         self.assertNotIn("Formal Decision 的合法后置交接只能使用 `CHATGPT_FORMAL_DECISION_COMPLETION`", index_text)
         self.assertNotIn("FORMAL_DECISION_COMPLETION` completion ingress", index_text)
         self.assertIn("正式决策不创建或依赖 BDS", index_text)
