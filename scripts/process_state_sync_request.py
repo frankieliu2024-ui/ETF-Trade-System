@@ -2502,24 +2502,20 @@ def record_scheduled_system_review(request: dict) -> tuple[bool, bool]:
     return True, True
 
 
-def record_formal_decision_report_event(request: dict, bds: dict) -> tuple[bool, bool, str]:
+def record_formal_decision_report_event(request: dict, bds: dict | None = None) -> tuple[bool, bool, str]:
     """Project one frozen Formal Decision body directly to the shared review-event notification chain."""
-    # Revalidate the persisted BDS at the canonical owner, including the actual
-    # frozen presentation. Idempotent replay must not allow an already-written
-    # short/legacy payload to bypass the current Formal Decision contract.
-    validate_source(
-        bds,
-        expected_snapshot=str(bds.get("consumed_snapshot") or "").strip() or None,
-        normalize_presentation=False,
-    )
-    binding = bds.get("presentation_binding") if isinstance(bds.get("presentation_binding"), dict) else {}
+    # Project the exact frozen presentation at the canonical owner. Historical
+    # BDS callers may still pass their source envelope, but new completion
+    # callers are validated from the completion itself.
+    source = bds if isinstance(bds, dict) else request
+    binding = source.get("presentation_binding") if isinstance(source.get("presentation_binding"), dict) else {}
     identity = {
-        "request_id": str(bds.get("request_id") or "").strip(),
-        "parent_request_id": str(bds.get("parent_request_id") or "").strip(),
-        "decision_id": str(bds.get("decision_id") or "").strip(),
-        "binding_request_id": str(binding.get("request_id") or "").strip(),
-        "binding_parent_request_id": str(binding.get("parent_request_id") or bds.get("parent_request_id") or "").strip(),
-        "binding_decision_id": str(binding.get("decision_id") or "").strip(),
+        "request_id": str(source.get("request_id") or request.get("request_id") or "").strip(),
+        "parent_request_id": str(source.get("parent_request_id") or request.get("parent_request_id") or source.get("request_id") or "").strip(),
+        "decision_id": str(source.get("decision_id") or request.get("decision_id") or "").strip(),
+        "binding_request_id": str(binding.get("request_id") or source.get("request_id") or request.get("request_id") or "").strip(),
+        "binding_parent_request_id": str(binding.get("parent_request_id") or source.get("parent_request_id") or source.get("request_id") or "").strip(),
+        "binding_decision_id": str(binding.get("decision_id") or source.get("decision_id") or request.get("decision_id") or "").strip(),
     }
     if any(not value for value in identity.values()):
         raise ValueError("Formal Decision canonical event requires complete request/parent/decision identity")
@@ -2531,21 +2527,21 @@ def record_formal_decision_report_event(request: dict, bds: dict) -> tuple[bool,
         raise ValueError("Formal Decision canonical event presentation identity mismatch")
     if str(request.get("parent_request_id") or "").strip() != identity["parent_request_id"]:
         raise ValueError("Formal Decision canonical event completion parent mismatch")
-    full_content = str(bds.get("presentation_content") or binding.get("full_content") or "")
-    task_run_id = str(bds.get("task_run_id") or binding.get("task_run_id") or "").strip()
+    full_content = str(source.get("presentation_content") or binding.get("full_content") or "")
+    task_run_id = str(source.get("task_run_id") or binding.get("task_run_id") or "").strip()
     if not full_content or not task_run_id:
         raise ValueError("Formal Decision canonical event requires frozen content and task_run_id")
     content_hash = hashlib.sha256(full_content.encode("utf-8")).hexdigest()
-    supplied_bds_hash = str(bds.get("content_hash") or "").strip()
+    supplied_bds_hash = str(source.get("content_hash") or "").strip()
     supplied_binding_hash = str(binding.get("content_hash") or "").strip()
     # Formal Decision uses the same single-owner rule as Scheduled Review:
     # derive the audit hash from the already frozen presentation content.
     hash_source = "audit_supplied" if (supplied_bds_hash or supplied_binding_hash) else "canonical_owner"
     binding = {
         "report_type": "ETF_FORMAL_DECISION",
-        "task_id": str(bds.get("task_id") or binding.get("task_id") or "ETF正式决策"),
+        "task_id": str(source.get("task_id") or binding.get("task_id") or "ETF正式决策"),
         "task_run_id": task_run_id,
-        "report_id": str(bds.get("report_id") or binding.get("report_id") or f"ETF_FORMAL_DECISION:{task_run_id}"),
+        "report_id": str(source.get("report_id") or binding.get("report_id") or f"ETF_FORMAL_DECISION:{task_run_id}"),
         "request_id": identity["request_id"],
         "parent_request_id": identity["parent_request_id"],
         "decision_id": identity["decision_id"],
@@ -2554,17 +2550,17 @@ def record_formal_decision_report_event(request: dict, bds: dict) -> tuple[bool,
         "content_hash": content_hash,
         "content_hash_source": hash_source,
     }
-    occurrence = str(bds.get("occurrence_id") or binding.get("occurrence_id") or task_run_id)
+    occurrence = str(source.get("occurrence_id") or binding.get("occurrence_id") or task_run_id)
     payload = {
         "event_type": "FORMAL_DECISION_REPORT",
         "occurrence_id": occurrence,
         "request_id": identity["request_id"],
         "parent_request_id": identity["parent_request_id"],
         "decision_id": identity["decision_id"],
-        "reviewed_at_beijing": str(bds.get("requested_at_beijing") or request.get("requested_at_beijing") or ""),
+        "reviewed_at_beijing": str(source.get("requested_at_beijing") or request.get("requested_at_beijing") or ""),
         "presentation_binding": binding,
-        "formal_decision": bds.get("decision_response") or bds.get("formal_decision") or {},
-        "source_bds_path": str(bds.get("target_path") or ""),
+        "formal_decision": source.get("decision_response") or source.get("formal_decision") or {},
+        "source_bds_path": str(source.get("target_path") or ""),
     }
     payload["fingerprint"] = hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
     event_path = ROOT / "events" / "reviews" / f"formal_{occurrence}.json"
@@ -3826,6 +3822,21 @@ def main() -> int:
     completion_dispatch = is_formal_decision_completion(request)
     if completion_dispatch:
         bds_path = str(request.get("bds_path") or "").strip()
+        # A new completion is already the frozen request-bound handoff. Do not
+        # create or recover a second BDS before projecting its canonical event.
+        if not bds_path:
+            request.setdefault("parent_request_id", str(request.get("request_id") or "").strip())
+            recorded, idempotent, event_path = record_formal_decision_report_event(request)
+            print(json.dumps({
+                "ok": True,
+                "request_id": request.get("request_id"),
+                "decision_id": request.get("decision_id"),
+                "formal_decision_event": True,
+                "canonical_publication": event_path,
+                "idempotent_replay": idempotent,
+                "bds_required": False,
+            }, ensure_ascii=False))
+            return 0
         # Older task runners may have written the completion envelope without
         # bds_path. Recover only the deterministic BDS belonging to this same
         # parent request; never scan history or choose a lexicographic match.
@@ -3854,9 +3865,9 @@ def main() -> int:
         ).strip().upper()
         if bds_type != BUSINESS_DECISION_SOURCE:
             raise ValueError("Formal Decision completion must reference BUSINESS_DECISION_SOURCE")
-        if str(bds.get("parent_request_id") or "").strip() != str(request.get("parent_request_id") or "").strip():
+        if str(source.get("parent_request_id") or request.get("parent_request_id") or source.get("request_id") or "").strip() != str(request.get("parent_request_id") or "").strip():
             raise ValueError("Formal Decision completion parent does not match BDS")
-        if str(bds.get("decision_id") or "").strip() != str(request.get("decision_id") or "").strip():
+        if str(source.get("decision_id") or request.get("decision_id") or "").strip() != str(request.get("decision_id") or "").strip():
             raise ValueError("Formal Decision completion decision_id does not match BDS")
         content = bds.get("presentation_content")
         if not isinstance(content, str) or not content:
@@ -3867,15 +3878,15 @@ def main() -> int:
         # derived binding from those exact bytes before projection, and persist
         # the repaired BDS so the read-back contract is true as well.
         expected_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
-        if str(bds.get("content_hash") or "").strip() != expected_hash:
+        if str(source.get("content_hash") or "").strip() != expected_hash:
             raise ValueError("Formal Decision completion content binding is invalid")
         binding = bds.get("presentation_binding") if isinstance(bds.get("presentation_binding"), dict) else {}
         if str(binding.get("full_content") or "") != content:
             repaired_binding = build_formal_decision_presentation_binding(
                 content,
-                request_id=str(bds.get("request_id") or "").strip(),
-                decision_id=str(bds.get("decision_id") or "").strip(),
-                parent_request_id=str(bds.get("parent_request_id") or "").strip(),
+                request_id=str(source.get("request_id") or request.get("request_id") or "").strip(),
+                decision_id=str(source.get("decision_id") or request.get("decision_id") or "").strip(),
+                parent_request_id=str(source.get("parent_request_id") or request.get("parent_request_id") or source.get("request_id") or "").strip(),
                 report_id=str(bds.get("report_id") or "").strip(),
             )
             if repaired_binding.get("full_content") != content:
@@ -3901,7 +3912,7 @@ def main() -> int:
                 raise ValueError("Formal Decision completion presentation binding does not match BDS")
         request.update({key: value for key, value in bds.items() if key not in {"request_id", "request_type", "source"}})
         request["request_type"] = BUSINESS_DECISION_SOURCE
-        request["request_id"] = str(bds.get("request_id") or "").strip()
+        request["request_id"] = str(source.get("request_id") or request.get("request_id") or "").strip()
         request["presentation_content"] = content
         recorded, idempotent, event_path = record_formal_decision_report_event(request, bds)
         print(json.dumps({
