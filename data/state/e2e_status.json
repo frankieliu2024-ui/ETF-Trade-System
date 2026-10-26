@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-10-26T18:28:53+08:00",
+  "generated_at": "2026-10-26T18:40:57+08:00",
   "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -51,19 +51,17 @@
       "decision_context": true,
       "minimum_decision_context": "READY_OR_NOT_APPLICABLE",
       "observability_boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
-      "request_bound": false,
+      "request_bound": true,
       "formal_reply_gate": {
-        "request_id": "fd_20261026_181200_scheduled_formal_review_cf22c56b",
-        "requested_at_beijing": "2026-10-26T18:12:17+08:00",
-        "status": "IN_FLIGHT",
-        "reply_freezable": false,
-        "blockers": [
-          "REQUEST_BOUND_QUERY_CONTEXT_NOT_PUBLISHED"
-        ],
+        "request_id": "fd_20261026_183956_scheduled_formal_review_e3efef50",
+        "requested_at_beijing": "2026-10-26T18:39:56+08:00",
+        "status": "READY",
+        "reply_freezable": true,
+        "blockers": [],
         "source": "decision_fact_pack.formal_reply_freeze",
         "consumer_manifest": {
-          "request_id": "fd_20261026_181200_scheduled_formal_review_cf22c56b",
-          "requested_at_beijing": "2026-10-26T18:12:17+08:00",
+          "request_id": "fd_20261026_183956_scheduled_formal_review_e3efef50",
+          "requested_at_beijing": "2026-10-26T18:39:56+08:00",
           "query_context_path": "data/state/query_context.json",
           "decision_context_path": "data/state/decision_context.json",
           "decision_work_package_present": true,
@@ -86,14 +84,14 @@
         },
         "request_bound_fact_projection": {
           "trigger": {
-            "request_id": "fd_20261026_181200_scheduled_formal_review_cf22c56b",
-            "requested_at_beijing": "2026-10-26T18:12:17+08:00"
+            "request_id": "fd_20261026_183956_scheduled_formal_review_e3efef50",
+            "requested_at_beijing": "2026-10-26T18:39:56+08:00"
           },
           "formal_reply_freeze": {
             "status": "READY",
             "reply_freezable": true,
             "blockers": [],
-            "request_id": "fd_20261026_181200_scheduled_formal_review_cf22c56b",
+            "request_id": "fd_20261026_183956_scheduled_formal_review_e3efef50",
             "post_request_pit_resolved": true,
             "discovery_status": "READY",
             "rule": "Manual formal replies wait only for same-request action-determinative facts that are still legally forming. Once those facts resolve (including explicit terminal degradation), complete analysis and the first user-visible decision reply must proceed without waiting for Decision Fact persistence/post-write acceptance or any downstream Dashboard/account/E2E/notification/research projection. Persistence failure is disclosed as '正式决策尚未持久化' and repaired separately; it does not suppress an otherwise valid business decision reply."
@@ -7417,7 +7415,7 @@
                 "price": null,
                 "change_pct": null,
                 "market_phase": "PRE_MARKET",
-                "as_of_beijing": "2026-10-26T18:11:31+08:00",
+                "as_of_beijing": "2026-10-26T18:40:13+08:00",
                 "quality_status": "PASS",
                 "provider": ""
               },
@@ -7427,7 +7425,7 @@
                 "price": null,
                 "change_pct": null,
                 "market_phase": "PRE_MARKET",
-                "as_of_beijing": "2026-10-26T18:11:54+08:00",
+                "as_of_beijing": "2026-10-26T18:38:57+08:00",
                 "quality_status": "PASS",
                 "provider": ""
               },
@@ -7617,7 +7615,7 @@
                 "price": null,
                 "change_pct": null,
                 "market_phase": "PRE_MARKET",
-                "as_of_beijing": "2026-10-26T17:59:55+08:00",
+                "as_of_beijing": "2026-10-26T18:29:50+08:00",
                 "quality_status": "FRESH",
                 "provider": ""
               },
@@ -7627,7 +7625,7 @@
                 "price": null,
                 "change_pct": null,
                 "market_phase": "PRE_MARKET",
-                "as_of_beijing": "2026-10-26T18:00:03+08:00",
+                "as_of_beijing": "2026-10-26T18:29:07+08:00",
                 "quality_status": "FRESH",
                 "provider": ""
               },
@@ -9216,8 +9214,8 @@
                     }
                   },
                   "us_extended_hours_context": {
-                    "generated_at": "2026-10-26T10:00:17Z",
-                    "generated_at_beijing": "2026-10-26T18:00:17+08:00",
+                    "generated_at": "2026-10-26T10:30:27Z",
+                    "generated_at_beijing": "2026-10-26T18:30:27+08:00",
                     "scope": "US_SESSION_CONTEXT",
                     "quality_status": "DEGRADED",
                     "base_proxies": [
@@ -9240,18 +9238,18 @@
                         "market_phase_of_latest": "PRE_MARKET",
                         "quality_status": "FRESH",
                         "freshness_status": "FRESH",
-                        "data_age_seconds": 21,
+                        "data_age_seconds": 36,
                         "current_market_phase": "PRE_MARKET",
                         "latest": {
-                          "open": 706.93,
-                          "high": 706.93,
-                          "low": 706.93,
-                          "close": 706.93,
+                          "open": 704.7,
+                          "high": 704.7,
+                          "low": 704.7,
+                          "close": 704.7,
                           "volume": 0,
-                          "timestamp": 1793008795,
-                          "as_of_utc": "2026-10-26T09:59:55Z",
-                          "as_of_local": "2026-10-26T05:59:55-04:00",
-                          "as_of_beijing": "2026-10-26T17:59:55+08:00",
+                          "timestamp": 1793010590,
+                          "as_of_utc": "2026-10-26T10:29:50Z",
+                          "as_of_local": "2026-10-26T06:29:50-04:00",
+                          "as_of_beijing": "2026-10-26T18:29:50+08:00",
                           "market_date_local": "2026-10-26",
                           "session": "PRE_MARKET"
                         },
@@ -9278,7 +9276,7 @@
                           "late_session_change_pct": -2.0973,
                           "sampling_note": "由Yahoo 5分钟现金盘bar重建日内路径；用于总结高低点、修复/回撤和分段走势，不直接生成A股交易动作。"
                         },
-                        "extended_change_vs_regular_close_pct": 0.3606,
+                        "extended_change_vs_regular_close_pct": 0.044,
                         "decision_note": "NDX/SOX是正式现金盘指数，只在REGULAR承担直接指数实时语义；其盘前/盘后值仅作最近现金盘SESSION_REFERENCE。QQQ/SOXX用于PRE_MARKET/POST_MARKET前置信号，也可作为现金盘数据异常时的明确代理备份。扩展时段不得把ETF代理涨跌直接等同于NDX/SOX正式指数涨跌，也不得单独生成A股ETF动作。",
                         "object": "QQQ"
                       },
@@ -9292,18 +9290,18 @@
                         "market_phase_of_latest": "PRE_MARKET",
                         "quality_status": "FRESH",
                         "freshness_status": "FRESH",
-                        "data_age_seconds": 14,
+                        "data_age_seconds": 79,
                         "current_market_phase": "PRE_MARKET",
                         "latest": {
-                          "open": 480.41,
-                          "high": 480.41,
-                          "low": 480.41,
-                          "close": 480.41,
+                          "open": 478.6897,
+                          "high": 478.6897,
+                          "low": 478.6897,
+                          "close": 478.6897,
                           "volume": 0,
-                          "timestamp": 1793008803,
-                          "as_of_utc": "2026-10-26T10:00:03Z",
-                          "as_of_local": "2026-10-26T06:00:03-04:00",
-                          "as_of_beijing": "2026-10-26T18:00:03+08:00",
+                          "timestamp": 1793010547,
+                          "as_of_utc": "2026-10-26T10:29:07Z",
+                          "as_of_local": "2026-10-26T06:29:07-04:00",
+                          "as_of_beijing": "2026-10-26T18:29:07+08:00",
                           "market_date_local": "2026-10-26",
                           "session": "PRE_MARKET"
                         },
@@ -9330,7 +9328,7 @@
                           "late_session_change_pct": -5.2013,
                           "sampling_note": "由Yahoo 5分钟现金盘bar重建日内路径；用于总结高低点、修复/回撤和分段走势，不直接生成A股交易动作。"
                         },
-                        "extended_change_vs_regular_close_pct": 0.395,
+                        "extended_change_vs_regular_close_pct": 0.0355,
                         "decision_note": "NDX/SOX是正式现金盘指数，只在REGULAR承担直接指数实时语义；其盘前/盘后值仅作最近现金盘SESSION_REFERENCE。QQQ/SOXX用于PRE_MARKET/POST_MARKET前置信号，也可作为现金盘数据异常时的明确代理备份。扩展时段不得把ETF代理涨跌直接等同于NDX/SOX正式指数涨跌，也不得单独生成A股ETF动作。",
                         "object": "SOXX"
                       },
@@ -9344,7 +9342,7 @@
                         "market_phase_of_latest": "POST_MARKET",
                         "quality_status": "STALE",
                         "freshness_status": "STALE",
-                        "data_age_seconds": 223217,
+                        "data_age_seconds": 225026,
                         "current_market_phase": "PRE_MARKET",
                         "latest": {
                           "open": 28957.52734375,
@@ -9396,7 +9394,7 @@
                         "market_phase_of_latest": "POST_MARKET",
                         "quality_status": "STALE",
                         "freshness_status": "STALE",
-                        "data_age_seconds": 223217,
+                        "data_age_seconds": 225027,
                         "current_market_phase": "PRE_MARKET",
                         "latest": {
                           "open": 10779.4638671875,
@@ -9552,7 +9550,7 @@
                 },
                 "market_structure_context": {
                   "schema_version": "1.4",
-                  "generated_at": "2026-10-26T10:09:05Z",
+                  "generated_at": "2026-10-26T10:29:01Z",
                   "market_date": "2026-10-26",
                   "as_of_beijing": "2026-10-26T16:16:33+08:00",
                   "source_snapshot": "data/market/snapshots/2026-10-26_161633.json",
@@ -12438,31 +12436,111 @@
         "projection_scope": "FORMAL_DECISION_REQUEST",
         "parent_request_source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
         "parent_request_entry_mode": "MANUAL_CONVERSATION",
-        "actor_action": "CONTINUE_SAME_REQUEST_SILENTLY",
-        "user_output_allowed": false,
+        "actor_action": "COMPLETE_BUSINESS_DECISION_NOW",
+        "user_output_allowed": true,
         "business_decision_allowed": true,
         "final_content_generation_allowed": true,
-        "consumer_status": "REQUEST_BOUND_FACTS_BUILDING",
-        "required_problem_ids": [],
-        "required_problem_count": 0,
-        "business_answer_contract": null,
-        "ready_handoff": null,
-        "request_bound": false,
-        "projection_preserved_from_non_formal_runtime_request": true
+        "consumer_status": "BUSINESS_DECISION_READY",
+        "required_problem_ids": [
+          "RISK_PERMISSION",
+          "MAIN_CANDIDATE",
+          "DEPLOYABLE_CASH",
+          "RELEASABLE_CAPITAL",
+          "TRIAL_CONFIRM_CAPACITY",
+          "CONCENTRATION_COMMON_RISK",
+          "NEXT_UNIT_CAPITAL_USE",
+          "HOLDING:159941",
+          "HELD_ETF_ADD:159941",
+          "HOLDING:159981",
+          "HELD_ETF_ADD:159981",
+          "HOLDING:159992",
+          "HELD_ETF_ADD:159992",
+          "HOLDING:159056",
+          "HELD_ETF_ADD:159056",
+          "HOLDING:127118",
+          "OBSERVATION:588000",
+          "OBSERVATION:159781",
+          "OBSERVATION:513180",
+          "OBSERVATION:159561",
+          "OBSERVATION:513520",
+          "OBSERVATION:518880",
+          "OBSERVATION:515880",
+          "OBSERVATION:159326",
+          "OBSERVATION:515220",
+          "OBSERVATION:513350",
+          "OBSERVATION:515080",
+          "DISCOVERY:159180",
+          "DISCOVERY:159355",
+          "DISCOVERY:159518",
+          "DISCOVERY:159828",
+          "DISCOVERY:159869",
+          "DISCOVERY:159883",
+          "DISCOVERY:159929",
+          "DISCOVERY:515080",
+          "DISCOVERY:520610",
+          "DISCOVERY:562060"
+        ],
+        "required_problem_count": 37,
+        "business_answer_contract": "DWP_COVERAGE_FOR_JUDGMENT",
+        "ready_handoff": {
+          "required": false,
+          "submission_type": "SCHEDULED_REVIEW_COMPLETION",
+          "source": "CHATGPT_SCHEDULED_REVIEW_ACTOR",
+          "parent_request_id": "fd_20261026_183956_scheduled_formal_review_e3efef50",
+          "required_payload_fields": [
+            "request_id",
+            "parent_request_id",
+            "entry_mode",
+            "source",
+            "task_id",
+            "task_run_id",
+            "occurrence_id",
+            "market_date",
+            "decision_id",
+            "formal_review",
+            "presentation_binding.full_content",
+            "presentation_binding.content_hash"
+          ],
+          "binding_rules": {
+            "parent_request_id": "fd_20261026_183956_scheduled_formal_review_e3efef50",
+            "allowed_sources": [
+              "CHATGPT_SCHEDULED_REVIEW_ACTOR"
+            ],
+            "forbid_historical_fallback": true,
+            "read_back_required": true,
+            "completion_must_be_written_and_read_back_before_user_reply": false
+          },
+          "business_decision_allowed": true,
+          "final_content_generation_allowed": true,
+          "user_reply_precondition": false,
+          "notification_attempt_precondition": true,
+          "provider_success_not_required_for_user_reply": true,
+          "user_reply_contract": {
+            "must_be_first_user_visible_message": true,
+            "must_contain_complete_final_content": true,
+            "status_only_reply_forbidden": true,
+            "handoff_status_cannot_replace_content": true,
+            "completion_must_reuse_exact_final_content": true
+          },
+          "post_reply_async": true,
+          "provider_success_async": true,
+          "must_read_back_before_reply": false,
+          "historical_fallback_forbidden": true
+        }
       },
       "context_read_contract": {
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 1328169,
-          "sha256": "1212552e91833871608889117a83421dcfb326cf636a2c2806b94d3210819081",
+          "byte_count": 1679332,
+          "sha256": "029936d7ceb8bfc4e8e77efe9e0dfb45235679546b0125d8c04d0218ad0e3bd8",
           "parsed_object": true
         },
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 438809,
-          "sha256": "5cc8d8fc469fec1c922b1a6f6ecc5b6426659b6058ef1e3d7da1e3b9fbb57f67",
+          "byte_count": 528359,
+          "sha256": "d253be1fddbead0914e4a5b83f81508d38f6af0885016530947a21c92767bae0",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -12480,7 +12558,7 @@
     "maintenance": {
       "status": "READY",
       "reason": "maintenance guard passed",
-      "checked_at": "2026-10-26T18:28:39+08:00"
+      "checked_at": "2026-10-26T18:40:25+08:00"
     }
   },
   "blockers": [],
@@ -12491,15 +12569,15 @@
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 1328169,
-      "sha256": "1212552e91833871608889117a83421dcfb326cf636a2c2806b94d3210819081",
+      "byte_count": 1679332,
+      "sha256": "029936d7ceb8bfc4e8e77efe9e0dfb45235679546b0125d8c04d0218ad0e3bd8",
       "parsed_object": true
     },
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 438809,
-      "sha256": "5cc8d8fc469fec1c922b1a6f6ecc5b6426659b6058ef1e3d7da1e3b9fbb57f67",
+      "byte_count": 528359,
+      "sha256": "d253be1fddbead0914e4a5b83f81508d38f6af0885016530947a21c92767bae0",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"
