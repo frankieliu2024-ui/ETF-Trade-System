@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-10-26T21:21:54+08:00",
+  "generated_at": "2026-10-26T21:38:29+08:00",
   "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -54,14 +54,14 @@
       "request_bound": true,
       "formal_reply_gate": {
         "request_id": "conversation-formal-20261026T212023+0800-90d3c2b2",
-        "requested_at_beijing": "2026-10-26T21:20:23+08:00",
-        "status": "READY",
+        "requested_at_beijing": "2026-10-26T21:20:23.000+08:00",
+        "status": "NOT_APPLICABLE",
         "reply_freezable": true,
         "blockers": [],
         "source": "decision_fact_pack.formal_reply_freeze",
         "consumer_manifest": {
           "request_id": "conversation-formal-20261026T212023+0800-90d3c2b2",
-          "requested_at_beijing": "2026-10-26T21:20:23+08:00",
+          "requested_at_beijing": "2026-10-26T21:20:23.000+08:00",
           "query_context_path": "data/state/query_context.json",
           "decision_context_path": "data/state/decision_context.json",
           "decision_work_package_present": true,
@@ -85,15 +85,15 @@
         "request_bound_fact_projection": {
           "trigger": {
             "request_id": "conversation-formal-20261026T212023+0800-90d3c2b2",
-            "requested_at_beijing": "2026-10-26T21:20:23+08:00"
+            "requested_at_beijing": "2026-10-26T21:20:23.000+08:00"
           },
           "formal_reply_freeze": {
-            "status": "READY",
+            "status": "NOT_APPLICABLE",
             "reply_freezable": true,
             "blockers": [],
             "request_id": "conversation-formal-20261026T212023+0800-90d3c2b2",
             "post_request_pit_resolved": true,
-            "discovery_status": "READY",
+            "discovery_status": "NOT_REQUESTED",
             "rule": "Manual formal replies wait only for same-request action-determinative facts that are still legally forming. Once those facts resolve (including explicit terminal degradation), complete analysis and the first user-visible decision reply must proceed without waiting for Decision Fact persistence/post-write acceptance or any downstream Dashboard/account/E2E/notification/research projection. Persistence failure is disclosed as '正式决策尚未持久化' and repaired separately; it does not suppress an otherwise valid business decision reply."
           },
           "decision_work_package": {
@@ -404,96 +404,6 @@
                 },
                 "role_contract": "CONTINUOUS_INFORMATION_V1",
                 "required_business_judgment": "先判断持续信息功能是否仍独立、可证伪且不可被更有效对象充分替代，再判断当前机会状态；RETAIN不要求当前接近Trial/Confirm，EXIT必须说明信息功能失效/被替代及退出后的信息连续性成本。观察ETF若当前形成机会可同时作为节点级候选参与资本比较"
-              },
-              {
-                "problem_id": "DISCOVERY:159180",
-                "decision_object": "159180",
-                "security": "软件ETF银华",
-                "formal_quote_status": "SESSION_REFERENCE_READY",
-                "role_contract": "NODE_LOCAL_CANDIDATE_V1",
-                "management_identity": null,
-                "required_business_judgment": "判断本节点机会ETF状态及资本竞争位置；机会ETF角色本身不持久。只有另有持续跨节点信息价值时才ADMIT为观察ETF，REJECT观察准入不等于否定本节点候选机会"
-              },
-              {
-                "problem_id": "DISCOVERY:159355",
-                "decision_object": "159355",
-                "security": "800红利低波ETF华宝",
-                "formal_quote_status": "SESSION_REFERENCE_READY",
-                "role_contract": "NODE_LOCAL_CANDIDATE_V1",
-                "management_identity": null,
-                "required_business_judgment": "判断本节点机会ETF状态及资本竞争位置；机会ETF角色本身不持久。只有另有持续跨节点信息价值时才ADMIT为观察ETF，REJECT观察准入不等于否定本节点候选机会"
-              },
-              {
-                "problem_id": "DISCOVERY:159518",
-                "decision_object": "159518",
-                "security": "标普油气ETF嘉实",
-                "formal_quote_status": "SESSION_REFERENCE_READY",
-                "role_contract": "NODE_LOCAL_CANDIDATE_V1",
-                "management_identity": null,
-                "required_business_judgment": "判断本节点机会ETF状态及资本竞争位置；机会ETF角色本身不持久。只有另有持续跨节点信息价值时才ADMIT为观察ETF，REJECT观察准入不等于否定本节点候选机会"
-              },
-              {
-                "problem_id": "DISCOVERY:159828",
-                "decision_object": "159828",
-                "security": "医疗ETF国泰",
-                "formal_quote_status": "SESSION_REFERENCE_READY",
-                "role_contract": "NODE_LOCAL_CANDIDATE_V1",
-                "management_identity": null,
-                "required_business_judgment": "判断本节点机会ETF状态及资本竞争位置；机会ETF角色本身不持久。只有另有持续跨节点信息价值时才ADMIT为观察ETF，REJECT观察准入不等于否定本节点候选机会"
-              },
-              {
-                "problem_id": "DISCOVERY:159869",
-                "decision_object": "159869",
-                "security": "游戏ETF华夏",
-                "formal_quote_status": "SESSION_REFERENCE_READY",
-                "role_contract": "NODE_LOCAL_CANDIDATE_V1",
-                "management_identity": null,
-                "required_business_judgment": "判断本节点机会ETF状态及资本竞争位置；机会ETF角色本身不持久。只有另有持续跨节点信息价值时才ADMIT为观察ETF，REJECT观察准入不等于否定本节点候选机会"
-              },
-              {
-                "problem_id": "DISCOVERY:159883",
-                "decision_object": "159883",
-                "security": "医疗器械ETF永赢",
-                "formal_quote_status": "SESSION_REFERENCE_READY",
-                "role_contract": "NODE_LOCAL_CANDIDATE_V1",
-                "management_identity": null,
-                "required_business_judgment": "判断本节点机会ETF状态及资本竞争位置；机会ETF角色本身不持久。只有另有持续跨节点信息价值时才ADMIT为观察ETF，REJECT观察准入不等于否定本节点候选机会"
-              },
-              {
-                "problem_id": "DISCOVERY:159929",
-                "decision_object": "159929",
-                "security": "医药ETF汇添富",
-                "formal_quote_status": "SESSION_REFERENCE_READY",
-                "role_contract": "NODE_LOCAL_CANDIDATE_V1",
-                "management_identity": null,
-                "required_business_judgment": "判断本节点机会ETF状态及资本竞争位置；机会ETF角色本身不持久。只有另有持续跨节点信息价值时才ADMIT为观察ETF，REJECT观察准入不等于否定本节点候选机会"
-              },
-              {
-                "problem_id": "DISCOVERY:515080",
-                "decision_object": "515080",
-                "security": "中证红利ETF招商",
-                "formal_quote_status": "READY",
-                "role_contract": "NODE_LOCAL_CANDIDATE_V1",
-                "management_identity": null,
-                "required_business_judgment": "判断本节点机会ETF状态及资本竞争位置；机会ETF角色本身不持久。只有另有持续跨节点信息价值时才ADMIT为观察ETF，REJECT观察准入不等于否定本节点候选机会"
-              },
-              {
-                "problem_id": "DISCOVERY:520610",
-                "decision_object": "520610",
-                "security": "港股红利低波ETF银华",
-                "formal_quote_status": "SESSION_REFERENCE_READY",
-                "role_contract": "NODE_LOCAL_CANDIDATE_V1",
-                "management_identity": null,
-                "required_business_judgment": "判断本节点机会ETF状态及资本竞争位置；机会ETF角色本身不持久。只有另有持续跨节点信息价值时才ADMIT为观察ETF，REJECT观察准入不等于否定本节点候选机会"
-              },
-              {
-                "problem_id": "DISCOVERY:562060",
-                "decision_object": "562060",
-                "security": "标普A股红利ETF华宝",
-                "formal_quote_status": "SESSION_REFERENCE_READY",
-                "role_contract": "NODE_LOCAL_CANDIDATE_V1",
-                "management_identity": null,
-                "required_business_judgment": "判断本节点机会ETF状态及资本竞争位置；机会ETF角色本身不持久。只有另有持续跨节点信息价值时才ADMIT为观察ETF，REJECT观察准入不等于否定本节点候选机会"
               }
             ],
             "evidence_requirements": [
@@ -5676,1746 +5586,36 @@
                 "optional": true,
                 "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
                 "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159180:GLOBAL_CROSS_MARKET_REVIEW",
-                "target_problem_id": "DISCOVERY:159180",
-                "evidence_class": "GLOBAL_CROSS_MARKET_REVIEW",
-                "target_exposure": "软件ETF银华",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "SATISFIED"
-              },
-              {
-                "requirement_id": "DISCOVERY:159180:GLOBAL_RISK",
-                "target_problem_id": "DISCOVERY:159180",
-                "evidence_class": "GLOBAL_RISK",
-                "target_exposure": "软件ETF银华",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159180:RATES",
-                "target_problem_id": "DISCOVERY:159180",
-                "evidence_class": "RATES",
-                "target_exposure": "软件ETF银华",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159180:FX",
-                "target_problem_id": "DISCOVERY:159180",
-                "evidence_class": "FX",
-                "target_exposure": "软件ETF银华",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159180:MACRO_POLICY_EVENTS",
-                "target_problem_id": "DISCOVERY:159180",
-                "evidence_class": "MACRO_POLICY_EVENTS",
-                "target_exposure": "软件ETF银华",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159180:A_SHARE_INDEX",
-                "target_problem_id": "DISCOVERY:159180",
-                "evidence_class": "A_SHARE_INDEX",
-                "target_exposure": "软件ETF银华",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159180:A_SHARE_BREADTH",
-                "target_problem_id": "DISCOVERY:159180",
-                "evidence_class": "A_SHARE_BREADTH",
-                "target_exposure": "软件ETF银华",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159180:A_SHARE_STYLE_FEEDBACK",
-                "target_problem_id": "DISCOVERY:159180",
-                "evidence_class": "A_SHARE_STYLE_FEEDBACK",
-                "target_exposure": "软件ETF银华",
-                "required": true,
-                "optional": false,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "SATISFIED"
-              },
-              {
-                "requirement_id": "DISCOVERY:159180:A_SHARE_INDUSTRY_THEME",
-                "target_problem_id": "DISCOVERY:159180",
-                "evidence_class": "A_SHARE_INDUSTRY_THEME",
-                "target_exposure": "软件ETF银华",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159180:A_SHARE_LIQUIDITY_TURNOVER",
-                "target_problem_id": "DISCOVERY:159180",
-                "evidence_class": "A_SHARE_LIQUIDITY_TURNOVER",
-                "target_exposure": "软件ETF银华",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159180:A_SHARE_CAPITAL_FLOW",
-                "target_problem_id": "DISCOVERY:159180",
-                "evidence_class": "A_SHARE_CAPITAL_FLOW",
-                "target_exposure": "软件ETF银华",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159180:A_SHARE_ANOMALY",
-                "target_problem_id": "DISCOVERY:159180",
-                "evidence_class": "A_SHARE_ANOMALY",
-                "target_exposure": "软件ETF银华",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159180:EXTERNAL_CONFIRMATION_STATE",
-                "target_problem_id": "DISCOVERY:159180",
-                "evidence_class": "EXTERNAL_CONFIRMATION_STATE",
-                "target_exposure": "软件ETF银华",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159180:ETF_RELATIVE_STRENGTH",
-                "target_problem_id": "DISCOVERY:159180",
-                "evidence_class": "ETF_RELATIVE_STRENGTH",
-                "target_exposure": "软件ETF银华",
-                "required": true,
-                "optional": false,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "SATISFIED"
-              },
-              {
-                "requirement_id": "DISCOVERY:159180:FULL_MARKET_DISCOVERY",
-                "target_problem_id": "DISCOVERY:159180",
-                "evidence_class": "FULL_MARKET_DISCOVERY",
-                "target_exposure": "软件ETF银华",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159180:OBSERVATION_ETF",
-                "target_problem_id": "DISCOVERY:159180",
-                "evidence_class": "OBSERVATION_ETF",
-                "target_exposure": "软件ETF银华",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159180:TEMPORARY_DISCOVERY_CANDIDATE",
-                "target_problem_id": "DISCOVERY:159180",
-                "evidence_class": "TEMPORARY_DISCOVERY_CANDIDATE",
-                "target_exposure": "软件ETF银华",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159355:GLOBAL_CROSS_MARKET_REVIEW",
-                "target_problem_id": "DISCOVERY:159355",
-                "evidence_class": "GLOBAL_CROSS_MARKET_REVIEW",
-                "target_exposure": "800红利低波ETF华宝",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "SATISFIED"
-              },
-              {
-                "requirement_id": "DISCOVERY:159355:GLOBAL_RISK",
-                "target_problem_id": "DISCOVERY:159355",
-                "evidence_class": "GLOBAL_RISK",
-                "target_exposure": "800红利低波ETF华宝",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159355:RATES",
-                "target_problem_id": "DISCOVERY:159355",
-                "evidence_class": "RATES",
-                "target_exposure": "800红利低波ETF华宝",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159355:FX",
-                "target_problem_id": "DISCOVERY:159355",
-                "evidence_class": "FX",
-                "target_exposure": "800红利低波ETF华宝",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159355:MACRO_POLICY_EVENTS",
-                "target_problem_id": "DISCOVERY:159355",
-                "evidence_class": "MACRO_POLICY_EVENTS",
-                "target_exposure": "800红利低波ETF华宝",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159355:A_SHARE_INDEX",
-                "target_problem_id": "DISCOVERY:159355",
-                "evidence_class": "A_SHARE_INDEX",
-                "target_exposure": "800红利低波ETF华宝",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159355:A_SHARE_BREADTH",
-                "target_problem_id": "DISCOVERY:159355",
-                "evidence_class": "A_SHARE_BREADTH",
-                "target_exposure": "800红利低波ETF华宝",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159355:A_SHARE_STYLE_FEEDBACK",
-                "target_problem_id": "DISCOVERY:159355",
-                "evidence_class": "A_SHARE_STYLE_FEEDBACK",
-                "target_exposure": "800红利低波ETF华宝",
-                "required": true,
-                "optional": false,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "SATISFIED"
-              },
-              {
-                "requirement_id": "DISCOVERY:159355:A_SHARE_INDUSTRY_THEME",
-                "target_problem_id": "DISCOVERY:159355",
-                "evidence_class": "A_SHARE_INDUSTRY_THEME",
-                "target_exposure": "800红利低波ETF华宝",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159355:A_SHARE_LIQUIDITY_TURNOVER",
-                "target_problem_id": "DISCOVERY:159355",
-                "evidence_class": "A_SHARE_LIQUIDITY_TURNOVER",
-                "target_exposure": "800红利低波ETF华宝",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159355:A_SHARE_CAPITAL_FLOW",
-                "target_problem_id": "DISCOVERY:159355",
-                "evidence_class": "A_SHARE_CAPITAL_FLOW",
-                "target_exposure": "800红利低波ETF华宝",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159355:A_SHARE_ANOMALY",
-                "target_problem_id": "DISCOVERY:159355",
-                "evidence_class": "A_SHARE_ANOMALY",
-                "target_exposure": "800红利低波ETF华宝",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159355:EXTERNAL_CONFIRMATION_STATE",
-                "target_problem_id": "DISCOVERY:159355",
-                "evidence_class": "EXTERNAL_CONFIRMATION_STATE",
-                "target_exposure": "800红利低波ETF华宝",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159355:ETF_RELATIVE_STRENGTH",
-                "target_problem_id": "DISCOVERY:159355",
-                "evidence_class": "ETF_RELATIVE_STRENGTH",
-                "target_exposure": "800红利低波ETF华宝",
-                "required": true,
-                "optional": false,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "SATISFIED"
-              },
-              {
-                "requirement_id": "DISCOVERY:159355:FULL_MARKET_DISCOVERY",
-                "target_problem_id": "DISCOVERY:159355",
-                "evidence_class": "FULL_MARKET_DISCOVERY",
-                "target_exposure": "800红利低波ETF华宝",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159355:OBSERVATION_ETF",
-                "target_problem_id": "DISCOVERY:159355",
-                "evidence_class": "OBSERVATION_ETF",
-                "target_exposure": "800红利低波ETF华宝",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159355:TEMPORARY_DISCOVERY_CANDIDATE",
-                "target_problem_id": "DISCOVERY:159355",
-                "evidence_class": "TEMPORARY_DISCOVERY_CANDIDATE",
-                "target_exposure": "800红利低波ETF华宝",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159518:GLOBAL_CROSS_MARKET_REVIEW",
-                "target_problem_id": "DISCOVERY:159518",
-                "evidence_class": "GLOBAL_CROSS_MARKET_REVIEW",
-                "target_exposure": "标普油气ETF嘉实",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "SATISFIED"
-              },
-              {
-                "requirement_id": "DISCOVERY:159518:GLOBAL_RISK",
-                "target_problem_id": "DISCOVERY:159518",
-                "evidence_class": "GLOBAL_RISK",
-                "target_exposure": "标普油气ETF嘉实",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159518:RATES",
-                "target_problem_id": "DISCOVERY:159518",
-                "evidence_class": "RATES",
-                "target_exposure": "标普油气ETF嘉实",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159518:FX",
-                "target_problem_id": "DISCOVERY:159518",
-                "evidence_class": "FX",
-                "target_exposure": "标普油气ETF嘉实",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159518:MACRO_POLICY_EVENTS",
-                "target_problem_id": "DISCOVERY:159518",
-                "evidence_class": "MACRO_POLICY_EVENTS",
-                "target_exposure": "标普油气ETF嘉实",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159518:A_SHARE_INDEX",
-                "target_problem_id": "DISCOVERY:159518",
-                "evidence_class": "A_SHARE_INDEX",
-                "target_exposure": "标普油气ETF嘉实",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159518:A_SHARE_BREADTH",
-                "target_problem_id": "DISCOVERY:159518",
-                "evidence_class": "A_SHARE_BREADTH",
-                "target_exposure": "标普油气ETF嘉实",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159518:A_SHARE_STYLE_FEEDBACK",
-                "target_problem_id": "DISCOVERY:159518",
-                "evidence_class": "A_SHARE_STYLE_FEEDBACK",
-                "target_exposure": "标普油气ETF嘉实",
-                "required": true,
-                "optional": false,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "SATISFIED"
-              },
-              {
-                "requirement_id": "DISCOVERY:159518:A_SHARE_INDUSTRY_THEME",
-                "target_problem_id": "DISCOVERY:159518",
-                "evidence_class": "A_SHARE_INDUSTRY_THEME",
-                "target_exposure": "标普油气ETF嘉实",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159518:A_SHARE_LIQUIDITY_TURNOVER",
-                "target_problem_id": "DISCOVERY:159518",
-                "evidence_class": "A_SHARE_LIQUIDITY_TURNOVER",
-                "target_exposure": "标普油气ETF嘉实",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159518:A_SHARE_CAPITAL_FLOW",
-                "target_problem_id": "DISCOVERY:159518",
-                "evidence_class": "A_SHARE_CAPITAL_FLOW",
-                "target_exposure": "标普油气ETF嘉实",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159518:A_SHARE_ANOMALY",
-                "target_problem_id": "DISCOVERY:159518",
-                "evidence_class": "A_SHARE_ANOMALY",
-                "target_exposure": "标普油气ETF嘉实",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159518:EXTERNAL_CONFIRMATION_STATE",
-                "target_problem_id": "DISCOVERY:159518",
-                "evidence_class": "EXTERNAL_CONFIRMATION_STATE",
-                "target_exposure": "标普油气ETF嘉实",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159518:ETF_RELATIVE_STRENGTH",
-                "target_problem_id": "DISCOVERY:159518",
-                "evidence_class": "ETF_RELATIVE_STRENGTH",
-                "target_exposure": "标普油气ETF嘉实",
-                "required": true,
-                "optional": false,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "SATISFIED"
-              },
-              {
-                "requirement_id": "DISCOVERY:159518:FULL_MARKET_DISCOVERY",
-                "target_problem_id": "DISCOVERY:159518",
-                "evidence_class": "FULL_MARKET_DISCOVERY",
-                "target_exposure": "标普油气ETF嘉实",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159518:OBSERVATION_ETF",
-                "target_problem_id": "DISCOVERY:159518",
-                "evidence_class": "OBSERVATION_ETF",
-                "target_exposure": "标普油气ETF嘉实",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159518:TEMPORARY_DISCOVERY_CANDIDATE",
-                "target_problem_id": "DISCOVERY:159518",
-                "evidence_class": "TEMPORARY_DISCOVERY_CANDIDATE",
-                "target_exposure": "标普油气ETF嘉实",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159518:COMMODITY",
-                "target_problem_id": "DISCOVERY:159518",
-                "evidence_class": "COMMODITY",
-                "target_exposure": "标普油气ETF嘉实",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159518:OVERSEAS_INDUSTRY_CHAIN",
-                "target_problem_id": "DISCOVERY:159518",
-                "evidence_class": "OVERSEAS_INDUSTRY_CHAIN",
-                "target_exposure": "标普油气ETF嘉实",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159518:HK_INDUSTRY_CHAIN",
-                "target_problem_id": "DISCOVERY:159518",
-                "evidence_class": "HK_INDUSTRY_CHAIN",
-                "target_exposure": "标普油气ETF嘉实",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159828:GLOBAL_CROSS_MARKET_REVIEW",
-                "target_problem_id": "DISCOVERY:159828",
-                "evidence_class": "GLOBAL_CROSS_MARKET_REVIEW",
-                "target_exposure": "医疗ETF国泰",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "SATISFIED"
-              },
-              {
-                "requirement_id": "DISCOVERY:159828:GLOBAL_RISK",
-                "target_problem_id": "DISCOVERY:159828",
-                "evidence_class": "GLOBAL_RISK",
-                "target_exposure": "医疗ETF国泰",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159828:RATES",
-                "target_problem_id": "DISCOVERY:159828",
-                "evidence_class": "RATES",
-                "target_exposure": "医疗ETF国泰",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159828:FX",
-                "target_problem_id": "DISCOVERY:159828",
-                "evidence_class": "FX",
-                "target_exposure": "医疗ETF国泰",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159828:MACRO_POLICY_EVENTS",
-                "target_problem_id": "DISCOVERY:159828",
-                "evidence_class": "MACRO_POLICY_EVENTS",
-                "target_exposure": "医疗ETF国泰",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159828:A_SHARE_INDEX",
-                "target_problem_id": "DISCOVERY:159828",
-                "evidence_class": "A_SHARE_INDEX",
-                "target_exposure": "医疗ETF国泰",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159828:A_SHARE_BREADTH",
-                "target_problem_id": "DISCOVERY:159828",
-                "evidence_class": "A_SHARE_BREADTH",
-                "target_exposure": "医疗ETF国泰",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159828:A_SHARE_STYLE_FEEDBACK",
-                "target_problem_id": "DISCOVERY:159828",
-                "evidence_class": "A_SHARE_STYLE_FEEDBACK",
-                "target_exposure": "医疗ETF国泰",
-                "required": true,
-                "optional": false,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "SATISFIED"
-              },
-              {
-                "requirement_id": "DISCOVERY:159828:A_SHARE_INDUSTRY_THEME",
-                "target_problem_id": "DISCOVERY:159828",
-                "evidence_class": "A_SHARE_INDUSTRY_THEME",
-                "target_exposure": "医疗ETF国泰",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159828:A_SHARE_LIQUIDITY_TURNOVER",
-                "target_problem_id": "DISCOVERY:159828",
-                "evidence_class": "A_SHARE_LIQUIDITY_TURNOVER",
-                "target_exposure": "医疗ETF国泰",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159828:A_SHARE_CAPITAL_FLOW",
-                "target_problem_id": "DISCOVERY:159828",
-                "evidence_class": "A_SHARE_CAPITAL_FLOW",
-                "target_exposure": "医疗ETF国泰",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159828:A_SHARE_ANOMALY",
-                "target_problem_id": "DISCOVERY:159828",
-                "evidence_class": "A_SHARE_ANOMALY",
-                "target_exposure": "医疗ETF国泰",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159828:EXTERNAL_CONFIRMATION_STATE",
-                "target_problem_id": "DISCOVERY:159828",
-                "evidence_class": "EXTERNAL_CONFIRMATION_STATE",
-                "target_exposure": "医疗ETF国泰",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159828:ETF_RELATIVE_STRENGTH",
-                "target_problem_id": "DISCOVERY:159828",
-                "evidence_class": "ETF_RELATIVE_STRENGTH",
-                "target_exposure": "医疗ETF国泰",
-                "required": true,
-                "optional": false,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "SATISFIED"
-              },
-              {
-                "requirement_id": "DISCOVERY:159828:FULL_MARKET_DISCOVERY",
-                "target_problem_id": "DISCOVERY:159828",
-                "evidence_class": "FULL_MARKET_DISCOVERY",
-                "target_exposure": "医疗ETF国泰",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159828:OBSERVATION_ETF",
-                "target_problem_id": "DISCOVERY:159828",
-                "evidence_class": "OBSERVATION_ETF",
-                "target_exposure": "医疗ETF国泰",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159828:TEMPORARY_DISCOVERY_CANDIDATE",
-                "target_problem_id": "DISCOVERY:159828",
-                "evidence_class": "TEMPORARY_DISCOVERY_CANDIDATE",
-                "target_exposure": "医疗ETF国泰",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159869:GLOBAL_CROSS_MARKET_REVIEW",
-                "target_problem_id": "DISCOVERY:159869",
-                "evidence_class": "GLOBAL_CROSS_MARKET_REVIEW",
-                "target_exposure": "游戏ETF华夏",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "SATISFIED"
-              },
-              {
-                "requirement_id": "DISCOVERY:159869:GLOBAL_RISK",
-                "target_problem_id": "DISCOVERY:159869",
-                "evidence_class": "GLOBAL_RISK",
-                "target_exposure": "游戏ETF华夏",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159869:RATES",
-                "target_problem_id": "DISCOVERY:159869",
-                "evidence_class": "RATES",
-                "target_exposure": "游戏ETF华夏",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159869:FX",
-                "target_problem_id": "DISCOVERY:159869",
-                "evidence_class": "FX",
-                "target_exposure": "游戏ETF华夏",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159869:MACRO_POLICY_EVENTS",
-                "target_problem_id": "DISCOVERY:159869",
-                "evidence_class": "MACRO_POLICY_EVENTS",
-                "target_exposure": "游戏ETF华夏",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159869:A_SHARE_INDEX",
-                "target_problem_id": "DISCOVERY:159869",
-                "evidence_class": "A_SHARE_INDEX",
-                "target_exposure": "游戏ETF华夏",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159869:A_SHARE_BREADTH",
-                "target_problem_id": "DISCOVERY:159869",
-                "evidence_class": "A_SHARE_BREADTH",
-                "target_exposure": "游戏ETF华夏",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159869:A_SHARE_STYLE_FEEDBACK",
-                "target_problem_id": "DISCOVERY:159869",
-                "evidence_class": "A_SHARE_STYLE_FEEDBACK",
-                "target_exposure": "游戏ETF华夏",
-                "required": true,
-                "optional": false,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "SATISFIED"
-              },
-              {
-                "requirement_id": "DISCOVERY:159869:A_SHARE_INDUSTRY_THEME",
-                "target_problem_id": "DISCOVERY:159869",
-                "evidence_class": "A_SHARE_INDUSTRY_THEME",
-                "target_exposure": "游戏ETF华夏",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159869:A_SHARE_LIQUIDITY_TURNOVER",
-                "target_problem_id": "DISCOVERY:159869",
-                "evidence_class": "A_SHARE_LIQUIDITY_TURNOVER",
-                "target_exposure": "游戏ETF华夏",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159869:A_SHARE_CAPITAL_FLOW",
-                "target_problem_id": "DISCOVERY:159869",
-                "evidence_class": "A_SHARE_CAPITAL_FLOW",
-                "target_exposure": "游戏ETF华夏",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159869:A_SHARE_ANOMALY",
-                "target_problem_id": "DISCOVERY:159869",
-                "evidence_class": "A_SHARE_ANOMALY",
-                "target_exposure": "游戏ETF华夏",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159869:EXTERNAL_CONFIRMATION_STATE",
-                "target_problem_id": "DISCOVERY:159869",
-                "evidence_class": "EXTERNAL_CONFIRMATION_STATE",
-                "target_exposure": "游戏ETF华夏",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159869:ETF_RELATIVE_STRENGTH",
-                "target_problem_id": "DISCOVERY:159869",
-                "evidence_class": "ETF_RELATIVE_STRENGTH",
-                "target_exposure": "游戏ETF华夏",
-                "required": true,
-                "optional": false,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "SATISFIED"
-              },
-              {
-                "requirement_id": "DISCOVERY:159869:FULL_MARKET_DISCOVERY",
-                "target_problem_id": "DISCOVERY:159869",
-                "evidence_class": "FULL_MARKET_DISCOVERY",
-                "target_exposure": "游戏ETF华夏",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159869:OBSERVATION_ETF",
-                "target_problem_id": "DISCOVERY:159869",
-                "evidence_class": "OBSERVATION_ETF",
-                "target_exposure": "游戏ETF华夏",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159869:TEMPORARY_DISCOVERY_CANDIDATE",
-                "target_problem_id": "DISCOVERY:159869",
-                "evidence_class": "TEMPORARY_DISCOVERY_CANDIDATE",
-                "target_exposure": "游戏ETF华夏",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159883:GLOBAL_CROSS_MARKET_REVIEW",
-                "target_problem_id": "DISCOVERY:159883",
-                "evidence_class": "GLOBAL_CROSS_MARKET_REVIEW",
-                "target_exposure": "医疗器械ETF永赢",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "SATISFIED"
-              },
-              {
-                "requirement_id": "DISCOVERY:159883:GLOBAL_RISK",
-                "target_problem_id": "DISCOVERY:159883",
-                "evidence_class": "GLOBAL_RISK",
-                "target_exposure": "医疗器械ETF永赢",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159883:RATES",
-                "target_problem_id": "DISCOVERY:159883",
-                "evidence_class": "RATES",
-                "target_exposure": "医疗器械ETF永赢",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159883:FX",
-                "target_problem_id": "DISCOVERY:159883",
-                "evidence_class": "FX",
-                "target_exposure": "医疗器械ETF永赢",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159883:MACRO_POLICY_EVENTS",
-                "target_problem_id": "DISCOVERY:159883",
-                "evidence_class": "MACRO_POLICY_EVENTS",
-                "target_exposure": "医疗器械ETF永赢",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159883:A_SHARE_INDEX",
-                "target_problem_id": "DISCOVERY:159883",
-                "evidence_class": "A_SHARE_INDEX",
-                "target_exposure": "医疗器械ETF永赢",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159883:A_SHARE_BREADTH",
-                "target_problem_id": "DISCOVERY:159883",
-                "evidence_class": "A_SHARE_BREADTH",
-                "target_exposure": "医疗器械ETF永赢",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159883:A_SHARE_STYLE_FEEDBACK",
-                "target_problem_id": "DISCOVERY:159883",
-                "evidence_class": "A_SHARE_STYLE_FEEDBACK",
-                "target_exposure": "医疗器械ETF永赢",
-                "required": true,
-                "optional": false,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "SATISFIED"
-              },
-              {
-                "requirement_id": "DISCOVERY:159883:A_SHARE_INDUSTRY_THEME",
-                "target_problem_id": "DISCOVERY:159883",
-                "evidence_class": "A_SHARE_INDUSTRY_THEME",
-                "target_exposure": "医疗器械ETF永赢",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159883:A_SHARE_LIQUIDITY_TURNOVER",
-                "target_problem_id": "DISCOVERY:159883",
-                "evidence_class": "A_SHARE_LIQUIDITY_TURNOVER",
-                "target_exposure": "医疗器械ETF永赢",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159883:A_SHARE_CAPITAL_FLOW",
-                "target_problem_id": "DISCOVERY:159883",
-                "evidence_class": "A_SHARE_CAPITAL_FLOW",
-                "target_exposure": "医疗器械ETF永赢",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159883:A_SHARE_ANOMALY",
-                "target_problem_id": "DISCOVERY:159883",
-                "evidence_class": "A_SHARE_ANOMALY",
-                "target_exposure": "医疗器械ETF永赢",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159883:EXTERNAL_CONFIRMATION_STATE",
-                "target_problem_id": "DISCOVERY:159883",
-                "evidence_class": "EXTERNAL_CONFIRMATION_STATE",
-                "target_exposure": "医疗器械ETF永赢",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159883:ETF_RELATIVE_STRENGTH",
-                "target_problem_id": "DISCOVERY:159883",
-                "evidence_class": "ETF_RELATIVE_STRENGTH",
-                "target_exposure": "医疗器械ETF永赢",
-                "required": true,
-                "optional": false,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "SATISFIED"
-              },
-              {
-                "requirement_id": "DISCOVERY:159883:FULL_MARKET_DISCOVERY",
-                "target_problem_id": "DISCOVERY:159883",
-                "evidence_class": "FULL_MARKET_DISCOVERY",
-                "target_exposure": "医疗器械ETF永赢",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159883:OBSERVATION_ETF",
-                "target_problem_id": "DISCOVERY:159883",
-                "evidence_class": "OBSERVATION_ETF",
-                "target_exposure": "医疗器械ETF永赢",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159883:TEMPORARY_DISCOVERY_CANDIDATE",
-                "target_problem_id": "DISCOVERY:159883",
-                "evidence_class": "TEMPORARY_DISCOVERY_CANDIDATE",
-                "target_exposure": "医疗器械ETF永赢",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159929:GLOBAL_CROSS_MARKET_REVIEW",
-                "target_problem_id": "DISCOVERY:159929",
-                "evidence_class": "GLOBAL_CROSS_MARKET_REVIEW",
-                "target_exposure": "医药ETF汇添富",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "SATISFIED"
-              },
-              {
-                "requirement_id": "DISCOVERY:159929:GLOBAL_RISK",
-                "target_problem_id": "DISCOVERY:159929",
-                "evidence_class": "GLOBAL_RISK",
-                "target_exposure": "医药ETF汇添富",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159929:RATES",
-                "target_problem_id": "DISCOVERY:159929",
-                "evidence_class": "RATES",
-                "target_exposure": "医药ETF汇添富",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159929:FX",
-                "target_problem_id": "DISCOVERY:159929",
-                "evidence_class": "FX",
-                "target_exposure": "医药ETF汇添富",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159929:MACRO_POLICY_EVENTS",
-                "target_problem_id": "DISCOVERY:159929",
-                "evidence_class": "MACRO_POLICY_EVENTS",
-                "target_exposure": "医药ETF汇添富",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159929:A_SHARE_INDEX",
-                "target_problem_id": "DISCOVERY:159929",
-                "evidence_class": "A_SHARE_INDEX",
-                "target_exposure": "医药ETF汇添富",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159929:A_SHARE_BREADTH",
-                "target_problem_id": "DISCOVERY:159929",
-                "evidence_class": "A_SHARE_BREADTH",
-                "target_exposure": "医药ETF汇添富",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159929:A_SHARE_STYLE_FEEDBACK",
-                "target_problem_id": "DISCOVERY:159929",
-                "evidence_class": "A_SHARE_STYLE_FEEDBACK",
-                "target_exposure": "医药ETF汇添富",
-                "required": true,
-                "optional": false,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "SATISFIED"
-              },
-              {
-                "requirement_id": "DISCOVERY:159929:A_SHARE_INDUSTRY_THEME",
-                "target_problem_id": "DISCOVERY:159929",
-                "evidence_class": "A_SHARE_INDUSTRY_THEME",
-                "target_exposure": "医药ETF汇添富",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159929:A_SHARE_LIQUIDITY_TURNOVER",
-                "target_problem_id": "DISCOVERY:159929",
-                "evidence_class": "A_SHARE_LIQUIDITY_TURNOVER",
-                "target_exposure": "医药ETF汇添富",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159929:A_SHARE_CAPITAL_FLOW",
-                "target_problem_id": "DISCOVERY:159929",
-                "evidence_class": "A_SHARE_CAPITAL_FLOW",
-                "target_exposure": "医药ETF汇添富",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159929:A_SHARE_ANOMALY",
-                "target_problem_id": "DISCOVERY:159929",
-                "evidence_class": "A_SHARE_ANOMALY",
-                "target_exposure": "医药ETF汇添富",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159929:EXTERNAL_CONFIRMATION_STATE",
-                "target_problem_id": "DISCOVERY:159929",
-                "evidence_class": "EXTERNAL_CONFIRMATION_STATE",
-                "target_exposure": "医药ETF汇添富",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159929:ETF_RELATIVE_STRENGTH",
-                "target_problem_id": "DISCOVERY:159929",
-                "evidence_class": "ETF_RELATIVE_STRENGTH",
-                "target_exposure": "医药ETF汇添富",
-                "required": true,
-                "optional": false,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "SATISFIED"
-              },
-              {
-                "requirement_id": "DISCOVERY:159929:FULL_MARKET_DISCOVERY",
-                "target_problem_id": "DISCOVERY:159929",
-                "evidence_class": "FULL_MARKET_DISCOVERY",
-                "target_exposure": "医药ETF汇添富",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159929:OBSERVATION_ETF",
-                "target_problem_id": "DISCOVERY:159929",
-                "evidence_class": "OBSERVATION_ETF",
-                "target_exposure": "医药ETF汇添富",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:159929:TEMPORARY_DISCOVERY_CANDIDATE",
-                "target_problem_id": "DISCOVERY:159929",
-                "evidence_class": "TEMPORARY_DISCOVERY_CANDIDATE",
-                "target_exposure": "医药ETF汇添富",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:515080:GLOBAL_CROSS_MARKET_REVIEW",
-                "target_problem_id": "DISCOVERY:515080",
-                "evidence_class": "GLOBAL_CROSS_MARKET_REVIEW",
-                "target_exposure": "中证红利ETF招商",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "SATISFIED"
-              },
-              {
-                "requirement_id": "DISCOVERY:515080:GLOBAL_RISK",
-                "target_problem_id": "DISCOVERY:515080",
-                "evidence_class": "GLOBAL_RISK",
-                "target_exposure": "中证红利ETF招商",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:515080:RATES",
-                "target_problem_id": "DISCOVERY:515080",
-                "evidence_class": "RATES",
-                "target_exposure": "中证红利ETF招商",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:515080:FX",
-                "target_problem_id": "DISCOVERY:515080",
-                "evidence_class": "FX",
-                "target_exposure": "中证红利ETF招商",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:515080:MACRO_POLICY_EVENTS",
-                "target_problem_id": "DISCOVERY:515080",
-                "evidence_class": "MACRO_POLICY_EVENTS",
-                "target_exposure": "中证红利ETF招商",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:515080:A_SHARE_INDEX",
-                "target_problem_id": "DISCOVERY:515080",
-                "evidence_class": "A_SHARE_INDEX",
-                "target_exposure": "中证红利ETF招商",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:515080:A_SHARE_BREADTH",
-                "target_problem_id": "DISCOVERY:515080",
-                "evidence_class": "A_SHARE_BREADTH",
-                "target_exposure": "中证红利ETF招商",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:515080:A_SHARE_STYLE_FEEDBACK",
-                "target_problem_id": "DISCOVERY:515080",
-                "evidence_class": "A_SHARE_STYLE_FEEDBACK",
-                "target_exposure": "中证红利ETF招商",
-                "required": true,
-                "optional": false,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "SATISFIED"
-              },
-              {
-                "requirement_id": "DISCOVERY:515080:A_SHARE_INDUSTRY_THEME",
-                "target_problem_id": "DISCOVERY:515080",
-                "evidence_class": "A_SHARE_INDUSTRY_THEME",
-                "target_exposure": "中证红利ETF招商",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:515080:A_SHARE_LIQUIDITY_TURNOVER",
-                "target_problem_id": "DISCOVERY:515080",
-                "evidence_class": "A_SHARE_LIQUIDITY_TURNOVER",
-                "target_exposure": "中证红利ETF招商",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:515080:A_SHARE_CAPITAL_FLOW",
-                "target_problem_id": "DISCOVERY:515080",
-                "evidence_class": "A_SHARE_CAPITAL_FLOW",
-                "target_exposure": "中证红利ETF招商",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:515080:A_SHARE_ANOMALY",
-                "target_problem_id": "DISCOVERY:515080",
-                "evidence_class": "A_SHARE_ANOMALY",
-                "target_exposure": "中证红利ETF招商",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:515080:EXTERNAL_CONFIRMATION_STATE",
-                "target_problem_id": "DISCOVERY:515080",
-                "evidence_class": "EXTERNAL_CONFIRMATION_STATE",
-                "target_exposure": "中证红利ETF招商",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:515080:ETF_RELATIVE_STRENGTH",
-                "target_problem_id": "DISCOVERY:515080",
-                "evidence_class": "ETF_RELATIVE_STRENGTH",
-                "target_exposure": "中证红利ETF招商",
-                "required": true,
-                "optional": false,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "SATISFIED"
-              },
-              {
-                "requirement_id": "DISCOVERY:515080:FULL_MARKET_DISCOVERY",
-                "target_problem_id": "DISCOVERY:515080",
-                "evidence_class": "FULL_MARKET_DISCOVERY",
-                "target_exposure": "中证红利ETF招商",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:515080:OBSERVATION_ETF",
-                "target_problem_id": "DISCOVERY:515080",
-                "evidence_class": "OBSERVATION_ETF",
-                "target_exposure": "中证红利ETF招商",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:515080:TEMPORARY_DISCOVERY_CANDIDATE",
-                "target_problem_id": "DISCOVERY:515080",
-                "evidence_class": "TEMPORARY_DISCOVERY_CANDIDATE",
-                "target_exposure": "中证红利ETF招商",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:520610:GLOBAL_CROSS_MARKET_REVIEW",
-                "target_problem_id": "DISCOVERY:520610",
-                "evidence_class": "GLOBAL_CROSS_MARKET_REVIEW",
-                "target_exposure": "港股红利低波ETF银华",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "SATISFIED"
-              },
-              {
-                "requirement_id": "DISCOVERY:520610:GLOBAL_RISK",
-                "target_problem_id": "DISCOVERY:520610",
-                "evidence_class": "GLOBAL_RISK",
-                "target_exposure": "港股红利低波ETF银华",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:520610:RATES",
-                "target_problem_id": "DISCOVERY:520610",
-                "evidence_class": "RATES",
-                "target_exposure": "港股红利低波ETF银华",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:520610:FX",
-                "target_problem_id": "DISCOVERY:520610",
-                "evidence_class": "FX",
-                "target_exposure": "港股红利低波ETF银华",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:520610:MACRO_POLICY_EVENTS",
-                "target_problem_id": "DISCOVERY:520610",
-                "evidence_class": "MACRO_POLICY_EVENTS",
-                "target_exposure": "港股红利低波ETF银华",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:520610:A_SHARE_INDEX",
-                "target_problem_id": "DISCOVERY:520610",
-                "evidence_class": "A_SHARE_INDEX",
-                "target_exposure": "港股红利低波ETF银华",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:520610:A_SHARE_BREADTH",
-                "target_problem_id": "DISCOVERY:520610",
-                "evidence_class": "A_SHARE_BREADTH",
-                "target_exposure": "港股红利低波ETF银华",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:520610:A_SHARE_STYLE_FEEDBACK",
-                "target_problem_id": "DISCOVERY:520610",
-                "evidence_class": "A_SHARE_STYLE_FEEDBACK",
-                "target_exposure": "港股红利低波ETF银华",
-                "required": true,
-                "optional": false,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "SATISFIED"
-              },
-              {
-                "requirement_id": "DISCOVERY:520610:A_SHARE_INDUSTRY_THEME",
-                "target_problem_id": "DISCOVERY:520610",
-                "evidence_class": "A_SHARE_INDUSTRY_THEME",
-                "target_exposure": "港股红利低波ETF银华",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:520610:A_SHARE_LIQUIDITY_TURNOVER",
-                "target_problem_id": "DISCOVERY:520610",
-                "evidence_class": "A_SHARE_LIQUIDITY_TURNOVER",
-                "target_exposure": "港股红利低波ETF银华",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:520610:A_SHARE_CAPITAL_FLOW",
-                "target_problem_id": "DISCOVERY:520610",
-                "evidence_class": "A_SHARE_CAPITAL_FLOW",
-                "target_exposure": "港股红利低波ETF银华",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:520610:A_SHARE_ANOMALY",
-                "target_problem_id": "DISCOVERY:520610",
-                "evidence_class": "A_SHARE_ANOMALY",
-                "target_exposure": "港股红利低波ETF银华",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:520610:EXTERNAL_CONFIRMATION_STATE",
-                "target_problem_id": "DISCOVERY:520610",
-                "evidence_class": "EXTERNAL_CONFIRMATION_STATE",
-                "target_exposure": "港股红利低波ETF银华",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:520610:ETF_RELATIVE_STRENGTH",
-                "target_problem_id": "DISCOVERY:520610",
-                "evidence_class": "ETF_RELATIVE_STRENGTH",
-                "target_exposure": "港股红利低波ETF银华",
-                "required": true,
-                "optional": false,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "SATISFIED"
-              },
-              {
-                "requirement_id": "DISCOVERY:520610:FULL_MARKET_DISCOVERY",
-                "target_problem_id": "DISCOVERY:520610",
-                "evidence_class": "FULL_MARKET_DISCOVERY",
-                "target_exposure": "港股红利低波ETF银华",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:520610:OBSERVATION_ETF",
-                "target_problem_id": "DISCOVERY:520610",
-                "evidence_class": "OBSERVATION_ETF",
-                "target_exposure": "港股红利低波ETF银华",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:520610:TEMPORARY_DISCOVERY_CANDIDATE",
-                "target_problem_id": "DISCOVERY:520610",
-                "evidence_class": "TEMPORARY_DISCOVERY_CANDIDATE",
-                "target_exposure": "港股红利低波ETF银华",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:562060:GLOBAL_CROSS_MARKET_REVIEW",
-                "target_problem_id": "DISCOVERY:562060",
-                "evidence_class": "GLOBAL_CROSS_MARKET_REVIEW",
-                "target_exposure": "标普A股红利ETF华宝",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "SATISFIED"
-              },
-              {
-                "requirement_id": "DISCOVERY:562060:GLOBAL_RISK",
-                "target_problem_id": "DISCOVERY:562060",
-                "evidence_class": "GLOBAL_RISK",
-                "target_exposure": "标普A股红利ETF华宝",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:562060:RATES",
-                "target_problem_id": "DISCOVERY:562060",
-                "evidence_class": "RATES",
-                "target_exposure": "标普A股红利ETF华宝",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:562060:FX",
-                "target_problem_id": "DISCOVERY:562060",
-                "evidence_class": "FX",
-                "target_exposure": "标普A股红利ETF华宝",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:562060:MACRO_POLICY_EVENTS",
-                "target_problem_id": "DISCOVERY:562060",
-                "evidence_class": "MACRO_POLICY_EVENTS",
-                "target_exposure": "标普A股红利ETF华宝",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:562060:A_SHARE_INDEX",
-                "target_problem_id": "DISCOVERY:562060",
-                "evidence_class": "A_SHARE_INDEX",
-                "target_exposure": "标普A股红利ETF华宝",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:562060:A_SHARE_BREADTH",
-                "target_problem_id": "DISCOVERY:562060",
-                "evidence_class": "A_SHARE_BREADTH",
-                "target_exposure": "标普A股红利ETF华宝",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:562060:A_SHARE_STYLE_FEEDBACK",
-                "target_problem_id": "DISCOVERY:562060",
-                "evidence_class": "A_SHARE_STYLE_FEEDBACK",
-                "target_exposure": "标普A股红利ETF华宝",
-                "required": true,
-                "optional": false,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "SATISFIED"
-              },
-              {
-                "requirement_id": "DISCOVERY:562060:A_SHARE_INDUSTRY_THEME",
-                "target_problem_id": "DISCOVERY:562060",
-                "evidence_class": "A_SHARE_INDUSTRY_THEME",
-                "target_exposure": "标普A股红利ETF华宝",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:562060:A_SHARE_LIQUIDITY_TURNOVER",
-                "target_problem_id": "DISCOVERY:562060",
-                "evidence_class": "A_SHARE_LIQUIDITY_TURNOVER",
-                "target_exposure": "标普A股红利ETF华宝",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:562060:A_SHARE_CAPITAL_FLOW",
-                "target_problem_id": "DISCOVERY:562060",
-                "evidence_class": "A_SHARE_CAPITAL_FLOW",
-                "target_exposure": "标普A股红利ETF华宝",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:562060:A_SHARE_ANOMALY",
-                "target_problem_id": "DISCOVERY:562060",
-                "evidence_class": "A_SHARE_ANOMALY",
-                "target_exposure": "标普A股红利ETF华宝",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:562060:EXTERNAL_CONFIRMATION_STATE",
-                "target_problem_id": "DISCOVERY:562060",
-                "evidence_class": "EXTERNAL_CONFIRMATION_STATE",
-                "target_exposure": "标普A股红利ETF华宝",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:562060:ETF_RELATIVE_STRENGTH",
-                "target_problem_id": "DISCOVERY:562060",
-                "evidence_class": "ETF_RELATIVE_STRENGTH",
-                "target_exposure": "标普A股红利ETF华宝",
-                "required": true,
-                "optional": false,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "SATISFIED"
-              },
-              {
-                "requirement_id": "DISCOVERY:562060:FULL_MARKET_DISCOVERY",
-                "target_problem_id": "DISCOVERY:562060",
-                "evidence_class": "FULL_MARKET_DISCOVERY",
-                "target_exposure": "标普A股红利ETF华宝",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:562060:OBSERVATION_ETF",
-                "target_problem_id": "DISCOVERY:562060",
-                "evidence_class": "OBSERVATION_ETF",
-                "target_exposure": "标普A股红利ETF华宝",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
-              },
-              {
-                "requirement_id": "DISCOVERY:562060:TEMPORARY_DISCOVERY_CANDIDATE",
-                "target_problem_id": "DISCOVERY:562060",
-                "evidence_class": "TEMPORARY_DISCOVERY_CANDIDATE",
-                "target_exposure": "标普A股红利ETF华宝",
-                "required": false,
-                "optional": true,
-                "why_decision_relevant": "可能改变该问题的风险许可、机会状态、持仓动作或资本配置",
-                "satisfaction": "INSUFFICIENT"
               }
             ],
             "current_evidence": [
+              {
+                "code": "NDX",
+                "name": "纳斯达克100指数",
+                "price": null,
+                "change_pct": null,
+                "market_phase": "REGULAR",
+                "as_of_beijing": "2026-10-26T21:38:25+08:00",
+                "quality_status": "PASS",
+                "provider": ""
+              },
+              {
+                "code": "SOX",
+                "name": "费城半导体指数",
+                "price": null,
+                "change_pct": null,
+                "market_phase": "REGULAR",
+                "as_of_beijing": "2026-10-26T21:38:20+08:00",
+                "quality_status": "PASS",
+                "provider": ""
+              },
               {
                 "code": "QQQ",
                 "name": "QQQ",
                 "price": null,
                 "change_pct": null,
-                "market_phase": "PRE_MARKET",
-                "as_of_beijing": "2026-10-26T21:21:28+08:00",
+                "market_phase": "REGULAR",
+                "as_of_beijing": "2026-10-26T21:38:25+08:00",
                 "quality_status": "PASS",
                 "provider": ""
               },
@@ -7424,8 +5624,8 @@
                 "name": "SOXX",
                 "price": null,
                 "change_pct": null,
-                "market_phase": "PRE_MARKET",
-                "as_of_beijing": "2026-10-26T21:20:26+08:00",
+                "market_phase": "REGULAR",
+                "as_of_beijing": "2026-10-26T21:38:25+08:00",
                 "quality_status": "PASS",
                 "provider": ""
               },
@@ -7610,26 +5810,6 @@
                 "provider": ""
               },
               {
-                "code": "NDX",
-                "name": "纳斯达克100指数",
-                "price": null,
-                "change_pct": null,
-                "market_phase": "PRE_MARKET",
-                "as_of_beijing": "2026-10-26T20:44:31+08:00",
-                "quality_status": "FRESH",
-                "provider": ""
-              },
-              {
-                "code": "SOX",
-                "name": "费城半导体指数",
-                "price": null,
-                "change_pct": null,
-                "market_phase": "PRE_MARKET",
-                "as_of_beijing": "2026-10-26T20:44:10+08:00",
-                "quality_status": "FRESH",
-                "provider": ""
-              },
-              {
                 "code": "100.N225",
                 "name": "日经225指数",
                 "price": null,
@@ -7666,96 +5846,6 @@
                 "change_pct": null,
                 "market_phase": "OFF_SESSION",
                 "as_of_beijing": "2026-10-26T16:08:28+08:00",
-                "quality_status": "PASS",
-                "provider": ""
-              },
-              {
-                "code": "159180",
-                "name": "软件ETF银华",
-                "price": null,
-                "change_pct": null,
-                "market_phase": "OFF_SESSION",
-                "as_of_beijing": "2026-10-26T16:14:45+08:00",
-                "quality_status": "PASS",
-                "provider": ""
-              },
-              {
-                "code": "159355",
-                "name": "800红利低波ETF华宝",
-                "price": null,
-                "change_pct": null,
-                "market_phase": "OFF_SESSION",
-                "as_of_beijing": "2026-10-26T16:14:15+08:00",
-                "quality_status": "PASS",
-                "provider": ""
-              },
-              {
-                "code": "159518",
-                "name": "标普油气ETF嘉实",
-                "price": null,
-                "change_pct": null,
-                "market_phase": "OFF_SESSION",
-                "as_of_beijing": "2026-10-26T16:14:15+08:00",
-                "quality_status": "PASS",
-                "provider": ""
-              },
-              {
-                "code": "159828",
-                "name": "医疗ETF国泰",
-                "price": null,
-                "change_pct": null,
-                "market_phase": "OFF_SESSION",
-                "as_of_beijing": "2026-10-26T16:14:45+08:00",
-                "quality_status": "PASS",
-                "provider": ""
-              },
-              {
-                "code": "159869",
-                "name": "游戏ETF华夏",
-                "price": null,
-                "change_pct": null,
-                "market_phase": "OFF_SESSION",
-                "as_of_beijing": "2026-10-26T16:14:45+08:00",
-                "quality_status": "PASS",
-                "provider": ""
-              },
-              {
-                "code": "159883",
-                "name": "医疗器械ETF永赢",
-                "price": null,
-                "change_pct": null,
-                "market_phase": "OFF_SESSION",
-                "as_of_beijing": "2026-10-26T16:14:39+08:00",
-                "quality_status": "PASS",
-                "provider": ""
-              },
-              {
-                "code": "159929",
-                "name": "医药ETF汇添富",
-                "price": null,
-                "change_pct": null,
-                "market_phase": "OFF_SESSION",
-                "as_of_beijing": "2026-10-26T16:14:30+08:00",
-                "quality_status": "PASS",
-                "provider": ""
-              },
-              {
-                "code": "520610",
-                "name": "港股红利低波ETF银华",
-                "price": null,
-                "change_pct": null,
-                "market_phase": "OFF_SESSION",
-                "as_of_beijing": "2026-10-26T16:14:57+08:00",
-                "quality_status": "PASS",
-                "provider": ""
-              },
-              {
-                "code": "562060",
-                "name": "标普A股红利ETF华宝",
-                "price": null,
-                "change_pct": null,
-                "market_phase": "OFF_SESSION",
-                "as_of_beijing": "2026-10-26T16:14:56+08:00",
                 "quality_status": "PASS",
                 "provider": ""
               }
@@ -8416,199 +6506,6 @@
                 "OBSERVATION:515080:FULL_MARKET_DISCOVERY",
                 "OBSERVATION:515080:OBSERVATION_ETF",
                 "OBSERVATION:515080:TEMPORARY_DISCOVERY_CANDIDATE"
-              ],
-              "DISCOVERY:159180": [
-                "DISCOVERY:159180:GLOBAL_CROSS_MARKET_REVIEW",
-                "DISCOVERY:159180:GLOBAL_RISK",
-                "DISCOVERY:159180:RATES",
-                "DISCOVERY:159180:FX",
-                "DISCOVERY:159180:MACRO_POLICY_EVENTS",
-                "DISCOVERY:159180:A_SHARE_INDEX",
-                "DISCOVERY:159180:A_SHARE_BREADTH",
-                "DISCOVERY:159180:A_SHARE_STYLE_FEEDBACK",
-                "DISCOVERY:159180:A_SHARE_INDUSTRY_THEME",
-                "DISCOVERY:159180:A_SHARE_LIQUIDITY_TURNOVER",
-                "DISCOVERY:159180:A_SHARE_CAPITAL_FLOW",
-                "DISCOVERY:159180:A_SHARE_ANOMALY",
-                "DISCOVERY:159180:EXTERNAL_CONFIRMATION_STATE",
-                "DISCOVERY:159180:ETF_RELATIVE_STRENGTH",
-                "DISCOVERY:159180:FULL_MARKET_DISCOVERY",
-                "DISCOVERY:159180:OBSERVATION_ETF",
-                "DISCOVERY:159180:TEMPORARY_DISCOVERY_CANDIDATE"
-              ],
-              "DISCOVERY:159355": [
-                "DISCOVERY:159355:GLOBAL_CROSS_MARKET_REVIEW",
-                "DISCOVERY:159355:GLOBAL_RISK",
-                "DISCOVERY:159355:RATES",
-                "DISCOVERY:159355:FX",
-                "DISCOVERY:159355:MACRO_POLICY_EVENTS",
-                "DISCOVERY:159355:A_SHARE_INDEX",
-                "DISCOVERY:159355:A_SHARE_BREADTH",
-                "DISCOVERY:159355:A_SHARE_STYLE_FEEDBACK",
-                "DISCOVERY:159355:A_SHARE_INDUSTRY_THEME",
-                "DISCOVERY:159355:A_SHARE_LIQUIDITY_TURNOVER",
-                "DISCOVERY:159355:A_SHARE_CAPITAL_FLOW",
-                "DISCOVERY:159355:A_SHARE_ANOMALY",
-                "DISCOVERY:159355:EXTERNAL_CONFIRMATION_STATE",
-                "DISCOVERY:159355:ETF_RELATIVE_STRENGTH",
-                "DISCOVERY:159355:FULL_MARKET_DISCOVERY",
-                "DISCOVERY:159355:OBSERVATION_ETF",
-                "DISCOVERY:159355:TEMPORARY_DISCOVERY_CANDIDATE"
-              ],
-              "DISCOVERY:159518": [
-                "DISCOVERY:159518:GLOBAL_CROSS_MARKET_REVIEW",
-                "DISCOVERY:159518:GLOBAL_RISK",
-                "DISCOVERY:159518:RATES",
-                "DISCOVERY:159518:FX",
-                "DISCOVERY:159518:MACRO_POLICY_EVENTS",
-                "DISCOVERY:159518:A_SHARE_INDEX",
-                "DISCOVERY:159518:A_SHARE_BREADTH",
-                "DISCOVERY:159518:A_SHARE_STYLE_FEEDBACK",
-                "DISCOVERY:159518:A_SHARE_INDUSTRY_THEME",
-                "DISCOVERY:159518:A_SHARE_LIQUIDITY_TURNOVER",
-                "DISCOVERY:159518:A_SHARE_CAPITAL_FLOW",
-                "DISCOVERY:159518:A_SHARE_ANOMALY",
-                "DISCOVERY:159518:EXTERNAL_CONFIRMATION_STATE",
-                "DISCOVERY:159518:ETF_RELATIVE_STRENGTH",
-                "DISCOVERY:159518:FULL_MARKET_DISCOVERY",
-                "DISCOVERY:159518:OBSERVATION_ETF",
-                "DISCOVERY:159518:TEMPORARY_DISCOVERY_CANDIDATE",
-                "DISCOVERY:159518:COMMODITY",
-                "DISCOVERY:159518:OVERSEAS_INDUSTRY_CHAIN",
-                "DISCOVERY:159518:HK_INDUSTRY_CHAIN"
-              ],
-              "DISCOVERY:159828": [
-                "DISCOVERY:159828:GLOBAL_CROSS_MARKET_REVIEW",
-                "DISCOVERY:159828:GLOBAL_RISK",
-                "DISCOVERY:159828:RATES",
-                "DISCOVERY:159828:FX",
-                "DISCOVERY:159828:MACRO_POLICY_EVENTS",
-                "DISCOVERY:159828:A_SHARE_INDEX",
-                "DISCOVERY:159828:A_SHARE_BREADTH",
-                "DISCOVERY:159828:A_SHARE_STYLE_FEEDBACK",
-                "DISCOVERY:159828:A_SHARE_INDUSTRY_THEME",
-                "DISCOVERY:159828:A_SHARE_LIQUIDITY_TURNOVER",
-                "DISCOVERY:159828:A_SHARE_CAPITAL_FLOW",
-                "DISCOVERY:159828:A_SHARE_ANOMALY",
-                "DISCOVERY:159828:EXTERNAL_CONFIRMATION_STATE",
-                "DISCOVERY:159828:ETF_RELATIVE_STRENGTH",
-                "DISCOVERY:159828:FULL_MARKET_DISCOVERY",
-                "DISCOVERY:159828:OBSERVATION_ETF",
-                "DISCOVERY:159828:TEMPORARY_DISCOVERY_CANDIDATE"
-              ],
-              "DISCOVERY:159869": [
-                "DISCOVERY:159869:GLOBAL_CROSS_MARKET_REVIEW",
-                "DISCOVERY:159869:GLOBAL_RISK",
-                "DISCOVERY:159869:RATES",
-                "DISCOVERY:159869:FX",
-                "DISCOVERY:159869:MACRO_POLICY_EVENTS",
-                "DISCOVERY:159869:A_SHARE_INDEX",
-                "DISCOVERY:159869:A_SHARE_BREADTH",
-                "DISCOVERY:159869:A_SHARE_STYLE_FEEDBACK",
-                "DISCOVERY:159869:A_SHARE_INDUSTRY_THEME",
-                "DISCOVERY:159869:A_SHARE_LIQUIDITY_TURNOVER",
-                "DISCOVERY:159869:A_SHARE_CAPITAL_FLOW",
-                "DISCOVERY:159869:A_SHARE_ANOMALY",
-                "DISCOVERY:159869:EXTERNAL_CONFIRMATION_STATE",
-                "DISCOVERY:159869:ETF_RELATIVE_STRENGTH",
-                "DISCOVERY:159869:FULL_MARKET_DISCOVERY",
-                "DISCOVERY:159869:OBSERVATION_ETF",
-                "DISCOVERY:159869:TEMPORARY_DISCOVERY_CANDIDATE"
-              ],
-              "DISCOVERY:159883": [
-                "DISCOVERY:159883:GLOBAL_CROSS_MARKET_REVIEW",
-                "DISCOVERY:159883:GLOBAL_RISK",
-                "DISCOVERY:159883:RATES",
-                "DISCOVERY:159883:FX",
-                "DISCOVERY:159883:MACRO_POLICY_EVENTS",
-                "DISCOVERY:159883:A_SHARE_INDEX",
-                "DISCOVERY:159883:A_SHARE_BREADTH",
-                "DISCOVERY:159883:A_SHARE_STYLE_FEEDBACK",
-                "DISCOVERY:159883:A_SHARE_INDUSTRY_THEME",
-                "DISCOVERY:159883:A_SHARE_LIQUIDITY_TURNOVER",
-                "DISCOVERY:159883:A_SHARE_CAPITAL_FLOW",
-                "DISCOVERY:159883:A_SHARE_ANOMALY",
-                "DISCOVERY:159883:EXTERNAL_CONFIRMATION_STATE",
-                "DISCOVERY:159883:ETF_RELATIVE_STRENGTH",
-                "DISCOVERY:159883:FULL_MARKET_DISCOVERY",
-                "DISCOVERY:159883:OBSERVATION_ETF",
-                "DISCOVERY:159883:TEMPORARY_DISCOVERY_CANDIDATE"
-              ],
-              "DISCOVERY:159929": [
-                "DISCOVERY:159929:GLOBAL_CROSS_MARKET_REVIEW",
-                "DISCOVERY:159929:GLOBAL_RISK",
-                "DISCOVERY:159929:RATES",
-                "DISCOVERY:159929:FX",
-                "DISCOVERY:159929:MACRO_POLICY_EVENTS",
-                "DISCOVERY:159929:A_SHARE_INDEX",
-                "DISCOVERY:159929:A_SHARE_BREADTH",
-                "DISCOVERY:159929:A_SHARE_STYLE_FEEDBACK",
-                "DISCOVERY:159929:A_SHARE_INDUSTRY_THEME",
-                "DISCOVERY:159929:A_SHARE_LIQUIDITY_TURNOVER",
-                "DISCOVERY:159929:A_SHARE_CAPITAL_FLOW",
-                "DISCOVERY:159929:A_SHARE_ANOMALY",
-                "DISCOVERY:159929:EXTERNAL_CONFIRMATION_STATE",
-                "DISCOVERY:159929:ETF_RELATIVE_STRENGTH",
-                "DISCOVERY:159929:FULL_MARKET_DISCOVERY",
-                "DISCOVERY:159929:OBSERVATION_ETF",
-                "DISCOVERY:159929:TEMPORARY_DISCOVERY_CANDIDATE"
-              ],
-              "DISCOVERY:515080": [
-                "DISCOVERY:515080:GLOBAL_CROSS_MARKET_REVIEW",
-                "DISCOVERY:515080:GLOBAL_RISK",
-                "DISCOVERY:515080:RATES",
-                "DISCOVERY:515080:FX",
-                "DISCOVERY:515080:MACRO_POLICY_EVENTS",
-                "DISCOVERY:515080:A_SHARE_INDEX",
-                "DISCOVERY:515080:A_SHARE_BREADTH",
-                "DISCOVERY:515080:A_SHARE_STYLE_FEEDBACK",
-                "DISCOVERY:515080:A_SHARE_INDUSTRY_THEME",
-                "DISCOVERY:515080:A_SHARE_LIQUIDITY_TURNOVER",
-                "DISCOVERY:515080:A_SHARE_CAPITAL_FLOW",
-                "DISCOVERY:515080:A_SHARE_ANOMALY",
-                "DISCOVERY:515080:EXTERNAL_CONFIRMATION_STATE",
-                "DISCOVERY:515080:ETF_RELATIVE_STRENGTH",
-                "DISCOVERY:515080:FULL_MARKET_DISCOVERY",
-                "DISCOVERY:515080:OBSERVATION_ETF",
-                "DISCOVERY:515080:TEMPORARY_DISCOVERY_CANDIDATE"
-              ],
-              "DISCOVERY:520610": [
-                "DISCOVERY:520610:GLOBAL_CROSS_MARKET_REVIEW",
-                "DISCOVERY:520610:GLOBAL_RISK",
-                "DISCOVERY:520610:RATES",
-                "DISCOVERY:520610:FX",
-                "DISCOVERY:520610:MACRO_POLICY_EVENTS",
-                "DISCOVERY:520610:A_SHARE_INDEX",
-                "DISCOVERY:520610:A_SHARE_BREADTH",
-                "DISCOVERY:520610:A_SHARE_STYLE_FEEDBACK",
-                "DISCOVERY:520610:A_SHARE_INDUSTRY_THEME",
-                "DISCOVERY:520610:A_SHARE_LIQUIDITY_TURNOVER",
-                "DISCOVERY:520610:A_SHARE_CAPITAL_FLOW",
-                "DISCOVERY:520610:A_SHARE_ANOMALY",
-                "DISCOVERY:520610:EXTERNAL_CONFIRMATION_STATE",
-                "DISCOVERY:520610:ETF_RELATIVE_STRENGTH",
-                "DISCOVERY:520610:FULL_MARKET_DISCOVERY",
-                "DISCOVERY:520610:OBSERVATION_ETF",
-                "DISCOVERY:520610:TEMPORARY_DISCOVERY_CANDIDATE"
-              ],
-              "DISCOVERY:562060": [
-                "DISCOVERY:562060:GLOBAL_CROSS_MARKET_REVIEW",
-                "DISCOVERY:562060:GLOBAL_RISK",
-                "DISCOVERY:562060:RATES",
-                "DISCOVERY:562060:FX",
-                "DISCOVERY:562060:MACRO_POLICY_EVENTS",
-                "DISCOVERY:562060:A_SHARE_INDEX",
-                "DISCOVERY:562060:A_SHARE_BREADTH",
-                "DISCOVERY:562060:A_SHARE_STYLE_FEEDBACK",
-                "DISCOVERY:562060:A_SHARE_INDUSTRY_THEME",
-                "DISCOVERY:562060:A_SHARE_LIQUIDITY_TURNOVER",
-                "DISCOVERY:562060:A_SHARE_CAPITAL_FLOW",
-                "DISCOVERY:562060:A_SHARE_ANOMALY",
-                "DISCOVERY:562060:EXTERNAL_CONFIRMATION_STATE",
-                "DISCOVERY:562060:ETF_RELATIVE_STRENGTH",
-                "DISCOVERY:562060:FULL_MARKET_DISCOVERY",
-                "DISCOVERY:562060:OBSERVATION_ETF",
-                "DISCOVERY:562060:TEMPORARY_DISCOVERY_CANDIDATE"
               ]
             },
             "capital_competition_readiness": {
@@ -9214,8 +7111,8 @@
                     }
                   },
                   "us_extended_hours_context": {
-                    "generated_at": "2026-10-26T12:44:38Z",
-                    "generated_at_beijing": "2026-10-26T20:44:38+08:00",
+                    "generated_at": "2026-10-26T13:22:47Z",
+                    "generated_at_beijing": "2026-10-26T21:22:47+08:00",
                     "scope": "US_SESSION_CONTEXT",
                     "quality_status": "DEGRADED",
                     "base_proxies": [
@@ -9238,18 +7135,18 @@
                         "market_phase_of_latest": "PRE_MARKET",
                         "quality_status": "FRESH",
                         "freshness_status": "FRESH",
-                        "data_age_seconds": 6,
+                        "data_age_seconds": 2,
                         "current_market_phase": "PRE_MARKET",
                         "latest": {
-                          "open": 708.35,
-                          "high": 708.35,
-                          "low": 708.35,
-                          "close": 708.35,
+                          "open": 707.1201,
+                          "high": 707.1201,
+                          "low": 707.1201,
+                          "close": 707.1201,
                           "volume": 0,
-                          "timestamp": 1793018671,
-                          "as_of_utc": "2026-10-26T12:44:31Z",
-                          "as_of_local": "2026-10-26T08:44:31-04:00",
-                          "as_of_beijing": "2026-10-26T20:44:31+08:00",
+                          "timestamp": 1793020964,
+                          "as_of_utc": "2026-10-26T13:22:44Z",
+                          "as_of_local": "2026-10-26T09:22:44-04:00",
+                          "as_of_beijing": "2026-10-26T21:22:44+08:00",
                           "market_date_local": "2026-10-26",
                           "session": "PRE_MARKET"
                         },
@@ -9276,7 +7173,7 @@
                           "late_session_change_pct": -2.0973,
                           "sampling_note": "由Yahoo 5分钟现金盘bar重建日内路径；用于总结高低点、修复/回撤和分段走势，不直接生成A股交易动作。"
                         },
-                        "extended_change_vs_regular_close_pct": 0.5622,
+                        "extended_change_vs_regular_close_pct": 0.3876,
                         "decision_note": "NDX/SOX是正式现金盘指数，只在REGULAR承担直接指数实时语义；其盘前/盘后值仅作最近现金盘SESSION_REFERENCE。QQQ/SOXX用于PRE_MARKET/POST_MARKET前置信号，也可作为现金盘数据异常时的明确代理备份。扩展时段不得把ETF代理涨跌直接等同于NDX/SOX正式指数涨跌，也不得单独生成A股ETF动作。",
                         "object": "QQQ"
                       },
@@ -9290,18 +7187,18 @@
                         "market_phase_of_latest": "PRE_MARKET",
                         "quality_status": "FRESH",
                         "freshness_status": "FRESH",
-                        "data_age_seconds": 27,
+                        "data_age_seconds": 140,
                         "current_market_phase": "PRE_MARKET",
                         "latest": {
-                          "open": 486.61,
-                          "high": 486.61,
-                          "low": 486.61,
-                          "close": 486.61,
+                          "open": 484.4,
+                          "high": 484.4,
+                          "low": 484.4,
+                          "close": 484.4,
                           "volume": 0,
-                          "timestamp": 1793018650,
-                          "as_of_utc": "2026-10-26T12:44:10Z",
-                          "as_of_local": "2026-10-26T08:44:10-04:00",
-                          "as_of_beijing": "2026-10-26T20:44:10+08:00",
+                          "timestamp": 1793020826,
+                          "as_of_utc": "2026-10-26T13:20:26Z",
+                          "as_of_local": "2026-10-26T09:20:26-04:00",
+                          "as_of_beijing": "2026-10-26T21:20:26+08:00",
                           "market_date_local": "2026-10-26",
                           "session": "PRE_MARKET"
                         },
@@ -9328,7 +7225,7 @@
                           "late_session_change_pct": -5.2013,
                           "sampling_note": "由Yahoo 5分钟现金盘bar重建日内路径；用于总结高低点、修复/回撤和分段走势，不直接生成A股交易动作。"
                         },
-                        "extended_change_vs_regular_close_pct": 1.6906,
+                        "extended_change_vs_regular_close_pct": 1.2288,
                         "decision_note": "NDX/SOX是正式现金盘指数，只在REGULAR承担直接指数实时语义；其盘前/盘后值仅作最近现金盘SESSION_REFERENCE。QQQ/SOXX用于PRE_MARKET/POST_MARKET前置信号，也可作为现金盘数据异常时的明确代理备份。扩展时段不得把ETF代理涨跌直接等同于NDX/SOX正式指数涨跌，也不得单独生成A股ETF动作。",
                         "object": "SOXX"
                       },
@@ -9342,7 +7239,7 @@
                         "market_phase_of_latest": "POST_MARKET",
                         "quality_status": "STALE",
                         "freshness_status": "STALE",
-                        "data_age_seconds": 233077,
+                        "data_age_seconds": 235367,
                         "current_market_phase": "PRE_MARKET",
                         "latest": {
                           "open": 28957.52734375,
@@ -9394,7 +7291,7 @@
                         "market_phase_of_latest": "POST_MARKET",
                         "quality_status": "STALE",
                         "freshness_status": "STALE",
-                        "data_age_seconds": 233078,
+                        "data_age_seconds": 235367,
                         "current_market_phase": "PRE_MARKET",
                         "latest": {
                           "open": 10779.4638671875,
@@ -9550,7 +7447,7 @@
                 },
                 "market_structure_context": {
                   "schema_version": "1.4",
-                  "generated_at": "2026-10-26T12:58:08Z",
+                  "generated_at": "2026-10-26T13:22:02Z",
                   "market_date": "2026-10-26",
                   "as_of_beijing": "2026-10-26T16:16:33+08:00",
                   "source_snapshot": "data/market/snapshots/2026-10-26_161633.json",
@@ -12137,79 +10034,8 @@
                 "decision_boundary": "A-share internal monitoring is not satisfied by fixed indices alone when qualified breadth/style/structure evidence already exists."
               },
               "layer_3_etf_opportunity_capital": {
-                "formal_discovery_status": "READY",
-                "discovery_candidates": [
-                  {
-                    "code": "159180",
-                    "name": "软件ETF银华",
-                    "eligibility": "OBSERVATION_FULL_EVALUATION",
-                    "formal_quote_status": "SESSION_REFERENCE_READY",
-                    "evidence": {}
-                  },
-                  {
-                    "code": "159355",
-                    "name": "800红利低波ETF华宝",
-                    "eligibility": "OBSERVATION_FULL_EVALUATION",
-                    "formal_quote_status": "SESSION_REFERENCE_READY",
-                    "evidence": {}
-                  },
-                  {
-                    "code": "159518",
-                    "name": "标普油气ETF嘉实",
-                    "eligibility": "OBSERVATION_FULL_EVALUATION",
-                    "formal_quote_status": "SESSION_REFERENCE_READY",
-                    "evidence": {}
-                  },
-                  {
-                    "code": "159828",
-                    "name": "医疗ETF国泰",
-                    "eligibility": "OBSERVATION_FULL_EVALUATION",
-                    "formal_quote_status": "SESSION_REFERENCE_READY",
-                    "evidence": {}
-                  },
-                  {
-                    "code": "159869",
-                    "name": "游戏ETF华夏",
-                    "eligibility": "OBSERVATION_FULL_EVALUATION",
-                    "formal_quote_status": "SESSION_REFERENCE_READY",
-                    "evidence": {}
-                  },
-                  {
-                    "code": "159883",
-                    "name": "医疗器械ETF永赢",
-                    "eligibility": "OBSERVATION_FULL_EVALUATION",
-                    "formal_quote_status": "SESSION_REFERENCE_READY",
-                    "evidence": {}
-                  },
-                  {
-                    "code": "159929",
-                    "name": "医药ETF汇添富",
-                    "eligibility": "OBSERVATION_FULL_EVALUATION",
-                    "formal_quote_status": "SESSION_REFERENCE_READY",
-                    "evidence": {}
-                  },
-                  {
-                    "code": "515080",
-                    "name": "中证红利ETF招商",
-                    "eligibility": "OBSERVATION_FULL_EVALUATION",
-                    "formal_quote_status": "READY",
-                    "evidence": {}
-                  },
-                  {
-                    "code": "520610",
-                    "name": "港股红利低波ETF银华",
-                    "eligibility": "OBSERVATION_FULL_EVALUATION",
-                    "formal_quote_status": "SESSION_REFERENCE_READY",
-                    "evidence": {}
-                  },
-                  {
-                    "code": "562060",
-                    "name": "标普A股红利ETF华宝",
-                    "eligibility": "OBSERVATION_FULL_EVALUATION",
-                    "formal_quote_status": "SESSION_REFERENCE_READY",
-                    "evidence": {}
-                  }
-                ],
+                "formal_discovery_status": "NOT_REQUESTED",
+                "discovery_candidates": [],
                 "actual_positions": [
                   {
                     "code": "159941",
@@ -12436,111 +10262,29 @@
         "projection_scope": "FORMAL_DECISION_REQUEST",
         "parent_request_source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
         "parent_request_entry_mode": "MANUAL_CONVERSATION",
-        "actor_action": "COMPLETE_BUSINESS_DECISION_NOW",
-        "user_output_allowed": true,
-        "business_decision_allowed": true,
-        "final_content_generation_allowed": true,
-        "consumer_status": "BUSINESS_DECISION_READY",
-        "required_problem_ids": [
-          "RISK_PERMISSION",
-          "MAIN_CANDIDATE",
-          "DEPLOYABLE_CASH",
-          "RELEASABLE_CAPITAL",
-          "TRIAL_CONFIRM_CAPACITY",
-          "CONCENTRATION_COMMON_RISK",
-          "NEXT_UNIT_CAPITAL_USE",
-          "HOLDING:159941",
-          "HELD_ETF_ADD:159941",
-          "HOLDING:159981",
-          "HELD_ETF_ADD:159981",
-          "HOLDING:159992",
-          "HELD_ETF_ADD:159992",
-          "HOLDING:159056",
-          "HELD_ETF_ADD:159056",
-          "HOLDING:127118",
-          "OBSERVATION:588000",
-          "OBSERVATION:159781",
-          "OBSERVATION:513180",
-          "OBSERVATION:159561",
-          "OBSERVATION:513520",
-          "OBSERVATION:518880",
-          "OBSERVATION:515880",
-          "OBSERVATION:159326",
-          "OBSERVATION:515220",
-          "OBSERVATION:513350",
-          "OBSERVATION:515080",
-          "DISCOVERY:159180",
-          "DISCOVERY:159355",
-          "DISCOVERY:159518",
-          "DISCOVERY:159828",
-          "DISCOVERY:159869",
-          "DISCOVERY:159883",
-          "DISCOVERY:159929",
-          "DISCOVERY:515080",
-          "DISCOVERY:520610",
-          "DISCOVERY:562060"
-        ],
-        "required_problem_count": 37,
-        "business_answer_contract": "DWP_COVERAGE_FOR_JUDGMENT",
-        "ready_handoff": {
-          "required": false,
-          "submission_type": "SCHEDULED_REVIEW_COMPLETION",
-          "source": "CHATGPT_SCHEDULED_REVIEW_ACTOR",
-          "parent_request_id": "conversation-formal-20261026T212023+0800-90d3c2b2",
-          "required_payload_fields": [
-            "request_id",
-            "parent_request_id",
-            "entry_mode",
-            "source",
-            "task_id",
-            "task_run_id",
-            "occurrence_id",
-            "market_date",
-            "decision_id",
-            "formal_review",
-            "presentation_binding.full_content",
-            "presentation_binding.content_hash"
-          ],
-          "binding_rules": {
-            "parent_request_id": "conversation-formal-20261026T212023+0800-90d3c2b2",
-            "allowed_sources": [
-              "CHATGPT_SCHEDULED_REVIEW_ACTOR"
-            ],
-            "forbid_historical_fallback": true,
-            "read_back_required": true,
-            "completion_must_be_written_and_read_back_before_user_reply": false
-          },
-          "business_decision_allowed": true,
-          "final_content_generation_allowed": true,
-          "user_reply_precondition": false,
-          "notification_attempt_precondition": true,
-          "provider_success_not_required_for_user_reply": true,
-          "user_reply_contract": {
-            "must_be_first_user_visible_message": true,
-            "must_contain_complete_final_content": true,
-            "status_only_reply_forbidden": true,
-            "handoff_status_cannot_replace_content": true,
-            "completion_must_reuse_exact_final_content": true
-          },
-          "post_reply_async": true,
-          "provider_success_async": true,
-          "must_read_back_before_reply": false,
-          "historical_fallback_forbidden": true
-        }
+        "actor_action": "CONTINUE_SAME_REQUEST_SILENTLY",
+        "user_output_allowed": false,
+        "business_decision_allowed": false,
+        "final_content_generation_allowed": false,
+        "consumer_status": "REQUEST_BOUND_FACTS_BUILDING",
+        "required_problem_ids": [],
+        "required_problem_count": 0,
+        "business_answer_contract": null,
+        "ready_handoff": null
       },
       "context_read_contract": {
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 1680012,
-          "sha256": "e95023373e65c732c9faafaa2f13d69a5227090a53a82614a24d826c8266adf9",
+          "byte_count": 1327805,
+          "sha256": "cb24b5f7fc6f9d73030ebaae3f7ecb8569a7a54fc95500207bf82d08af0c9321",
           "parsed_object": true
         },
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 528726,
-          "sha256": "171b522f469ddafb9245d015804cdbedbe639f04dc8ba3dbc127da5dade084a8",
+          "byte_count": 526629,
+          "sha256": "37343846041289b781de35b2797a31e80f30cc4ba1a95fbac75eca0aafede916",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -12558,7 +10302,7 @@
     "maintenance": {
       "status": "READY",
       "reason": "maintenance guard passed",
-      "checked_at": "2026-10-26T21:21:29+08:00"
+      "checked_at": "2026-10-26T21:38:24+08:00"
     }
   },
   "blockers": [],
@@ -12569,15 +10313,15 @@
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 1680012,
-      "sha256": "e95023373e65c732c9faafaa2f13d69a5227090a53a82614a24d826c8266adf9",
+      "byte_count": 1327805,
+      "sha256": "cb24b5f7fc6f9d73030ebaae3f7ecb8569a7a54fc95500207bf82d08af0c9321",
       "parsed_object": true
     },
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 528726,
-      "sha256": "171b522f469ddafb9245d015804cdbedbe639f04dc8ba3dbc127da5dade084a8",
+      "byte_count": 526629,
+      "sha256": "37343846041289b781de35b2797a31e80f30cc4ba1a95fbac75eca0aafede916",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"
