@@ -164,35 +164,9 @@ jobs:
             sleep 2
           done
 
-      - name: Create deterministic Formal Decision schedule ingress
-        if: ${{ github.event_name == 'schedule' }}
-        env:
-          SCHEDULED_CRON: ${{ github.event.schedule }}
-          TASK_ID: "ETF正式决策"
-          TASK_RUN_ID: scheduled-${{ github.run_id }}
-          OCCURRENCE_ID: scheduled_${{ github.run_id }}_${{ github.run_attempt }}
-        shell: bash
-        run: |
-          python scripts/create_scheduled_formal_request.py
-          if git diff --quiet -- requests/live_snapshot; then
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add requests/live_snapshot
-          git commit -m "chore: create scheduled formal decision ingress"
-          for attempt in 1 2 3; do
-            git fetch origin main
-            if git rebase origin/main && git push origin HEAD:main; then
-              break
-            fi
-            git rebase --abort || true
-            if [ "$attempt" = "3" ]; then
-              echo "bounded main publication retry exhausted" >&2
-              exit 1
-            fi
-            sleep 2
-          done
+      # Formal Decision consumes current main facts directly. This workflow remains
+      # responsible for market-data pulses only; it must not create a second
+      # request-bound Formal Decision fact-production chain.
       - name: Reject ambiguous recovery inputs
         if: ${{ github.event_name == 'workflow_dispatch' }}
         shell: bash
