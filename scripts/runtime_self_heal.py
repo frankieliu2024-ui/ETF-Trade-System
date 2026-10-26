@@ -518,3 +518,16 @@ def main() -> int:
 
     previous = previous_status()
     status = assess()
+    if args.repair_safe:
+        status = repair_safe(status)
+    if args.record_trigger:
+        status = record_trigger(status)
+    explicit_mutation = args.repair_safe or args.record_trigger
+    if explicit_mutation or semantic_status_changed(previous, status):
+        atomic_write_json(STATUS_PATH, status)
+    print(json.dumps(status, ensure_ascii=False))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
