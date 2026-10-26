@@ -7,7 +7,6 @@ INFLIGHT_STATUSES = {"BUILDING", "PENDING", "QUEUED", "RUNNING", "IN_PROGRESS", 
 READY_STATUSES = {"READY", "RESOLVED_DEGRADED"}
 TERMINAL_FAILURE_STATUSES = {"FAILED", "TERMINAL_FAILURE", "BLOCKED_TERMINAL"}
 BUSINESS_REPLY_OUTPUT = "COMPLETE_BUSINESS_DECISION_ONLY"
-HANDOFF_BEFORE_REPLY = "SCHEDULED_REVIEW_COMPLETION_EVENT_REPORT_NOTIFICATION_BOUNDED"
 ACTOR_CONTINUE = "CONTINUE_SAME_REQUEST_SILENTLY"
 ACTOR_DECIDE = "COMPLETE_BUSINESS_DECISION_NOW"
 ACTOR_TERMINATE = "TERMINATE_ON_EXPLICIT_FAILURE"
@@ -137,18 +136,14 @@ def classify_formal_request_consumer_state(
             "business_answer_contract": "DWP_COVERAGE_FOR_JUDGMENT",
             "actor_response_contract": response_contract,
             "control_plane_in_user_reply": False,
-            "reason": (
-                "SAME_REQUEST_FACTS_READY_COMPLETION_HANDOFF_BEFORE_REPLY_"
-                "COMPLETION_EVENT_REPORT_NOTIFICATION_READBACK"
-            ),
+            "reason": "SAME_REQUEST_FACTS_READY_PUBLISH_THEN_POST_HANDOFF",
             "canonical_persistence_status": (
                 "CONFIRMED" if canonical_persisted else "PENDING_ASYNC"
             ),
-             # This is the single bounded completion handoff contract, not a new
-            # state or producer. The Actor freezes FINAL_CONTENT, submits the
-            # existing shared completion ingress, and only then returns the exact
-            # frozen content. Downstream event,
-            # REPORT/notification/provider delivery remains asynchronous.
+            # This is the existing shared completion handoff contract, not a new
+            # state or producer. The Actor freezes and publishes FINAL_CONTENT;
+            # downstream completion, event, report, notification and provider
+            # delivery remain post-reply asynchronous work.
             "ready_handoff": {
                 "required": False,
                 "submission_type": "SCHEDULED_REVIEW_COMPLETION",
