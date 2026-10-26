@@ -1240,7 +1240,7 @@ def formal_content_event(source_path: Path) -> dict | None:
             "no_trade_authority": True,
             "content_hash": content_hash,
         }
-    if str(event.get("event_type") or "") != "FORMAL_DECISION":
+    if str(event.get("event_type") or "") not in {"FORMAL_DECISION", "FORMAL_DECISION_REPORT"}:
         return None
     binding = event.get("presentation_binding")
     if not isinstance(binding, dict):
