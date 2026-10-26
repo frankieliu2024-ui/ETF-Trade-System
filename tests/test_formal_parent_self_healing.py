@@ -134,6 +134,25 @@ class FormalParentSelfHealingTests(unittest.TestCase):
         context = workflow.index("python scripts/build_query_context.py --run-discovery", preserve)
         self.assertLess(normalize, context)
 
+    def test_normalizer_preserves_existing_requested_at_beijing_during_recovery(self):
+        policy = json.loads(Path("config/runtime_policy.json").read_text(encoding="utf-8"))
+        raw = {
+            "request_id": "p-fixed-time",
+            "request_type": "MARKET_QUOTE_REFRESH",
+            "source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+            "intent": "FORMAL_INTRADAY_ANALYSIS",
+            "query_intent": "FORMAL_INTRADAY_ANALYSIS",
+            "force_refresh": True,
+            "require_post_request_snapshot": True,
+            "requested_at_beijing": "2026-10-26T18:12:00+08:00",
+        }
+        from datetime import datetime
+        recovery_time = datetime.fromisoformat("2026-10-26T18:12:17+08:00")
+        normalized = runtime_session_gate.normalize_manual_request_session(raw, policy, now=recovery_time)
+        self.assertEqual(normalized["requested_at_beijing"], "2026-10-26T18:12:00+08:00")
+        self.assertEqual(normalized["interaction_requested_at_beijing"], "2026-10-26T18:12:00+08:00")
+        self.assertEqual(normalized["canonical_ingress_received_at_beijing"], "2026-10-26T18:12:17+08:00")
+
     def test_normalizer_recovers_missing_requested_at_beijing_at_existing_ingress_owner(self):
         policy = json.loads(Path("config/runtime_policy.json").read_text(encoding="utf-8"))
         raw = {
