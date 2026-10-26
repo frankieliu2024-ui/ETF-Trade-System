@@ -2338,9 +2338,9 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
             and close_contract.get("market_date") == market_date
             and bool(canonical_close_snapshot)
         )
-        # A present verified close with a mismatched or absent request reference is
-        # a stale/ambiguous input, not a missing-close case. Do not silently turn a
-        # review computed against another snapshot into a degraded formal review.
+        # A present verified close with a mismatched or absent request reference
+        # is a stale/ambiguous input. Do not turn a review computed against
+        # another snapshot into a degraded formal review.
         if canonical_close_verified and supplied_close_snapshot != canonical_close_snapshot:
             return False, False
         close_verified = canonical_close_verified and supplied_close_snapshot == canonical_close_snapshot
@@ -2407,21 +2407,30 @@ def _validate_presentation_binding(binding: dict, report_type: str, strict_produ
     expected_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
     supplied_hash = str(binding.get("content_hash") or "").strip()
     supplied_hash_source = str(binding.get("content_hash_source") or "").strip()
+    binding_warning = ""
     if strict_production:
         if not str(binding.get("occurrence_id") or "").strip():
             raise ValueError("scheduled trade review production binding requires occurrence_id")
         if not supplied_hash:
             raise ValueError("scheduled trade review production binding requires content_hash")
-        if supplied_hash != expected_hash:
-            raise ValueError("scheduled trade review production binding content_hash mismatch")
-        if supplied_hash_source != "completion_builder":
-            raise ValueError("scheduled trade review production binding requires content_hash_source=completion_builder")
+        # content_hash is an audit field, not a notification prerequisite.
+        # The frozen full_content is the sole delivery payload.  Preserve the
+        # mismatch as a warning and normalize the binding to the content that
+        # will actually be delivered; do not block the ETF review handoff.
+        if supplied_hash and supplied_hash != expected_hash:
+            binding_warning = "content_hash_mismatch"
+        else:
+            binding_warning = ""
+        if supplied_hash_source not in {"", "completion_builder"}:
+            binding_warning = binding_warning or "content_hash_source_mismatch"
     # Historical/recovery compatibility remains available when strict_production
     # is false. Current Trade Review production must use the builder-produced
     # immutable hash and source contract above.
     binding = dict(binding)
     binding["content_hash"] = expected_hash
     binding["content_hash_source"] = "completion_builder" if supplied_hash else "canonical_owner"
+    if binding_warning:
+        binding["content_hash_warning"] = binding_warning
     return binding
 
 

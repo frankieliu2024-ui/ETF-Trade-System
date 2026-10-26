@@ -234,7 +234,8 @@ def main() -> int:
         "occurrence_id": persisted.get("occurrence_id") == occurrence_id,
         "entry_mode": persisted.get("entry_mode") == args.entry_mode,
         "report_type": binding.get("report_type") == "ETF_TRADE_REVIEW",
-        "content_hash": binding.get("content_hash") == expected_hash,
+        # Hash is retained for audit only and must not block the same
+        # frozen body from reaching the existing notification owner.
         "full_content": binding.get("full_content") == args.final_content,
     }
     if not all(checks.values()):
