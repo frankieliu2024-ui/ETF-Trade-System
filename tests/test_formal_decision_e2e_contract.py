@@ -216,7 +216,7 @@ class FormalDecisionLessonsProtocolTests(unittest.TestCase):
         self.assertIn("不得扫描历史对象", text)
 
 class FormalReadyHandoffContractTests(unittest.TestCase):
-    def test_ready_gate_exposes_shared_completion_handoff_contract(self):
+    def test_ready_gate_exposes_publish_then_shared_completion_handoff_contract(self):
         root = Path(__file__).parents[1]
         text = (root / "scripts/formal_request_consumer.py").read_text(encoding="utf-8")
         self.assertIn('"submission_type": "SCHEDULED_REVIEW_COMPLETION"', text)
@@ -224,17 +224,17 @@ class FormalReadyHandoffContractTests(unittest.TestCase):
         self.assertIn('"notification_attempt_precondition": True', text)
         self.assertIn('"provider_success_not_required_for_user_reply": True', text)
         self.assertIn('"historical_fallback_forbidden": True', text)
-        self.assertIn('"post_reply_async": False', text)
-        self.assertIn('"provider_success_async": False', text)
-        self.assertIn('"must_read_back_before_reply": True', text)
-        self.assertIn('HANDOFF_BEFORE_REPLY = "SCHEDULED_REVIEW_COMPLETION_EVENT_REPORT_NOTIFICATION_BOUNDED"', text)
+        self.assertIn('"post_reply_async": True', text)
+        self.assertIn('"provider_success_async": True', text)
+        self.assertIn('"must_read_back_before_reply": False', text)
+        self.assertNotIn('HANDOFF_BEFORE_REPLY', text)
         self.assertNotIn("BDS_AUDIT_AND_PROVIDER_READBACK", text)
 
-    def test_protocol_completes_handoff_before_user_reply(self):
+    def test_protocol_publishes_before_post_reply_handoff(self):
         protocol = (Path(__file__).parents[1] / "docs/Formal Decision执行与用户回复协议.md").read_text(encoding="utf-8")
         self.assertIn("READY 后，必须先完成业务判断并冻结唯一", protocol)
-        self.assertIn("正文冻结只表示正文内容已经不可修改", protocol)
-        self.assertIn("先完成一次有界的后置交接尝试，再输出", protocol)
+        self.assertIn("先发布此前冻结的同一份完整正文，再继续后置交接", protocol)
+        self.assertIn("后置交接不得阻断正文发布", protocol)
         self.assertIn("SCHEDULED_REVIEW_COMPLETION", protocol)
         self.assertIn("后置交接", protocol)
 
