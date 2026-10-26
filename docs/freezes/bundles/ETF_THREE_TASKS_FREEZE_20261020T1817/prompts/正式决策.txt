@@ -1,16 +1,18 @@
 执行【ETF正式决策】。
 
-本任务只负责形成一次基于最新合法事实的ETF管理判断，不负责系统复核或交易复盘，不自动下单、不自动调仓、不改变交易权限。所有交易建议均由用户人工确认和执行。
+本任务只负责基于current main最近已经形成的合法固定时段事实，完成一次独立、完整、可追溯的ETF管理判断。不负责【ETF系统复核】或【ETF交易复盘】，不自动下单、不自动调仓、不改变交易权限。所有交易建议均由用户人工确认和执行。
 
-【事实来源】
+【事实来源与业务边界】
 
-GitHub仓库frankieliu2024-ui/ETF-Trade-System的current main是唯一正式事实来源。开始前读取ETF_SYSTEM_INDEX.md，并按INDEX读取正式决策所需的MASTER、正式决策协议、市场与账户事实、风险、持仓、成交、Discovery、观察ETF、机会ETF、通知和生产治理规范。
+GitHub仓库frankieliu2024-ui/ETF-Trade-System的current main是唯一正式事实来源。开始前读取ETF_SYSTEM_INDEX.md，并按INDEX读取MASTER、正式决策规范、市场与账户事实、风险、持仓、成交、Discovery、观察ETF、机会ETF、通知和生产治理规范。
 
-历史聊天、旧Prompt、旧请求、旧正文、旧completion、旧事件、旧报告和旧通知只能作为线索，不能覆盖本次current main事实，也不能恢复为本次运行事实。
+历史聊天、旧Prompt、旧请求、旧正文、旧completion、旧事件、旧报告和旧通知只能作为线索，不得覆盖current main，不得恢复为本次运行事实。
 
-【入口与唯一请求】
+本任务不为本次判断新建市场事实请求、MARKET_QUOTE_REFRESH、父请求、request-bound snapshot、formal_reply_gate、query_context或decision_context。目标事实已经由current main形成，本任务直接消费最近合法固定时段事实。
 
-根据真实入口确定身份：
+【入口与运行身份】
+
+根据真实入口确定：
 
 普通对话手动运行：
 source=CHATGPT_MANUAL_FORMAL_ANALYSIS
@@ -26,31 +28,76 @@ entry_mode=AUTOMATIC_SCHEDULED_TASK
 
 task_id固定为ETF正式决策，interaction_scenario固定为FORMAL_DECISION。
 
-本次运行必须建立一个全新的唯一请求，并使用同一组身份读取事实、生成正文、写入completion和交接通知。不得复用历史请求，不得创建第二请求、第二正文、第二completion、第二事件、第二报告或第二通知链。
+本次运行只建立并持续使用唯一运行身份：
 
-requested_at_beijing使用本次真实启动时间；task_run_id和occurrence_id优先使用平台本次提供的值，平台未提供时由本次请求唯一生成。不得因平台未提供这两个字段而停止。
+- task_id；
+- task_run_id；
+- occurrence_id；
+- market_date；
+- requested_at_beijing；
+- runtime_now；
+- source；
+- entry_mode；
+- interaction_scenario；
+- market_phase；
+- 判断路径；
+- 判断事实边界。
 
-【事实准入】
+requested_at_beijing使用本次真实运行启动时间；平台未提供task_run_id或occurrence_id时，根据本次运行身份生成，不得因此停止，也不得复用历史身份。
 
-只使用本次请求绑定的事实。事实仍在形成时，沿同一请求等待并回读，不创建第二请求、不使用旧事实补齐。
+【事实读取与新鲜度】
 
-必须核验：
+从current main读取最近已经形成的：
 
-- market_phase、market_date、runtime_now和事实时间；
-- 市场行情、账户、现金、成交、风险、生命周期和实际持仓；
-- Discovery、观察ETF、机会ETF和实际持仓的对象身份；
-- 数据质量、PIT边界和新鲜度；
-- 请求、gate和事实上下文是否属于同一请求。
+- 市场行情和市场监测；
+- 账户、现金、成交和实际持仓；
+- 风险与生命周期；
+- Discovery、观察ETF和机会ETF；
+- 与目标固定时段直接相关的海外、亚洲、商品、利率和汇率事实。
 
-盘中快照年龄不超过15分钟时正常判断；超过15分钟但不超过25分钟时可作降级判断；超过25分钟且无合法降级事实时不得形成正式判断。收盘后优先使用当前交易日15:00行情边界、质量和PIT验收通过的正式收盘快照，不能因采集时间距运行时间超过15分钟而自动降级。
+必须核验market_phase、market_date、runtime_now、market_data_at、provider_timestamp、captured_at_beijing、数据质量和PIT边界。
 
-Discovery、观察ETF、机会ETF和实际持仓必须分开核验。缺失对象层时可以形成受限判断，但不得把缺失写成0，不得把Discovery写成观察ETF或机会ETF，不得声称未完成的全市场资本比较已经完成。
+盘中快照：
 
-只有核心市场、账户、风险和实际持仓事实不足以支持判断时，才停止并说明事实阻断。通知、报告、事件或completion后置失败不改变业务判断路径。
+- 年龄不超过15分钟：正常正式判断；
+- 超过15分钟但不超过25分钟：降级正式判断；
+- 超过25分钟且没有合法降级事实：不得形成正式判断。
+
+收盘后优先使用当前交易日15:00行情边界、质量和PIT验收通过的正式收盘快照。正式收盘快照的采集时间距运行时间超过15分钟，不自动导致降级。
+
+目标事实已经形成时，不得等待下一行情时段，不得创建刷新请求，不得重复派发等价刷新，不得使用旧事实补齐。
+
+【对象层级与判断准入】
+
+必须分别核验全市场Discovery、观察ETF、机会ETF和全部实际持仓。Discovery候选不得直接升级为观察ETF、机会ETF、Trial或Confirm。
+
+事实缺口时：
+
+- Discovery、观察ETF或机会ETF缺失，可以形成受限判断，但必须披露缺失及影响；
+- 机会ETF正式确认为0时，明确写出数量和形成原因；
+- 账户、成交、风险或实际持仓核心事实不足时，不得授予Trial、Confirm或资金动作结论；
+- 当前快照、账户/风险核心事实和合法Discovery均不可用时，不得形成正式判断。
+
+【正式判断内容】
+
+必须说明：
+
+- 当前市场和风险状态；
+- 账户总资产、现金、可部署现金、证券市值；
+- 成交、委托、资金和实际持仓；
+- 风险许可和生命周期；
+- Discovery、观察ETF、机会ETF；
+- 每只实际持仓继续持有、追加、减持或退出的比较；
+- Trial和Confirm资格；
+- 现金、持仓、机会ETF、可释放资本和新增部署之间的资本竞争；
+- 建议动作、实际新增部署、实际释放和实际执行结果；
+- 下一节点验证条件、信息不足、判断限制、置信度和最可能出错的地方。
+
+如无交易条件，明确写出：新增部署为0元，实际释放为0份，现金和持仓结构维持不变。
 
 【正文要求】
 
-达到正常或合法降级准入后，形成唯一完整正文并立即发布。正文必须明确区分事实、推断、建议和实际执行结果，并逐只分析Discovery、观察ETF、机会ETF和全部实际持仓。
+达到正常或合法降级准入后，形成并冻结唯一完整FINAL_CONTENT。正文必须立即发布，且发布内容必须与后续completion中的full_content完全一致。
 
 首行为：
 
@@ -59,8 +106,6 @@ Discovery、观察ETF、机会ETF和实际持仓必须分开核验。缺失对�
 或：
 
 【ETF正式决策】YYYY-MM-DD HH:MM 降级正式判断
-
-时间使用本次实际北京时间。
 
 固定章节必须全部出现：
 
@@ -98,30 +143,25 @@ Discovery、观察ETF、机会ETF和实际持仓必须分开核验。缺失对�
 
 【后置交接状态】
 
-正文必须说明现金、可释放资本、资本竞争、Trial、Confirm、新增部署、实际释放和实际执行结果。没有交易条件时明确写出新增部署为0元、实际释放为0份、现金和持仓结构维持不变。
+正文逐只分析Discovery、观察ETF、机会ETF和全部实际持仓，严格区分事实、推断、资格、建议动作和实际执行结果。证券首次出现使用“名称（六位代码）”格式，同一对象全文保持一致。
 
-正文不得泄露request_id、task_run_id、occurrence_id、文件路径、workflow、job、completion、event、REPORT、notification、GitHub提交SHA或其他内部技术字段。
+正文不得泄露request_id、task_run_id、occurrence_id、文件路径、workflow、job、completion、event、REPORT、notification、GitHub提交SHA或技术日志。
+
+所有建议必须明确：本次仅形成管理建议，不自动下单、不自动调仓、不改变交易权限，所有证券交易由用户人工确认和执行。
 
 【同一运行交接】
 
-正文形成后，必须在同一运行中继续：
+正文冻结并发布后，继续使用同一运行身份、同一FINAL_CONTENT和同一content_hash：
 
-FINAL_CONTENT冻结
-→ 立即发布同一份完整正文
-→ 写入唯一completion并从current main回读
-→ 优先等待current main既有completion push通知链
-→ 回读canonical event、REPORT、notification记录和服务商投递状态。
+FINAL_CONTENT
+→ 写入并回读唯一SCHEDULED_REVIEW_COMPLETION
+→ 优先等待既有completion push通知链
+→ 回读Formal event、REPORT、notification记录和服务商投递结果。
 
-completion写入或回读不等于通知完成；服务商投递成功不等于用户已收到。
+completion写入或回读不等于通知完成；workflow提交或运行结束不等于通知完成；服务商投递成功不等于用户已经收到。
 
-只有completion push在有界等待窗口内没有形成或明确失败时，才允许使用同一completion路径提交一次显式通知灾备。灾备不得重新生成正文、重新写入completion或创建第二通知链。
+只有completion push在有界窗口内未形成或明确失败时，才允许使用同一completion路径提交一次显式灾备。灾备不得重新生成正文、重新写入completion或创建第二通知链。
 
-content_hash仅作为正文一致性的审计字段，不得单独作为业务准入或通知阻断条件。真正需要确认的是completion中的正文与本次发布正文一致。
+后置交接失败不得重新分析、重新生成正文、重新冻结正文或改写业务判断。最终状态必须分别说明正文、completion、event、REPORT、notification、服务商投递和用户收到状态。
 
-后置交接失败不得重新分析、重新生成正文、重新冻结正文，也不得把技术失败改写为业务判断。最终输出必须分别说明正文是否形成和发布、completion是否写入并回读、completion push是否形成、通知灾备是否启动、事件/报告/通知记录是否形成、服务商投递结果和用户收到状态。
-
-【执行边界】
-
-本任务只形成管理建议，不自动下单、不自动调仓、不改变交易权限。不得修改MASTER、provider优先级、正式监测范围或其他任务链。
-
-置信度和最可能出错的地方必须放在正文末尾。
+本任务不得修改MASTER、provider优先级、正式监测范围或其他任务链。
