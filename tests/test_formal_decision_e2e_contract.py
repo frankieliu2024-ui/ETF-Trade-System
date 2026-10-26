@@ -186,11 +186,10 @@ class FormalDecisionLessonsProtocolTests(unittest.TestCase):
         self.assertIn("不得创建第二请求、第二正文、第二完成记录", text)
         index_text = (root / "ETF_SYSTEM_INDEX.md").read_text(encoding="utf-8")
         self.assertIn("request_type=SCHEDULED_REVIEW_COMPLETION", index_text)
-        self.assertIn("source=CHATGPT_SCHEDULED_REVIEW_ACTOR", index_text)
+        notification_text = (root / ".github/workflows/decision-notification.yml").read_text(encoding="utf-8")
+        self.assertIn("scheduled_review_completion_path", notification_text)
         self.assertNotIn("Formal Decision 的合法后置交接只能使用 `CHATGPT_FORMAL_DECISION_COMPLETION`", index_text)
         self.assertNotIn("FORMAL_DECISION_COMPLETION` completion ingress", index_text)
-        self.assertIn("正式决策不创建或依赖 BDS", index_text)
-        self.assertIn("统一 Scheduled Review completion owner", index_text)
         self.assertIn("回读", index_text)
 
     def test_protocol_keeps_health_out_of_business_pr_gate(self):

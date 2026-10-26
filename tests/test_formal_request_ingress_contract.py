@@ -1,14 +1,13 @@
 from pathlib import Path
 
 
-def test_formal_request_ingress_has_one_canonical_path():
+def test_formal_decision_does_not_create_market_fact_ingress():
     root = Path(__file__).resolve().parents[1]
     workflow = (root / ".github" / "workflows" / "market-snapshot.yml").read_text(encoding="utf-8")
-    actor = (root / "scripts" / "create_scheduled_formal_request.py").read_text(encoding="utf-8")
-    assert '"data/requests/**"' in workflow
-    assert "Canonicalize legacy formal request ingress" in workflow
-    assert 'REQUEST_DIR = ROOT / "requests" / "live_snapshot"' in actor
-    assert "formal_context_recovery_request" in actor
+    assert "Create deterministic Formal Decision schedule ingress" not in workflow
+    assert "create_scheduled_formal_request.py" not in workflow
+    assert "Formal Decision consumes current main facts directly" in workflow
+
 
 def test_auxiliary_query_cannot_replace_canonical_context_on_empty_read():
     root = Path(__file__).resolve().parents[1]

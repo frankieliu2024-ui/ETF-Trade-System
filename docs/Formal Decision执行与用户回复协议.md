@@ -7,7 +7,7 @@
 
 ## 一、唯一目标与边界
 
-每次运行必须基于本次唯一请求绑定的最新正式事实，形成一份完整、可审计且对象级覆盖的正式 ETF 管理判断。
+每次运行必须基于current main已经形成的最近合法固定时段最新正式事实，形成一份完整、可审计且对象级覆盖的正式 ETF 管理判断。
 
 判断至少覆盖：
 
@@ -25,7 +25,7 @@
 
 不得消费、改写或替代【ETF系统复核】和【ETF交易复盘】的业务对象。
 
-## 二、入口和唯一请求
+## 二、入口和唯一运行身份
 
 入口必须依据真实触发方式识别：
 
@@ -37,70 +37,60 @@
 
 task_id固定为“ETF正式决策”，interaction_scenario固定为“FORMAL_DECISION”。
 
-手动入口必须为本次运行建立全新的唯一父请求；自动入口必须消费 current main 已为本次自动节点建立的唯一请求，不得自行创建第二请求。
-
-父请求必须绑定：
+本次运行只建立唯一运行身份：
 
 - task_id、task_run_id、occurrence_id；
-- parent_request_id、request_id；
 - market_date、requested_at_beijing、runtime_now；
-- source、entry_mode；
-- request_type=MARKET_QUOTE_REFRESH；
-- intent.query_intent=FORMAL_INTRADAY_ANALYSIS；
-- force_refresh=true；
-- require_post_request_snapshot=true；
-- reuse_inflight_refresh=true；
-- duplicate_equivalent_refresh_forbidden=true。
+- source、entry_mode、interaction_scenario；
+- market_phase、判断路径和判断事实边界。
 
-请求写入后必须回读同一路径并核对全部身份字段。请求建立不等于事实生成、正文完成、事件形成或通知完成。
+Formal Decision不为本次判断新建市场事实请求、MARKET_QUOTE_REFRESH、父请求、request-bound snapshot、formal_reply_gate、query_context或decision_context。正式判断直接消费current main已经形成的最近合法固定时段事实。
 
-请求回读后，手动入口必须立即提交 current main 登记的 `market-snapshot.yml`，并传入本次请求文件作为 `formal_context_recovery_request`；自动入口必须回读现有自动入口已提交的同一请求。必须确认工作流实际创建、消费本次请求并生成对应事实；提交失败、未消费或缺少回读证据时，入口失败，不得把“请求已写入”当作事实生产已启动。
+不得使用历史正文、旧请求、旧门禁或旧上下文替代current main最新合法事实。completion中的request_id仅作为本次运行和交接身份，不得被解释为新的市场事实请求。
 
-## 三、同一请求的事实生产与等待
+## 三、事实读取与新鲜度
 
-所有市场、账户、成交、风险、生命周期、Discovery、观察 ETF、机会 ETF和实际持仓事实，必须绑定同一父请求和同一 request-bound 快照。
+必须从current main读取本次运行时已经形成的最近合法事实：
 
-必须读取同一请求对应的：
+- 市场行情和市场监测；
+- 账户、现金、成交和实际持仓；
+- 风险与生命周期；
+- Discovery、观察ETF和机会ETF；
+- 与目标固定时段直接相关的海外、亚洲、商品、利率和汇率事实。
 
-- formal_reply_gate；
-- query_context；
-- decision_context；
-- decision_work_package；
-- problem_graph；
-- request-bound 市场快照；
-- 账户与成交事实；
-- 市场快照生产状态。
+必须核验：
 
-不得调用无请求参数的“最新请求”或共享目录选择器，不得切换历史请求。
+- market_phase、market_date和runtime_now；
+- market_data_at、provider_timestamp和captured_at_beijing；
+- 数据质量和PIT边界；
+- 快照是否为当前交易日正式收盘快照；
+- Discovery、观察ETF、机会ETF和实际持仓是否分别形成；
+- 事实是否属于最近合法固定时段。
 
-事实正在生成、门禁仍在排队/运行/构建、上下文未发布或身份未匹配时，必须沿同一请求轮询。每次间隔约15秒，最长等待6分钟；每次必须重新回读同一请求的生产状态、门禁、上下文和事实。
+盘中路径：
 
-等待期间不得输出终止性业务结论。只有同一请求达到合法准入、明确终止失败、current main明确不存在继续路径，或达到有界等待上限，才可结束等待。
+- 快照年龄不超过15分钟：正式判断；
+- 快照年龄超过15分钟但不超过25分钟：降级判断；
+- 超过25分钟：超时判断。超时只影响事实新鲜度、披露和置信度，不阻断任务、正文、completion或通知链。
 
-达到上限时必须记录本次请求身份、最后回读时间、最后状态、阻断层级、是否仍有同一请求继续运行证据、是否进入事实生产链，以及是否仍存在旧门禁。不得使用旧事实补齐本次请求。
+收盘后路径优先使用当前交易日15:00行情边界、质量和PIT验收通过的正式收盘快照；收盘快照的采集时间距运行时间超过15分钟，不自动导致降级。
 
-## 四、正式判断准入
+目标事实已经形成时，不得等待下一行情时段，不得新建刷新请求，不得重复派发等价刷新，不得使用旧事实补齐。
 
-只有以下条件全部满足，才允许生成正式判断：
+## 四、判断准入
 
-1. 入口和运行身份正确；
-2. 本次请求与 market_date 一致；
-3. 本次请求已进入 current main 事实生产链；
-4. 门禁允许正式判断；
-5. 门禁全部身份字段与本次请求一致；
-6. query_context 和 decision_context 绑定本次请求；
-7. query_context 中 request_id、source、entry_mode、requested_at_beijing 和 market_date 均非空且正确；
-8. request-bound 市场、账户和成交事实可读；
-9. decision_work_package 和 problem_graph 属于本次请求；
-10. 数据时点、PIT和新鲜度符合要求。
+以下条件满足即可形成对应判断路径；快照年龄不作为任务阻断条件：
 
-门禁已绑定但事实包身份缺失时，必须记录“门禁已绑定但事实包未绑定”，不得进入正式判断。
-
-READY只表示可以开始业务判断，不表示正文、完成记录、事件、报告、通知或用户收到已经完成。
+1. 真实入口和运行身份已确定；
+2. current main中市场、账户、成交、风险和实际持仓核心事实可读；
+3. 快照路径已明确：正式判断、降级判断、超时判断或合格正式收盘判断；
+4. Discovery、观察ETF、机会ETF和实际持仓已形成、正式确认为0或明确披露缺失；
+5. 事实足以支持资本竞争和管理动作判断；
+6. 不存在使用历史事实、旧请求或旧上下文补齐的情况。
 
 ## 五、唯一 FINAL_CONTENT
 
-准入后必须立即锁定本次 request-bound 事实，生成并冻结唯一 FINAL_CONTENT，不得停在“已达到准入状态”。READY 后，必须先完成业务判断并冻结唯一 FINAL_CONTENT，先发布此前冻结的同一份完整正文，再继续后置交接。后置交接不得阻断正文发布，也不得因 completion、事件、报告、通知或服务商结果暂时不可回读而重新生成正文。
+准入后必须立即锁定本次读取到的current main固定时段事实，生成并冻结唯一 FINAL_CONTENT，不得停在“已达到准入状态”。READY 后，必须先完成业务判断并冻结唯一 FINAL_CONTENT，先发布此前冻结的同一份完整正文，再继续后置交接。后置交接不得阻断正文发布，也不得因 completion、事件、报告、通知或服务商结果暂时不可回读而重新生成正文。
 
 正文首行必须严格为：
 
@@ -125,10 +115,11 @@ READY只表示可以开始业务判断，不表示正文、完成记录、事件
 
 ## 六、唯一生产交接链
 
-FINAL_CONTENT冻结后，必须调用 current main 登记的 ETF 正式决策 Actor，并继续沿同一请求、同一事实快照和同一冻结正文交接：
+FINAL_CONTENT冻结后，必须调用 current main 登记的 ETF 正式决策 Actor，并继续沿同一运行身份、同一事实快照和同一冻结正文交接：
 
-唯一父请求
-→ request-bound事实
+唯一运行身份
+→ current main最近合法固定时段事实
+→ 新鲜度判断
 → 合法准入
 → 唯一 FINAL_CONTENT
 → ETF正式决策 Actor
@@ -143,10 +134,10 @@ FINAL_CONTENT冻结后，必须调用 current main 登记的 ETF 正式决策 Ac
 
 Actor不得创建第二请求、第二正文、第二完成记录、第二事件、第二报告或第二通知链；不得直接手写事件、报告、通知或调用服务商。
 
-完成记录必须由统一生产者生成并回读；生产入口接收并校验本次唯一 Formal Decision completion，且该记录必须属于当前父请求。至少核对：
+完成记录必须由统一生产者生成并回读；生产入口接收并校验本次唯一 Formal Decision completion，且该记录必须属于当前运行身份。至少核对：
 
 - task_id、task_run_id、occurrence_id、request_id；
-- parent_request_id、source、entry_mode、market_date；
+- source、entry_mode、market_date；
 - interaction_scenario、report_type=ETF_FORMAL_DECISION；
 - 统一完成记录的请求类型固定为 `SCHEDULED_REVIEW_COMPLETION`；
 - 完整 FINAL_CONTENT 和 content_hash。
@@ -157,7 +148,7 @@ Actor不得创建第二请求、第二正文、第二完成记录、第二事件
 
 完成记录成功写入并回读后，必须沿 current main 既有正式决策生产路径继续处理。
 
-每层必须绑定本次父请求、occurrence_id、decision_id、正文和正文指纹，并分别回读。正式事件按本次 occurrence_id 写入 `events/reviews/formal_<occurrence_id>.json`，再回读：
+每层必须绑定本次运行身份、occurrence_id、decision_id、正文和正文指纹，并分别回读。正式事件按本次 occurrence_id 写入 `events/reviews/formal_<occurrence_id>.json`，再回读：
 
 - 完成记录；
 - 正式事件；
@@ -181,7 +172,7 @@ workflow成功不等于上述任何后续状态成功；服务商成功不等于
 
 ## 八、失败、恢复和最终回复
 
-任一层失败，必须沿同一请求、同一冻结 FINAL_CONTENT 和同一已形成的完成记录继续恢复，不得重新分析或创建第二链。
+任一层失败，必须沿同一运行身份、同一冻结 FINAL_CONTENT 和同一已形成的完成记录继续恢复，不得重新分析或创建第二链。
 
 如果事实未达到合法准入且达到合法终止条件，只能说明本次未形成正式判断，并说明最后完成层级和事实阻断。
 
@@ -190,7 +181,7 @@ workflow成功不等于上述任何后续状态成功；服务商成功不等于
 - 已完成层级；
 - 未完成层级；
 - 失败原因是否确认；
-- 是否需要沿同一请求继续恢复；
+- 是否需要沿同一运行身份继续恢复；
 - 用户收到状态。
 
 不得把技术失败改写成业务结论，不得把完成记录、事件、报告、服务商成功或用户收到混写为同一状态。

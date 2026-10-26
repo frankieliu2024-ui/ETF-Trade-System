@@ -274,7 +274,7 @@ def validate_formal_decision_presentation_timestamp(final_content: str, requeste
     expected_prefix = f"【ETF正式决策】{request_minute} "
     if not first_line.startswith(expected_prefix):
         raise ValueError("formal decision presentation title does not match current request timestamp")
-    if not first_line.endswith(("正式判断", "降级正式判断")):
+    if not first_line.endswith(("正式判断", "降级判断", "超时判断")):
         raise ValueError("formal decision presentation title has invalid decision path")
 
 
