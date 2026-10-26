@@ -126,7 +126,7 @@ jobs:
           payload = json.load(open(sys.argv[1], encoding="utf-8"))
           binding = payload.get("presentation_binding") or {}
           report_type = str(payload.get("report_type") or binding.get("report_type") or "").strip().upper()
-          formal = (str(payload.get("formal_fact_type") or "").strip().upper() == "FORMAL_POST_CLOSE_REVIEW" and report_type == "ETF_FORMAL_DECISION" and str(payload.get("task_id") or "").strip() == "ETF正式决策")
+          formal = (report_type == "ETF_FORMAL_DECISION" and str(payload.get("task_id") or "").strip() == "ETF正式决策")
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
               out.write("formal=%s\n" % ("true" if formal else "false"))
               out.write("scheduled=%s\n" % ("false" if formal else "true"))
@@ -165,9 +165,7 @@ jobs:
               payload.get("report_type") or binding.get("report_type") or ""
           ).strip().upper()
           if (
-              str(payload.get("formal_fact_type") or "").strip().upper()
-              == "FORMAL_POST_CLOSE_REVIEW"
-              and report_type == "ETF_FORMAL_DECISION"
+              report_type == "ETF_FORMAL_DECISION"
               and str(payload.get("task_id") or "").strip() == "ETF正式决策"
           ):
               print("FORMAL")
@@ -442,8 +440,11 @@ jobs:
           with open(sys.argv[1], encoding="utf-8") as handle:
               payload = json.load(handle)
           raise SystemExit(
-              0 if str(payload.get("formal_fact_type") or "").strip().upper()
-              == "FORMAL_POST_CLOSE_REVIEW" else 1
+              0 if (
+              str(payload.get("report_type") or (payload.get("presentation_binding") or {}).get("report_type") or "").strip().upper()
+              == "ETF_FORMAL_DECISION"
+              and str(payload.get("task_id") or "").strip() == "ETF正式决策"
+          ) else 1
           )
           PY
           then
