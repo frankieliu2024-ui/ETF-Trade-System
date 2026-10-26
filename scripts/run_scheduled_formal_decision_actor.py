@@ -211,9 +211,8 @@ def _dispatch_notification(completion_path: str) -> dict[str, object]:
 
     payload = json.dumps({
         "ref": "main",
-        # Use the same canonical input as System Review and Trade Review.
-        # Keep formal_completion_path as a compatibility alias in the workflow,
-        # but make the shared Scheduled Review path the primary binding.
+        # Formal Decision uses the same Scheduled Review completion owner and input as Trade Review;
+        # the completion payload remains the sole business-type discriminator.
         "inputs": {"scheduled_review_completion_path": completion_path},
     }).encode("utf-8")
     base = f"https://api.github.com/repos/{owner}/{repo}"
