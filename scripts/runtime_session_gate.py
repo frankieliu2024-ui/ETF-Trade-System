@@ -88,15 +88,18 @@ def normalize_manual_request_session(request: dict, policy: dict, *, now: dateti
         or normalized.get("request_time_beijing")
         or normalized.get("requested_at_utc")
     )
-    # The caller timestamp is provenance, not the canonical ingress clock.
-    # Different hosts and transport latency can legitimately put it slightly
-    # ahead of this runner.  Canonical receipt time owns routing/PIT anchoring;
-    # preserve the supplied interaction time separately for audit.
-    if requested is not None:
-        normalized["interaction_requested_at_beijing"] = requested.isoformat(timespec="seconds")
+    # requested_at_beijing is the immutable identity timestamp of an
+    # existing Formal Decision request. Context recovery must not rewrite it
+    # with the later recovery/receipt time, otherwise request, gate and
+    # query_context no longer refer to the same run. Keep the receipt time
+    # separately for audit and use the preserved request time for routing.
     normalized["canonical_ingress_received_at_beijing"] = current.isoformat(timespec="seconds")
-    requested = current
-    normalized["requested_at_beijing"] = requested.isoformat(timespec="seconds")
+    if requested is None:
+        requested = current
+        normalized["requested_at_beijing"] = requested.isoformat(timespec="seconds")
+    else:
+        normalized["requested_at_beijing"] = requested.isoformat(timespec="seconds")
+        normalized["interaction_requested_at_beijing"] = requested.isoformat(timespec="seconds")
     derived = interaction_scenario_for_time(policy, requested)
     supplied = str(normalized.get("interaction_scenario") or normalized.get("scenario") or "").strip().upper()
     if supplied and supplied != derived:
