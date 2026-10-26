@@ -650,7 +650,7 @@ def _formal_decision_events() -> list[dict]:
     rows: list[dict] = []
     for path in directory.glob("*.json") if directory.exists() else []:
         event = read_json(path, {})
-        if str(event.get("event_type") or "") != "FORMAL_DECISION":
+        if str(event.get("event_type") or "") not in {"FORMAL_DECISION", "FORMAL_DECISION_REPORT"}:
             continue
         decision = event.get("formal_decision") or {}
         event = dict(event)
