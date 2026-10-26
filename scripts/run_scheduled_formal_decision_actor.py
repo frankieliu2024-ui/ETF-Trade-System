@@ -34,66 +34,6 @@ except ModuleNotFoundError:
     from scripts.scheduled_review_completion_recovery import persist_completion_with_recovery
 
 
-def _persist_completion_to_main(target: Path) -> tuple[str, dict[str, object]]:
-    """Persist the single completion through GitHub Contents and read it back from main."""
-    token = (os.environ.get("GITHUB_TOKEN", "").strip()
-             or os.environ.get("GH_TOKEN", "").strip())
-    repository = (os.environ.get("GITHUB_REPOSITORY", "").strip()
-                  or "frankieliu2024-ui/ETF-Trade-System")
-    if not token:
-        raise RuntimeError("formal decision completion requires GITHUB_TOKEN or GH_TOKEN for current-main write")
-    owner, separator, repo = repository.partition("/")
-    if not separator or not owner or not repo:
-        raise RuntimeError("invalid GITHUB_REPOSITORY")
-    relative_path = str(target.relative_to(ROOT)).replace("\\\\", "/")
-    content = target.read_bytes()
-    base = f"https://api.github.com/repos/{owner}/{repo}/contents/{relative_path}"
-    headers = {
-        "Accept": "application/vnd.github+json",
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
-    existing_sha = ""
-    try:
-        req = urllib_request.Request(base + "?ref=main", method="GET", headers=headers)
-        with urllib_request.urlopen(req, timeout=30) as response:
-            existing = json.loads(response.read().decode("utf-8"))
-        existing_sha = str(existing.get("sha") or "")
-        if existing_sha:
-            existing_content = str(existing.get("content") or "").replace("\\n", "")
-            import base64
-            if base64.b64decode(existing_content) != content:
-                raise RuntimeError("completion path already contains a different current-main payload")
-            return relative_path, {"written": False, "already_present": True, "sha": existing_sha, "read_back": True}
-    except Exception as exc:
-        if isinstance(exc, RuntimeError):
-            raise
-        if getattr(exc, "code", None) != 404:
-            raise RuntimeError(f"current-main completion read failed: {exc}") from exc
-    import base64
-    payload = {"message": "Persist Formal Decision Scheduled Review completion", "content": base64.b64encode(content).decode("ascii"), "branch": "main"}
-    if existing_sha:
-        payload["sha"] = existing_sha
-    req = urllib_request.Request(base, data=json.dumps(payload).encode("utf-8"), method="PUT", headers=headers)
-    try:
-        with urllib_request.urlopen(req, timeout=30) as response:
-            result = json.loads(response.read().decode("utf-8"))
-    except Exception as exc:
-        raise RuntimeError(f"current-main completion write failed: {exc}") from exc
-    commit_sha = str((result.get("commit") or {}).get("sha") or "")
-    if not commit_sha:
-        raise RuntimeError("current-main completion write returned no commit SHA")
-    req = urllib_request.Request(base + "?ref=main", method="GET", headers=headers)
-    with urllib_request.urlopen(req, timeout=30) as response:
-        read_back = json.loads(response.read().decode("utf-8"))
-    import base64
-    remote_content = base64.b64decode(str(read_back.get("content") or "").replace("\\n", ""))
-    if remote_content != content:
-        raise RuntimeError("current-main completion readback content mismatch")
-    return relative_path, {"written": True, "commit_sha": commit_sha, "blob_sha": read_back.get("sha"), "read_back": True}
-
-
 def _dispatch_notification(completion_path: str) -> dict[str, object]:
     """Dispatch notification and read back the matching workflow run."""
     token = (os.environ.get("GITHUB_TOKEN", "").strip()
@@ -126,8 +66,46 @@ def _dispatch_notification(completion_path: str) -> dict[str, object]:
         "X-GitHub-Api-Version": "2022-11-28",
     }
     dispatched_at = datetime.now(timezone.utc)
+    expected_run_name = f"ETF decision notification — {completion_path}"
+
+    def matching_run() -> dict[str, object] | None:
+        req = urllib_request.Request(runs_endpoint, method="GET", headers=headers)
+        with urllib_request.urlopen(req, timeout=30) as response:
+            data = json.loads(response.read().decode("utf-8"))
+        candidates = []
+        for run in data.get("workflow_runs", []):
+            created_at = str(run.get("created_at") or "")
+            if not created_at:
+                continue
+            created = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+            if (
+                str(run.get("name") or "") == expected_run_name
+                and str(run.get("event") or "") == "workflow_dispatch"
+                and str(run.get("head_branch") or "") == "main"
+            ):
+                candidates.append((created, run))
+        if not candidates:
+            return None
+        candidates.sort(key=lambda item: item[0])
+        return candidates[-1][1]
+
+    def result_for(run: dict[str, object], *, read_back: bool) -> dict[str, object]:
+        return {
+            "submitted": True,
+            "run_id": run.get("id"),
+            "run_url": run.get("html_url"),
+            "run_status": run.get("status"),
+            "run_conclusion": run.get("conclusion"),
+            "completion_path": completion_path,
+            "read_back": read_back,
+            "workflow_input_readback": "VERIFIED_BY_RUN_NAME_BINDING",
+            "reused_existing_run": read_back,
+        }
 
     try:
+        existing = matching_run()
+        if existing:
+            return result_for(existing, read_back=True)
         req = urllib_request.Request(
             dispatch_endpoint, data=payload, method="POST", headers=headers
         )
@@ -152,7 +130,6 @@ def _dispatch_notification(completion_path: str) -> dict[str, object]:
                 if not created_at:
                     continue
                 created = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
-                expected_run_name = f"ETF decision notification — {completion_path}"
                 if (
                     created >= dispatched_at
                     and str(run.get("event") or "") == "workflow_dispatch"
