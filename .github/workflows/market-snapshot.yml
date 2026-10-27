@@ -424,6 +424,7 @@ jobs:
           NATURAL_PULSE_IDENTITY: ${{ steps.session_gate.outputs.natural_pulse_identity }}
           NATURAL_PULSE_IDENTITY_STATUS: ${{ steps.session_gate.outputs.natural_pulse_identity_status }}
           NATURAL_PULSE_ELIGIBLE: ${{ steps.session_gate.outputs.natural_pulse_eligible }}
+          ETF_HEALTH_PATH: ${{ github.event_name == 'push' && 'data/state/query_refresh_health.json' || 'data/state/runtime_health.json' }}
         shell: bash
         run: |
           python - <<'PY'
@@ -432,7 +433,7 @@ jobs:
           from pathlib import Path
           shanghai = timezone(timedelta(hours=8), name='Asia/Shanghai')
           now = datetime.now(shanghai).isoformat(timespec='seconds')
-          health_path = Path('data/state/runtime_health.json')
+          health_path = Path(os.environ.get('ETF_HEALTH_PATH', 'data/state/runtime_health.json'))
           current_path = Path('data/state/CURRENT.json')
           health = json.loads(health_path.read_text(encoding='utf-8')) if health_path.exists() else {}
           current = json.loads(current_path.read_text(encoding='utf-8')) if current_path.exists() else {}
@@ -512,6 +513,8 @@ jobs:
           SCHEDULED_CLOSE_INTENT: ${{ steps.session_gate.outputs.close_intent }}
           REQUEST_TIME_CLOSE_RECOVERY: ${{ steps.session_gate.outputs.request_time_close_recovery }}
           WAIT_FOR_CLOSE_BOUNDARY_SECONDS: ${{ steps.session_gate.outputs.wait_for_close_boundary_seconds }}
+          # Query-time refresh has its own health projection and must not overwrite canonical snapshot health.
+          ETF_HEALTH_PATH: ${{ github.event_name == 'push' && 'data/state/query_refresh_health.json' || 'data/state/runtime_health.json' }}
         run: |
           if [ "${WAIT_FOR_CLOSE_BOUNDARY_SECONDS:-0}" -gt 0 ]; then
             echo "scheduled close intent received; waiting ${WAIT_FOR_CLOSE_BOUNDARY_SECONDS}s for 15:00 boundary"
@@ -544,7 +547,7 @@ jobs:
               delay_seconds = int(delay_text) if delay_text else None
           except ValueError:
               delay_seconds = None
-          path = Path('data/state/runtime_health.json')
+          path = Path(os.environ.get('ETF_HEALTH_PATH', 'data/state/runtime_health.json'))
           data = json.loads(path.read_text(encoding='utf-8'))
           snapshot_path = Path(data.get('latest_snapshot', ''))
           snapshot = json.loads(snapshot_path.read_text(encoding='utf-8')) if snapshot_path.exists() else {}
@@ -574,12 +577,14 @@ jobs:
       - name: Verify a new valid snapshot was written
         id: snapshot_result
         if: ${{ steps.capture.outcome == 'success' }}
+        env:
+          ETF_HEALTH_PATH: ${{ github.event_name == 'push' && 'data/state/query_refresh_health.json' || 'data/state/runtime_health.json' }}
         shell: bash
         run: |
           python - <<'PY'
           import json, os
           from pathlib import Path
-          path = Path('data/state/runtime_health.json')
+          path = Path(os.environ.get('ETF_HEALTH_PATH', 'data/state/runtime_health.json'))
           written = False
           reason = 'runtime_health_missing'
           if path.exists():
@@ -1542,7 +1547,7 @@ jobs:
           import json, os
           from datetime import datetime
           from pathlib import Path
-          health_path = Path('data/state/runtime_health.json')
+          health_path = Path(os.environ.get('ETF_HEALTH_PATH', 'data/state/runtime_health.json'))
           if os.environ.get('GITHUB_EVENT_NAME') == 'push':
               raise SystemExit(0)
           if health_path.exists():
