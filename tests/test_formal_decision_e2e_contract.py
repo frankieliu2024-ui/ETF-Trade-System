@@ -131,7 +131,8 @@ class FormalDecisionE2EContractTests(unittest.TestCase):
         root = Path(__file__).parents[1]
         workflow = (root / ".github/workflows/decision-notification.yml").read_text(encoding="utf-8")
         self.assertIn('payload.get("report_type") or binding.get("report_type")', workflow)
-        self.assertIn('payload.get("formal_fact_type")', workflow)
+        self.assertIn('payload.get("task_id")', workflow)
+        self.assertNotIn('FORMAL_POST_CLOSE_REVIEW', workflow.split("formal =", 1)[-1].split("\n", 1)[0])
         self.assertIn('payload.get("task_id")', workflow)
         self.assertIn('print("FORMAL")', workflow)
 
