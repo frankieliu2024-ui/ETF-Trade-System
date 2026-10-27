@@ -78,7 +78,6 @@ def is_idempotent_close_skip(current: dict, runtime: dict, snapshot: dict, snaps
         and str(runtime.get('market_date') or '') == str(current.get('market_date') or '')
         and str(runtime.get('latest_snapshot') or '') == snapshot_rel
         and str(snapshot.get('market_date') or '') == str(current.get('market_date') or '')
-        and str((current.get('data_freshness') or {}).get('effective_market_time_beijing') or '') == f"{current.get('market_date')}T15:00:00+08:00"
     )
 
 
