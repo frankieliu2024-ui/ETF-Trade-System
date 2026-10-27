@@ -110,8 +110,8 @@
         "source": "SCHEDULED_REVIEW_COMPLETION",
         "sequence": [
           "identify_real_entry_and_unique_run_identity",
-          "read_current_main_latest_valid_fixed_period_facts",
-          "evaluate_snapshot_freshness_and_formal_or_degraded_path",
+          "read_current_main_latest_valid_fixed_period_facts_by_market",
+          "evaluate_market_layer_fact_boundaries_and_snapshot_path",
           "freeze_FINAL_CONTENT",
           "write_read_SCHEDULED_REVIEW_COMPLETION",
           "read_back_canonical_review_event_REPORT_notification_provider"
@@ -144,7 +144,13 @@
           "discovery_freshness_unit": "completed_trading_day",
           "discovery_fallback_max_completed_trading_days": 1,
           "discovery_requires_current_snapshot_revalidation": true,
-          "object_layers_independently_gated": true
+          "object_layers_independently_gated": true,
+          "market_layered_fact_consumption": true,
+          "a_share_premarket_fact": "previous_trading_day_15_00_quality_and_PIT_accepted_close",
+          "overseas_fact": "latest_pre_run_quality_and_PIT_accepted_snapshot",
+          "overseas_missing_or_stale_is_non_blocking": true,
+          "object_layer_missing_is_non_blocking": true,
+          "risk_or_lifecycle_missing_is_restricted_judgment_not_task_abort": true
         },
         "completion_push_required_in_same_run": true,
         "explicit_dispatch_role": "SAME_RUN_RECOVERY_ONLY"
@@ -158,7 +164,12 @@
         "freshness_decision": "intraday_snapshot_age_0_to_900_seconds_normal; age_901_to_1500_seconds_degraded; age_over_1500_timeout_non_blocking",
         "close_snapshot_rule": "prefer_current_trading_day_15_00_quality_and_PIT_accepted_close_snapshot",
         "stale_fact_reuse_forbidden": true,
-        "historical_fact_reuse_forbidden": true
+        "historical_fact_reuse_forbidden": true,
+        "market_layered": true,
+        "a_share_premarket_source": "previous_trading_day_15_00_close",
+        "overseas_source": "latest_valid_pre_run_snapshot",
+        "market_layer_missing_non_blocking": true,
+        "object_layer_missing_non_blocking": true
       }
     }
   ],
