@@ -15,7 +15,8 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
 
     def test_completion_push_classifies_scheduled_review_by_contract(self):
         workflow = (ROOT / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
-        self.assertIn('payload.get("formal_fact_type") == "FORMAL_POST_CLOSE_REVIEW"', workflow)
+        self.assertIn('payload.get("report_type") or binding.get("report_type")', workflow)
+        self.assertIn('payload.get("task_id")', workflow)
         self.assertIn('binding.get("report_type") == "ETF_FORMAL_DECISION"', workflow)
         self.assertIn('completion_kind', workflow)
         self.assertIn("Scheduled Review completion push is not a Formal Decision wake", workflow)
