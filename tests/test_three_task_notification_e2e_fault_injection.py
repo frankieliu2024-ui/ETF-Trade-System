@@ -10,7 +10,7 @@ class ThreeTaskNotificationE2EFaultInjectionTests(unittest.TestCase):
     TASKS = {
         "ETF系统复核": {
             "prompt": ROOT / "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/prompts/系统复核.txt",
-            "actor": None,
+            "actor": ROOT / "scripts/run_scheduled_system_review_actor.py",
             "report_type": "ETF_SYSTEM_REVIEW",
         },
         "ETF交易复盘": {
