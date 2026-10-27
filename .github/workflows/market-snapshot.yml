@@ -1482,6 +1482,20 @@ jobs:
           atomic_json_write(root / 'data/state/skfolio_risk_evidence.json', build(root))
           PY
 
+      - name: Reconcile Dashboard after canonical risk rebuild
+        # Risk/equity is a canonical input to the human Dashboard projection.
+        # Reconcile it after both normal and retained-close rebuilds so the
+        # projection cannot keep the prior day's strategy risk while the
+        # machine state has already advanced.
+        if: ${{ (steps.risk_refresh.outcome == 'success' || steps.retained_close_risk_refresh.outcome == 'success') && github.event.inputs.probe_only != 'true' }}
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from scripts.sync_formal_files import sync_dashboard_projection
+          result = sync_dashboard_projection(Path('.'))
+          print(result)
+          PY
+
       - name: Build state context and candidates
         id: state_context
         # Full decision preparation is request/state-sync bound. Scheduled
@@ -1737,3 +1751,4 @@ jobs:
             fi
             if [ "$attempt" = "3" ]; then exit 1; fi
           done
+
