@@ -18,15 +18,12 @@ on:
         required: false
         default: ""
   schedule:
-    # US pre-market, regular session and post-market at ten-minute target.
-    - cron: "*/10 8-23 * * 1-5"
-    # Standard-time tail crosses UTC midnight on Tue-Sat.
-    - cron: "*/10 0-1 * * 2-6"
-    # Staggered reliability backstop for GitHub schedule delay/missed wakes.
-    # Same workflow, same producer/state/notification chain; 20-minute cadence
-    # limits extra load while avoiding the primary cron minute boundary.
-    - cron: "2,22,42 8-23 * * 1-5"
-    - cron: "2,22,42 0-1 * * 2-6"
+    # Unified fixed pulse rule: every 10 minutes at :05/:15/:25/:35/:45/:55 UTC.
+    # UTC hour coverage spans US pre-market, regular and post-market in both
+    # daylight-saving and standard-time seasons; runtime phase gating decides
+    # the actual market objects and preserves local-time semantics.
+    - cron: "5,15,25,35,45,55 8-23 * * 1-5"
+    - cron: "5,15,25,35,45,55 0-1 * * 2-6"
 
 permissions:
   contents: write

@@ -597,7 +597,8 @@ def main() -> int:
     check("global_quote_router_exists", "build_market_quote_context" in router_module, "global quote router implementation exists")
     check("query_time_refresh_entry_exists", (ROOT / "scripts/query_time_market_refresh.py").exists() and "refresh_market_quotes" in refresh_module, "query-time refresh facade exists")
     check("query_time_refresh_can_bypass_stale_cache", "force_refresh" in query and "QUERY_TIME_IMMEDIATE_REFRESH" in router_module and "_query_refresh_needed" in router_module, "stale cache can trigger provider refresh")
-    check("scheduled_target_cadence_600s", runtime.get("target_cadence_seconds") == 600 and "*/10" in read_text(".github/workflows/overseas-preopen-pulse.yml") and "*/10" in read_text(".github/workflows/us-extended-hours-pulse.yml"), "scheduled market workflows target ten-minute cadence")
+    unified_pulse = '5,15,25,35,45,55'
+    check("scheduled_target_cadence_600s", runtime.get("target_cadence_seconds") == 600 and all(unified_pulse in read_text(path) for path in (".github/workflows/market-snapshot.yml", ".github/workflows/overseas-preopen-pulse.yml", ".github/workflows/us-extended-hours-pulse.yml")), "all scheduled market workflows use one ten-minute :05/:15/:25/:35/:45/:55 pulse cadence")
 
     overseas_builder = read_text("scripts/build_overseas_context.py")
     check("overseas:beijing_timestamp", "as_of_beijing" in overseas_builder and "generated_at_beijing" in overseas_builder, "overseas context exposes Beijing timestamps")
@@ -628,7 +629,7 @@ def main() -> int:
     check("workflow:no_full_consistency_preflight", "check_system_consistency.py" not in workflow, "high-frequency market workflow does not run full consistency before provider capture")
     check("workflow:concurrency_policy_loader", "Load unified provider concurrency policy" in workflow and "runtime_policy.json" in workflow and "HITHINK_MAX_WORKERS" in workflow, "workflow loads scheduled/query concurrency from runtime policy")
     check("workflow:session_gate", "runtime_session_gate.py" in workflow and "session_gate.outputs.should_capture" in workflow, "exchange calendar/session gate wired")
-    check("workflow:auction_cron", '15,20,25,30,40,50 1 * * 1-5' in workflow, "09:15/09:20/09:25 auction pulses scheduled")
+    check("workflow:unified_fixed_pulse", '5,15,25,35,45,55 0-7 * * 1-5' in workflow, "A-share market workflow uses unified fixed pulse cadence")
     check("workflow:valid_snapshot_downstream_gate", "snapshot_result.outputs.snapshot_written == 'true'" in workflow, "downstream contexts require new valid A-share snapshot")
     check("workflow:single_full_recovery_entry", "workflow_dispatch" in workflow and not (ROOT / ".github/workflows/full-snapshot-recovery.yml").exists(), "market-snapshot workflow_dispatch is the only full-state recovery entry")
     check("workflow:runtime_artifact_staging", "git add -A -- data/market/snapshots data/state" in workflow and "2>/dev/null || true" not in workflow, "runtime staging cannot silently drop a snapshot because an optional path is absent")
@@ -638,15 +639,13 @@ def main() -> int:
     overseas_workflow = read_text(".github/workflows/overseas-preopen-pulse.yml")
     check("workflow:overseas_preopen_exists", "build_overseas_context.py" in overseas_workflow, "standalone overseas pre-open pulse wired")
     check("workflow:us_extended_wired", "build_us_extended_hours_context.py" in overseas_workflow and "us_extended_hours_context.json" in overseas_workflow, "US extended-hours context wired into A-share pre-open workflow")
-    check("workflow:us_postmarket_0700_start", '*/10 23 * * 0-4' in overseas_workflow, "Beijing 07:00-07:50 prior-US post-market tail scheduled")
-    check("workflow:overseas_0800_start", '*/10 0-7 * * 1-5' in overseas_workflow, "Beijing 08:00-15:50 overseas pulses scheduled")
-    check("workflow:overseas_asia_10m", '*/10 0-7 * * 1-5' in overseas_workflow, "Beijing 08:00-15:50 Asia pulses scheduled every ten minutes")
+    check("workflow:overseas_unified_fixed_pulse", '5,15,25,35,45,55' in overseas_workflow, "APAC workflow uses unified fixed pulse cadence")
     check("workflow:overseas_runtime_health", "build_overseas_runtime_health.py" in overseas_workflow and "overseas_runtime_health.json" in overseas_workflow, "overseas runtime health is generated and committed")
     check("workflow:overseas_hithink_runtime", "HITHINK_FINANCE_API_KEY" in overseas_workflow and "@hithink-tech/hithink-finance-cli" in overseas_workflow, "overseas runner installs Hithink CLI and receives secret")
 
     us_workflow = read_text(".github/workflows/us-extended-hours-pulse.yml")
     check("workflow:us_afternoon_exists", "build_us_extended_hours_context.py" in us_workflow, "standalone US afternoon/evening extended-hours pulse wired")
-    check("workflow:us_10m_schedule", '*/10 8-23 * * 1-5' in us_workflow and '*/10 0-1 * * 2-6' in us_workflow, "US pre-market/regular/post-market pulses scheduled every ten minutes")
+    check("workflow:us_unified_fixed_pulse", '5,15,25,35,45,55' in us_workflow, "US pre-market/regular/post-market workflow uses unified fixed pulse cadence")
 
     maintenance_workflow = read_text(".github/workflows/system-consistency.yml")
     check("maintenance_workflow:data_standard_trigger", DATA_STANDARD in maintenance_workflow, "data standard changes trigger consistency workflow")

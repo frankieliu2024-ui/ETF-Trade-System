@@ -14,27 +14,11 @@ on:
       # producer.  The overseas workflow remains the sole APAC owner.
       - "requests/live_snapshot/**global*.json"
   schedule:
-    # UTC / Beijing time.
-    # 20:15/20:30 UTC = Beijing 04:15/04:30. Independent schedule backstop for
-    # the fixed US cash-session close summary if the dedicated US pulse misses.
-    - cron: "15,30 20 * * 1-5"
-    # Primary APAC ten-minute cadence retained as the canonical schedule contract.
-    # 23:00-23:50 UTC previous day = Beijing 07:00-07:50.
-    - cron: "*/10 23 * * 0-4"
-    # 00:00-07:50 UTC = Beijing 08:00-15:50, covering Asia-Pacific sessions.
-    - cron: "*/10 0-7 * * 1-5"
-    # 08:00-08:30 UTC = Beijing 16:00-16:30, covering APAC close after Hong Kong.
-    - cron: "0,10,20,30 8 * * 1-5"
-    # Staggered reliability backstop after the 2026-08-31 missed KOSPI wake-up.
-    # Same canonical workflow, same provider/event/dedupe/PushPlus chain; no
-    # parallel state or notification implementation. Twenty-minute cadence limits
-    # extra load while avoiding the UTC hour boundary and primary cron minute.
-    # Beijing 07:02/07:22/07:42.
-    - cron: "2,22,42 23 * * 0-4"
-    # Beijing 08:02-15:42 every twenty minutes.
-    - cron: "2,22,42 0-7 * * 1-5"
-    # Beijing 16:02/16:22 APAC close-tail backstop.
-    - cron: "2,22 8 * * 1-5"
+    # Unified fixed pulse rule: every 10 minutes at :05/:15/:25/:35/:45/:55 UTC.
+    # The same cadence maps to Beijing 07:55-16:35 for APAC coverage;
+    # market calendars and phases decide applicable objects.
+    - cron: "5,15,25,35,45,55 23 * * 0-4"
+    - cron: "5,15,25,35,45,55 0-8 * * 1-5"
 
 permissions:
   contents: write
