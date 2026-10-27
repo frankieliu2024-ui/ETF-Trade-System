@@ -1,16 +1,16 @@
 {
-  "schema_version": "2.0",
-  "freeze_id": "ETF_THREE_TASKS_CURRENT_FREEZE_20261020_V3",
-  "freeze_status": "SEALED_RUNTIME_EVIDENCE_CONFIRMED",
-  "authority": "current_main_only",
-  "captured_at_beijing": "2026-10-22",
+  "schema_version": "2.1",
+  "freeze_id": "ETF_THREE_TASKS_CURRENT_FREEZE_20261027_LIVE_PROMPT_AUTHORITY",
+  "freeze_status": "LIVE_PROMPT_AUTHORITY_CONFIRMED_AUDIT_POINTER",
+  "authority": "CHATGPT_SCHEDULED_TASK_LIVE_PROMPT",
+  "captured_at_beijing": "2026-10-27",
   "captured_main_commit": "0158c00b25e20b2e4f8b71ccd4b885fa1c3256cc",
   "current_pointer": "docs/freezes/ETF_THREE_TASKS_CURRENT_FREEZE.json",
   "index_path": "ETF_SYSTEM_INDEX.md",
-  "purpose": "唯一当前冻结指针；用于定位、审计、回退和按身份恢复三类ETF任务，不构成第二规则源。",
+  "purpose": "ChatGPT定时任务界面中的三类live Prompt是唯一运行指令；current main仅保存审计、测试、生产协议和回退指针，不覆盖live Prompt。",
   "non_goals": [
-    "不修改三类任务Prompt语义",
-    "不修改调度、MASTER、账户、行情、权限或通知生产逻辑",
+    "不以current main中的历史Prompt覆盖ChatGPT定时任务界面live Prompt",
+    "不修改三类任务的业务语义、调度、MASTER、账户、行情、权限或通知生产逻辑",
     "不新增任务、workflow、producer、checker、state或writer"
   ],
   "required_read_order": [
@@ -58,14 +58,16 @@
       "business_chain": "System Review → SCHEDULED_REVIEW_COMPLETION → canonical review event → REPORT → notification_center → PushPlus",
       "interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
       "prompt_snapshot": {
-        "status": "PERSISTED_CURRENT_LIVE_PROMPT",
+        "status": "LIVE_PROMPT_AUTHORITATIVE_REPOSITORY_AUDIT_POINTER",
         "source": "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/prompts/系统复核.txt",
         "manifest": "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/MANIFEST.json",
         "platform_hash_status": "NOT_EXPOSED_BY_UI",
         "historical_sources": [
           "docs/freezes/archive/20261016/ETF三类任务当前版本冻结封存_2026-10-16.md",
           "docs/freezes/archive/legacy/ETF三个定时任务冻结封存_2026-10-16-v2.md"
-        ]
+        ],
+        "authority": "CHATGPT_SCHEDULED_TASK_UI",
+        "note": "仓库文件仅作审计快照与生产协议映射，不是本任务运行时指令"
       },
       "entry_contract": {
         "automatic": "current main calendar; 08:30/19:30 and Sunday rule per protocol",
@@ -94,14 +96,16 @@
       "business_chain": "Trade Review → SCHEDULED_REVIEW_COMPLETION → canonical review event → REPORT → notification_center → PushPlus",
       "interaction_scenario": "SCHEDULED_TRADE_REVIEW",
       "prompt_snapshot": {
-        "status": "PERSISTED_CURRENT_LIVE_PROMPT",
+        "status": "LIVE_PROMPT_AUTHORITATIVE_REPOSITORY_AUDIT_POINTER",
         "source": "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/prompts/交易复盘.txt",
         "manifest": "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/MANIFEST.json",
         "platform_hash_status": "NOT_EXPOSED_BY_UI",
         "historical_sources": [
           "docs/freezes/archive/20261016/ETF三类任务当前版本冻结封存_2026-10-16.md",
           "docs/freezes/archive/legacy/ETF三个定时任务冻结封存_2026-10-16-v2.md"
-        ]
+        ],
+        "authority": "CHATGPT_SCHEDULED_TASK_UI",
+        "note": "仓库文件仅作审计快照与生产协议映射，不是本任务运行时指令"
       },
       "entry_contract": {
         "automatic": "12:30/20:30; Sunday weekly rule per protocol",
@@ -133,14 +137,16 @@
       "business_chain": "entry identity → current main fixed-period facts by market → FINAL_CONTENT → SCHEDULED_REVIEW_COMPLETION → decision-notification → formal canonical event → REPORT → notification_center → PushPlus",
       "interaction_scenario": "FORMAL_DECISION",
       "prompt_snapshot": {
-        "status": "PERSISTED_CURRENT_LIVE_PROMPT",
+        "status": "LIVE_PROMPT_AUTHORITATIVE_REPOSITORY_AUDIT_POINTER",
         "source": "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/prompts/正式决策.txt",
         "manifest": "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/MANIFEST.json",
         "platform_hash_status": "NOT_EXPOSED_BY_UI",
         "historical_sources": [
           "docs/freezes/archive/20261016/ETF三类任务当前版本冻结封存_2026-10-16.md",
           "docs/freezes/archive/legacy/formal-decision-scheduled-task-rebuild-v2.md"
-        ]
+        ],
+        "authority": "CHATGPT_SCHEDULED_TASK_UI",
+        "note": "仓库文件仅作审计快照与生产协议映射，不是本任务运行时指令"
       },
       "entry_contract": {
         "conversation": "CHATGPT_MANUAL_FORMAL_ANALYSIS / MANUAL_CONVERSATION",
@@ -264,5 +270,12 @@
   "bundle_manifest_path": "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/MANIFEST.json",
   "bundle_manifest_status": "REPOSITORY_EVIDENCE_COMPLETE_RUNTIME_EVIDENCE_CONFIRMED",
   "evidence_index_path": "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/EVIDENCE_INDEX.md",
-  "schedule_readback_path": "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/schedule-readback.json"
+  "schedule_readback_path": "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/schedule-readback.json",
+  "live_prompt_authority": {
+    "runtime_authority": "CHATGPT_SCHEDULED_TASK_UI",
+    "repository_role": "AUDIT_TEST_PRODUCTION_PROTOCOL_ONLY",
+    "readback": "2026-10-27 refreshed cloud-browser readback confirmed all three enabled tasks and current prompt text",
+    "platform_hash_status": "NOT_EXPOSED_BY_UI",
+    "rule": "不得由仓库归档文本反向覆盖或推断ChatGPT定时任务界面当前提示词"
+  }
 }
