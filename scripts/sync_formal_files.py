@@ -62,23 +62,23 @@ def _structured_decision_from_report(event: dict) -> dict:
     def match(pattern: str) -> str:
         found = re.search(pattern, content, flags=re.MULTILINE)
         return found.group(1).strip() if found else ""
-    risk = match(r"风险许可为([^。\\n]+)")
+    risk = match(r"风险许可为([^。\n]+)")
     if not risk:
-        risk = match(r"风险许可[：:]([^。\\n]+)")
-    candidate = match(r"候选中仅将([^，。\\n]+)")
+        risk = match(r"风险许可[：:]([^。\n]+)")
+    candidate = match(r"候选中仅将([^，。\n]+)")
     if not candidate:
-        candidate = match(r"机会ETF(?:是|为)[：:]?\\s*([^，。\\n]+)")
-    amount = match(r"建议新增部署\\s*([^，。；\\n]+)")
-    release = match(r"实际释放\\s*([^，。；\\n]+)")
+        candidate = match(r"机会ETF(?:是|为)[：:]?\s*([^，。\n]+)")
+    amount = match(r"建议新增部署\s*([^，。；\n]+)")
+    release = match(r"实际释放\s*([^，。；\n]+)")
     amount_action = "；".join(part for part in (
         f"新增部署{amount}" if amount else "",
         f"实际释放{release}" if release else "",
     ) if part)
-    reason = match(r"主因是([^。\\n]+)")
+    reason = match(r"主因是([^。\n]+)")
     if not reason:
-        reason = match(r"原因是([^。\\n]+)")
+        reason = match(r"原因是([^。\n]+)")
     lifecycle = []
-    for code, action in re.findall(r"[（(]\\d+[）)]\\s*[^\\n：:（(]+[（(](\\d{6})[）)]：([^。\\n]+)", content):
+    for code, action in re.findall(r"[（(]\d+[）)]\s*[^\n：:（(]+[（(](\d{6})[）)]：([^。\n]+)", content):
         lifecycle.append(f"{code}：{action.strip()}")
     return {
         "risk_permission": risk,
@@ -342,6 +342,10 @@ def normalize_dashboard_projection(text: str, root: Path = ROOT, account: dict |
             "- 当前无待处理结算现金约束。",
         ]
     result = "\n".join(lines)
+    # Keep the registered correction block present even when the input
+    # projection had no historical correction rows.
+    if "<!-- AUTO_TRADE_FACT_CORRECTIONS_START -->" not in result:
+        result += "\n<!-- AUTO_TRADE_FACT_CORRECTIONS_START -->\n<!-- AUTO_TRADE_FACT_CORRECTIONS_END -->"
     return result + ("\n" if text.endswith("\n") else "")
 
 
@@ -411,7 +415,7 @@ def build_dashboard_block(account: dict, equity: dict, existing: str, root: Path
     for p in positions:
         lines.append(
             f"|{display_name(p)}|{int(p.get('quantity') or 0):,}|"
-            f"{float(p.get('cost') or 0):.3f}|{position_metric(p, 'current_price', 'last_price'):.3f}|"
+            f"{float(p.get('cost') or p.get('cost_price') or 0):.3f}|{position_metric(p, 'current_price', 'last_price'):.3f}|"
             f"{money(p.get('market_value'))}|{format_position_pnl(p)}|"
         )
     etf_codes = {str(item.get("code")): str(item.get("name") or item.get("code")) for item in (load_json(root / "config/market/etf_monitor_universe.json").get("objects") or []) if item.get("code")}

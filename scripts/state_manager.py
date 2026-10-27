@@ -436,11 +436,25 @@ def build_etf_strategy_risk_metrics(root: Path) -> dict[str, Any]:
     # Strategy risk is dated to the latest confirmed account/trade fact.
     # A newer intraday market date alone does not invalidate the last valid
     # gross reconstruction when no new account or transaction fact exists.
-    risk_fact_date = str(
-        account.get("last_confirmed_market_date")
-        or current_market_date
+    # A broker screenshot may advance the account display date without
+    # introducing a new trade or cash-flow fact.  In that case the latest
+    # canonical Gross replay remains the valid risk owner; only a newer
+    # transaction/cash fact requires the replay to catch up.
+    account_trade_fact_date = str(
+        account.get("trade_fact_as_of")
+        or account.get("transaction_fact_as_of")
         or ""
     )
+    no_new_trade_observed = bool(account.get("no_new_trade_observed"))
+    if no_new_trade_observed and not account_trade_fact_date:
+        risk_fact_date = reconstruction_as_of
+    else:
+        risk_fact_date = str(
+            account_trade_fact_date
+            or account.get("last_confirmed_market_date")
+            or current_market_date
+            or ""
+        )
     reconstruction_fresh = bool(
         reconstruction_risk is not None
         and reconstruction_as_of
