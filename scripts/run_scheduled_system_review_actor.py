@@ -28,6 +28,22 @@ from scripts.run_scheduled_formal_decision_actor import (
 )
 
 
+
+def _wait_for_system_projection(occurrence_id: str, report_id: str) -> dict[str, object]:
+    event_path = "events/reviews/system_" + occurrence_id + ".json"
+    report_path = "requests/report_delivery/" + str(report_id).replace(":", "__") + ".json"
+    import time
+    deadline = time.time() + 120
+    while time.time() < deadline:
+        event = _read_main_json(event_path)
+        report = _read_main_json(report_path)
+        center = _read_main_json("data/state/notification_center.json")
+        if isinstance(event, dict) and isinstance(report, dict) and isinstance(center, dict) and _contains_text(center, report_id):
+            return {"verified": True, "event_path": event_path, "report_path": report_path, "report_id": report_id}
+        time.sleep(3)
+    return {"verified": False, "event_path": event_path, "report_path": report_path, "report_id": report_id,
+            "reason": "system event, REPORT, and bound notification record were not all readable"}
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--final-content", required=True)
@@ -87,7 +103,7 @@ def main() -> int:
     completion_path, persistence = persist_completion_with_recovery(target)
     canonical_path = _persist_completion_to_main(completion_path)
     dispatch = _dispatch_notification(canonical_path)
-    projection = _wait_for_projection(occurrence_id, binding.get("report_id") or "")
+    projection = _wait_for_system_projection(occurrence_id, binding.get("report_id") or "")
     ok = bool(dispatch.get("submitted")) and bool(dispatch.get("read_back")) and bool(projection.get("verified"))
     print(args.final_content)
     print(json.dumps({
