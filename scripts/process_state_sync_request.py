@@ -2507,6 +2507,51 @@ def record_scheduled_system_review(request: dict) -> tuple[bool, bool]:
     prior = load_json(event_path) if event_path.exists() else {}
     if prior and prior.get("fingerprint") != payload["fingerprint"]:
         raise ValueError("scheduled system review occurrence is immutable")
+    # The canonical System Review owner must project the frozen completion to
+    # the shared REPORT contract in the same transaction boundary as the event.
+    # Event-only persistence leaves decision-notification.yml with a valid
+    # review event but no REPORT input, so the guarded sender fails closed and
+    # no主动通知 is produced.  Keep the event as the sole source of content;
+    # this projection is idempotent and never scans history or creates a second
+    # notification path.
+    system_review = request.get("system_review") if isinstance(request.get("system_review"), dict) else {}
+    market_date = str(
+        request.get("market_date")
+        or system_review.get("market_date")
+        or system_review.get("a_share_latest_formal_market_date")
+        or ""
+    ).strip()
+    report_id = str(binding.get("report_id") or f"etf_system_review:{occurrence}").strip()
+    full_content = str(binding.get("full_content") or "")
+    if not market_date:
+        raise ValueError("scheduled system review completion requires effective market_date")
+    report_path = ROOT / "requests" / "report_delivery" / f"{report_id.replace(':', '__')}.json"
+    report = {
+        "schema_version": "1.0",
+        "event_type": "REPORT_DELIVERY_REQUEST",
+        "channel": "REPORT",
+        "report_type": "ETF_SYSTEM_REVIEW",
+        "report_id": report_id,
+        "request_id": str(request.get("request_id") or ""),
+        "task_id": str(binding.get("task_id") or "ETF系统复核"),
+        "task_run_id": str(binding.get("task_run_id") or occurrence),
+        "generated_at": str(request.get("requested_at_beijing") or ""),
+        "effective_market_date": market_date,
+        "source_actor": str(request.get("source") or "CHATGPT_SCHEDULED_SYSTEM_REVIEW_ACTOR"),
+        "source_reference": f"canonical-review-completion:events/reviews/system_{occurrence}.json",
+        "title": "【ETF系统复核】",
+        "summary": "Canonical system review completion; deliver the frozen report unchanged.",
+        "full_content": full_content,
+        "content_hash": hashlib.sha256(full_content.encode("utf-8")).hexdigest(),
+        "idempotency_key": "ETF_SYSTEM_REVIEW:" + str(binding.get("task_run_id") or occurrence),
+        "delivery_mode": "FULL_REPORT",
+        "no_trade_authority": True,
+    }
+    if report_path.exists() and load_json(report_path) != report:
+        raise RuntimeError("current system review REPORT_DELIVERY_REQUEST identity/content mismatch")
+    if not report_path.exists():
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        atomic_json_write(report_path, report)
     if not prior:
         event_path.parent.mkdir(parents=True, exist_ok=True)
         atomic_json_write(event_path, payload)

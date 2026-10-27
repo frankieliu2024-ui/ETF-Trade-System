@@ -636,11 +636,16 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
                 self.assertTrue(recorded)
                 self.assertFalse(replay)
                 event = json.loads((Path(directory) / "events" / "reviews" / "system_manual-system-review-1105.json").read_text())
+                report = json.loads((Path(directory) / "requests" / "report_delivery" / "etf_system_review__manual-system-review-1105.json").read_text())
         binding = event["presentation_binding"]
         self.assertEqual(binding["request_id"], "manual-system-review-1105")
         self.assertEqual(binding["occurrence_id"], "manual-system-review-1105")
         self.assertEqual(binding["report_id"], "etf_system_review:manual-system-review-1105")
         self.assertEqual(binding["full_content"], "FROZEN SYSTEM REVIEW")
+        self.assertEqual(report["report_type"], "ETF_SYSTEM_REVIEW")
+        self.assertEqual(report["report_id"], binding["report_id"])
+        self.assertEqual(report["full_content"], binding["full_content"])
+        self.assertEqual(report["effective_market_date"], "2026-10-27")
 
 
 if __name__ == "__main__":
