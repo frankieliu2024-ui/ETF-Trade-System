@@ -53,6 +53,43 @@ def display_name(position: dict) -> str:
 
 
 
+def _structured_decision_from_report(event: dict) -> dict:
+    """Recover display fields from a completed report's frozen presentation content."""
+    binding = event.get("presentation_binding") or {}
+    content = str(binding.get("full_content") or "")
+    if not content:
+        return {}
+    def match(pattern: str) -> str:
+        found = re.search(pattern, content, flags=re.MULTILINE)
+        return found.group(1).strip() if found else ""
+    risk = match(r"风险许可为([^。\\n]+)")
+    if not risk:
+        risk = match(r"风险许可[：:]([^。\\n]+)")
+    candidate = match(r"候选中仅将([^，。\\n]+)")
+    if not candidate:
+        candidate = match(r"机会ETF(?:是|为)[：:]?\\s*([^，。\\n]+)")
+    amount = match(r"建议新增部署\\s*([^，。；\\n]+)")
+    release = match(r"实际释放\\s*([^，。；\\n]+)")
+    amount_action = "；".join(part for part in (
+        f"新增部署{amount}" if amount else "",
+        f"实际释放{release}" if release else "",
+    ) if part)
+    reason = match(r"主因是([^。\\n]+)")
+    if not reason:
+        reason = match(r"原因是([^。\\n]+)")
+    lifecycle = []
+    for code, action in re.findall(r"[（(]\\d+[）)]\\s*[^\\n：:（(]+[（(](\\d{6})[）)]：([^。\\n]+)", content):
+        lifecycle.append(f"{code}：{action.strip()}")
+    return {
+        "risk_permission": risk,
+        "main_candidate": candidate,
+        "amount_action": amount_action,
+        "decisive_reason": reason,
+        "lifecycle": "；".join(lifecycle),
+        "data_as_of_beijing": event.get("reviewed_at_beijing") or event.get("market_date") or "",
+    }
+
+
 def latest_canonical_formal_decision(root: Path = ROOT) -> dict:
     """Return the newest canonical decision/report, explicitly marked when stale.
 
@@ -75,10 +112,9 @@ def latest_canonical_formal_decision(root: Path = ROOT) -> dict:
             continue
         decision = event.get("formal_decision") or event.get("decision") or {}
         if event_type == "FORMAL_DECISION_REPORT" and not decision:
-            # The completed report carries the same decision fields in the
-            # presentation binding; the bound full content is intentionally
-            # not used as a replacement source for structured projection.
             decision = event.get("decision_response") or {}
+            if not decision:
+                decision = _structured_decision_from_report(event)
         if not isinstance(decision, dict):
             continue
         if event_type == "FORMAL_DECISION_REPORT" and isinstance(decision.get("answers"), dict):
