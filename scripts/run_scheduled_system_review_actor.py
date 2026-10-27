@@ -1,0 +1,107 @@
+"""Run the canonical production handoff for ETF System Review.
+
+This adapter owns only the system-review completion handoff. It builds one
+system-review completion, persists and reads it back, explicitly dispatches
+the existing notification workflow with that exact completion path, and
+reports the read-back boundary. It never creates a second business payload.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import sys
+from pathlib import Path
+
+ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from scripts.scheduled_review_completion import build_system_review_completion_request
+from scripts.scheduled_review_completion_recovery import persist_completion_with_recovery
+from scripts.task_runtime_identity import derive_runtime_identity
+from scripts.run_scheduled_formal_decision_actor import (
+    _persist_completion_to_main,
+    _dispatch_notification,
+    _wait_for_projection,
+)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--final-content", required=True)
+    parser.add_argument("--requested-at-beijing", required=True)
+    parser.add_argument("--entry-mode", required=True,
+                        choices=("MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"))
+    parser.add_argument("--market-date", required=True)
+    parser.add_argument("--task-run-id", default="")
+    parser.add_argument("--occurrence-id", default="")
+    parser.add_argument("--request-id", default="")
+    parser.add_argument("--output", default="")
+    parser.add_argument("--review-json", default="")
+    args = parser.parse_args()
+
+    task_run_id, occurrence_id = derive_runtime_identity(
+        "ETF系统复核",
+        args.request_id or args.task_run_id or args.occurrence_id or "system-review-runtime",
+        args.requested_at_beijing, args.entry_mode,
+        args.task_run_id, args.occurrence_id,
+    )
+    review = {"status": "PASS", "task_id": "ETF系统复核",
+              "market_date": args.market_date, "fact_cutoff_at_beijing": args.requested_at_beijing}
+    if args.review_json:
+        review = json.loads(Path(args.review_json).read_text(encoding="utf-8"))
+    payload = build_system_review_completion_request(
+        review,
+        args.request_id or task_run_id,
+        args.requested_at_beijing,
+        "ETF系统复核",
+        task_run_id,
+        args.final_content,
+        args.entry_mode,
+        occurrence_id,
+    )
+    target = Path(args.output).resolve() if args.output else (
+        ROOT / "requests" / "live_snapshot" /
+        f"{task_run_id}__scheduled_review_completion.json"
+    )
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    persisted = json.loads(target.read_text(encoding="utf-8"))
+    binding = persisted.get("presentation_binding") or {}
+    expected_hash = hashlib.sha256(args.final_content.encode("utf-8")).hexdigest()
+    checks = {
+        "task_id": persisted.get("task_id") == "ETF系统复核",
+        "request_type": persisted.get("request_type") == "SCHEDULED_REVIEW_COMPLETION",
+        "formal_fact_type": persisted.get("formal_fact_type") == "FORMAL_SCHEDULED_SYSTEM_REVIEW",
+        "report_type": binding.get("report_type") == "ETF_SYSTEM_REVIEW",
+        "full_content": binding.get("full_content") == args.final_content,
+        "content_hash": binding.get("content_hash") == expected_hash,
+        "occurrence_id": persisted.get("occurrence_id") == occurrence_id,
+    }
+    if not all(checks.values()):
+        raise RuntimeError("system review completion readback mismatch: " +
+                           ", ".join(k for k, v in checks.items() if not v))
+
+    completion_path, persistence = persist_completion_with_recovery(target)
+    canonical_path = _persist_completion_to_main(completion_path)
+    dispatch = _dispatch_notification(canonical_path)
+    projection = _wait_for_projection(occurrence_id, binding.get("report_id") or "")
+    ok = bool(dispatch.get("submitted")) and bool(dispatch.get("read_back")) and bool(projection.get("verified"))
+    print(args.final_content)
+    print(json.dumps({
+        "ok": ok,
+        "user_visible_content": args.final_content,
+        "completion_path": completion_path,
+        "persistence": persistence,
+        "readback": checks,
+        "notification_dispatch": dispatch,
+        "projection": projection,
+        "same_run_handoff_complete": ok,
+    }, ensure_ascii=False))
+    return 0 if ok else 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
