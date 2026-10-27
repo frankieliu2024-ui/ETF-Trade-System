@@ -195,6 +195,7 @@ def unexpected_dirty_paths(dirty_lines: list[str], owned_mutations: tuple[str, .
             line[2:].strip().startswith(allowed_dirty_prefixes)
             or line[2:].strip().startswith("data/state/dashboard_update_candidate.json")
             or line[2:].strip() in normalized_owned
+            or line[2:].strip() == "system_readiness_preflight.json"
         )
     ]
 
