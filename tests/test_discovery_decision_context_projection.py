@@ -58,3 +58,40 @@ def test_not_requested_discovery_is_not_promoted(tmp_path):
     })
 
     assert state_context.load_node_local_formal_discovery(tmp_path, current) is None
+
+
+def test_compact_projection_is_preferred_over_large_context(tmp_path):
+    current = {
+        "market_date": "2026-09-21",
+        "latest_valid_node": "live",
+        "latest_snapshot": "data/market/snapshots/2026-09-21_100000.json",
+    }
+    compact = {
+        "schema_version": "1.0", "layer": "DISCOVERY", "status": "READY",
+        "market_date": current["market_date"],
+        "latest_valid_node": current["latest_valid_node"],
+        "latest_snapshot": current["latest_snapshot"],
+        "candidate_count": 1, "candidates": [{"code": "159303"}],
+    }
+    write_json(tmp_path / "data/state/formal_discovery_current.json", compact)
+    write_json(tmp_path / "data/state/query_context.json", {
+        "market_date": current["market_date"],
+        "latest_valid_node": current["latest_valid_node"],
+        "current": current,
+        "formal_etf_discovery": {"status": "NOT_REQUESTED", "candidates": []},
+    })
+    assert state_context.load_node_local_formal_discovery(tmp_path, current) == compact
+
+
+def test_compact_projection_snapshot_mismatch_fails_closed(tmp_path):
+    current = {
+        "market_date": "2026-09-21", "latest_valid_node": "live",
+        "latest_snapshot": "data/market/snapshots/2026-09-21_100000.json",
+    }
+    write_json(tmp_path / "data/state/formal_discovery_current.json", {
+        "status": "READY", "market_date": current["market_date"],
+        "latest_valid_node": current["latest_valid_node"],
+        "latest_snapshot": "data/market/snapshots/2026-09-21_095150.json",
+        "candidates": [{"code": "159303"}],
+    })
+    assert state_context.load_node_local_formal_discovery(tmp_path, current) is None

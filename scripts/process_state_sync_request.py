@@ -21,6 +21,41 @@ except ModuleNotFoundError:
     from scripts.build_stock_context import active_account_asset_codes, build_managed_position_projection, first, normalize_code, position_metric
 from sync_formal_files import sync_formal_files, latest_canonical_formal_decision, format_position_pnl
 from observation_etf_management import persist_monitor_universe, validate_observation_management
+
+
+def _persist_formal_opportunity_projection(root: Path, source: dict) -> None:
+    """Persist the post-MASTER node opportunity role without promoting Discovery."""
+    decision = source.get("business_decision") or source.get("formal_decision") or {}
+    reviews = decision.get("etf_opportunity_reviews") or []
+    opportunities = []
+    for item in reviews:
+        if not isinstance(item, dict):
+            continue
+        status = str(item.get("opportunity_status") or "").strip()
+        if status and status != "无机会":
+            opportunities.append({
+                key: item.get(key) for key in
+                ("code", "candidate_code", "candidate_name", "opportunity_status", "conclusion", "reason")
+                if item.get(key) not in (None, "")
+            })
+    binding = source.get("request_bound_fact_binding") or {}
+    atomic_json_write(root / "data/state/formal_opportunity_current.json", {
+        "schema_version": "1.0",
+        "layer": "OPPORTUNITY",
+        "producer": "process_state_sync_request.py",
+        "read_only": True,
+        "market_date": binding.get("market_date") or source.get("market_date") or "",
+        "latest_valid_node": source.get("latest_valid_node") or "",
+        "latest_snapshot": binding.get("snapshot_id") or source.get("consumed_snapshot") or "",
+        "generated_at_beijing": datetime.now(timezone(timedelta(hours=8))).isoformat(timespec="seconds"),
+        "status": "DECIDED",
+        "opportunity_count": len(opportunities),
+        "opportunities": opportunities,
+        "decision_owner": "MASTER_FORMAL_DECISION",
+        "not_zero_rule": "DECIDED zero is explicit only when the persisted decision has no qualified opportunity",
+        "source_request_id": source.get("request_id") or "",
+        "source_fingerprint": source.get("fingerprint") or "",
+    })
 try:
     from business_decision_source import (
         BUSINESS_DECISION_SOURCE,
@@ -4151,6 +4186,7 @@ def main() -> int:
         projected.pop("projection_status", None)
         projected.pop("fingerprint", None)
         request["formal_decision"] = projected
+        _persist_formal_opportunity_projection(ROOT, source)
     if original_source_dispatch:
         print(json.dumps({"ok": True, "request_id": request.get("request_id"), "business_decision_source_persisted": True, "completion_required": True}, ensure_ascii=False))
         return 0
