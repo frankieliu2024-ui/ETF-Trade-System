@@ -735,7 +735,7 @@ def _decision_notification_details(decision: dict, status: str, target: str) -> 
         next_validation = "在下一正式复核节点重新判断机会、持仓与资本效率。"
 
     if status in {"Trial机会", "Confirm机会"}:
-        user_action = f"如准备执行，先核对最新正式判断与金额后由用户人工下单；{action_text}"
+        user_action = f"如准备执行，先核对最新正式判断与金额后由用户人工执行（人工下单）；{action_text}"
     elif status == "观察机会":
         user_action = "当前仅进入观察，不下单；等待下一正式复核节点验证条件是否升级。"
     elif status == "无机会":
