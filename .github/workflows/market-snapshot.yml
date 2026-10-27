@@ -1142,6 +1142,11 @@ jobs:
           done
           fi
 
+      - name: Rebuild execution-quality projection after canonical account/trade sync
+        id: execution_quality_projection
+        if: ${{ steps.state_sync.outcome == 'success' && (steps.state_sync.outputs.processed == 'true' || steps.triggering_request.outputs.account_fact_refresh == 'true' || steps.triggering_request.outputs.trade_fact == 'true') }}
+        run: python scripts/build_execution_quality.py
+
       - name: Record broker account sync maintenance receipt
         if: ${{ always() && ((github.event_name == 'push' && env.TRIGGERING_REQUEST_ID != '' && env.TRIGGERING_REQUEST_FILE != '') || (github.event_name == 'workflow_dispatch' && github.event.inputs.replay_request != '')) }}
         shell: bash
