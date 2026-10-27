@@ -1042,7 +1042,7 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
     if (
         str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION"
         and str(request.get("source") or "").strip().upper() == "CHATGPT_SCHEDULED_REVIEW_ACTOR"
-        and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_POST_CLOSE_REVIEW"
+        and str(request.get("formal_fact_type") or "").strip().upper() in {\n            "FORMAL_POST_CLOSE_REVIEW",\n            "FORMAL_CURRENT_MAIN_DECISION",\n        }
         and str(request.get("task_id") or "").strip() == "ETF正式决策"
     ):
         raise ValueError(
@@ -2578,8 +2578,7 @@ def record_formal_decision_report_event(request: dict, bds: dict | None = None) 
     }
     if any(not value for value in identity.values()):
         raise ValueError("Formal Decision canonical event requires complete request/parent/decision identity")
-    if direct_completion and identity["request_id"] == identity["parent_request_id"]:
-        raise ValueError("Formal Decision completion request_id must differ from parent_request_id")
+    # A current-main runtime completion deliberately has no parent market-fact request.\n    # The completion itself is the durable handoff, so its request identity is\n    # also the canonical parent binding. Legacy/BDS projections still retain a\n    # distinct parent when one is supplied.
     if (
         identity["binding_request_id"] != identity["request_id"]
         or identity["binding_parent_request_id"] != identity["parent_request_id"]
