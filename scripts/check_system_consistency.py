@@ -443,12 +443,14 @@ def _validate_post_close_review_contract(report: dict, now=None) -> None:
     if pointer_stale and not projection_lag:
         errors.append("CURRENT.close_review_closure_is_stale")
     if projection_lag:
-        warning = (
-            "post_close_review:CURRENT.close_review_closure_projection_lag="
-            f"expected_market_date={market_date},current_node={current_node or 'UNKNOWN'}"
-        )
-        if warning not in report.setdefault("warnings", []):
-            report["warnings"].append(warning)
+        # During an active trading session, the previous session's close-review
+        # closure is intentionally retained until today's close node. This is
+        # an expected projection state, not a warning and not a stale pointer.
+        warning_prefix = "post_close_review:CURRENT.close_review_closure_projection_lag="
+        report["warnings"] = [
+            item for item in (report.get("warnings") or [])
+            if not str(item).startswith(warning_prefix)
+        ]
     report.setdefault("checks", []).append({
         "name": "review:post_close_canonical_chain",
         "status": "FAIL" if errors else ("WARNING" if projection_lag else "PASS"),
