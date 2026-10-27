@@ -497,8 +497,7 @@ jobs:
           if not isinstance(value, int) or value < 1:
               raise SystemExit(f"invalid {key}={value!r}")
           with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as handle:
-              handle.write(f"HITHINK_MAX_WORKERS={value}\n")
-          print(f"provider concurrency: {key}={value}")
+              handle.write(f"HITHINK_MAX_WORKERS={value}\n")          print(f"provider concurrency: {key}={value}")
       - name: Run data-only snapshot
         id: capture
         # Scheduled pulses and user requests share the same phase-aware producer.
@@ -997,8 +996,7 @@ jobs:
           elif is_broker_account_fact_sync:
               # Broker account-fact synchronization may contain a
               # subscription/allotment record without an ETF execution event.
-              # It is state synchronization only; do not require or fabricate
-              # a canonical ETF trade event.
+              # It is state synchronization only; do not require or fabricate              # a canonical ETF trade event.
               pass
           else:
             trade = obj.get("trade_event")
@@ -1497,8 +1495,7 @@ jobs:
               "task_run_id": str(request.get("task_run_id") or "").strip(),
               "occurrence_id": str(request.get("occurrence_id") or "").strip(),
               "source": str(request.get("source") or "").strip(),
-              "entry_mode": str(request.get("entry_mode") or "").strip(),
-              "requested_at_beijing": str(request.get("requested_at_beijing") or "").strip(),
+              "entry_mode": str(request.get("entry_mode") or "").strip(),              "requested_at_beijing": str(request.get("requested_at_beijing") or "").strip(),
               "market_date": str(request.get("market_date") or "").strip(),
           }
           decision = json.loads(Path("data/state/decision_context.json").read_text(encoding="utf-8"))
@@ -1592,7 +1589,7 @@ jobs:
 
           recovery_path = Path(os.environ.get("FORMAL_CONTEXT_RECOVERY_REQUEST") or "")
           if recovery_path.is_file():
-    try:
+              try:
                   recovery_obj = json.loads(recovery_path.read_text(encoding="utf-8"))
               except (OSError, json.JSONDecodeError):
                   recovery_obj = {}
