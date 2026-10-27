@@ -116,6 +116,7 @@ jobs:
           set -euo pipefail
           python scripts/run_system_readiness_preflight.py --json > system_readiness_preflight.json
           test -s system_readiness_preflight.json
+          cat system_readiness_preflight.json
           python - <<'PY'
           import json
           from pathlib import Path
