@@ -783,7 +783,7 @@ def run(root: Path = ROOT) -> dict:
         )
         check(
             f"nonproduction_validation:{rel}:artifact",
-            bool(text) and "actions/upload-artifact@v4" in text and artifact_path and artifact_path in text,
+            bool(text) and "actions/upload-artifact@v7" in text and artifact_path and artifact_path in text,
             f"validation evidence is uploaded as artifact path={artifact_path}",
         )
 
