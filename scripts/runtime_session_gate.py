@@ -318,7 +318,7 @@ def main() -> int:
     schedule_observation = resolve_scheduled_pulse(scheduled_cron, now, cadence_seconds=int(policy.get("target_cadence_seconds", 600)))
     scheduled_close_intent = (
         event_name == "schedule"
-        and scheduled_cron == "0,10 7 * * 1-5"
+        and scheduled_cron == "5,15,25,35,45,55 7 * * 1-5"
     )
     boundary_close_intent = scheduled_close_boundary_intent(now, event_name, scheduled_cron)
     calendar = load_json(ROOT / "config" / "market" / "a_share_trading_calendar_2026.json")
