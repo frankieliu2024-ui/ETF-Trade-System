@@ -79,7 +79,7 @@ jobs:
           print({"eligible": eligible, **pulse})
           PY
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         if: ${{ steps.pulse_gate.outputs.eligible == 'true' }}
         with:
           node-version: "22"
