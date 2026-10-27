@@ -14,12 +14,9 @@ from confirmed_trade_facts import canonical_etf_fee_projection, trade_signature
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 STATE = ROOT / "data" / "state"
 EQUITY = STATE / "etf_strategy_equity.json"
-DASHBOARD = ROOT / "ETF当前状态_DASHBOARD.md"
 ARCHIVE = ROOT / "ETF市场行情档案_2026.md"
 EXPERIENCE = ROOT / "ETF交易复盘与经验库_2026.md"
 TZ = timezone(timedelta(hours=8))
-DASH_START = "<!-- AUTO_TRADE_FACT_CORRECTIONS_START -->"
-DASH_END = "<!-- AUTO_TRADE_FACT_CORRECTIONS_END -->"
 ARCHIVE_START = "<!-- AUTO_TRADE_FACT_CORRECTIONS_START -->"
 ARCHIVE_END = "<!-- AUTO_TRADE_FACT_CORRECTIONS_END -->"
 EXPERIENCE_START = "<!-- AUTO_TRADE_FACT_CORRECTIONS_START -->"
@@ -282,9 +279,6 @@ def main() -> int:
     upsert_formal_line(ROOT, ARCHIVE.name, ARCHIVE_START, ARCHIVE_END, correction_key, f"- {line}")
     upsert_formal_line(ROOT, EXPERIENCE.name, EXPERIENCE_START, EXPERIENCE_END, correction_key, f"- 事实补充｜{line} 不新增CASE、不改变历史交易判断。")
     summary = equity.get("summary") or {}
-    dashboard_line = f"成交费用补充：{target} {fee:.2f}元已确认；ETF累计已确认费用{float(summary.get('known_fees') or 0):.2f}元；ETF策略Known-net收益率约{float(summary.get('known_net_current_strategy_return_pct') or 0):.2f}%。"
-    upsert_formal_line(ROOT, DASHBOARD.name, DASH_START, DASH_END, correction_key, f"- {dashboard_line}")
-
     receipt = {
         "status": "RECONCILED" if already_confirmed_same else "APPLIED",
         "trade_event_id": event_id,
