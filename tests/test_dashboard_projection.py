@@ -145,8 +145,20 @@ class DashboardProjectionTests(unittest.TestCase):
         self.assertEqual(format_position_pnl({"market_value": 90}), "—")
 
     def test_dashboard_cost_price_fallback_is_rendered(self):
-        rendered = build_dashboard({"positions": [{"name": "测试ETF", "code": "159999", "quantity": 100, "cost_price": 1.234, "current_price": 1.250, "market_value": 125.0}]})
-        self.assertIn("|测试ETF（159999）|100|1.234|1.250|125.00元|", rendered)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "config/market").mkdir(parents=True)
+            (root / "config/market/etf_monitor_universe.json").write_text(
+                json.dumps({"objects": [{"code": "159999", "name": "测试ETF"}]}), encoding="utf-8"
+            )
+            rendered = build_dashboard_block(
+                {"positions": [{"name": "测试ETF", "code": "159999", "quantity": 100, "cost_price": 1.234, "current_price": 1.250, "market_value": 125.0}],
+                 "total_asset": 125.0, "stock_market_value": 125.0},
+                {"summary": {}},
+                "",
+                root,
+            )
+            self.assertIn("|测试ETF（159999）|100|1.234|1.250|125.00元|", rendered)
 
     def test_dashboard_builder_renders_selector_dict_as_markdown(self):
         with tempfile.TemporaryDirectory() as tmp:
