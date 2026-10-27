@@ -3364,7 +3364,7 @@ def is_formal_decision_completion(request: dict) -> bool:
     binding = request.get("presentation_binding") if isinstance(request.get("presentation_binding"), dict) else {}
     return (
         str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION"
-        and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_POST_CLOSE_REVIEW"
+        and str(request.get("formal_fact_type") or "").strip().upper() in {"FORMAL_POST_CLOSE_REVIEW", "FORMAL_CURRENT_MAIN_DECISION"}
         and str(request.get("task_id") or "").strip() == "ETF正式决策"
         and str(request.get("report_type") or request.get("report_kind") or binding.get("report_type") or "").strip().upper() == "ETF_FORMAL_DECISION"
         and str(request.get("interaction_scenario") or "").strip().upper() == "FORMAL_DECISION"
