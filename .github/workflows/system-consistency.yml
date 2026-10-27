@@ -109,6 +109,22 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
+      - name: Run read-only ETF system readiness preflight
+        id: system_readiness_preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/run_system_readiness_preflight.py --json > system_readiness_preflight.json
+          test -s system_readiness_preflight.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          result = json.loads(Path("system_readiness_preflight.json").read_text(encoding="utf-8"))
+          assert result.get("read_only") is True
+          assert result.get("production_notification_sent") is False
+          print("system readiness preflight:", result.get("status"))
+          PY
+
       - name: Run bounded LLM adapter contract tests
         shell: bash
         run: |
@@ -232,6 +248,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: system-consistency-${{ github.run_id }}
-          path: ${{ github.workspace }}/system_consistency.json
+          path: |
+            ${{ github.workspace }}/system_consistency.json
+            ${{ github.workspace }}/system_readiness_preflight.json
           if-no-files-found: error
 
