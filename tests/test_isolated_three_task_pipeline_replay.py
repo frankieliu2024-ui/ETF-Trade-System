@@ -93,7 +93,7 @@ class IsolatedThreeTaskPipeline:
                 "【全部实际持仓】", "【最终管理动作】", "【关键风险与改变判断的条件】",
                 "【信息不足在哪里】", "【执行边界】", "【置信度】", "【最可能出错的地方】",
             ]
-            self.state.final_content = "【ETF正式决策】2026-09-23 20:30 正式判断\\n" + "\\n".join(sections)
+            self.state.final_content = "【ETF正式决策】2026-09-23 20:30 正式判断\n" + "\n".join(sections)
         else:
             self.state.final_content = f"{title}2026-09-23 20:30 模拟正文"
 
