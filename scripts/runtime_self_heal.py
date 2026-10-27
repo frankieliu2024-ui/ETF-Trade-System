@@ -434,12 +434,6 @@ def assess(now: datetime | None = None) -> dict:
         classification, action, reason = "DISABLED", "NONE", "self-healing disabled by runtime policy"
     elif consistency_gate["blocks_market_recovery"]:
         classification, action, reason = "CONSISTENCY_REGRESSION", "ESCALATE", "system consistency has a hard failure that is not proven orthogonal to canonical market recovery"
-    elif formal_replay_path:
-        # The durable parent already exists and the canonical watchdog has an
-        # existing recovery input. Continue the same parent through the same
-        # market-snapshot producer; do not escalate a recoverable handoff gap
-        # and do not create a replacement request.
-        classification, action, reason = "FORMAL_PARENT_RECOVERY_REQUIRED", "REPLAY_FORMAL_REQUEST", f"durable Formal Decision parent {formal_replay_parent_id} has no same-request derived context and no BUSINESS_DECISION_SOURCE; continue the existing parent through the canonical producer"
     elif same_day_missing:
         last_trigger = parse_dt(previous.get("last_snapshot_refresh_trigger_at"))
         seconds_since_trigger = int((now - last_trigger).total_seconds()) if last_trigger else None
@@ -467,6 +461,13 @@ def assess(now: datetime | None = None) -> dict:
             classification, action, reason = "REPAIR_COOLDOWN", "NONE", f"snapshot refresh is in cooldown ({seconds_since_trigger}s < {min_retrigger}s)"
         else:
             classification, action, reason = "SCHEDULE_MISSED_OR_STALE", "REFRESH_SNAPSHOT", f"capture age={age_seconds!r}s, health={health_status}, threshold={trigger_age}s"
+    elif formal_replay_path:
+        # Formal parent recovery is deliberately evaluated only after the
+        # canonical market snapshot has passed its freshness/node checks.
+        # A stale or missing market snapshot must always be repaired first;
+        # an unfinished Formal parent must never consume the watchdog's sole
+        # recovery decision and suppress market-data production.
+        classification, action, reason = "FORMAL_PARENT_RECOVERY_REQUIRED", "REPLAY_FORMAL_REQUEST", f"durable Formal Decision parent {formal_replay_parent_id} has no same-request derived context and no BUSINESS_DECISION_SOURCE; continue the existing parent through the canonical producer"
     elif formal_handoff_path:
         # Formal Decision completion is owned by the decision actor/canonical
         # completion owner. This is an observation-only projection gap and
