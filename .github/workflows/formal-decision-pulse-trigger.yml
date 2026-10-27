@@ -33,7 +33,7 @@ jobs:
           OCCURRENCE_ID: scheduled_pulse_${{ github.event.workflow_run.id }}
         run: |
           set -euo pipefail
-          result=$(python scripts/create_pulse_formal_trigger.py --task-run-id "$TASK_RUN_ID" --occurrence-id "$OCCURRENCE_ID")
+          result=$(PYTHONPATH=. python scripts/create_pulse_formal_trigger.py --task-run-id "$TASK_RUN_ID" --occurrence-id "$OCCURRENCE_ID")
           echo "$result"
           status=$(python -c 'import json,sys; print(json.loads(sys.argv[1])["status"])' "$result")
           echo "status=$status" >> "$GITHUB_OUTPUT"
