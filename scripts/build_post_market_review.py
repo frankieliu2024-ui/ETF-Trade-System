@@ -177,6 +177,29 @@ def main() -> None:
     atomic_json_write(ROOT / "data" / "state" / "review_context.json", result["review"])
     if result["event"]["market_close"]:
         atomic_json_write(ROOT / "post_market_review" / "post_market_review_event.json", result["event"])
+        # Reconcile the canonical CURRENT pointer after the close-review producer
+        # has materialized the same-day closure. This only advances the derived
+        # pointer and never creates a closure or invents review evidence.
+        market_date = str(result["event"].get("market_date") or "").strip()
+        closure_path = ROOT / "data" / "state" / f"close_review_closure_{market_date}.json"
+        if market_date and closure_path.exists():
+            try:
+                closure = json.loads(closure_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                closure = {}
+            if str(closure.get("market_date") or "") == market_date and str(closure.get("status") or "").upper() == "CLOSED":
+                current_path = ROOT / "data" / "state" / "CURRENT.json"
+                current = read_current(ROOT)
+                pointer = {
+                    "status": "CLOSED",
+                    "market_date": market_date,
+                    "path": str(closure_path.relative_to(ROOT)).replace("\\", "/"),
+                    "formal_review_path": f"events/reviews/{market_date}.json",
+                    "case_id": closure.get("case_id", ""),
+                }
+                if current.get("close_review_closure") != pointer:
+                    current["close_review_closure"] = pointer
+                    atomic_json_write(current_path, current)
     print(json.dumps({"ok": True, "market_close": result["event"]["market_close"], "status": result["event"]["status"], "close_data_status": result["event"]["close_data_contract"]["status"], "trade_output_generated": False}, ensure_ascii=False))
 
 
