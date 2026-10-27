@@ -1005,8 +1005,8 @@ jobs:
               trade = obj.get("trade_event")
               if not isinstance(trade, dict):
                   related_ids = obj.get("related_trade_event_ids")
-                if not isinstance(related_ids, list) or not related_ids:
-                    raise SystemExit("trade-bearing STATE_SYNC_ONLY replay must contain trade_event or related_trade_event_ids")
+                  if not isinstance(related_ids, list) or not related_ids:
+                      raise SystemExit("trade-bearing STATE_SYNC_ONLY replay must contain trade_event or related_trade_event_ids")
                 # A broker screenshot may confirm several already-persisted
                 # executions at once. Validate every referenced canonical event
                 # without creating or rewriting any trade event.
