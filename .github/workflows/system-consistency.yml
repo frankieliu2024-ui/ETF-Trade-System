@@ -114,9 +114,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          set +e
           python scripts/run_system_readiness_preflight.py --json > system_readiness_preflight.json
+          preflight_status=$?
+          set -e
           test -s system_readiness_preflight.json
           cat system_readiness_preflight.json
+          if [[ $preflight_status -ne 0 ]]; then exit "$preflight_status"; fi
           python - <<'PY'
           import json
           from pathlib import Path
