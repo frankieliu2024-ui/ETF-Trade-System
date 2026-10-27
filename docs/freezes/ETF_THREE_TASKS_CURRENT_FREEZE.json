@@ -130,7 +130,7 @@
     },
     {
       "task_id": "ETF正式决策",
-      "business_chain": "entry identity → parent request → request-bound facts/DWP → gate → FINAL_CONTENT → SCHEDULED_REVIEW_COMPLETION → decision-notification → formal canonical event → REPORT → notification_center → PushPlus",
+      "business_chain": "entry identity → current main fixed-period facts by market → FINAL_CONTENT → SCHEDULED_REVIEW_COMPLETION → decision-notification → formal canonical event → REPORT → notification_center → PushPlus",
       "interaction_scenario": "FORMAL_DECISION",
       "prompt_snapshot": {
         "status": "PERSISTED_CURRENT_LIVE_PROMPT",
@@ -153,21 +153,20 @@
         "entry_mode",
         "task_run_id",
         "occurrence_id",
-        "parent_request_id",
-        "request_id",
         "market_date",
         "decision_id",
         "report_id",
         "content_hash"
       ],
       "invariants": [
-        "one parent request",
         "one FINAL_CONTENT",
         "one completion",
         "one event",
         "one REPORT",
         "one notification",
-        "no automatic trading"
+        "no automatic trading",
+        "direct current-main fixed-period fact consumption",
+        "market-layered facts; missing one market is non-blocking"
       ],
       "owner_paths": [
         "ETF_SYSTEM_INDEX.md",
@@ -267,4 +266,3 @@
   "evidence_index_path": "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/EVIDENCE_INDEX.md",
   "schedule_readback_path": "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/schedule-readback.json"
 }
-
