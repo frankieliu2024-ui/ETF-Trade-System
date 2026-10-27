@@ -5,6 +5,11 @@ from urllib.error import HTTPError
 from pathlib import Path
 import base64
 import json
+import sys
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT / "scripts") not in sys.path:
+    sys.path.insert(0, str(ROOT / "scripts"))
 
 from scripts import notification_center
 from scripts import scheduled_review_completion_recovery as recovery
