@@ -341,6 +341,7 @@ def normalize_dashboard_projection(text: str, root: Path = ROOT, account: dict |
             "- 已关闭Trial仅在下一可执行节点独立评估降低风险或退出；本投影不生成订单。",
             "- 当前无待处理结算现金约束。",
         ]
+    result = "\n".join(lines)
     # Keep the registered correction block present even when the input
     # projection had no historical correction rows.
     if "<!-- AUTO_TRADE_FACT_CORRECTIONS_START -->" not in result:
