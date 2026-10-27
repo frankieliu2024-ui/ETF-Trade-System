@@ -614,6 +614,35 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         self.assertEqual(payload["presentation_binding"]["content_hash"], hashlib.sha256(b"FROZEN TRADE REPORT").hexdigest())
 
 
+    def test_system_review_event_owner_recovers_incomplete_binding(self):
+        from scripts import process_state_sync_request as owner
+        request = {
+            "formal_fact_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW",
+            "request_id": "manual-system-review-1105",
+            "task_id": "ETF系统复核",
+            "task_run_id": "manual-system-review-1105",
+            "occurrence_id": "manual-system-review-1105",
+            "requested_at_beijing": "2026-10-27T11:05:00+08:00",
+            "final_content": "FROZEN SYSTEM REVIEW",
+            "presentation_binding": {
+                "report_type": "ETF_SYSTEM_REVIEW",
+                "task_run_id": "manual-system-review-1105",
+            },
+            "system_review": {"market_date": "2026-10-27"},
+        }
+        with TemporaryDirectory() as directory:
+            with patch.object(owner, "ROOT", Path(directory)):
+                recorded, replay = owner.record_scheduled_system_review(request)
+                self.assertTrue(recorded)
+                self.assertFalse(replay)
+                event = json.loads((Path(directory) / "events" / "reviews" / "system_manual-system-review-1105.json").read_text())
+        binding = event["presentation_binding"]
+        self.assertEqual(binding["request_id"], "manual-system-review-1105")
+        self.assertEqual(binding["occurrence_id"], "manual-system-review-1105")
+        self.assertEqual(binding["report_id"], "etf_system_review:manual-system-review-1105")
+        self.assertEqual(binding["full_content"], "FROZEN SYSTEM REVIEW")
+
+
 if __name__ == "__main__":
     unittest.main()
 
