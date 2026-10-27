@@ -248,6 +248,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: system-consistency-${{ github.run_id }}
-          path: ${{ github.workspace }}/system_consistency.json
+          path: |
+            ${{ github.workspace }}/system_consistency.json
+            ${{ github.workspace }}/system_readiness_preflight.json
           if-no-files-found: error
 
