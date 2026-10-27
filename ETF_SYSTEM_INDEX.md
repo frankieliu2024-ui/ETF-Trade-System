@@ -20,7 +20,7 @@
 - **交易域**：`ETF规则_MASTER.md`。
 - **数据与市场监测域**：`ETF与市场监测数据接口使用规范.md`。负责数据资格、三层监测语义、market phase、Point-in-Time、provider降级、代理、新鲜度、质量验收与查询时补采边界。当前对象、provider顺序和runtime参数读取机器配置，不从INDEX复制。
 - **主动通知域**：`docs/ETF主动通知体系.md`。负责通知资格、事件语义、标题、固定节点、可比事实门、去重、恢复和展示边界。
-- **Formal Decision执行域**：`docs/Formal Decision执行与用户回复协议.md`。负责Formal Decision的唯一父请求、WAIT/READY/TERMINAL三态消费、业务回复时序和用户可见边界；不定义交易规则，不新增生产链。
+- **Formal Decision执行域**：`docs/Formal Decision执行与用户回复协议.md`。负责Formal Decision直接消费current main固定时段事实、判断路径、业务回复时序和用户可见边界；不创建本次判断的新事实请求，不定义交易规则，不新增生产链。
 - **生产变更与并发治理域**：`docs/生产变更与并发写入协议_V1.0.md`。负责生产变更准入、writer ownership、latest-main、并发、mutation gateway、状态producer和组合验收。`config/maintenance/production_mutation_protocol.json`只是该规范的机器可执行镜像，不是第二套规则源。
 
 - **自动维护与运行保障横向协议**：`docs/ETF自动维护与运行保障协议_V1.0.md`。只负责自动运行场景的触发、唯一owner、幂等、回读、投影、失败分类和人工接管；不新增交易规则、数据规则、通知规则、Formal Decision业务规则、workflow、state或writer。机器镜像为`config/maintenance/automatic_maintenance_protocol.json`，不是第二套业务规则源。
