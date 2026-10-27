@@ -397,8 +397,7 @@ jobs:
               request_id = str(request.get("request_id") or "").strip()
               parent_id = str(request.get("parent_request_id") or "").strip() or request_id
               if not request_id or parent_id != request_id:
-                  raise SystemExit(
-                      f"formal parent identity missing or conflicting: "
+                  raise SystemExit(                      f"formal parent identity missing or conflicting: "
                       f"request_id={request_id} parent_request_id={parent_id}"
                   )
               request["parent_request_id"] = parent_id
@@ -797,8 +796,7 @@ jobs:
                   continue
               try:
                   context = json.loads(shown.stdout)
-              except json.JSONDecodeError:
-                  continue
+              except json.JSONDecodeError:                  continue
               trigger = ((context.get("decision_fact_pack") or {}).get("trigger") or {})
               package = ((context.get("decision_fact_pack") or {}).get("decision_work_package") or {})
               # The request envelope is written before the request-bound
@@ -1197,8 +1195,7 @@ jobs:
             for attempt in 1 2 3; do
             git fetch origin main
             if git rebase origin/main && git push origin HEAD:main; then
-              break
-            fi
+              break            fi
             git rebase --abort || true
             if [ "$attempt" = "3" ]; then
               echo "bounded main publication retry exhausted" >&2
@@ -1466,7 +1463,7 @@ jobs:
         # Full decision preparation is request/state-sync bound. Scheduled
         # snapshots keep canonical market facts and reusable Discovery current;
         # formal requests/recovery rebuild the canonical decision context.
-        if: ${{ steps.query_context.outcome == 'success' && (steps.state_sync.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (steps.triggering_request.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (github.event_name == 'push' || steps.state_sync.outputs.processed == 'true' || github.event.inputs.formal_context_recovery_request != '') && github.event.inputs.probe_only != 'true' }}
+        if: ${{ steps.query_context.outcome == 'success' && (steps.state_sync.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (steps.triggering_request.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (github.event_name == 'push' || steps.state_sync.outputs.processed == 'true' || steps.snapshot_result.outputs.snapshot_written == 'true' || github.event.inputs.formal_context_recovery_request != '') && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_state_context.py --decision-ready-only
 
       - name: Promote formal request gate after full context validation
@@ -1597,8 +1594,7 @@ jobs:
                   formal_ids.append(triggering_id or str(obj.get("request_id") or "").strip())
 
           recovery_path = Path(os.environ.get("FORMAL_CONTEXT_RECOVERY_REQUEST") or "")
-          if recovery_path.is_file():
-              try:
+          if recovery_path.is_file():              try:
                   recovery_obj = json.loads(recovery_path.read_text(encoding="utf-8"))
               except (OSError, json.JSONDecodeError):
                   recovery_obj = {}
