@@ -2519,6 +2519,7 @@ def record_scheduled_system_review(request: dict) -> tuple[bool, bool]:
         request.get("market_date")
         or system_review.get("market_date")
         or system_review.get("a_share_latest_formal_market_date")
+        or str(request.get("requested_at_beijing") or "")[:10]
         or ""
     ).strip()
     report_id = str(binding.get("report_id") or f"etf_system_review:{occurrence}").strip()
