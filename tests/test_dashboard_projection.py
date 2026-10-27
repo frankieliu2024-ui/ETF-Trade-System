@@ -60,6 +60,27 @@ class DashboardProjectionTests(unittest.TestCase):
             self.assertEqual(result["main_candidate"], "电网设备ETF（159326）")
             self.assertIn("515880", result["lifecycle"])
 
+    def test_completed_report_presentation_populates_dashboard_decision(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "events" / "reviews").mkdir(parents=True)
+            (root / "data" / "state").mkdir(parents=True)
+            (root / "events" / "reviews" / "formal_test.json").write_text(json.dumps({
+                "event_type": "FORMAL_DECISION_REPORT",
+                "reviewed_at_beijing": "2026-10-27T14:55:57+08:00",
+                "presentation_binding": {
+                    "full_content": "风险许可为保留现金、管理既有仓位、暂不新增。候选中仅将银行ETF富国（159887）评为机会ETF。建议新增部署0元，实际释放0份。"
+                }
+            }, ensure_ascii=False), encoding="utf-8")
+            (root / "data" / "state" / "account_fact.json").write_text(json.dumps({
+                "updated_at": "2026-10-27T15:36:44+08:00",
+                "positions": []
+            }), encoding="utf-8")
+            decision = latest_canonical_formal_decision(root)
+            self.assertEqual(decision["risk_permission"], "保留现金、管理既有仓位、暂不新增")
+            self.assertIn("银行ETF富国", decision["main_candidate"])
+            self.assertIn("新增部署0元", decision["amount_action"])
+
     def test_latest_dashboard_decision_ignores_stage_review(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
