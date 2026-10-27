@@ -62,6 +62,18 @@ def looks_like_etf(position: dict, code: str, etf_codes: set[str]) -> bool:
     name = str(first(position, "name", "security_name", "instrument_name") or "")
     return code in etf_codes or "ETF" in security_type or "ETF" in name.upper()
 
+def looks_like_other_account_asset(position: dict, code: str) -> bool:
+    """Use one canonical classifier for bonds and other non-ETF holdings."""
+    asset_type = str(position.get("asset_type") or "").upper()
+    security_type = str(first(position, "security_type", "instrument_type", "type") or "").upper()
+    name = str(first(position, "name", "security_name", "instrument_name") or "")
+    return (
+        asset_type == "OTHER"
+        or security_type in {"CONVERTIBLE_BOND", "BOND", "OTHER"}
+        or "转债" in name
+        or "可转债" in name
+    )
+
 
 
 
@@ -76,7 +88,7 @@ def active_account_asset_codes(root: Path | None = None, account: dict | None = 
         code = normalize_code(first(position, "code", "symbol", "security_code", "instrument_code"))
         quantity = numeric(first(position, "quantity", "qty", "position", "shares", "volume"))
         if not code or quantity is None or quantity <= 0: continue
-        if str(position.get("asset_type") or "").upper() == "OTHER" or str(position.get("security_type") or "").upper() in {"CONVERTIBLE_BOND", "BOND"}:
+        if looks_like_other_account_asset(position, code):
             membership["other"].add(code)
         else:
             membership["etf" if looks_like_etf(position, code, etf_codes) else "stocks"].add(code)
@@ -160,10 +172,7 @@ def build() -> dict:
         # Convertible bonds and other non-stock account assets remain in the
         # account fact, but must not enter the stock runtime membership check.
         # Their presence must not block market recovery or formal ETF analysis.
-        is_other_account_asset = (
-            security_type in {"OTHER", "BOND", "CONVERTIBLE_BOND"}
-            or str(position.get("asset_type") or "").upper() == "OTHER"
-        )
+        is_other_account_asset = looks_like_other_account_asset(position, code)
         if is_other_account_asset or looks_like_etf(position, code, etf_codes):
             continue
 
