@@ -23,6 +23,16 @@ if not snapshot_path.exists():
     fail(f'CURRENT.latest_snapshot not found: {snapshot_rel}')
 snapshot = json.loads(snapshot_path.read_text(encoding='utf-8'))
 
+# A published close node must carry an explicit effective market boundary.
+# Provider observation/capture time is not a substitute for the 15:00 market time.
+if str(snapshot.get('node') or '').lower() == 'close':
+    expected_effective = f"{snapshot.get('market_date')}T15:00:00+08:00"
+    if str(snapshot.get('effective_market_time_beijing') or '') != expected_effective:
+        fail('close snapshot effective_market_time_beijing missing or incorrect')
+    current_effective = str((current.get('data_freshness') or {}).get('effective_market_time_beijing') or '')
+    if current_effective != expected_effective:
+        fail('CURRENT.data_freshness.effective_market_time_beijing != close boundary')
+
 for field in ('market_date', 'captured_at'):
     if str(current.get(field) or '') != str(snapshot.get(field) or ''):
         fail(f'CURRENT.{field} != snapshot.{field}')
