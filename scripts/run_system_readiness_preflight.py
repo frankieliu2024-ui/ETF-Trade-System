@@ -25,7 +25,8 @@ REQUIRED_FILES = (
     "scripts/scheduled_review_completion_recovery.py",
     "scripts/process_state_sync_request.py",
     "scripts/notification_center.py",
-    "tests/test_isolated_three_task_pipeline_replay.py",\n    "scripts/run_scheduled_system_review_actor.py",
+    "tests/test_isolated_three_task_pipeline_replay.py",
+    "scripts/run_scheduled_system_review_actor.py",
 )
 TASKS = ("ETF系统复核", "ETF交易复盘", "ETF正式决策")
 
@@ -63,7 +64,9 @@ def run_replay() -> dict[str, object]:
         "-q",
         "tests.test_isolated_three_task_pipeline_replay",
         "tests.test_three_task_notification_replay_harness",
-        "tests.test_scheduled_review_completion_recovery",\n        "tests.test_three_task_notification_e2e_fault_injection",\n        "tests.test_task_entry_scheduling_governance",
+        "tests.test_scheduled_review_completion_recovery",
+        "tests.test_three_task_notification_e2e_fault_injection",
+        "tests.test_task_entry_scheduling_governance",
     ]
     env = dict(__import__("os").environ)
     existing_pythonpath = env.get("PYTHONPATH", "")
