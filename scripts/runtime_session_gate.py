@@ -344,10 +344,12 @@ def main() -> int:
         should_capture = in_opening_auction or in_morning or in_midday_recovery or in_afternoon or in_close_grace
         reason = "midday_morning_close_recovery" if in_midday_recovery else ("capture_window" if should_capture else "outside_a_share_capture_window")
 
-    if event_name == "schedule" and schedule_observation["schedule_delay_class"] in {"SEVERELY_DELAYED", "UNKNOWN"}:
-        should_capture = False
-        reason = "stale_scheduled_pulse"
-    elif scheduled_close_intent and should_capture is False and minute >= 15 * 60 and date_text not in set(calendar.get("closed_dates") or []):
+    # A scheduled pulse is a data-capture opportunity, not a freshness gate.
+    # GitHub may deliver it late or without a stable occurrence identity; the
+    # resulting snapshot is still useful and Formal Decision classifies it by
+    # its actual provider timestamp. Never suppress capture merely because the
+    # cron delivery was delayed or ambiguous.
+    if scheduled_close_intent and should_capture is False and minute >= 15 * 60 and date_text not in set(calendar.get("closed_dates") or []):
         should_capture = True
         phase = "POST_CLOSE_RECOVERY"
         reason = "delayed_scheduled_close_recovery"
