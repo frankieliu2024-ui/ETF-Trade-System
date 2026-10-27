@@ -434,11 +434,6 @@ def assess(now: datetime | None = None) -> dict:
         classification, action, reason = "DISABLED", "NONE", "self-healing disabled by runtime policy"
     elif consistency_gate["blocks_market_recovery"]:
         classification, action, reason = "CONSISTENCY_REGRESSION", "ESCALATE", "system consistency has a hard failure that is not proven orthogonal to canonical market recovery"
-    elif formal_handoff_path:
-        # Formal Decision completion is owned by the decision actor/canonical
-        # completion owner. Watchdog observes this projection gap but must not
-        # turn it into a runtime recovery failure or block the next decision.
-        classification, action, reason = "FORMAL_PARENT_HANDOFF_PENDING", "NONE", f"Formal Decision parent {formal_handoff_parent_id} lacks post-reply projection: {formal_handoff_missing}; observation only, no replay and no decision gate"
     elif formal_replay_path:
         # The durable parent already exists and the canonical watchdog has an
         # existing recovery input. Continue the same parent through the same
@@ -472,6 +467,11 @@ def assess(now: datetime | None = None) -> dict:
             classification, action, reason = "REPAIR_COOLDOWN", "NONE", f"snapshot refresh is in cooldown ({seconds_since_trigger}s < {min_retrigger}s)"
         else:
             classification, action, reason = "SCHEDULE_MISSED_OR_STALE", "REFRESH_SNAPSHOT", f"capture age={age_seconds!r}s, health={health_status}, threshold={trigger_age}s"
+    elif formal_handoff_path:
+        # Formal Decision completion is owned by the decision actor/canonical
+        # completion owner. This is an observation-only projection gap and
+        # must never suppress a due A-share pulse or stale-snapshot recovery.
+        classification, action, reason = "FORMAL_PARENT_HANDOFF_PENDING", "NONE", f"Formal Decision parent {formal_handoff_parent_id} lacks post-reply projection: {formal_handoff_missing}; observation only, no replay and no market-refresh gate"
     elif consistency_status == "FAIL":
         classification, action, reason = "CONSISTENCY_REGRESSION", "ESCALATE", "global consistency hard failure remains active; no market refresh is currently required"
     elif not valid_json(QUERY_CONTEXT_PATH) or not valid_json(DECISION_CONTEXT_PATH):
