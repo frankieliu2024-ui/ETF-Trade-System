@@ -199,7 +199,7 @@ def morning_close_already_recorded(market_date: str) -> bool:
     current = read_current(ROOT)
     return current.get("market_date") == market_date and current.get("latest_valid_node") == "1130" and current.get("node_status") == "READY"
 
-def verify_published_snapshot(target: Path, *, market_date: str, node: str, expected_count: int) -> None:
+def verify_published_snapshot(target: Path, *, market_date: str, node: str, expected_count: int, expected_symbols: set[str] | None = None) -> None:
     """Fail closed if the atomic snapshot publication and CURRENT pointer diverge."""
     if not target.exists():
         raise RuntimeError("canonical snapshot publication missing after atomic replace")
@@ -221,6 +221,16 @@ def verify_published_snapshot(target: Path, *, market_date: str, node: str, expe
         raise RuntimeError("published snapshot count mismatch")
     if len({str(row.get("symbol") or "") for row in rows}) != len(rows):
         raise RuntimeError("published snapshot contains duplicate symbols")
+    actual_symbols = {str(row.get("symbol") or "").strip() for row in rows}
+    if expected_symbols is not None and actual_symbols != set(expected_symbols):
+        missing = sorted(set(expected_symbols) - actual_symbols)
+        unexpected = sorted(actual_symbols - set(expected_symbols))
+        raise RuntimeError(f"published snapshot object identity mismatch: missing={missing}; unexpected={unexpected}")
+    for row in rows:
+        if str(row.get("quality_status") or "").upper() not in {"PASS", "DEGRADED"}:
+            raise RuntimeError(f"published snapshot contains non-consumable row: {row.get('symbol')}")
+        if not row.get("as_of_beijing") or not row.get("captured_at_beijing"):
+            raise RuntimeError(f"published snapshot row missing timestamp: {row.get('symbol')}")
     if str(current.get("market_date") or "") != market_date:
         raise RuntimeError("CURRENT.market_date mismatch after publication")
     if str(current.get("latest_valid_node") or "") != node:
@@ -747,7 +757,7 @@ def main() -> int:
     provider_times = [str(item.get("as_of_beijing") or "") for item in rows if item.get("as_of_beijing")]
     provider_as_of = max(provider_times) if provider_times else ""
     update_current(root=ROOT, market_date=market_date, node=node, captured_at=captured, latest_snapshot=str(target.relative_to(ROOT)).replace("\\", "/"), snapshot_commit=os.environ.get("GITHUB_SHA", ""), node_status=("READY" if overall_quality == "PASS" else "DEGRADED"), data_freshness={"status": overall_quality, "provider": snapshot_provider, "count": len(rows), "etf_universe_count": len(ETF), "capture_mode": capture_mode, "market_phase": market_phase, "captured_at": captured, "captured_at_beijing": captured, "provider_as_of": provider_as_of, "target_cadence_seconds": POLICY["target_cadence_seconds"], "fresh_max_age_seconds": POLICY["fresh_max_age_seconds"], "degraded_max_age_seconds": POLICY["degraded_max_age_seconds"], "acquisition_seconds": acquisition_seconds})
-    verify_published_snapshot(target, market_date=market_date, node=node, expected_count=len(ETF) + len(INDEX))
+    verify_published_snapshot(target, market_date=market_date, node=node, expected_count=len(ETF) + len(INDEX), expected_symbols={code for code, _ in ETF} | {code for code, _ in INDEX})
     write_runtime_health({"status": runtime_status, "quality_status": overall_quality, "market_date": market_date, "node": node, "market_phase": market_phase, "run_started_at": run_started_at, "capture_started_at_beijing": capture_started_at, "captured_at": captured, "captured_at_beijing": captured, "provider_as_of": provider_as_of, "acquisition_seconds": acquisition_seconds, "count": len(rows), "latest_snapshot": str(target.relative_to(ROOT)).replace("\\", "/"), "analysis_coverage": coverage})
     print(json.dumps({"ok": True, "snapshot": str(target), "count": len(rows), "market_date": market_date, "node": node, "market_phase": market_phase, "captured_at_beijing": captured, "provider_as_of": provider_as_of, "acquisition_seconds": acquisition_seconds, "etf_universe_count": len(ETF)}, ensure_ascii=False))
     return 0
