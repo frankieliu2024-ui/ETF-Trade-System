@@ -150,7 +150,9 @@
           "overseas_fact": "latest_pre_run_quality_and_PIT_accepted_snapshot",
           "overseas_missing_or_stale_is_non_blocking": true,
           "object_layer_missing_is_non_blocking": true,
-          "risk_or_lifecycle_missing_is_restricted_judgment_not_task_abort": true
+          "risk_or_lifecycle_missing_is_restricted_judgment_not_task_abort": true,
+          "market_layers_independent": true,
+          "all_market_layers_non_blocking": true
         },
         "completion_push_required_in_same_run": true,
         "explicit_dispatch_role": "SAME_RUN_RECOVERY_ONLY",
@@ -173,7 +175,25 @@
         "market_layer_missing_non_blocking": true,
         "object_layer_missing_non_blocking": true,
         "minimum_business_fact_rule": "account_trades_holdings_core_readable_and_at_least_one_legal_market_fact",
-        "partial_fact_non_blocking": true
+        "partial_fact_non_blocking": true,
+        "market_layers": {
+          "a_share": "latest_valid_pre_run_snapshot; fallback_latest_quality_and_PIT_accepted_close",
+          "us": "latest_valid_pre_run_snapshot; use latest legal session reference outside US session",
+          "japan": "latest_valid_pre_run_snapshot",
+          "korea": "latest_valid_pre_run_snapshot",
+          "hong_kong": "latest_valid_pre_run_snapshot",
+          "taiwan": "latest_valid_pre_run_snapshot",
+          "commodities": "latest_valid_pre_run_snapshot",
+          "rates": "latest_valid_pre_run_snapshot",
+          "fx": "latest_valid_pre_run_snapshot"
+        },
+        "market_layer_freshness": {
+          "formal_max_age_seconds": 900,
+          "degraded_max_age_seconds": 1500,
+          "timeout_over_seconds": 1500,
+          "classification": "per_market",
+          "missing_or_stale_market_non_blocking": true
+        }
       }
     }
   ],
