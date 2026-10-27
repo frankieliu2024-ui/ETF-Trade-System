@@ -42,6 +42,16 @@ class RuntimeRecoveryConsistencyGateTests(unittest.TestCase):
         self.assertEqual(gate["classification"], "GLOBAL_FAIL_REPAIRABLE_DERIVED_MEMBERSHIP")
         self.assertIn("remains FAIL", gate["recovery_note"])
 
+    def test_missing_expected_account_member_is_not_repairable(self):
+        with mock.patch("scripts.build_stock_context.active_account_asset_codes", return_value={"stocks": {"127118"}, "other": set()}), \
+             mock.patch.object(runtime_self_heal, "load_json", side_effect=lambda path, default=None: {"default_stock_layer": {"detected_non_etf_stocks": []}} if str(path).endswith("stock_context.json") else ({"positions": []} if str(path).endswith("account_fact.json") else default)):
+            self.assertFalse(runtime_self_heal._repairable_derived_membership_mismatch())
+
+    def test_extra_explicit_other_member_is_repairable_only_when_no_stock_is_missing(self):
+        with mock.patch("scripts.build_stock_context.active_account_asset_codes", return_value={"stocks": set(), "other": {"127118"}}), \
+             mock.patch.object(runtime_self_heal, "load_json", side_effect=lambda path, default=None: {"default_stock_layer": {"detected_non_etf_stocks": [{"code": "127118"}]}} if str(path).endswith("stock_context.json") else ({"positions": []} if str(path).endswith("account_fact.json") else default)):
+            self.assertTrue(runtime_self_heal._repairable_derived_membership_mismatch())
+
     def test_unknown_membership_drift_remains_blocking(self):
         with mock.patch.object(runtime_self_heal, "_repairable_derived_membership_mismatch", return_value=False):
             gate = runtime_self_heal.consistency_market_recovery_gate({
