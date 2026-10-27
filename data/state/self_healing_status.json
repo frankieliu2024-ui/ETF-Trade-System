@@ -1,28 +1,26 @@
 {
   "schema_version": "1.1",
-  "checked_at": "2026-10-27T10:16:41+08:00",
+  "checked_at": "2026-10-27T10:18:49+08:00",
   "mode": "DETERMINISTIC_RUNTIME_SELF_HEALING",
   "enabled": true,
-  "classification": "CONSISTENCY_REGRESSION",
-  "recommended_action": "ESCALATE",
-  "reason": "system consistency has a hard failure that is not proven orthogonal to canonical market recovery",
+  "classification": "FORMAL_PARENT_RECOVERY_REQUIRED",
+  "recommended_action": "REPLAY_FORMAL_REQUEST",
+  "reason": "durable Formal Decision parent fd_20261026_112739_scheduled_formal_review_0bba5094 has no same-request derived context and no BUSINESS_DECISION_SOURCE; continue the existing parent through the canonical producer",
   "market_open_date": true,
   "watch_window_active": true,
   "same_day_current_required": true,
   "same_day_current_missing": true,
   "current_capture_at": "2026-10-26T16:16:33+08:00",
-  "current_capture_age_seconds": 64808,
+  "current_capture_age_seconds": 64936,
   "expected_pulse_at": null,
   "expected_pulse_missing": false,
   "runtime_health_status": "SKIPPED",
-  "system_consistency_status": "FAIL",
+  "system_consistency_status": "PASS",
   "market_recovery_consistency_gate": {
-    "global_status": "FAIL",
-    "blocks_market_recovery": true,
-    "classification": "GLOBAL_FAIL_BLOCKS_MARKET_RECOVERY_FAIL_SAFE",
-    "errors": [
-      "workflow:auction_cron: 09:15/09:20/09:25 auction pulses scheduled"
-    ]
+    "global_status": "PASS",
+    "blocks_market_recovery": false,
+    "classification": "NO_GLOBAL_HARD_FAIL",
+    "errors": []
   },
   "master_rules_version": "V2.2.34",
   "current_rules_version": "V2.2.34",
