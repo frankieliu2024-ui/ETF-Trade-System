@@ -451,8 +451,10 @@ def canonical_scheduled_report_events(event_path: str | None = None) -> list[dic
         # Scheduled Review legacy events may use task_run_id as their occurrence;
         # do not reject a valid Formal event merely because these identities differ.
         report_type = str(binding["report_type"])
-        if report_type != "ETF_FORMAL_DECISION" and event_occurrence and event_occurrence != task_run_id:
-            continue
+        # Scheduled Review occurrences are independent delivery identities.
+        # A stable task_run_id may legitimately contain more than one
+        # occurrence; preserve the occurrence for idempotency instead of
+        # rejecting the event as a mismatched task run.
         occurrence_id = event_occurrence or task_run_id
         key = f"{report_type}:{occurrence_id}"
         binding_request_id = str(binding.get("request_id") or event.get("request_id") or "").strip()

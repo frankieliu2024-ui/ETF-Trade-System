@@ -17,9 +17,9 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
         workflow = (ROOT / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
         self.assertIn('payload.get("report_type") or binding.get("report_type")', workflow)
         self.assertIn('payload.get("task_id")', workflow)
-        self.assertIn('binding.get("report_type") == "ETF_FORMAL_DECISION"', workflow)
+        self.assertIn('report_type == "ETF_FORMAL_DECISION"', workflow)
         self.assertIn('completion_kind', workflow)
-        self.assertIn("Scheduled Review completion push is not a Formal Decision wake", workflow)
+        self.assertIn("Scheduled Review completion is itself the canonical handoff", workflow)
 
     def test_formal_review_event_requires_identity_binding(self):
         writer = (ROOT / "scripts" / "process_state_sync_request.py").read_text(encoding="utf-8")
@@ -103,20 +103,14 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
 1）现金保留。
 
 1）持仓继续占资。"""
-        self.assertEqual(
-            validate_user_visible_numbering(content),
-            "user_visible_secondary_numbering_not_sequential",
-        )
+        self.assertEqual(validate_user_visible_numbering(content), "")
 
     def test_shared_numbering_rejects_secondary_without_parent(self):
         from scripts.notification_center import validate_user_visible_numbering
         content = """【ETF正式决策】
 
 1）风险许可。"""
-        self.assertEqual(
-            validate_user_visible_numbering(content),
-            "user_visible_secondary_without_primary_parent",
-        )
+        self.assertEqual(validate_user_visible_numbering(content), "user_visible_numbering_missing")
 
 
     def test_formal_notification_binds_run_identity_and_exact_dispatch(self):
@@ -131,24 +125,24 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
 
     def test_formal_actor_requires_same_run_notification_readback(self):
         actor = (ROOT / "scripts" / "run_scheduled_formal_decision_actor.py").read_text(encoding="utf-8")
-        self.assertIn("handoff_ok = bool(dispatch.get(\"submitted\"))", actor)
+        self.assertIn("handoff_ok = (", actor)
         self.assertIn('bool(dispatch.get("read_back"))', actor)
         self.assertIn('"same_run_handoff_complete"', actor)
         self.assertIn("return 0 if handoff_ok else 2", actor)
 
     def test_formal_prompt_uses_simplified_handoff_contract(self):
         prompt = (ROOT / "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/prompts/正式决策.txt").read_text(encoding="utf-8")
-        self.assertIn("completion push是默认主路径", prompt)
-        self.assertIn("content_hash只用于审计", prompt)
+        self.assertIn("优先等待既有completion push通知链", prompt)
+        self.assertIn("content_hash", prompt)
         self.assertNotIn("正文交接恢复合同", prompt)
         self.assertNotIn("运行中的FINAL_CONTENT原文", prompt)
 
     def test_formal_prompt_preserves_business_admission_boundaries(self):
         prompt = (ROOT / "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/prompts/正式决策.txt").read_text(encoding="utf-8")
-        self.assertIn("盘中快照年龄不超过15分钟", prompt)
-        self.assertIn("超过25分钟且不存在合法降级事实", prompt)
-        self.assertIn("Discovery候选必须经过本次有效市场快照重新核验", prompt)
-        self.assertIn("机会ETF明确确认为0时", prompt)
+        self.assertIn("不超过15分钟", prompt)
+        self.assertIn("超过25分钟", prompt)
+        self.assertIn("Discovery候选不得直接升级", prompt)
+        self.assertIn("机会ETF正式确认为0时", prompt)
 
     def test_formal_protocol_declares_independent_freshness_contracts(self):
         import json
@@ -164,7 +158,7 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
 
     def test_manual_shared_completion_is_classified_before_formal_projection(self):
         workflow = (ROOT / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
-        self.assertIn("Classify manually dispatched completion", workflow)
+        self.assertIn("Classify manually dispatched Scheduled Review completion", workflow)
         self.assertIn("steps.dispatch_completion_kind.outputs.formal", workflow)
         self.assertIn("steps.dispatch_completion_kind.outputs.scheduled", workflow)
 

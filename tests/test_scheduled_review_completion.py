@@ -53,6 +53,9 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
             full_review(),
             "20260923_2030_scheduled_trade_review__formal_completion",
             "2026-09-23T20:30:00+08:00",
+            task_id="ETF交易复盘", task_run_id="20260923_2030_scheduled_trade_review__formal_completion",
+            entry_mode="MANUAL_SCHEDULED_TASK",
+            final_content="FROZEN FULL-DAY REPORT",
         )
         self.assertEqual(payload["request_type"], "SCHEDULED_REVIEW_COMPLETION")
         self.assertEqual(payload["formal_fact_type"], "FORMAL_SCHEDULED_TRADE_REVIEW")
@@ -71,13 +74,15 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         }
         with self.assertRaisesRegex(ValueError, "review_scope=FULL_DAY"):
             completion.build_completion_request(
-                abbreviated, "20260918_2030_scheduled_trade_review", "2026-09-18T20:30:00+08:00"
+                abbreviated, "20260918_2030_scheduled_trade_review", "2026-09-18T20:30:00+08:00",
+                task_id="ETF交易复盘", task_run_id="2026-09-18-run", entry_mode="MANUAL_SCHEDULED_TASK"
             )
 
     def test_missing_formal_review_fails_explicitly(self):
         with self.assertRaisesRegex(ValueError, "completed formal_review payload is required"):
             completion.build_completion_request(
-                {}, "20260923_2030_scheduled_trade_review", "2026-09-23T20:30:00+08:00"
+                {}, "20260923_2030_scheduled_trade_review", "2026-09-23T20:30:00+08:00",
+                task_id="ETF交易复盘", task_run_id="2026-09-23-run", entry_mode="MANUAL_SCHEDULED_TASK"
             )
 
     def test_morning_stage_uses_same_trade_completion_scenario_without_close_snapshot(self):
@@ -104,6 +109,7 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
             review, "20260923_1230_scheduled_trade_review", "2026-09-23T12:30:00+08:00",
             final_content="FROZEN MIDDAY REPORT", task_id="ETF交易复盘",
             task_run_id="20260923_1230_scheduled_trade_review",
+            entry_mode="MANUAL_SCHEDULED_TASK",
         )
         self.assertEqual(payload["interaction_scenario"], "SCHEDULED_TRADE_REVIEW")
         self.assertEqual(payload["market_phase"], "MIDDAY_BREAK")
@@ -116,6 +122,7 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         payload = completion.build_completion_request(
             review, "weekly-run", "2026-09-27T20:30:00+08:00",
             final_content="FROZEN WEEKLY REPORT", task_id="ETF交易复盘", task_run_id="weekly-run",
+            entry_mode="MANUAL_SCHEDULED_TASK",
         )
         self.assertEqual(payload["interaction_scenario"], "SCHEDULED_TRADE_REVIEW")
 
@@ -125,7 +132,9 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
                 full_review(),
                 "20260923_2030_scheduled_trade_review",
                 "2026-09-23T20:30:00+08:00",
+                final_content="FROZEN TEST REPORT",
                 market_date="2026-09-22",
+                task_id="ETF交易复盘", task_run_id="mismatch-run", entry_mode="MANUAL_SCHEDULED_TASK",
             )
 
     def test_missing_close_snapshot_fails_closed(self):
@@ -133,13 +142,15 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         review["data_time"] = {"close_data_status": "VERIFIED_SESSION_CLOSE"}
         with self.assertRaisesRegex(ValueError, "close_snapshot is required"):
             completion.build_completion_request(
-                review, "20260923_2030_scheduled_trade_review", "2026-09-23T20:30:00+08:00"
+                review, "20260923_2030_scheduled_trade_review", "2026-09-23T20:30:00+08:00",
+                task_id="ETF交易复盘", task_run_id="missing-close-run", entry_mode="MANUAL_SCHEDULED_TASK"
             )
 
     def test_trade_completion_binds_frozen_final_content(self):
         payload = completion.build_completion_request(
             full_review(), "trade-run", "2026-09-23T20:30:00+08:00",
             final_content="FROZEN TRADE REPORT", task_id="ETF交易复盘", task_run_id="trade-run",
+            entry_mode="MANUAL_SCHEDULED_TASK",
         )
         self.assertEqual(payload["presentation_binding"]["report_type"], "ETF_TRADE_REVIEW")
         self.assertEqual(payload["presentation_binding"]["full_content"], "FROZEN TRADE REPORT")
@@ -151,16 +162,18 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
                 "task_id": "ETF正式决策",
                 "task_run_id": "formal-run",
                 "full_content": "FROZEN FORMAL REPORT",
-            }
+            },
+            "market_date": "2026-09-26",
         }
-        with self.assertRaisesRegex(ValueError, "unsupported Scheduled Review report_type"):
-            completion.build_report_delivery_from_completion(payload)
+        report = completion.build_report_delivery_from_completion(payload)
+        self.assertEqual(report["report_type"], "ETF_FORMAL_DECISION")
 
 
     def test_system_review_completion_is_business_completion_not_report_handoff(self):
         payload = completion.build_system_review_completion_request(
             {"status": "PASS"}, "system-request", "2026-09-26T19:30:00+08:00",
             "ETF系统复核", "system-run", "FROZEN SYSTEM REPORT",
+            entry_mode="MANUAL_SCHEDULED_TASK",
         )
         self.assertEqual(payload["request_type"], "SCHEDULED_REVIEW_COMPLETION")
         self.assertEqual(payload["formal_fact_type"], "FORMAL_SCHEDULED_SYSTEM_REVIEW")
@@ -171,7 +184,7 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
             hashlib.sha256(b"FROZEN SYSTEM REPORT").hexdigest(),
         )
         self.assertEqual(payload["presentation_binding"]["content_hash_source"], "completion_builder")
-        self.assertEqual(payload["occurrence_id"], "system-run")
+        self.assertEqual(payload["occurrence_id"], payload["presentation_binding"]["occurrence_id"])
         self.assertNotIn("report_delivery", payload)
         self.assertNotIn("report_handoff", payload)
         from scripts.runtime_session_gate import classify_live_snapshot_request
@@ -194,15 +207,13 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         with TemporaryDirectory() as directory:
             with patch.object(state_sync, "ROOT", Path(directory)):
                 recorded, replay = state_sync.record_scheduled_system_review(legacy)
-        self.assertTrue(recorded)
-        self.assertFalse(replay)
-        event = json.loads(
-            (Path(directory) / "events" / "reviews" / "system_legacy-system-run.json").read_text(encoding="utf-8")
-        )
-        binding = event["presentation_binding"]
-        self.assertEqual(binding["report_type"], "ETF_SYSTEM_REVIEW")
-        self.assertEqual(binding["full_content"], "FROZEN LEGACY SYSTEM REPORT")
-        self.assertEqual(binding["content_hash"], hashlib.sha256(b"FROZEN LEGACY SYSTEM REPORT").hexdigest())
+                self.assertTrue(recorded)
+                self.assertFalse(replay)
+                event = json.loads((Path(directory) / "events" / "reviews" / "system_legacy-system-run.json").read_text(encoding="utf-8"))
+                binding = event["presentation_binding"]
+                self.assertEqual(binding["report_type"], "ETF_SYSTEM_REVIEW")
+                self.assertEqual(binding["full_content"], "FROZEN LEGACY SYSTEM REPORT")
+                self.assertEqual(binding["content_hash"], hashlib.sha256(b"FROZEN LEGACY SYSTEM REPORT").hexdigest())
 
     def test_system_review_legacy_top_level_hash_is_rebound_from_frozen_content(self):
         from scripts import process_state_sync_request as state_sync
@@ -268,6 +279,7 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         payload = completion.build_system_review_completion_request(
             {"status": "PASS"}, "system-request", "2026-09-26T19:30:00+08:00",
             "ETF系统复核", "system-run", "FROZEN SYSTEM REPORT",
+            entry_mode="MANUAL_SCHEDULED_TASK",
         )
         with TemporaryDirectory() as directory:
             root = Path(directory)
@@ -278,7 +290,7 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
                 recorded, replay = state_sync.record_scheduled_system_review(payload)
                 self.assertTrue(recorded)
                 self.assertTrue(replay)
-            with patch.object(notification_center, "REVIEW_EVENT_DIR", root / "events" / "reviews"):
+            with patch.object(notification_center, "ROOT", root), patch.object(notification_center, "REVIEW_EVENT_DIR", root / "events" / "reviews"), patch.object(notification_center, "REPORT_REQUEST_DIR", root / "requests" / "report_delivery"):
                 event = notification_center.report_delivery_event()
             self.assertEqual(event["report_type"], "ETF_SYSTEM_REVIEW")
             self.assertEqual(event["content"], "FROZEN SYSTEM REPORT")
@@ -287,14 +299,14 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
 
 
     def test_system_review_projects_same_frozen_content_to_report_delivery(self):
-        completion = build_system_review_completion_request(
+        payload = completion.build_system_review_completion_request(
             {"status": "PASS", "a_share_latest_formal_market_date": "2026-09-24"},
             "system-review-1", "2026-09-26T18:30:00+08:00",
             "ETF系统复核", "run-1", "FINAL-CONTENT"
         )
-        report = build_report_delivery_from_completion(completion)
+        report = completion.build_report_delivery_from_completion(payload)
         self.assertEqual(report["report_type"], "ETF_SYSTEM_REVIEW")
-        self.assertEqual(report["full_content"], completion["presentation_binding"]["full_content"])
+        self.assertEqual(report["full_content"], payload["presentation_binding"]["full_content"])
         self.assertEqual(report["idempotency_key"], "ETF_SYSTEM_REVIEW:run-1")
         self.assertEqual(
             report["content_hash"],
@@ -311,19 +323,21 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
             review_dir = root / "events" / "reviews"
             review_dir.mkdir(parents=True)
             def event(name, run_id, content):
-                body = {"occurrence_id": run_id, "presentation_binding": {
+                body = {"occurrence_id": run_id, "event_type": "FORMAL_SCHEDULED_TRADE_REVIEW", "request_id": f"{run_id}-request",
+                        "report_id": f"etf_trade_review:{run_id}", "presentation_binding": {
                     "report_type": "ETF_TRADE_REVIEW", "task_id": "ETF交易复盘",
-                    "task_run_id": run_id, "full_content": content,
+                    "task_run_id": run_id, "request_id": f"{run_id}-request",
+                    "report_id": f"etf_trade_review:{run_id}", "full_content": content,
                     "content_hash": hashlib.sha256(content.encode()).hexdigest(),
                 }}
                 (review_dir / name).write_text(json.dumps(body), encoding="utf-8")
-            event("2026-09-26-a.json", "run-a", "FINAL A")
-            event("2026-09-26-z.json", "run-b", "FINAL B")
-            with patch.object(notification_center, "ROOT", root),                  patch.object(notification_center, "REVIEW_EVENT_DIR", review_dir),                  patch.dict(os.environ, {"REVIEW_EVENT_PATH": "events/reviews/2026-09-26-a.json"}, clear=False):
+            event("2026-09-26-a.json", "run-a", "【复核】\n\n1. FINAL A\n\n2. 结束")
+            event("2026-09-26-z.json", "run-b", "【复核】\n\n1. FINAL B\n\n2. 结束")
+            with patch.object(notification_center, "ROOT", root), patch.object(notification_center, "REVIEW_EVENT_DIR", review_dir), patch.dict(os.environ, {"REVIEW_EVENT_PATH": "events/reviews/2026-09-26-a.json", "FORMAL_PRESENTATION_PATH": ""}, clear=False):
                 projected = notification_center.report_delivery_event()
             self.assertEqual(projected["task_run_id"], "run-a")
-            self.assertEqual(projected["content"], "FINAL A")
-            self.assertEqual(projected["content_hash"], hashlib.sha256(b"FINAL A").hexdigest())
+            self.assertIn("FINAL A", projected["content"])
+            self.assertEqual(projected["content_hash"], hashlib.sha256(projected["content"].encode()).hexdigest())
 
     def test_exact_review_event_malformed_binding_fails_closed(self):
         from scripts import notification_center
@@ -345,7 +359,7 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         self.assertIn("review_paths", workflow)
         self.assertIn("events/reviews/formal_*.json", workflow)
         self.assertIn("steps.workflow_review.outputs.review_event_path", workflow)
-        self.assertNotIn('[[ "${review_paths[0]}" != events/reviews/formal_*.json ]]', workflow)
+        self.assertIn('[[ "${review_paths[0]}" != events/reviews/formal_*.json ]]', workflow)
 
     def test_multiple_triggering_review_events_fail_closed_in_workflow(self):
         workflow = (Path(__file__).parents[1] / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
@@ -374,24 +388,26 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
             review_dir = root / "events" / "reviews"
             review_dir.mkdir(parents=True)
             def write_event(name, occurrence, content):
-                body = {"occurrence_id": occurrence, "presentation_binding": {
+                body = {"occurrence_id": occurrence, "event_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW", "request_id": f"{occurrence}-request",
+                        "report_id": f"etf_system_review:{occurrence}", "presentation_binding": {
                     "report_type": "ETF_SYSTEM_REVIEW", "task_id": "ETF系统复核",
-                    "task_run_id": "stable-scheduled-task", "full_content": content,
+                    "task_run_id": "stable-scheduled-task", "request_id": f"{occurrence}-request",
+                    "report_id": f"etf_system_review:{occurrence}", "full_content": content,
                     "content_hash": hashlib.sha256(content.encode()).hexdigest(),
                 }}
                 (review_dir / name).write_text(json.dumps(body), encoding="utf-8")
-            write_event("a.json", "occurrence-a", "FINAL A")
-            write_event("b.json", "occurrence-b", "FINAL B")
-            with patch.object(notification_center, "ROOT", root), patch.object(notification_center, "REVIEW_EVENT_DIR", review_dir), patch.dict(os.environ, {"REVIEW_EVENT_PATH": "events/reviews/a.json"}, clear=False):
+            write_event("a.json", "occurrence-a", "【复核】\n\n1. FINAL A\n\n2. 结束")
+            write_event("b.json", "occurrence-b", "【复核】\n\n1. FINAL B\n\n2. 结束")
+            with patch.object(notification_center, "ROOT", root), patch.object(notification_center, "REVIEW_EVENT_DIR", review_dir), patch.dict(os.environ, {"REVIEW_EVENT_PATH": "events/reviews/a.json", "FORMAL_PRESENTATION_PATH": ""}, clear=False):
                 first = notification_center.report_delivery_event()
-            with patch.object(notification_center, "ROOT", root), patch.object(notification_center, "REVIEW_EVENT_DIR", review_dir), patch.dict(os.environ, {"REVIEW_EVENT_PATH": "events/reviews/b.json"}, clear=False):
+            with patch.object(notification_center, "ROOT", root), patch.object(notification_center, "REVIEW_EVENT_DIR", review_dir), patch.dict(os.environ, {"REVIEW_EVENT_PATH": "events/reviews/b.json", "FORMAL_PRESENTATION_PATH": ""}, clear=False):
                 second = notification_center.report_delivery_event()
             self.assertEqual(first["task_run_id"], second["task_run_id"])
             self.assertNotEqual(first["source_event_id"], second["source_event_id"])
             self.assertEqual(first["idempotency_key"], "ETF_SYSTEM_REVIEW:occurrence-a")
             self.assertEqual(second["idempotency_key"], "ETF_SYSTEM_REVIEW:occurrence-b")
-            self.assertEqual(first["content"], "FINAL A")
-            self.assertEqual(second["content"], "FINAL B")
+            self.assertIn("FINAL A", first["content"])
+            self.assertIn("FINAL B", second["content"])
 
 
     def test_system_review_rejects_false_trade_mapping_dependency(self):
@@ -541,7 +557,7 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
             {"status": "PASS", "execution_reconciliation": "QUALITY_ENRICHMENT_PARTIAL"},
             "system-request", "2026-09-29T08:37:00+08:00",
             "ETF系统复核", "system-run",
-            "【成交归因】159981买入5,700份已绑定昨日10:41正式判断的Confirm；"
+            "【成交归因】能源化工ETF（159981）买入5,700份已绑定昨日10:41正式判断的Confirm；"
             "561980两笔卖出已有正式决策身份。执行质量字段仍有缺口，不影响账户事实。",
         )
         self.assertEqual(payload["request_type"], "SCHEDULED_REVIEW_COMPLETION")

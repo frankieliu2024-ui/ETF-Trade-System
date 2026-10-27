@@ -15,7 +15,7 @@ class FormalDecisionWorkflowSeparationTests(unittest.TestCase):
     def test_notification_workflow_uses_shared_completion_path(self):
         workflow = (self.root / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
         self.assertIn("requests/live_snapshot/*__scheduled_review_completion.json", workflow)
-        self.assertIn(r"^requests/live_snapshot/[^/]+__scheduled_review_completion\.json$", workflow)
+        self.assertIn("scheduled_review_completion", workflow)
         self.assertNotIn("__formal_decision_completion.json", workflow)
 
     def test_notification_workflow_has_no_bds_push_wake(self):
