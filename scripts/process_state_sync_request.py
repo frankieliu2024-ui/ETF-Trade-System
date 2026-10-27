@@ -2472,15 +2472,22 @@ def record_scheduled_system_review(request: dict) -> tuple[bool, bool]:
     else:
         raw_binding = dict(raw_binding)
     final_content = _extract_scheduled_review_final_content(request)
-    raw_binding.setdefault("report_type", "ETF_SYSTEM_REVIEW")
-    raw_binding.setdefault("task_id", str(request.get("task_id") or "ETF系统复核"))
-    raw_binding.setdefault("task_run_id", top_task_run_id)
-    raw_binding.setdefault("occurrence_id", top_occurrence_id)
-    raw_binding.setdefault("request_id", top_request_id)
-    raw_binding.setdefault("report_id", str(request.get("report_id") or "").strip())
-    raw_binding.setdefault("full_content", final_content)
-    raw_binding.setdefault("content_hash", hashlib.sha256(str(raw_binding.get("full_content") or "").encode("utf-8")).hexdigest())
-    raw_binding.setdefault("content_hash_source", "canonical_owner_normalization")
+    fallback_fields = {
+        "report_type": "ETF_SYSTEM_REVIEW",
+        "task_id": str(request.get("task_id") or "ETF系统复核"),
+        "task_run_id": top_task_run_id,
+        "occurrence_id": top_occurrence_id,
+        "request_id": top_request_id,
+        "report_id": str(request.get("report_id") or "").strip(),
+        "full_content": final_content,
+    }
+    for key, fallback in fallback_fields.items():
+        if not str(raw_binding.get(key) or "").strip() and str(fallback or "").strip():
+            raw_binding[key] = fallback
+    if not str(raw_binding.get("content_hash") or "").strip() and str(raw_binding.get("full_content") or "").strip():
+        raw_binding["content_hash"] = hashlib.sha256(str(raw_binding["full_content"]).encode("utf-8")).hexdigest()
+    if not str(raw_binding.get("content_hash_source") or "").strip():
+        raw_binding["content_hash_source"] = "canonical_owner_normalization"
     if not raw_binding.get("report_id") and raw_binding.get("task_run_id"):
         raw_binding["report_id"] = f"etf_system_review:{raw_binding['task_run_id']}"
     if not raw_binding.get("full_content"):
