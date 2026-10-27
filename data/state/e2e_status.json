@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-10-27T18:02:17+08:00",
-  "status": "BLOCKED",
+  "generated_at": "2026-10-27T20:37:05+08:00",
+  "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
   "components": {
@@ -46,17 +46,20 @@
       "business_completion_status": "COMPLETE"
     },
     "decision_context": {
-      "status": "BLOCKED",
-      "reason": "canonical request-bound query context is empty, invalid, or missing a consumable fact pack",
-      "query_context": false,
+      "status": "READY",
+      "reason": "query and decision contexts are available; legacy minimum-ready observability is diagnostic only",
+      "query_context": true,
       "decision_context": true,
+      "minimum_decision_context": "READY_OR_NOT_APPLICABLE",
+      "observability_boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
+      "request_bound": false,
       "formal_reply_gate": {
         "request_id": "conversation-formal-20261026T212023+0800-90d3c2b2",
         "requested_at_beijing": "2026-10-26T21:20:23.000+08:00",
-        "status": "TERMINAL_FAILURE",
+        "status": "IN_FLIGHT",
         "reply_freezable": false,
         "blockers": [
-          "FORMAL_PARENT_RECOVERY_TIMEOUT"
+          "REQUEST_BOUND_QUERY_CONTEXT_NOT_PUBLISHED"
         ],
         "source": "decision_fact_pack.formal_reply_freeze",
         "consumer_manifest": {
@@ -10262,11 +10265,11 @@
         "projection_scope": "FORMAL_DECISION_REQUEST",
         "parent_request_source": "CHATGPT_MANUAL_FORMAL_ANALYSIS",
         "parent_request_entry_mode": "MANUAL_CONVERSATION",
-        "actor_action": "TERMINATE_ON_EXPLICIT_FAILURE",
-        "user_output_allowed": true,
+        "actor_action": "CONTINUE_SAME_REQUEST_SILENTLY",
+        "user_output_allowed": false,
         "business_decision_allowed": false,
         "final_content_generation_allowed": false,
-        "consumer_status": "TERMINAL_FAILURE",
+        "consumer_status": "REQUEST_BOUND_FACTS_BUILDING",
         "required_problem_ids": [],
         "required_problem_count": 0,
         "business_answer_contract": null,
@@ -10285,15 +10288,15 @@
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 1682205,
-          "sha256": "06ca55b5797f7937261060c25e96bf19901f5e325ed26f52de03572d54a60a03",
+          "byte_count": 1258652,
+          "sha256": "f38971f77d739904bf5dc3c937fae0e0dd41f0525a41a794e47e2a1bad0440c0",
           "parsed_object": true
         },
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 435614,
-          "sha256": "a35ab1223336f992f1b68944e339b6d8ecaefa532f93cdd7492f9179a7868ee8",
+          "byte_count": 406461,
+          "sha256": "378fe8ec133aff6cb921c65d096502ce8e4be2aaf06162d2820fcd9d7dd01a40",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -10311,12 +10314,10 @@
     "maintenance": {
       "status": "READY",
       "reason": "maintenance guard passed",
-      "checked_at": "2026-10-27T16:43:16+08:00"
+      "checked_at": "2026-10-27T20:36:46+08:00"
     }
   },
-  "blockers": [
-    "decision_context"
-  ],
+  "blockers": [],
   "degradations": [
     "risk",
     "close_review"
@@ -10325,15 +10326,15 @@
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 1682205,
-      "sha256": "06ca55b5797f7937261060c25e96bf19901f5e325ed26f52de03572d54a60a03",
+      "byte_count": 1258652,
+      "sha256": "f38971f77d739904bf5dc3c937fae0e0dd41f0525a41a794e47e2a1bad0440c0",
       "parsed_object": true
     },
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 435614,
-      "sha256": "a35ab1223336f992f1b68944e339b6d8ecaefa532f93cdd7492f9179a7868ee8",
+      "byte_count": 406461,
+      "sha256": "378fe8ec133aff6cb921c65d096502ce8e4be2aaf06162d2820fcd9d7dd01a40",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"
