@@ -617,3 +617,26 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
 if __name__ == "__main__":
     unittest.main()
 
+
+
+    def test_system_review_event_owner_normalizes_incomplete_binding(self):
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+        from scripts import process_state_sync_request as state_sync
+        request = {
+            "formal_fact_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW",
+            "request_id": "manual-system-review-20261027-1105",
+            "task_id": "ETF系统复核",
+            "task_run_id": "manual_system_review_1105",
+            "occurrence_id": "manual_system_review_1105",
+            "requested_at_beijing": "2026-10-27T11:05:00+08:00",
+            "final_content": "【ETF系统复核】2026-10-27 11:05 早间复核\\n\\n【执行状态】\\n\\n本次复核已完成。",
+            "presentation_binding": {"report_type": "ETF_SYSTEM_REVIEW", "task_run_id": "manual_system_review_1105"},
+            "system_review": {"market_date": "2026-10-27"},
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            with patch.object(state_sync, "ROOT", Path(directory)):
+                recorded, replay = state_sync.record_scheduled_system_review(request)
+        self.assertTrue(recorded)
+        self.assertFalse(replay)
