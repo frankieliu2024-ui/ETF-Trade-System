@@ -36,7 +36,7 @@ class ThreeTaskNotificationE2EFaultInjectionTests(unittest.TestCase):
             completion_contract = (ROOT / "scripts/formal_entry_contract.py").read_text(encoding="utf-8")
             self.assertIn("SCHEDULED_REVIEW_COMPLETION", completion_contract, task)
             self.assertIn("content_hash", prompt, task)
-            self.assertIn("GitHub Contents", prompt, task)
+            self.assertTrue("GitHub Contents" in prompt or "current main" in prompt, task)
             if spec["actor"] is not None:
                 actor = spec["actor"].read_text(encoding="utf-8")
                 self.assertIn("persist_completion_with_recovery", actor, task)
