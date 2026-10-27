@@ -17,7 +17,13 @@ import re
 from datetime import timezone, timedelta
 from pathlib import Path
 
-from confirmed_trade_facts import effective_confirmed_fee_fact
+try:
+    from confirmed_trade_facts import effective_confirmed_fee_fact
+except ModuleNotFoundError:
+    # The production workflow imports this module as ``scripts.sync_formal_files``;
+    # keep the repository-local dependency resolvable in both direct-script and
+    # package-style execution without changing the projection contract.
+    from scripts.confirmed_trade_facts import effective_confirmed_fee_fact
 try:
     from build_stock_context import active_account_asset_codes, normalize_code, position_metric
 except ModuleNotFoundError:
@@ -593,3 +599,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
