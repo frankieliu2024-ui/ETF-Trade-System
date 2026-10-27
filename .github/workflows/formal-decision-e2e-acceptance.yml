@@ -64,13 +64,13 @@ jobs:
         run: python -m compileall -q scripts
       - name: Run three-entry and REPORT handoff contract acceptance
         run: |
-          python -m unittest -v tests.test_formal_decision_e2e_contract
+          PYTHONPATH=scripts python -m unittest -v tests.test_formal_decision_e2e_contract
       - name: Run controlled three-entry production handoff acceptance
         run: |
-          python -m unittest -v tests.test_formal_decision_production_e2e
+          PYTHONPATH=scripts python -m unittest -v tests.test_formal_decision_production_e2e
       - name: Run notification workflow structural acceptance
         run: |
-          python -m unittest -v tests.test_notification_workflow_structure
+          PYTHONPATH=scripts python -m unittest -v tests.test_notification_workflow_structure
       - name: Assert acceptance scope
         run: |
           test -f scripts/formal_entry_contract.py
