@@ -415,7 +415,7 @@ def build_dashboard_block(account: dict, equity: dict, existing: str, root: Path
     for p in positions:
         lines.append(
             f"|{display_name(p)}|{int(p.get('quantity') or 0):,}|"
-            f"{float(p.get('cost') or 0):.3f}|{position_metric(p, 'current_price', 'last_price'):.3f}|"
+            f"{float(p.get('cost') or p.get('cost_price') or 0):.3f}|{position_metric(p, 'current_price', 'last_price'):.3f}|"
             f"{money(p.get('market_value'))}|{format_position_pnl(p)}|"
         )
     etf_codes = {str(item.get("code")): str(item.get("name") or item.get("code")) for item in (load_json(root / "config/market/etf_monitor_universe.json").get("objects") or []) if item.get("code")}
