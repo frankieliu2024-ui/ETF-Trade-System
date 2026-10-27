@@ -599,6 +599,19 @@ class WatchdogHealthSemanticsTests(unittest.TestCase):
         self.assertIn("escalation itself is a valid", workflow)
         self.assertNotIn("cat data/state/self_healing_status.json\n          exit 1", workflow)
 
+    def test_snapshot_publication_is_atomic_and_readback_verified(self):
+        root = Path(__file__).resolve().parents[1]
+        runner = (root / "scripts/cloud_runner_snapshot.py").read_text(encoding="utf-8")
+        watchdog = (root / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
+        snapshot = (root / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
+        self.assertIn("def verify_published_snapshot", runner)
+        self.assertIn("temp.replace(target)", runner)
+        self.assertIn("verify_published_snapshot(target", runner)
+        self.assertIn("group: etf-main-state-writer", snapshot)
+        self.assertIn("cancel-in-progress: false", snapshot)
+        self.assertIn("gh workflow run market-snapshot.yml --ref main", watchdog)
+        self.assertIn("Canonical snapshot already queued/in progress; no duplicate dispatch.", watchdog)
+
     def test_watchdog_does_not_turn_observed_health_into_task_blockage(self):
         root = Path(__file__).resolve().parents[1]
         guard = (root / "scripts/production_health_guard.py").read_text(encoding="utf-8")
