@@ -11,7 +11,11 @@ class TaskEntrySchedulingGovernanceTests(unittest.TestCase):
         data = json.loads((ROOT / "config/maintenance/task_entry_scheduling_protocol.json").read_text(encoding="utf-8"))
         self.assertEqual([x["task_name"] for x in data["tasks"]], ["ETF系统复核", "ETF交易复盘", "ETF正式决策"])
         self.assertEqual(data["tasks"][2]["automatic_schedule"], ["09:00", "10:00", "11:00", "13:30", "14:30"])
-        system = data["tasks"][0]\n        self.assertEqual(system["production_adapter"], "scripts/run_scheduled_system_review_actor.py")\n        self.assertEqual(system["completion_builder"], "build_system_review_completion_request")\n        self.assertEqual(system["handoff_execution"]["report_identity"], "ETF_SYSTEM_REVIEW")\n        trade = data["tasks"][1]
+        system = data["tasks"][0]
+        self.assertEqual(system["production_adapter"], "scripts/run_scheduled_system_review_actor.py")
+        self.assertEqual(system["completion_builder"], "build_system_review_completion_request")
+        self.assertEqual(system["handoff_execution"]["report_identity"], "ETF_SYSTEM_REVIEW")
+        trade = data["tasks"][1]
         self.assertEqual(trade["completion_owner"], "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER")
         self.assertEqual(trade["production_adapter"], "scripts/run_scheduled_trade_review_actor.py")
         decision = data["tasks"][2]
