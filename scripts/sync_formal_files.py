@@ -28,11 +28,20 @@ try:
     from build_stock_context import active_account_asset_codes, normalize_code, position_metric
 except ModuleNotFoundError:
     from scripts.build_stock_context import active_account_asset_codes, normalize_code, position_metric
-from formal_file_mutation_gateway import (
-    replace_managed_block as replace_block,
-    write_formal_text_if_changed,
-)
-from research_artifact_contract import archive_completed_research
+try:
+    from formal_file_mutation_gateway import (
+        replace_managed_block as replace_block,
+        write_formal_text_if_changed,
+    )
+except ModuleNotFoundError:
+    from scripts.formal_file_mutation_gateway import (
+        replace_managed_block as replace_block,
+        write_formal_text_if_changed,
+    )
+try:
+    from research_artifact_contract import archive_completed_research
+except ModuleNotFoundError:
+    from scripts.research_artifact_contract import archive_completed_research
 
 
 SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
