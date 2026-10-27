@@ -41,3 +41,15 @@ class ScheduledReviewHandoffContractTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_system_review_builder_derives_missing_request_identity():
+    payload = completion.build_system_review_completion_request(
+        {"status": "PASS", "market_date": "2026-10-27"},
+        "", "2026-10-27T10:30:00+08:00", "ETF系统复核", "",
+        "【ETF系统复核】2026-10-27 10:30 早间复核\n\n正文",
+        entry_mode="MANUAL_SCHEDULED_TASK",
+    )
+    assert payload["request_id"].startswith("manual-system-review-")
+    assert payload["task_run_id"]
+    assert payload["occurrence_id"] == payload["task_run_id"]

@@ -484,14 +484,14 @@ def build_system_review_completion_request(
     """Build the business completion envelope for one Scheduled System Review occurrence."""
     if not isinstance(system_review, dict) or not system_review:
         raise ValueError("scheduled system review completion requires system_review")
-    request_id = _safe_id(request_id)
     entry_mode = str(entry_mode or "").strip().upper()
+    request_id, task_run_id, occurrence_id = derive_scheduled_review_identity(
+        task_id or "ETF系统复核", requested_at_beijing, entry_mode,
+        request_id, task_run_id, occurrence_id,
+    )
+    request_id = _safe_id(request_id)
     if entry_mode not in {"MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"}:
         raise ValueError("scheduled system review completion requires a registered scheduled entry_mode")
-    task_run_id, occurrence_id = derive_runtime_identity(
-        task_id or "ETF系统复核", request_id, requested_at_beijing,
-        entry_mode, task_run_id, occurrence_id
-    )
     task_run_id = _safe_id(task_run_id)
     if not str(requested_at_beijing or "").strip() or not str(final_content or "").strip():
         raise ValueError("scheduled system review completion requires requested_at_beijing and frozen final_content")
@@ -604,6 +604,7 @@ def write_completion_request(
             task_run_id,
             final_content,
             entry_mode=entry_mode or "AUTOMATIC_SCHEDULED_TASK",
+            occurrence_id=occurrence_id,
         )
         if market_date and str(payload.get("market_date") or "") != str(market_date):
             raise ValueError("scheduled system review completion market_date must match the review")
