@@ -123,6 +123,10 @@ class DashboardProjectionTests(unittest.TestCase):
         self.assertIn("估算", format_position_pnl({"market_value": 90, "cost": 1, "quantity": 100}))
         self.assertEqual(format_position_pnl({"market_value": 90}), "—")
 
+    def test_dashboard_cost_price_fallback_is_rendered(self):
+        rendered = build_dashboard({"positions": [{"name": "测试ETF", "code": "159999", "quantity": 100, "cost_price": 1.234, "current_price": 1.250, "market_value": 125.0}]})
+        self.assertIn("|测试ETF（159999）|100|1.234|1.250|125.00元|", rendered)
+
     def test_dashboard_builder_renders_selector_dict_as_markdown(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
