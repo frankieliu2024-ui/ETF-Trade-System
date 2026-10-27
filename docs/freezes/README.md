@@ -1,6 +1,6 @@
-# ETF三类任务当前冻结指针（V3）
+# ETF三类任务当前冻结指针（live Prompt authority）
 
-本目录只保留一个当前指针：`ETF_THREE_TASKS_CURRENT_FREEZE.json`。
+本目录只保留一个当前指针：`ETF_THREE_TASKS_CURRENT_FREEZE.json`。三类任务在 ChatGPT 定时任务界面保存的 live Prompt 是唯一运行指令；current main 中的文件仅用于审计、测试、生产协议映射和回退登记，不得覆盖 live Prompt。
 
 读取顺序：
 
@@ -18,4 +18,4 @@
 - 历史封存文件只能审计和回退，不能作为运行时规则；
 - 该清单不新增任务、workflow、producer、checker、state或writer。
 
-完整冻结只有在 `freeze_status` 更新为 `SEALED`，并且三类任务的live Prompt、Schedule、automation_id、conversation_id、完整文本和hash均已回读后才成立。
+当前冻结登记只有在三类任务的 live Prompt 和 Schedule 已通过云浏览器回读后才可更新；平台不提供原生 Prompt/Schedule hash 时，不得伪造或推算 hash。仓库冻结文件只记录回读事实和审计指针，不构成第二套运行指令。
