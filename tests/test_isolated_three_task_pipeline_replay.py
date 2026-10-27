@@ -85,7 +85,17 @@ class IsolatedThreeTaskPipeline:
             "ETF交易复盘": "【ETF交易复盘】",
             "ETF正式决策": "【ETF正式决策】",
         }[self.state.task_id]
-        self.state.final_content = f"{title}2026-09-23 20:30 模拟正文"
+        if self.state.task_id == "ETF正式决策":
+            sections = [
+                "【判断时点与事实边界】", "【当前正式判断】", "【风险与市场状态】",
+                "【三层监测】", "【全市场发现逐只评估】", "【观察ETF逐只评估】",
+                "【机会ETF逐只评估】", "【全市场机会与资本竞争】", "【现金管理】",
+                "【全部实际持仓】", "【最终管理动作】", "【关键风险与改变判断的条件】",
+                "【信息不足在哪里】", "【执行边界】", "【置信度】", "【最可能出错的地方】",
+            ]
+            self.state.final_content = "【ETF正式决策】2026-09-23 20:30 正式判断\\n" + "\\n".join(sections)
+        else:
+            self.state.final_content = f"{title}2026-09-23 20:30 模拟正文"
 
     def write_completion(self):
         if not self.state.final_content:
@@ -104,6 +114,7 @@ class IsolatedThreeTaskPipeline:
                 self.state.task_id,
                 self.state.task_run_id,
                 self.state.final_content,
+                occurrence_id=self.state.occurrence_id,
             )
         elif self.state.task_id == "ETF交易复盘":
             review = {
