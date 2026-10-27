@@ -65,9 +65,13 @@ def run_replay() -> dict[str, object]:
         "tests.test_three_task_notification_replay_harness",
         "tests.test_scheduled_review_completion_recovery",
     ]
+    env = dict(__import__("os").environ)
+    existing_pythonpath = env.get("PYTHONPATH", "")
+    env["PYTHONPATH"] = str(ROOT / "scripts") + ((":" + existing_pythonpath) if existing_pythonpath else "")
     completed = subprocess.run(
         command,
         cwd=ROOT,
+        env=env,
         text=True,
         capture_output=True,
         check=False,
