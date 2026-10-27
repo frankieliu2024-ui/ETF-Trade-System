@@ -244,8 +244,11 @@ def main() -> int:
     persisted_path, persistence = persist_completion_with_recovery(Path(target))
     push_started_at = datetime.now(timezone.utc)
     canonical_path = _persist_completion_to_main(persisted_path)
+    # A generic push-triggered run is only a wake signal and is not bound to
+    # this completion. It must never satisfy the handoff gate.
     push = _wait_for_completion_push(canonical_path, push_started_at)
-    dispatch = push if push.get("read_back") else _dispatch_notification(canonical_path)
+    dispatch = _dispatch_notification(canonical_path)
+    dispatch["fallback_after"] = "PUSH_WAKE_NOT_ACCEPTED_AS_COMPLETION_PROOF"
     # Same-run hard gate: completion persistence alone is not a successful
     # handoff. The actor must dispatch the canonical notification workflow and
     # read back the matching run before reporting success.
