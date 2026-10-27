@@ -497,8 +497,9 @@ jobs:
           if not isinstance(value, int) or value < 1:
               raise SystemExit(f"invalid {key}={value!r}")
           with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as handle:
-              handle.write(f"HITHINK_MAX_WORKERS={value}\\n")\n          print(f"provider concurrency: {key}={value}")\n      - name: Run data-only snapshot
-        id: capture
+              handle.write(f"HITHINK_MAX_WORKERS={value}\n")
+          print(f"provider concurrency: {key}={value}")
+      - name: Run data-only snapshot        id: capture
         # Scheduled pulses and user requests share the same phase-aware producer.
         # `scheduled` is resolved by cloud_runner_snapshot.py into auction/live/close
         # from the actual A-share market phase, avoiding generic live labels after close.
@@ -997,8 +998,7 @@ jobs:
               # subscription/allotment record without an ETF execution event.
               # It is state synchronization only; do not require or fabricate              # a canonical ETF trade event.
               pass          else:
-            trade = obj.get("trade_event")
-            if not isinstance(trade, dict):
+            trade = obj.get("trade_event")            if not isinstance(trade, dict):
                 related_ids = obj.get("related_trade_event_ids")
                 if not isinstance(related_ids, list) or not related_ids:
                     raise SystemExit("trade-bearing STATE_SYNC_ONLY replay must contain trade_event or related_trade_event_ids")
@@ -1497,8 +1497,7 @@ jobs:
               "market_date": str(request.get("market_date") or "").strip(),
           }          decision = json.loads(Path("data/state/decision_context.json").read_text(encoding="utf-8"))
           trigger = (decision.get("observability") or {}).get("trigger") or {}
-          actual = {
-              key: str(trigger.get(key) or decision.get(key) or "").strip()
+          actual = {              key: str(trigger.get(key) or decision.get(key) or "").strip()
               for key in expected
           }
           for key, value in expected.items():
