@@ -469,7 +469,7 @@ jobs:
           })
           health_path.write_text(json.dumps(health, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
           PY
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         if: ${{ steps.session_gate.outputs.should_capture == 'true' || (github.event_name == 'push' && steps.session_gate.outputs.request_class != 'STATE_SYNC_ONLY' && steps.session_gate.outputs.request_class != 'BUSINESS_DECISION_SOURCE') }}
         with:
           node-version: "22"

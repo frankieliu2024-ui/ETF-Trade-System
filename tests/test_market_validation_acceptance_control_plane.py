@@ -60,7 +60,7 @@ class ValidationAcceptanceControlPlaneTest(unittest.TestCase):
         source = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("- name: Run full system consistency check", source)
         self.assertIn("ETF_CONSISTENCY_REPORT_PATH", source)
-        self.assertIn("actions/upload-artifact@v4", source)
+        self.assertIn("actions/upload-artifact@v7", source)
         self.assertIn("system-consistency-", source)
         self.assertIn("system_consistency.json", source)
         self.assertNotIn("production_acceptance:", source)

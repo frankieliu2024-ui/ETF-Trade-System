@@ -20,7 +20,7 @@ class MinuteShadowComplexityContractTest(unittest.TestCase):
             "scripts/validate_minute_context_integration.py",
         ):
             self.assertIn(script, workflow)
-        self.assertIn("actions/upload-artifact@v4", workflow)
+        self.assertIn("actions/upload-artifact@v7", workflow)
 
 
 if __name__ == "__main__":
