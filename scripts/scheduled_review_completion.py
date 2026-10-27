@@ -8,7 +8,7 @@ from pathlib import Path
 
 try:
     from runtime_session_gate import classify_live_snapshot_request
-    from task_runtime_identity import derive_runtime_identity
+    from task_runtime_identity import derive_runtime_identity, derive_scheduled_review_identity
     from process_state_sync_request import (
         validate_current_lifecycle_contract,
         validate_managed_position_lifecycle,
@@ -16,7 +16,7 @@ try:
     from user_visible_presentation import validate_user_visible_content
 except ModuleNotFoundError:
     from scripts.runtime_session_gate import classify_live_snapshot_request
-    from scripts.task_runtime_identity import derive_runtime_identity
+    from scripts.task_runtime_identity import derive_runtime_identity, derive_scheduled_review_identity
     from scripts.process_state_sync_request import (
         validate_current_lifecycle_contract,
         validate_managed_position_lifecycle,
@@ -175,6 +175,10 @@ def build_trade_review_completion_request(
     entry_mode: str = "",
 ) -> dict:
     """Wrap a frozen Scheduled Review for the existing state-sync owner."""
+    request_id, task_run_id, occurrence_id = derive_scheduled_review_identity(
+        task_id or "ETF交易复盘", requested_at_beijing, entry_mode,
+        request_id, task_run_id, occurrence_id,
+    )
     scope = str((formal_review or {}).get("review_scope") or "").strip().upper()
     is_midday = scope == "MORNING_SESSION_STAGE_ONLY"
     review_version = str((formal_review or {}).get("review_version") or "").upper()
