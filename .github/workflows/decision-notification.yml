@@ -126,7 +126,7 @@ jobs:
           payload = json.load(open(sys.argv[1], encoding="utf-8"))
           binding = payload.get("presentation_binding") or {}
           report_type = str(payload.get("report_type") or binding.get("report_type") or "").strip().upper()
-          formal = (report_type == "ETF_FORMAL_DECISION" and str(payload.get("task_id") or "").strip() == "ETF正式决策")
+          formal = (report_type == "ETF_FORMAL_DECISION" and str(payload.get("formal_fact_type") or "").strip().upper() == "FORMAL_POST_CLOSE_REVIEW" and str(payload.get("task_id") or "").strip() == "ETF正式决策")
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
               out.write("formal=%s\n" % ("true" if formal else "false"))
               out.write("scheduled=%s\n" % ("false" if formal else "true"))
