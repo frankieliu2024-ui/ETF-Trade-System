@@ -3357,7 +3357,9 @@ def _trade_event_id(request: dict, trade: dict, idempotency_key: str, ordinal: i
     suffix = hashlib.sha256(idempotency_key.encode("utf-8")).hexdigest()[:16]
     return f"{request_id}_{ordinal + 1}_{suffix}"
 
-# Formal Decision completion projection accepts current-main runtime completions.\n\ndef is_formal_decision_completion(request: dict) -> bool:
+# Formal Decision completion projection accepts current-main runtime completions.
+
+def is_formal_decision_completion(request: dict) -> bool:
     """Recognize the shared Formal Decision completion contract independent of actor label."""
     binding = request.get("presentation_binding") if isinstance(request.get("presentation_binding"), dict) else {}
     return (
