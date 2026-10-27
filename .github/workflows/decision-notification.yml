@@ -610,10 +610,31 @@ jobs:
           REPORT_DELIVERY_PATH: ${{ steps.push_kind.outputs.report_path }}
           REPORT_HANDOFF_PATH: ${{ steps.push_kind.outputs.report_handoff_path }}
           REVIEW_EVENT_PATH: ${{ steps.scheduled_completion_event.outputs.review_event_path || steps.formal_completion_event.outputs.review_event_path || steps.push_kind.outputs.review_event_path || steps.workflow_review.outputs.review_event_path }}
+          SCHEDULED_REVIEW_COMPLETION_PATH: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path || '' }}
           FORMAL_COMPLETION_EVENT: ${{ steps.formal_completion_event.outputs.review_event_path != '' && 'true' || 'false' }}
         run: |
           set -euo pipefail
+          # A manual dispatch must remain self-contained. If an earlier
+          # projection step did not expose its output, replay the same
+          # completion idempotently in this run and recover the exact event
+          # path before deciding whether to send. Never fall back to directory
+          # scanning or to a historical notification object.
+          if [ -z "$REVIEW_EVENT_PATH" ] && [ -n "$SCHEDULED_REVIEW_COMPLETION_PATH" ]; then
+            completion_path="$SCHEDULED_REVIEW_COMPLETION_PATH"
+            case "$completion_path" in
+              requests/live_snapshot/*) ;;
+              *) completion_path="requests/live_snapshot/$completion_path" ;;
+            esac
+            test -f "$completion_path"
+            projection=$(python scripts/process_state_sync_request.py "$completion_path")
+            REVIEW_EVENT_PATH=$(python -c 'import json,sys; print(json.loads(sys.argv[1]).get("canonical_publication", ""))' "$projection")
+            case "$REVIEW_EVENT_PATH" in
+              events/reviews/*.json) ;;
+              *) echo "Manual Scheduled Review completion did not resolve to an exact review event." >&2; exit 1 ;;
+            esac
+          fi
           if [ -n "$REPORT_DELIVERY_PATH" ] || [ -n "$REPORT_HANDOFF_PATH" ] || [ -n "$REVIEW_EVENT_PATH" ]; then
+            export REVIEW_EVENT_PATH
             python scripts/run_guarded_notification.py center --mode event
           else
             echo "No current shared completion/report binding; fail closed without PushPlus."
