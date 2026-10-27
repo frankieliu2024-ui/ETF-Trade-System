@@ -41,20 +41,10 @@ on:
       - "scripts/build_post_market_review.py"
       - ".github/workflows/market-snapshot.yml"
   schedule:
-    # Market data pulses.
-    # Deterministic Formal Decision ingress: Beijing 09:00.
-    - cron: "0 1 * * 1-5"
-    - cron: "15,20,25,30,40,50 1 * * 1-5"
-    # Keep a pre-10:00 A-share snapshot available for Formal Decision PIT selection.
-    - cron: "55 1 * * 1-5"
-    - cron: "9,19,29,39,49,59 2-3,5-6 * * 1-5"
-    - cron: "9,19 7 * * 1-5"
-    # Deterministic Formal Decision ingress: Beijing 10:00, 11:00, 13:30, 14:30.
-    # Holiday applicability remains enforced by the canonical market calendar.
-    - cron: "0 2 * * 1-5"
-    - cron: "0 3 * * 1-5"
-    - cron: "30 5 * * 1-5"
-    - cron: "30 6 * * 1-5"
+    # Unified fixed pulse rule: every 10 minutes at :05/:15/:25/:35/:45/:55 UTC.
+    # Beijing A-share coverage is approximately 08:55-15:25; the runtime
+    # market calendar/phase gate decides which pulse is applicable.
+    - cron: "5,15,25,35,45,55 0-7 * * 1-5"
 
 permissions:
   contents: write
