@@ -236,7 +236,7 @@ canonical intake只接受已登记的`ETF_TRADE_REVIEW`、`ETF_SYSTEM_REVIEW`与
 
 ### Formal Decision 主动通知正文边界（2026-10-14）
 
-Formal Decision 与两个 Scheduled Review 任务共用同一个 Scheduled Review completion owner 和 `request_type=SCHEDULED_REVIEW_COMPLETION`；其业务身份通过 `report_type=ETF_FORMAL_DECISION`、`formal_fact_type=FORMAL_POST_CLOSE_REVIEW` 和 `source=CHATGPT_SCHEDULED_REVIEW_ACTOR` 区分。不得再使用独立 Formal completion 类型。
+Formal Decision 与两个 Scheduled Review 任务共用同一个 Scheduled Review completion owner 和 `request_type=SCHEDULED_REVIEW_COMPLETION`；其业务身份通过 `report_type=ETF_FORMAL_DECISION`、`task_id=ETF正式决策` 和 `source=CHATGPT_SCHEDULED_REVIEW_ACTOR` 区分。当前Formal Decision使用`formal_fact_type=FORMAL_CURRENT_MAIN_DECISION`；不得再要求`FORMAL_POST_CLOSE_REVIEW`，也不得再使用独立 Formal completion 类型。
 
 `ETF_FORMAL_DECISION` 的通知正文唯一来源是当前请求已冻结并由统一 Scheduled Review completion event 绑定的 `FINAL_CONTENT`；Formal Decision 与【ETF系统复核】、【ETF交易复盘】共用同一个 completion owner、completion request type、REPORT、notification_center/PushPlus 主链，但通过 `report_type=ETF_FORMAL_DECISION` 保留独立业务身份。BDS 只负责业务事实入口和正文冻结，不是通知唤醒事件。通知中心必须消费当前精确 completion event，验证 `request_id`、`parent_request_id`、`decision_id`、`content_hash` 和 presentation binding；任何字段缺失或不一致都不得发送，不得扫描历史事件回退，也不得返回 `ALREADY_MANAGED`。
 
