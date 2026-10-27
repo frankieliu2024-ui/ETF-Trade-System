@@ -125,7 +125,9 @@ class AShareProductionChainTests(unittest.TestCase):
         self.assertIn("SCHEDULED_CRON:", workflow)
         self.assertIn("9,19,29,39,49,59 2-3,5-6 * * 1-5", workflow)
         self.assertNotIn("*/10 2-3,5-6 * * 1-5", workflow)
-        self.assertIn("stale_scheduled_pulse", (ROOT / "scripts/runtime_session_gate.py").read_text(encoding="utf-8"))
+        gate = (ROOT / "scripts/runtime_session_gate.py").read_text(encoding="utf-8")
+        self.assertIn("Never suppress capture merely because the cron delivery was delayed or ambiguous.", gate)
+        self.assertNotIn('reason = "stale_scheduled_pulse"', gate)
         self.assertFalse(observation["natural_pulse_eligible"])
 
     def test_shifted_natural_pulse_preserves_decision_freshness_margin(self):
