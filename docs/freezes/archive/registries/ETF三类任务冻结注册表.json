@@ -1,8 +1,8 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "registry_type": "ETF_THREE_TASK_FREEZE_REGISTRY",
   "authority": "current_main",
-  "canonical_status": "HISTORICAL_ARCHIVES_CONSOLIDATED_LIVE_SNAPSHOT_RECONCILIATION_REQUIRED",
+  "canonical_status": "LIVE_PROMPT_AUTHORITY_CONFIRMED_AUDIT_POINTER",
   "purpose": "统一登记三个ETF任务的冻结、历史归档、版本追踪和回滚关系；不复制业务规则，不构成第二任务、第二workflow、第二状态或第二业务链。",
   "current_main_only": true,
   "index_path": "ETF_SYSTEM_INDEX.md",
@@ -22,33 +22,36 @@
       "automation_id": "6accb02805ec8191aca29791a72636bd",
       "conversation_id": "6accb04b-9d30-83ec-9e9f-f632d3815e92",
       "canonical_interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
-      "live_snapshot_status": "RECONCILIATION_REQUIRED",
+      "live_snapshot_status": "LIVE_READBACK_CONFIRMED_CURRENT_MAIN_AUDIT_ONLY",
       "historical_versions": [
         "2026-10-16-v1",
         "2026-10-16-v2"
-      ]
+      ],
+      "freeze_rule": "以ChatGPT定时任务界面live Prompt为唯一运行指令；仓库快照仅用于审计"
     },
     {
       "task_id": "ETF交易复盘",
       "automation_id": "6ab78aab49988191818abf8660c65362",
       "conversation_id": "6ab89c94-e798-83e8-90e6-0b57c60905c5",
       "canonical_interaction_scenario": "SCHEDULED_TRADE_REVIEW",
-      "live_snapshot_status": "RECONCILIATION_REQUIRED",
+      "live_snapshot_status": "LIVE_READBACK_CONFIRMED_CURRENT_MAIN_AUDIT_ONLY",
       "historical_versions": [
         "2026-10-16-v1",
         "2026-10-16-v2"
-      ]
+      ],
+      "freeze_rule": "以ChatGPT定时任务界面live Prompt为唯一运行指令；仓库快照仅用于审计"
     },
     {
       "task_id": "ETF正式决策",
       "automation_id": "6ad1d7b4c05c819180eb6af2c8086cb8",
       "conversation_id": "6ad0aef0-7718-83ee-b901-d24316ce92b6",
       "canonical_interaction_scenario": "FORMAL_DECISION_CANONICAL_SCENARIO_PER_CURRENT_MAIN",
-      "live_snapshot_status": "RECONCILIATION_REQUIRED",
+      "live_snapshot_status": "LIVE_READBACK_CONFIRMED_CURRENT_MAIN_AUDIT_ONLY",
       "historical_versions": [
         "2026-10-16-v1",
         "2026-10-16-v2"
-      ]
+      ],
+      "freeze_rule": "以ChatGPT定时任务界面live Prompt为唯一运行指令；仓库快照仅用于审计"
     }
   ],
   "historical_archive_map": [
@@ -83,42 +86,13 @@
   ],
   "registry_revision": "2026-10-18-live-readback",
   "live_readback": {
-    "captured_at_beijing": "2026-10-18 12:46",
-    "source": "ChatGPT Scheduled Tasks live configuration via authorized browser readback",
-    "result": "READBACK_CONFIRMED_HASH_REGISTRATION_PENDING",
-    "authority_note": "本次只登记实际回读结果；平台页面未提供可直接回读的Prompt/Schedule blob hash，因此不填充或推算hash。",
-    "freeze_boundary": "本次登记不是最终冻结；在获得可验证的完整live Prompt、完整Schedule及对应hash前，保持RECONCILIATION_REQUIRED。",
-    "verified_common_contracts": [
-      "三个任务仍为ETF系统复核、ETF交易复盘、ETF正式决策，未新增任务",
-      "任务均以current main和ETF_SYSTEM_INDEX.md为唯一规则入口",
-      "三类任务保持独立，不跨任务复用请求、正文、completion、event、REPORT或notification",
-      "归档记录不改变live任务运行配置"
-    ],
-    "task_observations": {
-      "ETF系统复核": {
-        "automation_id": "6accb02805ec8191aca29791a72636bd",
-        "conversation_id": "6accb04b-9d30-83ec-9e9f-f632d3815e92",
-        "observed": "当前live Prompt要求每次自动或手动进入System Review后，在FINAL_CONTENT生成前执行一次current main全量一致性验收；必须回读本次run_id、提交SHA、状态、结论、失败检查和警告；结果必须进入正文和同一通知正文。",
-        "canonical_interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
-        "prompt_hash": "PENDING_PLATFORM_VERIFIABLE_HASH",
-        "schedule_hash": "PENDING_PLATFORM_VERIFIABLE_HASH"
-      },
-      "ETF交易复盘": {
-        "automation_id": "6ab78aab49988191818abf8660c65362",
-        "conversation_id": "6ab89c94-e798-83e8-90e6-0b57c60905c5",
-        "observed": "当前live Prompt要求唯一SCHEDULED_REVIEW_COMPLETION硬门；completion写入回读后继续canonical event、REPORT、notification_center和PushPlus交接；所有运行统一使用interaction_scenario=SCHEDULED_TRADE_REVIEW，早间、完整日和周复盘不生成平行场景值。",
-        "canonical_interaction_scenario": "SCHEDULED_TRADE_REVIEW",
-        "prompt_hash": "PENDING_PLATFORM_VERIFIABLE_HASH",
-        "schedule_hash": "PENDING_PLATFORM_VERIFIABLE_HASH"
-      },
-      "ETF正式决策": {
-        "automation_id": "6ad1d7b4c05c819180eb6af2c8086cb8",
-        "conversation_id": "6ad0aef0-7718-83ee-b901-d24316ce92b6",
-        "observed": "当前live Prompt仍要求Formal Decision按唯一父请求、request-bound事实、唯一FINAL_CONTENT、BDS、FORMAL_DECISION_COMPLETION及既有decision-notification主链执行；不生成平行任务或平行场景。",
-        "canonical_interaction_scenario": "FORMAL_DECISION_CANONICAL_SCENARIO_PER_CURRENT_MAIN",
-        "prompt_hash": "PENDING_PLATFORM_VERIFIABLE_HASH",
-        "schedule_hash": "PENDING_PLATFORM_VERIFIABLE_HASH"
-      }
-    }
-  }
+    "captured_at_beijing": "2026-10-27",
+    "source": "ChatGPT scheduled tasks cloud browser refreshed readback",
+    "result": "THREE_TASKS_LIVE_PROMPTS_READ_BACK_ENABLED",
+    "platform_hash_status": "NOT_EXPOSED_BY_UI",
+    "authority": "ChatGPT scheduled task UI live prompts",
+    "repository_role": "audit/test/production protocol only",
+    "limitation": "平台未提供可验证的原生Prompt/Schedule hash，不推算hash"
+  },
+  "current_main_role": "审计、测试、生产协议和回退登记；不得覆盖ChatGPT定时任务界面live Prompt"
 }
