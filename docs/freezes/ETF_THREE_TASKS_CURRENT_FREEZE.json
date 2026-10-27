@@ -25,7 +25,8 @@
       "watchdog异常不等同于快照生产失败",
       "不完整快照不得作为可消费CURRENT",
       "三类任务分别保持业务边界",
-      "唯一FINAL_CONTENT、completion和通知链"
+      "唯一FINAL_CONTENT、completion和通知链",
+      "正文冻结后必须实际调用对应生产Actor或等价正式入口；未经调用、返回结果和同路径回读不得结束运行"
     ]
   },
   "tasks": [
@@ -37,7 +38,7 @@
       "prompt_readback_status": "FULL_CURRENT_PROMPT_READ_BACK_AFTER_REFRESH",
       "authority": "CHATGPT_SCHEDULED_TASK_UI",
       "repository_role": "AUDIT_TEST_PRODUCTION_PROTOCOL_ONLY",
-      "live_prompt_audit_note": "已包含事实生产—发布—识别契约、事实受限判断路径及13:30固定节点补充"
+      "live_prompt_audit_note": "已包含事实生产—发布—识别契约、事实受限判断路径、13:30固定节点补充及强制正式决策生产Actor接线"
     },
     {
       "task_id": "ETF交易复盘",
@@ -47,7 +48,7 @@
       "prompt_readback_status": "FULL_CURRENT_PROMPT_READ_BACK_AFTER_REFRESH",
       "authority": "CHATGPT_SCHEDULED_TASK_UI",
       "repository_role": "AUDIT_TEST_PRODUCTION_PROTOCOL_ONLY",
-      "live_prompt_audit_note": "已包含目标复盘事实优先、查询刷新/watchdog非阻断及第十四节补充"
+      "live_prompt_audit_note": "已包含目标复盘事实优先、查询刷新/watchdog非阻断、第十四节补充及强制交易复盘生产Actor接线"
     },
     {
       "task_id": "ETF系统复核",
@@ -57,7 +58,7 @@
       "prompt_readback_status": "FULL_CURRENT_PROMPT_READ_BACK_AFTER_REFRESH",
       "authority": "CHATGPT_SCHEDULED_TASK_UI",
       "repository_role": "AUDIT_TEST_PRODUCTION_PROTOCOL_ONLY",
-      "live_prompt_audit_note": "已包含事实生产、发布、识别、查询刷新、watchdog和下游投影分层复核"
+      "live_prompt_audit_note": "已包含事实生产、发布、识别、查询刷新、watchdog和下游投影分层复核及强制系统复核生产Actor接线"
     }
   ],
   "common_chain": [
@@ -78,7 +79,7 @@
   },
   "acceptance_required": [
     "三条任务均启用且live Prompt完整回读",
-    "三条任务均明确事实生产、发布、识别边界",
+    "三条任务均明确事实生产、发布、识别边界和正文后的强制生产Actor接线",
     "canonical快照与查询刷新健康状态分离",
     "watchdog不覆盖canonical事实判断",
     "冻结指针JSON可解析并回读",
