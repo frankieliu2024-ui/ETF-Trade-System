@@ -578,6 +578,9 @@ class NotificationDecisionIdentityTests(unittest.TestCase):
         self.assertIn("git push origin HEAD:main", workflow)
         self.assertNotIn("git push --force", workflow)
         self.assertNotIn("git push -f ", workflow)
+        self.assertIn("Consistency report unchanged semantically; no state commit required.", workflow)
+        self.assertIn("def semantic(value):", workflow)
+        self.assertIn('k not in {"persisted_at_beijing", "persisted_state_commit"}', workflow)
 
 
 class PrAcceptancePathCoverageTests(unittest.TestCase):
