@@ -1249,6 +1249,69 @@ def _request_received_at_beijing(request: dict) -> str:
     return dt.astimezone(SHANGHAI).isoformat(timespec="seconds")
 
 
+def _write_formal_layer_projections(root: Path, current: dict, discovery: dict) -> None:
+    """Persist small, node-bound read contracts for downstream ChatGPT consumers.
+
+    query_context remains the full canonical context.  These projections prevent
+    connector truncation/partial reads from being interpreted as missing
+    Discovery, and make the pre-decision Opportunity state explicit without
+    inventing an opportunity or promoting a Discovery candidate.
+    """
+    market_date = str(current.get("market_date") or "")
+    node = str(current.get("latest_valid_node") or "")
+    snapshot = str((current.get("latest_snapshot") or ""))
+    generated = datetime.now(SHANGHAI).isoformat(timespec="seconds")
+    candidates = []
+    for item in discovery.get("candidates") or []:
+        if not isinstance(item, dict):
+            continue
+        # Keep the decision-relevant identity, eligibility, provenance and
+        # attached quote fields; omit provider dumps and raw history payloads.
+        keep = {
+            "code", "name", "category", "eligibility", "formal_status",
+            "discovery_spot", "historical_context", "quotes", "quote",
+            "decision_boundary", "source", "provenance", "data_quality",
+            "market_date", "required_history_end_date", "identity_status",
+        }
+        candidates.append({k: item[k] for k in keep if k in item})
+    status = str(discovery.get("status") or "NOT_REQUESTED").upper()
+    projection = {
+        "schema_version": "1.0",
+        "layer": "DISCOVERY",
+        "producer": "build_query_context.py",
+        "read_only": True,
+        "market_date": market_date,
+        "latest_valid_node": node,
+        "latest_snapshot": snapshot,
+        "generated_at_beijing": generated,
+        "status": status,
+        "coverage_status": discovery.get("coverage_status"),
+        "candidate_count": len(candidates),
+        "candidates": candidates,
+        "universe_identity": discovery.get("universe_identity"),
+        "discovery_delta_identity": discovery.get("discovery_delta_identity"),
+        "source": discovery.get("source"),
+        "pit_boundary": discovery.get("required_history_end_date") or market_date,
+        "freshness_rule": "same-node fixed-slot evidence; absence is not zero",
+    }
+    atomic_json_write(root / "data/state/formal_discovery_current.json", projection)
+    opportunity = {
+        "schema_version": "1.0",
+        "layer": "OPPORTUNITY",
+        "producer": "build_query_context.py",
+        "read_only": True,
+        "market_date": market_date,
+        "latest_valid_node": node,
+        "latest_snapshot": snapshot,
+        "generated_at_beijing": generated,
+        "status": "PENDING_MASTER_DECISION",
+        "opportunity_count": None,
+        "opportunities": [],
+        "decision_owner": "MASTER_FORMAL_DECISION",
+        "not_zero_rule": "pending decision is not an opportunity count of zero",
+        "source_discovery_status": status,
+    }
+    atomic_json_write(root / "data/state/formal_opportunity_current.json", opportunity)
 def _minimum_legal_inputs_ready_at(root: Path, request: dict, current: dict, account: dict, market_quote: dict, observed_at: str) -> str:
     """Return the earliest repository-observed time when action-determinative inputs are present.
 
@@ -1834,6 +1897,7 @@ def main() -> None:
     symbols = [x.strip() for x in args.symbols.split(",") if x.strip()]
     context = build(ROOT, force_refresh=args.force_refresh, requested_symbols=symbols, request_file=args.request_file or None, run_discovery=args.run_discovery)
     validate_request_bound_context(context, args.request_file or None)
+    _write_formal_layer_projections(ROOT, read_current(ROOT), context.get("formal_etf_discovery") or {})
     atomic_json_write(ROOT / "data" / "state" / "query_context.json", context)
     print(json.dumps({"ok": True, "generated_at_beijing": context["generated_at_beijing"], "market_date": context["market_date"], "latest_valid_node": context["latest_valid_node"], "system_consistency_status": context["system_consistency_status"], "candidate_trading_day": context["trading_day_status"]["is_candidate_trading_day"], "etf_universe_count": context["etf_universe_count"], "account_fact_status": context["account_fact_status"], "account_usable": context["account_gate"]["can_use_current_account_fact"], "freshness": context["freshness_at_context_build"]["status"], "overseas_context_status": context["overseas_context_status"], "us_extended_hours_status": context["us_extended_hours_status"], "stock_context_status": context["stock_context_status"], "stock_market_context_status": context["stock_market_context_status"], "read_plan_mode": context["decision_read_plan"]["mode"]}, ensure_ascii=False))
 
