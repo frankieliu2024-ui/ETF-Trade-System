@@ -475,6 +475,7 @@ def build_system_review_completion_request(
     task_run_id: str,
     final_content: str,
     entry_mode: str = "AUTOMATIC_SCHEDULED_TASK",
+    occurrence_id: str = "",
 ) -> dict:
     """Build the business completion envelope for one Scheduled System Review occurrence."""
     if not isinstance(system_review, dict) or not system_review:
@@ -485,7 +486,7 @@ def build_system_review_completion_request(
         raise ValueError("scheduled system review completion requires a registered scheduled entry_mode")
     task_run_id, occurrence_id = derive_runtime_identity(
         task_id or "ETF系统复核", request_id, requested_at_beijing,
-        entry_mode, task_run_id, ""
+        entry_mode, task_run_id, occurrence_id
     )
     task_run_id = _safe_id(task_run_id)
     if not str(requested_at_beijing or "").strip() or not str(final_content or "").strip():
@@ -494,7 +495,7 @@ def build_system_review_completion_request(
     validate_user_visible_content(str(final_content), canonical_closure_confirmed=False)
     frozen_content = str(final_content)
     content_hash = hashlib.sha256(frozen_content.encode("utf-8")).hexdigest()
-    occurrence_id = task_run_id
+    occurrence_id = _safe_id(occurrence_id)
     return {
         "request_id": request_id,
         "request_type": "SCHEDULED_REVIEW_COMPLETION",
