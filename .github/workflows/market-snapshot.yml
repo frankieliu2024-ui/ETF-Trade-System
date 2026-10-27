@@ -246,7 +246,12 @@ jobs:
               str(request.get("source") or "").upper()
               in {"CHATGPT_FORMAL_DECISION_COMPLETION", "CHATGPT_MANUAL_FORMAL_COMPLETION"}
               or (
-                  str(request.get("formal_fact_type") or "").upper() == "FORMAL_POST_CLOSE_REVIEW"
+                  str(request.get("request_type") or "").upper() == "SCHEDULED_REVIEW_COMPLETION"
+                  and str(request.get("source") or "").upper() == "CHATGPT_SCHEDULED_REVIEW_ACTOR"
+                  and (
+                      str(request.get("report_type") or ((request.get("presentation_binding") or {}).get("report_type") or "")).upper()
+                      == "ETF_FORMAL_DECISION"
+                  )
                   and str(request.get("task_id") or "").strip() == "ETF正式决策"
               )
           )
@@ -844,7 +849,10 @@ jobs:
           if (
               str(request.get("request_type") or "").upper() == "SCHEDULED_REVIEW_COMPLETION"
               and str(request.get("source") or "").upper() == "CHATGPT_SCHEDULED_REVIEW_ACTOR"
-              and str(request.get("formal_fact_type") or "").upper() == "FORMAL_POST_CLOSE_REVIEW"
+              and (
+                  str(request.get("report_type") or ((request.get("presentation_binding") or {}).get("report_type") or "")).upper()
+                  == "ETF_FORMAL_DECISION"
+              )
               and str(request.get("task_id") or "").strip() == "ETF正式决策"
           ):
               raise SystemExit(0)
@@ -868,7 +876,10 @@ jobs:
               str(request.get("source") or "").upper()
               in {"CHATGPT_FORMAL_DECISION_COMPLETION", "CHATGPT_MANUAL_FORMAL_COMPLETION"}
               or (
-                  str(request.get("formal_fact_type") or "").upper() == "FORMAL_POST_CLOSE_REVIEW"
+                  (
+              str(request.get("report_type") or ((request.get("presentation_binding") or {}).get("report_type") or "")).upper()
+              == "ETF_FORMAL_DECISION"
+          )
                   and str(request.get("task_id") or "").strip() == "ETF正式决策"
               )
           )
