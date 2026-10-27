@@ -2460,35 +2460,31 @@ def record_scheduled_system_review(request: dict) -> tuple[bool, bool]:
     if str(request.get("formal_fact_type") or "") != "FORMAL_SCHEDULED_SYSTEM_REVIEW":
         return False, False
     raw_binding = request.get("presentation_binding")
-    # Some task-interface runs historically wrote the frozen presentation at the
-    # completion envelope level but omitted presentation_binding. Normalize only
-    # when every identity/content field is present; otherwise fail closed.
+    # Normalize incomplete bindings from the same completion envelope before
+    # validation. A binding object may exist while omitting one or more fields;
+    # rejecting it outright strands an otherwise valid frozen completion before
+    # the canonical event owner. Never read history or invent a second identity.
+    top_task_run_id = str(request.get("task_run_id") or "").strip()
+    top_occurrence_id = str(request.get("occurrence_id") or top_task_run_id).strip()
+    top_request_id = str(request.get("request_id") or "").strip()
     if not isinstance(raw_binding, dict):
-        task_run_id = str(request.get("task_run_id") or "").strip()
-        request_id = str(request.get("request_id") or "").strip()
-        # Preserve the frozen body byte-for-byte.  The completion builder hashes
-        # the exact FINAL_CONTENT; stripping here changes the body/hash pair and
-        # lets the canonical event disagree with the completion envelope.
-        final_content = _extract_scheduled_review_final_content(request)
-        if not task_run_id or not request_id or not final_content.strip():
-            raise ValueError("scheduled system review completion requires presentation_binding or complete top-level binding fields")
-        # The canonical owner is the sole authority for the frozen presentation
-        # and its audit hash.  A task-interface envelope may still contain a
-        # legacy/top-level content_hash, but it is not allowed to create a
-        # second hash source or block canonicalization.  Recompute from the
-        # exact persisted FINAL_CONTENT and bind that value below.
-        content_hash = hashlib.sha256(final_content.encode("utf-8")).hexdigest()
-        raw_binding = {
-            "report_type": "ETF_SYSTEM_REVIEW",
-            "task_id": str(request.get("task_id") or "ETF系统复核"),
-            "task_run_id": task_run_id,
-            "occurrence_id": str(request.get("occurrence_id") or task_run_id),
-            "request_id": request_id,
-            "report_id": str(request.get("report_id") or f"etf_system_review:{task_run_id}"),
-            "full_content": final_content,
-            "content_hash": content_hash,
-            "content_hash_source": "canonical_owner_normalization",
-        }
+        raw_binding = {}
+    else:
+        raw_binding = dict(raw_binding)
+    final_content = _extract_scheduled_review_final_content(request)
+    raw_binding.setdefault("report_type", "ETF_SYSTEM_REVIEW")
+    raw_binding.setdefault("task_id", str(request.get("task_id") or "ETF系统复核"))
+    raw_binding.setdefault("task_run_id", top_task_run_id)
+    raw_binding.setdefault("occurrence_id", top_occurrence_id)
+    raw_binding.setdefault("request_id", top_request_id)
+    raw_binding.setdefault("report_id", str(request.get("report_id") or "").strip())
+    raw_binding.setdefault("full_content", final_content)
+    raw_binding.setdefault("content_hash", hashlib.sha256(str(raw_binding.get("full_content") or "").encode("utf-8")).hexdigest())
+    raw_binding.setdefault("content_hash_source", "canonical_owner_normalization")
+    if not raw_binding.get("report_id") and raw_binding.get("task_run_id"):
+        raw_binding["report_id"] = f"etf_system_review:{raw_binding['task_run_id']}"
+    if not raw_binding.get("full_content"):
+        raise ValueError("scheduled system review completion requires frozen final_content")
     binding = _validate_presentation_binding(raw_binding, "ETF_SYSTEM_REVIEW")
     occurrence = str(binding["task_run_id"])
     event_path = ROOT / "events" / "reviews" / f"system_{occurrence}.json"
