@@ -31,7 +31,47 @@
         ],
         "validation_only_report_forbidden": true
       },
-      "canonical_task_id": "ETF系统复核"
+      "canonical_task_id": "ETF系统复核",
+      "entry_modes": {
+        "automatic": {
+          "source": "CHATGPT_SCHEDULED_SYSTEM_REVIEW_ACTOR",
+          "entry_mode": "AUTOMATIC_SCHEDULED_TASK"
+        },
+        "manual": {
+          "source": "CHATGPT_SCHEDULED_SYSTEM_REVIEW_ACTOR",
+          "entry_mode": "MANUAL_SCHEDULED_TASK"
+        }
+      },
+      "production_adapter": "scripts/run_scheduled_system_review_actor.py",
+      "completion_builder": "build_system_review_completion_request",
+      "completion_owner": "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER",
+      "handoff_contract": {
+        "source": "SCHEDULED_REVIEW_COMPLETION",
+        "sequence": [
+          "freeze_FINAL_CONTENT",
+          "compute_content_hash",
+          "write_read_SCHEDULED_REVIEW_COMPLETION",
+          "read_back_canonical_review_event_REPORT_notification_provider"
+        ],
+        "same_run_runtime_clock": "requested_at_beijing",
+        "timezone": "Asia/Shanghai",
+        "utc_only_for": [
+          "GitHub Actions cron",
+          "persistence metadata"
+        ],
+        "bds_required": false,
+        "owner": "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER"
+      },
+      "handoff_execution": {
+        "owner": "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER",
+        "primary_mode": "DIRECT_GITHUB_CONTENTS_COMPLETION_WRITE_AND_READBACK",
+        "adapter_role": "PRODUCTION_SYSTEM_REVIEW_ACTOR",
+        "notification_wake": "EXPLICIT_DISPATCH_WITH_EXACT_COMPLETION_PATH",
+        "same_run_required": true,
+        "completion_readback_must_continue_to_notification_dispatch": true,
+        "report_identity": "ETF_SYSTEM_REVIEW",
+        "completion_push_required_in_same_run": true
+      }
     },
     {
       "id": "ETF_TRADE_REVIEW",
