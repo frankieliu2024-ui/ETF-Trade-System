@@ -4,16 +4,11 @@ from pathlib import Path
 WORKFLOW = Path(__file__).parents[1] / ".github" / "workflows" / "market-snapshot.yml"
 
 
-def test_formal_schedule_has_exact_five_beijing_slots():
+def test_market_snapshot_uses_unified_fixed_pulse_not_formal_task_slots():
     text = WORKFLOW.read_text(encoding="utf-8")
-    for cron in (
-        'cron: "0 1 * * 1-5"',
-        'cron: "0 2 * * 1-5"',
-        'cron: "0 3 * * 1-5"',
-        'cron: "30 5 * * 1-5"',
-        'cron: "30 6 * * 1-5"',
-    ):
-        assert cron in text
+    assert 'cron: "5,15,25,35,45,55 0-7 * * 1-5"' in text
+    assert 'cron: "0 1 * * 1-5"' not in text
+    assert 'cron: "30 5 * * 1-5"' not in text
 
 
 def test_formal_schedule_is_market_data_pulse_only():
