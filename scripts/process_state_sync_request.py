@@ -1042,7 +1042,10 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
     if (
         str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION"
         and str(request.get("source") or "").strip().upper() == "CHATGPT_SCHEDULED_REVIEW_ACTOR"
-        and str(request.get("formal_fact_type") or "").strip().upper() in {\n            "FORMAL_POST_CLOSE_REVIEW",\n            "FORMAL_CURRENT_MAIN_DECISION",\n        }
+        and str(request.get("formal_fact_type") or "").strip().upper() in {
+            "FORMAL_POST_CLOSE_REVIEW",
+            "FORMAL_CURRENT_MAIN_DECISION",
+        }
         and str(request.get("task_id") or "").strip() == "ETF正式决策"
     ):
         raise ValueError(
