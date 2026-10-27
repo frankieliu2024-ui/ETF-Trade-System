@@ -22,7 +22,7 @@ class TaskEntrySchedulingGovernanceTests(unittest.TestCase):
         self.assertNotIn("entry_adapter", decision)
         self.assertNotIn("entry_builder", decision)
         self.assertEqual(decision["production_adapter"], "scripts/run_scheduled_formal_decision_actor.py")
-        self.assertNotIn("completion_builder", decision)
+        self.assertEqual(decision["completion_builder"], "build_formal_review_completion_request")
         facts = decision["fact_consumption"]
         self.assertFalse(facts["request_required"])
         self.assertFalse(facts["parent_request_required"])
