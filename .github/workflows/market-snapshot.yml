@@ -535,6 +535,7 @@ jobs:
           NATURAL_PULSE_IDENTITY: ${{ steps.session_gate.outputs.natural_pulse_identity }}
           NATURAL_PULSE_IDENTITY_STATUS: ${{ steps.session_gate.outputs.natural_pulse_identity_status }}
           NATURAL_PULSE_ELIGIBLE: ${{ steps.session_gate.outputs.natural_pulse_eligible }}
+          ETF_HEALTH_PATH: ${{ github.event_name == 'push' && 'data/state/query_refresh_health.json' || 'data/state/runtime_health.json' }}
         shell: bash
         run: |
           python - <<'PY'
