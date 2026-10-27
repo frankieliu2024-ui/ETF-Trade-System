@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import fnmatch
 import json
 import os
@@ -272,6 +273,13 @@ def formal_decision_blockage(rows: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description="Read-only ETF production health aggregate")
+    parser.add_argument(
+        "--watchdog-observer",
+        action="store_true",
+        help="Report health state to the watchdog without turning observed health problems into an observer process failure.",
+    )
+    args = parser.parse_args()
     now_utc = datetime.now(timezone.utc)
     rows: list[dict[str, Any]] = []
     consistency = read_json(STATE / "system_consistency.json")
@@ -378,9 +386,13 @@ def main() -> int:
             "assessment_age_seconds": self_healing_age,
             "rule": "Global BLOCKED status remains visible; a fresh canonical self-healing assessment may keep an already-admitted safe deterministic recovery path executable. Unknown/stale assessments never bypass the guard.",
         },
-        "rule": "生产健康只读检查；不生成交易权限，不修改MASTER，不自动下单。",
+        "execution_status": "SUCCEEDED" if args.watchdog_observer else ("FAILED" if overall == "BLOCKED" and not safe_recovery_admitted else "SUCCEEDED"),
+        "observer_mode": bool(args.watchdog_observer),
+        "rule": "生产健康只读检查；不生成交易权限，不修改MASTER，不自动下单。观察模式只改变进程退出语义，不降低健康状态、不跳过升级或恢复门禁。",
     }
     print(json.dumps(payload, ensure_ascii=False, indent=2))
+    if args.watchdog_observer:
+        return 0
     if overall == "BLOCKED" and safe_recovery_admitted:
         return 0
     return 2 if overall == "BLOCKED" else 0

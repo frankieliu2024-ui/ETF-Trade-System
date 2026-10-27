@@ -586,6 +586,27 @@ class PrAcceptancePathCoverageTests(unittest.TestCase):
         pull_request_block = workflow
         self.assertIn('".github/workflows/**"', workflow)
 
+class WatchdogHealthSemanticsTests(unittest.TestCase):
+    def test_watchdog_observer_separates_execution_from_observed_health(self):
+        root = Path(__file__).resolve().parents[1]
+        guard = (root / "scripts/production_health_guard.py").read_text(encoding="utf-8")
+        workflow = (root / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
+        self.assertIn("--watchdog-observer", guard)
+        self.assertIn('"execution_status"', guard)
+        self.assertIn('"observer_mode"', guard)
+        self.assertIn("python scripts/production_health_guard.py --watchdog-observer", workflow)
+        self.assertIn("Record persistent or structural escalation", workflow)
+        self.assertIn("escalation itself is a valid", workflow)
+        self.assertNotIn("cat data/state/self_healing_status.json\n          exit 1", workflow)
+
+    def test_watchdog_does_not_turn_observed_health_into_task_blockage(self):
+        root = Path(__file__).resolve().parents[1]
+        guard = (root / "scripts/production_health_guard.py").read_text(encoding="utf-8")
+        workflow = (root / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
+        self.assertIn("Global consistency or maintenance health failure alone does not block a request-bound Formal Decision", guard)
+        self.assertIn("The watchdog process fails only when its own assessment", workflow)
+
+
 if __name__ == "__main__":
     unittest.main()
 
