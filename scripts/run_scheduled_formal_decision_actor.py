@@ -414,11 +414,11 @@ def main() -> int:
     started_at = datetime.now(timezone.utc)
     completion_path, persistence = persist_completion_with_recovery(target)
     canonical_path = _persist_completion_to_main(completion_path)
+    # A generic push-triggered run is only a wake signal and is not bound to
+    # this completion. It must never satisfy the handoff gate.
     push = _wait_for_completion_push(canonical_path, started_at)
-    dispatch = push
-    if not push.get("read_back"):
-        dispatch = _dispatch_notification(canonical_path)
-        dispatch["fallback_after"] = "CANONICAL_COMPLETION_PUSH_NOT_READ_BACK"
+    dispatch = _dispatch_notification(canonical_path)
+    dispatch["fallback_after"] = "PUSH_WAKE_NOT_ACCEPTED_AS_COMPLETION_PROOF"
 
     projection = _wait_for_projection(occurrence_id, expected_decision_id)
     handoff_ok = (
