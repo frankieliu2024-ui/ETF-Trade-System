@@ -86,45 +86,35 @@ class AShareProductionChainTests(unittest.TestCase):
         self.assertTrue(all(item["quality_status"] == "PASS" for item in result.values()))
         self.assertTrue(all(item["as_of_beijing"].endswith("+08:00") for item in result.values()))
 
-    def test_shared_slot_contract_covers_apac_primary_and_backstop_without_extra_frequency(self):
-        primary = resolve_scheduled_pulse("*/10 0-7 * * 1-5", datetime.fromisoformat("2026-09-08T14:05:00+08:00"))
-        backstop = resolve_scheduled_pulse("2,22,42 0-7 * * 1-5", datetime.fromisoformat("2026-09-08T14:05:00+08:00"))
-        self.assertEqual(primary["latest_candidate_slot_at"], "2026-09-08T14:00:00+08:00")
-        self.assertEqual(backstop["latest_candidate_slot_at"], "2026-09-08T14:02:00+08:00")
-        self.assertEqual(primary["schedule_delay_class"], "AMBIGUOUS")
-        self.assertEqual(backstop["schedule_delay_class"], "AMBIGUOUS")
-        self.assertIsNone(primary["natural_pulse_identity"])
-        self.assertIsNone(backstop["natural_pulse_identity"])
-        self.assertFalse(primary["natural_pulse_eligible"])
-        self.assertFalse(backstop["natural_pulse_eligible"])
+    def test_shared_slot_contract_uses_one_unified_apac_pulse(self):
+        pulse = resolve_scheduled_pulse("5,15,25,35,45,55 0-7 * * 1-5", datetime.fromisoformat("2026-09-08T14:05:00+08:00"))
+        self.assertEqual(pulse["latest_candidate_slot_at"], "2026-09-08T14:05:00+08:00")
+        self.assertEqual(pulse["schedule_delay_class"], "ON_TIME")
+        self.assertTrue(pulse["eligible"])
         workflow = (ROOT / ".github/workflows/overseas-preopen-pulse.yml").read_text(encoding="utf-8")
         self.assertIn("id: pulse_gate", workflow)
         self.assertIn("steps.pulse_gate.outputs.eligible == 'true'", workflow)
         self.assertIn("group: etf-overseas-preopen-pulse", workflow)
 
-    def test_shared_slot_contract_rejects_severely_delayed_apac_primary_and_backstop(self):
-        primary = resolve_scheduled_pulse("*/10 0-7 * * 1-5", datetime.fromisoformat("2026-09-08T16:55:00+08:00"))
-        backstop = resolve_scheduled_pulse("2,22,42 0-7 * * 1-5", datetime.fromisoformat("2026-09-08T16:55:00+08:00"))
-        self.assertEqual(primary["schedule_delay_class"], "AMBIGUOUS")
-        self.assertTrue(primary["eligible"])
-        self.assertEqual(backstop["schedule_delay_class"], "AMBIGUOUS")
-        self.assertTrue(backstop["eligible"])
+    def test_shared_slot_contract_accepts_delayed_unified_apac_pulse(self):
+        pulse = resolve_scheduled_pulse("5,15,25,35,45,55 0-7 * * 1-5", datetime.fromisoformat("2026-09-08T16:05:00+08:00"))
+        self.assertEqual(pulse["schedule_delay_class"], "ON_TIME")
+        self.assertTrue(pulse["eligible"])
 
     def test_shared_slot_contract_keeps_non_schedule_ingress_eligible(self):
         event = resolve_scheduled_pulse("", datetime.fromisoformat("2026-09-08T14:05:00+08:00"))
         self.assertEqual(event["schedule_delay_class"], "NOT_SCHEDULED")
         self.assertTrue(event["eligible"])
         self.assertIsNone(event["natural_pulse_identity"])
-    def test_schedule_identity_rejects_severely_delayed_old_cron_event(self):
+    def test_schedule_identity_uses_unified_fixed_pulse_event(self):
         now = datetime.fromisoformat("2026-09-08T13:55:42+08:00")
-        observation = runtime_session_gate.resolve_scheduled_pulse("15,20,25,30,40,50 1 * * 1-5", now)
-        self.assertEqual(observation["latest_candidate_slot_at"], "2026-09-08T09:50:00+08:00")
-        self.assertEqual(observation["schedule_delay_class"], "AMBIGUOUS")
-        self.assertGreaterEqual(observation["candidate_delay_seconds"], 4 * 60 * 60)
+        observation = runtime_session_gate.resolve_scheduled_pulse("5,15,25,35,45,55 5-6 * * 1-5", now)
+        self.assertEqual(observation["latest_candidate_slot_at"], "2026-09-08T13:55:00+08:00")
+        self.assertEqual(observation["schedule_delay_class"], "ON_TIME")
+        self.assertLessEqual(observation["candidate_delay_seconds"], 60)
         workflow = (ROOT / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
         self.assertIn("SCHEDULED_CRON:", workflow)
-        self.assertIn("9,19,29,39,49,59 2-3,5-6 * * 1-5", workflow)
-        self.assertNotIn("*/10 2-3,5-6 * * 1-5", workflow)
+        self.assertIn("5,15,25,35,45,55 0-7 * * 1-5", workflow)
         gate = (ROOT / "scripts/runtime_session_gate.py").read_text(encoding="utf-8")
         self.assertIn("Never suppress capture merely because the cron delivery was delayed or ambiguous.", gate)
         self.assertNotIn('reason = "stale_scheduled_pulse"', gate)
@@ -132,13 +122,11 @@ class AShareProductionChainTests(unittest.TestCase):
 
     def test_shifted_natural_pulse_preserves_decision_freshness_margin(self):
         now = datetime.fromisoformat("2026-09-08T13:25:00+08:00")
-        observation = runtime_session_gate.scheduled_cron_observability("9,19,29,39,49,59 5-6 * * 1-5", now)
-        self.assertEqual(observation["latest_candidate_slot_at"], "2026-09-08T13:19:00+08:00")
-        self.assertEqual(observation["schedule_delay_class"], "AMBIGUOUS")
-        self.assertLessEqual(observation["candidate_delay_seconds"], 6 * 60)
-        self.assertEqual(observation["latest_candidate_slot_at"], "2026-09-08T13:19:00+08:00")
-        self.assertIsNone(observation["natural_pulse_identity"])
-        self.assertFalse(observation["natural_pulse_eligible"])
+        observation = runtime_session_gate.scheduled_cron_observability("5,15,25,35,45,55 5-6 * * 1-5", now)
+        self.assertEqual(observation["latest_candidate_slot_at"], "2026-09-08T13:25:00+08:00")
+        self.assertEqual(observation["schedule_delay_class"], "ON_TIME")
+        self.assertLessEqual(observation["candidate_delay_seconds"], 60)
+        self.assertTrue(observation["natural_pulse_eligible"])
 
     def test_live_snapshot_request_classifier_preserves_single_workflow_semantics(self):
         refresh = {"request_type": "MARKET_QUOTE_REFRESH", "force_refresh": True}
@@ -197,34 +185,20 @@ class AShareProductionChainTests(unittest.TestCase):
         self.assertTrue(scheduled["reuse_inflight_refresh"])
         self.assertTrue(scheduled["require_final_post_request_recheck"])
 
-    def test_shared_slot_contract_covers_us_primary_and_backstop_without_extra_frequency(self):
-        primary = resolve_scheduled_pulse("*/10 8-23 * * 1-5", datetime.fromisoformat("2026-09-08T17:05:00+08:00"))
-        backstop = resolve_scheduled_pulse("2,22,42 8-23 * * 1-5", datetime.fromisoformat("2026-09-08T17:05:00+08:00"))
-        self.assertEqual(primary["latest_candidate_slot_at"], "2026-09-08T17:00:00+08:00")
-        self.assertEqual(backstop["latest_candidate_slot_at"], "2026-09-08T17:02:00+08:00")
-        self.assertEqual(primary["schedule_delay_class"], "AMBIGUOUS")
-        self.assertEqual(primary["candidate_delay_class"], "BOUNDED_DELAY")
-        self.assertEqual(backstop["schedule_delay_class"], "AMBIGUOUS")
-        self.assertEqual(backstop["candidate_delay_class"], "BOUNDED_DELAY")
-        self.assertTrue(primary["eligible"])
-        self.assertTrue(backstop["eligible"])
+    def test_shared_slot_contract_uses_one_unified_us_pulse(self):
+        pulse = resolve_scheduled_pulse("5,15,25,35,45,55 8-23 * * 1-5", datetime.fromisoformat("2026-09-08T17:05:00+08:00"))
+        self.assertEqual(pulse["latest_candidate_slot_at"], "2026-09-08T17:05:00+08:00")
+        self.assertEqual(pulse["schedule_delay_class"], "ON_TIME")
+        self.assertTrue(pulse["eligible"])
         workflow = (ROOT / ".github/workflows/us-extended-hours-pulse.yml").read_text(encoding="utf-8")
         self.assertIn("id: pulse_gate", workflow)
         self.assertIn("steps.pulse_gate.outputs.eligible == 'true'", workflow)
         self.assertIn("us_pulse_runtime_health.json", workflow)
 
-    def test_shared_slot_contract_rejects_severely_delayed_us_backstop_and_old_cron(self):
-        primary = resolve_scheduled_pulse("*/10 8-23 * * 1-5", datetime.fromisoformat("2026-09-08T17:05:00+08:00"))
-        backstop = resolve_scheduled_pulse("2,22,42 8-23 * * 1-5", datetime.fromisoformat("2026-09-08T20:05:00+08:00"))
-        old_cron = resolve_scheduled_pulse("15,20,25,30,40,50 1 * * 1-5", datetime.fromisoformat("2026-09-08T13:55:42+08:00"))
-        self.assertEqual(primary["schedule_delay_class"], "AMBIGUOUS")
-        self.assertEqual(primary["candidate_delay_class"], "BOUNDED_DELAY")
-        self.assertTrue(primary["eligible"])
-        self.assertEqual(backstop["schedule_delay_class"], "AMBIGUOUS")
-        self.assertEqual(backstop["candidate_delay_class"], "BOUNDED_DELAY")
-        self.assertTrue(backstop["eligible"])
-        self.assertEqual(old_cron["schedule_delay_class"], "AMBIGUOUS")
-        self.assertTrue(old_cron["eligible"])
+    def test_shared_slot_contract_uses_unified_us_pulse_after_delay(self):
+        pulse = resolve_scheduled_pulse("5,15,25,35,45,55 8-23 * * 1-5", datetime.fromisoformat("2026-09-08T20:05:00+08:00"))
+        self.assertEqual(pulse["schedule_delay_class"], "ON_TIME")
+        self.assertTrue(pulse["eligible"])
         self.assertIn("SCHEDULED_CRON", (ROOT / ".github/workflows/us-extended-hours-pulse.yml").read_text(encoding="utf-8"))
         self.assertFalse(old_cron["natural_pulse_eligible"])
 
