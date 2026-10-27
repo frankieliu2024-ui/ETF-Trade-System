@@ -1465,6 +1465,23 @@ jobs:
           atomic_json_write(root / 'data/state/skfolio_risk_evidence.json', build(root))
           PY
 
+      - name: Refresh retained close risk evidence
+        id: retained_close_risk_refresh
+        # A manual close replay may intentionally retain an already-published
+        # canonical snapshot. It must still rebuild date-aligned research/risk
+        # evidence; otherwise prior-day evidence is misread as current.
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close' && steps.risk_refresh.outcome == 'skipped' && github.event.inputs.probe_only != 'true' }}
+        run: |
+          python scripts/build_research_features.py
+          python scripts/rebuild_etf_strategy_equity.py --output data/state/etf_strategy_equity.json
+          python - <<'PY'
+          from pathlib import Path
+          from scripts.build_skfolio_risk_evidence import build
+          from scripts.state_manager import atomic_json_write
+          root = Path('.')
+          atomic_json_write(root / 'data/state/skfolio_risk_evidence.json', build(root))
+          PY
+
       - name: Build state context and candidates
         id: state_context
         # Full decision preparation is request/state-sync bound. Scheduled
