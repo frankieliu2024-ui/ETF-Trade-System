@@ -17,6 +17,8 @@ on:
     # Unified fixed pulse rule: every 10 minutes at :05/:15/:25/:35/:45/:55 UTC.
     # The same cadence maps to Beijing 07:55-16:35 for APAC coverage;
     # market calendars and phases decide applicable objects.
+    - cron: "5,15,25,35,45,55 23 * * 0-4"
+    - cron: "5,15,25,35,45,55 0-8 * * 1-5"
 
 permissions:
   contents: write
