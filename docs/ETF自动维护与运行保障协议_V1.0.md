@@ -42,9 +42,9 @@
 
 ## 3.1 三类ETF任务运行身份校验
 
-System Review、Trade Review 和 Formal Decision 的运行身份必须在进入 canonical owner 前完成校验。校验至少覆盖 `task_id`、`source`、`entry_mode`、`task_run_id`、`occurrence_id`、`parent_request_id`、`request_id` 和 `market_date`；Formal Decision 还必须校验 `presentation_binding.task_id=ETF正式决策`。
+System Review、Trade Review 和 Formal Decision 的运行身份必须在进入 canonical owner 前完成校验。校验至少覆盖 `task_id`、`source`、`entry_mode`、`task_run_id`、`occurrence_id`、`request_id` 和 `market_date`；只有所属业务合同明确要求时，才校验 `parent_request_id`。三类任务的completion不得因为不存在父市场事实请求而被拒绝；Formal Decision 还必须校验 `presentation_binding.task_id=ETF正式决策`。
 
-身份校验失败不得降级为普通任务、历史请求或另一条业务链，必须保留原输入和错误分类并停止当前投影。重试只能沿原身份和原输入继续，不得创建第二请求、第二正文、第二 event 或第二通知。
+身份不明、字段冲突或运行身份与本次请求不一致时，不得降级为普通任务、历史请求或另一条业务链，必须保留原输入和错误分类并停止当前投影。已确认且属于注册入口的运行身份必须继续执行completion写入和回读；completion、事件、报告或通知未闭环只记录后置交接未完成，不得阻断已冻结并输出的FINAL_CONTENT。重试只能沿原身份和原输入继续，不得创建第二请求、第二正文、第二event或第二通知。
 
 ## 4. Owner与写入边界
 
