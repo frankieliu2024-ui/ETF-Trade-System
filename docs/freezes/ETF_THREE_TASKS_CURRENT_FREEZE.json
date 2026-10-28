@@ -3,8 +3,8 @@
   "freeze_id": "ETF_THREE_TASKS_CURRENT_FREEZE_20261027_LIVE_PROMPT_AUTHORITY",
   "freeze_status": "LIVE_PROMPT_AUTHORITY_CONFIRMED_AUDIT_POINTER",
   "authority": "CHATGPT_SCHEDULED_TASK_LIVE_PROMPT",
-  "captured_at_beijing": "2026-10-27",
-  "captured_main_commit": "8cfb4d936ebbdf0573e85d53968ac87afd6750ac",
+  "captured_at_beijing": "2026-10-28",
+  "captured_main_commit": "d0083a5339bd8dfe59364d2aa2fbfc9cd5fea5bf",
   "current_pointer": "docs/freezes/ETF_THREE_TASKS_CURRENT_FREEZE.json",
   "index_path": "ETF_SYSTEM_INDEX.md",
   "purpose": "ChatGPT定时任务界面中的三类live Prompt是唯一运行指令；current main仅保存审计、测试、生产协议和回退指针，不覆盖live Prompt。",
@@ -14,7 +14,7 @@
     "不新增任务、workflow、producer、checker、state或writer"
   ],
   "live_readback": {
-    "captured_at_beijing": "2026-10-27",
+    "captured_at_beijing": "2026-10-28",
     "source": "ChatGPT scheduled-task UI cloud-browser readback after refresh",
     "platform_hash_status": "NOT_EXPOSED_BY_UI",
     "schedule_status": "THREE_TASKS_ENABLED_DAILY_CUSTOM_FREQUENCY",
@@ -25,8 +25,10 @@
       "watchdog异常不等同于快照生产失败",
       "不完整快照不得作为可消费CURRENT",
       "三类任务分别保持业务边界",
+      "普通对话、任务界面手动和自动入口均属于注册入口，入口类型不得成为completion资格硬门",
       "唯一FINAL_CONTENT、completion和通知链",
-      "正文冻结后必须实际调用对应生产Actor或等价正式入口；未经调用、返回结果和同路径回读不得结束运行"
+      "completion必须在正文冻结并输出后实际尝试并回读，但completion失败、工具不可见或回读失败不得阻断正文或无限等待",
+      "后置交接失败只能记录未闭环，不得改写正文或创建第二链"
     ]
   },
   "tasks": [
@@ -38,7 +40,7 @@
       "prompt_readback_status": "FULL_CURRENT_PROMPT_READ_BACK_AFTER_REFRESH",
       "authority": "CHATGPT_SCHEDULED_TASK_UI",
       "repository_role": "AUDIT_TEST_PRODUCTION_PROTOCOL_ONLY",
-      "live_prompt_audit_note": "已包含事实生产—发布—识别契约、事实受限判断路径、13:30固定节点补充及强制正式决策生产Actor接线"
+      "live_prompt_audit_note": "已包含事实生产—发布—识别契约、事实受限判断路径、13:30固定节点补充及强制正式决策生产Actor接线；入口与completion解耦，completion为强制后置步骤但非任务阻断条件"
     },
     {
       "task_id": "ETF交易复盘",
@@ -48,7 +50,7 @@
       "prompt_readback_status": "FULL_CURRENT_PROMPT_READ_BACK_AFTER_REFRESH",
       "authority": "CHATGPT_SCHEDULED_TASK_UI",
       "repository_role": "AUDIT_TEST_PRODUCTION_PROTOCOL_ONLY",
-      "live_prompt_audit_note": "已包含目标复盘事实优先、查询刷新/watchdog非阻断、第十四节补充及强制交易复盘生产Actor接线"
+      "live_prompt_audit_note": "已包含目标复盘事实优先、查询刷新/watchdog非阻断、第十四节补充及强制交易复盘生产Actor接线；入口与completion解耦，completion为强制后置步骤但非任务阻断条件"
     },
     {
       "task_id": "ETF系统复核",
@@ -58,7 +60,7 @@
       "prompt_readback_status": "FULL_CURRENT_PROMPT_READ_BACK_AFTER_REFRESH",
       "authority": "CHATGPT_SCHEDULED_TASK_UI",
       "repository_role": "AUDIT_TEST_PRODUCTION_PROTOCOL_ONLY",
-      "live_prompt_audit_note": "已包含事实生产、发布、识别、查询刷新、watchdog和下游投影分层复核及强制系统复核生产Actor接线"
+      "live_prompt_audit_note": "已包含事实生产、发布、识别、查询刷新、watchdog和下游投影分层复核及强制系统复核生产Actor接线；入口与completion解耦，completion为强制后置步骤但非任务阻断条件"
     }
   ],
   "common_chain": [
@@ -79,11 +81,14 @@
   },
   "acceptance_required": [
     "三条任务均启用且live Prompt完整回读",
-    "三条任务均明确事实生产、发布、识别边界和正文后的强制生产Actor接线",
+    "三条任务均明确事实生产、发布、识别边界和正文后的completion后置交接",
+    "三条任务的注册入口与main入口映射一致",
+    "普通对话入口不被completion owner拒绝",
     "canonical快照与查询刷新健康状态分离",
     "watchdog不覆盖canonical事实判断",
+    "completion失败不阻断已冻结正文、不无限等待、不创建第二链",
     "冻结指针JSON可解析并回读",
     "相关一致性、预检、故障注入和三类任务模拟验收通过"
   ],
-  "evidence_note": "本次冻结仅登记云浏览器刷新后的live Prompt回读事实和当前主分支审计指针，不复制或覆盖ChatGPT定时任务界面提示词。平台未提供原生Prompt hash，因此不伪造或推算hash。"
+  "evidence_note": "本次冻结登记云浏览器回读到的live Prompt权威原则、三类任务入口映射及main分支修复后的审计指针；平台未提供原生Prompt hash，因此不伪造或推算hash。仓库文件仅作审计、测试、生产协议和回退登记，不覆盖live Prompt。"
 }
