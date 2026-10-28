@@ -19,13 +19,8 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts.scheduled_review_completion import build_system_review_completion_request
-from scripts.scheduled_review_completion_recovery import persist_completion_with_recovery
+from scripts.scheduled_review_completion_owner import persist_completion, dispatch_notification, read_main_json, contains_text
 from scripts.task_runtime_identity import derive_runtime_identity
-from scripts.run_scheduled_formal_decision_actor import (
-    _persist_completion_to_main,
-    _dispatch_notification,
-    _wait_for_projection,
-)
 
 
 
@@ -35,10 +30,10 @@ def _wait_for_system_projection(occurrence_id: str, report_id: str) -> dict[str,
     import time
     deadline = time.time() + 120
     while time.time() < deadline:
-        event = _read_main_json(event_path)
-        report = _read_main_json(report_path)
-        center = _read_main_json("data/state/notification_center.json")
-        if isinstance(event, dict) and isinstance(report, dict) and isinstance(center, dict) and _contains_text(center, report_id):
+        event = read_main_json(event_path)
+        report = read_main_json(report_path)
+        center = read_main_json("data/state/notification_center.json")
+        if isinstance(event, dict) and isinstance(report, dict) and isinstance(center, dict) and contains_text(center, report_id):
             return {"verified": True, "event_path": event_path, "report_path": report_path, "report_id": report_id}
         time.sleep(3)
     return {"verified": False, "event_path": event_path, "report_path": report_path, "report_id": report_id,
@@ -100,9 +95,8 @@ def main() -> int:
         raise RuntimeError("system review completion readback mismatch: " +
                            ", ".join(k for k, v in checks.items() if not v))
 
-    completion_path, persistence = persist_completion_with_recovery(target)
-    canonical_path = _persist_completion_to_main(completion_path)
-    dispatch = _dispatch_notification(canonical_path)
+    completion_path, persistence = persist_completion(target)
+    dispatch = dispatch_notification(completion_path)
     projection = _wait_for_system_projection(occurrence_id, binding.get("report_id") or "")
     ok = bool(dispatch.get("submitted")) and bool(dispatch.get("read_back")) and bool(projection.get("verified"))
     print(args.final_content)
