@@ -43,7 +43,6 @@ on:
     paths:
       # Formal Decision notifications are authorized only by events/reviews/formal_*.json.
       - "requests/live_snapshot/*__scheduled_review_completion.json"
-      - "requests/live_snapshot/*__formal_decision_completion.json"
       - "requests/live_snapshot/scheduled_review_completion_*.json"
       # Scheduled trade-review task writes persist their canonical completion at the
       # request-id path. Keep this as an ingress alias; identity and content
@@ -145,7 +144,7 @@ jobs:
           git cat-file -e "$PUSH_BEFORE^{commit}" 2>/dev/null || git fetch --no-tags origin "$PUSH_BEFORE"
           git cat-file -e "$PUSH_AFTER^{commit}" 2>/dev/null || git fetch --no-tags origin "$PUSH_AFTER"
           git diff --name-only "$PUSH_BEFORE" "$PUSH_AFTER" > /tmp/changed_files.txt
-                    mapfile -t completion_paths < <(grep -E '^requests/live_snapshot/([^/]+__(scheduled_review|formal_decision)_completion|scheduled_review_completion_[^/]+|etf_trade_review_[^/]+)\.json$' /tmp/changed_files.txt || true)
+                              mapfile -t completion_paths < <(grep -E '^requests/live_snapshot/([^/]+__scheduled_review_completion|scheduled_review_completion_[^/]+|etf_trade_review_[^/]+)\.json$' /tmp/changed_files.txt || true)
           if [ "${#completion_paths[@]}" -eq 1 ]; then
             completion_path="${completion_paths[0]}"
             completion_kind=$(python - "$completion_path" <<'PY'
@@ -547,10 +546,10 @@ jobs:
 
       - name: Project Formal Decision completion to canonical review event
         id: formal_completion_event
-        if: ${{ (github.event_name == 'push' && steps.push_kind.outputs.formal_completion == 'true') || (github.event_name == 'workflow_dispatch' && inputs.formal_completion_path != '' && steps.dispatch_completion_kind.outputs.formal == 'true') }}
+        if: ${{ (github.event_name == 'push' && steps.push_kind.outputs.formal_completion == 'true') || (github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path != '' && steps.dispatch_completion_kind.outputs.formal == 'true') }}
         shell: bash
         env:
-          COMPLETION_PATH: ${{ github.event_name == 'workflow_dispatch' && inputs.formal_completion_path || steps.push_kind.outputs.formal_completion_path }}
+          COMPLETION_PATH: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path || steps.push_kind.outputs.formal_completion_path }}
         run: |
           set -euo pipefail
           test -f "$COMPLETION_PATH"
