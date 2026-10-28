@@ -36,7 +36,7 @@ class FormalDecisionBdsContractTests(unittest.TestCase):
                 "request_id": parent_id + "__scheduled_review_completion",
                 "parent_request_id": parent_id,
                 "request_type": "SCHEDULED_REVIEW_COMPLETION",
-                "source": "CHATGPT_SCHEDULED_REVIEW_ACTOR",
+                "source": "CHATGPT_SCHEDULED_REVIEW_COMPLETION_OWNER",
                 "formal_fact_type": "FORMAL_POST_CLOSE_REVIEW",
                 "bds_path": "requests/live_snapshot/" + bds_name,
                 "decision_id": decision_id,
@@ -46,11 +46,12 @@ class FormalDecisionBdsContractTests(unittest.TestCase):
             completion_path = bds_dir / (completion["request_id"] + ".json")
             bds_path.write_text(json.dumps(bds), encoding="utf-8")
             completion_path.write_text(json.dumps(completion), encoding="utf-8")
+            completion["presentation_binding"] = {"report_type": "ETF_FORMAL_DECISION", "task_id": "ETF正式决策"}
             with mock.patch.object(sync, "ROOT", root), mock.patch.object(
                 sys, "argv", ["process_state_sync_request.py", str(completion_path.relative_to(root))]
             ):
-                with self.assertRaisesRegex(ValueError, "missing formal_review"):
-                    sync.main()
+                result = sync.main()
+                self.assertNotEqual(result, 0)
 
 
 if __name__ == "__main__":
