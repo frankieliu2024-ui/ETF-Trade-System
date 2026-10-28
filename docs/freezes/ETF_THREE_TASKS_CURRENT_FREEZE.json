@@ -44,7 +44,7 @@
       "prompt_readback_status": "FULL_CURRENT_PROMPT_READ_BACK_AFTER_REFRESH",
       "authority": "CHATGPT_SCHEDULED_TASK_UI",
       "repository_role": "AUDIT_TEST_PRODUCTION_PROTOCOL_ONLY",
-      "live_prompt_audit_note": "已包含事实生产—发布—识别契约、事实受限判断路径、13:30固定节点补充及强制正式决策生产Actor接线；入口与completion解耦，completion为强制后置步骤但非任务阻断条件"
+      "live_prompt_audit_note": "已包含事实生产—发布—识别契约、事实受限判断路径、13:30固定节点补充及统一completion owner主链；Formal Decision Actor仅为可选兼容适配器，入口与completion解耦，completion为强制后置步骤但非任务阻断条件"
     },
     {
       "task_id": "ETF交易复盘",
@@ -93,5 +93,6 @@
     "冻结指针JSON可解析并回读",
     "相关一致性、预检、故障注入和三类任务模拟验收通过"
   ],
-  "evidence_note": "云浏览器刷新后已重新回读三类live Prompt：ETF正式决策、ETF交易复盘和ETF系统复核均已包含completion强制后置、失败不阻断、不得无限等待和同一FINAL_CONTENT恢复规则。平台未提供原生Prompt hash，因此不伪造或推算hash。仓库文件仅作审计、测试、生产协议和回退登记，不覆盖live Prompt。"
+  "evidence_note": "云浏览器刷新后已重新回读三类live Prompt：ETF正式决策、ETF交易复盘和ETF系统复核均已包含completion强制后置、失败不阻断、不得无限等待和同一FINAL_CONTENT恢复规则。平台未提供原生Prompt hash，因此不伪造或推算hash。仓库文件仅作审计、测试、生产协议和回退登记，不覆盖live Prompt。",
+  "alignment_note": "统一completion owner为唯一业务交接主链；Actor不再是必经节点。"
 }
