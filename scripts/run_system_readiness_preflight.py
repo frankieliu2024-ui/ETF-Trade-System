@@ -26,7 +26,6 @@ REQUIRED_FILES = (
     "scripts/process_state_sync_request.py",
     "scripts/notification_center.py",
     "tests/test_isolated_three_task_pipeline_replay.py",
-    "scripts/scheduled_review_completion_owner.py",
 )
 TASKS = ("ETF系统复核", "ETF交易复盘", "ETF正式决策")
 
