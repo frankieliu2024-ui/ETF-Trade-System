@@ -35,6 +35,10 @@ on:
         description: "Exact current Scheduled Review completion path to canonicalize"
         required: false
         default: ""
+      force_resend:
+        description: "Explicitly resend the same bound completion notification once"
+        required: false
+        default: "false"
   push:
     paths:
       # Formal Decision notifications are authorized only by events/reviews/formal_*.json.
@@ -606,6 +610,7 @@ jobs:
           REVIEW_EVENT_PATH: ${{ steps.scheduled_completion_event.outputs.review_event_path || steps.formal_completion_event.outputs.review_event_path || steps.push_kind.outputs.review_event_path || steps.workflow_review.outputs.review_event_path }}
           SCHEDULED_REVIEW_COMPLETION_PATH: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path || '' }}
           FORMAL_COMPLETION_EVENT: ${{ steps.formal_completion_event.outputs.review_event_path != '' && 'true' || 'false' }}
+          FORCE_NOTIFICATION_RESEND: ${{ github.event_name == 'workflow_dispatch' && inputs.force_resend || 'false' }}
         run: |
           set -euo pipefail
           # A manual dispatch must remain self-contained. If an earlier
