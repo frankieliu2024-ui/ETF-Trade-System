@@ -40,6 +40,10 @@
         "manual": {
           "source": "CHATGPT_SCHEDULED_SYSTEM_REVIEW_ACTOR",
           "entry_mode": "MANUAL_SCHEDULED_TASK"
+        },
+        "manual_conversation": {
+          "source": "CHATGPT_MANUAL_SYSTEM_REVIEW",
+          "entry_mode": "MANUAL_CONVERSATION"
         }
       },
       "production_adapter": "scripts/run_scheduled_system_review_actor.py",
@@ -60,7 +64,9 @@
           "persistence metadata"
         ],
         "bds_required": false,
-        "owner": "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER"
+        "owner": "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER",
+        "entry_mode_is_identity_only": true,
+        "completion_owner_must_accept_registered_entry_modes": true
       },
       "handoff_execution": {
         "owner": "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER",
@@ -91,6 +97,10 @@
         "manual": {
           "source": "CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR",
           "entry_mode": "MANUAL_SCHEDULED_TASK"
+        },
+        "manual_conversation": {
+          "source": "CHATGPT_MANUAL_TRADE_REVIEW",
+          "entry_mode": "MANUAL_CONVERSATION"
         }
       },
       "canonical_task_id": "ETF交易复盘",
@@ -110,7 +120,9 @@
           "persistence metadata"
         ],
         "bds_required": false,
-        "owner": "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER"
+        "owner": "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER",
+        "entry_mode_is_identity_only": true,
+        "completion_owner_must_accept_registered_entry_modes": true
       },
       "production_adapter": "scripts/run_scheduled_trade_review_actor.py",
       "handoff_execution": {
