@@ -3427,7 +3427,7 @@ def _validate_formal_completion_identity(request: dict) -> None:
     if requested is None:
         raise ValueError("Formal Decision completion requested_at_beijing is invalid")
     first_line = content.splitlines()[0].strip() if content.splitlines() else ""
-    match = re.fullmatch(r"【ETF正式决策】(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}) (正式判断|降级判断|超时判断)", first_line)
+    match = re.fullmatch(r"【ETF正式决策】(\d{4}-\d{2}-\d{2} \d{2}:\d{2}) (正式判断|降级判断|超时判断)", first_line)
     if not match:
         raise ValueError("Formal Decision FINAL_CONTENT title is invalid")
     title_time = parse_time(match.group(1) + ":00+08:00")
