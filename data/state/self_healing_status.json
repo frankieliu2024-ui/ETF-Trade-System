@@ -1,26 +1,28 @@
 {
   "schema_version": "1.1",
-  "checked_at": "2026-10-28T15:30:09+08:00",
+  "checked_at": "2026-10-28T15:48:50+08:00",
   "mode": "DETERMINISTIC_RUNTIME_SELF_HEALING",
   "enabled": true,
-  "classification": "FORMAL_PARENT_RECOVERY_REQUIRED",
-  "recommended_action": "REPLAY_FORMAL_REQUEST",
-  "reason": "durable Formal Decision parent fd_20261026_112739_scheduled_formal_review_0bba5094 has no same-request derived context and no BUSINESS_DECISION_SOURCE; continue the existing parent through the canonical producer",
+  "classification": "CONSISTENCY_REGRESSION",
+  "recommended_action": "ESCALATE",
+  "reason": "system consistency has a hard failure that is not proven orthogonal to canonical market recovery",
   "market_open_date": true,
   "watch_window_active": false,
   "same_day_current_required": false,
   "same_day_current_missing": false,
   "current_capture_at": "2026-10-28T15:17:50+08:00",
-  "current_capture_age_seconds": 739,
+  "current_capture_age_seconds": 1860,
   "expected_pulse_at": null,
   "expected_pulse_missing": false,
   "runtime_health_status": "SKIPPED",
-  "system_consistency_status": "PASS",
+  "system_consistency_status": "FAIL",
   "market_recovery_consistency_gate": {
-    "global_status": "PASS",
-    "blocks_market_recovery": false,
-    "classification": "NO_GLOBAL_HARD_FAIL",
-    "errors": []
+    "global_status": "FAIL",
+    "blocks_market_recovery": true,
+    "classification": "GLOBAL_FAIL_BLOCKS_MARKET_RECOVERY_FAIL_SAFE",
+    "errors": [
+      "tests:post_close_review_canonical: .....................F.\n======================================================================\nFAIL: test_trade_review_timestamp_close_snapshot_maps_to_canonical_path (tests.test_post_close_review_canonical.PostCloseReviewCanonicalTests.test_trade_review_timestamp_close_snapshot_maps_to_canonical_path)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/tests/test_post_close_review_canonical.py\", line 66, in test_trade_review_timestamp_close_snapshot_maps_to_canonical_path\n    self.assertEqual(event[\"event_type\"], \"FORMAL_SCHEDULED_TRADE_REVIEW\")\nAssertionError: 'FORMAL_POST_CLOSE_REVIEW' != 'FORMAL_SCHEDULED_TRADE_REVIEW'\n- FORMAL_POST_CLOSE_REVIEW\n+ FORMAL_SCHEDULED_TRADE_REVIEW\n\n\n----------------------------------------------------------------------\nRan 23 tests in 0.081s\n\nFAILED (failures=1)"
+    ]
   },
   "master_rules_version": "V2.2.34",
   "current_rules_version": "V2.2.34",
