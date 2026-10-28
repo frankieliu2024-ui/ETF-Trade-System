@@ -2618,8 +2618,8 @@ def record_formal_decision_report_event(request: dict, bds: dict | None = None) 
         "parent_request_id": str(source.get("parent_request_id") or request.get("parent_request_id") or (request.get("request_id") if direct_completion else source.get("request_id")) or "").strip(),
         "decision_id": str(source.get("decision_id") or request.get("decision_id") or binding.get("decision_id") or binding.get("report_id") or request.get("request_id") or "").strip(),
         "binding_request_id": str(binding.get("request_id") or source.get("request_id") or request.get("request_id") or "").strip(),
-        "binding_parent_request_id": str(binding.get("parent_request_id") or source.get("parent_request_id") or source.get("request_id") or "").strip(),
-        "binding_decision_id": str(binding.get("decision_id") or source.get("decision_id") or request.get("decision_id") or "").strip(),
+        "binding_parent_request_id": str(binding.get("parent_request_id") or source.get("parent_request_id") or (request.get("request_id") if direct_completion else source.get("request_id")) or "").strip(),
+        "binding_decision_id": str(binding.get("decision_id") or source.get("decision_id") or request.get("decision_id") or binding.get("report_id") or request.get("request_id") or "").strip(),
     }
     if any(not value for value in identity.values()):
         raise ValueError("Formal Decision canonical event requires complete request/parent/decision identity")
