@@ -61,7 +61,7 @@ completion owner不得根据入口类型决定是否可写入；不得把“入�
 
 三类任务的 `task_id` 必须使用本协议登记的任务名称，不得把 source、automation_id、conversation_id、时间戳或运行描述写入 `task_id`。Formal Decision 的 canonical `task_id` 固定为 `ETF正式决策`；`presentation_binding.task_id`、completion、event、REPORT 和 notification 必须逐字段保持一致。
 
-入口身份、task_id、parent_request_id、request_id、report_id 任一缺失、冲突或与本次运行不一致时，canonical owner 必须 fail-closed，并归类为 `OWNER_REJECTED` 或 `CONFLICT_REQUIRES_REVIEW`。平台未注入 task_run_id/occurrence_id 时，由本次运行适配器依据已确认的 task_id、request_id、requested_at_beijing、entry_mode 生成唯一运行身份；生成后仍必须逐字段回读并校验，禁止使用历史对象、任务名称单独推断结果或成功通知覆盖身份错误。
+task_id、request_id或report_id缺失、冲突或与本次运行不一致时，canonical owner 必须 fail-closed，并归类为 `OWNER_REJECTED` 或 `CONFLICT_REQUIRES_REVIEW`。parent_request_id仅在所属业务合同明确要求时校验；System Review、Trade Review和Formal Decision的completion不得因不存在父市场事实请求而被拒绝。平台未注入 task_run_id/occurrence_id 时，由本次运行适配器依据已确认的 task_id、request_id、requested_at_beijing、entry_mode 生成唯一运行身份；生成后仍必须逐字段回读并校验，禁止使用历史对象、任务名称单独推断结果或成功通知覆盖身份错误。
 
 每次成功通知验收必须回读正文、completion、event、REPORT、notification_id 和 provider result；“正文已生成”“workflow success”或“provider success”均不是端到端完成条件。
 
@@ -125,7 +125,7 @@ completion owner不得根据入口类型决定是否可写入；不得把“入�
 
 ## 6.2 Scheduled Review后置交接合同
 
-System Review和Trade Review在生成唯一完整FINAL_CONTENT后，不得以“正文已生成”作为任务完成。必须在同一运行中提交并回读唯一的`SCHEDULED_REVIEW_COMPLETION`，并继续形成canonical review event、REPORT、notification_id和provider result。任一对象缺失、错绑或回读失败，任务状态必须保持未闭环；不得补绑历史对象、补发历史正文或创建第二请求、第二event、第二通知。provider success只能记录为provider接口成功，不得表述为用户已收到。
+System Review和Trade Review在生成唯一完整FINAL_CONTENT后，不得以“正文已生成”作为后置交接完成。必须在同一运行中实际尝试并回读唯一的`SCHEDULED_REVIEW_COMPLETION`，并继续尝试形成canonical review event、REPORT、notification_id和provider result。任一对象缺失、错绑或回读失败，只能将后置交接标记为未闭环，不得阻断、撤回或改写已经冻结并输出的FINAL_CONTENT；不得补绑历史对象、补发历史正文或创建第二请求、第二event、第二通知。provider success只能记录为provider接口成功，不得表述为用户已收到。
 
 ## 6.3 Trade Review专属重复协议已移除
 
