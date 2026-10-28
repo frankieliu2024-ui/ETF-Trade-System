@@ -205,7 +205,7 @@ def build_trade_review_completion_request(
         "request_id": _safe_id(request_id),
         "request_type": "SCHEDULED_REVIEW_COMPLETION",
         "formal_fact_type": "FORMAL_SCHEDULED_TRADE_REVIEW",
-        "source": "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
+        "source": "CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR",
         "interaction_scenario": "SCHEDULED_TRADE_REVIEW",
         "market_phase": str(formal_review.get("market_phase") or ("MIDDAY_BREAK" if is_midday else "POST_CLOSE")),
         "requested_at_beijing": str(requested_at_beijing or "").strip(),
