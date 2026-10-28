@@ -131,7 +131,7 @@ Formal Decision不为本次判断新建市场事实请求、MARKET_QUOTE_REFRESH
 
 ## 六、唯一生产交接链
 
-FINAL_CONTENT冻结后，必须直接进入 current main 登记的统一 Scheduled Review completion owner，并继续沿同一运行身份、同一事实快照和同一冻结正文交接。统一 completion owner 是唯一生产入口；不再设置 Formal Decision Actor 或其他适配器作为生产入口：
+FINAL_CONTENT冻结后，必须直接进入 current main 登记的统一 Scheduled Review direct completion writer，并继续沿同一运行身份、同一事实快照和同一冻结正文交接。统一 direct completion writer 是唯一生产入口；不再设置 Formal Decision Actor 或其他适配器作为生产入口：
 
 唯一运行身份
 → current main最近合法固定时段事实
@@ -145,9 +145,9 @@ FINAL_CONTENT冻结后，必须直接进入 current main 登记的统一 Schedul
 → 服务商投递结果
 → 用户收到状态。
 
-这里的“调用”必须是实际提交并回读统一 completion owner，不得只在用户回复中声明已调用。正文发布后，若运行环境暂时不能提交或回读后置交接，只能如实记录最后完成层级和用户收到状态，不得因此阻断已经冻结的正式正文。
+这里的“调用”必须是实际提交并回读统一 direct completion writer，不得只在用户回复中声明已调用。正文发布后，若运行环境暂时不能提交或回读后置交接，只能如实记录最后完成层级和用户收到状态，不得因此阻断已经冻结的正式正文。
 
-completion owner 不得创建第二请求、第二正文、第二完成记录、第二事件、第二报告或第二通知链；不得直接手写事件、报告、通知或调用服务商。
+direct completion writer 不得创建第二请求、第二正文、第二完成记录、第二事件、第二报告或第二通知链；不得直接手写事件、报告、通知或调用服务商。
 
 完成记录必须由统一生产者生成并回读；生产入口接收并校验本次唯一 Formal Decision completion，且该记录必须属于当前运行身份。至少核对：
 
