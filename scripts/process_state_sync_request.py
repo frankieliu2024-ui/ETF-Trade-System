@@ -4441,7 +4441,7 @@ def main() -> int:
         if not market_date:
             raise ValueError("SCHEDULED_REVIEW_COMPLETION requires market_date")
         if (
-            str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_POST_CLOSE_REVIEW"
+            str(request.get("formal_fact_type") or "").strip().upper() in {"FORMAL_POST_CLOSE_REVIEW", "FORMAL_CURRENT_MAIN_DECISION"}
             and str((request.get("presentation_binding") or {}).get("task_id") or "").strip() == "ETF正式决策"
             and str(request.get("occurrence_id") or "").strip()
         ):
