@@ -10,17 +10,17 @@ class ThreeTaskNotificationE2EFaultInjectionTests(unittest.TestCase):
     TASKS = {
         "ETF系统复核": {
             "prompt": ROOT / "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/prompts/系统复核.txt",
-            "actor": ROOT / "scripts/run_scheduled_system_review_actor.py",
+            "owner": ROOT / "scripts/scheduled_review_completion_owner.py",
             "report_type": "ETF_SYSTEM_REVIEW",
         },
         "ETF交易复盘": {
             "prompt": ROOT / "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/prompts/交易复盘.txt",
-            "actor": ROOT / "scripts/run_scheduled_trade_review_actor.py",
+            "owner": ROOT / "scripts/scheduled_review_completion_owner.py",
             "report_type": "ETF_TRADE_REVIEW",
         },
         "ETF正式决策": {
             "prompt": ROOT / "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/prompts/正式决策.txt",
-            "actor": ROOT / "scripts/run_scheduled_formal_decision_actor.py",
+            "owner": ROOT / "scripts/scheduled_review_completion_owner.py",
             "report_type": "ETF_FORMAL_DECISION",
         },
     }
@@ -37,9 +37,8 @@ class ThreeTaskNotificationE2EFaultInjectionTests(unittest.TestCase):
             self.assertIn("SCHEDULED_REVIEW_COMPLETION", completion_contract, task)
             self.assertIn("content_hash", prompt, task)
             self.assertTrue("GitHub Contents" in prompt or "current main" in prompt, task)
-            if spec["actor"] is not None:
-                actor = spec["actor"].read_text(encoding="utf-8")
-            self.assertIn("persist_completion", actor, task)
+            owner = spec["owner"].read_text(encoding="utf-8")
+            self.assertIn("persist_completion", owner, task)
 
     def test_fault_matrix_is_fail_closed_before_notification(self):
         recovery = (ROOT / "scripts/scheduled_review_completion_recovery.py").read_text(encoding="utf-8")
