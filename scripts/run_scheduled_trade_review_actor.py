@@ -22,12 +22,6 @@ except ModuleNotFoundError:
     from scripts.scheduled_review_completion import write_completion_request
     from scripts.task_runtime_identity import derive_runtime_identity
 
-try:
-    from scheduled_review_completion_owner import persist_completion, dispatch_notification
-except ModuleNotFoundError:
-    from scripts.scheduled_review_completion_owner import persist_completion, dispatch_notification
-
-
 
 def _persist_completion_to_main(completion_path: str) -> str:
     """Persist and verify the single completion before dispatching notification."""
@@ -241,13 +235,13 @@ def main() -> int:
     if not all(checks.values()):
         failed = ", ".join(key for key, ok in checks.items() if not ok)
         raise RuntimeError(f"trade review completion readback mismatch: {failed}")
-    persisted_path, persistence = persist_completion(Path(target))
+    persisted_path, persistence = _persist_completion_to_main(Path(target))
     push_started_at = datetime.now(timezone.utc)
     canonical_path = persisted_path
     # A generic push-triggered run is only a wake signal and is not bound to
     # this completion. It must never satisfy the handoff gate.
     push = _wait_for_completion_push(canonical_path, push_started_at)
-    dispatch = dispatch_notification(canonical_path)
+    dispatch = _dispatch_notification(canonical_path)
     dispatch["fallback_after"] = "PUSH_WAKE_NOT_ACCEPTED_AS_COMPLETION_PROOF"
     # Same-run hard gate: completion persistence alone is not a successful
     # handoff. The actor must dispatch the canonical notification workflow and
