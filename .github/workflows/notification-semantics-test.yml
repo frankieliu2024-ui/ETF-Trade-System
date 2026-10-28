@@ -34,9 +34,9 @@ jobs:
           from notification_semantics import object_role, shock_implication
 
           checks = [
-              (shock_implication('515880', '通信ETF', 'ETF', 'A_SHARE')[0], '正式动作/生命周期对象'),
-              (shock_implication('561980', '半导体设备ETF', 'ETF', 'A_SHARE')[0], '当前持仓ETF'),
-              (shock_implication('300750', '宁德时代', 'ACCOUNT_STOCK', 'A_SHARE')[0], '账户个股'),
+              (shock_implication('515880', '通信ETF', 'ETF', 'A_SHARE')[0], '监测ETF'),
+              (shock_implication('561980', '半导体设备ETF', 'ETF', 'A_SHARE')[0], '监测ETF'),
+              (shock_implication('300750', '宁德时代', 'ACCOUNT_STOCK', 'A_SHARE')[0], 'A股本地风险偏好'),
               (shock_implication('000688', '科创50指数', 'A_SHARE_INDEX', 'A_SHARE')[0], 'A股本地风险偏好'),
               (shock_implication('HSTECH', '恒生科技指数', 'INDEX', 'OVERSEAS')[0], '恒生科技ETF（513180）'),
               (shock_implication('NDX', '纳斯达克100指数', 'INDEX', 'OVERSEAS')[0], '纳指ETF（159941）'),
