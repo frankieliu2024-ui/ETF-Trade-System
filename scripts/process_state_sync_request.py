@@ -2379,7 +2379,7 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
         # A present verified close with a mismatched or absent request reference
         # is a stale/ambiguous input. Do not turn a review computed against
         # another snapshot into a degraded formal review.
-        if canonical_close_verified and supplied_close_snapshot != canonical_close_snapshot:
+        if canonical_close_verified and supplied_close_snapshot and supplied_close_snapshot != canonical_close_snapshot:
             return False, False
         close_verified = canonical_close_verified and supplied_close_snapshot == canonical_close_snapshot
         # Review completion is independent from close-data completeness. Preserve
