@@ -2793,9 +2793,8 @@ def record_close_review_closure(account: dict, request: dict, review: dict, even
         "note": "Formal post-close review is canonicalized from the request-scoped review payload; no trade or permission is inferred.",
     }
     prior = load_json(closure_path) if closure_path.exists() else {}
-    if prior == closure:
-        return
-    atomic_json_write(closure_path, closure)
+    if prior != closure:
+        atomic_json_write(closure_path, closure)
     current_path = ROOT / "data" / "state" / "CURRENT.json"
     if current_path.exists():
         current = load_json(current_path)
