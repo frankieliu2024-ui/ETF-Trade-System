@@ -1642,8 +1642,13 @@ def main() -> int:
     if not event:
         state.update({"schema_version": "2.2", "updated_at": now().isoformat(timespec="seconds"), "notifications": notifications, "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]}); write_json(state_path, state); print(json.dumps({"status": "NO_NOTIFICATION_NEEDED"}, ensure_ascii=False)); return 0
     existing = find_existing_notification(notifications, event)
-    if existing and existing.get("lifecycle_status") in {"SENT", "WAITING_CONFIRMATION", "CONFIRMED", "ARCHIVED"}:
+    force_resend = os.environ.get("FORCE_NOTIFICATION_RESEND", "").strip().lower() == "true"
+    if existing and existing.get("lifecycle_status") in {"SENT", "WAITING_CONFIRMATION", "CONFIRMED", "ARCHIVED"} and not force_resend:
         state.update({"schema_version": "2.2", "updated_at": now().isoformat(timespec="seconds"), "notifications": notifications, "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]}); write_json(state_path, state); print(json.dumps({"status": "ALREADY_MANAGED", "notification_id": existing.get("notification_id"), "lifecycle_status": existing.get("lifecycle_status")}, ensure_ascii=False)); return 0
+    if force_resend:
+        # Explicit manual recovery may resend the exact bound event once. It does
+        # not create a new completion, report, event, or notification identity.
+        existing = None
     if existing and existing.get("lifecycle_status") == "EXPIRED":
         # EXPIRED is historical delivery state, not an active idempotency barrier.
         # The current request-bound event has passed identity,正文 and hash
