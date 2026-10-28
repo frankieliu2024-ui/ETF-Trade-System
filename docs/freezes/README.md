@@ -9,7 +9,7 @@
 3. 按 `task_id` 选择唯一任务记录；
 4. 按入口身份和运行身份选择本次对象；
 5. 按 `content_hash` 绑定 FINAL_CONTENT、completion、event、REPORT、notification 和 provider result；
-6. 若任一层缺失，按清单中的失败分类停止，不使用历史对象补绑。
+6. 若任一层缺失，按清单中的失败分类记录后置交接未闭环；不得使用历史对象补绑，也不得阻断已冻结并输出的合法正文。
 
 本版本明确区分：
 
