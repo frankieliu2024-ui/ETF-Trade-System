@@ -241,7 +241,7 @@ jobs:
               in {"CHATGPT_FORMAL_DECISION_COMPLETION", "CHATGPT_MANUAL_FORMAL_COMPLETION"}
               or (
                   str(request.get("request_type") or "").upper() == "SCHEDULED_REVIEW_COMPLETION"
-                  and str(request.get("source") or "").upper() == "CHATGPT_SCHEDULED_REVIEW_ACTOR"
+                  and str(request.get("source") or "").upper() == "CHATGPT_SCHEDULED_REVIEW_COMPLETION_OWNER"
                   and (
                       str(request.get("report_type") or ((request.get("presentation_binding") or {}).get("report_type") or "")).upper()
                       == "ETF_FORMAL_DECISION"
@@ -846,7 +846,7 @@ jobs:
           request = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
           if (
               str(request.get("request_type") or "").upper() == "SCHEDULED_REVIEW_COMPLETION"
-              and str(request.get("source") or "").upper() == "CHATGPT_SCHEDULED_REVIEW_ACTOR"
+              and str(request.get("source") or "").upper() == "CHATGPT_SCHEDULED_REVIEW_COMPLETION_OWNER"
               and (
                   str(request.get("report_type") or ((request.get("presentation_binding") or {}).get("report_type") or "")).upper()
                   == "ETF_FORMAL_DECISION"
