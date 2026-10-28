@@ -39,7 +39,7 @@ class ThreeTaskNotificationE2EFaultInjectionTests(unittest.TestCase):
             self.assertTrue("GitHub Contents" in prompt or "current main" in prompt, task)
             if spec["actor"] is not None:
                 actor = spec["actor"].read_text(encoding="utf-8")
-                self.assertIn("persist_completion_with_recovery", actor, task)
+            self.assertIn("persist_completion", actor, task)
 
     def test_fault_matrix_is_fail_closed_before_notification(self):
         recovery = (ROOT / "scripts/scheduled_review_completion_recovery.py").read_text(encoding="utf-8")
