@@ -172,7 +172,7 @@ jobs:
             case "$completion_kind" in
               FORMAL)
                 echo "formal_completion=true" >> "$GITHUB_OUTPUT"
-                echo "formal_completion_path=$completion_path" >> "$GITHUB_OUTPUT"
+                echo "formal_review_source_path=$completion_path" >> "$GITHUB_OUTPUT"
                 ;;
               SCHEDULED_REVIEW)
                 # A Scheduled Review completion is itself the canonical handoff
@@ -192,7 +192,7 @@ jobs:
             exit 1
           else
             echo "formal_completion=false" >> "$GITHUB_OUTPUT"
-            echo "formal_completion_path=" >> "$GITHUB_OUTPUT"
+            echo "formal_review_source_path=" >> "$GITHUB_OUTPUT"
           fi
           echo "decision=false" >> "$GITHUB_OUTPUT"
           echo "decision_event_path=" >> "$GITHUB_OUTPUT"
@@ -545,7 +545,7 @@ jobs:
         if: ${{ (github.event_name == 'push' && steps.push_kind.outputs.formal_completion == 'true') || (github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path != '' && steps.dispatch_completion_kind.outputs.formal == 'true') }}
         shell: bash
         env:
-          COMPLETION_PATH: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path || steps.push_kind.outputs.formal_completion_path }}
+          COMPLETION_PATH: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path || steps.push_kind.outputs.formal_review_source_path }}
         run: |
           set -euo pipefail
           test -f "$COMPLETION_PATH"
