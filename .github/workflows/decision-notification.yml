@@ -43,6 +43,7 @@ on:
     paths:
       # Formal Decision notifications are authorized only by events/reviews/formal_*.json.
       - "requests/live_snapshot/*__scheduled_review_completion.json"
+      - "requests/live_snapshot/*__formal_decision_completion.json"
       - "requests/live_snapshot/scheduled_review_completion_*.json"
       # Scheduled trade-review task writes persist their canonical completion at the
       # request-id path. Keep this as an ingress alias; identity and content
@@ -546,10 +547,10 @@ jobs:
 
       - name: Project Formal Decision completion to canonical review event
         id: formal_completion_event
-        if: ${{ (github.event_name == 'push' && steps.push_kind.outputs.formal_completion == 'true') || (github.event_name == 'workflow_dispatch' && (inputs.scheduled_review_completion_path != '' || inputs.formal_completion_path != '') && steps.dispatch_completion_kind.outputs.formal == 'true') }}
+        if: ${{ (github.event_name == 'push' && steps.push_kind.outputs.formal_completion == 'true') || (github.event_name == 'workflow_dispatch' && inputs.formal_completion_path != '' && steps.dispatch_completion_kind.outputs.formal == 'true') }}
         shell: bash
         env:
-          COMPLETION_PATH: ${{ github.event_name == 'workflow_dispatch' && (inputs.scheduled_review_completion_path || inputs.formal_completion_path) || steps.push_kind.outputs.formal_completion_path }}
+          COMPLETION_PATH: ${{ github.event_name == 'workflow_dispatch' && inputs.formal_completion_path || steps.push_kind.outputs.formal_completion_path }}
         run: |
           set -euo pipefail
           test -f "$COMPLETION_PATH"
@@ -608,7 +609,7 @@ jobs:
           REPORT_DELIVERY_PATH: ${{ steps.push_kind.outputs.report_path }}
           REPORT_HANDOFF_PATH: ${{ steps.push_kind.outputs.report_handoff_path }}
           REVIEW_EVENT_PATH: ${{ steps.scheduled_completion_event.outputs.review_event_path || steps.formal_completion_event.outputs.review_event_path || steps.push_kind.outputs.review_event_path || steps.workflow_review.outputs.review_event_path }}
-          SCHEDULED_REVIEW_COMPLETION_PATH: ${{ github.event_name == 'workflow_dispatch' && (inputs.scheduled_review_completion_path || inputs.formal_completion_path) || '' }}
+          SCHEDULED_REVIEW_COMPLETION_PATH: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path || '' }}
           FORMAL_COMPLETION_EVENT: ${{ steps.formal_completion_event.outputs.review_event_path != '' && 'true' || 'false' }}
         run: |
           set -euo pipefail
