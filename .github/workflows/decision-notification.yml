@@ -44,7 +44,7 @@ on:
       # Formal Decision notifications are authorized only by events/reviews/formal_*.json.
       - "requests/live_snapshot/*__scheduled_review_completion.json"
       - "requests/live_snapshot/scheduled_review_completion_*.json"
-      # Scheduled trade-review actors persist their canonical completion at the
+      # Scheduled trade-review task writes persist their canonical completion at the
       # request-id path. Keep this as an ingress alias; identity and content
       # validation below remain mandatory before any notification is sent.
       - "requests/live_snapshot/etf_trade_review_*.json"
@@ -180,7 +180,7 @@ jobs:
                 ;;
               SCHEDULED_REVIEW)
                 # A Scheduled Review completion is itself the canonical handoff
-                # after the actor freezes FINAL_CONTENT. Consume this exact
+                # after the task freezes FINAL_CONTENT. Consume this exact
                 # completion once through the existing event/report/notification
                 # owner; do not require a second browser dispatch.
                 echo "scheduled_review_completion=true" >> "$GITHUB_OUTPUT"
