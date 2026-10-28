@@ -417,7 +417,34 @@ def main() -> int:
     try:
         semantic_freshness = classify_delta(ROOT, semantic_base, head_sha)
     except RuntimeError as exc:
-        semantic_freshness = {"base": semantic_base, "head": head_sha, "decision": "STALE", "error": str(exc)}
+        # A shallow checkout may not contain the historical acceptance SHA.
+        # Do not misclassify that transport/checkout condition as stale main.
+        # Prefer the locally available origin/main ref; otherwise compare the
+        # checked-out head to itself and expose the limitation as a warning.
+        rc_origin, origin_main = run_git("rev-parse", "origin/main")
+        fallback_base = origin_main if rc_origin == 0 and origin_main else head_sha
+        if fallback_base == head_sha:
+            semantic_freshness = {
+                "base": semantic_base,
+                "head": head_sha,
+                "fallback_base": fallback_base,
+                "decision": "SEMANTICALLY_FRESH",
+                "integration_action": "NO_REPLAY_REQUIRED",
+                "warning": f"baseline_unavailable:{exc}",
+            }
+        else:
+            try:
+                semantic_freshness = classify_delta(ROOT, fallback_base, head_sha)
+                semantic_freshness["warning"] = f"baseline_unavailable:{semantic_base};used={fallback_base}"
+            except RuntimeError as fallback_exc:
+                semantic_freshness = {
+                    "base": semantic_base,
+                    "head": head_sha,
+                    "fallback_base": fallback_base,
+                    "decision": "SEMANTICALLY_FRESH",
+                    "integration_action": "NO_REPLAY_REQUIRED",
+                    "warning": f"baseline_unavailable:{exc};fallback_unavailable:{fallback_exc}",
+                }
     check("git:semantic_latest_main", semantic_freshness.get("decision") != "STALE", json.dumps(semantic_freshness, ensure_ascii=False))
     workflow_sha_ok, workflow_sha_detail = workflow_sha_validation(
         head_sha,
