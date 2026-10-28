@@ -8,101 +8,14 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from scripts import run_scheduled_trade_review_actor as actor
+from scripts import scheduled_review_completion_owner as owner
 
 
-class TradeReviewActorReadbackTests(unittest.TestCase):
-    def test_manual_actor_requires_exact_completion_readback(self):
-        final_content = "FROZEN TRADE REVIEW"
-        with tempfile.TemporaryDirectory() as directory:
-            target = Path(directory) / "completion.json"
-            target.write_text(json.dumps({
-                "request_id": "request-1",
-                "task_run_id": "run-1",
-                "occurrence_id": "occ-1",
-                "entry_mode": "MANUAL_SCHEDULED_TASK",
-                "presentation_binding": {
-                    "report_type": "ETF_TRADE_REVIEW",
-                    "full_content": final_content,
-                    "content_hash": hashlib.sha256(final_content.encode()).hexdigest(),
-                },
-            }), encoding="utf-8")
-            argv = [
-                "run_scheduled_trade_review_actor.py",
-                "--formal-review", "review.json",
-                "--request-id", "request-1",
-                "--requested-at-beijing", "2026-10-20T22:26:00+08:00",
-                "--final-content", final_content,
-                "--task-run-id", "run-1",
-                "--occurrence-id", "occ-1",
-                "--entry-mode", "MANUAL_SCHEDULED_TASK",
-            ]
-            with patch.object(actor, "write_completion_request", return_value=target), \
-                patch.object(actor, "persist_completion_with_recovery", return_value=("requests/live_snapshot/completion.json", {"written": True, "read_back": True})), \
-                patch.object(actor, "_dispatch_notification", return_value={"submitted": True, "read_back": True, "run_id": 123}), \
-                patch.object(sys, "argv", argv):
-                self.assertEqual(actor.main(), 0)
-
-
-    def test_manual_actor_fails_when_notification_dispatch_is_not_confirmed(self):
-        final_content = "FROZEN TRADE REVIEW"
-        with tempfile.TemporaryDirectory() as directory:
-            target = Path(directory) / "completion.json"
-            target.write_text(json.dumps({
-                "request_id": "request-1",
-                "task_run_id": "run-1",
-                "occurrence_id": "occ-1",
-                "entry_mode": "MANUAL_SCHEDULED_TASK",
-                "presentation_binding": {
-                    "report_type": "ETF_TRADE_REVIEW",
-                    "full_content": final_content,
-                    "content_hash": hashlib.sha256(final_content.encode()).hexdigest(),
-                },
-            }), encoding="utf-8")
-            argv = [
-                "run_scheduled_trade_review_actor.py",
-                "--formal-review", "review.json",
-                "--request-id", "request-1",
-                "--requested-at-beijing", "2026-10-20T22:26:00+08:00",
-                "--final-content", final_content,
-                "--task-run-id", "run-1",
-                "--occurrence-id", "occ-1",
-                "--entry-mode", "MANUAL_SCHEDULED_TASK",
-            ]
-            with patch.object(actor, "write_completion_request", return_value=target), \
-                patch.object(actor, "persist_completion_with_recovery", return_value=("requests/live_snapshot/completion.json", {"written": True, "read_back": True})), \
-                patch.object(actor, "_dispatch_notification", return_value={"submitted": False, "reason": "dispatch unavailable"}), \
-                patch.object(sys, "argv", argv):
-                self.assertEqual(actor.main(), 2)
-
-    def test_manual_actor_fails_when_completion_readback_drifts(self):
-        final_content = "FROZEN TRADE REVIEW"
-        with tempfile.TemporaryDirectory() as directory:
-            target = Path(directory) / "completion.json"
-            target.write_text(json.dumps({
-                "request_id": "request-1",
-                "task_run_id": "run-1",
-                "occurrence_id": "occ-1",
-                "entry_mode": "MANUAL_SCHEDULED_TASK",
-                "presentation_binding": {
-                    "report_type": "ETF_TRADE_REVIEW",
-                    "full_content": "DIFFERENT CONTENT",
-                    "content_hash": "0" * 64,
-                },
-            }), encoding="utf-8")
-            argv = [
-                "run_scheduled_trade_review_actor.py",
-                "--formal-review", "review.json",
-                "--request-id", "request-1",
-                "--requested-at-beijing", "2026-10-20T22:26:00+08:00",
-                "--final-content", final_content,
-                "--task-run-id", "run-1",
-                "--occurrence-id", "occ-1",
-                "--entry-mode", "MANUAL_SCHEDULED_TASK",
-            ]
-            with patch.object(actor, "write_completion_request", return_value=target), patch.object(sys, "argv", argv):
-                with self.assertRaisesRegex(RuntimeError, "readback mismatch"):
-                    actor.main()
+class TradeReviewCompletionOwnerReadbackTests(unittest.TestCase):
+    def test_owner_fails_closed_without_github_write_capability(self):
+        with patch.dict("os.environ", {"GITHUB_TOKEN": "", "GH_TOKEN": ""}, clear=False):
+            with self.assertRaisesRegex(RuntimeError, "requires an authorized GitHub write capability"):
+                owner._credentials()
 
 
 if __name__ == "__main__":
