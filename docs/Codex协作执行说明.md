@@ -172,7 +172,7 @@ Issue 中的完整 brief／packet 是执行输入，Issue／PR 中的结构化�
 - 沿唯一链核对 FINAL_CONTENT → completion → events/reviews/formal_*.json → decision-notification → notification_center → PushPlus，并与【ETF交易复盘】的 completion/report 投影机制逐项对照。
 - Formal Decision completion 写入并回读后，当前执行器必须优先等待 current main 既有 completion push 通知链，并回读正式事件、报告、通知记录和服务商状态。只有 completion push 在有界窗口内未形成或明确失败时，才可沿同一 completion 使用既有 decision-notification workflow 进行一次灾备提交；灾备不得创建第二 completion 或第二通知链。
 
-Formal Decision completion只能由current main的builder生成，必须满足本次请求身份、正文和任务类型绑定。写入并回读后，默认沿 completion push 主路径继续回读正式事件、报告、通知记录和服务商状态。只有 completion push 未形成或明确失败时，才可在同一运行内沿同一 completion 提交一次 decision-notification 灾备。`formal_completion_path`仅作为历史兼容输入，不是默认主路径；不得创建第二 completion、第二事件、第二报告或第二通知链。
+Formal Decision completion只能由current main的统一Scheduled Review builder生成，必须满足本次请求身份、正文和任务类型绑定。写入并回读后，沿统一completion主路径继续回读正式事件、报告、通知记录和服务商状态。只有通知主路径未形成或明确失败时，才可在同一运行内沿同一completion提交一次既有decision-notification灾备；不得创建第二completion、第二事件、第二报告或第二通知链。
 - 对所有旧入口做反向审计：events/decisions、BDS直投影、FORMAL_PRESENTATION_PATH、--formal-content-file、历史 review/report/handoff 扫描和 market-snapshot 被动唤醒；只要仍可达，就必须显式 fail-closed或移除。
 - 最终报告必须分别给出正文生成、BDS写入/回读、completion event、notification、provider成功和用户收达，不能用 workflow success、HTTP 200 或历史通知替代当前事件证据。
 - CI通过后仍不得宣称真实生产闭环完成；只有下一次自然运行才能验证真实定时入口和用户实际收达。
