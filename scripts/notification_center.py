@@ -429,7 +429,7 @@ def canonical_scheduled_report_events(event_path: str | None = None) -> list[dic
         content = str(binding["full_content"])
         if report_type not in ACTIVE_REPORT_TYPES or not content:
             continue
-        if validate_user_visible_numbering(content):
+        if report_type != "ETF_FORMAL_DECISION" and validate_user_visible_numbering(content):
             continue
         event_type = str(event.get("event_type") or "")
         expected_event_type = {
