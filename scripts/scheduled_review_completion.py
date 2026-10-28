@@ -490,8 +490,8 @@ def build_system_review_completion_request(
         request_id, task_run_id, occurrence_id,
     )
     request_id = _safe_id(request_id)
-    if entry_mode not in {"MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"}:
-        raise ValueError("scheduled system review completion requires a registered scheduled entry_mode")
+    if entry_mode not in {"MANUAL_CONVERSATION", "MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"}:
+        raise ValueError("scheduled system review completion requires a registered entry_mode")
     task_run_id = _safe_id(task_run_id)
     if not str(requested_at_beijing or "").strip() or not str(final_content or "").strip():
         raise ValueError("scheduled system review completion requires requested_at_beijing and frozen final_content")
@@ -649,7 +649,7 @@ def main() -> int:
     parser.add_argument("--task-id", default="")
     parser.add_argument("--task-run-id", default="")
     parser.add_argument("--occurrence-id", default="")
-    parser.add_argument("--entry-mode", required=True, choices=["MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"])
+    parser.add_argument("--entry-mode", required=True, choices=["MANUAL_CONVERSATION", "MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"])
     args = parser.parse_args()
     target = write_completion_request(
         args.formal_review,
