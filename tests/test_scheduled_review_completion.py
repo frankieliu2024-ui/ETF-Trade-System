@@ -60,7 +60,7 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         self.assertEqual(payload["request_type"], "SCHEDULED_REVIEW_COMPLETION")
         self.assertEqual(payload["formal_fact_type"], "FORMAL_SCHEDULED_TRADE_REVIEW")
         self.assertEqual(payload["interaction_scenario"], "SCHEDULED_TRADE_REVIEW")
-        self.assertEqual(payload["source"], "CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR")
+        self.assertEqual(payload["source"], "CHATGPT_SCHEDULED_REVIEW_COMPLETION_OWNER")
         self.assertEqual(payload["formal_review"], full_review())
 
     def test_20260918_style_abbreviated_review_fails_before_persistence(self):
@@ -197,7 +197,7 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
             "request_id": "legacy-system-request",
             "request_type": "SCHEDULED_REVIEW_COMPLETION",
             "formal_fact_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW",
-            "source": "CHATGPT_SCHEDULED_SYSTEM_REVIEW_ACTOR",
+            "source": "CHATGPT_SCHEDULED_REVIEW_COMPLETION_OWNER",
             "task_id": "ETF系统复核",
             "task_run_id": "legacy-system-run",
             "final_content": "FROZEN LEGACY SYSTEM REPORT",
@@ -221,7 +221,7 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
             "request_id": "legacy-system-request",
             "request_type": "SCHEDULED_REVIEW_COMPLETION",
             "formal_fact_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW",
-            "source": "CHATGPT_SCHEDULED_SYSTEM_REVIEW_ACTOR",
+            "source": "CHATGPT_SCHEDULED_REVIEW_COMPLETION_OWNER",
             "task_id": "ETF系统复核",
             "task_run_id": "legacy-system-run",
             "final_content": "FROZEN LEGACY SYSTEM REPORT\n",
@@ -248,7 +248,7 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
             "request_id": "uppercase-system-request",
             "request_type": "SCHEDULED_REVIEW_COMPLETION",
             "formal_fact_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW",
-            "source": "CHATGPT_SCHEDULED_SYSTEM_REVIEW_ACTOR",
+            "source": "CHATGPT_SCHEDULED_REVIEW_COMPLETION_OWNER",
             "task_id": "ETF系统复核",
             "task_run_id": "uppercase-system-run",
             "FINAL_CONTENT": "FROZEN UPPERCASE SYSTEM REPORT",
@@ -557,7 +557,7 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
             {"status": "PASS", "execution_reconciliation": "QUALITY_ENRICHMENT_PARTIAL"},
             "system-request", "2026-09-29T08:37:00+08:00",
             "ETF系统复核", "system-run",
-            "【成交归因】能源化工ETF（159981）买入5,700份已绑定昨日10:41正式判断的Confirm；"
+            "【成交归因】能源化工（159981）买入5,700份已绑定昨日10:41正式判断的Confirm；"
             "561980两笔卖出已有正式决策身份。执行质量字段仍有缺口，不影响账户事实。",
         )
         self.assertEqual(payload["request_type"], "SCHEDULED_REVIEW_COMPLETION")
