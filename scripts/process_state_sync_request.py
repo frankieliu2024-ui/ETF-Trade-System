@@ -1804,7 +1804,953 @@ def _managed_lifecycle_lines(value: object, account: dict) -> list[str]:
 def validate_current_lifecycle_contract(value: object, account: dict, object_name: str = "lifecycle") -> str:
     """Validate current lifecycle semantics against the canonical account fact.
 
-    Formal decisions and post-close reviews share this in…13376 tokens truncated…view_known_net.get("etf_strategy_risk_rate_pct") is not None else canonical_risk,
+    Formal decisions and post-close reviews share this ingress contract.  A
+    historical Trial/Confirm mention remains explanatory when explicitly
+    marked as such, but it cannot be the current lifecycle of a held asset.
+    """
+    if not isinstance(value, dict):
+        return ""
+    membership = active_account_asset_codes(ROOT, account or {})
+    held_codes = membership["etf"] | membership["stocks"]
+    position_names = {
+        normalize_code(first(position, "code", "symbol", "security_code", "instrument_code")): str(
+            first(position, "name", "security_name", "instrument_name") or ""
+        )
+        for position in (account or {}).get("positions") or []
+        if isinstance(position, dict)
+    }
+    opportunity_terms = ("观察", "Trial", "Confirm", "观察机会", "Trial机会", "Confirm机会")
+    holding_terms = ("持有管理", "持仓管理", "降低风险", "退出", "持有")
+    for security, action in value.items():
+        text = str(action or "").strip()
+        code = _lifecycle_object_code(security)
+        if not code:
+            security_text = str(security or "")
+            code = next((candidate for candidate, name in position_names.items() if name and name in security_text), "")
+        is_held = code in held_codes
+        historical = _is_historical_lifecycle_explanation(text) or (
+            "继续" in text and any(term in text for term in ("持有管理", "持仓管理", "降低风险", "退出"))
+        )
+        if is_held and any(term in text for term in opportunity_terms) and not historical:
+            return f"{object_name}[{security}] uses opportunity lifecycle for a held asset; current action must be holding management"
+        if not is_held and any(term in text for term in holding_terms) and not historical:
+            return f"{object_name}[{security}] uses holding lifecycle for an unheld asset; current action must be observation or opportunity"
+    return ""
+
+
+def record_unrecoverable_review_prerequisite(account: dict, request: dict, trade_event: dict) -> tuple[bool, bool]:
+    """Project an evidence-backed terminal review state, never a normal CASE."""
+    assessment = request.get("historical_recovery_assessment")
+    if request.get("interaction_scenario") != "POST_CLOSE_REVIEW" or not assessment:
+        return False, False
+    event_id = str(trade_event.get("event_id") or "")
+    ok, reason = validate_unrecoverable_assessment(assessment, event_id)
+    if not ok:
+        raise ValueError(f"invalid unrecoverable review prerequisite: {reason}")
+    market_date = str(assessment["review_target_market_date"])
+    event_path = ROOT / "events" / "reviews" / f"{market_date}.json"
+    prior = load_json(event_path) if event_path.exists() else {}
+    if prior.get("event_type") in {"FORMAL_POST_CLOSE_REVIEW", "FORMAL_SCHEDULED_TRADE_REVIEW"}:
+        raise RuntimeError("normal formal review already exists; cannot overwrite with terminal state")
+    event = build_unrecoverable_review_event(
+        assessment,
+        request_id=str(request.get("request_id") or ""),
+        created_at_beijing=datetime.now(SHANGHAI).isoformat(timespec="seconds"),
+    )
+    if prior == event:
+        return True, True
+    event_path.parent.mkdir(parents=True, exist_ok=True)
+    atomic_json_write(event_path, event)
+    upsert_formal_line(
+        ROOT,
+        EXPERIENCE.name,
+        REVIEW_UNAVAILABLE_START,
+        REVIEW_UNAVAILABLE_END,
+        event_id,
+        terminal_experience_line(assessment),
+        before_heading="## 6. 版本维护记录",
+    )
+    return True, False
+
+
+def sync_experience_case_mapping_index(review: dict) -> None:
+    """Project canonical review trade→CASE mappings into the transaction index."""
+    # Review mappings are the canonical owner; the transaction index is only a human projection.
+    mappings = []
+
+    def collect(value):
+        if isinstance(value, dict):
+            if value.get("trade_event_id") and value.get("case_id"):
+                mappings.append((str(value["trade_event_id"]), str(value["case_id"])))
+            for child in value.values():
+                collect(child)
+        elif isinstance(value, list):
+            for child in value:
+                collect(child)
+
+    collect(review.get("case_mapping") or {})
+    if not mappings or not EXPERIENCE.exists():
+        return
+    text = EXPERIENCE.read_text(encoding="utf-8")
+    lines = text.splitlines()
+    changed = False
+    for index, line in enumerate(lines):
+        if not line.startswith("|2026-") or "TRADE_EVENT:" not in line:
+            continue
+        for event_id, case_id in mappings:
+            if f"TRADE_EVENT:{event_id}" not in line:
+                continue
+            parts = line.strip().strip("|").split("|")
+            if len(parts) < 10:
+                continue
+            marker = f"<!-- TRADE_EVENT:{event_id} -->"
+            # Rebuild the matched row from its table fields and append one
+            # canonical marker. This repairs historical duplicate markers while
+            # keeping the transaction identity and unrelated rows unchanged.
+            without_markers = line.replace(marker, "").strip()
+            if without_markers.startswith("|"):
+                without_markers = without_markers[1:]
+            normalized_parts = without_markers.split("|")
+            if len(normalized_parts) < 10:
+                continue
+            remark = normalized_parts[9].strip()
+            if case_id not in remark:
+                normalized_parts[9] = f"{case_id}；{remark}" if remark else case_id
+            normalized_line = "|" + "|".join(normalized_parts) + f" {marker}"
+            if normalized_line != line:
+                lines[index] = normalized_line
+                changed = True
+            break
+    if changed:
+        newline = "\n".join(lines) + ("\n" if text.endswith("\n") else "")
+        write_formal_text_if_changed(ROOT, EXPERIENCE.name, newline)
+
+
+
+def _purge_case_mapping_rows() -> None:
+    """Remove legacy routing rows from the human CASE managed block."""
+    text = EXPERIENCE.read_text(encoding="utf-8")
+    start, end = text.find(CASE_DETAILS_START), text.find(CASE_DETAILS_END)
+    if start < 0 or end < start:
+        return
+    body_start = start + len(CASE_DETAILS_START)
+    block = text[body_start:end]
+    kept = []
+    for line in block.splitlines():
+        stripped = line.strip()
+        if (
+            re.match(r"^\\d{8}[_-]", stripped)
+            or stripped.startswith("2026-") and "｜" in stripped
+            or "TRADE_EVENT:" in stripped
+            or "已归入CASE" in stripped
+            or "待复盘CASE" in stripped
+        ):
+            continue
+        kept.append(line)
+    cleaned = "\n".join(kept).strip("\n")
+    updated = text[:body_start] + "\n" + cleaned + "\n" + text[end:]
+    write_formal_text_if_changed(ROOT, EXPERIENCE.name, updated)
+
+
+
+_CASE_TEMPLATE_FIELDS = (
+    "背景／生命周期",
+    "关键证据",
+    "执行",
+    "结果",
+    "判断质量",
+    "执行质量",
+    "风险收益质量",
+    "资本使用效率",
+    "最终结果／反事实",
+    "经验",
+)
+
+
+def _case_detail_projection_entry(case_entry: str, case_id: str) -> str:
+    """Build the shared human CASE template without manufacturing absent facts."""
+    text = EXPERIENCE.read_text(encoding="utf-8")
+    case_match = re.search(
+        rf"^### (2\.\d+) {re.escape(case_id)}[:：]",
+        text,
+        re.MULTILINE,
+    )
+    if case_match:
+        ordinal = int(case_match.group(1).split(".")[1])
+    else:
+        ordinals = [
+            int(value)
+            for value in re.findall(r"^### 2\.(\d+) CASE-", text, re.MULTILINE)
+        ]
+        ordinal = max(ordinals, default=2) + 1
+    body = case_entry.strip()
+    body_lines = body.splitlines()
+    # CASE_MAPPING rows are audit metadata, never CASE_REVIEW prose.
+    body_lines = [
+        line for line in body_lines
+        if not re.match(r"^\d{8}[_-].*｜- 已归入CASE-", line.strip())
+    ]
+    body = "\n".join(body_lines).strip()
+    body = re.sub(r"^### (?:2\.\d+ )?", "", body, count=1)
+    if body.startswith(case_id):
+        body = re.sub(rf"^{re.escape(case_id)}[：:]?\s*", "", body, count=1)
+    title = body.splitlines()[0].split("｜", 1)[0].strip() if body else "CASE复盘"
+    title = title or "CASE复盘"
+
+    fields: dict[str, list[str]] = {name: [] for name in _CASE_TEMPLATE_FIELDS}
+    current_field = ""
+    unstructured: list[str] = []
+    for line in body.splitlines():
+        match = re.match(r"^-\s*(背景／生命周期|关键证据|执行|结果|判断质量|执行质量|风险收益质量|资本使用效率|最终结果／反事实|经验)：\s*(.*)$", line.strip())
+        if match:
+            current_field = match.group(1)
+            if match.group(2):
+                fields[current_field].append(match.group(2))
+        elif current_field and line.startswith(("  ", "\t")):
+            fields[current_field].append(line.strip())
+        elif line.strip():
+            unstructured.append(line.strip())
+    if unstructured and not any(fields.values()):
+        fields["背景／生命周期"].append("；".join(unstructured))
+    rendered = [f"### 2.{ordinal} {case_id}：{title}"]
+    for name in _CASE_TEMPLATE_FIELDS:
+        value = "\n".join(fields[name]).strip() or "信息不足（现有正式复盘未记录该字段）"
+        rendered.append(f"- {name}：{value}")
+    return "\n".join(rendered)
+
+
+def _case_lifecycle_update_text(root: Path, case_id: str, review: dict, updates: list[dict]) -> str:
+    market_date = str(review.get("market_date") or "")
+    status = next((str(item.get("case_status") or "").strip() for item in reversed(updates) if item.get("case_status")), "")
+    reason = next((str(item.get("mapping_reason") or "").strip() for item in reversed(updates) if item.get("mapping_reason")), "")
+    trade_lines = []
+    for item in updates:
+        event_id = str(item.get("trade_event_id") or "").strip()
+        if not event_id:
+            continue
+        trade_path = root / "events" / "trades" / f"{event_id}.json"
+        if not trade_path.exists():
+            if str(item.get("case_status") or "").upper() == "RESOLVED":
+                raise ValueError(f"resolved CASE update lacks canonical trade fact: {event_id}")
+            continue
+        trade = load_json(trade_path)
+        if str(trade.get("code") or "") != str(item.get("security_code") or trade.get("code") or ""):
+            raise ValueError(f"CASE update trade identity mismatch: {event_id}")
+        if str(trade.get("execution_status") or "").upper() != "EXECUTED":
+            raise ValueError(f"CASE update trade is not confirmed executed: {event_id}")
+        side = str(trade.get("side") or "").upper()
+        if str(item.get("case_status") or "").upper() == "RESOLVED" and side != "SELL":
+            continue
+        trade_lines.append(
+            f"{trade.get('confirmed_at_beijing') or trade.get('executed_at_beijing') or '时间未记录'} "
+            f"{side or '交易'} {trade.get('quantity', '数量未记录')}份@{trade.get('price', '价格未记录')}元 "
+            f"(trade_event_id={event_id})"
+        )
+    if status.upper() == "RESOLVED" and not trade_lines:
+        raise ValueError(f"resolved CASE update has no canonical executed SELL fact: {case_id}")
+    parts = [f"状态={status or '未提供'}"]
+    if trade_lines:
+        parts.append("正式成交=" + "；".join(trade_lines))
+    if reason:
+        parts.append("复盘映射说明=" + reason)
+    return f"- 后续正式复盘（{market_date}）：" + "；".join(parts)
+
+
+def _append_case_update_field(entry: str, field: str, market_date: str, update_line: str) -> str:
+    marker = f"后续正式复盘（{market_date}）"
+    lines = entry.splitlines()
+    field_prefix = f"- {field}："
+    index = next((i for i, line in enumerate(lines) if line.startswith(field_prefix)), None)
+    if index is None:
+        raise ValueError(f"CASE template missing required field: {field}")
+    section_end = next(
+        (i for i in range(index + 1, len(lines)) if any(lines[i].startswith(f"- {name}：") for name in _CASE_TEMPLATE_FIELDS)),
+        len(lines),
+    )
+    field_lines = lines[index + 1:section_end]
+    update_pattern = re.compile(r"^\s*- 后续正式复盘（(\d{4}-\d{2}-\d{2})）：")
+    other_lines = [line for line in field_lines if not update_pattern.match(line)]
+    updates_by_date = {}
+    for line in field_lines:
+        match = update_pattern.match(line)
+        if match and marker not in line:
+            updates_by_date[match.group(1)] = line
+    updates_by_date[market_date] = "  " + update_line
+    updates = [updates_by_date[date] for date in sorted(updates_by_date)]
+    lines[index + 1:section_end] = other_lines + updates
+    return "\n".join(lines)
+
+
+def _persist_existing_case_detail_projections(review: dict) -> None:
+    """Project later canonical CASE lifecycle facts through the formal gateway."""
+    if not EXPERIENCE.exists():
+        return
+    mapping = review.get("case_mapping") if isinstance(review.get("case_mapping"), dict) else {}
+    updates = mapping.get("existing_case_updates") if isinstance(mapping.get("existing_case_updates"), list) else []
+    grouped: dict[str, list[dict]] = {}
+    for item in updates:
+        if not isinstance(item, dict) or not str(item.get("case_id") or "").strip():
+            continue
+        if not str(item.get("case_status") or "").strip():
+            continue
+        grouped.setdefault(str(item["case_id"]).strip(), []).append(item)
+    if not grouped:
+        return
+    text = EXPERIENCE.read_text(encoding="utf-8")
+    start = text.find(CASE_DETAILS_START)
+    end = text.find(CASE_DETAILS_END, start + len(CASE_DETAILS_START)) if start >= 0 else -1
+    if start < 0 or end < 0:
+        raise ValueError("canonical CASE detail managed block is missing")
+    block = text[start + len(CASE_DETAILS_START):end]
+    for case_id, case_updates in grouped.items():
+        match = re.search(rf"^### 2\.(\d+) {re.escape(case_id)}[:：].*$", block, re.MULTILINE)
+        if not match:
+            raise ValueError(f"canonical existing CASE detail not found: {case_id}")
+        next_heading = re.search(r"^### ", block[match.end():], re.MULTILINE)
+        section_end = match.end() + next_heading.start() if next_heading else len(block)
+        section_start = match.start()
+        section = block[section_start:section_end].strip()
+        if not all(re.search(rf"^- {re.escape(field)}：", section, re.MULTILINE) for field in _CASE_TEMPLATE_FIELDS):
+            section = _case_detail_projection_entry(section, case_id)
+        update_line = _case_lifecycle_update_text(ROOT, case_id, review, case_updates)
+        market_date = str(review.get("market_date") or "")
+        for field in ("背景／生命周期", "结果", "最终结果／反事实"):
+            section = _append_case_update_field(section, field, market_date, update_line)
+        block = block[:section_start] + "\n" + section + "\n" + block[section_end:]
+    replace_formal_block(ROOT, EXPERIENCE.name, CASE_DETAILS_START, CASE_DETAILS_END, block.strip())
+
+
+def _normalize_executed_trade_case_mapping(review: dict, market_date: str) -> dict:
+    """Normalize mapping-required executed trades at the formal review owner.
+
+    Existing CASE ownership is recovered from prior canonical reviews by exact
+    security code. A first-seen executed exit without a lawful CASE is recorded
+    as an explicit canonical ineligibility, never as a fabricated CASE.
+    """
+    normalized = json.loads(json.dumps(review))
+    mapping = normalized.setdefault("case_mapping", {})
+    existing = mapping.setdefault("existing_case_updates", [])
+    ineligible = mapping.setdefault("ineligible_executed_trades", [])
+    mapped_ids = {str(x.get("trade_event_id") or "") for x in existing if isinstance(x, dict)}
+    ineligible_ids = {str(x.get("trade_event_id") or "") for x in ineligible if isinstance(x, dict)}
+    prior_cases = {}
+    review_dir = ROOT / "events" / "reviews"
+    for path in sorted(review_dir.glob("*.json")) if review_dir.exists() else []:
+        try:
+            payload = load_json(path)
+        except (OSError, ValueError, TypeError):
+            continue
+        def walk(value):
+            if isinstance(value, dict):
+                code = str(value.get("security_code") or "")
+                case_id = str(value.get("case_id") or "")
+                if code and case_id:
+                    prior_cases.setdefault(code, (case_id, str(value.get("case_status") or "RESOLVED")))
+                for child in value.values():
+                    walk(child)
+            elif isinstance(value, list):
+                for child in value:
+                    walk(child)
+        walk(payload)
+    trade_dir = ROOT / "events" / "trades"
+    for path in sorted(trade_dir.glob("*.json")) if trade_dir.exists() else []:
+        try:
+            trade = load_json(path)
+        except (OSError, ValueError, TypeError):
+            continue
+        if str(trade.get("execution_status") or "").upper() != "EXECUTED":
+            continue
+        event_id = str(trade.get("event_id") or "")
+        trade_date = str(trade.get("confirmed_at_beijing") or trade.get("executed_at_beijing") or "")[:10]
+        if not event_id or trade_date != market_date or event_id in mapped_ids or event_id in ineligible_ids:
+            continue
+        code = str(trade.get("code") or "")
+        case = prior_cases.get(code)
+        # Downstream review/CASE projections must consume the same effective
+        # attribution truth as execution_attribution/decision_trade_link.
+        # The immutable trade may intentionally retain linked_decision_id=null.
+        from decision_trade_link import resolve_link
+        effective_id, _decision, resolution = resolve_link(
+            ROOT, trade, str(trade.get("linked_decision_id") or "")
+        )
+        if resolution == "CORRECTION_CONFLICT":
+            raise RuntimeError(
+                f"executed trade attribution conflict during review normalization: {event_id}"
+            )
+        effective_id = str(effective_id or trade.get("linked_decision_id") or "")
+        if case:
+            existing.append({
+                "trade_event_id": event_id,
+                "decision_id": effective_id,
+                "case_id": case[0],
+                "security_code": code,
+                "case_status": "RESOLVED",
+                "mapping_reason": "正式复盘后将当前executed exit映射至该证券既有CASE；使用authoritative trade event身份。",
+            })
+            mapped_ids.add(event_id)
+        else:
+            ineligible.append({
+                "trade_event_id": event_id,
+                "decision_id": effective_id,
+                "security_code": code,
+                "eligibility": "EXPLICIT_CANONICAL_INELIGIBILITY",
+                "reason": "正式复盘已完成，但当前不存在该证券既有CASE，且本次退出不满足既有通用CASE intake语义；不创建新CASE。",
+            })
+            ineligible_ids.add(event_id)
+    return normalized
+
+def _persist_post_close_review_projections(account: dict, request: dict, review: dict, event: dict) -> None:
+    """Complete all review projections for first write and safe idempotent replay."""
+    market_date = str(event.get("market_date") or review.get("market_date") or "")
+    if not market_date:
+        return
+    archive_entry = str(review.get("archive_entry") or "").strip()
+    if archive_entry:
+        upsert_formal_line(ROOT, ARCHIVE.name, REVIEW_ARCHIVE_START, REVIEW_ARCHIVE_END, market_date, archive_entry, before_heading="## 6. 历史Excel与专项数据来源")
+    _purge_case_mapping_rows()
+    experience_entry = str(review.get("experience_entry") or "").strip()
+    if experience_entry:
+        case_mode = str(review.get("case_mode") or "").upper()
+        case_id = str(review.get("case_id") or "").strip()
+        if case_mode.startswith("NEW_CASE_FROM_EXECUTED_") and case_id:
+            case_entry = _case_detail_projection_entry(experience_entry, case_id)
+            upsert_formal_line(ROOT, EXPERIENCE.name, CASE_DETAILS_START, CASE_DETAILS_END, case_id, case_entry, before_heading="## 3. 历史研究与专项回测")
+        else:
+            upsert_formal_line(ROOT, EXPERIENCE.name, REVIEW_EXPERIENCE_START, REVIEW_EXPERIENCE_END, market_date, experience_entry, before_heading="## 5. 研究与经验转化")
+    _persist_existing_case_detail_projections(review)
+    sync_experience_case_mapping_index(review)
+    # Post-close review is the canonical boundary for execution attribution too.
+    # Rebuild the read-only projection from canonical trade events after the
+    # review has normalized CASE eligibility; never mutate trade facts here.
+    try:
+        from build_execution_quality import build as build_execution_quality
+    except ModuleNotFoundError:
+        from scripts.build_execution_quality import build as build_execution_quality
+    atomic_json_write(ROOT / "data/state/execution_quality.json", build_execution_quality(ROOT))
+    record_close_review_closure(account, request, review, event)
+
+
+def _normalize_close_snapshot_reference(value: object) -> str:
+    """Map actor timestamp references to the canonical close snapshot path."""
+    reference = str(value or "").strip()
+    if not reference or reference.startswith("data/market/snapshots/"):
+        return reference
+    parsed = parse_time(reference)
+    if parsed is None:
+        return reference
+    return f"data/market/snapshots/{parsed.strftime('%Y-%m-%d_%H%M%S')}.json"
+
+
+def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
+    review = request.get("formal_review")
+    interaction_scenario = str(request.get("interaction_scenario") or "").strip().upper()
+    if interaction_scenario not in {"SCHEDULED_TRADE_REVIEW", "POST_CLOSE_REVIEW", "FORMAL_DECISION", "MIDDAY_REVIEW", "WEEKLY_REVIEW"} or not review:
+        return False, False
+    review_scope = str(review.get("review_scope") or "").strip().upper()
+    request_phase = str(request.get("market_phase") or request.get("session_stage") or "").strip().upper()
+    review_phase = str(review.get("market_phase") or review.get("session_stage") or "").strip().upper()
+    is_midday_review = (
+        interaction_scenario == "MIDDAY_REVIEW"
+        or review_scope == "MORNING_SESSION_STAGE_ONLY"
+        or "MIDDAY_BREAK" in {request_phase, review_phase}
+    )
+    market_date = str(review.get("market_date") or request.get("market_date") or account.get("last_confirmed_market_date") or "")
+    if not market_date:
+        raise RuntimeError("POST_CLOSE_REVIEW requires market_date")
+    current_path = ROOT / "data" / "state" / "CURRENT.json"
+    current_fact = load_json(current_path) if current_path.exists() else {}
+    current_market_date = str(current_fact.get("market_date") or "")
+    # market_date is the formal run/review date; CURRENT.market_date is the
+    # latest valid market-fact date. A weekend formal decision may therefore
+    # legitimately have market_date later than CURRENT.market_date. Weekdays
+    # remain strict so an actually future trading date cannot pass this guard.
+    try:
+        is_weekend_formal_date = datetime.strptime(market_date, "%Y-%m-%d").date().weekday() >= 5
+    except ValueError:
+        is_weekend_formal_date = False
+    if current_market_date and market_date > current_market_date and not is_weekend_formal_date:
+        raise ValueError(
+            f"POST_CLOSE_REVIEW market_date {market_date} is later than CURRENT.market_date {current_market_date}"
+        )
+    formal_occurrence = str(request.get("occurrence_id") or "").strip()
+    is_formal_decision_production = is_formal_decision_completion(request)
+    event_path = (
+        ROOT / "events" / "reviews" / f"formal_{formal_occurrence}.json"
+        if is_formal_decision_production and formal_occurrence
+        else ROOT / "events" / "reviews" / f"{market_date}.json"
+    )
+    prior = load_json(event_path) if event_path.exists() else {}
+    prior_review = prior.get("review") if isinstance(prior.get("review"), dict) else {}
+    incoming_time = parse_time(
+        review.get("reviewed_at_beijing")
+        or review.get("updated_at_beijing")
+        or request.get("requested_at_beijing")
+        or request.get("request_time_beijing")
+        or account.get("updated_at")
+    )
+    prior_time = parse_time(
+        prior.get("reviewed_at_beijing")
+        or prior.get("updated_at_beijing")
+        or prior.get("account_updated_at")
+    )
+    replay_received = parse_time(request.get("requested_at_beijing") or request.get("request_time_beijing"))
+    prior_updated = parse_time(prior.get("updated_at_beijing"))
+    if prior_updated and replay_received and replay_received < prior_updated and review == prior_review:
+        # Exact replay of the already-persisted canonical review: repair all
+        # downstream projections idempotently without revalidating historical
+        # PIT against today's account or rewriting the canonical review event.
+        # This preserves the same request/event identity while allowing a
+        # previously interrupted handoff to complete its REPORT and closure.
+        is_scheduled_trade_review = (
+            str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION"
+            and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_SCHEDULED_TRADE_REVIEW"
+            and str(request.get("interaction_scenario") or "").strip().upper() == "SCHEDULED_TRADE_REVIEW"
+        )
+        if is_scheduled_trade_review:
+            _persist_post_close_review_projections(account, request, prior_review, prior)
+        else:
+            _persist_existing_case_detail_projections(prior_review)
+        return True, True
+    # Normalize scheduled trade-review bindings at the canonical owner.
+    # Legacy/recovery requests without a presentation binding remain compatible;
+    # a present binding must satisfy the exact scheduled-delivery contract.
+    raw_presentation_binding = request.get("presentation_binding")
+    is_trade_review_production = (
+        str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION"
+        and str(request.get("source") or "").strip().upper() == "CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR"
+        and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_SCHEDULED_TRADE_REVIEW"
+        and str((raw_presentation_binding or {}).get("task_id") or "").strip() == "ETF交易复盘"
+    )
+    is_formal_decision_production = is_formal_decision_completion(request)
+    if is_trade_review_production:
+        entry_mode = str(request.get("entry_mode") or "").strip().upper()
+        if entry_mode not in {"MANUAL_CONVERSATION", "MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"}:
+            raise ValueError("scheduled trade review production requires a registered manual or automatic entry mode")
+        binding_entry_mode = str((raw_presentation_binding or {}).get("entry_mode") or "").strip().upper()
+        if binding_entry_mode != entry_mode:
+            raise ValueError("scheduled trade review production entry_mode must match presentation_binding.entry_mode")
+    if is_formal_decision_production:
+        entry_mode = str(request.get("entry_mode") or "").strip().upper()
+        if entry_mode not in {"MANUAL_CONVERSATION", "MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"}:
+            raise ValueError("formal decision production requires a registered entry mode")
+        binding_entry_mode = str((raw_presentation_binding or {}).get("entry_mode") or "").strip().upper()
+        if binding_entry_mode != entry_mode:
+            raise ValueError("formal decision production entry_mode must match presentation_binding.entry_mode")
+    presentation_binding = (
+        _validate_presentation_binding(
+            raw_presentation_binding,
+            "ETF_FORMAL_DECISION" if is_formal_decision_production else "ETF_TRADE_REVIEW",
+            strict_production=is_trade_review_production or is_formal_decision_production,
+        )
+        if raw_presentation_binding is not None
+        else {}
+    )
+    if presentation_binding:
+        presentation_binding["request_id"] = str(request.get("request_id") or "")
+        presentation_binding["report_id"] = (
+            f"etf_formal_decision:{presentation_binding['task_run_id']}"
+            if is_formal_decision_production
+            else f"etf_trade_review:{presentation_binding['task_run_id']}"
+        )
+    data_time = dict(review.get("data_time")) if isinstance(review.get("data_time"), dict) else {}
+    if is_midday_review:
+        # Midday Scheduled Review is a valid stage review, not a 15:00 close review.
+        # Preserve the frozen morning boundary and bypass the close-only contract;
+        # the same canonical review event/report path remains the sole delivery chain.
+        data_time["close_data_status"] = "MORNING_STAGE_REFERENCE"
+        data_time["close_data_gap"] = (
+            "This is a MORNING stage review bounded by the 11:30 A-share boundary; "
+            "it is not a full-day session close."
+        )
+        review = dict(review)
+        review["data_time"] = data_time
+    else:
+        current_path = ROOT / "data" / "state" / "CURRENT.json"
+        current = load_json(current_path) if current_path.exists() else {}
+        close_contract = build_close_data_contract(ROOT, current)
+        supplied_close_snapshot = _normalize_close_snapshot_reference(data_time.get("close_snapshot") or review.get("close_snapshot"))
+        canonical_close_snapshot = _normalize_close_snapshot_reference(close_contract.get("latest_snapshot"))
+        canonical_close_verified = (
+            close_contract.get("status") == "VERIFIED_SESSION_CLOSE"
+            and close_contract.get("verified_session_close") is True
+            and close_contract.get("market_date") == market_date
+            and bool(canonical_close_snapshot)
+        )
+        # A present verified close with a mismatched or absent request reference
+        # is a stale/ambiguous input. Do not turn a review computed against
+        # another snapshot into a degraded formal review.
+        if canonical_close_verified and supplied_close_snapshot != canonical_close_snapshot:
+            return False, False
+        close_verified = canonical_close_verified and supplied_close_snapshot == canonical_close_snapshot
+        # Review completion is independent from close-data completeness. Preserve
+        # the canonical close contract when available; otherwise persist an explicit
+        # degraded review with the missing/invalid evidence boundary. Never invent
+        # a close snapshot or promote an intraday fact to 15:00.
+        if close_verified:
+            data_time["close_data_status"] = "VERIFIED_SESSION_CLOSE"
+            data_time["close_snapshot"] = canonical_close_snapshot
+            data_time.pop("close_data_gap", None)
+        else:
+            data_time["close_data_status"] = str(close_contract.get("status") or "UNVERIFIED")
+            data_time["close_data_gap"] = (
+                "VERIFIED_SESSION_CLOSE unavailable for this market date; review completed "
+                "with degraded/incomplete evidence and no inferred close."
+            )
+            data_time.pop("close_snapshot", None)
+        review = dict(review)
+        review["data_time"] = data_time
+    lifecycle_error = validate_current_lifecycle_contract(review.get("lifecycle"), account)
+    if lifecycle_error:
+        raise ValueError(f"invalid formal review lifecycle contract: {lifecycle_error}")
+    review_lifecycle = review.get("holding_actions") or review.get("lifecycle")
+    managed_error = validate_managed_position_lifecycle(review_lifecycle, account, "formal_review.managed_positions")
+    if managed_error:
+        raise ValueError(f"invalid formal review managed-position contract: {managed_error}")
+    managed_projection = build_managed_position_projection(ROOT, account)
+    review = _normalize_executed_trade_case_mapping(review, market_date)
+    payload = {"market_date": market_date, "account_updated_at": account.get("updated_at"), "formal_review": review, "presentation_binding": presentation_binding}
+    fingerprint = hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
+    prior = load_json(event_path) if event_path.exists() else {}
+    if prior.get("fingerprint") == fingerprint:
+        # Event existence is not proof that downstream projections completed.
+        persisted_review = prior.get("review") if isinstance(prior.get("review"), dict) else review
+        _persist_post_close_review_projections(account, request, persisted_review, prior)
+        return True, True
+    if prior_time and incoming_time and incoming_time < prior_time:
+        # A stale review cannot replace canonical event/PIT facts, but its
+        # already-canonical lifecycle mapping may still repair human CASE
+        # projections through the same formal-file gateway.
+        prior_review = prior.get("review") if isinstance(prior.get("review"), dict) else {}
+        _persist_existing_case_detail_projections(prior_review)
+        return True, True
+    review_time = (incoming_time or datetime.now(SHANGHAI)).isoformat(timespec="seconds")
+    event = {"event_type": "FORMAL_SCHEDULED_TRADE_REVIEW" if is_trade_review_production else "FORMAL_POST_CLOSE_REVIEW", "source": request.get("source"), "entry_mode": request.get("entry_mode"), "market_date": market_date, "account_updated_at": account.get("updated_at"), "fingerprint": fingerprint, "request_id": request.get("request_id"), "report_id": presentation_binding.get("report_id", ""), "content_hash": presentation_binding.get("content_hash", ""), "review": review, "presentation_binding": presentation_binding, "managed_position_sell_review": managed_projection, "updated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds")}
+    event["reviewed_at_beijing"] = review_time
+    event_path.parent.mkdir(parents=True, exist_ok=True)
+    atomic_json_write(event_path, event)
+    _persist_post_close_review_projections(account, request, review, event)
+    return True, False
+
+
+def _validate_presentation_binding(binding: dict, report_type: str, strict_production: bool = False) -> dict:
+    if not isinstance(binding, dict):
+        raise ValueError("scheduled completion presentation_binding must be an object")
+    required = ("task_id", "task_run_id", "request_id", "report_id", "full_content")
+    missing = [key for key in required if not str(binding.get(key) or "").strip()]
+    if missing:
+        raise ValueError("scheduled completion presentation_binding missing:" + ",".join(missing))
+    if str(binding.get("report_type") or "") != report_type:
+        raise ValueError("scheduled completion presentation_binding report_type mismatch")
+    content = str(binding["full_content"])
+    expected_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
+    supplied_hash = str(binding.get("content_hash") or "").strip()
+    supplied_hash_source = str(binding.get("content_hash_source") or "").strip()
+    binding_warning = ""
+    if strict_production:
+        if not str(binding.get("occurrence_id") or "").strip():
+            raise ValueError("scheduled trade review production binding requires occurrence_id")
+        if not supplied_hash:
+            raise ValueError("scheduled trade review production binding requires content_hash")
+        # content_hash is an audit field, not a notification prerequisite.
+        # The frozen full_content is the sole delivery payload.  Preserve the
+        # mismatch as a warning and normalize the binding to the content that
+        # will actually be delivered; do not block the ETF review handoff.
+        if supplied_hash and supplied_hash != expected_hash:
+            binding_warning = "content_hash_mismatch"
+        else:
+            binding_warning = ""
+        if supplied_hash_source not in {"", "completion_builder"}:
+            binding_warning = binding_warning or "content_hash_source_mismatch"
+    # Historical/recovery compatibility remains available when strict_production
+    # is false. Current Trade Review production must use the builder-produced
+    # immutable hash and source contract above.
+    binding = dict(binding)
+    binding["content_hash"] = expected_hash
+    binding["content_hash_source"] = "completion_builder" if supplied_hash else "canonical_owner"
+    if binding_warning:
+        binding["content_hash_warning"] = binding_warning
+    return binding
+
+
+
+def _extract_scheduled_review_final_content(request: dict) -> str:
+    """Return the one canonical frozen body from a completion ingress.
+
+    Task-interface envelopes have historically used both FINAL_CONTENT and
+    final_content.  This is the only compatibility boundary: once extracted,
+    every downstream owner uses this single value and recomputes its hash.
+    """
+    values = [
+        request.get("final_content"),
+        request.get("FINAL_CONTENT"),
+        request.get("full_content"),
+    ]
+    non_empty = [str(value) for value in values if str(value or "").strip()]
+    if not non_empty:
+        return ""
+    if any(value != non_empty[0] for value in non_empty[1:]):
+        raise ValueError("scheduled system review completion contains conflicting frozen content fields")
+    return non_empty[0]
+
+
+
+def record_scheduled_system_review(request: dict) -> tuple[bool, bool]:
+    if str(request.get("formal_fact_type") or "") != "FORMAL_SCHEDULED_SYSTEM_REVIEW":
+        return False, False
+    raw_binding = request.get("presentation_binding")
+    # Normalize incomplete bindings from the same completion envelope before
+    # validation. A binding object may exist while omitting one or more fields;
+    # rejecting it outright strands an otherwise valid frozen completion before
+    # the canonical event owner. Never read history or invent a second identity.
+    top_task_run_id = str(request.get("task_run_id") or "").strip()
+    top_occurrence_id = str(request.get("occurrence_id") or top_task_run_id).strip()
+    top_request_id = str(request.get("request_id") or "").strip()
+    if not isinstance(raw_binding, dict):
+        raw_binding = {}
+    else:
+        raw_binding = dict(raw_binding)
+    final_content = _extract_scheduled_review_final_content(request)
+    fallback_fields = {
+        "report_type": "ETF_SYSTEM_REVIEW",
+        "task_id": str(request.get("task_id") or "ETF系统复核"),
+        "task_run_id": top_task_run_id,
+        "occurrence_id": top_occurrence_id,
+        "request_id": top_request_id,
+        "report_id": str(request.get("report_id") or "").strip(),
+        "full_content": final_content,
+    }
+    for key, fallback in fallback_fields.items():
+        if not str(raw_binding.get(key) or "").strip() and str(fallback or "").strip():
+            raw_binding[key] = fallback
+    if not str(raw_binding.get("content_hash") or "").strip() and str(raw_binding.get("full_content") or "").strip():
+        raw_binding["content_hash"] = hashlib.sha256(str(raw_binding["full_content"]).encode("utf-8")).hexdigest()
+    if not str(raw_binding.get("content_hash_source") or "").strip():
+        raw_binding["content_hash_source"] = "canonical_owner_normalization"
+    if not raw_binding.get("report_id") and raw_binding.get("task_run_id"):
+        raw_binding["report_id"] = f"etf_system_review:{raw_binding['task_run_id']}"
+    if not raw_binding.get("full_content"):
+        raise ValueError("scheduled system review completion requires frozen final_content")
+    binding = _validate_presentation_binding(raw_binding, "ETF_SYSTEM_REVIEW")
+    occurrence = str(binding["task_run_id"])
+    event_path = ROOT / "events" / "reviews" / f"system_{occurrence}.json"
+    payload = {
+        "event_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW",
+        "occurrence_id": occurrence,
+        "request_id": request.get("request_id"),
+        "reviewed_at_beijing": request.get("requested_at_beijing"),
+        "presentation_binding": binding,
+        "review": request.get("system_review") or {},
+    }
+    payload["fingerprint"] = hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
+    prior = load_json(event_path) if event_path.exists() else {}
+    if prior and prior.get("fingerprint") != payload["fingerprint"]:
+        raise ValueError("scheduled system review occurrence is immutable")
+    # The canonical System Review owner must project the frozen completion to
+    # the shared REPORT contract in the same transaction boundary as the event.
+    # Event-only persistence leaves decision-notification.yml with a valid
+    # review event but no REPORT input, so the guarded sender fails closed and
+    # no主动通知 is produced.  Keep the event as the sole source of content;
+    # this projection is idempotent and never scans history or creates a second
+    # notification path.
+    system_review = request.get("system_review") if isinstance(request.get("system_review"), dict) else {}
+    market_date = str(
+        request.get("market_date")
+        or system_review.get("market_date")
+        or system_review.get("a_share_latest_formal_market_date")
+        or str(request.get("requested_at_beijing") or "")[:10]
+        or ""
+    ).strip()
+    report_id = str(binding.get("report_id") or f"etf_system_review:{occurrence}").strip()
+    full_content = str(binding.get("full_content") or "")
+    if not market_date:
+        raise ValueError("scheduled system review completion requires effective market_date")
+    report_path = ROOT / "requests" / "report_delivery" / f"{report_id.replace(':', '__')}.json"
+    report = {
+        "schema_version": "1.0",
+        "event_type": "REPORT_DELIVERY_REQUEST",
+        "channel": "REPORT",
+        "report_type": "ETF_SYSTEM_REVIEW",
+        "report_id": report_id,
+        "request_id": str(request.get("request_id") or ""),
+        "task_id": str(binding.get("task_id") or "ETF系统复核"),
+        "task_run_id": str(binding.get("task_run_id") or occurrence),
+        "generated_at": str(request.get("requested_at_beijing") or ""),
+        "effective_market_date": market_date,
+        "source_actor": str(request.get("source") or "CHATGPT_SCHEDULED_SYSTEM_REVIEW_ACTOR"),
+        "source_reference": f"canonical-review-completion:events/reviews/system_{occurrence}.json",
+        "title": "【ETF系统复核】",
+        "summary": "Canonical system review completion; deliver the frozen report unchanged.",
+        "full_content": full_content,
+        "content_hash": hashlib.sha256(full_content.encode("utf-8")).hexdigest(),
+        "idempotency_key": "ETF_SYSTEM_REVIEW:" + str(binding.get("task_run_id") or occurrence),
+        "delivery_mode": "FULL_REPORT",
+        "no_trade_authority": True,
+    }
+    if report_path.exists() and load_json(report_path) != report:
+        raise RuntimeError("current system review REPORT_DELIVERY_REQUEST identity/content mismatch")
+    if not report_path.exists():
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        atomic_json_write(report_path, report)
+    if not prior:
+        event_path.parent.mkdir(parents=True, exist_ok=True)
+        atomic_json_write(event_path, payload)
+        return True, False
+    return True, True
+
+
+def record_formal_decision_report_event(request: dict, bds: dict | None = None) -> tuple[bool, bool, str]:
+    """Project one frozen Formal Decision body directly to the shared review-event notification chain."""
+    # Project the exact frozen presentation at the canonical owner. Historical
+    # BDS callers may still pass their source envelope, but new completion
+    # callers are validated from the completion itself.
+    direct_completion = bds is None
+    source = bds if isinstance(bds, dict) else request
+    binding = source.get("presentation_binding") if isinstance(source.get("presentation_binding"), dict) else {}
+    identity = {
+        "request_id": str(source.get("request_id") or request.get("request_id") or "").strip(),
+        "parent_request_id": str(source.get("parent_request_id") or request.get("parent_request_id") or ("" if direct_completion else source.get("request_id")) or "").strip(),
+        "decision_id": str(source.get("decision_id") or request.get("decision_id") or "").strip(),
+        "binding_request_id": str(binding.get("request_id") or source.get("request_id") or request.get("request_id") or "").strip(),
+        "binding_parent_request_id": str(binding.get("parent_request_id") or source.get("parent_request_id") or source.get("request_id") or "").strip(),
+        "binding_decision_id": str(binding.get("decision_id") or source.get("decision_id") or request.get("decision_id") or "").strip(),
+    }
+    if any(not value for value in identity.values()):
+        raise ValueError("Formal Decision canonical event requires complete request/parent/decision identity")
+    # A current-main runtime completion deliberately has no parent market-fact request.\n    # The completion itself is the durable handoff, so its request identity is\n    # also the canonical parent binding. Legacy/BDS projections still retain a\n    # distinct parent when one is supplied.
+    if (
+        identity["binding_request_id"] != identity["request_id"]
+        or identity["binding_parent_request_id"] != identity["parent_request_id"]
+        or identity["binding_decision_id"] != identity["decision_id"]
+    ):
+        raise ValueError("Formal Decision canonical event presentation identity mismatch")
+    if str(request.get("parent_request_id") or "").strip() != identity["parent_request_id"]:
+        raise ValueError("Formal Decision canonical event completion parent mismatch")
+    full_content = str(source.get("presentation_content") or binding.get("full_content") or "")
+    task_run_id = str(source.get("task_run_id") or binding.get("task_run_id") or "").strip()
+    if not full_content or not task_run_id:
+        raise ValueError("Formal Decision canonical event requires frozen content and task_run_id")
+    content_hash = hashlib.sha256(full_content.encode("utf-8")).hexdigest()
+    supplied_bds_hash = str(source.get("content_hash") or "").strip()
+    supplied_binding_hash = str(binding.get("content_hash") or "").strip()
+    # Formal Decision uses the same single-owner rule as Scheduled Review:
+    # derive the audit hash from the already frozen presentation content.
+    hash_source = "audit_supplied" if (supplied_bds_hash or supplied_binding_hash) else "canonical_owner"
+    binding = {
+        "report_type": "ETF_FORMAL_DECISION",
+        "task_id": str(source.get("task_id") or binding.get("task_id") or "ETF正式决策"),
+        "task_run_id": task_run_id,
+        "report_id": str(source.get("report_id") or binding.get("report_id") or f"ETF_FORMAL_DECISION:{task_run_id}"),
+        "request_id": identity["request_id"],
+        "parent_request_id": identity["parent_request_id"],
+        "decision_id": identity["decision_id"],
+        "title": "【ETF正式决策】",
+        "full_content": full_content,
+        "content_hash": content_hash,
+        "content_hash_source": hash_source,
+    }
+    occurrence = str(source.get("occurrence_id") or binding.get("occurrence_id") or task_run_id)
+    payload = {
+        "event_type": "FORMAL_DECISION_REPORT",
+        "occurrence_id": occurrence,
+        "request_id": identity["request_id"],
+        "parent_request_id": identity["parent_request_id"],
+        "decision_id": identity["decision_id"],
+        "reviewed_at_beijing": str(source.get("requested_at_beijing") or request.get("requested_at_beijing") or ""),
+        "presentation_binding": binding,
+        "formal_decision": source.get("decision_response") or source.get("formal_decision") or {},
+        "source_completion_path": str(source.get("_ingress_path") or "") if direct_completion else "",
+        "source_bds_path": "" if direct_completion else str(source.get("target_path") or ""),
+    }
+    payload["fingerprint"] = hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
+    event_path = ROOT / "events" / "reviews" / f"formal_{occurrence}.json"
+    prior = load_json(event_path) if event_path.exists() else {}
+    if prior and prior.get("fingerprint") != payload["fingerprint"]:
+        raise ValueError("Formal Decision occurrence is immutable")
+    if not prior:
+        event_path.parent.mkdir(parents=True, exist_ok=True)
+        atomic_json_write(event_path, payload)
+        return True, False, str(event_path.relative_to(ROOT)).replace("\\", "/")
+    return True, True, str(event_path.relative_to(ROOT)).replace("\\", "/")
+
+
+def record_close_review_closure(account: dict, request: dict, review: dict, event: dict) -> None:
+    """Persist canonical closure while preserving degraded evidence semantics."""
+    market_date = str(event.get("market_date") or "")
+    if not market_date:
+        return
+    review_scope = str(review.get("review_scope") or "").strip().upper()
+    data_time = review.get("data_time") if isinstance(review.get("data_time"), dict) else {}
+    reviewed_at = parse_time(
+        review.get("reviewed_at_beijing")
+        or event.get("reviewed_at_beijing")
+        or event.get("updated_at_beijing")
+    )
+    legal_close_boundary = parse_time(f"{market_date}T15:00:00+08:00")
+    if (
+        review_scope != "FULL_DAY"
+        or reviewed_at is None
+        or legal_close_boundary is None
+        or reviewed_at < legal_close_boundary
+    ):
+        return
+    closure_path = ROOT / "data" / "state" / f"close_review_closure_{market_date}.json"
+    snapshot = review.get("data_time") or {}
+    binding = event.get("presentation_binding") if isinstance(event.get("presentation_binding"), dict) else {}
+    # The review event is the single completion owner.  Persist the REPORT
+    # handoff from that same event so a generated review cannot exist without
+    # a durable, request-bound delivery request.  notification_center remains
+    # the only sender; this projection only records the immutable handoff.
+    task_run_id = str(binding.get("task_run_id") or "").strip()
+    full_content = str(binding.get("full_content") or "")
+    report_id = f"etf_trade_review:{task_run_id}" if task_run_id else ""
+    content_hash = hashlib.sha256(full_content.encode("utf-8")).hexdigest() if full_content else ""
+    if task_run_id and full_content:
+        report_path = ROOT / "requests" / "report_delivery" / f"{report_id.replace(':', '__')}.json"
+        report = {
+            "schema_version": "1.0",
+            "event_type": "REPORT_DELIVERY_REQUEST",
+            "channel": "REPORT",
+            "report_type": str(binding.get("report_type") or "ETF_TRADE_REVIEW"),
+            "report_id": report_id,
+            "request_id": str(event.get("request_id") or request.get("request_id") or ""),
+            "task_id": str(binding.get("task_id") or "ETF交易复盘"),
+            "task_run_id": task_run_id,
+            "generated_at": str(event.get("reviewed_at_beijing") or event.get("updated_at_beijing") or ""),
+            "effective_market_date": market_date,
+            "source_actor": str(event.get("source") or "CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR"),
+            "source_reference": f"canonical-review-completion:events/reviews/{market_date}.json",
+            "title": "【ETF交易复盘】",
+            "summary": "Canonical review completion; deliver the frozen report unchanged.",
+            "full_content": full_content,
+            "content_hash": content_hash,
+            "idempotency_key": f"ETF_TRADE_REVIEW:{task_run_id}",
+            "delivery_mode": "FULL_REPORT",
+            "no_trade_authority": True,
+        }
+        if report_path.exists() and load_json(report_path) != report:
+            raise RuntimeError("current review REPORT_DELIVERY_REQUEST identity/content mismatch")
+        if not report_path.exists():
+            atomic_json_write(report_path, report)
+    canonical_equity_path = ROOT / "data" / "state" / "etf_strategy_equity.json"
+    canonical_equity = load_json(canonical_equity_path) if canonical_equity_path.exists() else {}
+    canonical_summary = canonical_equity.get("summary") if isinstance(canonical_equity.get("summary"), dict) else {}
+    canonical_risk = (
+        canonical_summary.get("current_strategy_return_pct_gross")
+        if str(canonical_equity.get("replay_cutoff") or canonical_equity.get("as_of_transaction_date") or "") == market_date
+        else None
+    )
+    review_known_net = review.get("etf_strategy_known_net") or {}
+    closure = {
+        "schema_version": "1.0", "market_date": market_date,
+        "chain": ["market_close", "account", "formal_review", "archive", "experience", "dashboard", "risk"],
+        "account_fact_updated_at": account.get("updated_at", ""),
+        "close_snapshot": snapshot.get("close_snapshot") or review.get("close_snapshot", ""),
+        "formal_review_path": f"events/reviews/{market_date}.json",
+        "dashboard_path": "ETF当前状态_DASHBOARD.md", "archive_path": "ETF市场行情档案_2026.md",
+        "experience_path": "ETF交易复盘与经验库_2026.md",
+        "case_id": review.get("case_id") or "", "case_mode": review.get("case_mode") or "CONTINUATION_NO_NEW_CASE",
+        "known_net_equity": review_known_net.get("known_net_strategy_equity") or canonical_summary.get("current_gross_strategy_equity"),
+        "risk_rate_pct": review_known_net.get("etf_strategy_risk_rate_pct") if review_known_net.get("etf_strategy_risk_rate_pct") is not None else canonical_risk,
         # CLOSED means the canonical closure event was persisted.  Keep the
         # substantive evidence state separate so degraded discovery/evidence
         # cannot be mistaken for a complete business review.
