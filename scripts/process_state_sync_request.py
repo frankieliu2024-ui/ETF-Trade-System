@@ -2403,6 +2403,13 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     if lifecycle_error:
         raise ValueError(f"invalid formal review lifecycle contract: {lifecycle_error}")
     review_lifecycle = review.get("holding_actions") or review.get("lifecycle")
+    if not review_lifecycle and isinstance(review.get("holdings"), list):
+        review_lifecycle = {
+            str(item.get("code") or ""): item.get("action") or item.get("actual_execution") or "HOLD_REVIEW"
+            for item in review.get("holdings")
+            if isinstance(item, dict) and str(item.get("code") or "").strip()
+        }
+        review["holding_actions"] = review_lifecycle
     managed_error = validate_managed_position_lifecycle(review_lifecycle, account, "formal_review.managed_positions")
     if managed_error:
         raise ValueError(f"invalid formal review managed-position contract: {managed_error}")
