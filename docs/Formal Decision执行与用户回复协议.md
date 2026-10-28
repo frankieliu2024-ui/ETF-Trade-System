@@ -131,7 +131,7 @@ Formal Decision不为本次判断新建市场事实请求、MARKET_QUOTE_REFRESH
 
 ## 六、唯一生产交接链
 
-FINAL_CONTENT冻结后，必须直接进入 current main 登记的统一 Scheduled Review completion owner，并继续沿同一运行身份、同一事实快照和同一冻结正文交接。既有 Formal Decision Actor 仅作为兼容运行环境的可选适配器，不是业务必经节点；适配器不可用或未暴露时，不得阻断统一 completion owner 的写入尝试：
+FINAL_CONTENT冻结后，必须直接进入 current main 登记的统一 Scheduled Review completion owner，并继续沿同一运行身份、同一事实快照和同一冻结正文交接。统一 completion owner 是唯一生产入口；不再设置 Formal Decision Actor 或其他适配器作为生产入口：
 
 唯一运行身份
 → current main最近合法固定时段事实
@@ -147,7 +147,7 @@ FINAL_CONTENT冻结后，必须直接进入 current main 登记的统一 Schedul
 
 这里的“调用”必须是实际提交并回读统一 completion owner，不得只在用户回复中声明已调用。正文发布后，若运行环境暂时不能提交或回读后置交接，只能如实记录最后完成层级和用户收到状态，不得因此阻断已经冻结的正式正文。
 
-兼容适配器不得创建第二请求、第二正文、第二完成记录、第二事件、第二报告或第二通知链；不得直接手写事件、报告、通知或调用服务商。
+completion owner 不得创建第二请求、第二正文、第二完成记录、第二事件、第二报告或第二通知链；不得直接手写事件、报告、通知或调用服务商。
 
 完成记录必须由统一生产者生成并回读；生产入口接收并校验本次唯一 Formal Decision completion，且该记录必须属于当前运行身份。至少核对：
 
@@ -205,8 +205,8 @@ workflow成功不等于上述任何后续状态成功；服务商成功不等于
 
 历史 BDS、旧完成记录、旧事件、旧报告和旧通知可以保留为审计档案，但不得作为当前 Formal Decision 的事实、准入依据、正文来源或生产输入。
 
-Formal Decision 的 Actor、workflow、测试和治理检查不得创建、读取或依赖 BDS。若共享状态同步模块暂时保留历史兼容读取，其作用域必须限于非 Formal Decision 的历史状态同步，不得被 Formal Decision 请求、完成记录、事件或通知链调用。历史档案不属于当前生产链。
+Formal Decision 的 workflow、测试和治理检查不得创建、读取或依赖 BDS。若共享状态同步模块暂时保留历史兼容读取，其作用域必须限于非 Formal Decision 的历史状态同步，不得被 Formal Decision 请求、完成记录、事件或通知链调用。历史档案不属于当前生产链。
 
-本协议不新增生产链；它只约束当前已有的 Formal Decision Actor、统一完成记录生产者、正式事件、报告和通知链。
+本协议不新增生产链；它只约束统一完成记录生产者、正式事件、报告和通知链。
 
 
