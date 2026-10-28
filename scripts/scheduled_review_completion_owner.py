@@ -78,10 +78,16 @@ def dispatch_notification_with_one_recovery(completion_path: str) -> dict[str, o
     an explicit failure.  An accepted-but-not-read-back submission is kept
     pending and is never duplicated here.
     """
-    primary = dispatch_notification(completion_path)
+    try:
+        primary = dispatch_notification(completion_path)
+    except Exception as exc:
+        primary = {"submitted": False, "accepted": False, "reason": str(exc), "exception": True}
     if primary.get("submitted") or primary.get("accepted"):
         return {"primary": primary, "recovery": None, "recovery_attempted": False}
-    recovery = dispatch_notification(completion_path)
+    try:
+        recovery = dispatch_notification(completion_path)
+    except Exception as exc:
+        recovery = {"submitted": False, "accepted": False, "reason": str(exc), "exception": True}
     return {
         "primary": primary,
         "recovery": recovery,
@@ -89,6 +95,51 @@ def dispatch_notification_with_one_recovery(completion_path: str) -> dict[str, o
         "same_completion_path": True,
         "recovery_limit": 1,
     }
+
+
+def readback_projection(target: Path, *, timeout_seconds: int = 60) -> dict[str, object]:
+    """Read back event, REPORT, notification-center and provider state.
+
+    The existence of paths is not treated as proof: every result is obtained
+    from current main through ``read_main_json`` and carries its own status.
+    """
+    payload = json.loads(target.read_text(encoding="utf-8"))
+    binding = payload.get("presentation_binding") or {}
+    task_id = str(payload.get("task_id") or binding.get("task_id") or "")
+    occurrence = str(payload.get("occurrence_id") or binding.get("occurrence_id") or payload.get("task_run_id") or "")
+    market_date = str(payload.get("market_date") or "")
+    report_id = str(binding.get("report_id") or payload.get("report_id") or "")
+    if task_id == "ETF正式决策":
+        event_path = f"events/reviews/formal_{occurrence}.json"
+    elif task_id == "ETF系统复核":
+        event_path = f"events/reviews/system_{occurrence}.json"
+    else:
+        event_path = f"events/reviews/{market_date}.json"
+    deadline = time.time() + max(0, timeout_seconds)
+    last: dict[str, object] = {}
+    while True:
+        event = read_main_json(event_path)
+        event_status = "READ_BACK" if isinstance(event, dict) else "NOT_READ_BACK"
+        actual_report_id = str((event or {}).get("report_id") or report_id)
+        report_path = f"requests/report_delivery/{actual_report_id.replace(':', '__')}.json" if actual_report_id else ""
+        report = read_main_json(report_path) if report_path else None
+        center = read_main_json("data/state/notification_center.json")
+        provider = None
+        if isinstance(center, dict) and actual_report_id and contains_text(center, actual_report_id):
+            provider = "BOUND_RECORD_PRESENT"
+        last = {
+            "event": {"status": event_status, "path": event_path},
+            "report": {"status": "READ_BACK" if isinstance(report, dict) else "NOT_READ_BACK", "path": report_path},
+            "notification_center": {"status": "READ_BACK" if isinstance(center, dict) and actual_report_id and contains_text(center, actual_report_id) else "NOT_READ_BACK"},
+            "provider": {"status": provider or "NOT_CONFIRMED"},
+        }
+        if all(item.get("status") == "READ_BACK" for item in (last["event"], last["report"])) and last["notification_center"]["status"] == "READ_BACK":
+            last["status"] = "READ_BACK"
+            return last
+        if time.time() >= deadline:
+            last["status"] = "NOT_CONFIRMED"
+            return last
+        time.sleep(3)
 
 
 def read_main_json(relative_path: str) -> dict[str, object] | None:
@@ -161,14 +212,16 @@ def execute_post_handoff(target: Path, *, completion_kind: str = "SCHEDULED_REVI
         result["failure_reason"] = str(exc)
         return result
 
-    # Dispatch acknowledgement is not projection proof.  Callers must perform
-    # the event/REPORT/notification-center readback through the canonical path.
-    result["projection_readback"] = {
-        "attempted": False,
-        "status": "PENDING_CANONICAL_READBACK",
-        "reason": "notification submitted; event, REPORT and provider state require canonical readback",
-    }
-    result["failure_stage"] = "projection_readback"
-    result["failure_reason"] = "canonical event/REPORT/notification/provider readback not performed by owner helper"
+    try:
+        projection = readback_projection(target)
+        result["projection_readback"] = {"attempted": True, **projection}
+        result["ok"] = projection.get("status") == "READ_BACK"
+        if not result["ok"]:
+            result["failure_stage"] = "projection_readback"
+            result["failure_reason"] = "canonical event/REPORT/notification/provider state was not fully confirmed"
+    except Exception as exc:
+        result["projection_readback"] = {"attempted": True, "status": "FAILED", "reason": str(exc)}
+        result["failure_stage"] = "projection_readback"
+        result["failure_reason"] = str(exc)
     return result
 
