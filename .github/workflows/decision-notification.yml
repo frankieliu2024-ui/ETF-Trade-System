@@ -103,11 +103,11 @@ jobs:
 
       - name: Classify manually dispatched Scheduled Review completion
         # Formal Decision and Trade Review use the shared scheduled_review_completion_path.
-        if: ${{ github.event_name == 'workflow_dispatch' && (inputs.scheduled_review_completion_path != '' || inputs.formal_completion_path != '') }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path != '' }}
         id: dispatch_completion_kind
         shell: bash
         env:
-          COMPLETION_PATH: ${{ inputs.scheduled_review_completion_path || inputs.formal_completion_path }}
+          COMPLETION_PATH: ${{ inputs.scheduled_review_completion_path }}
         run: |
           set -euo pipefail
           case "$COMPLETION_PATH" in
