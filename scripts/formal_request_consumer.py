@@ -147,7 +147,7 @@ def classify_formal_request_consumer_state(
             "ready_handoff": {
                 "required": False,
                 "submission_type": "SCHEDULED_REVIEW_COMPLETION",
-                "source": "CHATGPT_SCHEDULED_REVIEW_ACTOR",
+                "source": "CHATGPT_SCHEDULED_REVIEW_COMPLETION_OWNER",
                 "parent_request_id": parent,
                 "required_payload_fields": [
                     "request_id",
@@ -166,7 +166,7 @@ def classify_formal_request_consumer_state(
                 "binding_rules": {
                     "parent_request_id": parent,
                     "allowed_sources": [
-                        "CHATGPT_SCHEDULED_REVIEW_ACTOR",
+                        "CHATGPT_SCHEDULED_REVIEW_COMPLETION_OWNER",
                     ],
                     "forbid_historical_fallback": True,
                     "read_back_required": True,
