@@ -212,6 +212,8 @@ PushPlus微信渠道存在平台层展示模板：ETF系统通过API传入的业
 - 【决策提醒】：固定脉冲发现需要运行正式判断的原因、建议立即运行或等待下一节点，以及不构成正式决策和交易许可的边界；
 - 【收盘账户】：收盘账户事实确认提醒，不生成交易指令。
 
+【决策提醒】不得退化为只有“请运行正式决策”的空泛提示。正文至少应从current main形成并展示：触发事实及北京时间、当前合法市场节点、相关海外/亚洲上下文质量、账户总资产/现金/当日盈亏事实、实际持仓摘要、风险复核区间、当前资本比较是否已有主候选，以及为什么需要重新运行Formal Decision。上述内容只说明已确认事实和需要复核的范围，不提前生成观察机会、Trial、Confirm、持仓动作、风险许可或任何交易结论；任一关键事实缺失时应明确标注缺失，不得用历史正文或推测补齐。
+
 测试仅是隔离的通道测试family，不是交易或市场通知资格。未登记event type、自由title/content或未通过统一renderer的INTERRUPT默认拒绝用户投递并留下可审计失败；不得降级成自由文案。生产PushPlus发送权与data/state/notification_center.json正式写权均只属于.github/workflows/decision-notification.yml经scripts/run_guarded_notification.py和现有scripts/notification_center.py/merge_notification_state.py形成的单一提交链；producer只提供结构化事实。
 
 ### REPORT_DELIVERY_REQUEST 合同

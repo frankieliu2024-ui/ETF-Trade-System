@@ -938,6 +938,70 @@ def formal_decision_pending_event() -> dict | None:
     evidence_time = str(trigger.get("evidence_time") or trigger.get("triggered_at") or "").strip()
     if not key or not evidence or not evidence_time:
         return None
+    current = read_json(STATE / "CURRENT.json", {})
+    account = read_json(STATE / "account_fact.json", {})
+    decision_context = read_json(STATE / "decision_context.json", {})
+    overseas = read_json(STATE / "overseas_context.json", {})
+    trigger_names = {
+        "RISK_BOUNDARY_CROSSED": "风险边界发生变化",
+        "TRADE_CONFIRMED": "已有成交事实需要重新纳入判断",
+        "ACCOUNT_STRUCTURE_CHANGED": "账户结构发生变化",
+        "MARKET_STATE_CHANGED": "市场状态发生变化",
+    }
+    trigger_reason = trigger_names.get(trigger_type, "市场、风险或账户事实发生变化")
+    positions = []
+    for position in account.get("positions") or []:
+        if not isinstance(position, dict):
+            continue
+        name = str(position.get("name") or "相关持仓")
+        code = str(position.get("code") or "")
+        quantity = position.get("quantity")
+        pnl = position.get("holding_pnl_pct")
+        item = f"{name}{f'（{code}）' if code else ''}"
+        if isinstance(quantity, (int, float)):
+            item += f" {quantity:g}份"
+        if isinstance(pnl, (int, float)):
+            item += f"，持仓盈亏{pnl:+.2f}%"
+        positions.append(item)
+    risk = (decision_context.get("decision_trigger") or {})
+    ranking = decision_context.get("capital_efficiency_ranking") or {}
+    top_candidate = ranking.get("top_candidate")
+    if isinstance(top_candidate, dict):
+        top_candidate_text = str(top_candidate.get("display_name") or top_candidate.get("name") or "")
+    else:
+        top_candidate_text = str(top_candidate or "")
+    context = {
+        "trigger_reason": trigger_reason,
+        "trigger_type": trigger_type,
+        "evidence_change": evidence,
+        "evidence_time_beijing": evidence_time,
+        "market_snapshot": (
+            f"{current.get('market_date') or '未提供'}交易日，"
+            f"最近合法节点为{current.get('latest_valid_node') or '未提供'}，"
+            f"行情事实时点为{current.get('captured_at') or '未提供'}，"
+            f"状态为{current.get('node_status') or '未提供'}。"
+        ),
+        "overseas_snapshot": (
+            f"海外与亚洲上下文质量为{overseas.get('quality_status_cn') or overseas.get('quality_status') or '未提供'}，"
+            f"生成时点为{overseas.get('generated_at_beijing') or '未提供'}。"
+        ),
+        "account_snapshot": (
+            f"总资产{account.get('total_asset'):,.2f}元，"
+            f"现金{account.get('cash'):,.2f}元，"
+            f"当日盈亏{account.get('daily_pnl'):,.2f}元；"
+            f"账户事实时点为{account.get('updated_at') or '未提供'}。"
+            if all(isinstance(account.get(key), (int, float)) for key in ("total_asset", "cash", "daily_pnl"))
+            else "账户总资产、现金或当日盈亏事实不完整。"
+        ),
+        "positions": positions,
+        "risk_snapshot": (
+            f"当前风险复核区间为{risk.get('risk_zone') or '未提供'}，"
+            f"增强风险复核={'是' if risk.get('enhanced_risk_review_required') else '否'}；"
+            f"当前资本比较主候选为{top_candidate_text or '尚未形成'}。"
+        ),
+        "applicable_object": str(trigger.get("applicable_object") or ""),
+        "e2e_status": str(trigger.get("e2e_status") or ""),
+    }
     return {
         "key": f"decision-pending:{key}",
         "source_event_id": f"decision-pending:{key}",
@@ -949,9 +1013,7 @@ def formal_decision_pending_event() -> dict | None:
         "user_severity": "需要关注",
         "user_action": "建议立即运行【ETF正式决策】；如暂不运行，等待下一自动正式决策节点。",
         "confirmation_context": {
-            "trigger_type": trigger_type,
-            "evidence_change": evidence,
-            "evidence_time_beijing": evidence_time,
+            **context,
             "requires_formal_reassessment": True,
             "idempotency_key": key,
             "request_id": str(trigger.get("request_id") or ""),
@@ -1474,8 +1536,18 @@ def render_canonical_notification(event: dict) -> dict | None:
         title = "【决策提醒】建议运行【ETF正式决策】"
         ctx = event.get("confirmation_context") or {}
         evidence_time = human_time(ctx.get("evidence_time_beijing")) if ctx.get("evidence_time_beijing") else "未单独记录"
+        positions = "；".join(str(item) for item in (ctx.get("positions") or []) if item) or "当前持仓明细未提供。"
+        object_text = str(ctx.get("applicable_object") or "").strip() or "触发对象未单独登记。"
         body = (
-            f"### 发生了什么\n固定脉冲发现了需要重新进行正式判断的变化：{event.get('content') or '市场、风险或持仓状态发生了需要复核的变化。'}\n\n"
+            f"### 发生了什么\n固定脉冲识别为：{ctx.get('trigger_reason') or '市场、风险或账户事实发生变化'}。\n\n"
+            f"{event.get('content') or '市场、风险或持仓状态发生了需要复核的变化。'}\n\n"
+            f"涉及对象：{object_text}\n\n"
+            f"### 当前事实\n{ctx.get('market_snapshot') or '市场事实未提供。'}\n"
+            f"{ctx.get('overseas_snapshot') or '海外事实未提供。'}\n"
+            f"{ctx.get('account_snapshot') or '账户事实未提供。'}\n"
+            f"当前实际持仓：{positions}\n\n"
+            f"### 为什么需要重新判断\n{ctx.get('risk_snapshot') or '当前风险和资本比较事实不完整。'}\n"
+            "上述事实说明需要重新进入正式判断，但不提前替代正式判断中的Discovery、观察ETF、机会ETF、Trial、Confirm和持仓动作评估。\n\n"
             "### 你现在可以做什么\n建议立即运行【ETF正式决策】。如果暂不运行，系统将在下一自动正式决策节点重新读取最新合法事实并完成判断。\n\n"
             "### 当前边界\n本提醒不是正式决策正文，不代表已经形成新的买入、卖出、Trial、Confirm或持仓动作结论。系统不会自动下单或调仓。\n\n"
             f"> {_canonical_boundary(family)}\n\n### 触发事实时点（北京时间）\n{evidence_time}"
