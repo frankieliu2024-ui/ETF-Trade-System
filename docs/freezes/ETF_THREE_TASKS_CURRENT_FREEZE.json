@@ -18,18 +18,19 @@
     "source": "ChatGPT scheduled-task UI cloud-browser readback after refresh",
     "platform_hash_status": "NOT_EXPOSED_BY_UI",
     "schedule_status": "THREE_TASKS_ENABLED_DAILY_CUSTOM_FREQUENCY",
-    "result": "ALL_THREE_CURRENT_PROMPTS_READ_BACK",
+    "result": "FORMAL_DECISION_AND_TRADE_REVIEW_CURRENT_PROMPTS_READ_BACK_WITH_SYSTEM_REVIEW_PROMPT_STILL_OLD",
     "rules_verified": [
-      "canonical快照生产、发布和识别分层",
-      "查询时刷新与canonical健康状态隔离",
-      "watchdog异常不等同于快照生产失败",
-      "不完整快照不得作为可消费CURRENT",
-      "三类任务分别保持业务边界",
-      "普通对话、任务界面手动和自动入口均属于注册入口，入口类型不得成为completion资格硬门",
-      "唯一FINAL_CONTENT、completion和通知链",
-      "completion必须在正文冻结并输出后实际尝试并回读，但completion失败、工具不可见或回读失败不得阻断正文或无限等待",
-      "后置交接失败只能记录未闭环，不得改写正文或创建第二链"
-    ]
+      "ETF正式决策已包含completion强制后置、失败不阻断和有界恢复规则",
+      "ETF交易复盘已包含completion强制后置、失败不阻断和有界恢复规则",
+      "ETF系统复核仍需手动替换为同一completion非阻断规则",
+      "三类任务入口与completion在main分支已解耦",
+      "main分支不得覆盖线上live Prompt"
+    ],
+    "alignment_status": {
+      "ETF正式决策": "ALIGNED_WITH_NON_BLOCKING_COMPLETION_RULE",
+      "ETF交易复盘": "ALIGNED_WITH_NON_BLOCKING_COMPLETION_RULE",
+      "ETF系统复核": "NOT_ALIGNED_STILL_MISSING_NON_BLOCKING_COMPLETION_RULE"
+    }
   },
   "tasks": [
     {
@@ -81,8 +82,7 @@
   },
   "acceptance_required": [
     "三条任务均启用且live Prompt完整回读",
-    "三条任务均明确事实生产、发布、识别边界和正文后的completion后置交接",
-    "三条任务的注册入口与main入口映射一致",
+    "三条任务均包含completion强制后置且非阻断规则",
     "普通对话入口不被completion owner拒绝",
     "canonical快照与查询刷新健康状态分离",
     "watchdog不覆盖canonical事实判断",
@@ -90,5 +90,5 @@
     "冻结指针JSON可解析并回读",
     "相关一致性、预检、故障注入和三类任务模拟验收通过"
   ],
-  "evidence_note": "本次冻结登记云浏览器回读到的live Prompt权威原则、三类任务入口映射及main分支修复后的审计指针；平台未提供原生Prompt hash，因此不伪造或推算hash。仓库文件仅作审计、测试、生产协议和回退登记，不覆盖live Prompt。"
+  "evidence_note": "云浏览器刷新后重新回读：ETF正式决策与ETF交易复盘已包含新版completion非阻断规则；ETF系统复核仍为旧版，未达到三任务完全对齐。平台未提供原生Prompt hash，因此不伪造或推算hash。仓库文件仅作审计、测试、生产协议和回退登记，不覆盖live Prompt。"
 }
