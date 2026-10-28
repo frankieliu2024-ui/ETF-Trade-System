@@ -10,7 +10,6 @@ class ThreeTaskNotificationE2EFaultInjectionTests(unittest.TestCase):
     TASKS = {
         "ETF系统复核": {
             "prompt": ROOT / "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/prompts/系统复核.txt",
-            "owner": ROOT / "scripts/scheduled_review_completion_owner.py",
             "report_type": "ETF_SYSTEM_REVIEW",
         },
         "ETF交易复盘": {
@@ -37,8 +36,7 @@ class ThreeTaskNotificationE2EFaultInjectionTests(unittest.TestCase):
             self.assertIn("SCHEDULED_REVIEW_COMPLETION", completion_contract, task)
             self.assertIn("content_hash", prompt, task)
             self.assertTrue("GitHub Contents" in prompt or "current main" in prompt, task)
-            owner = spec["owner"].read_text(encoding="utf-8")
-            self.assertIn("persist_completion", owner, task)
+            self.assertIn("CHATGPT_DIRECT_GITHUB_CONTENTS_WRITER", completion_contract, task)
 
     def test_fault_matrix_is_fail_closed_before_notification(self):
         recovery = (ROOT / "scripts/scheduled_review_completion_recovery.py").read_text(encoding="utf-8")
