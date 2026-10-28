@@ -49,7 +49,7 @@ def main() -> int:
     parser.add_argument("--final-content", required=True)
     parser.add_argument("--requested-at-beijing", required=True)
     parser.add_argument("--entry-mode", required=True,
-                        choices=("MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"))
+                        choices=("MANUAL_CONVERSATION", "MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"))
     parser.add_argument("--market-date", required=True)
     parser.add_argument("--task-run-id", default="")
     parser.add_argument("--occurrence-id", default="")
