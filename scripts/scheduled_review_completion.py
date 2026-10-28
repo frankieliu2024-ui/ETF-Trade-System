@@ -560,7 +560,7 @@ def build_report_delivery_from_completion(completion: dict) -> dict:
         "task_run_id": task_run_id,
         "generated_at": str(completion.get("requested_at_beijing") or ""),
         "effective_market_date": effective_market_date,
-        "source_actor": str(completion.get("source") or "Scheduled Review Actor"),
+        "source_actor": str(completion.get("source") or "Scheduled Review Completion Owner"),
         "source_reference": f"scheduled-review-completion:{completion.get('request_id')}",
         "title": (
             "【ETF交易复盘】" if report_type == "ETF_TRADE_REVIEW"
