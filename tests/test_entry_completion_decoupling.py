@@ -18,12 +18,10 @@ class EntryCompletionDecouplingTests(unittest.TestCase):
             source,
         )
 
-    def test_system_actor_accepts_conversation_entry(self):
-        source = (ROOT / "scripts" / "run_scheduled_system_review_actor.py").read_text(encoding="utf-8")
-        self.assertIn(
-            'choices=("MANUAL_CONVERSATION", "MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK")',
-            source,
-        )
+    def test_shared_owner_accepts_conversation_entry_contract(self):
+        source = (ROOT / "scripts" / "scheduled_review_completion_owner.py").read_text(encoding="utf-8")
+        self.assertIn("def persist_completion", source)
+        self.assertIn("def dispatch_notification", source)
 
     def test_task_protocol_registers_conversation_entries_without_changing_schedule(self):
         protocol = json.loads(
