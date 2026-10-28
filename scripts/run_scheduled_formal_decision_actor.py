@@ -1,4 +1,4 @@
-"""Run the shared Scheduled Review Actor handoff for Formal Decision.
+"""Compatibility adapter for the shared Scheduled Review completion owner.
 
 The actor freezes one user-visible investment judgment, delegates persistence
 to the same completion owner used by Trade Review, and explicitly wakes the
@@ -40,7 +40,7 @@ def _persist_completion_to_main(completion_path: str) -> str:
     token = os.environ.get("GITHUB_TOKEN", "").strip()
     repository = os.environ.get("GITHUB_REPOSITORY", "").strip()
     if not token or not repository:
-        raise RuntimeError("cannot persist trade review completion without GITHUB_TOKEN and GITHUB_REPOSITORY")
+        raise RuntimeError("cannot persist Formal Decision completion without GitHub API credentials")
     owner, separator, repo = repository.partition("/")
     if not separator or not owner or not repo:
         raise RuntimeError("invalid GITHUB_REPOSITORY")
@@ -48,7 +48,7 @@ def _persist_completion_to_main(completion_path: str) -> str:
     try:
         relative_path = path.relative_to(Path(__file__).resolve().parents[1]).as_posix()
     except ValueError as exc:
-        raise RuntimeError("trade review completion must be inside the repository root") from exc
+        raise RuntimeError("Formal Decision completion must be inside the repository root") from exc
     body = path.read_bytes()
     base = "https://api.github.com/repos/" + owner + "/" + repo
     endpoint = base + "/contents/" + relative_path
@@ -70,7 +70,7 @@ def _persist_completion_to_main(completion_path: str) -> str:
         if getattr(exc, "code", None) != 404:
             if isinstance(exc, RuntimeError):
                 raise
-            raise RuntimeError("failed to read existing completion on main: " + str(exc)) from exc
+            raise RuntimeError("failed to read existing Formal Decision completion on main: " + str(exc)) from exc
     payload = json.dumps({
         "message": "Persist Scheduled Review completion",
         "content": __import__("base64").b64encode(body).decode("ascii"),
@@ -82,14 +82,14 @@ def _persist_completion_to_main(completion_path: str) -> str:
             if response.status not in (200, 201):
                 raise RuntimeError("completion persistence returned HTTP " + str(response.status))
     except Exception as exc:
-        raise RuntimeError("failed to persist trade review completion on main: " + str(exc)) from exc
+        raise RuntimeError("failed to persist Formal Decision completion on main: " + str(exc)) from exc
     verify_req = urllib_request.Request(endpoint + "?ref=main", method="GET", headers=headers)
     try:
         with urllib_request.urlopen(verify_req, timeout=30) as response:
             verified = json.loads(response.read().decode("utf-8"))
         verified_body = __import__("base64").b64decode(str(verified.get("content") or "").replace("\\n", ""))
     except Exception as exc:
-        raise RuntimeError("failed to read back persisted trade review completion: " + str(exc)) from exc
+        raise RuntimeError("failed to read back persisted Formal Decision completion: " + str(exc)) from exc
     if verified_body != body:
         raise RuntimeError("persisted trade review completion readback mismatch: " + relative_path)
     return relative_path
