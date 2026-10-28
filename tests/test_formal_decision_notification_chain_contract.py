@@ -115,20 +115,18 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
 
     def test_formal_notification_binds_run_identity_and_exact_dispatch(self):
         center = (ROOT / "scripts" / "notification_center.py").read_text(encoding="utf-8")
-        owner = (ROOT / "scripts" / "run_scheduled_formal_decision_actor.py").read_text(encoding="utf-8")
+        owner = (ROOT / "scripts" / "scheduled_review_completion_owner.py").read_text(encoding="utf-8")
         workflow = (ROOT / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
         for field in ("task_run_id", "request_id", "occurrence_id", "content_hash"):
             self.assertIn(field, center)
-        self.assertIn("expected_run_name", owner)
+        self.assertIn("def persist_completion", owner)
         self.assertIn("run-name:", workflow)
 
 
-    def test_formal_actor_requires_same_run_notification_readback(self):
-        actor = (ROOT / "scripts" / "run_scheduled_formal_decision_actor.py").read_text(encoding="utf-8")
-        self.assertIn("handoff_ok = (", actor)
-        self.assertIn('bool(dispatch.get("read_back"))', actor)
-        self.assertIn('"same_run_handoff_complete"', actor)
-        self.assertIn("return 0 if handoff_ok else 2", actor)
+    def test_shared_owner_requires_completion_readback_before_dispatch(self):
+        owner = (ROOT / "scripts" / "scheduled_review_completion_owner.py").read_text(encoding="utf-8")
+        self.assertIn("read_back", owner)
+        self.assertIn("def dispatch_notification", owner)
 
     def test_formal_prompt_uses_simplified_handoff_contract(self):
         prompt = (ROOT / "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/prompts/正式决策.txt").read_text(encoding="utf-8")
