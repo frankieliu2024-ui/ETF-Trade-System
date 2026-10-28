@@ -186,7 +186,7 @@ class FormalDecisionLessonsProtocolTests(unittest.TestCase):
         self.assertIn("服务商投递结果", text)
         self.assertIn("不得创建第二请求、第二正文、第二完成记录", text)
         index_text = (root / "ETF_SYSTEM_INDEX.md").read_text(encoding="utf-8")
-        self.assertIn("request_type=SCHEDULED_REVIEW_COMPLETION", index_text)
+        self.assertIn("统一Scheduled Review completion写入、回读", index_text)
         notification_text = (root / ".github/workflows/decision-notification.yml").read_text(encoding="utf-8")
         self.assertIn("scheduled_review_completion_path", notification_text)
         self.assertNotIn("Formal Decision 的合法后置交接只能使用 `CHATGPT_FORMAL_DECISION_COMPLETION`", index_text)
