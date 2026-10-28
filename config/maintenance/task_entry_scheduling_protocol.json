@@ -157,7 +157,7 @@
       ],
       "automatic_entry_mode": "AUTOMATIC_SCHEDULED_TASK",
       "canonical_task_id": "ETF正式决策",
-      "production_adapter_role": "SHARED_SCHEDULED_REVIEW_ACTOR_ADAPTER_ONLY",
+      "production_adapter_role": "OPTIONAL_COMPATIBILITY_ADAPTER_NOT_BUSINESS_CHAIN",
       "handoff_contract": {
         "source": "SCHEDULED_REVIEW_COMPLETION",
         "sequence": [
@@ -175,13 +175,17 @@
           "persistence metadata"
         ],
         "bds_required": false,
-        "owner": "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER"
+        "owner": "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER",
+        "actor_required": false,
+        "completion_owner_is_primary": true
       },
       "completion_owner": "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER",
       "handoff_execution": {
         "owner": "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER",
         "primary_mode": "DIRECT_GITHUB_CONTENTS_COMPLETION_WRITE_AND_READBACK",
         "adapter_role": "OPTIONAL_COMPATIBILITY_ADAPTER_ONLY",
+        "actor_required": false,
+        "completion_owner_is_primary": true,
         "notification_wake": "CANONICAL_COMPLETION_PUSH_PRIMARY_EXPLICIT_DISPATCH_RECOVERY",
         "adapter_unavailable_must_not_block_completion": true,
         "completion_readback_must_continue_to_notification_dispatch": true,
