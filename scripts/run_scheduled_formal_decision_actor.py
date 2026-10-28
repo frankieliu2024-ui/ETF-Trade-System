@@ -29,9 +29,9 @@ except ModuleNotFoundError:
     from scripts.task_runtime_identity import derive_runtime_identity
 
 try:
-    from scheduled_review_completion_recovery import persist_completion_with_recovery
+    from scheduled_review_completion_owner import persist_completion, dispatch_notification
 except ModuleNotFoundError:
-    from scripts.scheduled_review_completion_recovery import persist_completion_with_recovery
+    from scripts.scheduled_review_completion_owner import persist_completion, dispatch_notification
 
 
 
@@ -412,12 +412,12 @@ def main() -> int:
         raise RuntimeError("formal runtime completion readback mismatch: " + ", ".join(hard_failures))
 
     started_at = datetime.now(timezone.utc)
-    completion_path, persistence = persist_completion_with_recovery(target)
-    canonical_path = _persist_completion_to_main(completion_path)
+    completion_path, persistence = persist_completion(target)
+    canonical_path = completion_path
     # A generic push-triggered run is only a wake signal and is not bound to
     # this completion. It must never satisfy the handoff gate.
     push = _wait_for_completion_push(canonical_path, started_at)
-    dispatch = _dispatch_notification(canonical_path)
+    dispatch = dispatch_notification(canonical_path)
     dispatch["fallback_after"] = "PUSH_WAKE_NOT_ACCEPTED_AS_COMPLETION_PROOF"
 
     projection = _wait_for_projection(occurrence_id, expected_decision_id)
