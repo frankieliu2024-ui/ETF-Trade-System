@@ -196,7 +196,7 @@ def main() -> int:
     parser.add_argument(
         "--entry-mode",
         required=True,
-        choices=("MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"),
+        choices=("MANUAL_CONVERSATION", "MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"),
     )
     args = parser.parse_args()
 
