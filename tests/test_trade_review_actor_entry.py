@@ -30,11 +30,12 @@ class TradeReviewCompletionOwnerTests(unittest.TestCase):
             target = Path(tmp) / "completion.json"
             target.write_text("{}\n", encoding="utf-8")
             with patch.object(owner, "persist_completion", return_value=("requests/live_snapshot/x.json", {"written": True, "read_back": True})), \
-                 patch.object(owner, "dispatch_notification", return_value={"submitted": True}) as dispatch:
+                 patch.object(owner, "dispatch_notification", return_value={"submitted": True}) as dispatch, \
+                 patch.object(owner, "readback_projection", return_value={"status": "NOT_CONFIRMED"}):
                 result = owner.execute_post_handoff(target)
         dispatch.assert_called_once()
         self.assertEqual(result["completion_readback"]["status"], "SUCCEEDED")
-        self.assertEqual(result["projection_readback"]["status"], "PENDING_CANONICAL_READBACK")
+        self.assertEqual(result["projection_readback"]["status"], "NOT_CONFIRMED")
         self.assertFalse(result["ok"])
 
     def test_recovery_reuses_same_completion_once_after_explicit_failure(self):
@@ -46,6 +47,16 @@ class TradeReviewCompletionOwnerTests(unittest.TestCase):
         self.assertTrue(result["recovery_attempted"])
         self.assertTrue(result["same_completion_path"])
         self.assertEqual(result["recovery_limit"], 1)
+        self.assertEqual(dispatch.call_count, 2)
+
+    def test_recovery_runs_when_primary_raises(self):
+        with patch.object(owner, "dispatch_notification", side_effect=[
+            RuntimeError("primary transport unavailable"),
+            {"submitted": True, "completion_path": "same.json"},
+        ]) as dispatch:
+            result = owner.dispatch_notification_with_one_recovery("same.json")
+        self.assertTrue(result["recovery_attempted"])
+        self.assertTrue(result["recovery"]["submitted"])
         self.assertEqual(dispatch.call_count, 2)
 
 
