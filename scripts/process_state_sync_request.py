@@ -3411,9 +3411,7 @@ def _validate_formal_completion_identity(request: dict) -> None:
         return
     if str(request.get("task_id") or "").strip() != "ETF正式决策":
         return
-    if str(request.get("formal_fact_type") or "").strip().upper() not in {
-        "FORMAL_POST_CLOSE_REVIEW", "FORMAL_CURRENT_MAIN_DECISION"
-    }:
+    if str(request.get("formal_fact_type") or "").strip().upper() != "FORMAL_CURRENT_MAIN_DECISION":
         return
     if str(request.get("interaction_scenario") or "").strip().upper() != "FORMAL_DECISION":
         raise ValueError("Formal Decision completion requires interaction_scenario=FORMAL_DECISION")
@@ -3927,11 +3925,12 @@ def main() -> int:
     # identity from task names, timestamps, or historical objects.
     if (
         str(request.get("request_type") or "").strip().upper()
-        == "SCHEDULED_REVIEW_COMPLETION"
+        in {"SCHEDULED_REVIEW_COMPLETION", "FORMAL_DECISION_COMPLETION"}
         and not str(request.get("interaction_scenario") or "").strip()
     ):
         scenario_by_fact_type = {
             "FORMAL_POST_CLOSE_REVIEW": "POST_CLOSE_REVIEW",
+            "FORMAL_CURRENT_MAIN_DECISION": "FORMAL_DECISION",
             "FORMAL_SCHEDULED_TRADE_REVIEW": "SCHEDULED_TRADE_REVIEW",
             "FORMAL_SCHEDULED_SYSTEM_REVIEW": "SCHEDULED_SYSTEM_REVIEW",
             "FORMAL_MIDDAY_REVIEW": "MIDDAY_REVIEW",
