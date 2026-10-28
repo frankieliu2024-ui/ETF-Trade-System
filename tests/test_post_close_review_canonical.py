@@ -45,7 +45,7 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
         request["interaction_scenario"] = "SCHEDULED_TRADE_REVIEW"
         request["formal_fact_type"] = "FORMAL_SCHEDULED_TRADE_REVIEW"
         request["request_type"] = "SCHEDULED_REVIEW_COMPLETION"
-        request["source"] = "CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR"
+        request["source"] = "CHATGPT_SCHEDULED_REVIEW_COMPLETION_OWNER"
         request["entry_mode"] = "MANUAL_SCHEDULED_TASK"
         request["formal_review"]["data_time"]["close_snapshot"] = "2026-08-31 15:01:10 +08:00"
         request["presentation_binding"] = {
