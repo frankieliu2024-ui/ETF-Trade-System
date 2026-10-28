@@ -193,9 +193,9 @@ PushPlus微信渠道存在平台层展示模板：ETF系统通过API传入的业
 - **INTERRUPT**：事件驱动的固定模板通知，覆盖市场异动、观察/Trial/Confirm机会、机会失效、持仓动作、风险许可、成交确认、账户确认、系统阻塞、判断恢复和收盘账户。其资格受正式事实、PIT、materiality、dedup、冷却和实质升级约束；默认delivery mode为**COMPACT**。
 - **REPORT**：当前覆盖仍在运行的三个固定正式报告产品：`ETF_TRADE_REVIEW`、`ETF_SYSTEM_REVIEW`与`ETF_FORMAL_DECISION`。二者达到合法终态后以**FULL_REPORT**原文投递，不套用INTERRUPT模板，也不创建第二sender、第二state或第二token owner。REPORT与INTERRUPT共享现有发送、状态和transport owner，但资格语义严格分离：REPORT只转发已完成、已冻结的完整节点结果，不能重新分析、产生交易权限或回流生成INTERRUPT。`report_type`标识当前active report family，不证明对应业务事实已经成功持久化。
 
-固定`ETF_FORMAL_DECISION` Scheduled Actor重新纳入active REPORT生产体系，并与`ETF_TRADE_REVIEW`、`ETF_SYSTEM_REVIEW`共用同一completion、`presentation_binding`、REPORT、notification_center和统一PushPlus链。Formal Decision达到合法终态并冻结唯一`FINAL_CONTENT`后，必须通过同一正式完成入口投递完整报告；不得改走`FORMAL_DECISION_MATERIAL_CHANGE`或重新生成摘要。既有历史Formal Decision REPORT文件、notification history与审计引用继续保留，不因本次重新启用而重写历史事实。
+固定`ETF_FORMAL_DECISION`直接进入active REPORT生产体系，并与`ETF_TRADE_REVIEW`、`ETF_SYSTEM_REVIEW`共用同一completion、`presentation_binding`、REPORT、notification_center和统一PushPlus链。Formal Decision达到合法终态并冻结唯一`FINAL_CONTENT`后，必须通过同一正式完成入口投递完整报告；不得改走`FORMAL_DECISION_MATERIAL_CHANGE`或重新生成摘要。既有历史Formal Decision REPORT文件、notification history与审计引用继续保留，不因本次重新启用而重写历史事实。
 
-固定报告Actor的**节点终态、业务持久化、REPORT投递**是三个独立层次：节点终态回答本次固定运行是否已经得到可恢复的最终结果；业务持久化只在对应业务合同允许时写入canonical事实；REPORT只负责把已冻结的Trade Review、System Review和Formal Decision节点结果完整投递。普通in-progress/尚未到terminal的评估不得提前生成终态REPORT。同一Scheduled run/node必须保持幂等性，每次合法终态至多投递一个REPORT；不得为失败分支新增report type、第二transport、sender、workflow、state、queue或relay。
+固定报告的**节点终态、业务持久化、REPORT投递**是三个独立层次：节点终态回答本次固定运行是否已经得到可恢复的最终结果；业务持久化只在对应业务合同允许时写入canonical事实；REPORT只负责把已冻结的Trade Review、System Review和Formal Decision节点结果完整投递。普通in-progress/尚未到terminal的评估不得提前生成终态REPORT。同一Scheduled run/node必须保持幂等性，每次合法终态至多投递一个REPORT；不得为失败分支新增report type、第二transport、sender、workflow、state、queue或relay。
 
 所有用户可见INTERRUPT event必须映射到下列canonical template family，固定模板表示固定一级标题、section skeleton、边界语句与结构化动态槽位，并不把业务动态文字写死：
 
@@ -220,7 +220,7 @@ PushPlus微信渠道存在平台层展示模板：ETF系统通过API传入的业
 
 REPORT只接受已经达到合法终态并冻结的active正式节点结果，不重新分析，也不拥有formal reasoning或交易权限。请求至少包含：schema_version、channel=REPORT、report_type、report_id、task_id、task_run_id、generated_at、effective_market_date、source_actor、source_reference、title、summary、full_content、idempotency_key、delivery_mode=FULL_REPORT和no_trade_authority=true。
 
-Scheduled Review Actor达到合法终态并冻结唯一`FINAL_CONTENT`后，只提交一次现有canonical Scheduled Review completion ingress；completion事件携带`presentation_binding`（至少包含`report_type`、`task_id`、`task_run_id`、`report_id`和冻结的`full_content`）；content_hash如存在仅作非阻断审计字段；canonical owner只校验冻结正文逐字一致、身份一致和幂等键，不因缺少哈希阻断投影。由现有`notification_center`从该canonical review event投影REPORT并经统一sender投递。`ETF_TRADE_REVIEW`、`ETF_SYSTEM_REVIEW`和`ETF_FORMAL_DECISION`的一级标题分别固定为`【ETF交易复盘】`、`【ETF系统复核】`和`【ETF正式决策】`，不得沿用运行时间、报告后缀或自由标题。Scheduled Actor不得在completion之后另行创建`requests/report_delivery`或`requests/report_handoff`作为新的生产标准。`decision-notification.yml`在Formal completion触发的push中必须先将唯一`events/reviews/formal_*.json`事件持久化到current main，再精确绑定该路径；多个候选或binding/schema、哈希、来源、task/run identity不合法时fail closed，不得按目录排序猜测occurrence；Formal Decision completion模式下不得回退到BDS、旧REPORT或历史handoff。历史`report_delivery`/`report_handoff`仅保留current确需的compatibility/recovery语义。`notification_center.build_report_delivery_request`可以继续作为仓库内辅助构造/测试函数，但不是Scheduled Actor的生产前置执行依赖。Formal completion严格模式必须由统一的模块级模式判断函数同时约束校验和投影，不能依赖局部变量或静态字符串测试。
+Scheduled Review达到合法终态并冻结唯一`FINAL_CONTENT`后，只提交一次现有canonical Scheduled Review completion ingress；completion事件携带`presentation_binding`（至少包含`report_type`、`task_id`、`task_run_id`、`report_id`和冻结的`full_content`）；content_hash如存在仅作非阻断审计字段；canonical owner只校验冻结正文逐字一致、身份一致和幂等键，不因缺少哈希阻断投影。由现有`notification_center`从该canonical review event投影REPORT并经统一sender投递。`ETF_TRADE_REVIEW`、`ETF_SYSTEM_REVIEW`和`ETF_FORMAL_DECISION`的一级标题分别固定为`【ETF交易复盘】`、`【ETF系统复核】`和`【ETF正式决策】`，不得沿用运行时间、报告后缀或自由标题。completion owner不得在completion之后另行创建`requests/report_delivery`或`requests/report_handoff`作为新的生产标准。`decision-notification.yml`在Formal completion触发的push中必须先将唯一`events/reviews/formal_*.json`事件持久化到current main，再精确绑定该路径；多个候选或binding/schema、哈希、来源、task/run identity不合法时fail closed，不得按目录排序猜测occurrence；Formal Decision completion模式下不得回退到BDS、旧REPORT或历史handoff。历史`report_delivery`/`report_handoff`仅保留current确需的compatibility/recovery语义。`notification_center.build_report_delivery_request`可以继续作为仓库内辅助构造/测试函数，但不是completion owner的生产前置执行依赖。Formal completion严格模式必须由统一的模块级模式判断函数同时约束校验和投影，不能依赖局部变量或静态字符串测试。
 
 三类任务统一使用 `request_type=SCHEDULED_REVIEW_COMPLETION`；它由现有 state-sync owner 负责登记 `events/reviews/*.json`，随后仍由同一 REPORT/notification_center/PushPlus 链投影。Formal Decision 使用 `formal_fact_type=FORMAL_CURRENT_MAIN_DECISION`、`source=CHATGPT_SCHEDULED_REVIEW_ACTOR`、`task_id=ETF正式决策` 和 `report_type=ETF_FORMAL_DECISION`，不得要求`FORMAL_POST_CLOSE_REVIEW`，不得再创建独立 Formal completion 类型。
 
@@ -230,9 +230,9 @@ canonical intake只接受已登记的`ETF_TRADE_REVIEW`、`ETF_SYSTEM_REVIEW`与
 
 观察/Trial/Confirm、机会失效、风险许可和持仓动作等交易语义，只能由可审计的formal-decision material change产生。raw decision_trigger只表达何时需要重新判断，不得为同一事实建立平行交易/风险/机会通知；如E2E_RECOVERED仍具独立用户价值，只映射为【判断恢复】。成交确认、账户确认和系统恢复分别只确认已经发生的事实或恢复边界，不授予交易权限。
 
-### Scheduled Actor边界
+### Scheduled Review边界
 
-当前固定REPORT Actor包括ETF交易复盘、ETF系统复核与ETF正式决策。三者共用同一REPORT完成与通知链。它们达到合法终态后是否形成REPORT，服从本节REPORT完成语义；其输出本身不产生交易类INTERRUPT资格。manual正式ETF分析不是Scheduled REPORT Actor，其交易语义只通过canonical FORMAL_DECISION material change进入INTERRUPT。Scheduled Task的connector、GitHub request-file能力或产品侧运行细节不在本文冻结，也不形成第二行情链、第二writer或第二transport。
+当前固定REPORT产品包括ETF交易复盘、ETF系统复核与ETF正式决策。三者共用同一REPORT完成与通知链。它们达到合法终态后是否形成REPORT，服从本节REPORT完成语义；其输出本身不产生交易类INTERRUPT资格。manual正式ETF分析不进入Scheduled Review REPORT生产链，其交易语义只通过canonical FORMAL_DECISION material change进入INTERRUPT。Scheduled Task的connector、GitHub request-file能力或产品侧运行细节不在本文冻结，也不形成第二行情链、第二writer或第二transport。
 
 ### 维护与验收 owner
 
