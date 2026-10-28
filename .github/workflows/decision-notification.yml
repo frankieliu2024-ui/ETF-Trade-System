@@ -1,5 +1,5 @@
 name: ETF decision notification
-run-name: ETF decision notification — ${{ inputs.scheduled_review_completion_path || inputs.formal_completion_path || github.event_name }}
+run-name: ETF decision notification — ${{ inputs.scheduled_review_completion_path || github.event_name }}
 
 on:
   workflow_run:
@@ -29,10 +29,6 @@ on:
         default: ""
       recovery_source_run_id:
         description: "Source US pulse run ID for bounded recovery audit"
-        required: false
-        default: ""
-      formal_completion_path:
-        description: "Exact current Formal Decision completion path to canonicalize"
         required: false
         default: ""
       scheduled_review_completion_path:
