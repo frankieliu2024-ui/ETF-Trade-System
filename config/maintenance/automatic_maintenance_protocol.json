@@ -58,7 +58,7 @@
     {
       "id": "SYSTEM_REVIEW",
       "input": "existing_system_review_entry",
-      "owner": "existing_system_review_owner",
+      "owner": "task_direct_github_contents_writer",
       "outputs": [
         "review_report",
         "notification_projection",
@@ -72,7 +72,7 @@
     {
       "id": "TRADE_REVIEW",
       "input": "existing_trade_review_entry",
-      "owner": "existing_trade_review_owner",
+      "owner": "task_direct_github_contents_writer",
       "outputs": [
         "review_event",
         "archive_and_experience_projection",
@@ -85,8 +85,8 @@
     },
     {
       "id": "FORMAL_DECISION_HANDOFF",
-      "input": "formal_completion_ingress",
-      "owner": "existing_completion_owner + decision-notification.yml",
+      "input": "task_direct_github_contents_writer",
+      "owner": "task_direct_github_contents_writer + decision-notification.yml",
       "outputs": [
         "event",
         "REPORT",
