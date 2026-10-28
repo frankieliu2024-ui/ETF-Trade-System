@@ -37,6 +37,17 @@ class TradeReviewCompletionOwnerTests(unittest.TestCase):
         self.assertEqual(result["projection_readback"]["status"], "PENDING_CANONICAL_READBACK")
         self.assertFalse(result["ok"])
 
+    def test_recovery_reuses_same_completion_once_after_explicit_failure(self):
+        with patch.object(owner, "dispatch_notification", side_effect=[
+            {"submitted": False, "reason": "primary unavailable"},
+            {"submitted": True, "completion_path": "same.json"},
+        ]) as dispatch:
+            result = owner.dispatch_notification_with_one_recovery("same.json")
+        self.assertTrue(result["recovery_attempted"])
+        self.assertTrue(result["same_completion_path"])
+        self.assertEqual(result["recovery_limit"], 1)
+        self.assertEqual(dispatch.call_count, 2)
+
 
 if __name__ == "__main__":
     unittest.main()
