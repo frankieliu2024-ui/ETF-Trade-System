@@ -18,7 +18,7 @@ ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1
 
 
 def _credentials() -> tuple[str, str]:
-    token = (os.environ.get("GITHUB_TOKEN", "").strip() or os.environ.get("GH_TOKEN", "").strip())
+    token = (os.environ.get("ETF_GITHUB_PAT", "").strip() or os.environ.get("GITHUB_TOKEN", "").strip() or os.environ.get("GH_TOKEN", "").strip())
     repository = os.environ.get("GITHUB_REPOSITORY", "").strip() or "frankieliu2024-ui/ETF-Trade-System"
     if not token:
         raise RuntimeError("scheduled review completion owner requires an authorized GitHub write capability")
