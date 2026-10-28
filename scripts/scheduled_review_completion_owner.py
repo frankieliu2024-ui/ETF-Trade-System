@@ -91,3 +91,59 @@ def contains_text(value: object, needle: str) -> bool:
         return any(contains_text(item, needle) for item in value)
     return needle in str(value) if value is not None else False
 
+
+def execute_post_handoff(target: Path, *, completion_kind: str = "SCHEDULED_REVIEW_COMPLETION") -> dict[str, object]:
+    """Execute the mandatory post-content handoff with explicit checkpoints.
+
+    This is the only orchestration helper for callers that already froze and
+    published FINAL_CONTENT.  It deliberately returns a structured failure
+    instead of allowing callers to emit an unqualified "cannot reliably"
+    message: every failure is tied to the exact stage that was attempted.
+    """
+    result: dict[str, object] = {
+        "attempted": True,
+        "completion_kind": completion_kind,
+        "completion_write": {"attempted": False, "status": "NOT_STARTED"},
+        "completion_readback": {"attempted": False, "status": "NOT_STARTED"},
+        "notification_dispatch": {"attempted": False, "status": "NOT_STARTED"},
+        "projection_readback": {"attempted": False, "status": "NOT_STARTED"},
+        "ok": False,
+    }
+    try:
+        relative, persistence = persist_completion(target)
+        result["completion_write"] = {"attempted": True, "status": "SUCCEEDED", **persistence}
+        result["completion_readback"] = {"attempted": True, "status": "SUCCEEDED", "path": relative}
+    except Exception as exc:
+        result["completion_write"] = {"attempted": True, "status": "FAILED", "reason": str(exc)}
+        result["failure_stage"] = "completion_write"
+        result["failure_reason"] = str(exc)
+        return result
+
+    try:
+        dispatch = dispatch_notification(relative)
+        result["notification_dispatch"] = {
+            "attempted": True,
+            "status": "SUBMITTED" if dispatch.get("submitted") else "FAILED",
+            **dispatch,
+        }
+        if not dispatch.get("submitted"):
+            result["failure_stage"] = "notification_dispatch"
+            result["failure_reason"] = str(dispatch.get("reason") or "notification dispatch was not submitted")
+            return result
+    except Exception as exc:
+        result["notification_dispatch"] = {"attempted": True, "status": "FAILED", "reason": str(exc)}
+        result["failure_stage"] = "notification_dispatch"
+        result["failure_reason"] = str(exc)
+        return result
+
+    # Dispatch acknowledgement is not projection proof.  Callers must perform
+    # the event/REPORT/notification-center readback through the canonical path.
+    result["projection_readback"] = {
+        "attempted": False,
+        "status": "PENDING_CANONICAL_READBACK",
+        "reason": "notification submitted; event, REPORT and provider state require canonical readback",
+    }
+    result["failure_stage"] = "projection_readback"
+    result["failure_reason"] = "canonical event/REPORT/notification/provider readback not performed by owner helper"
+    return result
+
