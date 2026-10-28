@@ -300,7 +300,7 @@ def build_formal_review_completion_request(
     This is the new production path. It deliberately contains no durable
     business-source envelope and no BDS path. The investment judgment is the
     frozen presentation carried by the same Scheduled Review completion owner
-    used by Trade Review; only the report identity and fact scope differ.
+    written directly to GitHub Contents by the live task; only the report identity and fact scope differ.
     """
     if str(task_id or "").strip() != "ETF正式决策":
         raise ValueError("formal review completion requires canonical task_id")
@@ -330,8 +330,8 @@ def build_formal_review_completion_request(
     payload = {
         "request_id": _safe_id(request_id),
         "request_type": "SCHEDULED_REVIEW_COMPLETION",
-        "formal_fact_type": "FORMAL_POST_CLOSE_REVIEW",
-        "source": "CHATGPT_SCHEDULED_REVIEW_COMPLETION_OWNER",
+        "formal_fact_type": "FORMAL_CURRENT_MAIN_DECISION",
+        "source": "CHATGPT_DIRECT_GITHUB_CONTENTS_WRITER",
         "interaction_scenario": "FORMAL_DECISION",
         "formal_entry_source": str(formal_review.get("source") or "").strip(),
         "entry_mode": effective_entry_mode,
@@ -504,7 +504,7 @@ def build_system_review_completion_request(
         "request_id": request_id,
         "request_type": "SCHEDULED_REVIEW_COMPLETION",
         "formal_fact_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW",
-        "source": "CHATGPT_SCHEDULED_REVIEW_COMPLETION_OWNER",
+        "source": "CHATGPT_DIRECT_GITHUB_CONTENTS_WRITER",
         "interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
         "entry_mode": entry_mode,
         "requested_at_beijing": str(requested_at_beijing),
