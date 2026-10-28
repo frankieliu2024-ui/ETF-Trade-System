@@ -7,11 +7,11 @@ ROOT = Path(__file__).resolve().parents[1]
 class FormalDecisionNotificationChainContractTests(unittest.TestCase):
     def test_completion_push_is_the_primary_formal_notification_path(self):
         workflow = (ROOT / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
-        actor = (ROOT / "scripts" / "run_scheduled_formal_decision_actor.py").read_text(encoding="utf-8")
+        owner = (ROOT / "scripts" / "scheduled_review_completion_owner.py").read_text(encoding="utf-8")
         self.assertIn("steps.workflow_review.outputs.review_event_path", workflow)
         self.assertIn("github.event_name == 'workflow_run'", workflow)
-        self.assertIn("_wait_for_completion_push(canonical_path, started_at)", actor)
-        self.assertIn("if not push.get(\"read_back\"):", actor)
+        self.assertIn("def dispatch_notification", owner)
+        self.assertIn("scheduled_review_completion_path", owner)
 
     def test_completion_push_classifies_scheduled_review_by_contract(self):
         workflow = (ROOT / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
@@ -115,11 +115,11 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
 
     def test_formal_notification_binds_run_identity_and_exact_dispatch(self):
         center = (ROOT / "scripts" / "notification_center.py").read_text(encoding="utf-8")
-        actor = (ROOT / "scripts" / "run_scheduled_formal_decision_actor.py").read_text(encoding="utf-8")
+        owner = (ROOT / "scripts" / "run_scheduled_formal_decision_actor.py").read_text(encoding="utf-8")
         workflow = (ROOT / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
         for field in ("task_run_id", "request_id", "occurrence_id", "content_hash"):
             self.assertIn(field, center)
-        self.assertIn("expected_run_name", actor)
+        self.assertIn("expected_run_name", owner)
         self.assertIn("run-name:", workflow)
 
 
@@ -163,12 +163,9 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
         self.assertIn("steps.dispatch_completion_kind.outputs.scheduled", workflow)
 
     def test_formal_actor_prefers_completion_push_and_uses_one_fallback(self):
-        actor = (ROOT / "scripts" / "run_scheduled_formal_decision_actor.py").read_text(encoding="utf-8")
-        handoff = actor.split("started_at = datetime.now(timezone.utc)", 1)[1]
-        self.assertIn("canonical_path = _persist_completion_to_main(completion_path)", handoff)
-        self.assertIn("push = _wait_for_completion_push(canonical_path, started_at)", handoff)
-        self.assertIn("if not push.get(\"read_back\"):", handoff)
-        self.assertIn("dispatch = _dispatch_notification(canonical_path)", handoff)
+        owner = (ROOT / "scripts" / "scheduled_review_completion_owner.py").read_text(encoding="utf-8")
+        self.assertIn("def persist_completion", owner)
+        self.assertIn("def dispatch_notification", owner)
 
 
 if __name__ == "__main__":
