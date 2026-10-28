@@ -19,7 +19,7 @@ class ScheduledReviewHandoffContractTests(unittest.TestCase):
         )
         self.assertEqual(payload["request_type"], "SCHEDULED_REVIEW_COMPLETION")
         self.assertEqual(payload["formal_fact_type"], "FORMAL_SCHEDULED_SYSTEM_REVIEW")
-        self.assertEqual(payload["source"], "CHATGPT_SCHEDULED_SYSTEM_REVIEW_ACTOR")
+        self.assertEqual(payload["source"], "CHATGPT_SCHEDULED_REVIEW_COMPLETION_OWNER")
         self.assertEqual(
             payload["presentation_binding"]["report_type"], "ETF_SYSTEM_REVIEW"
         )
