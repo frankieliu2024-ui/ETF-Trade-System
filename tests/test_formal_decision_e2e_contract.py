@@ -220,7 +220,7 @@ class FormalReadyHandoffContractTests(unittest.TestCase):
         root = Path(__file__).parents[1]
         text = (root / "scripts/formal_request_consumer.py").read_text(encoding="utf-8")
         self.assertIn('"submission_type": "SCHEDULED_REVIEW_COMPLETION"', text)
-        self.assertIn('"source": "CHATGPT_SCHEDULED_REVIEW_ACTOR"', text)
+        self.assertIn('"source": "CHATGPT_SCHEDULED_REVIEW_COMPLETION_OWNER"', text)
         self.assertIn('"notification_attempt_precondition": True', text)
         self.assertIn('"provider_success_not_required_for_user_reply": True', text)
         self.assertIn('"historical_fallback_forbidden": True', text)
