@@ -174,7 +174,7 @@ def build_trade_review_completion_request(
     occurrence_id: str = "",
     entry_mode: str = "",
 ) -> dict:
-    """Wrap a frozen Scheduled Review for the existing state-sync owner."""
+    """Wrap a frozen Scheduled Review for the legacy state-sync compatibility path."""
     request_id, task_run_id, occurrence_id = derive_scheduled_review_identity(
         task_id or "ETF交易复盘", requested_at_beijing, entry_mode,
         request_id, task_run_id, occurrence_id,
@@ -205,7 +205,7 @@ def build_trade_review_completion_request(
         "request_id": _safe_id(request_id),
         "request_type": "SCHEDULED_REVIEW_COMPLETION",
         "formal_fact_type": "FORMAL_SCHEDULED_TRADE_REVIEW",
-        "source": "CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR",
+        "source": "CHATGPT_DIRECT_GITHUB_CONTENTS_WRITER",
         "interaction_scenario": "SCHEDULED_TRADE_REVIEW",
         "market_phase": str(formal_review.get("market_phase") or ("MIDDAY_BREAK" if is_midday else "POST_CLOSE")),
         "requested_at_beijing": str(requested_at_beijing or "").strip(),
@@ -299,7 +299,7 @@ def build_formal_review_completion_request(
 
     This is the new production path. It deliberately contains no durable
     business-source envelope and no BDS path. The investment judgment is the
-    frozen presentation carried by the same Scheduled Review completion owner
+    frozen presentation carried by the task-direct GitHub Contents writer
     written directly to GitHub Contents by the live task; only the report identity and fact scope differ.
     """
     if str(task_id or "").strip() != "ETF正式决策":
@@ -709,7 +709,7 @@ def build_formal_runtime_completion_request(
         "request_id": task_run_id,
         "request_type": "SCHEDULED_REVIEW_COMPLETION",
         "formal_fact_type": "FORMAL_CURRENT_MAIN_DECISION",
-        "source": "CHATGPT_SCHEDULED_REVIEW_COMPLETION_OWNER",
+        "source": "CHATGPT_DIRECT_GITHUB_CONTENTS_WRITER",
         "interaction_scenario": "FORMAL_DECISION",
         "task_id": "ETF正式决策",
         "task_run_id": task_run_id,
