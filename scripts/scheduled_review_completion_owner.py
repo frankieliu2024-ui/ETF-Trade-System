@@ -70,6 +70,27 @@ def dispatch_notification(completion_path: str) -> dict[str, object]:
     return {"submitted": True, "completion_path": completion_path, "read_back": False}
 
 
+def dispatch_notification_with_one_recovery(completion_path: str) -> dict[str, object]:
+    """Submit the same completion once, with one bounded same-completion recovery.
+
+    Recovery is not a second notification chain: it reuses the exact same
+    completion path and is allowed only after the primary submission returned
+    an explicit failure.  An accepted-but-not-read-back submission is kept
+    pending and is never duplicated here.
+    """
+    primary = dispatch_notification(completion_path)
+    if primary.get("submitted") or primary.get("accepted"):
+        return {"primary": primary, "recovery": None, "recovery_attempted": False}
+    recovery = dispatch_notification(completion_path)
+    return {
+        "primary": primary,
+        "recovery": recovery,
+        "recovery_attempted": True,
+        "same_completion_path": True,
+        "recovery_limit": 1,
+    }
+
+
 def read_main_json(relative_path: str) -> dict[str, object] | None:
     token, repository = _credentials()
     owner, repo = repository.split("/", 1)
@@ -120,13 +141,17 @@ def execute_post_handoff(target: Path, *, completion_kind: str = "SCHEDULED_REVI
         return result
 
     try:
-        dispatch = dispatch_notification(relative)
+        dispatch = dispatch_notification_with_one_recovery(relative)
+        primary = dispatch.get("primary") or {}
+        submitted = bool(primary.get("submitted"))
+        if not submitted and dispatch.get("recovery_attempted"):
+            submitted = bool((dispatch.get("recovery") or {}).get("submitted"))
         result["notification_dispatch"] = {
             "attempted": True,
-            "status": "SUBMITTED" if dispatch.get("submitted") else "FAILED",
+            "status": "SUBMITTED" if submitted else "FAILED",
             **dispatch,
         }
-        if not dispatch.get("submitted"):
+        if not submitted:
             result["failure_stage"] = "notification_dispatch"
             result["failure_reason"] = str(dispatch.get("reason") or "notification dispatch was not submitted")
             return result
