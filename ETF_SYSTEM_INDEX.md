@@ -50,7 +50,7 @@ Formal Decision通知交接使用 source=CHATGPT_SCHEDULED_REVIEW_ACTOR。\n\nFo
 
 正式判断必须读取MASTER、数据与市场监测规范、账户与成交事实、风险与生命周期事实、Discovery、观察ETF、机会ETF、实际持仓和主动通知规范。事实足以判断时直接形成唯一FINAL_CONTENT；超时判断必须披露事实时点和限制，但不因此停止任务、正文交接或通知链。
 
-正文冻结并立即发布后，completion的请求类型固定为 `request_type=SCHEDULED_REVIEW_COMPLETION`，source固定为 `CHATGPT_SCHEDULED_REVIEW_ACTOR`，并沿统一Scheduled Review链完成；不创建Formal专属completion、事件、报告或通知链。completion写入、completion回读、completion push、事件、REPORT、notification、服务商投递和用户收到必须分别核验，后置交接失败不得改写已形成的业务判断，也不得重新生成正文。
+正文冻结并立即发布后，任务在同一运行内直接将唯一completion写入main分支并回读核验；不经过KV、HTTP ingress、consumer或独立completion owner，不创建Formal专属的第二套事件、报告或通知链。completion写入、completion回读、通知workflow、事件、REPORT、notification、服务商投递和用户收到必须分别核验，后置交接失败不得改写已形成的业务判断，也不得重新生成正文。
 
 普通交易判断仍按MASTER和所属数据规范读取；用户上传的账户截图按既有账户事实入口处理，不改变Formal Decision的事实消费边界。
 
@@ -119,7 +119,7 @@ INDEX只负责回答“去哪里读”，不得重新定义以下内容：正式
 
 #### Formal Decision交接可执行性硬门
 
-Formal Decision只使用统一Scheduled Review completion owner。completion沿用共享Scheduled Review路径，绑定本次运行身份、market_date、唯一FINAL_CONTENT和必要审计字段；不要求本次判断先建立父请求或request-bound事实链。正文冻结并发布后，继续写入并回读completion，再等待既有completion push通知链；只有在有界窗口内未形成或明确失败时，才使用同一completion进行灾备通知。各层级必须分别回读，不能把completion写入、通知workflow提交、服务商投递或历史通知表述为用户已收到。
+Formal Decision使用统一Scheduled Review completion格式，但由任务本身在同一运行内直接写入并回读main分支唯一completion文件；不经过KV、HTTP ingress、consumer或独立completion owner。completion绑定本次运行身份、market_date、唯一FINAL_CONTENT和必要审计字段。写入并回读后，再沿既有通知workflow完成通知交接；各层级必须分别回读，不能把completion写入、通知workflow提交、服务商投递或历史通知表述为用户已收到。
 
 ## 6. 冻结、封存与回退登记
 
