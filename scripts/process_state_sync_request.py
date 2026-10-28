@@ -2694,7 +2694,7 @@ def record_close_review_closure(account: dict, request: dict, review: dict, even
     )
     legal_close_boundary = parse_time(f"{market_date}T15:00:00+08:00")
     if (
-        review_scope != "FULL_DAY"
+        review_scope not in {"FULL_DAY", "FULL_TRADING_DAY"}
         or reviewed_at is None
         or legal_close_boundary is None
         or reviewed_at < legal_close_boundary
