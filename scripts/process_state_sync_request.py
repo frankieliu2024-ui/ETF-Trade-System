@@ -3400,6 +3400,48 @@ def _trade_event_id(request: dict, trade: dict, idempotency_key: str, ordinal: i
 
 # Formal Decision completion projection accepts current-main runtime completions.
 
+def _validate_formal_completion_identity(request: dict) -> None:
+    """Fail closed on stale or replayed Formal Decision presentation envelopes.
+
+    The business body is immutable once frozen, but its presentation must still
+    belong to this run: the title minute must match requested_at_beijing, the
+    run identity must be complete, and the content hash must be real.
+    """
+    if str(request.get("request_type") or "").strip().upper() != "SCHEDULED_REVIEW_COMPLETION":
+        return
+    if str(request.get("task_id") or "").strip() != "ETF正式决策":
+        return
+    if str(request.get("formal_fact_type") or "").strip().upper() not in {
+        "FORMAL_POST_CLOSE_REVIEW", "FORMAL_CURRENT_MAIN_DECISION"
+    }:
+        return
+    if str(request.get("interaction_scenario") or "").strip().upper() != "FORMAL_DECISION":
+        raise ValueError("Formal Decision completion requires interaction_scenario=FORMAL_DECISION")
+    for key in ("task_run_id", "occurrence_id", "request_id", "requested_at_beijing"):
+        if not str(request.get(key) or "").strip():
+            raise ValueError(f"Formal Decision completion missing {key}")
+    content = _extract_scheduled_review_final_content(request)
+    if not content:
+        raise ValueError("Formal Decision completion requires frozen final_content")
+    requested = parse_time(request.get("requested_at_beijing"))
+    if requested is None:
+        raise ValueError("Formal Decision completion requested_at_beijing is invalid")
+    first_line = content.splitlines()[0].strip() if content.splitlines() else ""
+    match = re.fullmatch(r"【ETF正式决策】(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}) (正式判断|降级判断|超时判断)", first_line)
+    if not match:
+        raise ValueError("Formal Decision FINAL_CONTENT title is invalid")
+    title_time = parse_time(match.group(1) + ":00+08:00")
+    requested_minute = requested.astimezone(SHANGHAI).replace(second=0, microsecond=0)
+    if title_time != requested_minute:
+        raise ValueError("Formal Decision FINAL_CONTENT title time does not match this run")
+    binding = request.get("presentation_binding") if isinstance(request.get("presentation_binding"), dict) else {}
+    supplied_hash = str(request.get("content_hash") or binding.get("content_hash") or "").strip()
+    if not supplied_hash or supplied_hash.lower() in {"sha256-placeholder", "placeholder"}:
+        raise ValueError("Formal Decision completion requires a real content_hash")
+    expected_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
+    if supplied_hash != expected_hash:
+        raise ValueError("Formal Decision completion content_hash mismatch")
+
 def is_formal_decision_completion(request: dict) -> bool:
     """Recognize the shared Formal Decision completion contract independent of actor label."""
     binding = request.get("presentation_binding") if isinstance(request.get("presentation_binding"), dict) else {}
@@ -3901,6 +3943,8 @@ def main() -> int:
                 "scheduled review completion requires a registered interaction_scenario"
             )
         request["interaction_scenario"] = scenario
+
+    _validate_formal_completion_identity(request)
 
     # New Formal Decision identities must not bypass the structured Business
     # Decision Source ingress. Historical legacy completion artifacts remain
