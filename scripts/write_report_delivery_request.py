@@ -13,7 +13,7 @@ def build_and_write_report_request(*, output: Path, task_id: str, task_run_id: s
                                    full_content: str, source_reference: str,
                                    idempotency_key: str, generated_at: str,
                                    source_actor: str = "ChatGPT") -> dict:
-    """Persist a Scheduled Actor REPORT only through the canonical schema builder."""
+    """Persist a Scheduled Review REPORT only through the canonical schema builder."""
     request = build_report_delivery_request(
         task_id=task_id,
         task_run_id=task_run_id,
@@ -37,7 +37,7 @@ def build_and_write_report_request(*, output: Path, task_id: str, task_run_id: s
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Canonical ingress for Scheduled Actor REPORT delivery requests.")
+    parser = argparse.ArgumentParser(description="Canonical ingress for Scheduled Review REPORT delivery requests.")
     parser.add_argument("--output", required=True)
     parser.add_argument("--task-id", required=True)
     parser.add_argument("--task-run-id", required=True)
