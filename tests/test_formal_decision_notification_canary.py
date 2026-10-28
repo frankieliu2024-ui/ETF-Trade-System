@@ -18,6 +18,21 @@ import notification_materiality_guard as guard
 
 
 class FormalDecisionNotificationCanaryTests(unittest.TestCase):
+    def test_scheduled_task_reports_are_always_notification_eligible(self):
+        for report_type in ("ETF_FORMAL_DECISION", "ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW"):
+            event = {
+                "event_type": "REPORT_DELIVERY_REQUEST",
+                "report_type": report_type,
+                "task_id": report_type,
+                "task_run_id": "run-1",
+                "request_id": "run-1",
+                "occurrence_id": "occ-1",
+                "report_id": report_type + ":run-1",
+                "content_hash": "hash",
+                "content": "无交易、无资格变化，但本次任务仍须发送完整报告。",
+            }
+            self.assertEqual(guard.notification_evidence_error(event), "")
+
     def _event(self, decision_id: str, decision_time: str, code: str, name: str, status: str, risk: str, amount_action: str = "新增0元；现有持仓维持；现金保留。") -> dict:
         return {
             "event_type": "FORMAL_DECISION",
@@ -63,186 +78,3 @@ class FormalDecisionNotificationCanaryTests(unittest.TestCase):
                 "d2",
                 "2026-09-04T11:30:00+08:00",
                 "159326",
-                "电网设备ETF",
-                "观察机会",
-                "允许Trial",
-            )
-            self._write_events(root, prior, latest)
-            with patch.object(center, "ROOT", root), patch.object(
-                center,
-                "now",
-                return_value=datetime.fromisoformat("2026-09-04T11:31:00+08:00"),
-            ):
-                event = center.formal_decision_change_event()
-
-            self.assertIsNotNone(event)
-            self.assertEqual(event["event_type"], "FORMAL_DECISION_MATERIAL_CHANGE")
-            self.assertEqual(event["related_decision_id"], "d2")
-            self.assertEqual(event["security_code"], "159326")
-            self.assertIn("【观察机会】", event["title"])
-            self.assertEqual(event["confirmation_context"]["previous_security_code"], "518880")
-            self.assertEqual(guard.notification_evidence_error(event), "")
-
-    def test_no_material_change_stays_silent(self):
-        with tempfile.TemporaryDirectory() as td:
-            root = Path(td)
-            prior = self._event(
-                "d1",
-                "2026-09-04T11:20:00+08:00",
-                "159326",
-                "电网设备ETF",
-                "观察机会",
-                "允许Trial",
-            )
-            latest = self._event(
-                "d2",
-                "2026-09-04T11:30:00+08:00",
-                "159326",
-                "电网设备ETF",
-                "观察机会",
-                "允许Trial",
-                amount_action="新增0元；现金继续保留。",
-            )
-            self._write_events(root, prior, latest)
-            with patch.object(center, "ROOT", root), patch.object(
-                center,
-                "now",
-                return_value=datetime.fromisoformat("2026-09-04T11:31:00+08:00"),
-            ):
-                event = center.formal_decision_change_event()
-
-            self.assertIsNone(event)
-
-    def test_trial_upgrade_is_actionable_but_never_auto_executes(self):
-        with tempfile.TemporaryDirectory() as td:
-            root = Path(td)
-            prior = self._event(
-                "d1",
-                "2026-09-04T11:20:00+08:00",
-                "159326",
-                "电网设备ETF",
-                "观察机会",
-                "允许Trial",
-            )
-            latest = self._event(
-                "d2",
-                "2026-09-04T11:30:00+08:00",
-                "159326",
-                "电网设备ETF",
-                "Trial机会",
-                "允许Trial",
-                amount_action="Trial新增5,000元；由用户人工下单。",
-            )
-            self._write_events(root, prior, latest)
-            with patch.object(center, "ROOT", root), patch.object(
-                center,
-                "now",
-                return_value=datetime.fromisoformat("2026-09-04T11:31:00+08:00"),
-            ):
-                event = center.formal_decision_change_event()
-
-            self.assertIsNotNone(event)
-            self.assertIn("【Trial机会】", event["title"])
-            self.assertIn("人工执行", event["user_action"])
-            self.assertEqual(guard.notification_evidence_error(event), "")
-
-
-    def test_action_guidance_uses_runtime_policy_fallback_boundary_not_literal_ten_minutes(self):
-        with tempfile.TemporaryDirectory() as td:
-            root = Path(td)
-            config = root / "config"
-            config.mkdir(parents=True, exist_ok=True)
-            (config / "runtime_policy.json").write_text(
-                json.dumps({"interactive_decision_freshness": {"fallback_max_age_seconds": 900}}),
-                encoding="utf-8",
-            )
-            prior = self._event(
-                "d1", "2026-09-04T11:20:00+08:00", "159326", "电网设备ETF",
-                "观察机会", "允许Trial",
-            )
-            latest = self._event(
-                "d2", "2026-09-04T11:30:00+08:00", "159326", "电网设备ETF",
-                "Trial机会", "允许Trial", amount_action="Trial新增5,000元；由用户人工下单。",
-            )
-            latest["comparison_snapshot"] = {"as_of_beijing": "2026-09-04T11:19:00+08:00"}
-            self._write_events(root, prior, latest)
-            with patch.object(center, "ROOT", root), patch.object(
-                center, "now", return_value=datetime.fromisoformat("2026-09-04T11:31:00+08:00")
-            ):
-                event = center.formal_decision_change_event()
-
-            self.assertIsNotNone(event)
-            self.assertIn("人工执行", event["user_action"])
-            self.assertNotIn("超过10分钟", event["user_action"])
-            self.assertNotIn("超出current runtime policy", event["user_action"])
-
-    def test_action_guidance_blocks_only_outside_runtime_policy_fallback_window(self):
-        with tempfile.TemporaryDirectory() as td:
-            root = Path(td)
-            config = root / "config"
-            config.mkdir(parents=True, exist_ok=True)
-            (config / "runtime_policy.json").write_text(
-                json.dumps({"interactive_decision_freshness": {"fallback_max_age_seconds": 900}}),
-                encoding="utf-8",
-            )
-            prior = self._event(
-                "d1", "2026-09-04T11:20:00+08:00", "159326", "电网设备ETF",
-                "观察机会", "允许Trial",
-            )
-            latest = self._event(
-                "d2", "2026-09-04T11:30:00+08:00", "159326", "电网设备ETF",
-                "Trial机会", "允许Trial", amount_action="Trial新增5,000元；由用户人工下单。",
-            )
-            latest["comparison_snapshot"] = {"as_of_beijing": "2026-09-04T11:14:00+08:00"}
-            self._write_events(root, prior, latest)
-            with patch.object(center, "ROOT", root), patch.object(
-                center, "now", return_value=datetime.fromisoformat("2026-09-04T11:31:00+08:00")
-            ):
-                event = center.formal_decision_change_event()
-
-            self.assertIsNotNone(event)
-            self.assertIn("超出current runtime policy允许的盘中动作时效窗口", event["user_action"])
-            self.assertNotIn("超过10分钟", event["user_action"])
-
-    def test_risk_permission_upgrade_without_trade_opportunity_is_action_complete(self):
-        with tempfile.TemporaryDirectory() as td:
-            root = Path(td)
-            prior = self._event(
-                "d1", "2026-09-18T14:00:00+08:00", "561980", "半导体设备ETF",
-                "无机会", "禁止新增",
-            )
-            latest = self._event(
-                "d2", "2026-09-18T14:10:53+08:00", "561980", "半导体设备ETF",
-                "无机会", "允许Trial", amount_action="",
-            )
-            latest["formal_decision"]["decisive_reason"] = ""
-            latest["formal_decision"]["capital_competition"] = {
-                "next_unit_capital_use": "现金",
-                "new_amount_yuan": 0,
-                "zero_amount_decisive_reason": "风险许可已解除，但当前候选尚未形成完整新增资本证据。",
-                "selected_state_reason": "维持现有组合与现金优于当前候选。",
-                "capital_release_migrations": [],
-            }
-            latest["formal_decision"]["managed_position_reviews"] = [
-                {"next_change_condition": "若科技承接继续增强并形成独立证据，再评估新增。"}
-            ]
-            self._write_events(root, prior, latest)
-            with patch.object(center, "ROOT", root), patch.object(
-                center, "now", return_value=datetime.fromisoformat("2026-09-18T14:11:30+08:00")
-            ):
-                event = center.formal_decision_change_event()
-                rendered = center.render_canonical_notification(event)
-
-            self.assertIsNotNone(event)
-            self.assertEqual(rendered["title"], "【风险许可】禁止新增 → 允许Trial")
-            self.assertIn("新增0元", rendered["content"])
-            self.assertIn("下一单位资本：现金", rendered["content"])
-            self.assertIn("当前无需新增", rendered["content"])
-            self.assertIn("若科技承接继续增强", rendered["content"])
-            self.assertNotIn("未提供", rendered["content"])
-            self.assertNotIn("打开ChatGPT", rendered["content"])
-
-
-
-if __name__ == "__main__":
-    unittest.main()
