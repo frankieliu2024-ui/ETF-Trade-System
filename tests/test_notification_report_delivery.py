@@ -174,7 +174,7 @@ class ReportDeliveryContractTests(unittest.TestCase):
 
     def test_canonical_trade_and_system_completion_preserve_frozen_content(self):
         for report_type, filename in (("ETF_TRADE_REVIEW", "2026-09-26.json"), ("ETF_SYSTEM_REVIEW", "system_20260926_1930.json")):
-            body = f"FROZEN FINAL_CONTENT {report_type}"
+            body = f"FROZEN FINAL_CONTENT {report_type}\n\n1. 第一项\n\n2. 第二项"
             event = {
                 "event_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW" if report_type == "ETF_SYSTEM_REVIEW" else "FORMAL_POST_CLOSE_REVIEW",
                 "request_id": f"request-{report_type}",
@@ -189,7 +189,7 @@ class ReportDeliveryContractTests(unittest.TestCase):
             with tempfile.TemporaryDirectory() as directory:
                 path = Path(directory) / filename
                 path.write_text(json.dumps(event, ensure_ascii=False), encoding="utf-8")
-                with patch.object(notification_center, "REVIEW_EVENT_DIR", Path(directory)):
+                with patch.object(notification_center, "REVIEW_EVENT_DIR", Path(directory)), patch.dict("os.environ", {"REVIEW_EVENT_PATH": str(path)}, clear=False):
                     first = notification_center.report_delivery_event()
                     second = notification_center.report_delivery_event()
             self.assertEqual(first["content"], body)
@@ -215,7 +215,7 @@ class ReportDeliveryContractTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "trade_wrong_route.json"
             path.write_text(json.dumps(event, ensure_ascii=False), encoding="utf-8")
-            with patch.object(notification_center, "REVIEW_EVENT_DIR", Path(directory)):
+            with patch.object(notification_center, "REVIEW_EVENT_DIR", Path(directory)), patch.dict("os.environ", {"REVIEW_EVENT_PATH": str(path)}, clear=False):
                 self.assertEqual(notification_center.canonical_scheduled_report_events(), [])
 
     def test_review_event_contract_requires_request_identity(self):
@@ -249,7 +249,7 @@ class ReportDeliveryContractTests(unittest.TestCase):
 
 
     def test_canonical_review_event_without_hash_is_still_deliverable(self):
-        body = "FROZEN FINAL_CONTENT without audit hash"
+        body = "FROZEN FINAL_CONTENT without audit hash\n\n1. 第一项\n\n2. 第二项"
         event = {
             "event_type": "FORMAL_POST_CLOSE_REVIEW",
             "request_id": "request-no-hash",
