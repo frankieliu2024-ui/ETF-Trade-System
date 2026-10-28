@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 63376)
-Total output lines: 4451
-
 from __future__ import annotations
 
 import argparse
@@ -497,8 +494,7 @@ def _snapshot_fact_times(snapshot: dict) -> list[datetime]:
         parsed = parse_time(value)
         if parsed is not None:
             values.append(parsed)
-    for row in snapshot.get("rows") or []:
-        if not isinstance(row, dict):
+    for row in snapshot.get("rows") or []:        if not isinstance(row, dict):
             continue
         for key in ("as_of_beijing", "provider_as_of_beijing", "provider_timestamp"):
             parsed = parse_time(row.get(key))
@@ -997,8 +993,7 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
             "POINT_IN_TIME_SNAPSHOT_TWO_CLOCK_VALIDATED",
             "EXTERNAL_MARKET_EVIDENCE_VALIDATED",
         }
-    ):
-        raise ValueError(f"manual formal decision requires legal PIT/source snapshot: {pit_status}")
+    ):        raise ValueError(f"manual formal decision requires legal PIT/source snapshot: {pit_status}")
     request_bound_query_time_pit = False
     if is_manual_completion and not external_evidence and not _manual_completion_snapshot_is_post_request(
         manual_parent_request, snapshot
@@ -1497,8 +1492,7 @@ def required_etf_opportunity_reviews(root: Path, account: dict, market_date: str
     """Return the request-node ETF opportunity set that formal completion must cover.
 
     Current query_context must never be projected backwards onto a historical
-    replay.  Coverage is enforced only when the decision market_date matches
-    the query-context market_date that enumerated the node.
+    replay.  Coverage is enforced only when the decision market_date matches    the query-context market_date that enumerated the node.
     """
     path = root / "data" / "state" / "query_context.json"
     if not path.exists():
@@ -1997,8 +1991,7 @@ def _account_change_events(prior: dict, current: dict, request: dict, trade: dic
             "source": str(current.get("source") or request.get("source") or "USER_CONFIRMED"),
             "read_only": True,
         })
-    batch_event_time = next(
-        (str(item.get("confirmed_at_beijing") or item.get("executed_at") or "") for item in trades
+    batch_event_time = next(        (str(item.get("confirmed_at_beijing") or item.get("executed_at") or "") for item in trades
          if item.get("confirmed_at_beijing") or item.get("executed_at")),
         str(current.get("updated_at") or ""),
     )
@@ -2497,8 +2490,7 @@ def canonical_ingress_contract_for_request(request: dict) -> dict:
         return {
             "required": False,
             "terminal_state": CANONICAL_INGRESS_NOT_APPLICABLE,
-            "reason": "formal_decision_completion_projection",
-        }
+            "reason": "formal_decision_completion_projection",        }
 
     if not any([is_broker_fact, is_review_fact, is_trade_fact, is_decision_fact]):
         return {
@@ -2997,8 +2989,7 @@ def main() -> int:
 
     # Explicit Business Decision Source dispatch. The ingress file itself is
     # the immutable durable Source artifact; projection only occurs after the
-    # Phase 1 gate and never calls decision logic or refreshes market facts.
-    source_dispatch = str(request.get("request_type") or "").strip().upper() == BUSINESS_DECISION_SOURCE
+    # Phase 1 gate and never calls decision logic or refreshes market facts.    source_dispatch = str(request.get("request_type") or "").strip().upper() == BUSINESS_DECISION_SOURCE
     source_fingerprint_value = ""
     source_reply_ready = False
     if source_dispatch:
@@ -3497,12 +3488,10 @@ def main() -> int:
             and str(request.get("occurrence_id") or "").strip()
         ):
             result["canonical_publication"] = f"events/reviews/formal_{request['occurrence_id']}.json"
-        else:
-            result["canonical_publication"] = f"events/reviews/{market_date}.json"
+        else:            result["canonical_publication"] = f"events/reviews/{market_date}.json"
     print(json.dumps(result, ensure_ascii=False))
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
