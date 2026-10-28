@@ -916,6 +916,48 @@ def decision_event() -> dict | None:
         "user_severity": "需要关注",
         "user_action": "等待或查看后续正式判断；通知本身不代表成交。",
     }
+
+
+def formal_decision_pending_event() -> dict | None:
+    """Create one actionable reminder when a pulse requires Formal Decision.
+
+    This is an INTERRUPT reminder only. It never creates a report, decision,
+    trade permission, or second market-fact request.
+    """
+    trigger = read_json(STATE / "decision_trigger.json", {})
+    status = str(trigger.get("status") or "")
+    if status not in {"TRIGGERED", "ALREADY_RECORDED"}:
+        return None
+    if not bool(trigger.get("requires_formal_reassessment")):
+        return None
+    trigger_type = str(trigger.get("trigger_type") or "")
+    if trigger_type == "E2E_RECOVERED":
+        return None
+    key = str(trigger.get("idempotency_key") or "").strip()
+    evidence = str(trigger.get("evidence_change") or "").strip()
+    evidence_time = str(trigger.get("evidence_time") or trigger.get("triggered_at") or "").strip()
+    if not key or not evidence or not evidence_time:
+        return None
+    return {
+        "key": f"decision-pending:{key}",
+        "source_event_id": f"decision-pending:{key}",
+        "type": "决策提醒",
+        "event_type": "FORMAL_DECISION_PENDING",
+        "title": "【决策提醒】建议运行【ETF正式决策】",
+        "content": evidence,
+        "source": "decision_trigger",
+        "user_severity": "需要关注",
+        "user_action": "建议立即运行【ETF正式决策】；如暂不运行，等待下一自动正式决策节点。",
+        "confirmation_context": {
+            "trigger_type": trigger_type,
+            "evidence_change": evidence,
+            "evidence_time_beijing": evidence_time,
+            "requires_formal_reassessment": True,
+            "idempotency_key": key,
+            "request_id": str(trigger.get("request_id") or ""),
+            "next_formal_decision_node": str(trigger.get("next_formal_decision_node") or ""),
+        },
+    }
 def _meaningful_unreconciled_account_changes(account: dict) -> list[dict]:
     """Return only account deltas that can represent a real user/account action.
 
@@ -1102,11 +1144,11 @@ def choose_event(mode: str) -> dict | None:
         return report_delivery_event()
     builders = (
         (report_delivery_event, execution_confirmation_event,
-         formal_decision_change_event, account_confirmation_event, system_event, decision_event)
+         formal_decision_change_event, account_confirmation_event, system_event, decision_event, formal_decision_pending_event)
         if (_report_handoff_path() is not None or _report_delivery_path() is not None)
         else
         (execution_confirmation_event, formal_decision_change_event,
-         account_confirmation_event, system_event, decision_event, report_delivery_event)
+        account_confirmation_event, system_event, decision_event, formal_decision_pending_event, report_delivery_event)
     )
     for builder in builders:
         event = builder()
@@ -1347,6 +1389,7 @@ CANONICAL_TEMPLATE_FAMILIES = {
     "PENDING_EXECUTION_CONFIRMATION": "成交确认",
     "ACCOUNT_FACT_CONFIRMATION": "账户确认",
     "E2E_RECOVERED": "判断恢复",
+    "FORMAL_DECISION_PENDING": "决策提醒",
     "SYSTEM_EVENT": "系统阻塞",
     "CHANNEL_TEST": "测试",
     "收盘账户": "收盘账户",
@@ -1385,6 +1428,8 @@ def _canonical_boundary(family: str) -> str:
         return "通知只转发已有正式判断；用户如需交易必须人工核对并下单，通知本身不代表成交。"
     if family in {"系统阻塞", "判断恢复"}:
         return "系统只报告当前恢复/阻塞边界，不修改MASTER、账户事实或交易权限。"
+    if family == "决策提醒":
+        return "提醒只表示需要运行正式判断，不代表正式决策已经完成，也不生成交易许可。"
     if family == "账户确认":
         return "仅核对账户事实，不把价格波动或通知发送当作成交。"
     if family == "收盘账户":
@@ -1425,6 +1470,16 @@ def render_canonical_notification(event: dict) -> dict | None:
     elif family == "判断恢复":
         title = "【判断恢复】此前暂缓的正式判断可以继续"
         body = f"### 发生了什么\n{event.get('content') or '此前暂缓的正式判断所需信息已经恢复。'}\n\n### 当前边界\n系统可以继续正式判断，但不生成新的交易指令。\n\n> {_canonical_boundary(family)}"
+    elif family == "决策提醒":
+        title = "【决策提醒】建议运行【ETF正式决策】"
+        ctx = event.get("confirmation_context") or {}
+        evidence_time = human_time(ctx.get("evidence_time_beijing")) if ctx.get("evidence_time_beijing") else "未单独记录"
+        body = (
+            f"### 发生了什么\n固定脉冲发现了需要重新进行正式判断的变化：{event.get('content') or '市场、风险或持仓状态发生了需要复核的变化。'}\n\n"
+            "### 你现在可以做什么\n建议立即运行【ETF正式决策】。如果暂不运行，系统将在下一自动正式决策节点重新读取最新合法事实并完成判断。\n\n"
+            "### 当前边界\n本提醒不是正式决策正文，不代表已经形成新的买入、卖出、Trial、Confirm或持仓动作结论。系统不会自动下单或调仓。\n\n"
+            f"> {_canonical_boundary(family)}\n\n### 触发事实时点（北京时间）\n{evidence_time}"
+        )
     elif family == "风险许可":
         previous_risk = str(ctx.get("previous_risk_permission") or "未记录")
         risk = str(ctx.get("risk_permission") or "未记录")
