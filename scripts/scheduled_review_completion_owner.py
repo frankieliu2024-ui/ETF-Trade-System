@@ -62,7 +62,20 @@ def dispatch_notification(completion_path: str) -> dict[str, object]:
     token, repository = _credentials()
     owner, repo = repository.split("/", 1)
     endpoint = f"https://api.github.com/repos/{owner}/{repo}/actions/workflows/decision-notification.yml/dispatches"
-    payload = json.dumps({"ref": "main", "inputs": {"scheduled_review_completion_path": completion_path}}).encode("utf-8")
+    raw = Path(completion_path)
+    if not raw.is_absolute():
+        raw = ROOT / raw
+    try:
+        envelope = json.loads(raw.read_text(encoding="utf-8"))
+    except Exception as exc:
+        raise RuntimeError("completion owner cannot read completion envelope: " + str(exc)) from exc
+    is_formal = (
+        str(envelope.get("task_id") or "").strip() == "ETF正式决策"
+        and str(envelope.get("request_type") or "").strip().upper() == "FORMAL_DECISION_COMPLETION"
+        and str(envelope.get("report_type") or "").strip().upper() == "ETF_FORMAL_DECISION"
+    )
+    input_name = "formal_completion_path" if is_formal else "scheduled_review_completion_path"
+    payload = json.dumps({"ref": "main", "inputs": {input_name: completion_path}}).encode("utf-8")
     headers = {"Accept": "application/vnd.github+json", "Authorization": f"Bearer {token}", "Content-Type": "application/json", "X-GitHub-Api-Version": "2022-11-28"}
     with urllib_request.urlopen(urllib_request.Request(endpoint, data=payload, method="POST", headers=headers), timeout=30) as response:
         if response.status != 204:
