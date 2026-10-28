@@ -234,6 +234,15 @@ def notification_evidence_error(event: dict | None) -> str:
     event_type = str(event.get("event_type") or event.get("type") or "")
     source = str(event.get("source") or "")
 
+    # The three scheduled ETF tasks are mandatory full-report notifications.
+    # Their delivery is triggered by an already validated, request-bound
+    # completion event; it must not be suppressed by market-change materiality
+    # rules merely because the decision contains no trade or status change.
+    if event_type == "REPORT_DELIVERY_REQUEST" and str(event.get("report_type") or "") in {
+        "ETF_FORMAL_DECISION", "ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW",
+    }:
+        return ""
+
     if event_type in {"MARKET_VALUE_ALERT", "MARKET_SHOCK_ALERT"}:
         return _market_value_error(event)
     if event_type == "APAC_SESSION_SUMMARY":
