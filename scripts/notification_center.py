@@ -124,7 +124,7 @@ def build_report_from_handoff(handoff: dict) -> dict:
         source_reference=f"scheduled-report-handoff:{task_run_id}",
         idempotency_key=f"{report_type}:{task_run_id}",
         generated_at=str(handoff["generated_at"]),
-        source_actor="Scheduled Review Actor",
+        source_actor="Scheduled Review Completion Owner",
     )
 
 
