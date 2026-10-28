@@ -25,11 +25,18 @@
 
 自动入口和用户手动入口均进入既有Trade Review链。Trade Review不得创建或冒充Formal Decision父请求、BDS或Formal Decision事件。
 
-Trade Review completion必须显式携带并回读本次真实入口身份：自动节点使用
-`entry_mode=AUTOMATIC_SCHEDULED_TASK`，任务界面手动启动使用
-`entry_mode=MANUAL_SCHEDULED_TASK`。两者均使用既有
-`source=CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR`和`interaction_scenario=SCHEDULED_TRADE_REVIEW`；
-缺失或冲突时必须在completion ingress fail-closed。
+Trade Review completion必须显式携带并回读本次真实入口身份。普通对话手动运行使用
+`source=CHATGPT_MANUAL_TRADE_REVIEW`、`entry_mode=MANUAL_CONVERSATION`；任务界面手动启动使用
+`entry_mode=MANUAL_SCHEDULED_TASK`；自动节点使用
+`entry_mode=AUTOMATIC_SCHEDULED_TASK`。三者均进入同一既有
+`SCHEDULED_REVIEW_COMPLETION` owner和通知链；入口字段只用于运行身份、审计和绑定，不得作为completion资格的额外硬门。
+缺失或冲突时仍必须在completion ingress fail-closed。
+
+### 2.2 入口与completion解耦
+
+入口识别与completion资格是两个独立层级。入口层只负责确认source、entry_mode、interaction_scenario、task_id、运行时间和本次运行身份；completion层只负责校验注册任务身份、唯一FINAL_CONTENT、事实边界、正文指纹、同一运行绑定及所属业务字段。只要entry_mode属于该任务注册的合法入口，不能因为是普通对话手动、任务界面手动或自动入口而拒绝共享completion。
+
+completion owner不得根据入口类型决定是否可写入；不得把“入口不明”与“入口已确认但不是任务界面入口”混为一谈。入口不明或字段冲突仍应fail-closed；入口已确认且属于注册入口时，必须继续执行completion写入和回读。
 
 ### ETF正式决策
 
