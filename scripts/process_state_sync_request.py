@@ -1075,8 +1075,8 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
             "new Formal Decision production source cannot use legacy events/decisions writer"
         )
     if (
-        str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION"
-        and str(request.get("source") or "").strip().upper() == "CHATGPT_SCHEDULED_REVIEW_COMPLETION_OWNER"
+        str(request.get("request_type") or "").strip().upper() == "FORMAL_DECISION_COMPLETION"
+        and str(request.get("source") or "").strip().upper() == "CHATGPT_SCHEDULED_REVIEW_ACTOR"
         and str(request.get("formal_fact_type") or "").strip().upper() in {
             "FORMAL_POST_CLOSE_REVIEW",
             "FORMAL_CURRENT_MAIN_DECISION",
@@ -3407,7 +3407,7 @@ def _validate_formal_completion_identity(request: dict) -> None:
     belong to this run: the title minute must match requested_at_beijing, the
     run identity must be complete, and the content hash must be real.
     """
-    if str(request.get("request_type") or "").strip().upper() != "SCHEDULED_REVIEW_COMPLETION":
+    if str(request.get("request_type") or "").strip().upper() != "FORMAL_DECISION_COMPLETION":
         return
     if str(request.get("task_id") or "").strip() != "ETF正式决策":
         return
@@ -3446,8 +3446,8 @@ def is_formal_decision_completion(request: dict) -> bool:
     """Recognize the shared Formal Decision completion contract independent of actor label."""
     binding = request.get("presentation_binding") if isinstance(request.get("presentation_binding"), dict) else {}
     return (
-        str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION"
-        and str(request.get("formal_fact_type") or "").strip().upper() in {"FORMAL_POST_CLOSE_REVIEW", "FORMAL_CURRENT_MAIN_DECISION"}
+        str(request.get("request_type") or "").strip().upper() == "FORMAL_DECISION_COMPLETION"
+        and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_CURRENT_MAIN_DECISION"
         and str(request.get("task_id") or "").strip() == "ETF正式决策"
         and str(request.get("report_type") or request.get("report_kind") or binding.get("report_type") or "").strip().upper() == "ETF_FORMAL_DECISION"
         and str(request.get("interaction_scenario") or "").strip().upper() == "FORMAL_DECISION"
@@ -4485,7 +4485,8 @@ def main() -> int:
         if not market_date:
             raise ValueError("SCHEDULED_REVIEW_COMPLETION requires market_date")
         if (
-            str(request.get("formal_fact_type") or "").strip().upper() in {"FORMAL_POST_CLOSE_REVIEW", "FORMAL_CURRENT_MAIN_DECISION"}
+            str(request.get("request_type") or "").strip().upper() == "FORMAL_DECISION_COMPLETION"
+            and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_CURRENT_MAIN_DECISION"
             and str((request.get("presentation_binding") or {}).get("task_id") or "").strip() == "ETF正式决策"
             and str(request.get("occurrence_id") or "").strip()
         ):
