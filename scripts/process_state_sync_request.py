@@ -3441,10 +3441,17 @@ def _validate_formal_completion_identity(request: dict) -> None:
         raise ValueError("Formal Decision completion content_hash mismatch")
 
 def is_formal_decision_completion(request: dict) -> bool:
-    """Recognize the shared Formal Decision completion contract independent of actor label."""
+    """Recognize the shared Formal Decision completion contract independent of actor label.
+
+    Live completions normally carry request_type=SCHEDULED_REVIEW_COMPLETION.
+    Older valid completions may omit that transport label while retaining the
+    full task/report/fact/presentation binding; those must remain replayable
+    without mutating the immutable completion object.
+    """
     binding = request.get("presentation_binding") if isinstance(request.get("presentation_binding"), dict) else {}
+    request_type = str(request.get("request_type") or "").strip().upper()
     return (
-        str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION"
+        request_type in {"", "SCHEDULED_REVIEW_COMPLETION"}
         and str(request.get("formal_fact_type") or "").strip().upper() in {"FORMAL_POST_CLOSE_REVIEW", "FORMAL_CURRENT_MAIN_DECISION"}
         and str(request.get("task_id") or "").strip() == "ETF正式决策"
         and str(request.get("report_type") or request.get("report_kind") or binding.get("report_type") or "").strip().upper() == "ETF_FORMAL_DECISION"
