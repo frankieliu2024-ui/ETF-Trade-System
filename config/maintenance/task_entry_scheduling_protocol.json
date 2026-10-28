@@ -46,7 +46,6 @@
           "entry_mode": "MANUAL_CONVERSATION"
         }
       },
-      "production_adapter": "scripts/run_scheduled_system_review_actor.py",
       "completion_builder": "build_system_review_completion_request",
       "completion_owner": "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER",
       "handoff_contract": {
@@ -66,17 +65,19 @@
         "bds_required": false,
         "owner": "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER",
         "entry_mode_is_identity_only": true,
-        "completion_owner_must_accept_registered_entry_modes": true
+        "completion_owner_must_accept_registered_entry_modes": true,
+        "completion_owner_is_primary": true
       },
       "handoff_execution": {
         "owner": "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER",
         "primary_mode": "DIRECT_GITHUB_CONTENTS_COMPLETION_WRITE_AND_READBACK",
-        "adapter_role": "PRODUCTION_SYSTEM_REVIEW_ACTOR",
         "notification_wake": "EXPLICIT_DISPATCH_WITH_EXACT_COMPLETION_PATH",
         "same_run_required": true,
         "completion_readback_must_continue_to_notification_dispatch": true,
         "report_identity": "ETF_SYSTEM_REVIEW",
-        "completion_push_required_in_same_run": true
+        "completion_push_required_in_same_run": true,
+        "completion_owner_is_primary": true,
+        "production_entry": "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER"
       }
     },
     {
@@ -122,18 +123,19 @@
         "bds_required": false,
         "owner": "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER",
         "entry_mode_is_identity_only": true,
-        "completion_owner_must_accept_registered_entry_modes": true
+        "completion_owner_must_accept_registered_entry_modes": true,
+        "completion_owner_is_primary": true
       },
-      "production_adapter": "scripts/run_scheduled_trade_review_actor.py",
       "handoff_execution": {
         "owner": "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER",
         "primary_mode": "DIRECT_GITHUB_CONTENTS_COMPLETION_WRITE_AND_READBACK",
-        "adapter_role": "OPTIONAL_COMPATIBILITY_ADAPTER_ONLY",
         "notification_wake": "CANONICAL_COMPLETION_PUSH_PRIMARY_EXPLICIT_DISPATCH_RECOVERY",
         "adapter_unavailable_must_not_block_completion": true,
         "same_run_required": true,
         "completion_push_required_in_same_run": true,
-        "explicit_dispatch_role": "SAME_RUN_RECOVERY_ONLY"
+        "explicit_dispatch_role": "SAME_RUN_RECOVERY_ONLY",
+        "completion_owner_is_primary": true,
+        "production_entry": "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER"
       }
     },
     {
@@ -149,7 +151,6 @@
       "sunday_rule": "按current main正式日历判定",
       "manual_allowed": true,
       "route": "FORMAL_DECISION",
-      "production_adapter": "scripts/run_scheduled_formal_decision_actor.py",
       "completion_builder": "build_formal_review_completion_request",
       "manual_entry_modes": [
         "MANUAL_CONVERSATION",
@@ -157,7 +158,6 @@
       ],
       "automatic_entry_mode": "AUTOMATIC_SCHEDULED_TASK",
       "canonical_task_id": "ETF正式决策",
-      "production_adapter_role": "OPTIONAL_COMPATIBILITY_ADAPTER_NOT_BUSINESS_CHAIN",
       "handoff_contract": {
         "source": "SCHEDULED_REVIEW_COMPLETION",
         "sequence": [
@@ -176,15 +176,12 @@
         ],
         "bds_required": false,
         "owner": "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER",
-        "actor_required": false,
         "completion_owner_is_primary": true
       },
       "completion_owner": "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER",
       "handoff_execution": {
         "owner": "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER",
         "primary_mode": "DIRECT_GITHUB_CONTENTS_COMPLETION_WRITE_AND_READBACK",
-        "adapter_role": "OPTIONAL_COMPATIBILITY_ADAPTER_ONLY",
-        "actor_required": false,
         "completion_owner_is_primary": true,
         "notification_wake": "CANONICAL_COMPLETION_PUSH_PRIMARY_EXPLICIT_DISPATCH_RECOVERY",
         "adapter_unavailable_must_not_block_completion": true,
@@ -213,7 +210,8 @@
         "completion_push_required_in_same_run": true,
         "explicit_dispatch_role": "SAME_RUN_RECOVERY_ONLY",
         "automatic_task_pause_forbidden": true,
-        "partial_fact_judgment_required": true
+        "partial_fact_judgment_required": true,
+        "production_entry": "SHARED_SCHEDULED_REVIEW_COMPLETION_OWNER"
       },
       "fact_consumption": {
         "source": "CURRENT_MAIN_LATEST_VALID_FIXED_PERIOD_FACTS",
