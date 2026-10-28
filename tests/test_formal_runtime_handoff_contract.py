@@ -29,7 +29,7 @@ def test_formal_runtime_completion_does_not_require_fact_request_binding():
     assert payload["presentation_binding"]["report_type"] == "ETF_FORMAL_DECISION"
 
 
-def test_shared_owner_is_the_completion_ingress():
-    text = Path("scripts/scheduled_review_completion_owner.py").read_text(encoding="utf-8")
-    assert "def persist_completion" in text
-    assert "def dispatch_notification" in text
+def test_direct_writer_is_the_formal_completion_ingress():
+    text = Path("scripts/scheduled_review_completion.py").read_text(encoding="utf-8")
+    assert "CHATGPT_DIRECT_GITHUB_CONTENTS_WRITER" in text
+    assert "FORMAL_CURRENT_MAIN_DECISION" in text
