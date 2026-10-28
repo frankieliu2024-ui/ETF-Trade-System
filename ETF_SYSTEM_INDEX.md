@@ -142,4 +142,4 @@ Formal Decision只使用统一Scheduled Review completion owner。completion沿�
 
 【ETF系统复核】与【ETF交易复盘】完成唯一FINAL_CONTENT和对应的 Scheduled Review completion 写入、回读后，必须在同一handoff中显式调用既有 `decision-notification.yml` 的 `workflow_dispatch`，并传入 `scheduled_review_completion_path=<当前唯一completion路径>`。不得依赖GitHub Contents push、`GITHUB_TOKEN`提交、market-snapshot或其他被动唤醒，因为这些方式不保证创建通知工作流运行。
 
-当前运行只有同时满足以下条件，才可声明后置交接完成：completion写入并回读；显式通知workflow运行已创建并回读；canonical review event、REPORT、notification状态和provider结果均与同一task_run_id、report_id、content_hash及FINAL_CONTENT一致。否则必须保留正文并记录最后完成层级及具体未完成层级，不得以“无更新”、定时任务平台completed或历史通知替代本次结果。
+当前运行只有同时满足以下条件，才可声明后置交接完成：completion写入并回读；显式通知workflow运行已创建并回读；canonical review event、REPORT、notification状态和provider结果均与同一task_run_id、report_id、content_hash及FINAL_CONTENT一致。否则只能声明后置交接未闭环，并记录最后完成层级及具体未完成层级；不得以“无更新”、定时任务平台completed或历史通知替代本次结果。后置交接未闭环不得阻断、撤回、改写或重新生成已经冻结并输出的FINAL_CONTENT，也不得无限等待或创建第二链。
