@@ -2615,8 +2615,8 @@ def record_formal_decision_report_event(request: dict, bds: dict | None = None) 
     binding = source.get("presentation_binding") if isinstance(source.get("presentation_binding"), dict) else {}
     identity = {
         "request_id": str(source.get("request_id") or request.get("request_id") or "").strip(),
-        "parent_request_id": str(source.get("parent_request_id") or request.get("parent_request_id") or ("" if direct_completion else source.get("request_id")) or "").strip(),
-        "decision_id": str(source.get("decision_id") or request.get("decision_id") or "").strip(),
+        "parent_request_id": str(source.get("parent_request_id") or request.get("parent_request_id") or (request.get("request_id") if direct_completion else source.get("request_id")) or "").strip(),
+        "decision_id": str(source.get("decision_id") or request.get("decision_id") or binding.get("decision_id") or binding.get("report_id") or request.get("request_id") or "").strip(),
         "binding_request_id": str(binding.get("request_id") or source.get("request_id") or request.get("request_id") or "").strip(),
         "binding_parent_request_id": str(binding.get("parent_request_id") or source.get("parent_request_id") or source.get("request_id") or "").strip(),
         "binding_decision_id": str(binding.get("decision_id") or source.get("decision_id") or request.get("decision_id") or "").strip(),
@@ -2630,9 +2630,9 @@ def record_formal_decision_report_event(request: dict, bds: dict | None = None) 
         or identity["binding_decision_id"] != identity["decision_id"]
     ):
         raise ValueError("Formal Decision canonical event presentation identity mismatch")
-    if str(request.get("parent_request_id") or "").strip() != identity["parent_request_id"]:
+    if not direct_completion and str(request.get("parent_request_id") or "").strip() != identity["parent_request_id"]:
         raise ValueError("Formal Decision canonical event completion parent mismatch")
-    full_content = str(source.get("presentation_content") or binding.get("full_content") or "")
+    full_content = str(source.get("presentation_content") or binding.get("full_content") or source.get("final_content") or "")
     task_run_id = str(source.get("task_run_id") or binding.get("task_run_id") or "").strip()
     if not full_content or not task_run_id:
         raise ValueError("Formal Decision canonical event requires frozen content and task_run_id")
