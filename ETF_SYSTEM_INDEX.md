@@ -26,6 +26,8 @@
 - **自动维护与运行保障横向协议**：`docs/ETF自动维护与运行保障协议_V1.0.md`。只负责自动运行场景的触发、唯一owner、幂等、回读、投影、失败分类和人工接管；不新增交易规则、数据规则、通知规则、Formal Decision业务规则、workflow、state或writer。机器镜像为`config/maintenance/automatic_maintenance_protocol.json`，不是第二套业务规则源。
 - **任务入口与调度治理横向协议**：`docs/ETF任务入口与调度治理协议_V1.0.md`。只负责三个ETF任务的身份、自动/手动入口、节点、SKIP、版本保护和业务链路由；不复制业务规则，不新增任务、workflow、state或业务链。机器镜像为`config/maintenance/task_entry_scheduling_protocol.json`。
 
+- **三类任务运行交接固化记录**：`docs/ETF三类任务运行交接固化规则.md`。只记录已验证的completion、canonical event、REPORT、notification、provider和用户收件分层，以及同一completion的一次有界force_resend恢复；不新增规则源、任务或业务对象。
+
 查询路由技术说明：`docs/市场行情查询路由与全球时点规则_V1.0.md`。它只解释ETF系统内部查询路由实现，不是第五个规范域；唯一无网络路由实现为`scripts/market_quote_router.py`，单对象查询入口为`scripts/query_market_object.py`，查询时即时补采由`scripts/query_time_market_refresh.py`执行。
 
 ## 2.1 三类任务当前冻结指针
