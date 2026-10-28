@@ -50,7 +50,7 @@ Formal Decision通知交接使用 source=CHATGPT_SCHEDULED_REVIEW_ACTOR。\n\nFo
 
 正式判断必须读取MASTER、数据与市场监测规范、账户与成交事实、风险与生命周期事实、Discovery、观察ETF、机会ETF、实际持仓和主动通知规范。事实足以判断时直接形成唯一FINAL_CONTENT；超时判断必须披露事实时点和限制，但不因此停止任务、正文交接或通知链。
 
-正文冻结并立即发布后，任务在同一运行内直接将唯一FORMAL_DECISION_COMPLETION写入main分支并回读核验；不使用SCHEDULED_REVIEW_COMPLETION兼容合同，不经过KV、HTTP ingress、consumer或独立completion owner。Formal Decision只进入独立formal事件投影和既有通知引擎，不创建第二套事件、报告或通知链。completion写入、completion回读、formal事件、REPORT、notification、服务商投递和用户收到必须分别核验，后置交接失败不得改写已形成的业务判断，也不得重新生成正文。
+正文冻结并立即发布后，任务在同一运行内直接将统一Scheduled Review completion写入main分支并回读核验；不经过KV、HTTP ingress、consumer或独立completion owner。Formal Decision沿既有统一completion、正式事件和通知链交接，不创建专属第二链路。completion写入、completion回读、正式事件、REPORT、notification、服务商投递和用户收到必须分别核验，后置交接失败不得改写已形成的业务判断，也不得重新生成正文。
 
 普通交易判断仍按MASTER和所属数据规范读取；用户上传的账户截图按既有账户事实入口处理，不改变Formal Decision的事实消费边界。
 
@@ -119,7 +119,7 @@ INDEX只负责回答“去哪里读”，不得重新定义以下内容：正式
 
 #### Formal Decision交接可执行性硬门
 
-Formal Decision使用独立FORMAL_DECISION_COMPLETION格式，由任务本身在同一运行内直接写入并回读main分支唯一completion文件；不允许降级为SCHEDULED_REVIEW_COMPLETION，不经过KV、HTTP ingress、consumer或独立completion owner。completion必须绑定本次运行身份、market_date、唯一FINAL_CONTENT、真实content_hash和presentation_binding。写入并回读后，必须沿formal_completion_path进入独立formal事件投影，再由既有通知workflow完成通知交接；各层级必须分别回读，不能把completion写入、事件形成、通知workflow提交、服务商投递或历史通知表述为用户已收到。
+Formal Decision沿三类任务统一的Scheduled Review completion格式，由任务本身在同一运行内直接写入并回读main分支唯一completion文件；不经过KV、HTTP ingress、consumer或独立completion owner。completion必须绑定本次运行身份、market_date、唯一FINAL_CONTENT、真实content_hash和presentation_binding。写入并回读后，沿既有统一通知workflow完成Formal事件、REPORT和通知交接；各层级必须分别回读，不能把completion写入、事件形成、通知workflow提交、服务商投递或历史通知表述为用户已收到。
 
 ## 6. 冻结、封存与回退登记
 
@@ -140,6 +140,6 @@ Formal Decision使用独立FORMAL_DECISION_COMPLETION格式，由任务本身在
 
 ## Scheduled Review显式交接硬门
 
-【ETF系统复核】与【ETF交易复盘】完成唯一FINAL_CONTENT和对应的Scheduled Review completion写入、回读后，必须在同一handoff中显式调用既有 `decision-notification.yml` 的 `workflow_dispatch`，并传入 `scheduled_review_completion_path=<当前唯一completion路径>`。Formal Decision完成独立FORMAL_DECISION_COMPLETION写入、回读后，必须传入 `formal_completion_path=<当前唯一completion路径>`。三类任务均不得依赖GitHub Contents push、`GITHUB_TOKEN`提交、market-snapshot或其他被动唤醒，因为这些方式不保证创建通知工作流运行。
+三类任务完成唯一FINAL_CONTENT和统一Scheduled Review completion写入、回读后，必须在同一handoff中显式调用既有 `decision-notification.yml` 的 `workflow_dispatch`，并传入 `scheduled_review_completion_path=<当前唯一completion路径>`。三类任务均不得依赖GitHub Contents push、`GITHUB_TOKEN`提交、market-snapshot或其他被动唤醒，因为这些方式不保证创建通知工作流运行。
 
 当前运行只有同时满足以下条件，才可声明后置交接完成：completion写入并回读；显式通知workflow运行已创建并回读；canonical review event、REPORT、notification状态和provider结果均与同一task_run_id、report_id、content_hash及FINAL_CONTENT一致。否则只能声明后置交接未闭环，并记录最后完成层级及具体未完成层级；不得以“无更新”、定时任务平台completed或历史通知替代本次结果。后置交接未闭环不得阻断、撤回、改写或重新生成已经冻结并输出的FINAL_CONTENT，也不得无限等待或创建第二链。
