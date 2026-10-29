@@ -318,13 +318,26 @@ def validate_formal_presentation_contract(envelope: dict[str, Any]) -> tuple[boo
     if not any(token in capital_section for token in ("机会成本", "资本效率", "风险收益比")):
         return False, "formal_presentation_missing_capital_efficiency_comparison"
 
-    import re
-    holding_items = list(re.finditer(r"(?m)^\s*[0-9]+[）)]\s+", holdings_section))
+    holding_items = []
+    current_item_lines = []
+    for line in holdings_section.splitlines():
+        stripped = line.strip()
+        is_position_item = (
+            len(stripped) > 2
+            and stripped[0].isdigit()
+            and stripped[1] in ("）", ")")
+        )
+        if is_position_item:
+            if current_item_lines:
+                holding_items.append("\n".join(current_item_lines))
+            current_item_lines = [stripped]
+        elif current_item_lines:
+            current_item_lines.append(line)
+    if current_item_lines:
+        holding_items.append("\n".join(current_item_lines))
     if not holding_items:
         return False, "formal_presentation_missing_individual_position_reviews"
-    for index, match in enumerate(holding_items):
-        end = holding_items[index + 1].start() if index + 1 < len(holding_items) else len(holdings_section)
-        item = holdings_section[match.start():end]
+    for item in holding_items:
         if "相较" not in item or not any(token in item for token in ("释放", "可释放资本")):
             return False, "formal_presentation_position_missing_hold_vs_release_comparison"
         if not any(token in item for token in ("若", "如果", "当")):
