@@ -53,3 +53,88 @@ def test_system_review_builder_derives_missing_request_identity():
     assert payload["request_id"].startswith("manual-system-review-")
     assert payload["task_run_id"]
     assert payload["occurrence_id"] == payload["task_run_id"]
+
+
+
+def test_system_review_identity_gate_rejects_wrong_entry_and_binding():
+    from scripts import process_state_sync_request as state_sync
+
+    try:
+        state_sync._validate_scheduled_system_review_identity({
+            "request_type": "SCHEDULED_REVIEW_COMPLETION",
+            "task_id": "ETF系统复核",
+            "entry_mode": "UNKNOWN_ENTRY",
+            "interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
+        })
+    except ValueError as exc:
+        assert "entry_mode" in str(exc)
+    else:
+        raise AssertionError("invalid entry_mode was accepted")
+
+    try:
+        state_sync._validate_scheduled_system_review_identity({
+            "request_type": "SCHEDULED_REVIEW_COMPLETION",
+            "task_id": "ETF系统复核",
+            "entry_mode": "AUTOMATIC_SCHEDULED_TASK",
+            "interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
+            "presentation_binding": {
+                "task_id": "ETF系统复核",
+                "entry_mode": "MANUAL_CONVERSATION",
+            },
+        })
+    except ValueError as exc:
+        assert "presentation entry_mode" in str(exc)
+    else:
+        raise AssertionError("conflicting presentation entry_mode was accepted")
+
+
+
+def test_system_review_identity_gate_rejects_invalid_binding_and_origin():
+    from scripts import process_state_sync_request as state_sync
+
+    cases = [
+        (
+            {"presentation_binding": []},
+            "presentation_binding",
+        ),
+        (
+            {
+                "system_review": {
+                    "source": "CHATGPT_SCHEDULED_SYSTEM_REVIEW",
+                    "entry_mode": "MANUAL_CONVERSATION",
+                }
+            },
+            "origin source/entry_mode",
+        ),
+    ]
+    for extra, message in cases:
+        request = {
+            "request_type": "SCHEDULED_REVIEW_COMPLETION",
+            "task_id": "ETF系统复核",
+            "entry_mode": "AUTOMATIC_SCHEDULED_TASK",
+            "interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
+            **extra,
+        }
+        try:
+            state_sync._validate_scheduled_system_review_identity(request)
+        except ValueError as exc:
+            assert message in str(exc)
+        else:
+            raise AssertionError(f"invalid identity was accepted: {message}")
+
+
+def test_system_review_identity_gate_requires_origin_identity():
+    from scripts import process_state_sync_request as state_sync
+    request = {
+        "request_type": "SCHEDULED_REVIEW_COMPLETION",
+        "task_id": "ETF系统复核",
+        "entry_mode": "AUTOMATIC_SCHEDULED_TASK",
+        "interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
+        "system_review": {"market_date": "2026-10-29"},
+    }
+    try:
+        state_sync._validate_scheduled_system_review_identity(request)
+    except ValueError as exc:
+        assert "origin identity is required" in str(exc)
+    else:
+        raise AssertionError("missing System Review origin identity was accepted")

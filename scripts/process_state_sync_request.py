@@ -2501,7 +2501,48 @@ def _extract_scheduled_review_final_content(request: dict) -> str:
 
 
 
+def _validate_scheduled_system_review_identity(request: dict) -> None:
+    """Fail closed when a System Review completion is misclassified or cross-bound."""
+    if str(request.get("request_type") or "").strip() != "SCHEDULED_REVIEW_COMPLETION":
+        raise ValueError("scheduled system review completion request_type mismatch")
+    if str(request.get("task_id") or "").strip() != "ETF系统复核":
+        raise ValueError("scheduled system review completion task_id mismatch")
+    entry_mode = str(request.get("entry_mode") or "").strip().upper()
+    if entry_mode not in {"MANUAL_CONVERSATION", "MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"}:
+        raise ValueError("scheduled system review completion entry_mode is not registered")
+    if str(request.get("interaction_scenario") or "").strip().upper() != "SCHEDULED_SYSTEM_REVIEW":
+        raise ValueError("scheduled system review completion interaction_scenario mismatch")
+    if "presentation_binding" in request and not isinstance(request.get("presentation_binding"), dict):
+        raise ValueError("scheduled system review presentation_binding must be an object")
+    binding = request.get("presentation_binding")
+    if isinstance(binding, dict):
+        binding_task = str(binding.get("task_id") or "").strip()
+        binding_mode = str(binding.get("entry_mode") or "").strip().upper()
+        if binding_task and binding_task != "ETF系统复核":
+            raise ValueError("scheduled system review presentation task_id mismatch")
+        if binding_mode and binding_mode != entry_mode:
+            raise ValueError("scheduled system review presentation entry_mode mismatch")
+    review = request.get("system_review")
+    if not isinstance(review, dict):
+        raise ValueError("scheduled system review origin identity is required")
+    origin_source = str(review.get("source") or "").strip()
+    origin_mode = str(review.get("entry_mode") or "").strip().upper()
+    origin_mapping = {
+        "CHATGPT_SCHEDULED_SYSTEM_REVIEW": "AUTOMATIC_SCHEDULED_TASK",
+        "CHATGPT_SCHEDULED_SYSTEM_REVIEW_ACTOR": "AUTOMATIC_SCHEDULED_TASK",
+        "CHATGPT_MANUAL_SCHEDULED_SYSTEM_REVIEW": "MANUAL_SCHEDULED_TASK",
+        "CHATGPT_MANUAL_SYSTEM_REVIEW": "MANUAL_CONVERSATION",
+    }
+    if not origin_source or not origin_mode:
+        raise ValueError("scheduled system review origin identity is required")
+    if origin_source not in origin_mapping or origin_mapping[origin_source] != origin_mode:
+        raise ValueError("scheduled system review origin source/entry_mode mismatch")
+    if origin_mode != entry_mode:
+        raise ValueError("scheduled system review origin entry_mode does not match completion entry_mode")
+
+
 def record_scheduled_system_review(request: dict) -> tuple[bool, bool]:
+    _validate_scheduled_system_review_identity(request)
     if str(request.get("formal_fact_type") or "") != "FORMAL_SCHEDULED_SYSTEM_REVIEW":
         return False, False
     raw_binding = request.get("presentation_binding")
