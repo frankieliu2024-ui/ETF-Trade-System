@@ -249,5 +249,37 @@ class FormalFinalContentNotificationTests(unittest.TestCase):
         self.assertEqual(center.find_existing_notification([existing], current), existing)
 
 
+
+class FormalPresentationSemanticGapCharacterizationTests(unittest.TestCase):
+    def test_weak_zero_deployment_rationale_without_structured_answers_is_accepted(self):
+        import scripts.notification_center as center
+
+        envelope = {
+            "presentation_content": (
+                "【ETF正式决策】2026-10-29 11:04 正式判断\\n"
+                "新增部署0元，因为风险较高。四只ETF继续持有。释放0份。"
+            ),
+            "decision_response": {},
+        }
+
+        accepted, reason = center.validate_formal_presentation_contract(envelope)
+
+        # Characterizes current fail-open behavior. This validator should not
+        # be treated as proof of capital-competition or per-position review.
+        self.assertTrue(accepted, reason)
+        self.assertEqual(reason, "")
+
+    def test_missing_presentation_content_without_structured_answers_is_accepted(self):
+        import scripts.notification_center as center
+
+        accepted, reason = center.validate_formal_presentation_contract(
+            {"decision_response": {}}
+        )
+
+        # Current code returns before checking content when answers are absent.
+        self.assertTrue(accepted, reason)
+        self.assertEqual(reason, "")
+
+
 if __name__ == "__main__":
     unittest.main()
