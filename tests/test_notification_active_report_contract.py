@@ -280,7 +280,7 @@ class FormalPresentationSemanticGateTests(unittest.TestCase):
             "【全市场发现逐只评估】": "1. 发现候选评估\n\n1）候选甲（159001）：仅为发现输入，尚未自动成为观察ETF或机会ETF。",
             "【观察ETF逐只评估】": "1. 观察对象评估\n\n1）观察甲（159002）：保留观察身份，仍需核验趋势、承接和独立假设。",
             "【机会ETF逐只评估】": "1. 机会对象评估\n\n1）当前机会状态尚待完整比较，不把未形成写成零只。",
-            "【全市场机会与资本竞争】": capital_text or "现金、候选机会、持仓之间必须进行全资本竞争。相较将现金保留，只有在候选机会的风险收益比、独立假设和资本效率更优时才部署；比较机会成本、现金缓冲与旧仓释放后可部署资本，不能只因风险较高就机械归零。",
+            "【全市场机会与资本竞争】": capital_text or "现金、候选机会、持仓之间必须进行全资本竞争。相较将现金保留，继续持有既有持仓、追加、减持释放或退出并部署机会ETF均需比较。因为目前没有证据表明候选机会的风险收益比、独立假设和资本效率优于现金保留与旧仓继续持有，所以不追加、不减持释放；比较机会成本、现金缓冲与旧仓释放后可部署资本，不能只因风险较高就机械归零。",
             "【现金管理】": "可部署现金和结算约束必须核验。实际新增部署为0元、实际释放为0份时，必须说明这是完整比较后的结论，而不是默认值。",
             "【全部实际持仓】": (
                 "1. 持仓逐只比较\n\n"
@@ -377,6 +377,30 @@ class FormalPresentationSemanticGateTests(unittest.TestCase):
 
         self.assertTrue(accepted, reason)
         self.assertEqual(reason, "")
+
+    def test_keyword_complete_capital_without_alternatives_is_rejected(self):
+        import scripts.notification_center as center
+        content = self._content(capital_text=(
+            "现金与持仓相较机会，资本效率和机会成本均已考虑。"
+            "因为风险许可有限，现金保留、持仓继续持有，建议新增部署0元。"
+        ))
+        accepted, reason = center.validate_formal_presentation_contract({
+            "presentation_content": content, "decision_response": {},
+        })
+        self.assertFalse(accepted)
+        self.assertEqual(reason, "formal_presentation_missing_capital_alternatives")
+
+    def test_capital_alternatives_without_rationale_are_rejected(self):
+        import scripts.notification_center as center
+        content = self._content(capital_text=(
+            "现金保留、持仓持有、追加、减持释放、退出、机会ETF均相较。"
+            "资本效率与机会成本。"
+        ))
+        accepted, reason = center.validate_formal_presentation_contract({
+            "presentation_content": content, "decision_response": {},
+        })
+        self.assertFalse(accepted)
+        self.assertEqual(reason, "formal_presentation_missing_capital_choice_rationale")
 
     def test_position_without_hold_vs_release_comparison_is_rejected(self):
         import scripts.notification_center as center
