@@ -20,6 +20,20 @@ class E2ERiskGateTests(unittest.TestCase):
         self.assertEqual(result["etf_strategy_risk_pct"], -1.0)
         self.assertEqual(result["source"], "data/state/etf_strategy_equity.json")
 
+    def test_current_date_stale_reconstruction_is_degraded_not_ready(self):
+        result = risk_component(
+            {
+                "as_of_transaction_date": "2026-10-28",
+                "summary": {"current_strategy_return_pct_gross": -12.6499},
+                "generated_at": "2026-10-28T18:00:00+08:00",
+            },
+            {"market_date": "2026-10-29", "last_confirmed_market_date": "2026-10-29"},
+            {},
+        )
+        self.assertEqual(result["status"], "DEGRADED")
+        self.assertIsNone(result["etf_strategy_risk_pct"])
+        self.assertFalse(result["reconstruction_fresh_for_market_date"])
+
 
 if __name__ == "__main__":
     unittest.main()
