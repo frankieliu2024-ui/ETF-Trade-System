@@ -179,19 +179,13 @@ class FormalParentSelfHealingTests(unittest.TestCase):
         self.assertIn("mutually exclusive", workflow)
         self.assertIn("process_state_sync_request.py", workflow)
 
-    def test_workflow_reuses_single_canonical_replay_input(self):
+    def test_watchdog_does_not_replay_legacy_formal_parent(self):
         workflow = Path(".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
-        self.assertIn("formal_replay_request", workflow)
-        self.assertIn("market-snapshot.yml", workflow)
-        self.assertIn("-f node=scheduled", workflow)
-        self.assertNotIn("-f node=query", workflow)
-        self.assertIn("formal_context_recovery_request=", workflow)
-        self.assertNotIn("formal-decision-recovery.yml", workflow)
+        self.assertNotIn("REPLAY_FORMAL_REQUEST", workflow)
+        self.assertNotIn("formal_context_recovery_request=", workflow)
         source = Path("scripts/runtime_self_heal.py").read_text(encoding="utf-8")
-        self.assertIn('"REPLAY_FORMAL_REQUEST"', source)
-        self.assertIn("latest_unfinished_formal_parent", source)
-        self.assertIn('"FORMAL_PARENT_RECOVERY_REQUIRED", "REPLAY_FORMAL_REQUEST"', source)
-        self.assertNotIn("automatic replay is prohibited", source)
+        self.assertIn("formal_replay_path, formal_replay_parent_id = None, None", source)
+        self.assertNotIn('classification, action, reason = "FORMAL_PARENT_RECOVERY_REQUIRED"', source)
 
 
 if __name__ == "__main__":
