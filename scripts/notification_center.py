@@ -258,14 +258,12 @@ def validate_formal_presentation_contract(envelope: dict[str, Any]) -> tuple[boo
     """
     content = envelope.get("presentation_content")
     answers = (envelope.get("decision_response") or {}).get("answers")
-    if not isinstance(answers, dict):
-        return True, ""
+    # Validate the frozen user-visible content regardless of whether a
+    # structured decision_response is available. Formal Decision is allowed
+    # to consume current-main facts directly, so absence of answers must not
+    # bypass the content contract.
     if not isinstance(content, str) or not content.strip():
         return False, "formal_presentation_missing_content"
-    # Formal Decision's user-visible contract is defined by the current
-    # task prompt. Keep this validator aligned with that contract; the former
-    # generic headings (业务结论/资本用途/后续安排) rejected valid formal
-    # decisions before REPORT delivery and caused a false no-notification path.
     required_headings = (
         "【判断时点与事实边界】", "【当前正式判断】", "【风险与市场状态】",
         "【三层监测】", "【全市场发现逐只评估】", "【观察ETF逐只评估】",
@@ -287,14 +285,16 @@ def validate_formal_presentation_contract(envelope: dict[str, Any]) -> tuple[boo
         return False, numbering_error
     if "**" in content or any(term in content for term in ("canonical", "writer", "BDS", "reply_freezable", "control plane")):
         return False, "formal_presentation_internal_term_or_markdown"
+
     missing_objects = []
-    for problem_id in answers:
-        key = str(problem_id)
-        if ":" not in key:
-            continue
-        code = key.split(":", 1)[1].strip()
-        if code and code not in content:
-            missing_objects.append(key)
+    if isinstance(answers, dict):
+        for problem_id in answers:
+            key = str(problem_id)
+            if ":" not in key:
+                continue
+            code = key.split(":", 1)[1].strip()
+            if code and code not in content:
+                missing_objects.append(key)
     if missing_objects:
         return False, "formal_presentation_missing_objects:" + ",".join(missing_objects)
     if "持有管理" not in content or "不追加" not in content:
@@ -303,9 +303,67 @@ def validate_formal_presentation_contract(envelope: dict[str, Any]) -> tuple[boo
         return False, "formal_presentation_missing_capital_boundary"
     if "Trial" not in content or "Confirm" not in content:
         return False, "formal_presentation_missing_trial_confirm_boundary"
+
+    # Semantic coverage: a generic risk statement is not sufficient to pass
+    # the zero-deployment / zero-release decision. Require explicit risk-
+    # permission reasoning, a whole-capital comparison, and per-position
+    # hold-versus-release evidence with a condition that would change the call.
+    risk_section = _formal_section(content, "【风险与市场状态】")
+    capital_section = _formal_section(content, "【全市场机会与资本竞争】")
+    holdings_section = _formal_section(content, "【全部实际持仓】")
+    if not risk_section or "风险许可" not in risk_section:
+        return False, "formal_presentation_missing_risk_permission_reasoning"
+    if not capital_section or not all(token in capital_section for token in ("现金", "机会", "持仓", "相较")):
+        return False, "formal_presentation_missing_whole_capital_comparison"
+    if not any(token in capital_section for token in ("机会成本", "资本效率", "风险收益比")):
+        return False, "formal_presentation_missing_capital_efficiency_comparison"
+
+    holding_items = []
+    current_item_lines = []
+    for line in holdings_section.splitlines():
+        stripped = line.strip()
+        is_position_item = (
+            len(stripped) > 2
+            and stripped[0].isdigit()
+            and stripped[1] in ("）", ")")
+        )
+        if is_position_item:
+            if current_item_lines:
+                holding_items.append("\n".join(current_item_lines))
+            current_item_lines = [stripped]
+        elif current_item_lines:
+            current_item_lines.append(line)
+    if current_item_lines:
+        holding_items.append("\n".join(current_item_lines))
+    if not holding_items:
+        return False, "formal_presentation_missing_individual_position_reviews"
+    for item in holding_items:
+        if "相较" not in item or not any(token in item for token in ("释放", "可释放资本")):
+            return False, "formal_presentation_position_missing_hold_vs_release_comparison"
+        if not any(token in item for token in ("若", "如果", "当")):
+            return False, "formal_presentation_position_missing_change_condition"
     if not any(token in content for token in ("1）", "2）", "3）")):
         return False, "formal_presentation_missing_secondary_numbering"
     return True, ""
+
+
+def _formal_section(content: str, heading: str) -> str:
+    """Return one standalone heading section from a frozen Formal Decision."""
+    lines = str(content or "").splitlines()
+    start = None
+    for index, line in enumerate(lines):
+        if line.strip() == heading:
+            start = index + 1
+            break
+    if start is None:
+        return ""
+    end = len(lines)
+    for index in range(start, len(lines)):
+        stripped = lines[index].strip()
+        if stripped.startswith("【") and stripped.endswith("】"):
+            end = index
+            break
+    return "\n".join(lines[start:end])
 
 def formal_presentation_event() -> dict | None:
     """Formal Decision delivery is allowed only from an exact canonical review event."""
@@ -1319,6 +1377,12 @@ def formal_content_event(source_path: Path) -> dict | None:
             return None
         if str(binding.get("decision_id") or "") != decision_id or str(binding.get("full_content") or "") != content:
             return None
+        accepted, _reason = validate_formal_presentation_contract({
+            "presentation_content": content,
+            "decision_response": event.get("decision_response") or {},
+        })
+        if not accepted:
+            return None
         expected_request = str(os.environ.get("EXPECTED_FORMAL_REQUEST_ID") or "").strip()
         if expected_request and expected_request not in {request_id, parent_request_id}:
             return None
@@ -1362,6 +1426,12 @@ def formal_content_event(source_path: Path) -> dict | None:
     if not content or not request_id or not parent_request_id or not task_run_id or not occurrence_id or not content_hash or not decision_id or not report_id:
         return None
     if not isinstance(content, str) or not content:
+        return None
+    accepted, _reason = validate_formal_presentation_contract({
+        "presentation_content": content,
+        "decision_response": event.get("decision_response") or {},
+    })
+    if not accepted:
         return None
     expected_request = str(os.environ.get("EXPECTED_FORMAL_REQUEST_ID") or "").strip()
     if expected_request and expected_request != request_id:

@@ -249,5 +249,155 @@ class FormalFinalContentNotificationTests(unittest.TestCase):
         self.assertEqual(center.find_existing_notification([existing], current), existing)
 
 
+
+
+class FormalPresentationSemanticGateTests(unittest.TestCase):
+    def _content(self, capital_text=None, holding_comparison=True):
+        headings = [
+            "【判断时点与事实边界】",
+            "【当前正式判断】",
+            "【风险与市场状态】",
+            "【三层监测】",
+            "【全市场发现逐只评估】",
+            "【观察ETF逐只评估】",
+            "【机会ETF逐只评估】",
+            "【全市场机会与资本竞争】",
+            "【现金管理】",
+            "【全部实际持仓】",
+            "【最终管理动作】",
+            "【关键风险与改变判断的条件】",
+            "【信息不足在哪里】",
+            "【执行边界】",
+            "【置信度】",
+            "【最可能出错的地方】",
+            "【后置交接状态】",
+        ]
+        sections = {
+            "【判断时点与事实边界】": "本次判断使用本节点合法固定时段事实，区分行情实际时间、采集时间和账户事实时间。信息只截至本次运行开始前，不将后续事实倒灌。",
+            "【当前正式判断】": "本次先完成风险许可，再比较机会、金额、现金、现有持仓和可释放资本。当前建议不自动构成交易执行，Trial与Confirm均需满足完整准入条件。",
+            "【风险与市场状态】": "风险许可必须结合市场状态、账户风险和有效证据判断；本例风险许可尚允许继续评估机会，但不以风险提示代替金额判断。",
+            "【三层监测】": "海外与跨市场、A股内部反馈、ETF与资本状态分别核验，数据缺失降低证据强度但不自动等于没有机会。",
+            "【全市场发现逐只评估】": "1. 发现候选评估\n\n1）候选甲（159001）：仅为发现输入，尚未自动成为观察ETF或机会ETF。",
+            "【观察ETF逐只评估】": "1. 观察对象评估\n\n1）观察甲（159002）：保留观察身份，仍需核验趋势、承接和独立假设。",
+            "【机会ETF逐只评估】": "1. 机会对象评估\n\n1）当前机会状态尚待完整比较，不把未形成写成零只。",
+            "【全市场机会与资本竞争】": capital_text or "现金、候选机会、持仓之间必须进行全资本竞争。相较将现金保留，只有在候选机会的风险收益比、独立假设和资本效率更优时才部署；比较机会成本、现金缓冲与旧仓释放后可部署资本，不能只因风险较高就机械归零。",
+            "【现金管理】": "可部署现金和结算约束必须核验。实际新增部署为0元、实际释放为0份时，必须说明这是完整比较后的结论，而不是默认值。",
+            "【全部实际持仓】": (
+                "1. 持仓逐只比较\n\n"
+                "1）纳指ETF（159941）：持有管理，不追加。"
+                + ("相较继续持有与释放资本，当前没有足够证据证明释放后部署到其他机会更优；可释放资本暂不确认。若海外科技持续弱于市场或回撤扩大，再评估。" if holding_comparison else "当前继续持有，因为风险较高。")
+                + "\n\n2）能源化工ETF（159981）：持有管理，不追加。相较继续持有与释放资本，当前没有更优机会证据；可释放资本暂不确认。若趋势和相对强度恶化，再评估。"
+                + "\n\n3）创新药ETF（159992）：持有管理，不追加。相较继续持有与释放资本，尚无完整反转证据；可释放资本暂不确认。若持续弱于市场或更优机会形成，再评估。"
+                + "\n\n4）全指器械ETF（159056）：持有管理，不追加。相较继续持有与释放资本，尚无明确破坏事实；可释放资本暂不确认。若行业持续弱于市场，再评估。"
+            ),
+            "【最终管理动作】": "建议新增部署0元，实际新增部署0元，实际释放0份。继续管理持仓；Trial与Confirm按正式规则分别判断，不自动下单。",
+            "【关键风险与改变判断的条件】": "下一节点验证风险许可、市场宽度、候选持续性、持仓相对强弱、现金竞争和账户新成交。",
+            "【信息不足在哪里】": "部分资金流和盘口承接证据可能缺失；不得把信息不足伪装成已完成比较。",
+            "【执行边界】": "所有内容仅为管理建议。用户是唯一交易负责人，系统不自动提交订单或改变交易权限。",
+            "【置信度】": "整体置信度中等；结论受数据新鲜度、候选完整性和账户事实边界影响。",
+            "【最可能出错的地方】": "可能低估候选机会或误判持仓相对优势；需用下一合法节点事实更新。",
+            "【后置交接状态】": "正文形成、完成记录、事件、报告、通知投递和用户收到必须分别确认，不相互替代。",
+        }
+        return "【ETF正式决策】2026-10-29 11:04 正式判断\n\n" + "\n\n".join(
+            heading + "\n\n" + sections[heading] for heading in headings
+        )
+
+    def test_missing_content_without_structured_answers_is_rejected(self):
+        import scripts.notification_center as center
+
+        accepted, reason = center.validate_formal_presentation_contract(
+            {"decision_response": {}}
+        )
+
+        self.assertFalse(accepted)
+        self.assertEqual(reason, "formal_presentation_missing_content")
+
+    def test_weak_zero_deployment_rationale_is_rejected_without_structured_answers(self):
+        import scripts.notification_center as center
+
+        weak = self._content(
+            capital_text="风险较高，所以新增部署0元。现金保留，持仓继续持有。"
+        )
+        accepted, reason = center.validate_formal_presentation_contract({
+            "presentation_content": weak,
+            "decision_response": {},
+        })
+
+        self.assertFalse(accepted)
+        self.assertIn(reason, {
+            "formal_presentation_missing_whole_capital_comparison",
+            "formal_presentation_missing_capital_efficiency_comparison",
+        })
+
+    def test_complete_capital_and_position_comparisons_are_accepted(self):
+        import scripts.notification_center as center
+
+        content = self._content()
+        accepted, reason = center.validate_formal_presentation_contract({
+            "presentation_content": content,
+            "decision_response": {},
+        })
+
+        self.assertTrue(accepted, reason)
+        self.assertEqual(reason, "")
+
+    def test_position_without_hold_vs_release_comparison_is_rejected(self):
+        import scripts.notification_center as center
+
+        content = self._content(holding_comparison=False)
+        accepted, reason = center.validate_formal_presentation_contract({
+            "presentation_content": content,
+            "decision_response": {},
+        })
+
+        self.assertFalse(accepted)
+        self.assertEqual(reason, "formal_presentation_position_missing_hold_vs_release_comparison")
+
+    def _formal_content_event_for(self, content):
+        import json
+        import tempfile
+
+        digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
+        event = {
+            "request_type": "BUSINESS_DECISION_SOURCE",
+            "request_id": "formal-request-current",
+            "parent_request_id": "formal-request-current",
+            "decision_id": "formal-decision-current",
+            "presentation_content": content,
+            "content_hash": digest,
+            "presentation_binding": {
+                "request_id": "formal-request-current",
+                "parent_request_id": "formal-request-current",
+                "decision_id": "formal-decision-current",
+                "report_id": "formal-report-current",
+                "full_content": content,
+            },
+            "decision_response": {},
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "current-bds.json"
+            path.write_text(json.dumps(event, ensure_ascii=False), encoding="utf-8")
+            return center.formal_content_event(path)
+
+    def test_delivery_entry_rejects_weak_zero_deployment_rationale(self):
+        weak = self._content(
+            capital_text="风险较高，所以新增部署0元。现金保留，持仓继续持有。"
+        )
+
+        self.assertIsNone(self._formal_content_event_for(weak))
+
+    def test_delivery_entry_accepts_complete_semantic_presentation(self):
+        event = self._formal_content_event_for(self._content())
+
+        self.assertIsNotNone(event)
+        self.assertEqual(event["content"], self._content())
+        self.assertEqual(event["request_id"], "formal-request-current")
+
+    def test_delivery_entry_rejects_holding_without_release_comparison(self):
+        weak = self._content(holding_comparison=False)
+
+        self.assertIsNone(self._formal_content_event_for(weak))
+
+
 if __name__ == "__main__":
     unittest.main()
