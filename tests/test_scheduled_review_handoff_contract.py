@@ -56,15 +56,23 @@ def test_system_review_builder_derives_missing_request_identity():
 \n\ndef test_system_review_identity_gate_rejects_wrong_entry_and_binding():
     from scripts import process_state_sync_request as state_sync
 
-    with __import__("pytest").raises(ValueError, match="entry_mode"):
+    try:
         state_sync._validate_scheduled_system_review_identity({
             "request_type": "SCHEDULED_REVIEW_COMPLETION",
             "task_id": "ETF系统复核",
             "entry_mode": "UNKNOWN_ENTRY",
             "interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
         })
+    except ValueError as exc:
+        assert "presentation entry_mode" in str(exc)
+    else:
+        raise AssertionError("conflicting presentation entry_mode was accepted")
+    except ValueError as exc:
+        assert "entry_mode" in str(exc)
+    else:
+        raise AssertionError("invalid entry_mode was accepted")
 
-    with __import__("pytest").raises(ValueError, match="presentation entry_mode"):
+    try:
         state_sync._validate_scheduled_system_review_identity({
             "request_type": "SCHEDULED_REVIEW_COMPLETION",
             "task_id": "ETF系统复核",
