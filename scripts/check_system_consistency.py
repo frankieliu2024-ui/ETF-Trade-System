@@ -256,7 +256,11 @@ def _validate_formal_risk_precedence(report: dict) -> None:
     except ModuleNotFoundError:
         from scripts.build_e2e_status import risk_component
     risk_evidence = _read_json("data/state/skfolio_risk_evidence.json")
-    e2e_risk = risk_component(equity, current, risk_evidence).get("etf_strategy_risk_pct")
+    # Evaluate the E2E risk component from the same current canonical inputs
+    # used by the producer.  The persisted e2e_status.json may describe an
+    # earlier market date and must not be used to classify this run.
+    e2e_component = risk_component(equity, current, risk_evidence)
+    e2e_risk = e2e_component.get("etf_strategy_risk_pct")
     dashboard_risk = float(match.group(1)) if match else None
     mismatches = []
     if dashboard_risk is None or abs(dashboard_risk - formal_risk) > 0.03:
@@ -265,11 +269,6 @@ def _validate_formal_risk_precedence(report: dict) -> None:
     # current-date risk reconstruction is unavailable.  It must not be
     # promoted to a hard consistency failure, while a READY component with
     # no value remains a contract violation.
-    e2e_component = {}
-    try:
-        e2e_component = _read_json("data/state/e2e_status.json").get("components", {}).get("risk") or {}
-    except (OSError, json.JSONDecodeError):
-        e2e_component = {}
     e2e_state = str(e2e_component.get("status") or "").upper()
     try:
         if e2e_risk is None:
