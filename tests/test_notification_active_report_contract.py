@@ -353,6 +353,51 @@ class FormalPresentationSemanticGateTests(unittest.TestCase):
         self.assertFalse(accepted)
         self.assertEqual(reason, "formal_presentation_position_missing_hold_vs_release_comparison")
 
+    def _formal_content_event_for(self, content):
+        import json
+        import tempfile
+
+        digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
+        event = {
+            "request_type": "BUSINESS_DECISION_SOURCE",
+            "request_id": "formal-request-current",
+            "parent_request_id": "formal-request-current",
+            "decision_id": "formal-decision-current",
+            "presentation_content": content,
+            "content_hash": digest,
+            "presentation_binding": {
+                "request_id": "formal-request-current",
+                "parent_request_id": "formal-request-current",
+                "decision_id": "formal-decision-current",
+                "report_id": "formal-report-current",
+                "full_content": content,
+            },
+            "decision_response": {},
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "current-bds.json"
+            path.write_text(json.dumps(event, ensure_ascii=False), encoding="utf-8")
+            return center.formal_content_event(path)
+
+    def test_delivery_entry_rejects_weak_zero_deployment_rationale(self):
+        weak = self._content(
+            capital_text="风险较高，所以新增部署0元。现金保留，持仓继续持有。"
+        )
+
+        self.assertIsNone(self._formal_content_event_for(weak))
+
+    def test_delivery_entry_accepts_complete_semantic_presentation(self):
+        event = self._formal_content_event_for(self._content())
+
+        self.assertIsNotNone(event)
+        self.assertEqual(event["content"], self._content())
+        self.assertEqual(event["request_id"], "formal-request-current")
+
+    def test_delivery_entry_rejects_holding_without_release_comparison(self):
+        weak = self._content(holding_comparison=False)
+
+        self.assertIsNone(self._formal_content_event_for(weak))
+
 
 if __name__ == "__main__":
     unittest.main()
