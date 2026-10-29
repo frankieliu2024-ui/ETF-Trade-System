@@ -344,23 +344,23 @@ def validate_formal_presentation_contract(envelope: dict[str, Any]) -> tuple[boo
     if not any(word in capital_section for word in ("因为", "由于", "原因", "依据", "证据", "尚未", "不足", "优于", "弱于", "条件")):
         return False, "formal_presentation_missing_capital_choice_rationale"
 
+    # A live task may render holdings as separate named paragraphs instead of
+    # numbered items. Split only on explicit six-digit security identifiers;
+    # do not treat general commentary as an individual holding.
     holding_items = []
     current_item_lines = []
     for line in holdings_section.splitlines():
         stripped = line.strip()
-        is_position_item = (
-            len(stripped) > 2
-            and stripped[0].isdigit()
-            and stripped[1] in ("）", ")")
-        )
-        if is_position_item:
+        numbered = bool(re.match(r"^(?:\\d+[）)]|（\\d+）)\\s*", stripped))
+        named = bool(re.match(r"^(?:\\d+[）)]\\s*|（\\d+）\\s*)?[^：\\n]{1,50}（\\d{6}）：", stripped))
+        if numbered or named:
             if current_item_lines:
-                holding_items.append("\n".join(current_item_lines))
+                holding_items.append("\\n".join(current_item_lines))
             current_item_lines = [stripped]
         elif current_item_lines:
             current_item_lines.append(line)
     if current_item_lines:
-        holding_items.append("\n".join(current_item_lines))
+        holding_items.append("\\n".join(current_item_lines))
     if not holding_items:
         return False, "formal_presentation_missing_individual_position_reviews"
     for item in holding_items:
