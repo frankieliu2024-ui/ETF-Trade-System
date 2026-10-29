@@ -166,5 +166,11 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
         self.assertIn("def dispatch_notification", owner)
 
 
+    def test_formal_actor_fails_closed_on_content_hash_mismatch(self):
+        actor = (ROOT / "scripts" / "run_scheduled_formal_decision_actor.py").read_text(encoding="utf-8")
+        self.assertIn('hard_failures = [key for key, ok in checks.items() if not ok]', actor)
+        self.assertNotIn('key != "content_hash"', actor)
+
+
 if __name__ == "__main__":
     unittest.main()
