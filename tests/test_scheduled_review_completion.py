@@ -672,9 +672,8 @@ if __name__ == "__main__":
 
 
 
-
 def test_system_review_builder_rejects_origin_entry_mismatch():
-    with __import__("pytest").raises(ValueError, match="does not match"):
+    try:
         completion.build_system_review_completion_request(
             {
                 "status": "PASS",
@@ -688,3 +687,7 @@ def test_system_review_builder_rejects_origin_entry_mismatch():
             "FROZEN SYSTEM REPORT",
             entry_mode="MANUAL_CONVERSATION",
         )
+    except ValueError as exc:
+        assert "does not match" in str(exc)
+    else:
+        raise AssertionError("origin/completion entry mismatch was accepted")
