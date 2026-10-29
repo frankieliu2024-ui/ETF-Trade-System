@@ -495,6 +495,21 @@ def build_system_review_completion_request(
     task_run_id = _safe_id(task_run_id)
     if not str(requested_at_beijing or "").strip() or not str(final_content or "").strip():
         raise ValueError("scheduled system review completion requires requested_at_beijing and frozen final_content")
+    origin_source = str(system_review.get("source") or "").strip()
+    origin_mode = str(system_review.get("entry_mode") or "").strip().upper()
+    if origin_source or origin_mode:
+        if not origin_source or not origin_mode:
+            raise ValueError("scheduled system review origin identity is incomplete")
+        origin_mapping = {
+            "CHATGPT_SCHEDULED_SYSTEM_REVIEW": "AUTOMATIC_SCHEDULED_TASK",
+            "CHATGPT_SCHEDULED_SYSTEM_REVIEW_ACTOR": "AUTOMATIC_SCHEDULED_TASK",
+            "CHATGPT_MANUAL_SCHEDULED_SYSTEM_REVIEW": "MANUAL_SCHEDULED_TASK",
+            "CHATGPT_MANUAL_SYSTEM_REVIEW": "MANUAL_CONVERSATION",
+        }
+        if origin_source not in origin_mapping or origin_mapping[origin_source] != origin_mode:
+            raise ValueError("scheduled system review origin source/entry_mode mismatch")
+        if origin_mode != entry_mode:
+            raise ValueError("scheduled system review origin entry_mode does not match completion entry_mode")
     validate_system_review_presentation(system_review, final_content)
     validate_user_visible_content(str(final_content), canonical_closure_confirmed=False)
     frozen_content = str(final_content)
