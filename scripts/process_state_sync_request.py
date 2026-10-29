@@ -2523,22 +2523,24 @@ def _validate_scheduled_system_review_identity(request: dict) -> None:
         if binding_mode and binding_mode != entry_mode:
             raise ValueError("scheduled system review presentation entry_mode mismatch")
     review = request.get("system_review")
-    if not isinstance(review, dict):
-        raise ValueError("scheduled system review origin identity is required")
-    origin_source = str(review.get("source") or "").strip()
-    origin_mode = str(review.get("entry_mode") or "").strip().upper()
+    origin_source = str(review.get("source") or "").strip() if isinstance(review, dict) else ""
+    origin_mode = str(review.get("entry_mode") or "").strip().upper() if isinstance(review, dict) else ""
     origin_mapping = {
         "CHATGPT_SCHEDULED_SYSTEM_REVIEW": "AUTOMATIC_SCHEDULED_TASK",
         "CHATGPT_SCHEDULED_SYSTEM_REVIEW_ACTOR": "AUTOMATIC_SCHEDULED_TASK",
         "CHATGPT_MANUAL_SCHEDULED_SYSTEM_REVIEW": "MANUAL_SCHEDULED_TASK",
         "CHATGPT_MANUAL_SYSTEM_REVIEW": "MANUAL_CONVERSATION",
     }
-    if not origin_source or not origin_mode:
-        raise ValueError("scheduled system review origin identity is required")
-    if origin_source not in origin_mapping or origin_mapping[origin_source] != origin_mode:
-        raise ValueError("scheduled system review origin source/entry_mode mismatch")
-    if origin_mode != entry_mode:
-        raise ValueError("scheduled system review origin entry_mode does not match completion entry_mode")
+    # The live task contract permits omitted nested origin metadata. The
+    # canonical owner independently rejects any supplied partial or conflicting
+    # identity while preserving the top-level completion identity gate.
+    if origin_source or origin_mode:
+        if not origin_source or not origin_mode:
+            raise ValueError("scheduled system review origin identity is incomplete")
+        if origin_source not in origin_mapping or origin_mapping[origin_source] != origin_mode:
+            raise ValueError("scheduled system review origin source/entry_mode mismatch")
+        if origin_mode != entry_mode:
+            raise ValueError("scheduled system review origin entry_mode does not match completion entry_mode")
 
 
 def record_scheduled_system_review(request: dict) -> tuple[bool, bool]:

@@ -503,12 +503,16 @@ def build_system_review_completion_request(
         "CHATGPT_MANUAL_SCHEDULED_SYSTEM_REVIEW": "MANUAL_SCHEDULED_TASK",
         "CHATGPT_MANUAL_SYSTEM_REVIEW": "MANUAL_CONVERSATION",
     }
-    if not origin_source or not origin_mode:
-        raise ValueError("scheduled system review origin identity is required")
-    if origin_source not in origin_mapping or origin_mapping[origin_source] != origin_mode:
-        raise ValueError("scheduled system review origin source/entry_mode mismatch")
-    if origin_mode != entry_mode:
-        raise ValueError("scheduled system review origin entry_mode does not match completion entry_mode")
+    # The live task contract permits platforms that do not expose nested
+    # origin fields. Validate them fail-closed when present, but do not block
+    # the completion path solely because the platform omitted them.
+    if origin_source or origin_mode:
+        if not origin_source or not origin_mode:
+            raise ValueError("scheduled system review origin identity is incomplete")
+        if origin_source not in origin_mapping or origin_mapping[origin_source] != origin_mode:
+            raise ValueError("scheduled system review origin source/entry_mode mismatch")
+        if origin_mode != entry_mode:
+            raise ValueError("scheduled system review origin entry_mode does not match completion entry_mode")
     validate_system_review_presentation(system_review, final_content)
     validate_user_visible_content(str(final_content), canonical_closure_confirmed=False)
     frozen_content = str(final_content)
