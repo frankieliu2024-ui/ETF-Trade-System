@@ -53,7 +53,10 @@ def test_system_review_builder_derives_missing_request_identity():
     assert payload["request_id"].startswith("manual-system-review-")
     assert payload["task_run_id"]
     assert payload["occurrence_id"] == payload["task_run_id"]
-\n\ndef test_system_review_identity_gate_rejects_wrong_entry_and_binding():
+
+
+
+def test_system_review_identity_gate_rejects_wrong_entry_and_binding():
     from scripts import process_state_sync_request as state_sync
 
     try:
@@ -63,10 +66,6 @@ def test_system_review_builder_derives_missing_request_identity():
             "entry_mode": "UNKNOWN_ENTRY",
             "interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
         })
-    except ValueError as exc:
-        assert "presentation entry_mode" in str(exc)
-    else:
-        raise AssertionError("conflicting presentation entry_mode was accepted")
     except ValueError as exc:
         assert "entry_mode" in str(exc)
     else:
@@ -83,3 +82,7 @@ def test_system_review_builder_derives_missing_request_identity():
                 "entry_mode": "MANUAL_CONVERSATION",
             },
         })
+    except ValueError as exc:
+        assert "presentation entry_mode" in str(exc)
+    else:
+        raise AssertionError("conflicting presentation entry_mode was accepted")
