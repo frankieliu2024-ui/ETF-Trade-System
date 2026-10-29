@@ -302,6 +302,34 @@ class FormalPresentationSemanticGateTests(unittest.TestCase):
             heading + "\n\n" + sections[heading] for heading in headings
         )
 
+    def test_unnumbered_named_holdings_are_checked_individually(self):
+        import scripts.notification_center as center
+        content = self._content()
+        for code, name in (("159941", "纳指ETF"), ("159981", "能源化工ETF"),
+                           ("159992", "创新药ETF"), ("159056", "全指器械ETF")):
+            content = content.replace(name + "（" + code + "）", name + "（" + code + "）")
+        import re
+        content = re.sub(r"(?m)^\\d+）(?=[^\\n]*（\\d{6}）：)", "", content)
+        accepted, reason = center.validate_formal_presentation_contract({
+            "presentation_content": content, "decision_response": {},
+        })
+        self.assertTrue(accepted, reason)
+
+    def test_unnumbered_holding_without_release_comparison_is_rejected(self):
+        import scripts.notification_center as center
+        import re
+        content = self._content()
+        content = re.sub(r"(?m)^\\d+）(?=[^\\n]*（\\d{6}）：)", "", content)
+        content = content.replace(
+            "相较继续持有与释放资本，尚无完整反转证据；可释放资本暂不确认。",
+            "目前暂时继续持有。",
+        )
+        accepted, reason = center.validate_formal_presentation_contract({
+            "presentation_content": content, "decision_response": {},
+        })
+        self.assertFalse(accepted)
+        self.assertEqual(reason, "formal_presentation_position_missing_hold_vs_release_comparison")
+
     def test_live_prompt_section_labels_and_numbering_are_accepted(self):
         import scripts.notification_center as center
 
