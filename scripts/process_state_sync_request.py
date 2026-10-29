@@ -3692,7 +3692,7 @@ def normalize_broker_account_fact_ingress(request: dict, supplied: object) -> tu
         code = str(position.get("code") or "").strip()
         asset_type = str(position.get("asset_type") or "").strip().upper()
         name = str(position.get("name") or position.get("security_name") or "").strip()
-        if not re.fullmatch(r"\d{6}", code) and asset_type in non_security_types and name:
+        # A confirmed six-digit convertible-bond code is a security identity,\n        # not an unresolved account asset. Normalize its transport type without\n        # changing the security code, quantity, or market value.\n        if re.fullmatch(r"\d{6}", code) and asset_type == "CONVERTIBLE_BOND":\n            position = dict(position)\n            position["asset_type"] = "OTHER"\n            position["security_type"] = "CONVERTIBLE_BOND"\n        if not re.fullmatch(r"\d{6}", code) and asset_type in non_security_types and name:
             row = dict(position)
             row["source_position_index"] = index
             row["identity_status"] = "UNRESOLVED_NON_SECURITY_ASSET"
