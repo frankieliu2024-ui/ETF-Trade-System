@@ -413,7 +413,9 @@ def assess(now: datetime | None = None) -> dict:
     # Automatic watchdog recovery must never let an unfinished manual request
     # occupy the global formal gate for a later scheduled occurrence. Manual
     # requests remain recoverable only through their explicit manual path.
-    formal_replay_path, formal_replay_parent_id = latest_unfinished_formal_parent(allow_manual=False)
+    # Formal Decision no longer consumes historical market-refresh parents.
+    # Keep legacy archival inspection separate from active watchdog assessment.
+    formal_replay_path, formal_replay_parent_id = None, None
     formal_handoff_path, formal_handoff_parent_id, formal_handoff_missing = formal_parent_handoff_gap(allow_manual=True)
     review_ver = str(review_context.get("rules_version") or "")
     review_identity_drift = derived_context_identity_drift(current, review_context)
@@ -461,13 +463,6 @@ def assess(now: datetime | None = None) -> dict:
             classification, action, reason = "REPAIR_COOLDOWN", "NONE", f"snapshot refresh is in cooldown ({seconds_since_trigger}s < {min_retrigger}s)"
         else:
             classification, action, reason = "SCHEDULE_MISSED_OR_STALE", "REFRESH_SNAPSHOT", f"capture age={age_seconds!r}s, health={health_status}, threshold={trigger_age}s"
-    elif formal_replay_path:
-        # Formal parent recovery is deliberately evaluated only after the
-        # canonical market snapshot has passed its freshness/node checks.
-        # A stale or missing market snapshot must always be repaired first;
-        # an unfinished Formal parent must never consume the watchdog's sole
-        # recovery decision and suppress market-data production.
-        classification, action, reason = "FORMAL_PARENT_RECOVERY_REQUIRED", "REPLAY_FORMAL_REQUEST", f"durable Formal Decision parent {formal_replay_parent_id} has no same-request derived context and no BUSINESS_DECISION_SOURCE; continue the existing parent through the canonical producer"
     elif formal_handoff_path:
         # Formal Decision completion is owned by the decision actor/canonical
         # completion owner. This is an observation-only projection gap and
