@@ -77,7 +77,7 @@ Codex协作交接说明：`docs/Codex协作执行说明.md`。它只负责CODEX_
 
 以下均是运行事实或实现入口，不是新的规则来源：
 
-- 系统一致性：`data/state/system_consistency.json`、`scripts/check_system_consistency.py`、`.github/workflows/etf-system-consistency.yml`
+- 系统一致性：`data/state/system_consistency.json`、`scripts/check_system_consistency.py`、`.github/workflows/system-consistency.yml`
 - 当前正式行情：`data/state/CURRENT.json`
 - 账户事实：`data/state/account_fact.json`
 - 运行健康：`data/state/runtime_health.json`、`data/state/overseas_runtime_health.json`
