@@ -484,7 +484,8 @@ def build_dashboard_block(account: dict, decision: dict | None, request: dict) -
             lines.append(f"- {item.get('security_name') or item.get('security_code')}（{item.get('security_code')}）：{item.get('lifecycle_status')}，起始交易日{item.get('start_market_date')}，当前T+{item.get('current_t_plus')}，下一节点{item.get('next_lifecycle_node')}{due}。")
     else:
         lines.append("- 当前没有可由正式决策与真实成交事实恢复的未关闭Trial生命周期。")
-    return "\n".join(lines)
+    return "
+".join(lines)
 
 
 def _snapshot_fact_times(snapshot: dict) -> list[datetime]:
@@ -1922,7 +1923,10 @@ def sync_experience_case_mapping_index(review: dict) -> None:
                 changed = True
             break
     if changed:
-        newline = "\n".join(lines) + ("\n" if text.endswith("\n") else "")
+        newline = "
+".join(lines) + ("
+" if text.endswith("
+") else "")
         write_formal_text_if_changed(ROOT, EXPERIENCE.name, newline)
 
 
@@ -1947,8 +1951,12 @@ def _purge_case_mapping_rows() -> None:
         ):
             continue
         kept.append(line)
-    cleaned = "\n".join(kept).strip("\n")
-    updated = text[:body_start] + "\n" + cleaned + "\n" + text[end:]
+    cleaned = "
+".join(kept).strip("
+")
+    updated = text[:body_start] + "
+" + cleaned + "
+" + text[end:]
     write_formal_text_if_changed(ROOT, EXPERIENCE.name, updated)
 
 
@@ -1990,7 +1998,8 @@ def _case_detail_projection_entry(case_entry: str, case_id: str) -> str:
         line for line in body_lines
         if not re.match(r"^\d{8}[_-].*｜- 已归入CASE-", line.strip())
     ]
-    body = "\n".join(body_lines).strip()
+    body = "
+".join(body_lines).strip()
     body = re.sub(r"^### (?:2\.\d+ )?", "", body, count=1)
     if body.startswith(case_id):
         body = re.sub(rf"^{re.escape(case_id)}[：:]?\s*", "", body, count=1)
@@ -2014,9 +2023,11 @@ def _case_detail_projection_entry(case_entry: str, case_id: str) -> str:
         fields["背景／生命周期"].append("；".join(unstructured))
     rendered = [f"### 2.{ordinal} {case_id}：{title}"]
     for name in _CASE_TEMPLATE_FIELDS:
-        value = "\n".join(fields[name]).strip() or "信息不足（现有正式复盘未记录该字段）"
+        value = "
+".join(fields[name]).strip() or "信息不足（现有正式复盘未记录该字段）"
         rendered.append(f"- {name}：{value}")
-    return "\n".join(rendered)
+    return "
+".join(rendered)
 
 
 def _case_lifecycle_update_text(root: Path, case_id: str, review: dict, updates: list[dict]) -> str:
@@ -2078,7 +2089,8 @@ def _append_case_update_field(entry: str, field: str, market_date: str, update_l
     updates_by_date[market_date] = "  " + update_line
     updates = [updates_by_date[date] for date in sorted(updates_by_date)]
     lines[index + 1:section_end] = other_lines + updates
-    return "\n".join(lines)
+    return "
+".join(lines)
 
 
 def _persist_existing_case_detail_projections(review: dict) -> None:
@@ -2116,7 +2128,9 @@ def _persist_existing_case_detail_projections(review: dict) -> None:
         market_date = str(review.get("market_date") or "")
         for field in ("背景／生命周期", "结果", "最终结果／反事实"):
             section = _append_case_update_field(section, field, market_date, update_line)
-        block = block[:section_start] + "\n" + section + "\n" + block[section_end:]
+        block = block[:section_start] + "
+" + section + "
+" + block[section_end:]
     replace_formal_block(ROOT, EXPERIENCE.name, CASE_DETAILS_START, CASE_DETAILS_END, block.strip())
 
 
@@ -2623,7 +2637,10 @@ def record_formal_decision_report_event(request: dict, bds: dict | None = None) 
     }
     if any(not value for value in identity.values()):
         raise ValueError("Formal Decision canonical event requires complete request/parent/decision identity")
-    # A current-main runtime completion deliberately has no parent market-fact request.\n    # The completion itself is the durable handoff, so its request identity is\n    # also the canonical parent binding. Legacy/BDS projections still retain a\n    # distinct parent when one is supplied.
+    # A current-main runtime completion deliberately has no parent market-fact request.
+    # The completion itself is the durable handoff, so its request identity is
+    # also the canonical parent binding. Legacy/BDS projections still retain a
+    # distinct parent when one is supplied.
     if (
         identity["binding_request_id"] != identity["request_id"]
         or identity["binding_parent_request_id"] != identity["parent_request_id"]
@@ -3214,7 +3231,8 @@ def sync_experience_transaction_index(event: dict) -> None:
     if not event_id:
         return
     text = EXPERIENCE.read_text(encoding="utf-8")
-    section_end = "\n### 2.2 银证转账与非交易现金流水"
+    section_end = "
+### 2.2 银证转账与非交易现金流水"
     if section_end not in text:
         raise RuntimeError("experience transaction-index boundary missing")
 
@@ -3284,19 +3302,24 @@ def sync_experience_transaction_index(event: dict) -> None:
         lines[economic_index] = row
         if marker_index is not None and marker_index != economic_index:
             del lines[marker_index]
-        updated_table = "\n".join(lines)
+        updated_table = "
+".join(lines)
         text = text[:table_start] + updated_table + text[table_end:]
     elif marker_index is not None:
         lines[marker_index] = row
-        updated_table = "\n".join(lines)
+        updated_table = "
+".join(lines)
         text = text[:table_start] + updated_table + text[table_end:]
     elif economic_index is not None:
         lines[economic_index] = row
-        updated_table = "\n".join(lines)
+        updated_table = "
+".join(lines)
         text = text[:table_start] + updated_table + text[table_end:]
     else:
         idx = text.index(section_end)
-        text = text[:idx].rstrip() + "\n" + row + "\n" + text[idx:]
+        text = text[:idx].rstrip() + "
+" + row + "
+" + text[idx:]
 
     # Recompute the unique index counts from the actual table instead of carrying
     # a hand-maintained number that can lag a newly confirmed fill.
@@ -3692,7 +3715,14 @@ def normalize_broker_account_fact_ingress(request: dict, supplied: object) -> tu
         code = str(position.get("code") or "").strip()
         asset_type = str(position.get("asset_type") or "").strip().upper()
         name = str(position.get("name") or position.get("security_name") or "").strip()
-        # A confirmed six-digit convertible-bond code is a security identity,\n        # not an unresolved account asset. Normalize its transport type without\n        # changing the security code, quantity, or market value.\n        if re.fullmatch(r"\d{6}", code) and asset_type == "CONVERTIBLE_BOND":\n            position = dict(position)\n            position["asset_type"] = "OTHER"\n            position["security_type"] = "CONVERTIBLE_BOND"\n        if not re.fullmatch(r"\d{6}", code) and asset_type in non_security_types and name:
+        # A confirmed six-digit convertible-bond code is a security identity,
+        # not an unresolved account asset. Normalize its transport type without
+        # changing the security code, quantity, or market value.
+        if re.fullmatch(r"\d{6}", code) and asset_type == "CONVERTIBLE_BOND":
+            position = dict(position)
+            position["asset_type"] = "OTHER"
+            position["security_type"] = "CONVERTIBLE_BOND"
+        if not re.fullmatch(r"\d{6}", code) and asset_type in non_security_types and name:
             row = dict(position)
             row["source_position_index"] = index
             row["identity_status"] = "UNRESOLVED_NON_SECURITY_ASSET"
@@ -4094,7 +4124,20 @@ def main() -> int:
         # payload is the child handoff, but its validation and completion
         # recovery require the exact work package that produced the answer.
         source_payload["decision_work_package"] = json.loads(json.dumps(decision_work_package))
-        # BUSINESS_DECISION_SOURCE carries Formal ingress identity at the top level.\n        # Preserve it when projecting the internal source payload; otherwise the\n        # validator sees an empty formal_entry_source even though the durable BDS\n        # is correctly bound to the actual entry.\n        for identity_field in (\n            "formal_entry_source",\n            "entry_mode",\n            "task_id",\n            "task_run_id",\n            "occurrence_id",\n        ):\n            if identity_field in request:\n                source_payload.setdefault(identity_field, request.get(identity_field))\n        current_context = query_context.get("current") or {}
+        # BUSINESS_DECISION_SOURCE carries Formal ingress identity at the top level.
+        # Preserve it when projecting the internal source payload; otherwise the
+        # validator sees an empty formal_entry_source even though the durable BDS
+        # is correctly bound to the actual entry.
+        for identity_field in (
+            "formal_entry_source",
+            "entry_mode",
+            "task_id",
+            "task_run_id",
+            "occurrence_id",
+        ):
+            if identity_field in request:
+                source_payload.setdefault(identity_field, request.get(identity_field))
+        current_context = query_context.get("current") or {}
         source_payload.setdefault("request_id", str(request.get("request_id") or f"{parent_id}__business_decision_source"))
         source_payload.setdefault("parent_request_id", parent_id)
         source_payload.setdefault("decision_id", str(request.get("decision_id") or f"{parent_id}_decision"))
