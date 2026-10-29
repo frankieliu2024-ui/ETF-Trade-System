@@ -3692,6 +3692,12 @@ def normalize_broker_account_fact_ingress(request: dict, supplied: object) -> tu
         code = str(position.get("code") or "").strip()
         asset_type = str(position.get("asset_type") or "").strip().upper()
         name = str(position.get("name") or position.get("security_name") or "").strip()
+        # Explicitly typed, code-confirmed convertible bonds are securities.
+        # Preserve their security subtype while using the canonical asset class.
+        if re.fullmatch(r"\d{6}", code) and asset_type == "CONVERTIBLE_BOND":
+            position = dict(position)
+            position["asset_type"] = "OTHER"
+            position["security_type"] = "CONVERTIBLE_BOND"
         if not re.fullmatch(r"\d{6}", code) and asset_type in non_security_types and name:
             row = dict(position)
             row["source_position_index"] = index

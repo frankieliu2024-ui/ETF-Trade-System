@@ -59,6 +59,28 @@ class BrokerAccountFactIngressContractTests(unittest.TestCase):
         self.assertEqual(normalized["unresolved_assets"][0]["identity_status"], "UNRESOLVED_NON_SECURITY_ASSET")
         self.assertEqual(validate_broker_account_fact_ingress(request, normalized), "")
 
+    def test_confirmed_convertible_bond_code_normalizes_to_other_security(self):
+        request = self.request()
+        supplied = {"positions": [
+            {"name": "华纬转债", "code": "127118", "quantity": 10,
+             "asset_type": "CONVERTIBLE_BOND", "market_value": 1000},
+        ]}
+        normalized, moved = normalize_broker_account_fact_ingress(request, supplied)
+        self.assertEqual(moved, 0)
+        self.assertEqual(normalized["positions"][0]["asset_type"], "OTHER")
+        self.assertEqual(normalized["positions"][0]["security_type"], "CONVERTIBLE_BOND")
+        self.assertEqual(normalized["positions"][0]["code"], "127118")
+        self.assertEqual(normalized["positions"][0]["market_value"], 1000)
+        self.assertEqual(validate_broker_account_fact_ingress(request, normalized), "")
+
+    def test_unknown_six_digit_asset_type_still_rejected(self):
+        request = self.request()
+        normalized, _ = normalize_broker_account_fact_ingress(
+            request, {"positions": [{"code": "127118", "quantity": 10,
+                                     "asset_type": "UNVERIFIED_TYPE"}]})
+        self.assertIn("asset_type is invalid",
+                      validate_broker_account_fact_ingress(request, normalized))
+
     def test_non_broker_requests_are_not_reclassified_by_this_contract(self):
         self.assertEqual(
             validate_broker_account_fact_ingress(
