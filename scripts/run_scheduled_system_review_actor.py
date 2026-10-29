@@ -98,7 +98,8 @@ def main() -> int:
     completion_path, persistence = persist_completion(target)
     dispatch = dispatch_notification(completion_path)
     projection = _wait_for_system_projection(occurrence_id, binding.get("report_id") or "")
-    ok = bool(dispatch.get("submitted")) and bool(dispatch.get("read_back")) and bool(projection.get("verified"))
+    # Dispatch acceptance is not a workflow-run readback. Verify downstream projections separately.
+    ok = bool(dispatch.get("submitted")) and bool(projection.get("verified"))
     print(args.final_content)
     print(json.dumps({
         "ok": ok,
