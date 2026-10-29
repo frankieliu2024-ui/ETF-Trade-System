@@ -272,7 +272,19 @@ def validate_formal_presentation_contract(envelope: dict[str, Any]) -> tuple[boo
         "【信息不足在哪里】", "【执行边界】", "【置信度】",
         "【最可能出错的地方】", "【后置交接状态】",
     )
-    missing_headings = [heading for heading in required_headings if heading not in content]
+    # The scheduled task's live Prompt is the runtime presentation contract.
+    # Accept its current section labels as well as legacy canonical labels;
+    # do not weaken the separate business-semantic checks below.
+    heading_aliases = {
+        "【三层监测】": "【市场监测】",
+        "【全市场发现逐只评估】": "【全市场发现】",
+        "【观察ETF逐只评估】": "【观察ETF】",
+        "【机会ETF逐只评估】": "【机会ETF】",
+    }
+    missing_headings = [
+        heading for heading in required_headings
+        if heading not in content and heading_aliases.get(heading) not in content
+    ]
     if missing_headings:
         return False, "formal_presentation_missing_sections:" + ",".join(missing_headings)
     if len(content.strip()) < 1200:
@@ -280,7 +292,10 @@ def validate_formal_presentation_contract(envelope: dict[str, Any]) -> tuple[boo
     layout_error = _validate_formal_presentation_layout(content)
     if layout_error:
         return False, layout_error
-    numbering_error = validate_user_visible_numbering(content)
+    # Formal Decision's live Prompt uses （1） subitems; keep the shared
+    # validator unchanged for System Review and Trade Review.
+    formal_numbering_content = re.sub(r"(?m)^(\\s*)（(\\d+)）(?=\\s)", r"\\1\\2）", content)
+    numbering_error = validate_user_visible_numbering(formal_numbering_content)
     if numbering_error:
         return False, numbering_error
     if "**" in content or any(term in content for term in ("canonical", "writer", "BDS", "reply_freezable", "control plane")):
@@ -342,7 +357,7 @@ def validate_formal_presentation_contract(envelope: dict[str, Any]) -> tuple[boo
             return False, "formal_presentation_position_missing_hold_vs_release_comparison"
         if not any(token in item for token in ("若", "如果", "当")):
             return False, "formal_presentation_position_missing_change_condition"
-    if not any(token in content for token in ("1）", "2）", "3）")):
+    if not any(token in content for token in ("1）", "2）", "3）", "（1）", "（2）", "（3）")):
         return False, "formal_presentation_missing_secondary_numbering"
     return True, ""
 
