@@ -2523,6 +2523,7 @@ def _validate_scheduled_system_review_identity(request: dict) -> None:
 
 
 def record_scheduled_system_review(request: dict) -> tuple[bool, bool]:
+    _validate_scheduled_system_review_identity(request)
     if str(request.get("formal_fact_type") or "") != "FORMAL_SCHEDULED_SYSTEM_REVIEW":
         return False, False
     raw_binding = request.get("presentation_binding")
