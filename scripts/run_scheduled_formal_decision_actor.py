@@ -401,7 +401,7 @@ def main() -> int:
         "content_hash": binding.get("content_hash") == expected_hash,
         "full_content": binding.get("full_content") == args.final_content,
     }
-    hard_failures = [key for key, ok in checks.items() if not ok and key != "content_hash"]
+    hard_failures = [key for key, ok in checks.items() if not ok]
     if hard_failures:
         raise RuntimeError("formal runtime completion readback mismatch: " + ", ".join(hard_failures))
 
