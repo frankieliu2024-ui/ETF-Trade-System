@@ -691,3 +691,21 @@ def test_system_review_builder_rejects_origin_entry_mismatch():
         assert "does not match" in str(exc)
     else:
         raise AssertionError("origin/completion entry mismatch was accepted")
+
+
+def test_system_review_builder_requires_origin_identity():
+    from scripts import scheduled_review_completion as completion
+    try:
+        completion.build_system_review_completion_request(
+            {"status": "PASS"},
+            "system-request",
+            "2026-10-29T19:30:00+08:00",
+            "ETF系统复核",
+            "system-run",
+            "FROZEN SYSTEM REPORT",
+            entry_mode="AUTOMATIC_SCHEDULED_TASK",
+        )
+    except ValueError as exc:
+        assert "origin identity is required" in str(exc)
+    else:
+        raise AssertionError("missing System Review origin identity was accepted")
