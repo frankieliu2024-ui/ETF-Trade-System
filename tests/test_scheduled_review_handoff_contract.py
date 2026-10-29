@@ -86,3 +86,38 @@ def test_system_review_identity_gate_rejects_wrong_entry_and_binding():
         assert "presentation entry_mode" in str(exc)
     else:
         raise AssertionError("conflicting presentation entry_mode was accepted")
+
+
+
+def test_system_review_identity_gate_rejects_invalid_binding_and_origin():
+    from scripts import process_state_sync_request as state_sync
+
+    cases = [
+        (
+            {"presentation_binding": []},
+            "presentation_binding",
+        ),
+        (
+            {
+                "system_review": {
+                    "source": "CHATGPT_SCHEDULED_SYSTEM_REVIEW",
+                    "entry_mode": "MANUAL_CONVERSATION",
+                }
+            },
+            "origin source/entry_mode",
+        ),
+    ]
+    for extra, message in cases:
+        request = {
+            "request_type": "SCHEDULED_REVIEW_COMPLETION",
+            "task_id": "ETF系统复核",
+            "entry_mode": "AUTOMATIC_SCHEDULED_TASK",
+            "interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
+            **extra,
+        }
+        try:
+            state_sync._validate_scheduled_system_review_identity(request)
+        except ValueError as exc:
+            assert message in str(exc)
+        else:
+            raise AssertionError(f"invalid identity was accepted: {message}")
