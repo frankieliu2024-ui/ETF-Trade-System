@@ -319,7 +319,7 @@ def validate_formal_presentation_contract(envelope: dict[str, Any]) -> tuple[boo
         return False, "formal_presentation_missing_capital_efficiency_comparison"
 
     import re
-    holding_items = list(re.finditer(r"(?m)^([1-9]\\d?)）\\s+[^\\n]+", holdings_section))
+    holding_items = list(re.finditer(r"(?m)^([1-9]\d?)）\s+[^\n]+", holdings_section))
     if not holding_items:
         return False, "formal_presentation_missing_individual_position_reviews"
     for index, match in enumerate(holding_items):
@@ -337,10 +337,10 @@ def validate_formal_presentation_contract(envelope: dict[str, Any]) -> tuple[boo
 def _formal_section(content: str, heading: str) -> str:
     """Return one standalone heading section from a frozen Formal Decision."""
     import re
-    match = re.search(r"(?m)^" + re.escape(heading) + r"\\s*$", content)
+    match = re.search(r"(?m)^" + re.escape(heading) + r"\s*$", content)
     if not match:
         return ""
-    next_heading = re.search(r"(?m)^【[^】]+】\\s*$", content[match.end():])
+    next_heading = re.search(r"(?m)^【[^】]+】\s*$", content[match.end():])
     end = match.end() + next_heading.start() if next_heading else len(content)
     return content[match.end():end]
 
