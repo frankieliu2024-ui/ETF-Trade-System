@@ -133,3 +133,38 @@ def test_system_review_identity_gate_allows_omitted_origin_identity():
         "system_review": {"market_date": "2026-10-29"},
     }
     state_sync._validate_scheduled_system_review_identity(request)
+
+
+def test_system_review_owner_does_not_validate_other_task_completions():
+    from scripts import process_state_sync_request as state_sync
+
+    for task_id, formal_fact_type in (
+        ("ETF交易复盘", "FORMAL_SCHEDULED_TRADE_REVIEW"),
+        ("ETF正式决策", "FORMAL_SCHEDULED_FORMAL_DECISION"),
+    ):
+        request = {
+            "request_type": "SCHEDULED_REVIEW_COMPLETION",
+            "task_id": task_id,
+            "formal_fact_type": formal_fact_type,
+            "entry_mode": "AUTOMATIC_SCHEDULED_TASK",
+            "interaction_scenario": "SCHEDULED_TRADE_REVIEW",
+        }
+        assert state_sync.record_scheduled_system_review(request) == (False, False)
+
+
+def test_system_review_owner_still_rejects_invalid_system_identity():
+    from scripts import process_state_sync_request as state_sync
+
+    request = {
+        "request_type": "SCHEDULED_REVIEW_COMPLETION",
+        "task_id": "ETF系统复核",
+        "formal_fact_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW",
+        "entry_mode": "UNKNOWN_ENTRY",
+        "interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
+    }
+    try:
+        state_sync.record_scheduled_system_review(request)
+    except ValueError as exc:
+        assert "entry_mode" in str(exc)
+    else:
+        raise AssertionError("invalid System Review identity was accepted")
