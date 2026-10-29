@@ -121,3 +121,20 @@ def test_system_review_identity_gate_rejects_invalid_binding_and_origin():
             assert message in str(exc)
         else:
             raise AssertionError(f"invalid identity was accepted: {message}")
+
+
+def test_system_review_identity_gate_requires_origin_identity():
+    from scripts import process_state_sync_request as state_sync
+    request = {
+        "request_type": "SCHEDULED_REVIEW_COMPLETION",
+        "task_id": "ETF系统复核",
+        "entry_mode": "AUTOMATIC_SCHEDULED_TASK",
+        "interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
+        "system_review": {"market_date": "2026-10-29"},
+    }
+    try:
+        state_sync._validate_scheduled_system_review_identity(request)
+    except ValueError as exc:
+        assert "origin identity is required" in str(exc)
+    else:
+        raise AssertionError("missing System Review origin identity was accepted")
