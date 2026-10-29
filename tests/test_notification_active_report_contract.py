@@ -299,7 +299,7 @@ class FormalPresentationSemanticGateTests(unittest.TestCase):
             "【后置交接状态】": "正文形成、完成记录、事件、报告、通知投递和用户收到必须分别确认，不相互替代。",
         }
         return "【ETF正式决策】2026-10-29 11:04 正式判断\n\n" + "\n\n".join(
-            heading + "\n" + sections[heading] for heading in headings
+            heading + "\n\n" + sections[heading] for heading in headings
         )
 
     def test_missing_content_without_structured_answers_is_rejected(self):
