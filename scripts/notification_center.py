@@ -336,13 +336,21 @@ def validate_formal_presentation_contract(envelope: dict[str, Any]) -> tuple[boo
 
 def _formal_section(content: str, heading: str) -> str:
     """Return one standalone heading section from a frozen Formal Decision."""
-    import re
-    match = re.search(r"(?m)^" + re.escape(heading) + r"\s*$", content)
-    if not match:
+    lines = str(content or "").splitlines()
+    start = None
+    for index, line in enumerate(lines):
+        if line.strip() == heading:
+            start = index + 1
+            break
+    if start is None:
         return ""
-    next_heading = re.search(r"(?m)^【[^】]+】\s*$", content[match.end():])
-    end = match.end() + next_heading.start() if next_heading else len(content)
-    return content[match.end():end]
+    end = len(lines)
+    for index in range(start, len(lines)):
+        stripped = lines[index].strip()
+        if stripped.startswith("【") and stripped.endswith("】"):
+            end = index
+            break
+    return "\n".join(lines[start:end])
 
 def formal_presentation_event() -> dict | None:
     """Formal Decision delivery is allowed only from an exact canonical review event."""
