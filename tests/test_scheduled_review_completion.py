@@ -185,6 +185,9 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
         )
         self.assertEqual(payload["presentation_binding"]["content_hash_source"], "completion_builder")
         self.assertEqual(payload["occurrence_id"], payload["presentation_binding"]["occurrence_id"])
+        self.assertEqual(payload["report_type"], "ETF_SYSTEM_REVIEW")
+        self.assertEqual(payload["report_id"], "etf_system_review:system-run")
+        self.assertEqual(payload["content_hash"], payload["presentation_binding"]["content_hash"])
         self.assertNotIn("report_delivery", payload)
         self.assertNotIn("report_handoff", payload)
         from scripts.runtime_session_gate import classify_live_snapshot_request
