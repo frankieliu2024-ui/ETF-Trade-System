@@ -1377,6 +1377,12 @@ def formal_content_event(source_path: Path) -> dict | None:
             return None
         if str(binding.get("decision_id") or "") != decision_id or str(binding.get("full_content") or "") != content:
             return None
+        accepted, _reason = validate_formal_presentation_contract({
+            "presentation_content": content,
+            "decision_response": event.get("decision_response") or {},
+        })
+        if not accepted:
+            return None
         expected_request = str(os.environ.get("EXPECTED_FORMAL_REQUEST_ID") or "").strip()
         if expected_request and expected_request not in {request_id, parent_request_id}:
             return None
@@ -1420,6 +1426,12 @@ def formal_content_event(source_path: Path) -> dict | None:
     if not content or not request_id or not parent_request_id or not task_run_id or not occurrence_id or not content_hash or not decision_id or not report_id:
         return None
     if not isinstance(content, str) or not content:
+        return None
+    accepted, _reason = validate_formal_presentation_contract({
+        "presentation_content": content,
+        "decision_response": event.get("decision_response") or {},
+    })
+    if not accepted:
         return None
     expected_request = str(os.environ.get("EXPECTED_FORMAL_REQUEST_ID") or "").strip()
     if expected_request and expected_request != request_id:
