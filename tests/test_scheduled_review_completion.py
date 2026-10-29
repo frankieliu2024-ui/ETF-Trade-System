@@ -670,3 +670,21 @@ class ScheduledReviewCompletionTests(unittest.TestCase):
 if __name__ == "__main__":
     unittest.main()
 
+
+
+
+def test_system_review_builder_rejects_origin_entry_mismatch():
+    with __import__("pytest").raises(ValueError, match="does not match"):
+        completion.build_system_review_completion_request(
+            {
+                "status": "PASS",
+                "source": "CHATGPT_SCHEDULED_SYSTEM_REVIEW",
+                "entry_mode": "AUTOMATIC_SCHEDULED_TASK",
+            },
+            "system-request",
+            "2026-10-29T19:30:00+08:00",
+            "ETF系统复核",
+            "system-run",
+            "FROZEN SYSTEM REPORT",
+            entry_mode="MANUAL_CONVERSATION",
+        )
