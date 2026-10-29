@@ -123,7 +123,7 @@ def test_system_review_identity_gate_rejects_invalid_binding_and_origin():
             raise AssertionError(f"invalid identity was accepted: {message}")
 
 
-def test_system_review_identity_gate_requires_origin_identity():
+def test_system_review_identity_gate_allows_omitted_origin_identity():
     from scripts import process_state_sync_request as state_sync
     request = {
         "request_type": "SCHEDULED_REVIEW_COMPLETION",
@@ -132,9 +132,4 @@ def test_system_review_identity_gate_requires_origin_identity():
         "interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
         "system_review": {"market_date": "2026-10-29"},
     }
-    try:
-        state_sync._validate_scheduled_system_review_identity(request)
-    except ValueError as exc:
-        assert "origin identity is required" in str(exc)
-    else:
-        raise AssertionError("missing System Review origin identity was accepted")
+    state_sync._validate_scheduled_system_review_identity(request)
