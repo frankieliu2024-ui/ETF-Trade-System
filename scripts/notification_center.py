@@ -334,6 +334,16 @@ def validate_formal_presentation_contract(envelope: dict[str, Any]) -> tuple[boo
     if not any(token in capital_section for token in ("机会成本", "资本效率", "风险收益比")):
         return False, "formal_presentation_missing_capital_efficiency_comparison"
 
+    # Require actual allocation alternatives and a stated decision basis.
+    alternatives = (
+        ("现金", "保留"), ("持仓", "持有"), ("追加",),
+        ("释放", "减持", "退出"), ("机会",),
+    )
+    if not all(any(word in capital_section for word in group) for group in alternatives):
+        return False, "formal_presentation_missing_capital_alternatives"
+    if not any(word in capital_section for word in ("因为", "由于", "原因", "依据", "证据", "尚未", "不足", "优于", "弱于", "条件")):
+        return False, "formal_presentation_missing_capital_choice_rationale"
+
     holding_items = []
     current_item_lines = []
     for line in holdings_section.splitlines():
@@ -358,6 +368,12 @@ def validate_formal_presentation_contract(envelope: dict[str, Any]) -> tuple[boo
             return False, "formal_presentation_position_missing_hold_vs_release_comparison"
         if not any(token in item for token in ("若", "如果", "当")):
             return False, "formal_presentation_position_missing_change_condition"
+        if not all(any(word in item for word in group) for group in (
+            ("持有", "继续"), ("追加",), ("减持", "退出", "释放"),
+        )):
+            return False, "formal_presentation_position_missing_action_alternatives"
+        if not any(word in item for word in ("因为", "由于", "依据", "证据", "尚未", "不足", "优于", "弱于", "趋势", "风险", "条件")):
+            return False, "formal_presentation_position_missing_comparison_basis"
     if not any(token in content for token in ("1）", "2）", "3）", "（1）", "（2）", "（3）")):
         return False, "formal_presentation_missing_secondary_numbering"
     return True, ""
