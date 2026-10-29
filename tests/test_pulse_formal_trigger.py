@@ -48,3 +48,14 @@ def test_pulse_trigger_is_idempotent_when_pending(tmp_path, monkeypatch):
     }), encoding="utf-8")
     monkeypatch.setattr(trigger, "STATE_PATH", state_file)
     assert trigger.create_request(now=datetime.now(timezone.utc), task_run_id="run-2", occurrence_id="scheduled_pulse_run-2")["status"] == "CREATED"
+
+
+def test_legacy_pulse_workflow_cannot_create_requests_or_dispatch_market_snapshot():
+    from pathlib import Path
+
+    workflow = Path(".github/workflows/formal-decision-pulse-trigger.yml").read_text(encoding="utf-8")
+    assert "permissions:\n  contents: read" in workflow
+    assert "Publish pulse-created formal request" not in workflow
+    assert "Start request-bound market fact production" not in workflow
+    assert "scripts/create_pulse_formal_trigger.py" not in workflow
+    assert "gh workflow run market-snapshot.yml" not in workflow
