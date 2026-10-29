@@ -302,6 +302,43 @@ class FormalPresentationSemanticGateTests(unittest.TestCase):
             heading + "\n\n" + sections[heading] for heading in headings
         )
 
+    def test_live_prompt_section_labels_and_numbering_are_accepted(self):
+        import scripts.notification_center as center
+
+        content = self._content()
+        for old, new in (
+            ("【三层监测】", "【市场监测】"),
+            ("【全市场发现逐只评估】", "【全市场发现】"),
+            ("【观察ETF逐只评估】", "【观察ETF】"),
+            ("【机会ETF逐只评估】", "【机会ETF】"),
+        ):
+            content = content.replace(old, new)
+        import re
+        content = re.sub(r"(?m)^(\\d+)）(?=\\s)", r"（\\1）", content)
+        accepted, reason = center.validate_formal_presentation_contract({
+            "presentation_content": content,
+            "decision_response": {},
+        })
+        self.assertTrue(accepted, reason)
+
+    def test_live_prompt_format_does_not_bypass_capital_semantics(self):
+        import scripts.notification_center as center
+
+        content = self._content(capital_text="风险较高，所以新增部署0元。现金保留，持仓继续持有。")
+        content = content.replace("【三层监测】", "【市场监测】")
+        content = content.replace("【全市场发现逐只评估】", "【全市场发现】")
+        content = content.replace("【观察ETF逐只评估】", "【观察ETF】")
+        content = content.replace("【机会ETF逐只评估】", "【机会ETF】")
+        accepted, reason = center.validate_formal_presentation_contract({
+            "presentation_content": content,
+            "decision_response": {},
+        })
+        self.assertFalse(accepted)
+        self.assertIn(reason, {
+            "formal_presentation_missing_whole_capital_comparison",
+            "formal_presentation_missing_capital_efficiency_comparison",
+        })
+
     def test_missing_content_without_structured_answers_is_rejected(self):
         import scripts.notification_center as center
 
