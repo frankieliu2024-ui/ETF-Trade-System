@@ -1,66 +1,29 @@
 name: ETF formal decision pulse trigger
 
+# Compatibility-only wake remains visible for audit, but this workflow must not
+# create Formal Decision requests or start a second market-fact production chain.
+# The canonical Formal Decision task consumes current-main fixed-node facts;
+# decision reminders remain owned by the existing notification pipeline.
 on:
   workflow_run:
     workflows: ["ETF market snapshot"]
     types: [completed]
 
 permissions:
-  contents: write
-  actions: write
+  contents: read
 
 concurrency:
   group: etf-formal-decision-pulse-trigger
   cancel-in-progress: false
 
 jobs:
-  trigger:
+  audit_only:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 2
     steps:
-      - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.11"
-
-      - name: Consume pulse reassessment trigger
-        id: create
-        env:
-          TASK_RUN_ID: ${{ github.event.workflow_run.id }}
-          OCCURRENCE_ID: scheduled_pulse_${{ github.event.workflow_run.id }}
+      - name: Record legacy pulse is intentionally non-producing
         run: |
-          set -euo pipefail
-          result=$(PYTHONPATH=. python scripts/create_pulse_formal_trigger.py --task-run-id "$TASK_RUN_ID" --occurrence-id "$OCCURRENCE_ID")
-          echo "$result"
-          status=$(python -c 'import json,sys; print(json.loads(sys.argv[1])["status"])' "$result")
-          echo "status=$status" >> "$GITHUB_OUTPUT"
-          request_path=$(python -c 'import json,sys; print(json.loads(sys.argv[1]).get("request_path", ""))' "$result")
-          echo "request_path=$request_path" >> "$GITHUB_OUTPUT"
-
-      - name: Publish pulse-created formal request
-        if: ${{ steps.create.outputs.status == 'CREATED' }}
-        run: |
-          set -euo pipefail
-          git fetch origin main
-          git rebase origin/main
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add requests/live_snapshot
-          git commit -m "feat: create formal decision request from market pulse"
-          git push origin HEAD:main
-
-      - name: Start request-bound market fact production
-        if: ${{ steps.create.outputs.status == 'CREATED' }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REQUEST_PATH: ${{ steps.create.outputs.request_path }}
-        run: |
-          set -euo pipefail
-          gh workflow run market-snapshot.yml --ref main \
-            -f node=scheduled \
-            -f probe_only=false \
-            -f formal_context_recovery_request="$REQUEST_PATH"
-
+          echo "No Formal Decision request created."
+          echo "No market-snapshot workflow dispatched."
+          echo "Canonical Formal Decision and notification pipelines remain unchanged."
