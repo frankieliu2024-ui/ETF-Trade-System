@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-10-29T12:38:40+08:00",
+  "generated_at": "2026-10-29T15:44:45+08:00",
   "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -8,31 +8,30 @@
     "market": {
       "status": "READY",
       "reason": "latest market snapshot is valid",
-      "snapshot": "data/market/snapshots/2026-10-29_113141.json",
-      "captured_at": "2026-10-29T11:31:41+08:00",
-      "market_phase": "MIDDAY_BREAK"
+      "snapshot": "data/market/snapshots/2026-10-29_151757.json",
+      "captured_at": "2026-10-29T15:17:57+08:00",
+      "market_phase": "POST_CLOSE_GRACE"
     },
     "account": {
       "status": "READY",
       "reason": "confirmed account facts remain valid; historical audit deltas are not pending updates",
-      "updated_at": "2026-10-28T18:02:00+08:00",
+      "updated_at": "2026-10-29T15:33:14+08:00",
       "source": "CHATGPT_USER_BROKER_SCREENSHOT",
       "pending_change_events": [],
-      "historical_audit_event_count": 125,
+      "historical_audit_event_count": 126,
       "cash": 115294.47,
       "reserved_cash_for_settlement": 0,
       "deployable_cash": 115294.47,
       "settlement_constraint_status": "NONE"
     },
     "risk": {
-      "status": "DEGRADED",
-      "reason": "ETF strategy equity reconstruction is stale for the current market date and Dashboard cannot be used as a fallback",
-      "etf_strategy_risk_pct": null,
+      "status": "READY",
+      "reason": "formal ETF strategy risk metric is available from a fresh canonical reconstruction",
+      "etf_strategy_risk_pct": -12.8623,
       "source": "data/state/etf_strategy_equity.json",
-      "stale_reconstruction_risk_pct": -12.6499,
       "source_updated_at": null,
-      "reconstruction_as_of_transaction_date": "2026-10-28",
-      "reconstruction_fresh_for_market_date": false,
+      "reconstruction_as_of_transaction_date": "2026-10-29",
+      "reconstruction_fresh_for_market_date": true,
       "data_quality": null
     },
     "close_review": {
@@ -80,15 +79,15 @@
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 1314221,
-          "sha256": "b32fa9a84a1c55ac21119d8d48b84a8cede9fe2a13e5a519184db2f32f53a2dc",
+          "byte_count": 1320358,
+          "sha256": "5dc2611a10a76ebf87db0a2cf4d262b0c56a391c0922d95e423344c3908dbd07",
           "parsed_object": true
         },
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 432602,
-          "sha256": "760786b63563c647d7cbd3dc98be48fa5c7ff58a55c95cff815a9e15707c1191",
+          "byte_count": 436620,
+          "sha256": "1b8ada94ab43b5dafd8cd626f080ca24a698bbe06743a2cc9ceeca08421f9b67",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -106,27 +105,26 @@
     "maintenance": {
       "status": "READY",
       "reason": "maintenance guard passed",
-      "checked_at": "2026-10-29T12:38:13+08:00"
+      "checked_at": "2026-10-29T15:44:26+08:00"
     }
   },
   "blockers": [],
   "degradations": [
-    "risk",
     "close_review"
   ],
   "context_read_contract": {
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 1314221,
-      "sha256": "b32fa9a84a1c55ac21119d8d48b84a8cede9fe2a13e5a519184db2f32f53a2dc",
+      "byte_count": 1320358,
+      "sha256": "5dc2611a10a76ebf87db0a2cf4d262b0c56a391c0922d95e423344c3908dbd07",
       "parsed_object": true
     },
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 432602,
-      "sha256": "760786b63563c647d7cbd3dc98be48fa5c7ff58a55c95cff815a9e15707c1191",
+      "byte_count": 436620,
+      "sha256": "1b8ada94ab43b5dafd8cd626f080ca24a698bbe06743a2cc9ceeca08421f9b67",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"
