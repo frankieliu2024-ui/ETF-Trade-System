@@ -517,6 +517,9 @@ def build_system_review_completion_request(
         "task_run_id": task_run_id,
         "occurrence_id": occurrence_id,
         "final_content": frozen_content,
+        "report_type": "ETF_SYSTEM_REVIEW",
+        "report_id": f"etf_system_review:{task_run_id}",
+        "content_hash": content_hash,
         "system_review": system_review,
         "presentation_binding": {
             "report_type": "ETF_SYSTEM_REVIEW",
