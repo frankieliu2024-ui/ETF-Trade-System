@@ -351,8 +351,8 @@ def validate_formal_presentation_contract(envelope: dict[str, Any]) -> tuple[boo
     current_item_lines = []
     for line in holdings_section.splitlines():
         stripped = line.strip()
-        numbered = bool(re.match(r"^(?:\\d+[）)]|（\\d+）)\\s*", stripped))
-        named = bool(re.match(r"^(?:\\d+[）)]\\s*|（\\d+）\\s*)?[^：\\n]{1,50}（\\d{6}）：", stripped))
+        numbered = bool(re.match(r"^(?:\d+[）)]|（\d+）)\s*", stripped))
+        named = bool(re.match(r"^(?:\d+[）)]\s*|（\d+）\s*)?[^：\n]{1,50}（\d{6}）：", stripped))
         if numbered or named:
             if current_item_lines:
                 holding_items.append("\\n".join(current_item_lines))
