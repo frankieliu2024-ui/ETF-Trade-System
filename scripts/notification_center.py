@@ -319,7 +319,7 @@ def validate_formal_presentation_contract(envelope: dict[str, Any]) -> tuple[boo
         return False, "formal_presentation_missing_capital_efficiency_comparison"
 
     import re
-    holding_items = list(re.finditer(r"(?m)^([1-9]\d?)）\s+[^\n]+", holdings_section))
+    holding_items = list(re.finditer(r"(?m)^\s*[0-9]+[）)]\s+", holdings_section))
     if not holding_items:
         return False, "formal_presentation_missing_individual_position_reviews"
     for index, match in enumerate(holding_items):
