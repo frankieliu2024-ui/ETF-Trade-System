@@ -73,6 +73,12 @@ class PushPlusNotificationClosureTests(unittest.TestCase):
 
     def test_formal_content_event_consumes_presentation_binding_full_content(self):
         from scripts import notification_center as center
+        from tests.test_notification_active_report_contract import FormalPresentationSemanticGateTests
+
+        # Use a complete canonical presentation fixture; this test validates
+        # identity/binding/hash and must not bypass the production semantic gate.
+        content = FormalPresentationSemanticGateTests()._content()
+        digest = __import__("hashlib").sha256(content.encode("utf-8")).hexdigest()
         with tempfile.TemporaryDirectory() as td:
             source = Path(td) / "scheduled-bds.json"
             source.write_text(json.dumps({
@@ -86,18 +92,19 @@ class PushPlusNotificationClosureTests(unittest.TestCase):
                     "task_id": "ETF正式决策",
                     "task_run_id": "scheduled-20261012-110000",
                     "occurrence_id": "scheduled-20261012-110000-occurrence",
-                    "full_content": "【ETF正式决策】测试正文",
+                    "full_content": content,
                     "request_id": "scheduled-20261012-110000",
+                    "parent_request_id": "scheduled-20261012-110000",
                     "decision_id": "scheduled-20261012-110000_decision",
                     "report_id": "scheduled-20261012-110000_report",
-                    "content_hash": __import__("hashlib").sha256("【ETF正式决策】测试正文".encode()).hexdigest(),
+                    "content_hash": digest,
                 },
             }, ensure_ascii=False), encoding="utf-8")
             event = center.formal_content_event(source)
         self.assertIsNotNone(event)
-        self.assertEqual(event["content"], "【ETF正式决策】测试正文")
+        self.assertEqual(event["content"], content)
         self.assertEqual(event["title"], "【ETF正式决策】")
-        self.assertEqual(event["content_hash"], __import__("hashlib").sha256("【ETF正式决策】测试正文".encode()).hexdigest())
+        self.assertEqual(event["content_hash"], digest)
 
 
     def test_canonical_known_ipo_attribution_is_consumed_without_reinference(self):
