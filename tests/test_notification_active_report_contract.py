@@ -328,7 +328,7 @@ class FormalPresentationSemanticGateTests(unittest.TestCase):
             "presentation_content": content, "decision_response": {},
         })
         self.assertFalse(accepted)
-        self.assertEqual(reason, "formal_presentation_position_missing_hold_vs_release_comparison")
+        self.assertEqual(reason, "formal_presentation_position_3_missing_hold_cash_opportunity_comparison")
 
     def test_live_prompt_section_labels_and_numbering_are_accepted(self):
         import scripts.notification_center as center
