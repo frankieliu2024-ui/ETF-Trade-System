@@ -11,7 +11,11 @@ from pathlib import Path
 from typing import Any
 
 from notification_materiality_guard import decision_critical_blockage
-from user_visible_presentation import formal_decision_semantic_errors
+
+try:
+    from user_visible_presentation import formal_decision_semantic_errors
+except ModuleNotFoundError:
+    from scripts.user_visible_presentation import formal_decision_semantic_errors
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 STATE = ROOT / "data" / "state"
