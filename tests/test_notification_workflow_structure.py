@@ -123,6 +123,20 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
         names = [x for x in result["checks"] if x["name"] == "notification_owner:single_external_effect_committer"]
         self.assertEqual(names[0]["status"], "PASS")
 
+    def test_review_projection_preserves_current_pointer_across_main_refresh(self):
+        scheduled = self.text.split("- name: Persist Scheduled Review canonical review event", 1)[1]
+        scheduled = scheduled.split("- name: Project Formal Decision completion", 1)[0]
+        self.assertIn('current_backup="/tmp/scheduled-review-current.json"', scheduled)
+        self.assertIn('cp -- "$current_backup" data/state/CURRENT.json', scheduled)
+        self.assertIn('git add -- data/state/CURRENT.json', scheduled)
+
+        formal = self.text.split("- name: Persist Formal Decision canonical review event", 1)[1]
+        formal = formal.split("- name: Send material user-action notification", 1)[0]
+        self.assertIn('current_backup="/tmp/formal-review-current.json"', formal)
+        self.assertIn('cp -- "$current_backup" data/state/CURRENT.json', formal)
+        self.assertIn('git add -- data/state/CURRENT.json', formal)
+
+
     def test_notification_state_uses_single_owner_contract(self):
         import json
         config = json.loads((ROOT / "config/maintenance/production_mutation_protocol.json").read_text(encoding="utf-8"))
