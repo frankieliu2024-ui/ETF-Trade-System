@@ -488,14 +488,11 @@ class FormalPresentationSemanticGateTests(unittest.TestCase):
         self.assertIsNone(self._formal_content_event_for(weak))
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
-def test_formal_completion_rejects_holdings_without_zero_base_counterfactual():
+    def test_formal_completion_rejects_holdings_without_zero_base_counterfactual(self):
+    def test_formal_completion_rejects_holdings_without_zero_base_counterfactual():
     import pytest
     from scripts.scheduled_review_completion import build_formal_runtime_completion_request
-
+    
     headings = (
         "【判断时点与事实边界】", "【当前正式判断】", "【风险与市场状态】",
         "【三层监测】", "【全市场发现逐只评估】", "【观察ETF逐只评估】",
@@ -524,3 +521,6 @@ def test_formal_completion_rejects_holdings_without_zero_base_counterfactual():
             final_content=body,
             decision_path="formal",
         )
+
+if __name__ == "__main__":
+    unittest.main()
