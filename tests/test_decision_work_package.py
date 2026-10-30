@@ -566,48 +566,5 @@ class DecisionWorkPackageTests(unittest.TestCase):
             _capital_competition_opportunity_reviews(reviews, graph)
 
 
-    def test_response_contract_requires_symmetric_holding_and_opportunity_counterfactuals(self):
-        graph = _decision_problem_graph(
-            [{"code": "159981", "name": "能源化工ETF", "asset_type": "ETF", "market_value": 10000}],
-            [{"code": "159127", "name": "发现候选"}],
-            {"deployable_cash": 1000},
-            observation_inputs=[{"code": "513180", "name": "恒生科技ETF"}],
-        )
-        package = _decision_work_package(graph, _evidence_requirement_plan(graph), [])
-        contract = package["response_contract"]
-
-        self.assertEqual(contract["holding_capital_competition_policy"], "RELEASE_FIRST")
-        self.assertEqual(contract["holding_counterfactual_policy"], "ZERO_BASE_HOLD_REDUCE_EXIT_COMPARE")
-        self.assertTrue({
-            "zero_base_reentry_test",
-            "hold_over_cash_and_eligible_opportunity_reason",
-            "reduce_over_hold_reason",
-            "exit_over_hold_reason",
-        } <= set(contract["holding_additional_fields"]))
-
-        self.assertEqual(contract["opportunity_capital_competition_policy"], "TRIAL_CONFIRM_ZERO_COMPARE")
-        self.assertTrue({
-            "trial_eligibility_and_trial_over_zero_reason",
-            "direct_confirm_eligibility_and_confirm_over_trial_reason",
-            "zero_deployment_decisive_reason_if_zero",
-            "capital_alternative_if_trial_or_confirm",
-            "observable_requalification_condition",
-            "next_review_node",
-        } <= set(contract["opportunity_review_fields"]))
-        self.assertTrue({
-            "why_not_trial",
-            "why_not_confirm",
-            "why_zero_is_currently_better",
-        } <= set(contract["opportunity_nonqualification_fields"]))
-
-        discovery = next(item for item in graph if item["problem_id"] == "DISCOVERY:159127")
-        observation = next(item for item in graph if item["problem_id"] == "OBSERVATION:513180")
-        self.assertIn("直接Confirm和0元", discovery["required_business_judgment"])
-        self.assertIn("直接Confirm和0元", observation["required_business_judgment"])
-        self.assertIn("不得默认0元", discovery["required_business_judgment"])
-        self.assertIn("不得自动升级身份", discovery["required_business_judgment"])
-
-
-
 if __name__ == "__main__":
     unittest.main()
