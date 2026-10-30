@@ -448,6 +448,24 @@ def _validate_system_review_fact_cutoff(system_review: dict) -> None:
         )
 
 
+def validate_system_review_user_facing_clarity(final_content: str) -> None:
+    """Reject explicit internal identifiers in System Review's frozen user report only.
+
+    Keep the guard narrow: ordinary ETF names, provider names, and technical facts
+    needed to explain a real incident must remain reportable.
+    """
+    import re
+
+    content = str(final_content or "")
+    forbidden = (
+        r"(?<![A-Za-z_])(?:request_id|task_run_id|occurrence_id|content_hash)\s*[:=]",
+        r"CURRENT\.close_review_closure_is_stale",
+        r"(?<![A-Za-z_])(?:CHATGPT_MANUAL_SYSTEM_REVIEW|CHATGPT_SCHEDULED_SYSTEM_REVIEW|MANUAL_CONVERSATION|AUTOMATIC_SCHEDULED_TASK)(?![A-Za-z_])",
+    )
+    if any(re.search(pattern, content, flags=re.IGNORECASE) for pattern in forbidden):
+        raise ValueError("System Review user report exposes internal audit identifiers; revise before freezing")
+
+
 def validate_system_review_presentation(system_review: dict, final_content: str) -> None:
     """Keep Scheduled System Review informational and non-decisional.
 
@@ -514,6 +532,7 @@ def build_system_review_completion_request(
         if origin_mode != entry_mode:
             raise ValueError("scheduled system review origin entry_mode does not match completion entry_mode")
     validate_system_review_presentation(system_review, final_content)
+    validate_system_review_user_facing_clarity(final_content)
     validate_user_visible_content(str(final_content), canonical_closure_confirmed=False)
     frozen_content = str(final_content)
     content_hash = hashlib.sha256(frozen_content.encode("utf-8")).hexdigest()

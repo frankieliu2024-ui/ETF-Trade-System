@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-10-29T20:36:16+08:00",
+  "generated_at": "2026-10-30T12:39:17+08:00",
   "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -8,9 +8,9 @@
     "market": {
       "status": "READY",
       "reason": "latest market snapshot is valid",
-      "snapshot": "data/market/snapshots/2026-10-29_151757.json",
-      "captured_at": "2026-10-29T15:17:57+08:00",
-      "market_phase": "POST_CLOSE_GRACE"
+      "snapshot": "data/market/snapshots/2026-10-30_113146.json",
+      "captured_at": "2026-10-30T11:31:46+08:00",
+      "market_phase": "MIDDAY_BREAK"
     },
     "account": {
       "status": "READY",
@@ -25,22 +25,23 @@
       "settlement_constraint_status": "NONE"
     },
     "risk": {
-      "status": "READY",
-      "reason": "formal ETF strategy risk metric is available from a fresh canonical reconstruction",
-      "etf_strategy_risk_pct": -12.8623,
+      "status": "DEGRADED",
+      "reason": "ETF strategy equity reconstruction is stale for the current market date and Dashboard cannot be used as a fallback",
+      "etf_strategy_risk_pct": null,
       "source": "data/state/etf_strategy_equity.json",
+      "stale_reconstruction_risk_pct": -12.8623,
       "source_updated_at": null,
       "reconstruction_as_of_transaction_date": "2026-10-29",
-      "reconstruction_fresh_for_market_date": true,
+      "reconstruction_fresh_for_market_date": false,
       "data_quality": null
     },
     "close_review": {
       "status": "DEGRADED",
       "reason": "close review closure exists but evidence or business completion is not sufficient",
-      "market_date": "2026-10-28",
-      "formal_review_market_date": "2026-10-28",
-      "formal_review_path": "events/reviews/2026-10-28.json",
-      "closure_path": "data/state/close_review_closure_2026-10-28.json",
+      "market_date": "2026-10-29",
+      "formal_review_market_date": "2026-10-29",
+      "formal_review_path": "events/reviews/2026-10-29.json",
+      "closure_path": "data/state/close_review_closure_2026-10-29.json",
       "review_evidence_status": "DEGRADED",
       "business_completion_status": "DEGRADED"
     },
@@ -79,15 +80,15 @@
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 1331713,
-          "sha256": "97dfd20f42ff2cf8fc89303bdb82ae2ff2fe53c2d041cb79fd91db1e81ccda3f",
+          "byte_count": 1321275,
+          "sha256": "99172fdcb5fc73eba8c5e192d2ecb1bce3a2c0b66bd2db3e50d5d53082569270",
           "parsed_object": true
         },
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 443042,
-          "sha256": "c51090d14d608fc02fa1bcd82f37e955989ad0892282fd8f10caf08f6cefee5d",
+          "byte_count": 440247,
+          "sha256": "1c77d586cbd461a631f84f39669d3706a73449f3ce30e6a92038e498f54cf4e1",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -105,26 +106,27 @@
     "maintenance": {
       "status": "READY",
       "reason": "maintenance guard passed",
-      "checked_at": "2026-10-29T20:35:53+08:00"
+      "checked_at": "2026-10-30T12:38:51+08:00"
     }
   },
   "blockers": [],
   "degradations": [
+    "risk",
     "close_review"
   ],
   "context_read_contract": {
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 1331713,
-      "sha256": "97dfd20f42ff2cf8fc89303bdb82ae2ff2fe53c2d041cb79fd91db1e81ccda3f",
+      "byte_count": 1321275,
+      "sha256": "99172fdcb5fc73eba8c5e192d2ecb1bce3a2c0b66bd2db3e50d5d53082569270",
       "parsed_object": true
     },
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 443042,
-      "sha256": "c51090d14d608fc02fa1bcd82f37e955989ad0892282fd8f10caf08f6cefee5d",
+      "byte_count": 440247,
+      "sha256": "1c77d586cbd461a631f84f39669d3706a73449f3ce30e6a92038e498f54cf4e1",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"

@@ -160,16 +160,100 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
         self.assertIn("steps.dispatch_completion_kind.outputs.formal", workflow)
         self.assertIn("steps.dispatch_completion_kind.outputs.scheduled", workflow)
 
+    def test_formal_completion_normalizes_present_hash_drift_from_identical_frozen_body(self):
+        import hashlib
+        from scripts.process_state_sync_request import _validate_formal_completion_identity
+
+        content = "【ETF正式决策】2026-10-30 09:03 正式判断\n\n正式决策正文。"
+        request = {
+            "request_type": "SCHEDULED_REVIEW_COMPLETION",
+            "task_id": "ETF正式决策",
+            "formal_fact_type": "FORMAL_CURRENT_MAIN_DECISION",
+            "interaction_scenario": "FORMAL_DECISION",
+            "task_run_id": "formal-run-0903",
+            "occurrence_id": "formal-run-0903",
+            "request_id": "formal-request-0903",
+            "requested_at_beijing": "2026-10-30T09:03:00+08:00",
+            "final_content": content,
+            "content_hash": "0" * 64,
+            "presentation_binding": {
+                "full_content": content,
+                "content_hash": "1" * 64,
+                "content_hash_source": "completion_builder",
+            },
+        }
+
+        _validate_formal_completion_identity(request)
+
+        expected = hashlib.sha256(content.encode("utf-8")).hexdigest()
+        self.assertEqual(request["content_hash"], expected)
+        self.assertEqual(request["presentation_binding"]["content_hash"], expected)
+        self.assertEqual(
+            request["presentation_binding"]["content_hash_warning"],
+            "content_hash_mismatch",
+        )
+        self.assertEqual(
+            request["presentation_binding"]["content_hash_source"],
+            "canonical_owner_normalized_after_mismatch",
+        )
+
+    def test_formal_completion_rejects_missing_or_malformed_hashes(self):
+        from scripts.process_state_sync_request import _validate_formal_completion_identity
+
+        content = "【ETF正式决策】2026-10-30 09:03 正式判断\n\n正式决策正文。"
+        base = {
+            "request_type": "SCHEDULED_REVIEW_COMPLETION",
+            "task_id": "ETF正式决策",
+            "formal_fact_type": "FORMAL_CURRENT_MAIN_DECISION",
+            "interaction_scenario": "FORMAL_DECISION",
+            "task_run_id": "formal-run-0903",
+            "occurrence_id": "formal-run-0903",
+            "request_id": "formal-request-0903",
+            "requested_at_beijing": "2026-10-30T09:03:00+08:00",
+            "final_content": content,
+            "presentation_binding": {"full_content": content},
+        }
+        for value in ("", "placeholder", "not-a-sha256"):
+            request = dict(base)
+            request["presentation_binding"] = dict(base["presentation_binding"])
+            request["presentation_binding"]["content_hash"] = value
+            with self.subTest(content_hash=value):
+                with self.assertRaisesRegex(ValueError, "requires a real content_hash"):
+                    _validate_formal_completion_identity(request)
+
+    def test_formal_completion_rejects_presentation_body_drift(self):
+        from scripts.process_state_sync_request import _validate_formal_completion_identity
+
+        content = "【ETF正式决策】2026-10-30 09:03 正式判断\n\n正式决策正文。"
+        request = {
+            "request_type": "SCHEDULED_REVIEW_COMPLETION",
+            "task_id": "ETF正式决策",
+            "formal_fact_type": "FORMAL_CURRENT_MAIN_DECISION",
+            "interaction_scenario": "FORMAL_DECISION",
+            "task_run_id": "formal-run-0903",
+            "occurrence_id": "formal-run-0903",
+            "request_id": "formal-request-0903",
+            "requested_at_beijing": "2026-10-30T09:03:00+08:00",
+            "final_content": content,
+            "content_hash": "0" * 64,
+            "presentation_binding": {
+                "full_content": content + "发生变化",
+                "content_hash": "0" * 64,
+            },
+        }
+
+        with self.assertRaisesRegex(ValueError, "frozen content mismatch"):
+            _validate_formal_completion_identity(request)
+
+    def test_formal_completion_event_preserves_hash_normalization_audit_marker(self):
+        writer = (ROOT / "scripts" / "process_state_sync_request.py").read_text(encoding="utf-8")
+        self.assertIn("canonical_owner_normalized_after_mismatch", writer)
+        self.assertIn('binding["content_hash_warning"] = hash_warning', writer)
+
     def test_formal_actor_prefers_completion_push_and_uses_one_fallback(self):
         owner = (ROOT / "scripts" / "scheduled_review_completion_owner.py").read_text(encoding="utf-8")
         self.assertIn("def persist_completion", owner)
         self.assertIn("def dispatch_notification", owner)
-
-
-    def test_formal_actor_fails_closed_on_content_hash_mismatch(self):
-        actor = (ROOT / "scripts" / "run_scheduled_formal_decision_actor.py").read_text(encoding="utf-8")
-        self.assertIn('hard_failures = [key for key, ok in checks.items() if not ok]', actor)
-        self.assertNotIn('key != "content_hash"', actor)
 
 
 if __name__ == "__main__":

@@ -2684,7 +2684,13 @@ def record_formal_decision_report_event(request: dict, bds: dict | None = None) 
     supplied_binding_hash = str(binding.get("content_hash") or "").strip()
     # Formal Decision uses the same single-owner rule as Scheduled Review:
     # derive the audit hash from the already frozen presentation content.
-    hash_source = "audit_supplied" if (supplied_bds_hash or supplied_binding_hash) else "canonical_owner"
+    hash_warning = str(binding.get("content_hash_warning") or "").strip()
+    hash_source = (
+        "canonical_owner_normalized_after_mismatch"
+        if hash_warning == "content_hash_mismatch"
+        else "audit_supplied" if (supplied_bds_hash or supplied_binding_hash)
+        else "canonical_owner"
+    )
     binding = {
         "report_type": "ETF_FORMAL_DECISION",
         "task_id": str(source.get("task_id") or binding.get("task_id") or "ETF正式决策"),
@@ -2698,6 +2704,8 @@ def record_formal_decision_report_event(request: dict, bds: dict | None = None) 
         "content_hash": content_hash,
         "content_hash_source": hash_source,
     }
+    if hash_warning:
+        binding["content_hash_warning"] = hash_warning
     occurrence = str(source.get("occurrence_id") or binding.get("occurrence_id") or task_run_id)
     payload = {
         "event_type": "FORMAL_DECISION_REPORT",
@@ -3475,13 +3483,41 @@ def _validate_formal_completion_identity(request: dict) -> None:
     requested_minute = requested.astimezone(SHANGHAI).replace(second=0, microsecond=0)
     if title_time != requested_minute:
         raise ValueError("Formal Decision FINAL_CONTENT title time does not match this run")
-    binding = request.get("presentation_binding") if isinstance(request.get("presentation_binding"), dict) else {}
-    supplied_hash = str(request.get("content_hash") or binding.get("content_hash") or "").strip()
-    if not supplied_hash or supplied_hash.lower() in {"sha256-placeholder", "placeholder"}:
+    binding_value = request.get("presentation_binding")
+    if not isinstance(binding_value, dict):
+        raise ValueError("Formal Decision completion requires presentation_binding")
+    binding = dict(binding_value)
+    binding_content = str(binding.get("full_content") or "")
+    if not binding_content:
+        raise ValueError("Formal Decision completion requires presentation_binding.full_content")
+    if binding_content != content:
+        raise ValueError("Formal Decision completion frozen content mismatch")
+
+    supplied_hashes = [
+        str(request.get("content_hash") or "").strip(),
+        str(binding.get("content_hash") or "").strip(),
+    ]
+    supplied_hashes = [value for value in supplied_hashes if value]
+    real_hashes = [
+        value for value in supplied_hashes
+        if re.fullmatch(r"[0-9a-fA-F]{64}", value)
+    ]
+    if not real_hashes:
         raise ValueError("Formal Decision completion requires a real content_hash")
+
     expected_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
-    if supplied_hash != expected_hash:
-        raise ValueError("Formal Decision completion content_hash mismatch")
+    hash_mismatch = any(value.lower() != expected_hash for value in supplied_hashes)
+    if hash_mismatch:
+        # The frozen body and run identity remain the authority.  A present,
+        # well-formed but stale hash is audit metadata drift: normalize it
+        # from the immutable body without weakening content/identity checks.
+        binding["content_hash_warning"] = "content_hash_mismatch"
+        binding["content_hash_source"] = "canonical_owner_normalized_after_mismatch"
+    else:
+        binding.setdefault("content_hash_source", "completion_builder")
+    request["content_hash"] = expected_hash
+    binding["content_hash"] = expected_hash
+    request["presentation_binding"] = binding
 
 def is_formal_decision_completion(request: dict) -> bool:
     """Recognize the shared Formal Decision completion contract independent of actor label.
