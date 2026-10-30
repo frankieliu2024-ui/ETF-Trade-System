@@ -279,16 +279,16 @@ class FormalPresentationSemanticGateTests(unittest.TestCase):
             "【三层监测】": "海外与跨市场、A股内部反馈、ETF与资本状态分别核验，数据缺失降低证据强度但不自动等于没有机会。",
             "【全市场发现逐只评估】": "1. 发现候选评估\n\n1）候选甲（159001）：仅为发现输入，尚未自动成为观察ETF或机会ETF。",
             "【观察ETF逐只评估】": "1. 观察对象评估\n\n1）观察甲（159002）：保留观察身份，仍需核验趋势、承接和独立假设。",
-            "【机会ETF逐只评估】": "1. 机会对象评估\n\n1）当前机会状态尚待完整比较，不把未形成写成零只。",
-            "【全市场机会与资本竞争】": capital_text or "现金、候选机会、持仓之间必须进行全资本竞争。相较将现金保留，继续持有既有持仓、追加、减持释放或退出并部署机会ETF均需比较。因为目前没有证据表明候选机会的风险收益比、独立假设和资本效率优于现金保留与旧仓继续持有，所以不追加、不减持释放；比较机会成本、现金缓冲与旧仓释放后可部署资本，不能只因风险较高就机械归零。",
+            "【机会ETF逐只评估】": "1. 机会对象评估\n\n1）当前候选尚未达到机会资格。Trial按5,000元标准评估，直接Confirm必须独立达到Confirm证据标准，三者与0元部署比较；当前Trial和Confirm均未成立，决定性缺口是持续性与承接证据不足，下一复核节点为下次正式决策。",
+            "【全市场机会与资本竞争】": capital_text or "现金保留、持仓继续持有、追加、部分减持释放、全部退出以及合格机会之间必须进行全资本竞争。相较现金保留与其他机会，比较风险收益比、资本效率、机会成本和迁移成本。因为当前候选证据不足以胜出，当前胜出用途为保留现金并维持具备正面理由的持仓；未选择追加、减持释放和全部退出，是因为尚无证据证明其边际收益风险更优。下一单位资本当前最有效用途为保留现金。",
             "【现金管理】": "可部署现金和结算约束必须核验。实际新增部署为0元、实际释放为0份时，必须说明这是完整比较后的结论，而不是默认值。",
             "【全部实际持仓】": (
                 "1. 持仓逐只比较\n\n"
                 "1）纳指ETF（159941）：持有管理，不追加。"
-                + ("相较继续持有与释放资本，当前没有足够证据证明释放后部署到其他机会更优；可释放资本暂不确认。若海外科技持续弱于市场或回撤扩大，再评估。" if holding_comparison else "当前继续持有，因为风险较高。")
-                + "\n\n2）能源化工ETF（159981）：持有管理，不追加。相较继续持有与释放资本，当前没有更优机会证据；可释放资本暂不确认。若趋势和相对强度恶化，再评估。"
-                + "\n\n3）创新药ETF（159992）：持有管理，不追加。相较继续持有与释放资本，尚无完整反转证据；可释放资本暂不确认。若持续弱于市场或更优机会形成，再评估。"
-                + "\n\n4）全指器械ETF（159056）：持有管理，不追加。相较继续持有与释放资本，尚无明确破坏事实；可释放资本暂不确认。若行业持续弱于市场，再评估。"
+                + ("相较现金、合格机会和替代用途，继续占资优于释放资本，因为当前风险收益仍可接受且迁移成本较高。若当前没有该持仓，按当前价格和证据仍愿意重新配置资本；继续持有、追加、部分减持和全部退出分别比较。继续持有保留旧仓赢家右尾，承担的失败风险可控，且保留账户功能；迁移成本需覆盖。若海外科技持续弱于市场或回撤扩大，再评估。" if holding_comparison else "目前暂时继续持有。")
+                + "\n\n2）能源化工ETF（159981）：持有管理，不追加。相较现金、合格机会和替代用途，继续占资优于释放资本，因为趋势与相对强度仍占优；若当前没有该持仓，按当前价格和证据仍愿意重新配置资本；继续持有、追加、部分减持和全部退出分别比较。继续持有保留旧仓赢家右尾，承担的失败风险可控，且保留账户功能；迁移成本需覆盖。若趋势和相对强度恶化，再评估。"
+                + "\n\n3）创新药ETF（159992）：持有管理，不追加。相较现金、合格机会和替代用途，继续占资优于释放资本，因为尚有反转修复的可证伪空间；若当前没有该持仓，按当前价格和证据仍愿意重新配置资本；继续持有、追加、部分减持和全部退出分别比较。继续持有保留旧仓赢家右尾，承担的失败风险可控，且保留账户功能；迁移成本需覆盖。若持续弱于市场或反转假设被证伪，再评估。"
+                + "\n\n4）全指器械ETF（159056）：持有管理，不追加。相较现金、合格机会和替代用途，继续占资优于释放资本，因为行业配置功能仍有保留价值；若当前没有该持仓，按当前价格和证据仍愿意重新配置资本；继续持有、追加、部分减持和全部退出分别比较。继续持有保留旧仓赢家右尾，承担的失败风险可控，且保留账户功能；迁移成本需覆盖。若行业持续弱于市场，再评估。"
             ),
             "【最终管理动作】": "建议新增部署0元，实际新增部署0元，实际释放0份。继续管理持仓；Trial与Confirm按正式规则分别判断，不自动下单。",
             "【关键风险与改变判断的条件】": "下一节点验证风险许可、市场宽度、候选持续性、持仓相对强弱、现金竞争和账户新成交。",
@@ -321,14 +321,14 @@ class FormalPresentationSemanticGateTests(unittest.TestCase):
         content = self._content()
         content = re.sub(r"(?m)^\\d+）(?=[^\\n]*（\\d{6}）：)", "", content)
         content = content.replace(
-            "相较继续持有与释放资本，尚无完整反转证据；可释放资本暂不确认。",
-            "目前暂时继续持有。",
+            "相较现金、合格机会和替代用途，继续占资优于释放资本，因为尚有反转修复的可证伪空间；",
+            "目前暂时继续持有；",
         )
         accepted, reason = center.validate_formal_presentation_contract({
             "presentation_content": content, "decision_response": {},
         })
         self.assertFalse(accepted)
-        self.assertEqual(reason, "formal_presentation_position_missing_hold_vs_release_comparison")
+        self.assertEqual(reason, "formal_presentation_position_3_missing_hold_cash_opportunity_comparison")
 
     def test_live_prompt_section_labels_and_numbering_are_accepted(self):
         import scripts.notification_center as center
@@ -440,7 +440,7 @@ class FormalPresentationSemanticGateTests(unittest.TestCase):
         })
 
         self.assertFalse(accepted)
-        self.assertEqual(reason, "formal_presentation_position_missing_hold_vs_release_comparison")
+        self.assertEqual(reason, "formal_presentation_position_1_missing_hold_cash_opportunity_comparison")
 
     def _formal_content_event_for(self, content):
         import json
