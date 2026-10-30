@@ -69,41 +69,100 @@ def display_name(position: dict) -> str:
 
 
 def _structured_decision_from_report(event: dict) -> dict:
-    """Recover display fields from a completed report's frozen presentation content."""
+    """Recover Dashboard fields from the canonical frozen Formal Decision body.
+
+    Direct Scheduled Review completion events carry the immutable user-facing
+    body in presentation_binding.full_content. Missing structured fields stay
+    explicit rather than being guessed from discovery or account state.
+    """
     binding = event.get("presentation_binding") or {}
-    content = str(binding.get("full_content") or "")
+    content = str(binding.get("full_content") or event.get("final_content") or "")
     if not content:
         return {}
-    def match(pattern: str) -> str:
-        found = re.search(pattern, content, flags=re.MULTILINE)
-        return found.group(1).strip() if found else ""
-    risk = match(r"风险许可为([^。\n]+)")
+
+    def match(patterns: tuple[str, ...], source: str = content) -> str:
+        for pattern in patterns:
+            found = re.search(pattern, source, flags=re.MULTILINE)
+            if found:
+                return found.group(1).strip()
+        return ""
+
+    def section(name: str) -> str:
+        marker = f"【{name}】"
+        start = content.find(marker)
+        if start < 0:
+            return ""
+        start += len(marker)
+        next_heading = re.search(r"\n【[^】]+】", content[start:])
+        return content[start:start + next_heading.start()] if next_heading else content[start:]
+
+    risk = match((
+        r"^\s*[-*]?\s*风险许可[：:]\s*([^。；\n]+)",
+        r"风险许可为([^。；\n]+)",
+    ))
     if not risk:
-        risk = match(r"风险许可[：:]([^。\n]+)")
-    candidate = match(r"候选中仅将([^，。\n]+)")
-    if not candidate:
-        candidate = match(r"机会ETF(?:是|为)[：:]?\s*([^，。\n]+)")
-    amount = match(r"建议新增部署\s*([^，。；\n]+)")
-    release = match(r"实际释放\s*([^，。；\n]+)")
+        denied = []
+        if re.search(r"Trial\s*不授予", content, flags=re.IGNORECASE):
+            denied.append("Trial不授予")
+        if re.search(r"Confirm\s*不授予", content, flags=re.IGNORECASE):
+            denied.append("Confirm不授予")
+        if denied:
+            risk = "未单独字段化（正文明确：" + "、".join(denied) + "）"
+
+    candidate = match((
+        r"^\s*[-*]?\s*唯一主候选[：:]\s*([^。；\n]+)",
+        r"候选中仅将([^，。；\n]+)",
+        r"机会ETF(?:是|为)[：:]?\s*([^，。；\n]+)",
+    ))
+    competition = section("全市场机会与资本竞争")
+    if not candidate and competition and (
+        "没有合格替代机会胜出现金" in competition
+        or "没有新的主候选" in competition
+    ):
+        candidate = "无新的主候选；现金优先"
+
+    amount = match((r"建议新增部署\s*([^，。；\n]+)",))
+    release = match((r"实际释放\s*([^，。；\n]+)",))
     amount_action = "；".join(part for part in (
         f"新增部署{amount}" if amount else "",
         f"实际释放{release}" if release else "",
     ) if part)
-    reason = match(r"主因是([^。\n]+)")
-    if not reason:
-        reason = match(r"原因是([^。\n]+)")
+
+    reason = match((
+        r"^\s*[-*]?\s*(?:最大风险或0元主因|0元主因|决定性原因)[：:]\s*([^。\n]+)",
+        r"主因是([^。\n]+)",
+        r"原因是([^。\n]+)",
+    ))
+    if not reason and competition:
+        sentences = re.split(r"(?<=[。！？])", competition.strip())
+        reason = next((
+            sentence.strip().rstrip("。！？")
+            for sentence in sentences
+            if "现金" in sentence and (
+                "胜出" in sentence or "优势" in sentence or "优于" in sentence
+            )
+        ), "")
+
     lifecycle = []
-    for code, action in re.findall(r"[（(]\d+[）)]\s*[^\n：:（(]+[（(](\d{6})[）)]：([^。\n]+)", content):
-        lifecycle.append(f"{code}：{action.strip()}")
+    holdings = section("全部实际持仓")
+    for line in holdings.splitlines():
+        found = re.match(r"\s*(?:[-*]\s*)?(.+?)（(\d{6})）：([^。\n]+)", line)
+        if found:
+            name, code, action = (part.strip() for part in found.groups())
+            lifecycle.append(f"{name}（{code}）：{action}")
+
+    data_as_of = match((
+        r"^\s*[-*]?\s*决策数据时点[：:]\s*([^。；\n]+)",
+        r"^\s*[-*]?\s*判断时点[：:]\s*([^。；\n]+)",
+    ))
     return {
         "risk_permission": risk,
         "main_candidate": candidate,
         "amount_action": amount_action,
         "decisive_reason": reason,
         "lifecycle": "；".join(lifecycle),
-        "data_as_of_beijing": event.get("reviewed_at_beijing") or event.get("market_date") or "",
+        "data_as_of_beijing": data_as_of or event.get("reviewed_at_beijing") or event.get("market_date") or "",
     }
-
 
 def latest_canonical_formal_decision(root: Path = ROOT) -> dict:
     """Return the newest canonical decision/report, explicitly marked when stale.
@@ -186,9 +245,15 @@ def latest_canonical_formal_decision(root: Path = ROOT) -> dict:
     stale_reasons = []
     if current_codes and lifecycle_codes and not lifecycle_codes.issubset(current_codes):
         stale_reasons.append("正式决策生命周期包含当前账户已退出标的")
-    if account_time and parsed.isoformat() < account_time:
-        if lifecycle_codes and current_codes and lifecycle_codes != current_codes:
-            stale_reasons.append("正式决策早于最新账户事实且持仓集合已变化")
+    if account_time:
+        try:
+            account_stamp = datetime.fromisoformat(account_time.replace("Z", "+00:00"))
+            if account_stamp.tzinfo is None:
+                account_stamp = account_stamp.replace(tzinfo=SHANGHAI)
+            if account_stamp > parsed:
+                stale_reasons.append("正式决策早于最新账户事实；该账户变化尚未纳入本次正式判断")
+        except (TypeError, ValueError):
+            pass
     decision["_current_applicability"] = "HISTORICAL" if stale_reasons else "CURRENT"
     decision["_stale_reason"] = "；".join(dict.fromkeys(stale_reasons))
     lifecycle = decision.get("lifecycle")

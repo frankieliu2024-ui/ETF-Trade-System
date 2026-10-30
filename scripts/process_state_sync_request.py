@@ -3716,9 +3716,10 @@ def normalize_broker_account_fact_ingress(request: dict, supplied: object) -> tu
         "total_assets": "total_asset",
         "available_cash": "cash",
         "securities_market_value": "stock_market_value",
+        "floating_pnl": "holding_pnl",
     }
     for source, target in aliases.items():
-        if target not in normalized and normalized.get(source) is not None:
+        if target not in supplied and normalized.get(source) is not None:
             normalized[target] = normalized[source]
     # A broker screenshot is a new authoritative observation for the
     # screenshot-scoped account fields. Refresh the observation timestamp and
@@ -3782,8 +3783,9 @@ def normalize_broker_account_fact_ingress(request: dict, supplied: object) -> tu
             moved += 1
         else:
             kept.append(position)
+    # Persist per-row normalization even when no unresolved asset was moved.
+    normalized["positions"] = kept
     if moved:
-        normalized["positions"] = kept
         normalized["unresolved_assets"] = unresolved
     return normalized, moved
 

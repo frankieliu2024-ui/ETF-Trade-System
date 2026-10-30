@@ -1,6 +1,9 @@
 import unittest
 
-from scripts.process_state_sync_request import (\n    normalize_broker_account_fact_ingress,\n    validate_broker_account_fact_ingress,\n)
+from scripts.process_state_sync_request import (
+    normalize_broker_account_fact_ingress,
+    validate_broker_account_fact_ingress,
+)
 
 
 class BrokerAccountFactIngressContractTests(unittest.TestCase):
