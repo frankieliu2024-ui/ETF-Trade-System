@@ -35,7 +35,7 @@ class FakeResponse:
 
 class SystemReviewNotificationRunReadbackTests(unittest.TestCase):
     def _projection_fixture(self, *, report_content=None):
-        content = "【ETF系统复核】\\n本次复核正文"
+        content = "【ETF系统复核】\n本次复核正文"
         digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
         completion = {"request_id": "req-1", "presentation_binding": {
             "task_id": "ETF系统复核", "task_run_id": "run-1", "occurrence_id": "occ-1",
@@ -72,8 +72,8 @@ class SystemReviewNotificationRunReadbackTests(unittest.TestCase):
     def test_system_projection_rejects_provider_success_without_exact_full_content(self):
         actor = _load()
         _, completion, files = self._projection_fixture(report_content="截断正文")
-        with patch.object(actor, "read_main_json", side_effect=lambda path: files.get(path)), \\
-             patch.object(actor.time, "time", side_effect=[100, 221]), \\
+        with patch.object(actor, "read_main_json", side_effect=lambda path: files.get(path)), \
+             patch.object(actor.time, "time", side_effect=[100, 221]), \
              patch.object(actor.time, "sleep"):
             result = actor._wait_for_system_projection(completion)
         self.assertFalse(result["verified"])
@@ -85,7 +85,7 @@ class SystemReviewNotificationRunReadbackTests(unittest.TestCase):
         run = {"id": 123, "created_at": "2026-10-30T01:00:01Z", "event": "workflow_dispatch",
                "head_branch": "main", "display_title": "ETF decision notification — " + path,
                "status": "completed", "conclusion": "success"}
-        with patch.dict("os.environ", {"GITHUB_TOKEN": "test-token", "GITHUB_REPOSITORY": "owner/repo"}), \\
+        with patch.dict("os.environ", {"GITHUB_TOKEN": "test-token", "GITHUB_REPOSITORY": "owner/repo"}), \
              patch.object(actor.urllib_request, "urlopen", return_value=FakeResponse([run])):
             result = actor._readback_notification_run(path, datetime(2026, 10, 30, 1, tzinfo=timezone.utc))
         self.assertTrue(result["verified"])
@@ -96,8 +96,8 @@ class SystemReviewNotificationRunReadbackTests(unittest.TestCase):
         path = "requests/live_snapshot/unique__scheduled_review_completion.json"
         run = {"id": 124, "created_at": "2026-10-30T01:00:01Z", "event": "workflow_dispatch",
                "head_branch": "main", "display_title": "ETF decision notification — different"}
-        with patch.dict("os.environ", {"GITHUB_TOKEN": "test-token", "GITHUB_REPOSITORY": "owner/repo"}), \\
-             patch.object(actor.urllib_request, "urlopen", return_value=FakeResponse([run])), \\
+        with patch.dict("os.environ", {"GITHUB_TOKEN": "test-token", "GITHUB_REPOSITORY": "owner/repo"}), \
+             patch.object(actor.urllib_request, "urlopen", return_value=FakeResponse([run])), \
              patch.object(actor.time, "monotonic", side_effect=[0, 61]):
             result = actor._readback_notification_run(path, datetime(2026, 10, 30, 1, tzinfo=timezone.utc))
         self.assertFalse(result["verified"])
@@ -114,9 +114,9 @@ class SystemReviewNotificationRunReadbackTests(unittest.TestCase):
         run = {"id": 125, "created_at": "2026-10-30T01:00:01Z", "event": "workflow_dispatch",
                "head_branch": "main", "display_title": "ETF decision notification — " + path,
                "status": "in_progress", "conclusion": None}
-        with patch.dict("os.environ", {"GITHUB_TOKEN": "test-token", "GITHUB_REPOSITORY": "owner/repo"}), \\
-             patch.object(actor.urllib_request, "urlopen", return_value=FakeResponse([run])), \\
-             patch.object(actor.time, "monotonic", side_effect=[0, 0, 61]), \\
+        with patch.dict("os.environ", {"GITHUB_TOKEN": "test-token", "GITHUB_REPOSITORY": "owner/repo"}), \
+             patch.object(actor.urllib_request, "urlopen", return_value=FakeResponse([run])), \
+             patch.object(actor.time, "monotonic", side_effect=[0, 0, 61]), \
              patch.object(actor.time, "sleep"):
             result = actor._readback_notification_run(path, datetime(2026, 10, 30, 1, tzinfo=timezone.utc))
         self.assertFalse(result["verified"])
@@ -127,7 +127,7 @@ class SystemReviewNotificationRunReadbackTests(unittest.TestCase):
         run = {"id": 126, "created_at": "2026-10-30T01:00:01Z", "event": "workflow_dispatch",
                "head_branch": "main", "display_title": "ETF decision notification — " + path,
                "status": "completed", "conclusion": "failure"}
-        with patch.dict("os.environ", {"GITHUB_TOKEN": "test-token", "GITHUB_REPOSITORY": "owner/repo"}), \\
+        with patch.dict("os.environ", {"GITHUB_TOKEN": "test-token", "GITHUB_REPOSITORY": "owner/repo"}), \
              patch.object(actor.urllib_request, "urlopen", return_value=FakeResponse([run])):
             result = actor._readback_notification_run(path, datetime(2026, 10, 30, 1, tzinfo=timezone.utc))
         self.assertFalse(result["verified"])
