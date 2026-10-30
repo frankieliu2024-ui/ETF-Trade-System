@@ -49,5 +49,32 @@ class AccountFactConsumptionContractTests(unittest.TestCase):
             self.assertTrue(request.exists())
 
 
+
+    def test_floating_pnl_alias_updates_canonical_account_holding_pnl(self):
+        request = {
+            "source": "CHATGPT_USER_BROKER_SCREENSHOT",
+            "submitted_at_beijing": "2026-10-30T15:17:00+08:00",
+        }
+        supplied = {
+            "total_assets": 171134.27,
+            "available_cash": 115294.47,
+            "securities_market_value": 55839.80,
+            "floating_pnl": 353.40,
+            "positions": [{"code": "159941", "quantity": 12200, "asset_type": "ETF"}],
+        }
+        normalized, moved = normalize_broker_account_fact_ingress(request, supplied)
+        self.assertEqual(moved, 0)
+        self.assertEqual(normalized["holding_pnl"], 353.40)
+        self.assertEqual(normalized["floating_pnl"], 353.40)
+
+    def test_explicit_holding_pnl_takes_precedence_over_floating_pnl_alias(self):
+        request = {
+            "source": "CHATGPT_USER_BROKER_SCREENSHOT",
+            "submitted_at_beijing": "2026-10-30T15:17:00+08:00",
+        }
+        supplied = {"holding_pnl": 320.0, "floating_pnl": 353.40}
+        normalized, _ = normalize_broker_account_fact_ingress(request, supplied)
+        self.assertEqual(normalized["holding_pnl"], 320.0)
+
 if __name__ == "__main__":
     unittest.main()
