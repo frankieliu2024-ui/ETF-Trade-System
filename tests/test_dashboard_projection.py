@@ -329,5 +329,50 @@ class DashboardProjectionTests(unittest.TestCase):
             self.assertEqual(decision["_current_applicability"], "HISTORICAL")
             self.assertIn("尚未纳入", decision["_stale_reason"])
 
+
+    def test_direct_completion_report_projects_actual_decision_sections_and_staleness(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            review_dir = root / "events/reviews"
+            state_dir = root / "data/state"
+            review_dir.mkdir(parents=True)
+            state_dir.mkdir(parents=True)
+            body = """【当前正式判断】
+
+现金优先、持仓管理优先，不新增部署。Trial不授予，Confirm不授予；建议新增部署0元，实际释放0份。
+
+【全市场机会与资本竞争】
+
+现金保留优于新增部署；当前没有合格替代机会胜出现金，也没有持仓追加胜出现金。
+
+【全部实际持仓】
+
+纳指ETF（159941）：继续持有观察，不追加、不主动减持。继续占资优势尚未充分证明。
+能源化工（159981）：继续持有观察，暂不追加。暂无明确破位。
+创新药（159992）：继续持有管理，不追加、不主动退出。成长弱势仍在。
+
+【执行边界】
+
+本次仅形成管理建议。"""
+            (review_dir / "formal_direct.json").write_text(json.dumps({
+                "event_type": "FORMAL_DECISION_REPORT",
+                "reviewed_at_beijing": "2026-10-30T11:02:29+08:00",
+                "presentation_binding": {"full_content": body},
+            }, ensure_ascii=False), encoding="utf-8")
+            (state_dir / "account_fact.json").write_text(json.dumps({
+                "updated_at": "2026-10-30T15:17:00+08:00",
+                "positions": [
+                    {"code": "159941"}, {"code": "159981"}, {"code": "159992"}
+                ],
+            }), encoding="utf-8")
+            decision = latest_canonical_formal_decision(root)
+            self.assertIn("Trial不授予", decision["risk_permission"])
+            self.assertIn("无新的主候选", decision["main_candidate"])
+            self.assertIn("新增部署0元", decision["amount_action"])
+            self.assertIn("现金保留优于新增部署", decision["decisive_reason"])
+            self.assertIn("纳指ETF（159941）：继续持有观察", decision["lifecycle"])
+            self.assertEqual(decision["_current_applicability"], "HISTORICAL")
+            self.assertIn("尚未纳入", decision["_stale_reason"])
+
 if __name__ == "__main__":
     unittest.main()
