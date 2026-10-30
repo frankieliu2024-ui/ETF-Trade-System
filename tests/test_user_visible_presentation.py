@@ -149,14 +149,14 @@ class UserVisiblePresentationContractTests(unittest.TestCase):
 
     def test_accepts_explicit_zero_opportunity_count_without_fake_object_numbering(self):
         content = (
-            "【机会ETF逐只评估】\\n"
+            "【机会ETF逐只评估】\n"
             "本次正式机会对象为0只，未形成机会对象。"
         )
         self.assertEqual(_formal_object_numbering_errors(content), [])
 
     def test_still_requires_numbering_for_nonzero_opportunity_objects(self):
         content = (
-            "【机会ETF逐只评估】\\n"
+            "【机会ETF逐只评估】\n"
             "候选甲具备部分观察依据，但尚未形成完整资格。"
         )
         self.assertEqual(
