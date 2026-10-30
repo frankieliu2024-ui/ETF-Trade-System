@@ -489,7 +489,6 @@ class FormalPresentationSemanticGateTests(unittest.TestCase):
 
 
     def test_formal_completion_rejects_holdings_without_zero_base_counterfactual(self):
-        import pytest
         from scripts.scheduled_review_completion import build_formal_runtime_completion_request
 
         headings = (
@@ -508,7 +507,7 @@ class FormalPresentationSemanticGateTests(unittest.TestCase):
         body = "【ETF正式决策】2026-10-30 09:00 正式判断\n\n" + "\n\n".join(
             heading + "\n\n" + sections.get(heading, "") for heading in headings
         )
-        with pytest.raises(ValueError, match="zero_base_reentry_counterfactual"):
+        with self.assertRaisesRegex(ValueError, "zero_base_reentry_counterfactual"):
             build_formal_runtime_completion_request(
                 run_identity={
                     "task_run_id": "manual-formal-20261030T090000-test",
