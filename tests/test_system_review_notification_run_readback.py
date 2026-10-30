@@ -73,7 +73,7 @@ class SystemReviewNotificationRunReadbackTests(unittest.TestCase):
         actor = _load()
         _, completion, files = self._projection_fixture(report_content="截断正文")
         with patch.object(actor, "read_main_json", side_effect=lambda path: files.get(path)), \
-             patch.object(actor.time, "time", side_effect=[100, 221]), \
+             patch.object(actor.time, "time", side_effect=[100, 100, 221]), \
              patch.object(actor.time, "sleep"):
             result = actor._wait_for_system_projection(completion)
         self.assertFalse(result["verified"])
