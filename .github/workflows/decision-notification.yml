@@ -510,8 +510,10 @@ jobs:
           )
           closure_backup="/tmp/scheduled-review-closure.json"
           report_backup="/tmp/scheduled-review-report.json"
+          current_backup="/tmp/scheduled-review-current.json"
           [ -n "$closure_path" ] && [ -f "$closure_path" ] && cp -- "$closure_path" "$closure_backup" || true
           [ -n "$report_path" ] && [ -f "$report_path" ] && cp -- "$report_path" "$report_backup" || true
+          [ -f data/state/CURRENT.json ] && cp -- data/state/CURRENT.json "$current_backup" || true
           git config user.name "ETF notification bot"
           git config user.email "etf-notification-bot@users.noreply.github.com"
           for attempt in 1 2 3; do
@@ -527,9 +529,14 @@ jobs:
               mkdir -p "$(dirname "$report_path")"
               cp -- "$report_backup" "$report_path"
             fi
+            if [ -f "$current_backup" ]; then
+              mkdir -p data/state
+              cp -- "$current_backup" data/state/CURRENT.json
+            fi
             git add -- "$EVENT_PATH"
             [ -n "$closure_path" ] && [ -f "$closure_path" ] && git add -- "$closure_path" || true
             [ -n "$report_path" ] && [ -f "$report_path" ] && git add -- "$report_path" || true
+            [ -f "$current_backup" ] && git add -- data/state/CURRENT.json || true
             if git diff --cached --quiet; then
               echo "Scheduled Review canonical review event already present in current main."
               break
@@ -576,7 +583,9 @@ jobs:
           esac
           test -f "$EVENT_PATH"
           event_backup="/tmp/formal-review-event.json"
+          current_backup="/tmp/formal-review-current.json"
           cp -- "$EVENT_PATH" "$event_backup"
+          [ -f data/state/CURRENT.json ] && cp -- data/state/CURRENT.json "$current_backup" || true
           git config user.name "ETF notification bot"
           git config user.email "etf-notification-bot@users.noreply.github.com"
           for attempt in 1 2 3; do
@@ -584,7 +593,12 @@ jobs:
             git reset --hard origin/main
             mkdir -p "$(dirname "$EVENT_PATH")"
             cp -- "$event_backup" "$EVENT_PATH"
+            if [ -f "$current_backup" ]; then
+              mkdir -p data/state
+              cp -- "$current_backup" data/state/CURRENT.json
+            fi
             git add -- "$EVENT_PATH"
+            [ -f "$current_backup" ] && git add -- data/state/CURRENT.json || true
             if git diff --cached --quiet; then
               echo "Formal Decision canonical review event already present in current main."
               break
