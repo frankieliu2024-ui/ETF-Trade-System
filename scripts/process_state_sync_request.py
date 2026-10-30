@@ -3783,8 +3783,9 @@ def normalize_broker_account_fact_ingress(request: dict, supplied: object) -> tu
             moved += 1
         else:
             kept.append(position)
+    # Persist per-row normalization even when no unresolved asset was moved.
+    normalized["positions"] = kept
     if moved:
-        normalized["positions"] = kept
         normalized["unresolved_assets"] = unresolved
     return normalized, moved
 
