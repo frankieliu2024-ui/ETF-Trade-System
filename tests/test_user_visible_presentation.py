@@ -3,6 +3,7 @@ from __future__ import annotations
 import unittest
 
 from scripts.user_visible_presentation import (
+    _formal_object_numbering_errors,
     build_formal_decision_presentation_binding,
     validate_formal_decision_reply_nonblocking,
     validate_user_visible_content,
@@ -145,6 +146,23 @@ class UserVisiblePresentationContractTests(unittest.TestCase):
         self.assertTrue(binding["business_reply_eligible"])
         self.assertFalse(binding["presentation_valid"])
 
+
+    def test_accepts_explicit_zero_opportunity_count_without_fake_object_numbering(self):
+        content = (
+            "【机会ETF逐只评估】\\n"
+            "本次正式机会对象为0只，未形成机会对象。"
+        )
+        self.assertEqual(_formal_object_numbering_errors(content), [])
+
+    def test_still_requires_numbering_for_nonzero_opportunity_objects(self):
+        content = (
+            "【机会ETF逐只评估】\\n"
+            "候选甲具备部分观察依据，但尚未形成完整资格。"
+        )
+        self.assertEqual(
+            _formal_object_numbering_errors(content),
+            ["object section requires one separately numbered paragraph per object: 【机会ETF逐只评估】"],
+        )
 
     def test_rejects_global_primary_numbering_across_sections(self):
         content = "【第一节】\n\n1. 第一项\n\n【第二节】\n\n2. 第二项\n\n【第三节】\n\n3. 第三项"
