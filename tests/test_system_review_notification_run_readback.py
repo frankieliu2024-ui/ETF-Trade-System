@@ -26,6 +26,74 @@ class FakeResponse:
         return self.body
 
 
+def test_system_projection_requires_exact_event_report_and_provider_record():
+    import hashlib
+    actor = _load()
+    content = "【ETF系统复核】\\n本次复核正文"
+    digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
+    completion = {"request_id": "req-1", "presentation_binding": {
+        "task_id": "ETF系统复核", "task_run_id": "run-1", "occurrence_id": "occ-1",
+        "request_id": "req-1", "report_id": "etf_system_review:run-1",
+        "report_type": "ETF_SYSTEM_REVIEW", "full_content": content, "content_hash": digest,
+    }}
+    event = {"event_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW", "request_id": "req-1",
+             "presentation_binding": dict(completion["presentation_binding"])}
+    report = {"report_type": "ETF_SYSTEM_REVIEW", "report_id": "etf_system_review:run-1",
+              "request_id": "req-1", "task_id": "ETF系统复核", "task_run_id": "run-1",
+              "title": "【ETF系统复核】", "full_content": content, "content_hash": digest,
+              "delivery_mode": "FULL_REPORT", "no_trade_authority": True}
+    notification = {"notification_id": "nid-1", "report_id": "etf_system_review:run-1",
+                    "request_id": "req-1", "event_type": "REPORT_DELIVERY_REQUEST",
+                    "notification_channel": "REPORT", "delivery_mode": "FULL_REPORT",
+                    "title": "【ETF系统复核】", "content": content, "content_hash": digest,
+                    "lifecycle_status": "SENT",
+                    "response": {"http_status": 200, "pushplus_code": 200}}
+    files = {
+        "events/reviews/system_run-1.json": event,
+        "requests/report_delivery/etf_system_review__run-1.json": report,
+        "data/state/notification_center.json": {"notifications": [notification]},
+    }
+    with patch.object(actor, "read_main_json", side_effect=lambda path: files.get(path)):
+        result = actor._wait_for_system_projection(completion)
+    assert result["verified"] is True
+    assert result["notification_id"] == "nid-1"
+
+
+def test_system_projection_rejects_provider_success_without_exact_full_content():
+    import hashlib
+    actor = _load()
+    content = "【ETF系统复核】\\n本次复核正文"
+    digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
+    completion = {"request_id": "req-1", "presentation_binding": {
+        "task_id": "ETF系统复核", "task_run_id": "run-1", "occurrence_id": "occ-1",
+        "request_id": "req-1", "report_id": "etf_system_review:run-1",
+        "report_type": "ETF_SYSTEM_REVIEW", "full_content": content, "content_hash": digest,
+    }}
+    event = {"event_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW", "request_id": "req-1",
+             "presentation_binding": dict(completion["presentation_binding"])}
+    report = {"report_type": "ETF_SYSTEM_REVIEW", "report_id": "etf_system_review:run-1",
+              "request_id": "req-1", "task_id": "ETF系统复核", "task_run_id": "run-1",
+              "title": "【ETF系统复核】", "full_content": "截断正文", "content_hash": digest,
+              "delivery_mode": "FULL_REPORT", "no_trade_authority": True}
+    notification = {"notification_id": "nid-1", "report_id": "etf_system_review:run-1",
+                    "request_id": "req-1", "event_type": "REPORT_DELIVERY_REQUEST",
+                    "notification_channel": "REPORT", "delivery_mode": "FULL_REPORT",
+                    "title": "【ETF系统复核】", "content": content, "content_hash": digest,
+                    "lifecycle_status": "SENT",
+                    "response": {"http_status": 200, "pushplus_code": 200}}
+    files = {
+        "events/reviews/system_run-1.json": event,
+        "requests/report_delivery/etf_system_review__run-1.json": report,
+        "data/state/notification_center.json": {"notifications": [notification]},
+    }
+    with patch.object(actor, "read_main_json", side_effect=lambda path: files.get(path)), \\
+         patch.object(actor.time, "time", side_effect=[100, 221]), \\
+         patch.object(actor.time, "sleep"):
+        result = actor._wait_for_system_projection(completion)
+    assert result["verified"] is False
+    assert result["checks"]["report_content"] is False
+
+
 def test_exact_completion_run_accepted():
     actor = _load()
     path = "requests/live_snapshot/unique__scheduled_review_completion.json"
