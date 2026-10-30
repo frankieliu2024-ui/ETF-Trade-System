@@ -86,6 +86,8 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
             "request_id": request["request_id"],
             "report_id": "ETF_TRADE_REVIEW:trade-manual-close-boundary-1",
             "full_content": "FROZEN CLOSE-BOUNDARY REPORT",
+            "content_hash": "4aaad845900b3e2c67c39990294ed5b06f0c23ab943fc23bd36a0cd9a70bf4ce",
+            "content_hash_source": "completion_builder",
         }
         account = {"status": "VALID", "updated_at": "2026-08-31T15:12:00+08:00"}
 
