@@ -23,25 +23,99 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts.scheduled_review_completion import build_system_review_completion_request
-from scripts.scheduled_review_completion_owner import persist_completion, dispatch_notification, read_main_json, contains_text
+from scripts.scheduled_review_completion_owner import persist_completion, dispatch_notification, read_main_json
 from scripts.task_runtime_identity import derive_runtime_identity
 
 
 
-def _wait_for_system_projection(occurrence_id: str, report_id: str) -> dict[str, object]:
-    event_path = "events/reviews/system_" + occurrence_id + ".json"
-    report_path = "requests/report_delivery/" + str(report_id).replace(":", "__") + ".json"
+def _wait_for_system_projection(completion: dict) -> dict[str, object]:
+    """Verify this System Review's exact event, full REPORT, and provider record."""
     import time
+
+    binding = completion.get("presentation_binding") or {}
+    task_run_id = str(binding.get("task_run_id") or "").strip()
+    occurrence_id = str(binding.get("occurrence_id") or "").strip()
+    request_id = str(binding.get("request_id") or completion.get("request_id") or "").strip()
+    report_id = str(binding.get("report_id") or "").strip()
+    report_type = str(binding.get("report_type") or "").strip()
+    task_id = str(binding.get("task_id") or "").strip()
+    content = binding.get("full_content")
+    content_hash = str(binding.get("content_hash") or "").strip()
+    expected_hash = hashlib.sha256(content.encode("utf-8")).hexdigest() if isinstance(content, str) else ""
+    event_path = "events/reviews/system_" + task_run_id + ".json"
+    report_path = "requests/report_delivery/" + report_id.replace(":", "__") + ".json"
+    identity = {
+        "task_id": task_id == "ETF系统复核",
+        "task_run_id": bool(task_run_id),
+        "occurrence_id": bool(occurrence_id),
+        "request_id": bool(request_id),
+        "report_id": report_id == f"etf_system_review:{task_run_id}" if task_run_id else False,
+        "report_type": report_type == "ETF_SYSTEM_REVIEW",
+        "content_hash": bool(expected_hash) and content_hash == expected_hash,
+    }
+    if not all(identity.values()) or not isinstance(content, str) or not content:
+        return {"verified": False, "event_path": event_path, "report_path": report_path,
+                "report_id": report_id, "reason": "completion presentation identity/content is incomplete",
+                "checks": identity}
+
     deadline = time.time() + 120
     while time.time() < deadline:
         event = read_main_json(event_path)
         report = read_main_json(report_path)
         center = read_main_json("data/state/notification_center.json")
-        if isinstance(event, dict) and isinstance(report, dict) and isinstance(center, dict) and contains_text(center, report_id):
-            return {"verified": True, "event_path": event_path, "report_path": report_path, "report_id": report_id}
+        event_binding = event.get("presentation_binding") if isinstance(event, dict) else {}
+        checks = {
+            "event_type": isinstance(event, dict) and event.get("event_type") == "FORMAL_SCHEDULED_SYSTEM_REVIEW",
+            "event_request_id": isinstance(event, dict) and str(event.get("request_id") or "") == request_id,
+            "event_task_run_id": isinstance(event_binding, dict) and str(event_binding.get("task_run_id") or "") == task_run_id,
+            "event_occurrence_id": isinstance(event_binding, dict) and str(event_binding.get("occurrence_id") or "") == occurrence_id,
+            "event_report_id": isinstance(event_binding, dict) and str(event_binding.get("report_id") or "") == report_id,
+            "event_content": isinstance(event_binding, dict) and event_binding.get("full_content") == content,
+            "event_hash": isinstance(event_binding, dict) and str(event_binding.get("content_hash") or "") == expected_hash,
+            "report_type": isinstance(report, dict) and report.get("report_type") == "ETF_SYSTEM_REVIEW",
+            "report_id": isinstance(report, dict) and str(report.get("report_id") or "") == report_id,
+            "report_request_id": isinstance(report, dict) and str(report.get("request_id") or "") == request_id,
+            "report_task_id": isinstance(report, dict) and str(report.get("task_id") or "") == task_id,
+            "report_task_run_id": isinstance(report, dict) and str(report.get("task_run_id") or "") == task_run_id,
+            "report_title": isinstance(report, dict) and report.get("title") == "【ETF系统复核】",
+            "report_content": isinstance(report, dict) and report.get("full_content") == content,
+            "report_hash": isinstance(report, dict) and str(report.get("content_hash") or "") == expected_hash,
+            "report_delivery_mode": isinstance(report, dict) and report.get("delivery_mode") == "FULL_REPORT",
+            "report_no_trade_authority": isinstance(report, dict) and report.get("no_trade_authority") is True,
+        }
+        items = center.get("notifications") if isinstance(center, dict) else []
+        items = items if isinstance(items, list) else []
+        matching = [item for item in items if isinstance(item, dict)
+                    and str(item.get("report_id") or "") == report_id
+                    and str(item.get("request_id") or "") == request_id]
+        notification = matching[0] if len(matching) == 1 else {}
+        response = notification.get("response") if isinstance(notification, dict) else {}
+        response = response if isinstance(response, dict) else {}
+        notification_checks = {
+            "unique_notification": len(matching) == 1,
+            "notification_id": bool(notification.get("notification_id")),
+            "event_type": notification.get("event_type") == "REPORT_DELIVERY_REQUEST",
+            "channel": notification.get("notification_channel") == "REPORT",
+            "delivery_mode": notification.get("delivery_mode") == "FULL_REPORT",
+            "title": notification.get("title") == "【ETF系统复核】",
+            "content": notification.get("content") == content,
+            "content_hash": str(notification.get("content_hash") or "") == expected_hash,
+            "provider_status": notification.get("lifecycle_status") == "SENT",
+            "provider_http_200": response.get("http_status") == 200,
+            "provider_code_200": str(response.get("pushplus_code") or "") == "200",
+        }
+        checks.update({f"notification_{key}": value for key, value in notification_checks.items()})
+        if all(checks.values()):
+            return {"verified": True, "event_path": event_path, "report_path": report_path,
+                    "report_id": report_id, "notification_id": notification["notification_id"],
+                    "provider_result": {"http_status": response.get("http_status"),
+                                        "pushplus_code": response.get("pushplus_code")},
+                    "checks": checks}
         time.sleep(3)
-    return {"verified": False, "event_path": event_path, "report_path": report_path, "report_id": report_id,
-            "reason": "system event, REPORT, and bound notification record were not all readable"}
+    return {"verified": False, "event_path": event_path, "report_path": report_path,
+            "report_id": report_id, "reason": "same-run event, full REPORT, or provider notification readback mismatch",
+            "checks": checks if "checks" in locals() else identity}
+
 
 def _readback_notification_run(completion_path: str, submitted_after: datetime) -> dict[str, object]:
     """Confirm one workflow_dispatch run bound to this exact completion path."""
@@ -144,7 +218,7 @@ def main() -> int:
     dispatch_started_at = datetime.now(timezone.utc)
     dispatch = dispatch_notification(completion_path)
     workflow_run = _readback_notification_run(completion_path, dispatch_started_at)
-    projection = _wait_for_system_projection(occurrence_id, binding.get("report_id") or "")
+    projection = _wait_for_system_projection(persisted)
     # Dispatch acceptance is not a workflow-run readback. Verify downstream projections separately.
     ok = bool(dispatch.get("submitted")) and bool(workflow_run.get("verified")) and bool(projection.get("verified"))
     print(args.final_content)
