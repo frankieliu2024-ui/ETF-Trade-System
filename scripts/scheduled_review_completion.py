@@ -458,8 +458,8 @@ def validate_system_review_user_facing_clarity(final_content: str) -> None:
 
     content = str(final_content or "")
     forbidden = (
-        r"(?<![A-Za-z_])(?:request_id|task_run_id|occurrence_id|content_hash)\\s*[:=]",
-        r"CURRENT\\.close_review_closure_is_stale",
+        r"(?<![A-Za-z_])(?:request_id|task_run_id|occurrence_id|content_hash)\s*[:=]",
+        r"CURRENT\.close_review_closure_is_stale",
         r"(?<![A-Za-z_])(?:CHATGPT_MANUAL_SYSTEM_REVIEW|CHATGPT_SCHEDULED_SYSTEM_REVIEW|MANUAL_CONVERSATION|AUTOMATIC_SCHEDULED_TASK)(?![A-Za-z_])",
     )
     if any(re.search(pattern, content, flags=re.IGNORECASE) for pattern in forbidden):
