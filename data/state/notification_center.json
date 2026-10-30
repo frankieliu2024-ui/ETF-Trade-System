@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-10-30T10:03:19+08:00",
-  "last_status": "SENT",
-  "last_type": "REPORT_DELIVERY_REQUEST",
-  "last_title": "【ETF正式决策】",
+  "updated_at": "2026-10-30T10:04:45+08:00",
+  "last_status": "AGGREGATED_INTO_EXISTING",
+  "last_type": "MARKET_VALUE_ALERT",
+  "last_title": "【市场异动】科创50（000688）出现极端波动 -3.32%",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -40509,7 +40509,16 @@
           "588000"
         ],
         "structure_cluster_scope": "EXPLICIT_SAME_EPISODE_ONLY",
-        "event_family_id": "A_SHARE:2026-10-30:A_SHARE:000688:EXTREME:DOWN:A_SHARE_TECH_GROWTH_EPISODE"
+        "event_family_id": "A_SHARE:2026-10-30:A_SHARE:000688:EXTREME:DOWN:A_SHARE_TECH_GROWTH_EPISODE",
+        "event_tags": [
+          "EXTREME",
+          "SUDDEN"
+        ],
+        "aggregation_status": "MERGED_SAME_OBJECT_CONTINUOUS_FACT",
+        "source_fact_ids": [
+          "2026-10-30:000688:SUDDEN:DOWN:2026-10-30T09:49:54+08:00"
+        ],
+        "family_peak_magnitude_pct": 3.3157179034109863
       },
       "response": {
         "http_status": 200,
@@ -44254,6 +44263,6 @@
     "notification_d5f3ea1194565824a934",
     "notification_fd7763215037ab96f889"
   ],
-  "policy": "只推送会改变用户关注、风险许可、机会状态、持仓动作、执行确认或系统可靠性的实质事件；总资产/市值/浮动盈亏等纯盯市变化不作为账户异常；同一实质账户事件和同一正式decision_id不得重复推送；收盘账户提醒仅在A股交易日触发。",
+  "policy": "canonical bounded market notification batch",
   "safety_boundary": "通知中心只转发已有正式判断，不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"
 }
