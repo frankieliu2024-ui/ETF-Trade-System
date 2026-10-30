@@ -440,7 +440,7 @@ class FormalPresentationSemanticGateTests(unittest.TestCase):
         })
 
         self.assertFalse(accepted)
-        self.assertEqual(reason, "formal_presentation_position_missing_hold_vs_release_comparison")
+        self.assertEqual(reason, "formal_presentation_position_1_missing_hold_cash_opportunity_comparison")
 
     def _formal_content_event_for(self, content):
         import json
