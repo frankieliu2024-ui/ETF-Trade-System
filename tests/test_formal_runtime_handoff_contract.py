@@ -52,7 +52,7 @@ def test_formal_completion_rejects_holdings_without_zero_base_counterfactual():
         "【全市场机会与资本竞争】": "现金保留、持仓继续持有、追加、部分减持释放、全部退出和机会均相较。因为资本效率和机会成本，当前胜出用途为保留现金，下一单位资本当前最有效用途为保留现金。",
         "【全部实际持仓】": "1）测试ETF（159999）：持有管理，不追加。相较现金和机会，继续占资优于释放；继续持有、追加、部分减持、全部退出均已比较。若趋势变化则重新评估。",
     }
-    body = "【ETF正式决策】2026-10-30 09:00 正式判断\\n\\n" + "\n\n".join(
+    body = "【ETF正式决策】2026-10-30 09:00 正式判断\n\n" + "\n\n".join(
         heading + "\n\n" + sections.get(heading, "本节已披露。") for heading in headings
     )
     with pytest.raises(ValueError, match="zero_base_reentry_counterfactual"):
