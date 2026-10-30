@@ -29,7 +29,7 @@ class FakeResponse:
 def test_system_projection_requires_exact_event_report_and_provider_record():
     import hashlib
     actor = _load()
-    content = "【ETF系统复核】\\n本次复核正文"
+    content = "【ETF系统复核】\n本次复核正文"
     digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
     completion = {"request_id": "req-1", "presentation_binding": {
         "task_id": "ETF系统复核", "task_run_id": "run-1", "occurrence_id": "occ-1",
@@ -62,7 +62,7 @@ def test_system_projection_requires_exact_event_report_and_provider_record():
 def test_system_projection_rejects_provider_success_without_exact_full_content():
     import hashlib
     actor = _load()
-    content = "【ETF系统复核】\\n本次复核正文"
+    content = "【ETF系统复核】\n本次复核正文"
     digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
     completion = {"request_id": "req-1", "presentation_binding": {
         "task_id": "ETF系统复核", "task_run_id": "run-1", "occurrence_id": "occ-1",
