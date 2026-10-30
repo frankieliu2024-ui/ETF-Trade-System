@@ -2241,6 +2241,23 @@ def _normalize_close_snapshot_reference(value: object) -> str:
     return f"data/market/snapshots/{parsed.strftime('%Y-%m-%d_%H%M%S')}.json"
 
 
+def _is_effective_close_timestamp(
+    value: object,
+    *,
+    market_date: str,
+    close_contract: dict,
+) -> bool:
+    """Accept the legal 15:00 price-effective boundary as a snapshot reference."""
+    parsed = parse_time(value)
+    effective = parse_time(close_contract.get("effective_market_time_beijing"))
+    return bool(
+        parsed
+        and effective
+        and parsed == effective
+        and parsed.date().isoformat() == str(market_date).strip()
+    )
+
+
 def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     review = request.get("formal_review")
     interaction_scenario = str(request.get("interaction_scenario") or "").strip().upper()
@@ -2368,20 +2385,35 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
         current_path = ROOT / "data" / "state" / "CURRENT.json"
         current = load_json(current_path) if current_path.exists() else {}
         close_contract = build_close_data_contract(ROOT, current)
-        supplied_close_snapshot = _normalize_close_snapshot_reference(data_time.get("close_snapshot") or review.get("close_snapshot"))
+        raw_close_snapshot_reference = data_time.get("close_snapshot") or review.get("close_snapshot")
+        supplied_close_snapshot = _normalize_close_snapshot_reference(raw_close_snapshot_reference)
         canonical_close_snapshot = _normalize_close_snapshot_reference(close_contract.get("latest_snapshot"))
+        effective_close_timestamp = _is_effective_close_timestamp(
+            raw_close_snapshot_reference,
+            market_date=market_date,
+            close_contract=close_contract,
+        )
         canonical_close_verified = (
             close_contract.get("status") == "VERIFIED_SESSION_CLOSE"
             and close_contract.get("verified_session_close") is True
             and close_contract.get("market_date") == market_date
             and bool(canonical_close_snapshot)
         )
-        # A present verified close with a mismatched or absent request reference
-        # is a stale/ambiguous input. Do not turn a review computed against
-        # another snapshot into a degraded formal review.
-        if canonical_close_verified and supplied_close_snapshot and supplied_close_snapshot != canonical_close_snapshot:
+        # A present verified close with a mismatched request reference is
+        # stale/ambiguous unless the actor supplied the exact legal 15:00
+        # effective boundary. The latter resolves to the canonical provider
+        # snapshot captured after 15:00; all other mismatches remain fail-closed.
+        if (
+            canonical_close_verified
+            and supplied_close_snapshot
+            and supplied_close_snapshot != canonical_close_snapshot
+            and not effective_close_timestamp
+        ):
             return False, False
-        close_verified = canonical_close_verified and supplied_close_snapshot == canonical_close_snapshot
+        close_verified = canonical_close_verified and (
+            supplied_close_snapshot == canonical_close_snapshot
+            or effective_close_timestamp
+        )
         # Review completion is independent from close-data completeness. Preserve
         # the canonical close contract when available; otherwise persist an explicit
         # degraded review with the missing/invalid evidence boundary. Never invent

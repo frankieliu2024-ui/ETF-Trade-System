@@ -69,6 +69,39 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
             "data/market/snapshots/2026-08-31_150110.json",
         )
 
+    def test_trade_review_effective_close_boundary_maps_to_canonical_path(self):
+        request = self.request()
+        request["interaction_scenario"] = "SCHEDULED_TRADE_REVIEW"
+        request["formal_fact_type"] = "FORMAL_SCHEDULED_TRADE_REVIEW"
+        request["request_type"] = "SCHEDULED_REVIEW_COMPLETION"
+        request["source"] = "CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR"
+        request["entry_mode"] = "MANUAL_SCHEDULED_TASK"
+        request["formal_review"]["data_time"]["close_snapshot"] = "2026-08-31T15:00:00+08:00"
+        request["presentation_binding"] = {
+            "report_type": "ETF_TRADE_REVIEW",
+            "task_id": "ETF交易复盘",
+            "task_run_id": "trade-manual-close-boundary-1",
+            "occurrence_id": "trade-manual-close-boundary-1",
+            "entry_mode": "MANUAL_SCHEDULED_TASK",
+            "request_id": request["request_id"],
+            "report_id": "ETF_TRADE_REVIEW:trade-manual-close-boundary-1",
+            "full_content": "FROZEN CLOSE-BOUNDARY REPORT",
+            "content_hash": "4aaad845900b3e2c67c39990294ed5b06f0c23ab943fc23bd36a0cd9a70bf4ce",
+            "content_hash_source": "completion_builder",
+        }
+        account = {"status": "VALID", "updated_at": "2026-08-31T15:12:00+08:00"}
+
+        self.assertEqual(sync.record_post_close_review(account, request), (True, False))
+        event = json.loads((self.root / "events/reviews/2026-08-31.json").read_text(encoding="utf-8"))
+        self.assertEqual(
+            event["review"]["data_time"]["close_snapshot"],
+            "data/market/snapshots/2026-08-31_150110.json",
+        )
+        self.assertEqual(
+            event["review"]["data_time"]["close_data_status"],
+            "VERIFIED_SESSION_CLOSE",
+        )
+
     def test_weekly_trade_review_reaches_canonical_owner(self):
         request = self.request()
         request["interaction_scenario"] = "WEEKLY_REVIEW"
