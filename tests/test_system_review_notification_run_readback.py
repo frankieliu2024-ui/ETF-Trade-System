@@ -86,8 +86,8 @@ def test_system_projection_rejects_provider_success_without_exact_full_content()
         "requests/report_delivery/etf_system_review__run-1.json": report,
         "data/state/notification_center.json": {"notifications": [notification]},
     }
-    with patch.object(actor, "read_main_json", side_effect=lambda path: files.get(path)), \\
-         patch.object(actor.time, "time", side_effect=[100, 221]), \\
+    with patch.object(actor, "read_main_json", side_effect=lambda path: files.get(path)), \
+         patch.object(actor.time, "time", side_effect=[100, 221]), \
          patch.object(actor.time, "sleep"):
         result = actor._wait_for_system_projection(completion)
     assert result["verified"] is False
