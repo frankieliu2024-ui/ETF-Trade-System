@@ -183,7 +183,15 @@ def _formal_object_numbering_errors(text: str) -> list[str]:
                 if bad_primary:
                     errors.append(f"object list must use secondary numbering 1）、2）、3）：{current}")
                 if entries and not numbered:
-                    errors.append(f"object section requires one separately numbered paragraph per object: {current}")
+                    explicit_zero_opportunities = (
+                        current == "【机会ETF逐只评估】"
+                        and _has_any(
+                            "\n".join(entries),
+                            ("0只", "未形成机会对象", "暂无机会对象", "没有形成机会对象"),
+                        )
+                    )
+                    if not explicit_zero_opportunities:
+                        errors.append(f"object section requires one separately numbered paragraph per object: {current}")
                 if numbered:
                     nums = [int(re.match(r"^(\d+)）", item).group(1)) for item in numbered]
                     if nums != list(range(1, len(nums) + 1)):
