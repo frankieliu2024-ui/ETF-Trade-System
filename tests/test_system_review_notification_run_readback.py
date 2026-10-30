@@ -50,3 +50,22 @@ def test_missing_credentials_fail_closed():
     with patch.dict("os.environ", {"GITHUB_TOKEN": "", "ETF_GITHUB_PAT": "", "GH_TOKEN": ""}):
         result = actor._readback_notification_run("path", datetime.now(timezone.utc))
     assert result["verified"] is False
+
+
+def test_matching_but_in_progress_run_is_not_success():
+    actor = _load()
+    path = "requests/live_snapshot/unique__scheduled_review_completion.json"
+    run = {"id": 125, "created_at": "2026-10-30T01:00:01Z", "event": "workflow_dispatch", "head_branch": "main", "display_title": "ETF decision notification — " + path, "status": "in_progress", "conclusion": None}
+    with patch.dict("os.environ", {"GITHUB_TOKEN": "test-token", "GITHUB_REPOSITORY": "owner/repo"}), patch.object(actor.urllib_request, "urlopen", return_value=FakeResponse([run])), patch.object(actor.time, "monotonic", side_effect=[0, 0, 61]), patch.object(actor.time, "sleep"):
+        result = actor._readback_notification_run(path, datetime(2026, 10, 30, 1, tzinfo=timezone.utc))
+    assert result["verified"] is False
+
+
+def test_matching_failed_run_is_not_success():
+    actor = _load()
+    path = "requests/live_snapshot/unique__scheduled_review_completion.json"
+    run = {"id": 126, "created_at": "2026-10-30T01:00:01Z", "event": "workflow_dispatch", "head_branch": "main", "display_title": "ETF decision notification — " + path, "status": "completed", "conclusion": "failure"}
+    with patch.dict("os.environ", {"GITHUB_TOKEN": "test-token", "GITHUB_REPOSITORY": "owner/repo"}), patch.object(actor.urllib_request, "urlopen", return_value=FakeResponse([run])):
+        result = actor._readback_notification_run(path, datetime(2026, 10, 30, 1, tzinfo=timezone.utc))
+    assert result["verified"] is False
+    assert result["conclusion"] == "failure"
