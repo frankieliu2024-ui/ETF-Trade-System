@@ -12,11 +12,26 @@ except ImportError:
     from scripts.notification_center import revalidate_pending_notifications
 
 
-def _load(path: Path) -> dict:
+def _empty_state() -> dict:
+    return {"schema_version": "2.2", "notifications": [], "recent": []}
+
+
+def _load(path: Path, *, allow_empty: bool = True) -> dict:
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return {"schema_version": "2.2", "notifications": [], "recent": []}
+        if path.exists() and path.stat().st_size == 0:
+            if allow_empty:
+                return _empty_state()
+            raise ValueError(f"empty notification state: {path}")
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        if allow_empty:
+            return _empty_state()
+        raise ValueError(f"invalid notification state: {path}") from exc
+    if not isinstance(value, dict):
+        if allow_empty:
+            return _empty_state()
+        raise ValueError(f"notification state must be an object: {path}")
+    return value
 
 
 def _identity_tokens(item: dict) -> set[str]:
@@ -145,8 +160,14 @@ def main() -> int:
     parser.add_argument("--incoming", required=True)
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
-    merged = merge_notification_state(_load(Path(args.base)), _load(Path(args.incoming)))
-    Path(args.output).write_text(json.dumps(merged, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    base = _load(Path(args.base), allow_empty=True)
+    incoming = _load(Path(args.incoming), allow_empty=False)
+    if not isinstance(incoming.get("notifications"), list):
+        raise SystemExit("incoming notification state must contain a notifications list")
+    merged = merge_notification_state(base, incoming)
+    output = Path(args.output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(merged, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return 0
 
 

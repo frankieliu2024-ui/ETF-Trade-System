@@ -649,8 +649,28 @@ jobs:
         shell: bash
         run: |
           mkdir -p /tmp/etf-notification-state/data/state
-          [ -f data/state/notification_center.json ] && cp data/state/notification_center.json /tmp/etf-notification-state/data/state/notification_center.json || true
-          [ -f data/state/execution_reconciliation.json ] && cp data/state/execution_reconciliation.json /tmp/etf-notification-state/data/state/execution_reconciliation.json || true
+          EXPECTED_EVENT_PATH="${{ steps.scheduled_completion_event.outputs.review_event_path || steps.formal_completion_event.outputs.review_event_path || steps.push_kind.outputs.review_event_path || steps.workflow_review.outputs.review_event_path }}"
+          EXPECTED_REPORT_PATH="${{ steps.push_kind.outputs.report_path }}"
+          EXPECTED_HANDOFF_PATH="${{ steps.push_kind.outputs.report_handoff_path }}"
+
+          # A bound report/review event means the sender must have produced a
+          # durable notification state. Never accept a zero-byte or malformed
+          # state file after provider success; otherwise the provider may have
+          # delivered while the audit record disappears from main.
+          if [ -n "$EXPECTED_EVENT_PATH" ] || [ -n "$EXPECTED_REPORT_PATH" ] || [ -n "$EXPECTED_HANDOFF_PATH" ]; then
+            test -s data/state/notification_center.json
+            python - data/state/notification_center.json <<'PY'
+          import json, sys
+          from pathlib import Path
+          path = Path(sys.argv[1])
+          payload = json.loads(path.read_text(encoding="utf-8"))
+          if not isinstance(payload, dict) or not isinstance(payload.get("notifications"), list):
+              raise SystemExit("notification_center.json is not a valid durable state object")
+          PY
+          fi
+
+          [ -s data/state/notification_center.json ] && cp data/state/notification_center.json /tmp/etf-notification-state/data/state/notification_center.json || true
+          [ -s data/state/execution_reconciliation.json ] && cp data/state/execution_reconciliation.json /tmp/etf-notification-state/data/state/execution_reconciliation.json || true
           if [ ! -f /tmp/etf-notification-state/data/state/notification_center.json ] && [ ! -f /tmp/etf-notification-state/data/state/execution_reconciliation.json ]; then
             exit 0
           fi
@@ -700,6 +720,15 @@ jobs:
             if git diff --cached --quiet; then
               exit 0
             fi
+            test -s data/state/notification_center.json
+            python - data/state/notification_center.json <<'PY'
+          import json, sys
+          from pathlib import Path
+          path = Path(sys.argv[1])
+          payload = json.loads(path.read_text(encoding="utf-8"))
+          if not isinstance(payload, dict) or not isinstance(payload.get("notifications"), list):
+              raise SystemExit("notification_center.json is not a valid durable state object")
+          PY
             git commit -m "state: record notification and execution reconciliation"
           done
 

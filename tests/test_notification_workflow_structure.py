@@ -150,6 +150,19 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
         self.assertNotIn("git push --force", persist)
 
 
+    def test_notification_persistence_rejects_empty_or_malformed_state(self):
+        persist = self.text.split("- name: Persist unified notification and execution-reconciliation state", 1)[1]
+        persist = persist.split("- name: Surface notification delivery failure", 1)[0]
+        self.assertIn("test -s data/state/notification_center.json", persist)
+        self.assertIn("json.loads(path.read_text(encoding=\"utf-8\"))", persist)
+        self.assertIn("notification_center.json is not a valid durable state object", persist)
+
+        merge = (ROOT / "scripts" / "merge_notification_state.py").read_text(encoding="utf-8")
+        self.assertIn("allow_empty: bool = True", merge)
+        self.assertIn("allow_empty=False", merge)
+        self.assertIn("incoming notification state must contain a notifications list", merge)
+
+
     def test_formal_decision_has_no_legacy_production_route(self):
         center = (ROOT / "scripts" / "notification_center.py").read_text(encoding="utf-8")
         sync = (ROOT / "scripts" / "process_state_sync_request.py").read_text(encoding="utf-8")
