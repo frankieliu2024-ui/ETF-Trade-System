@@ -12,6 +12,11 @@ from typing import Any
 
 from notification_materiality_guard import decision_critical_blockage
 
+try:
+    from user_visible_presentation import formal_decision_semantic_errors
+except ModuleNotFoundError:
+    from scripts.user_visible_presentation import formal_decision_semantic_errors
+
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 STATE = ROOT / "data" / "state"
 TZ = timezone(timedelta(hours=8))
@@ -320,62 +325,9 @@ def validate_formal_presentation_contract(envelope: dict[str, Any]) -> tuple[boo
     if "Trial" not in content or "Confirm" not in content:
         return False, "formal_presentation_missing_trial_confirm_boundary"
 
-    # Semantic coverage: a generic risk statement is not sufficient to pass
-    # the zero-deployment / zero-release decision. Require explicit risk-
-    # permission reasoning, a whole-capital comparison, and per-position
-    # hold-versus-release evidence with a condition that would change the call.
-    risk_section = _formal_section(content, "【风险与市场状态】")
-    capital_section = _formal_section(content, "【全市场机会与资本竞争】")
-    holdings_section = _formal_section(content, "【全部实际持仓】")
-    if not risk_section or "风险许可" not in risk_section:
-        return False, "formal_presentation_missing_risk_permission_reasoning"
-    if not capital_section or not all(token in capital_section for token in ("现金", "机会", "持仓", "相较")):
-        return False, "formal_presentation_missing_whole_capital_comparison"
-    if not any(token in capital_section for token in ("机会成本", "资本效率", "风险收益比")):
-        return False, "formal_presentation_missing_capital_efficiency_comparison"
-
-    # Require actual allocation alternatives and a stated decision basis.
-    alternatives = (
-        ("现金", "保留"), ("持仓", "持有"), ("追加",),
-        ("释放", "减持", "退出"), ("机会",),
-    )
-    if not all(any(word in capital_section for word in group) for group in alternatives):
-        return False, "formal_presentation_missing_capital_alternatives"
-    if not any(word in capital_section for word in ("因为", "由于", "原因", "依据", "证据", "尚未", "不足", "优于", "弱于", "条件")):
-        return False, "formal_presentation_missing_capital_choice_rationale"
-
-    # A live task may render holdings as separate named paragraphs instead of
-    # numbered items. Split only on explicit six-digit security identifiers;
-    # do not treat general commentary as an individual holding.
-    holding_items = []
-    current_item_lines = []
-    for line in holdings_section.splitlines():
-        stripped = line.strip()
-        numbered = bool(re.match(r"^(?:\d+[）)]|（\d+）)\s*", stripped))
-        named = bool(re.match(r"^(?:\d+[）)]\s*|（\d+）\s*)?[^：\n]{1,50}（\d{6}）：", stripped))
-        if numbered or named:
-            if current_item_lines:
-                holding_items.append("\\n".join(current_item_lines))
-            current_item_lines = [stripped]
-        elif current_item_lines:
-            current_item_lines.append(line)
-    if current_item_lines:
-        holding_items.append("\\n".join(current_item_lines))
-    if not holding_items:
-        return False, "formal_presentation_missing_individual_position_reviews"
-    for item in holding_items:
-        if "相较" not in item or not any(token in item for token in ("释放", "可释放资本")):
-            return False, "formal_presentation_position_missing_hold_vs_release_comparison"
-        if not any(token in item for token in ("若", "如果", "当")):
-            return False, "formal_presentation_position_missing_change_condition"
-        if not all(any(word in item for word in group) for group in (
-            ("持有", "继续"), ("追加",), ("减持", "退出", "释放"),
-        )):
-            return False, "formal_presentation_position_missing_action_alternatives"
-        if not any(word in item for word in ("因为", "由于", "依据", "证据", "尚未", "不足", "优于", "弱于", "趋势", "风险", "条件")):
-            return False, "formal_presentation_position_missing_comparison_basis"
-    if not any(token in content for token in ("1）", "2）", "3）", "（1）", "（2）", "（3）")):
-        return False, "formal_presentation_missing_secondary_numbering"
+    semantic_errors = formal_decision_semantic_errors(content)
+    if semantic_errors:
+        return False, semantic_errors[0]
     return True, ""
 
 
