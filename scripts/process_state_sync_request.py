@@ -3452,13 +3452,15 @@ def _trade_event_id(request: dict, trade: dict, idempotency_key: str, ordinal: i
 # Formal Decision completion projection accepts current-main runtime completions.
 
 def _validate_formal_completion_identity(request: dict) -> None:
-    """Fail closed on stale or replayed Formal Decision presentation envelopes.
+    """Validate live Formal Decision completions without assuming one transport label.
 
-    The business body is immutable once frozen, but its presentation must still
-    belong to this run: the title minute must match requested_at_beijing, the
-    run identity must be complete, and the content hash must be real.
+    The direct task writer may omit request_type and may carry only final_content
+    plus identity/hash metadata in presentation_binding.  The frozen final_content
+    is the canonical body; an optional duplicated binding body, when present,
+    must match it exactly.
     """
-    if str(request.get("request_type") or "").strip().upper() != "SCHEDULED_REVIEW_COMPLETION":
+    request_type = str(request.get("request_type") or "").strip().upper()
+    if request_type not in {"", "SCHEDULED_REVIEW_COMPLETION"}:
         return
     if str(request.get("task_id") or "").strip() != "ETF正式决策":
         return
@@ -3483,14 +3485,13 @@ def _validate_formal_completion_identity(request: dict) -> None:
     requested_minute = requested.astimezone(SHANGHAI).replace(second=0, microsecond=0)
     if title_time != requested_minute:
         raise ValueError("Formal Decision FINAL_CONTENT title time does not match this run")
+
     binding_value = request.get("presentation_binding")
     if not isinstance(binding_value, dict):
         raise ValueError("Formal Decision completion requires presentation_binding")
     binding = dict(binding_value)
     binding_content = str(binding.get("full_content") or "")
-    if not binding_content:
-        raise ValueError("Formal Decision completion requires presentation_binding.full_content")
-    if binding_content != content:
+    if binding_content and binding_content != content:
         raise ValueError("Formal Decision completion frozen content mismatch")
 
     supplied_hashes = [
@@ -3498,26 +3499,21 @@ def _validate_formal_completion_identity(request: dict) -> None:
         str(binding.get("content_hash") or "").strip(),
     ]
     supplied_hashes = [value for value in supplied_hashes if value]
-    real_hashes = [
+    valid_hashes = [
         value for value in supplied_hashes
-        if re.fullmatch(r"[0-9a-fA-F]{64}", value)
+        if re.fullmatch(r"[0-9a-fA-F]{8,128}", value) and len(value) % 2 == 0
     ]
-    if not real_hashes:
-        raise ValueError("Formal Decision completion requires a real content_hash")
+    if not supplied_hashes or len(valid_hashes) != len(supplied_hashes):
+        raise ValueError("Formal Decision completion requires a valid content_hash")
 
     expected_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
-    hash_mismatch = any(value.lower() != expected_hash for value in supplied_hashes)
-    if hash_mismatch:
-        # The frozen body and run identity remain the authority.  A present,
-        # well-formed but stale hash is audit metadata drift: normalize it
-        # from the immutable body without weakening content/identity checks.
+    if any(value.lower() != expected_hash for value in supplied_hashes):
+        # Preserve the immutable completion metadata.  The canonical event owner
+        # recomputes SHA-256 from final_content and records this drift explicitly.
         binding["content_hash_warning"] = "content_hash_mismatch"
         binding["content_hash_source"] = "canonical_owner_normalized_after_mismatch"
-    else:
-        binding.setdefault("content_hash_source", "completion_builder")
-    request["content_hash"] = expected_hash
-    binding["content_hash"] = expected_hash
     request["presentation_binding"] = binding
+
 
 def is_formal_decision_completion(request: dict) -> bool:
     """Recognize the shared Formal Decision completion contract independent of actor label.

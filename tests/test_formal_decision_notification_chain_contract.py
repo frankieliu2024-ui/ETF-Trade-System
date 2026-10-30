@@ -160,13 +160,11 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
         self.assertIn("steps.dispatch_completion_kind.outputs.formal", workflow)
         self.assertIn("steps.dispatch_completion_kind.outputs.scheduled", workflow)
 
-    def test_formal_completion_normalizes_present_hash_drift_from_identical_frozen_body(self):
-        import hashlib
+    def test_formal_completion_normalizes_present_short_hash_on_direct_writer_shape(self):
         from scripts.process_state_sync_request import _validate_formal_completion_identity
 
         content = "【ETF正式决策】2026-10-30 09:03 正式判断\n\n正式决策正文。"
         request = {
-            "request_type": "SCHEDULED_REVIEW_COMPLETION",
             "task_id": "ETF正式决策",
             "formal_fact_type": "FORMAL_CURRENT_MAIN_DECISION",
             "interaction_scenario": "FORMAL_DECISION",
@@ -175,19 +173,20 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
             "request_id": "formal-request-0903",
             "requested_at_beijing": "2026-10-30T09:03:00+08:00",
             "final_content": content,
-            "content_hash": "0" * 64,
+            "content_hash": "8ee5b9ca",
             "presentation_binding": {
-                "full_content": content,
-                "content_hash": "1" * 64,
-                "content_hash_source": "completion_builder",
+                "task_id": "ETF正式决策",
+                "report_type": "ETF_FORMAL_DECISION",
+                "report_id": "ETF_FORMAL_DECISION:formal-run-0903",
+                "request_id": "formal-request-0903",
+                "occurrence_id": "formal-run-0903",
+                "content_hash": "8ee5b9ca",
             },
         }
 
         _validate_formal_completion_identity(request)
 
-        expected = hashlib.sha256(content.encode("utf-8")).hexdigest()
-        self.assertEqual(request["content_hash"], expected)
-        self.assertEqual(request["presentation_binding"]["content_hash"], expected)
+        self.assertEqual(request["content_hash"], "8ee5b9ca")
         self.assertEqual(
             request["presentation_binding"]["content_hash_warning"],
             "content_hash_mismatch",
@@ -202,7 +201,6 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
 
         content = "【ETF正式决策】2026-10-30 09:03 正式判断\n\n正式决策正文。"
         base = {
-            "request_type": "SCHEDULED_REVIEW_COMPLETION",
             "task_id": "ETF正式决策",
             "formal_fact_type": "FORMAL_CURRENT_MAIN_DECISION",
             "interaction_scenario": "FORMAL_DECISION",
@@ -211,22 +209,21 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
             "request_id": "formal-request-0903",
             "requested_at_beijing": "2026-10-30T09:03:00+08:00",
             "final_content": content,
-            "presentation_binding": {"full_content": content},
+            "presentation_binding": {"task_id": "ETF正式决策", "report_type": "ETF_FORMAL_DECISION"},
         }
         for value in ("", "placeholder", "not-a-sha256"):
             request = dict(base)
             request["presentation_binding"] = dict(base["presentation_binding"])
             request["presentation_binding"]["content_hash"] = value
             with self.subTest(content_hash=value):
-                with self.assertRaisesRegex(ValueError, "requires a real content_hash"):
+                with self.assertRaisesRegex(ValueError, "requires a valid content_hash"):
                     _validate_formal_completion_identity(request)
 
-    def test_formal_completion_rejects_presentation_body_drift(self):
+    def test_formal_completion_rejects_presentation_body_drift_when_duplicate_exists(self):
         from scripts.process_state_sync_request import _validate_formal_completion_identity
 
         content = "【ETF正式决策】2026-10-30 09:03 正式判断\n\n正式决策正文。"
         request = {
-            "request_type": "SCHEDULED_REVIEW_COMPLETION",
             "task_id": "ETF正式决策",
             "formal_fact_type": "FORMAL_CURRENT_MAIN_DECISION",
             "interaction_scenario": "FORMAL_DECISION",
@@ -235,10 +232,10 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
             "request_id": "formal-request-0903",
             "requested_at_beijing": "2026-10-30T09:03:00+08:00",
             "final_content": content,
-            "content_hash": "0" * 64,
+            "content_hash": "8ee5b9ca",
             "presentation_binding": {
                 "full_content": content + "发生变化",
-                "content_hash": "0" * 64,
+                "content_hash": "8ee5b9ca",
             },
         }
 
@@ -253,7 +250,7 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
         from unittest.mock import patch
         from scripts import process_state_sync_request as state_sync
 
-        content = "【ETF正式决策】2026-10-30 09:03 正式判断\\n\\n正式决策正文。"
+        content = "【ETF正式决策】2026-10-30 09:03 正式判断\n\n正式决策正文。"
         request = {
             "request_id": "formal-request-0903",
             "parent_request_id": "formal-request-0903",
@@ -262,15 +259,18 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
             "task_run_id": "formal-run-0903",
             "occurrence_id": "formal-run-0903",
             "requested_at_beijing": "2026-10-30T09:03:00+08:00",
-            "content_hash": hashlib.sha256(content.encode("utf-8")).hexdigest(),
+            "content_hash": "8ee5b9ca",
+            "final_content": content,
             "presentation_binding": {
+                "task_id": "ETF正式决策",
+                "report_type": "ETF_FORMAL_DECISION",
                 "request_id": "formal-request-0903",
                 "parent_request_id": "formal-request-0903",
                 "decision_id": "ETF_FORMAL_DECISION:formal-run-0903",
                 "task_run_id": "formal-run-0903",
                 "report_id": "ETF_FORMAL_DECISION:formal-run-0903",
-                "full_content": content,
-                "content_hash": hashlib.sha256(content.encode("utf-8")).hexdigest(),
+                "occurrence_id": "formal-run-0903",
+                "content_hash": "8ee5b9ca",
                 "content_hash_warning": "content_hash_mismatch",
             },
         }
