@@ -314,6 +314,13 @@ def formal_decision_semantic_errors(content: str) -> list[str]:
         errors.append("formal_presentation_missing_capital_choice_rationale")
     if capital_section and not _has_any(capital_section, ("当前胜出", "胜出用途", "最有效用途", "下一单位资本")):
         errors.append("formal_presentation_missing_selected_capital_use")
+    if "新增部署0元" in text or "实际新增部署0元" in text:
+        if not _has_any(capital_section, ("最近可执行候选", "最近候选", "不存在合理的最近可执行候选")):
+            errors.append("formal_presentation_zero_deployment_missing_nearest_candidate")
+        if not _has_any(capital_section, ("决定性缺口", "决定性证据缺口", "尚缺", "证据不足")):
+            errors.append("formal_presentation_zero_deployment_missing_decisive_evidence_gap")
+        if not _has_any(capital_section, ("下一复核节点", "下次正式决策", "下一次正式决策", "最近复核节点", "下一节点")):
+            errors.append("formal_presentation_zero_deployment_missing_next_review_node")
 
     holding_items = _formal_holding_items(holdings_section)
     if not holding_items:
@@ -347,22 +354,27 @@ def formal_decision_semantic_errors(content: str) -> list[str]:
             if "账户功能" not in item:
                 errors.append(prefix + "missing_account_function_review")
 
-    # Every opportunity review must explicitly compare Trial, direct Confirm,
-    # and zero deployment. This remains required even when no opportunity
-    # qualifies: the report must state why the alternatives do not qualify.
-    for term, error in (
-        ("Trial", "formal_presentation_opportunity_missing_trial_review"),
-        ("Confirm", "formal_presentation_opportunity_missing_confirm_review"),
-        ("0元", "formal_presentation_opportunity_missing_zero_deployment_comparison"),
-    ):
-        if term not in opportunity_section:
-            errors.append(error)
-    if opportunity_section and not _has_any(opportunity_section, ("5,000", "5000", "5千元", "5,000元")):
-        errors.append("formal_presentation_opportunity_missing_trial_amount_standard")
-    if opportunity_section and not _has_any(opportunity_section, ("未达到", "未成立", "决定性缺口", "尚缺", "不具备", "缺少", "已达到")):
-        errors.append("formal_presentation_opportunity_missing_eligibility_reason")
-    if opportunity_section and not _has_any(opportunity_section, ("下一复核节点", "下次正式决策", "下一次正式决策", "最近复核节点", "下一节点")):
-        errors.append("formal_presentation_opportunity_missing_next_review_node")
+    # Compare all three deployment alternatives for every opportunity object,
+    # rather than allowing one generic paragraph to cover an entire section.
+    opportunity_items = _formal_holding_items(opportunity_section)
+    if not opportunity_items and not _has_any(opportunity_section, ("0只", "未形成机会对象", "暂无机会对象", "没有形成机会对象")):
+        errors.append("formal_presentation_opportunity_missing_explicit_zero_or_object_count")
+    if not opportunity_items:
+        opportunity_items = [opportunity_section]
+    for index, item in enumerate(opportunity_items, start=1):
+        prefix = f"formal_presentation_opportunity_{index}_"
+        if "Trial" not in item:
+            errors.append(prefix + "missing_trial_review")
+        if "Confirm" not in item:
+            errors.append(prefix + "missing_direct_confirm_review")
+        if "0元" not in item:
+            errors.append(prefix + "missing_zero_deployment_comparison")
+        if not _has_any(item, ("5,000", "5000", "5千元", "5,000元")):
+            errors.append(prefix + "missing_trial_amount_standard")
+        if not _has_any(item, ("未达到", "未成立", "决定性缺口", "尚缺", "不具备", "缺少", "已达到")):
+            errors.append(prefix + "missing_eligibility_reason")
+        if not _has_any(item, ("下一复核节点", "下次正式决策", "下一次正式决策", "最近复核节点", "下一节点")):
+            errors.append(prefix + "missing_next_review_node")
 
     if not _has_any(text, ("1）", "2）", "3）", "（1）", "（2）", "（3）")):
         errors.append("formal_presentation_missing_secondary_numbering")
