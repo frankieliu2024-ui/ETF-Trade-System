@@ -59,10 +59,11 @@ def main() -> int:
         args.requested_at_beijing, args.entry_mode,
         args.task_run_id, args.occurrence_id,
     )
-    review = {"status": "PASS", "task_id": "ETF系统复核",
-              "market_date": args.market_date, "fact_cutoff_at_beijing": args.requested_at_beijing}
-    if args.review_json:
-        review = json.loads(Path(args.review_json).read_text(encoding="utf-8"))
+    if not args.review_json:
+        raise ValueError("system review requires an explicit same-run review JSON; default PASS is prohibited")
+    review = json.loads(Path(args.review_json).read_text(encoding="utf-8"))
+    if not isinstance(review, dict) or review.get("task_id") != "ETF系统复核" or review.get("market_date") != args.market_date:
+        raise ValueError("system review input identity or market_date mismatch")
     payload = build_system_review_completion_request(
         review,
         args.request_id or task_run_id,
