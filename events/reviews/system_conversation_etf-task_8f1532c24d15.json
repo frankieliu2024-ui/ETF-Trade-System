@@ -1,0 +1,142 @@
+{
+  "event_type": "FORMAL_SCHEDULED_SYSTEM_REVIEW",
+  "occurrence_id": "conversation_etf-task_8f1532c24d15",
+  "request_id": "manual-system-review-20261030104558-339770d77d96",
+  "reviewed_at_beijing": "2026-10-30T10:45:58+08:00",
+  "presentation_binding": {
+    "report_type": "ETF_SYSTEM_REVIEW",
+    "task_id": "ETF系统复核",
+    "task_run_id": "conversation_etf-task_8f1532c24d15",
+    "occurrence_id": "conversation_etf-task_8f1532c24d15",
+    "request_id": "manual-system-review-20261030104558-339770d77d96",
+    "report_id": "etf_system_review:conversation_etf-task_8f1532c24d15",
+    "full_content": "【ETF系统复核】2026-10-30 10:50 早间复核\n\n【复核时点（北京时间）】\n\n本次由用户在普通对话中手动发起，属于早间复核，不因已过08:30自动节点而跳过。实际启动时间以本轮首次可核对的运行时钟记录为10:45:58；复核运行时钟为10:50:13，事实截止时点为10:48:17，市场日期为2026-10-30。平台未提供本次原生运行编号；本次另按main现行身份规则建立唯一审计关联，不是平台原生编号。\n\n【早间复核结论】\n\n系统索引、规范路由和今日盘中事实均可回读。10:32形成的A股盘中快照当时通过发布质量检查，CURRENT已指向该快照，决策、复盘和对象层上下文也已识别同一市场日期。到本轮事实截止时，该快照已超过15分钟新鲜阈值但未超过25分钟降级上限；看门狗已提示需要刷新。因此，系统可以继续读取已发布事实和运行只读复核，但当前行情新鲜度和下一节点准备度受限，不能把该快照称为本轮时点的最新行情。\n\n本次专属一致性验收已实际执行并回读成功；报告无硬错误和警告。这说明检查所覆盖的生产合同通过，不代表当前行情时效问题已自动消除。本次未修改业务事实，也未实施修复。\n\n【系统运行与交接能力】\n\nmain中的索引、正式文件及本次使用的一致性入口可读，索引路由与实际路径一致。索引没有列出独立的“ETF系统复核规范”或“系统复核执行与用户回复协议”；本次未假设这些文件存在，依据用户指令和已回读的现行正式规范执行。\n\n今日10:32的A股行情由正式数据流程形成，18个核心行情对象及15个ETF监测对象通过当时的质量检查；CURRENT指向该合法快照。10:35至10:36形成的决策与复盘上下文均识别到同一日期和快照；核心行情、4只持仓ETF和11只观察ETF覆盖完整。查询上下文于10:33形成，但路由使用缓存状态，决策时点仍标记需要刷新；美股纳指100与费城半导体指数仅有前一正式收盘时点，不能当作当前盘中事实。10:41形成的海外及美股扩展时段上下文质量通过，但海外调度脉冲归属仍不明确。\n\n看门狗于10:48检查时把盘中快照判为已过刷新时限并建议刷新；没有回读到该次刷新已经执行的证据。其一致性门为通过，未阻断市场恢复；此状态不推翻原快照通过发布校验的事实。维护健康记录较早，不能替代本次状态。账户投影仍反映10月29日账户事实；本轮未发现持仓身份被改写或跨任务投影证据。\n\n【今日市场阶段与开门条件】\n\nA股处于交易日上午。正式CURRENT指向10月30日10:32:29采集的盘中快照，行情供应时间为10:32:27；快照发布时质量为通过。到事实截止时约已过15分48秒，已不满足15分钟新鲜阈值，但仍在25分钟降级上限内。故同日盘中事实仍可作降级参考，新的盘中节点需确认行情刷新、CURRENT更新及任务消费者识别后，才可视为恢复到新鲜状态。\n\n【关键事实与数据可用性】\n\n账户事实状态有效，最新时间为10月29日15:33:14：总资产171,479.47元，现金115,294.47元，记录有4只持仓ETF和1只可转债。账户记录的最近已确认成交为10月26日全指器械ETF买入4,700份；账户未记录10月30日成交，但本次没有完成当日券商流水对账，不能据此断言今日无成交。累计已知ETF费用227.23元，仍有待确认费用。\n\n风险投影截至10月29日：账户总风险暴露约32.76%，ETF策略Gross风险率约-12.8623%。生命周期投影于10月30日可读，当前活动Trial、待决议和逾期计数均为0。上述账户、风险事实日期较本次市场快照旧，不能冒充今日账户更新。\n\nDiscovery今日状态为就绪、覆盖完整，共11个发现候选；这不等同于观察池或机会池。观察ETF维持独立的11个持续监测身份，实际持仓由账户事实确认。机会层仍待正式决策判断，数量未定，不能解释为零。本次未发现四类对象互相替代的证据。\n\n【ETF定时任务与系统交接准备度】\n\n任务平台回读显示系统复核自动化处于启用状态；今日08:30节点被记录为已完成，但其结果报告本身称未尝试completion和通知，不能视为该次交接闭环。平台没有返回下一次运行时间或本次手动运行的原生编号。自动节点配置仍以main正式调度协议为准；本次是手动运行，不替代今日后续自动节点。\n\n本次一致性验收终态为成功并已回读。正文冻结时，本次completion尚未写入，canonical event、REPORT和通知记录尚未形成，通知流程尚未启动；服务商投递及用户收到状态未确认。正文输出后将沿本次唯一completion继续尝试写入、回读及通知交接，并在正文外报告实际层级。\n\n【需要用户处理】\n\n目前没有基于已确认事实要求用户修改系统或采取交易动作。若10月30日账户或成交有变化，需通过既有账户事实流程补充并回读，不能用当前旧账户快照替代当日流水。\n\n【今日重点关注】\n\n首先确认新的A股行情脉冲是否形成并更新CURRENT，盘中数据是否恢复到新鲜阈值内，及下游上下文是否识别同一事实。其次确认海外自然调度归属和指数时点资格，以及账户、成交、风险和生命周期是否出现新事实。观察池、发现层、机会层和实际持仓继续分别读取、分别确认。\n\n【下一阶段】\n\n下一个适用的盘中刷新节点需核对行情生成、质量与PIT、CURRENT发布、任务识别、看门狗和下游投影；今天19:30系统复核节点还需核实平台是否实际启动并逐层回读交接。若快照仍超出新鲜阈值，下一节点应如实降级，不以旧数据宣称当前行情已更新。\n\n【执行状态】\n\n本次事实受限的系统复核已完成。今日A股行情生产、质量发布和下游识别已确认；截至事实截止时，行情需刷新。账户事实可用但较旧，今日成交未独立对账；风险按10月29日事实读取，生命周期投影可用；Discovery、观察ETF、机会ETF和持仓边界保持。查询刷新仅部分可用，看门狗提示刷新，一致性验收已实际执行且成功回读。未进行业务维护或交易操作，也未形成交易许可或交易指令。\n\n【置信度】\n\n索引、今日快照、发布状态、对象覆盖和一致性验收：高。账户、成交及风险对今日时点的代表性：受限。看门狗要求刷新及快照当前新鲜度降级：高。今日自动任务平台履约：中等；平台记录08:30运行完成，但后置交接仍未闭环。\n\n【最可能出错的地方】\n\n最可能的误读是把10:32发布时通过质量检查，等同于10:48仍处于新鲜阈值内；把一致性验收成功当成行情已经刷新；把08:30任务平台标记完成当成completion和通知闭环；把账户未列10月30日成交当成已经完成全日对账；或把Discovery候选、观察ETF、机会ETF和实际持仓混成同一对象。",
+    "content_hash": "6a83ab1675a8fd11d75be14dea06a7ee3f00364706dbfcb083db3f04c7c9da70",
+    "content_hash_source": "completion_builder"
+  },
+  "review": {
+    "task_id": "ETF系统复核",
+    "task_run_id": "conversation_etf-task_8f1532c24d15",
+    "occurrence_id": "conversation_etf-task_8f1532c24d15",
+    "request_id": "manual-system-review-20261030104558-339770d77d96",
+    "source": "CHATGPT_MANUAL_SYSTEM_REVIEW",
+    "entry_mode": "MANUAL_CONVERSATION",
+    "interaction_scenario": "SYSTEM_REVIEW",
+    "market_date": "2026-10-30",
+    "requested_at_beijing": "2026-10-30T10:45:58+08:00",
+    "runtime_now": "2026-10-30T10:50:13+08:00",
+    "review_type": "MORNING_SYSTEM_REVIEW",
+    "fact_cutoff_at_beijing": "2026-10-30T10:48:17+08:00",
+    "source_facts_as_of": {
+      "current_market_snapshot": "2026-10-30T10:32:29+08:00",
+      "current_pointer": "2026-10-30T10:32:29+08:00",
+      "account_fact": "2026-10-29T15:33:14+08:00",
+      "execution_reconciliation": "2026-10-29T15:45:13+08:00",
+      "risk_projection": "2026-10-29",
+      "decision_context": "2026-10-30T10:35:42+08:00",
+      "review_context": "2026-10-30T10:36:03+08:00",
+      "query_context": "2026-10-30T10:33:38+08:00",
+      "formal_discovery": "2026-10-30T10:33:38+08:00",
+      "formal_opportunity": "2026-10-30T10:33:38+08:00",
+      "overseas_context": "2026-10-30T10:41:05+08:00",
+      "us_extended_hours_context": "2026-10-30T10:41:14+08:00",
+      "self_healing_status": "2026-10-30T10:48:17+08:00",
+      "system_consistency": "2026-10-30T10:47:43+08:00",
+      "automation_run": "2026-10-30T08:30:10+08:00"
+    },
+    "system_consistency_acceptance": {
+      "executed": true,
+      "final_status": "SUCCESS",
+      "run_status": "COMPLETED",
+      "hard_errors": 0,
+      "warnings": 0
+    },
+    "canonical_facts": {
+      "market_snapshot": {
+        "market_date": "2026-10-30",
+        "node": "live",
+        "captured_at_beijing": "2026-10-30T10:32:29+08:00",
+        "provider_as_of_beijing": "2026-10-30T10:32:27+08:00",
+        "quality_at_publication": "PASS",
+        "object_count": 18,
+        "etf_monitor_count": 15,
+        "source": "tencent_qq"
+      },
+      "freshness_at_cutoff": {
+        "age_seconds": 948,
+        "strict_fresh_max_seconds": 900,
+        "degraded_max_seconds": 1500,
+        "classification": "DEGRADED"
+      },
+      "account_fact": {
+        "status": "VALID",
+        "updated_at": "2026-10-29T15:33:14+08:00",
+        "total_asset": 171479.47,
+        "cash": 115294.47,
+        "positions_count": 5,
+        "confirmed_trades_count": 1,
+        "last_confirmed_trade_at": "2026-10-26T14:55:04+08:00",
+        "daily_trade_reconciliation": "NOT_PERFORMED"
+      },
+      "risk": {
+        "account_exposure_pct": 32.76,
+        "etf_strategy_gross_risk_rate_pct": -12.8623,
+        "as_of_market_date": "2026-10-29",
+        "known_fees": 227.23,
+        "pending_fee_count": 1
+      },
+      "lifecycle": {
+        "as_of_market_date": "2026-10-30",
+        "active_trial_count": 0,
+        "decision_due_count": 0,
+        "overdue_count": 0
+      },
+      "object_boundaries": {
+        "discovery_status": "READY",
+        "discovery_candidate_count": 11,
+        "observed_etfs": 11,
+        "held_etfs": 4,
+        "opportunity_status": "PENDING_MASTER_DECISION",
+        "opportunity_count": null,
+        "identities_preserved": true
+      },
+      "query_refresh": {
+        "context_generated_at": "2026-10-30T10:33:38+08:00",
+        "router_mode": "CACHED_STATE",
+        "refresh_failures": 0,
+        "decision_freshness": "REFRESH_REQUIRED",
+        "ndx_sox": "PREVIOUS_CLOSE_STALE"
+      },
+      "watchdog": {
+        "checked_at": "2026-10-30T10:48:17+08:00",
+        "classification": "SCHEDULE_MISSED_OR_STALE",
+        "recommended_action": "REFRESH_SNAPSHOT",
+        "refresh_attempt_observed": false
+      },
+      "overseas_health": {
+        "status": "DEGRADED",
+        "reason": "natural scheduled pulse identity ambiguous",
+        "overseas_context_quality": "PASS"
+      },
+      "task_schedule": {
+        "enabled": true,
+        "last_scheduled_run_at": "2026-10-30T08:30:00+08:00",
+        "recorded_status": "completed",
+        "completion_attempt": "NOT_REPORTED_AS_ATTEMPTED",
+        "notification_attempt": "NOT_REPORTED_AS_ATTEMPTED",
+        "next_run_time": null
+      },
+      "handoff_at_freeze": {
+        "completion_written": false,
+        "canonical_event_formed": false,
+        "report_formed": false,
+        "notification_record_formed": false,
+        "notification_workflow_started": false,
+        "provider_delivery_confirmed": false,
+        "user_receipt_confirmed": false
+      }
+    },
+    "no_trade_authority": true
+  },
+  "fingerprint": "8477e00d36fc0e62928c5da1d8e1a16bcc4b91e6528527a2524b7078be8ab144"
+}
