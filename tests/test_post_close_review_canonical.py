@@ -87,6 +87,7 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
             "report_id": "ETF_TRADE_REVIEW:trade-manual-close-boundary-1",
             "full_content": "FROZEN CLOSE-BOUNDARY REPORT",
         }
+        account = {"status": "VALID", "updated_at": "2026-08-31T15:12:00+08:00"}
 
         self.assertEqual(sync.record_post_close_review(account, request), (True, False))
         event = json.loads((self.root / "events/reviews/2026-08-31.json").read_text(encoding="utf-8"))
