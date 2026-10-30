@@ -232,6 +232,142 @@ def _internal_presentation_terms(text: str) -> list[str]:
     return [term for term in terms if re.search(re.escape(term), text, re.IGNORECASE)]
 
 
+
+def _formal_section_content(content: str, heading: str) -> str:
+    aliases = {
+        "【三层监测】": "【市场监测】",
+        "【全市场发现逐只评估】": "【全市场发现】",
+        "【观察ETF逐只评估】": "【观察ETF】",
+        "【机会ETF逐只评估】": "【机会ETF】",
+    }
+    accepted = {heading, aliases.get(heading)}
+    lines = str(content or "").splitlines()
+    start = next((i + 1 for i, line in enumerate(lines) if line.strip() in accepted), None)
+    if start is None:
+        return ""
+    end = len(lines)
+    for i in range(start, len(lines)):
+        stripped = lines[i].strip()
+        if stripped.startswith("【") and stripped.endswith("】"):
+            end = i
+            break
+    return "\n".join(lines[start:end])
+
+
+def _formal_holding_items(section: str) -> list[str]:
+    items: list[str] = []
+    current: list[str] = []
+    for line in str(section or "").splitlines():
+        stripped = line.strip()
+        numbered = bool(re.match(r"^(?:\d+[）)]|（\d+）)\s*", stripped))
+        named = bool(re.match(r"^(?:\d+[）)]\s*|（\d+）\s*)?[^：\n]{1,50}（\d{6}）：", stripped))
+        if numbered or named:
+            if current:
+                items.append("\n".join(current))
+            current = [stripped]
+        elif current:
+            current.append(line)
+    if current:
+        items.append("\n".join(current))
+    return items
+
+
+def _has_any(text: str, terms: tuple[str, ...]) -> bool:
+    return any(term in text for term in terms)
+
+
+def formal_decision_semantic_errors(content: str) -> list[str]:
+    """Shared semantic coverage gate for Formal Decision freeze and report delivery.
+
+    This checks explicit counterfactual coverage in the user-visible report. It
+    does not infer market truth, choose trades, or replace the actor's judgment.
+    """
+    text = normalize_formal_decision_content(content)
+    if not text.startswith("【ETF正式决策】"):
+        return []
+
+    risk_section = _formal_section_content(text, "【风险与市场状态】")
+    capital_section = _formal_section_content(text, "【全市场机会与资本竞争】")
+    opportunity_section = _formal_section_content(text, "【机会ETF逐只评估】")
+    holdings_section = _formal_section_content(text, "【全部实际持仓】")
+    errors: list[str] = []
+
+    if not risk_section or "风险许可" not in risk_section:
+        errors.append("formal_presentation_missing_risk_permission_reasoning")
+
+    if not capital_section or not all(token in capital_section for token in ("现金", "机会", "持仓", "相较")):
+        errors.append("formal_presentation_missing_whole_capital_comparison")
+    if capital_section and not _has_any(capital_section, ("机会成本", "资本效率", "风险收益比", "边际收益风险")):
+        errors.append("formal_presentation_missing_capital_efficiency_comparison")
+
+    capital_alternatives = (
+        ("现金", "保留"),
+        ("持仓", "持有"),
+        ("追加",),
+        ("减持", "释放"),
+        ("全部退出", "退出"),
+        ("机会",),
+    )
+    if capital_section and not all(_has_any(capital_section, group) for group in capital_alternatives):
+        errors.append("formal_presentation_missing_capital_alternatives")
+    if capital_section and not _has_any(capital_section, ("因为", "由于", "原因", "依据", "证据", "尚未", "不足", "优于", "弱于", "条件")):
+        errors.append("formal_presentation_missing_capital_choice_rationale")
+    if capital_section and not _has_any(capital_section, ("当前胜出", "胜出用途", "最有效用途", "下一单位资本")):
+        errors.append("formal_presentation_missing_selected_capital_use")
+
+    holding_items = _formal_holding_items(holdings_section)
+    if not holding_items:
+        errors.append("formal_presentation_missing_individual_position_reviews")
+    for index, item in enumerate(holding_items, start=1):
+        prefix = f"formal_presentation_position_{index}_"
+        if not _has_any(item, ("相较", "相比")) or not _has_any(item, ("现金", "替代用途")) or not _has_any(item, ("机会", "替代用途")):
+            errors.append(prefix + "missing_hold_cash_opportunity_comparison")
+        if not _has_any(item, ("若", "如果", "当")):
+            errors.append(prefix + "missing_change_condition")
+        if not _has_any(item, ("继续持有", "持有管理")):
+            errors.append(prefix + "missing_hold_alternative")
+        if "追加" not in item:
+            errors.append(prefix + "missing_add_alternative")
+        if not _has_any(item, ("部分减持", "部分减仓", "减持")):
+            errors.append(prefix + "missing_reduce_alternative")
+        if not _has_any(item, ("全部退出", "全部清仓", "全部卖出", "退出")):
+            errors.append(prefix + "missing_exit_alternative")
+        if not _has_any(item, ("如果当前没有", "若当前没有", "假设当前没有", "零持仓", "重新配置资本", "按当前价格重新买入", "重新买入")):
+            errors.append(prefix + "missing_zero_base_reentry_counterfactual")
+        holding_action = _has_any(item, ("继续持有", "持有管理")) and not _has_any(item, ("建议减持", "建议退出", "建议全部退出", "建议全部清仓"))
+        if holding_action:
+            if not _has_any(item, ("继续占资", "继续配置", "保留该持仓")) or not _has_any(item, ("优于", "胜出", "更优")):
+                errors.append(prefix + "missing_affirmative_hold_over_release_reason")
+            if "迁移成本" not in item:
+                errors.append(prefix + "missing_migration_cost_review")
+            if not _has_any(item, ("失败风险", "失败损失")):
+                errors.append(prefix + "missing_failure_risk_review")
+            if not _has_any(item, ("右尾", "尾部收益", "上行尾部")):
+                errors.append(prefix + "missing_winner_right_tail_review")
+            if "账户功能" not in item:
+                errors.append(prefix + "missing_account_function_review")
+
+    # Every opportunity review must explicitly compare Trial, direct Confirm,
+    # and zero deployment. This remains required even when no opportunity
+    # qualifies: the report must state why the alternatives do not qualify.
+    for term, error in (
+        ("Trial", "formal_presentation_opportunity_missing_trial_review"),
+        ("Confirm", "formal_presentation_opportunity_missing_confirm_review"),
+        ("0元", "formal_presentation_opportunity_missing_zero_deployment_comparison"),
+    ):
+        if term not in opportunity_section:
+            errors.append(error)
+    if opportunity_section and not _has_any(opportunity_section, ("5,000", "5000", "5千元", "5,000元")):
+        errors.append("formal_presentation_opportunity_missing_trial_amount_standard")
+    if opportunity_section and not _has_any(opportunity_section, ("未达到", "未成立", "决定性缺口", "尚缺", "不具备", "缺少", "已达到")):
+        errors.append("formal_presentation_opportunity_missing_eligibility_reason")
+    if opportunity_section and not _has_any(opportunity_section, ("下一复核节点", "下次正式决策", "下一次正式决策", "最近复核节点", "下一节点")):
+        errors.append("formal_presentation_opportunity_missing_next_review_node")
+
+    if not _has_any(text, ("1）", "2）", "3）", "（1）", "（2）", "（3）")):
+        errors.append("formal_presentation_missing_secondary_numbering")
+    return errors
+
 def validate_user_visible_content(
     content: str,
     *,
@@ -250,6 +386,7 @@ def validate_user_visible_content(
     errors.extend(_single_item_numbering_errors(text))
     errors.extend(_formal_object_numbering_errors(text))
     errors.extend(_formal_required_sections_errors(text))
+    errors.extend(formal_decision_semantic_errors(text))
     errors.extend(_time_presentation_errors(text))
     if not technical_audit_mode:
         for term in _internal_presentation_terms(text):
