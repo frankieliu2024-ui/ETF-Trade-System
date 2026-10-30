@@ -68,6 +68,9 @@ jobs:
       - name: Run zero-deployment capital competition contract acceptance
         run: |
           PYTHONPATH=scripts python -m unittest -v tests.test_formal_decision_zero_amount_capital_contract
+      - name: Run symmetric capital competition contract acceptance
+        run: |
+          PYTHONPATH=scripts python -m unittest -v tests.test_formal_symmetric_capital_competition_contract
       - name: Run controlled three-entry production handoff acceptance
         run: |
           PYTHONPATH=scripts python -m unittest -v tests.test_formal_decision_production_e2e
