@@ -1,16 +1,16 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-10-30T12:39:17+08:00",
-  "status": "DEGRADED",
+  "generated_at": "2026-10-30T13:26:40+08:00",
+  "status": "BLOCKED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
   "components": {
     "market": {
       "status": "READY",
       "reason": "latest market snapshot is valid",
-      "snapshot": "data/market/snapshots/2026-10-30_113146.json",
-      "captured_at": "2026-10-30T11:31:46+08:00",
-      "market_phase": "MIDDAY_BREAK"
+      "snapshot": "data/market/snapshots/2026-10-30_132556.json",
+      "captured_at": "2026-10-30T13:25:56+08:00",
+      "market_phase": "CONTINUOUS_AFTERNOON"
     },
     "account": {
       "status": "READY",
@@ -46,27 +46,24 @@
       "business_completion_status": "DEGRADED"
     },
     "decision_context": {
-      "status": "READY",
-      "reason": "query and decision contexts are available; legacy minimum-ready observability is diagnostic only",
-      "query_context": true,
+      "status": "BLOCKED",
+      "reason": "canonical request-bound query context is empty, invalid, or missing a consumable fact pack",
+      "query_context": false,
       "decision_context": true,
-      "minimum_decision_context": "READY_OR_NOT_APPLICABLE",
-      "observability_boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
-      "request_bound": false,
       "formal_reply_gate": {
         "request_id": "conversation-formal-20261026T212023+0800-90d3c2b2",
         "requested_at_beijing": "2026-10-26T21:20:23.000+08:00",
-        "status": "IN_FLIGHT",
+        "status": "TERMINAL_FAILURE",
         "reply_freezable": false,
         "blockers": [
-          "REQUEST_BOUND_QUERY_CONTEXT_NOT_PUBLISHED"
+          "FORMAL_PARENT_RECOVERY_TIMEOUT"
         ],
         "source": "durable_parent_request_waiting_for_request_bound_projection",
-        "actor_action": "CONTINUE_SAME_REQUEST_SILENTLY",
-        "user_output_allowed": false,
+        "actor_action": "TERMINATE_ON_EXPLICIT_FAILURE",
+        "user_output_allowed": true,
         "business_decision_allowed": false,
         "final_content_generation_allowed": false,
-        "consumer_status": "REQUEST_BOUND_FACTS_BUILDING",
+        "consumer_status": "TERMINAL_FAILURE",
         "projection_scope": "FORMAL_DECISION_REQUEST",
         "superseded_request_id": "fd_20261026_112739_scheduled_formal_review_0bba5094",
         "request_bound": false,
@@ -74,21 +71,28 @@
         "required_problem_count": 0,
         "business_answer_contract": null,
         "ready_handoff": null,
-        "projection_preserved_from_non_formal_runtime_request": true
+        "projection_preserved_from_non_formal_runtime_request": true,
+        "terminal_failure": {
+          "error_class": "MAINTENANCE_INCOMPLETE",
+          "reason": "request-bound query context remained unbound beyond the existing workflow timeout",
+          "requested_at_beijing": "2026-10-26T21:20:23.000+08:00",
+          "terminated_at_beijing": "2026-10-30T13:26:38+08:00",
+          "query_context_request_id": ""
+        }
       },
       "context_read_contract": {
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 1321275,
-          "sha256": "99172fdcb5fc73eba8c5e192d2ecb1bce3a2c0b66bd2db3e50d5d53082569270",
+          "byte_count": 1895657,
+          "sha256": "bb241c6607dd92132381d9cafcdf7c43b9941bc840c2243a00df789196160d03",
           "parsed_object": true
         },
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 440247,
-          "sha256": "1c77d586cbd461a631f84f39669d3706a73449f3ce30e6a92038e498f54cf4e1",
+          "byte_count": 469237,
+          "sha256": "8776bbe29444d5f3e7ae3341e656d761795797b73866be79c06db51f58f9355e",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -109,7 +113,9 @@
       "checked_at": "2026-10-30T12:38:51+08:00"
     }
   },
-  "blockers": [],
+  "blockers": [
+    "decision_context"
+  ],
   "degradations": [
     "risk",
     "close_review"
@@ -118,15 +124,15 @@
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 1321275,
-      "sha256": "99172fdcb5fc73eba8c5e192d2ecb1bce3a2c0b66bd2db3e50d5d53082569270",
+      "byte_count": 1895657,
+      "sha256": "bb241c6607dd92132381d9cafcdf7c43b9941bc840c2243a00df789196160d03",
       "parsed_object": true
     },
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 440247,
-      "sha256": "1c77d586cbd461a631f84f39669d3706a73449f3ce30e6a92038e498f54cf4e1",
+      "byte_count": 469237,
+      "sha256": "8776bbe29444d5f3e7ae3341e656d761795797b73866be79c06db51f58f9355e",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"
