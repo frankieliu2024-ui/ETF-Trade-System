@@ -68,7 +68,13 @@ def _readback_notification_run(completion_path: str, submitted_after: datetime) 
                     matches.append(run)
             if len(matches) == 1:
                 run = matches[0]
-                return {"verified": True, "run_id": run.get("id"), "status": run.get("status"), "conclusion": run.get("conclusion")}
+                status = str(run.get("status") or "").lower()
+                conclusion = str(run.get("conclusion") or "").lower()
+                if status == "completed" and conclusion == "success":
+                    return {"verified": True, "run_id": run.get("id"), "status": status, "conclusion": conclusion}
+                if status == "completed" and conclusion not in {"", "null"}:
+                    return {"verified": False, "run_id": run.get("id"), "status": status, "conclusion": conclusion,
+                            "reason": "matching notification workflow run completed unsuccessfully"}
             if len(matches) > 1:
                 return {"verified": False, "reason": "ambiguous notification workflow runs for completion"}
         except Exception:
