@@ -2261,7 +2261,7 @@ def _is_effective_close_timestamp(
 def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     review = request.get("formal_review")
     interaction_scenario = str(request.get("interaction_scenario") or "").strip().upper()
-    if interaction_scenario not in {"SCHEDULED_TRADE_REVIEW", "POST_CLOSE_REVIEW", "FORMAL_DECISION", "MIDDAY_REVIEW", "WEEKLY_REVIEW"} or not review:
+    if interaction_scenario not in {"SCHEDULED_TRADE_REVIEW", "TRADE_REVIEW", "POST_CLOSE_REVIEW", "FORMAL_DECISION", "MIDDAY_REVIEW", "WEEKLY_REVIEW"} or not review:
         return False, False
     review_scope = str(review.get("review_scope") or "").strip().upper()
     request_phase = str(request.get("market_phase") or request.get("session_stage") or "").strip().upper()
@@ -2334,7 +2334,7 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     raw_presentation_binding = request.get("presentation_binding")
     is_trade_review_production = (
         str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION"
-        and str(request.get("source") or "").strip().upper() in {"CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR", "CHATGPT_SCHEDULED_TRADE_REVIEW", "CHATGPT_DIRECT_GITHUB_CONTENTS_WRITER"}
+        and str(request.get("source") or "").strip().upper() in {"CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR", "CHATGPT_SCHEDULED_TRADE_REVIEW", "CHATGPT_MANUAL_TRADE_REVIEW", "CHATGPT_DIRECT_GITHUB_CONTENTS_WRITER"}
         and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_SCHEDULED_TRADE_REVIEW"
         and str((raw_presentation_binding or {}).get("task_id") or "").strip() == "ETF交易复盘"
     )
