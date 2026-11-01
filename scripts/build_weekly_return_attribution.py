@@ -44,7 +44,8 @@ def _account_positions(account: dict) -> dict:
         if not isinstance(row, dict):
             continue
         code = str(row.get("code") or row.get("security_code") or row.get("symbol") or "").strip()
-        if not code:
+        asset_class = str(row.get("asset_class") or row.get("security_type") or row.get("position_type") or "").upper()
+        if not code or asset_class in {"OTHER", "CONVERTIBLE_BOND", "BOND", "CASH", "MONEY", "CASH_EQUIVALENT"}:
             continue
         qty = f(row.get("quantity") or row.get("qty") or row.get("shares"))
         value = f(row.get("market_value") or row.get("value") or row.get("marketValue"))
