@@ -646,6 +646,11 @@ jobs:
         if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' && github.event_name != 'push' }}
         run: python scripts/build_weekly_discovery.py
 
+      - name: Build weekly return attribution bridge
+        id: weekly_return_attribution
+        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' && github.event_name != 'push' }}
+        run: python scripts/build_weekly_return_attribution.py
+
       - name: Quick retry failed core objects after initial publish
         id: quick_retry
         # A user request gets the first publishable PASS/DEGRADED/FAILED result
