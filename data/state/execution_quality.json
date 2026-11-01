@@ -1,11 +1,11 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-11-01T13:38:31Z",
+  "generated_at": "2026-11-01T13:42:54Z",
   "mode": "DECISION_EXECUTION_ATTRIBUTION",
   "read_only": true,
   "trade_event_count": 52,
-  "linked_trade_count": 50,
-  "unlinked_trade_count": 2,
+  "linked_trade_count": 51,
+  "unlinked_trade_count": 1,
   "attribution_backlog": {
     "status": "OPEN",
     "items": [
@@ -15,13 +15,6 @@
         "link_status": "NO_PRIOR_MATCHING_DECISION",
         "code": "159981",
         "name": "能源化工ETF"
-      },
-      {
-        "trade_event_id": "trade-20261026-145504-159056-buy",
-        "status": "UNLINKED_TRADE",
-        "link_status": "NO_PRIOR_MATCHING_DECISION",
-        "code": "159056",
-        "name": "全指器械"
       }
     ],
     "rule": "未找到PIT有效正式决策时保留UNLINKED_TRADE；不得按时间、标的或持仓结果自动追认decision_id。后续必须补齐正式决策证据，或由正式复盘记录不可恢复归因。"
@@ -29,8 +22,8 @@
   "corrected_future_or_invalid_link_count": 35,
   "execution_cost_sample_count": 9,
   "mean_adverse_execution_cost_pct": 0.1091,
-  "delay_sample_count": 49,
-  "mean_decision_to_execution_seconds": 155982.2,
+  "delay_sample_count": 50,
+  "mean_decision_to_execution_seconds": 152930.5,
   "items": [
     {
       "trade_event_id": "20260825_100518",
@@ -943,10 +936,25 @@
     },
     {
       "trade_event_id": "trade-20261026-145504-159056-buy",
-      "status": "UNLINKED_TRADE",
-      "link_status": "NO_PRIOR_MATCHING_DECISION",
+      "decision_id": "FORMAL_COMPLETION:fd_20261026_144323_scheduled_formal_review_b7e14c92",
+      "raw_linked_decision_id": null,
+      "link_status": "CANONICAL_COMPLETION_PIT_MATCH",
+      "hypothesis_id": null,
       "code": "159056",
-      "name": "全指器械"
+      "name": "全指器械",
+      "side": "BUY",
+      "decision_time_beijing": null,
+      "decision_effective_at_beijing": "2026-10-26T14:43:23+08:00",
+      "recorded_at_beijing": "2026-10-26T14:43:23+08:00",
+      "decision_effective_ordering": "BEFORE_EXECUTION",
+      "timing_quality": "USER_CONFIRMED_BOUNDED",
+      "timing_status": "EXACT",
+      "execution_time_beijing": "2026-10-26T15:40:00+08:00",
+      "decision_price": null,
+      "execution_price": 1.042,
+      "decision_to_execution_seconds": 3397.0,
+      "adverse_execution_cost_pct": null,
+      "status": "PARTIAL"
     },
     {
       "trade_event_id": "trade_20260910_133720_515220_sell_3700",
