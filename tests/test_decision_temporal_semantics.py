@@ -70,6 +70,26 @@ class DecisionTemporalSemanticsTests(unittest.TestCase):
             self.assertEqual(item["status"], "INELIGIBLE_UNRECOVERABLE_TRADE")
             self.assertEqual(item["link_status"], "EXPLICIT_CANONICAL_INELIGIBILITY")
 
+    def test_quality_blocks_unlinked_executed_trade(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            trade_dir = root / "events/trades"
+            trade_dir.mkdir(parents=True)
+            trade = {
+                "event_id": "future-unlinked-trade",
+                "execution_date": "2026-11-02",
+                "confirmed_at_beijing": "2026-11-02T09:30:00+08:00",
+                "code": "159056",
+                "name": "全指器械ETF",
+                "side": "BUY",
+                "execution_status": "EXECUTED",
+            }
+            (trade_dir / "trade.json").write_text(json.dumps(trade), encoding="utf-8")
+            result = build_quality(root)
+            self.assertEqual(result["unlinked_trade_count"], 1)
+            self.assertEqual(result["attribution_backlog"]["status"], "OPEN")
+            self.assertEqual(result["attribution_gate"]["status"], "BLOCKED")
+            self.assertEqual(result["attribution_gate"]["unlinked_trade_ids"], ["future-unlinked-trade"])
     def test_quality_never_emits_false_negative_delay(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp); d=root/"events/decisions"; t=root/"events/trades"
