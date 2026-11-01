@@ -1659,6 +1659,16 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
             "consumption_rule": "周日周复盘只读取最后合法交易日收盘后形成的周级Discovery；缺失不等于候选为零。",
         },
     )
+    weekly_return_attribution = read_json(
+        root / "data" / "state" / "weekly_return_attribution.json",
+        {
+            "schema_version": "1.0",
+            "layer": "WEEKLY_RETURN_ATTRIBUTION",
+            "status": "NOT_AVAILABLE",
+            "strict_decomposition_status": "NOT_COMPLETE",
+            "read_only": True,
+        },
+    )
     request_source = str(request_payload.get("source") or request_payload.get("requested_by") or "").strip().upper()
     request_intent = _request_query_intent(request_payload)
     manual_formal_sources = {
@@ -1840,6 +1850,7 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
         "system_objects": system_objects, "user_requested_objects": [], "market_domain_projection": market_domain_projection,
         "formal_etf_discovery": formal_discovery,
         "weekly_formal_discovery": weekly_formal_discovery,
+        "weekly_return_attribution": weekly_return_attribution,
         "canonical_files": CANONICAL_FILES, "data_status": {**(current.get("data_freshness") or {}), **freshness}, "freshness_at_context_build": freshness,
         "interactive_decision_freshness": market_quote.get("decision_freshness", {}),
         "trading_day_status": trading_day_status, "user_visible_time_anchor": user_visible_time_anchor, "runtime_health": runtime_health,
