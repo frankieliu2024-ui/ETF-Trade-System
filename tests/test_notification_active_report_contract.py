@@ -394,6 +394,19 @@ class FormalPresentationSemanticGateTests(unittest.TestCase):
             "formal_presentation_missing_capital_efficiency_comparison",
         })
 
+    def test_delivery_entry_rejects_keyword_only_reentry_without_answer(self):
+        import scripts.notification_center as center
+
+        content = self._content().replace(
+            "若当前没有该持仓，按当前价格和证据仍愿意重新配置资本",
+            "若当前没有该持仓，需要重新比较现金与机会",
+        )
+        accepted, reason = center.validate_formal_presentation_contract({
+            "presentation_content": content, "decision_response": {},
+        })
+        self.assertFalse(accepted)
+        self.assertIn("missing_answered_zero_base_reentry_counterfactual", reason)
+
     def test_complete_capital_and_position_comparisons_are_accepted(self):
         import scripts.notification_center as center
 
