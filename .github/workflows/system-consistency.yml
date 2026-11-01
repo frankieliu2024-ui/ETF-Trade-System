@@ -192,6 +192,10 @@ jobs:
         shell: bash
         run: |
           PYTHONPATH=scripts python -m unittest tests.test_legacy_production_boundaries
+      - name: Run decision attribution hard-gate regression tests
+        shell: bash
+        run: |
+          PYTHONPATH=scripts python -m unittest tests.test_decision_temporal_semantics
 
       - name: Run full system consistency check
         shell: bash
