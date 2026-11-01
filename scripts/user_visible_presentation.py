@@ -285,21 +285,27 @@ def _has_any(text: str, terms: tuple[str, ...]) -> bool:
 
 
 def _explicit_reentry_answer(item: str) -> bool:
-    """Require a local yes/no conclusion and rationale, not scattered keywords.
+    """Check for an explicit, reasoned answer to the zero-position question.
 
-    This checks whether the zero-position counterfactual was answered. It does
-    not certify the investment rationale or the truth of cited market facts.
+    This is a coverage check; it cannot establish the truth of market evidence.
     """
     triggers = ("如果当前没有", "若当前没有", "假设当前没有", "零持仓", "按当前价格重新买入")
-    for sentence in re.split(r"[。；;\n]", item):
+    for sentence in re.split(r"[。；;\\n]", item):
         if not any(term in sentence for term in triggers):
             continue
-        # Explicit action is required; generic words such as "机会" do not
-        # constitute an answer to the reentry question.
-        if not re.search(r"(?:不会|不愿意|不选择|不考虑|不买入|不配置|愿意|选择|考虑|买入|配置)", sentence):
+        # Merely asking whether to buy or saying that it needs comparing
+        # is not a decision. Require an explicit yes/no commitment.
+        if not re.search(
+            r"(?:不会|不愿意|不选择|不考虑|不买入|不配置|暂不|不再)"
+            r"[^。；;\\n]{0,16}(?:买入|配置|建仓|持有|投入)"
+            r"|(?:会|愿意|选择|决定|建议|应当)"
+            r"[^。；;\\n]{0,16}(?:重新买入|买入|配置|建仓|持有|投入)",
+            sentence,
+        ):
             continue
-        # A conclusion must be tied to a reason in the same local argument.
-        if re.search(r"(?:因为|由于|理由|依据|基于|考虑到|鉴于|证据)", sentence):
+        # The explanation must contain substantive text after the causal link.
+        reason = re.search(r"(?:因为|由于|基于|考虑到|鉴于)([^，,：:]{4,})", sentence)
+        if reason and re.search(r"[\u4e00-\u9fff]{3,}", reason.group(1)):
             return True
     return False
 
