@@ -1,26 +1,28 @@
 {
   "schema_version": "1.1",
-  "checked_at": "2026-11-01T21:53:02+08:00",
+  "checked_at": "2026-11-01T22:03:00+08:00",
   "mode": "DETERMINISTIC_RUNTIME_SELF_HEALING",
   "enabled": true,
-  "classification": "HEALTHY",
-  "recommended_action": "NONE",
-  "reason": "runtime state is within self-healing bounds",
+  "classification": "CONSISTENCY_REGRESSION",
+  "recommended_action": "ESCALATE",
+  "reason": "system consistency has a hard failure that is not proven orthogonal to canonical market recovery",
   "market_open_date": false,
   "watch_window_active": false,
   "same_day_current_required": false,
   "same_day_current_missing": false,
   "current_capture_at": "2026-10-30T15:17:19+08:00",
-  "current_capture_age_seconds": 196543,
+  "current_capture_age_seconds": 197141,
   "expected_pulse_at": null,
   "expected_pulse_missing": false,
   "runtime_health_status": "SKIPPED",
-  "system_consistency_status": "WARNING",
+  "system_consistency_status": "FAIL",
   "market_recovery_consistency_gate": {
-    "global_status": "WARNING",
-    "blocks_market_recovery": false,
-    "classification": "NO_GLOBAL_HARD_FAIL",
-    "errors": []
+    "global_status": "FAIL",
+    "blocks_market_recovery": true,
+    "classification": "GLOBAL_FAIL_BLOCKS_MARKET_RECOVERY_FAIL_SAFE",
+    "errors": [
+      "execution_quality:attribution_gate_missing_or_not_pass"
+    ]
   },
   "master_rules_version": "V2.2.34",
   "current_rules_version": "V2.2.34",
