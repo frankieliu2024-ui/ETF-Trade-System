@@ -23,3 +23,18 @@ def test_explicit_reasoned_negative_counterfactual_is_accepted():
 def test_explicit_reasoned_positive_counterfactual_is_accepted():
     item = "纳指ETF（159941）：如果当前没有该持仓，会考虑买入，因为本节点的趋势与资金承接证据仍成立。"
     assert _explicit_reentry_answer(item)
+
+
+def test_reason_connector_without_answer_is_rejected():
+    item = "纳指ETF（159941）：若当前没有该持仓，需要重新比较现金与机会，因为风险收益尚不确定。"
+    assert not _explicit_reentry_answer(item)
+
+
+def test_reentry_question_and_unrelated_rationale_are_rejected():
+    item = "纳指ETF（159941）：如果当前没有该持仓，是否买入？因为需要比较，仍需观察。"
+    assert not _explicit_reentry_answer(item)
+
+
+def test_reasonless_positive_wording_is_rejected():
+    item = "纳指ETF（159941）：若当前没有该持仓，会重新买入，因为。"
+    assert not _explicit_reentry_answer(item)
