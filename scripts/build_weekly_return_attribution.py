@@ -312,7 +312,11 @@ def build() -> dict:
     artifact = {
         "schema_version": "1.0",
         "layer": "WEEKLY_RETURN_ATTRIBUTION",
-        "status": "PARTIAL" if observed_change is not None else "UNAVAILABLE",
+        "status": (
+            "COMPLETE" if strict_decomposition["status"] == "COMPLETE"
+            else "PARTIAL" if observed_change is not None
+            else "UNAVAILABLE"
+        ),
         "market_date": market_date,
         "week_start": start.isoformat(),
         "week_end": market_date,
