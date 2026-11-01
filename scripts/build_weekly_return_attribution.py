@@ -44,23 +44,21 @@ def _account_positions(account: dict) -> dict:
         if not isinstance(row, dict):
             continue
         code = str(row.get("code") or row.get("security_code") or row.get("symbol") or "").strip()
-        asset_class = str(row.get("asset_class") or row.get("security_type") or row.get("position_type") or "").upper()
+        asset_class = str(row.get("asset_class") or row.get("asset_type") or row.get("security_type") or row.get("position_type") or "").upper()
         if not code or asset_class in {"OTHER", "CONVERTIBLE_BOND", "BOND", "CASH", "MONEY", "CASH_EQUIVALENT"}:
             continue
         qty = f(row.get("quantity") or row.get("qty") or row.get("shares"))
         value = f(row.get("market_value") or row.get("value") or row.get("marketValue"))
-        price = f(row.get("current_price") or row.get("price"))
+        price = value / qty if qty not in (None, 0) and value is not None else f(row.get("last_price") or row.get("current_price") or row.get("price"))
         if value is None and qty is not None and price is not None:
             value = round(qty * price, 2)
-        if price is None and qty not in (None, 0) and value is not None:
-            price = value / qty
         result[code] = {
             "code": code,
             "name": row.get("name") or row.get("security_name") or "",
             "quantity": qty,
             "market_value": value,
             "price": price,
-            "asset_class": str(row.get("asset_class") or row.get("security_type") or row.get("position_type") or "").upper(),
+            "asset_class": asset_class,
         }
     return result
 
@@ -72,7 +70,7 @@ def _non_security_value(account: dict) -> float:
     for row in positions or []:
         if not isinstance(row, dict):
             continue
-        asset_class = str(row.get("asset_class") or row.get("security_type") or row.get("position_type") or "").upper()
+        asset_class = str(row.get("asset_class") or row.get("asset_type") or row.get("security_type") or row.get("position_type") or "").upper()
         if asset_class in security_classes:
             continue
         value = f(row.get("market_value") or row.get("value") or row.get("marketValue"))
