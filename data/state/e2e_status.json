@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-11-01T20:34:43+08:00",
-  "status": "DEGRADED",
+  "generated_at": "2026-11-01T20:52:34+08:00",
+  "status": "BLOCKED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
   "components": {
@@ -29,10 +29,10 @@
       "reason": "formal ETF strategy risk metric is available from a fresh canonical reconstruction",
       "etf_strategy_risk_pct": -13.0319,
       "source": "data/state/etf_strategy_equity.json",
-      "source_updated_at": null,
+      "source_updated_at": "2026-11-01T20:45:16+08:00",
       "reconstruction_as_of_transaction_date": "2026-10-30",
       "reconstruction_fresh_for_market_date": true,
-      "data_quality": null
+      "data_quality": "KNOWN_NET_COMPLETE_FOR_RECORDED_TRADE_FEES"
     },
     "close_review": {
       "status": "DEGRADED",
@@ -45,27 +45,24 @@
       "business_completion_status": "COMPLETE"
     },
     "decision_context": {
-      "status": "READY",
-      "reason": "query and decision contexts are available; legacy minimum-ready observability is diagnostic only",
-      "query_context": true,
+      "status": "BLOCKED",
+      "reason": "canonical request-bound query context is empty, invalid, or missing a consumable fact pack",
+      "query_context": false,
       "decision_context": true,
-      "minimum_decision_context": "READY_OR_NOT_APPLICABLE",
-      "observability_boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
-      "request_bound": false,
       "formal_reply_gate": {
         "request_id": "conversation-formal-20261026T212023+0800-90d3c2b2",
         "requested_at_beijing": "2026-10-26T21:20:23.000+08:00",
-        "status": "IN_FLIGHT",
+        "status": "TERMINAL_FAILURE",
         "reply_freezable": false,
         "blockers": [
-          "REQUEST_BOUND_QUERY_CONTEXT_NOT_PUBLISHED"
+          "FORMAL_PARENT_RECOVERY_TIMEOUT"
         ],
         "source": "durable_parent_request_waiting_for_request_bound_projection",
-        "actor_action": "CONTINUE_SAME_REQUEST_SILENTLY",
-        "user_output_allowed": false,
+        "actor_action": "TERMINATE_ON_EXPLICIT_FAILURE",
+        "user_output_allowed": true,
         "business_decision_allowed": false,
         "final_content_generation_allowed": false,
-        "consumer_status": "REQUEST_BOUND_FACTS_BUILDING",
+        "consumer_status": "TERMINAL_FAILURE",
         "projection_scope": "FORMAL_DECISION_REQUEST",
         "superseded_request_id": "fd_20261026_112739_scheduled_formal_review_0bba5094",
         "request_bound": false,
@@ -78,7 +75,7 @@
           "error_class": "MAINTENANCE_INCOMPLETE",
           "reason": "request-bound query context remained unbound beyond the existing workflow timeout",
           "requested_at_beijing": "2026-10-26T21:20:23.000+08:00",
-          "terminated_at_beijing": "2026-10-30T13:41:53+08:00",
+          "terminated_at_beijing": "2026-11-01T20:52:32+08:00",
           "query_context_request_id": ""
         }
       },
@@ -86,15 +83,15 @@
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 1338957,
-          "sha256": "34ca0232830863b28c8d4623781ae84761979c3f4914e441eab956bc744d22ee",
+          "byte_count": 1768349,
+          "sha256": "879554f0f8e5570edb2edffd94d8a8fbf40449d9c35d8e579789f35fd0d93bb6",
           "parsed_object": true
         },
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 445480,
-          "sha256": "cdcc2d6c0d5d9347b051075693bd7cc1fc3b1f2169ec8a98b58aaef55c052c77",
+          "byte_count": 476376,
+          "sha256": "6aaa410a0570da4730f44af2a5d4acc2593cffd9946ab00b4a1479f344f1abb5",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -115,7 +112,9 @@
       "checked_at": "2026-11-01T20:34:25+08:00"
     }
   },
-  "blockers": [],
+  "blockers": [
+    "decision_context"
+  ],
   "degradations": [
     "close_review"
   ],
@@ -123,15 +122,15 @@
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 1338957,
-      "sha256": "34ca0232830863b28c8d4623781ae84761979c3f4914e441eab956bc744d22ee",
+      "byte_count": 1768349,
+      "sha256": "879554f0f8e5570edb2edffd94d8a8fbf40449d9c35d8e579789f35fd0d93bb6",
       "parsed_object": true
     },
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 445480,
-      "sha256": "cdcc2d6c0d5d9347b051075693bd7cc1fc3b1f2169ec8a98b58aaef55c052c77",
+      "byte_count": 476376,
+      "sha256": "6aaa410a0570da4730f44af2a5d4acc2593cffd9946ab00b4a1479f344f1abb5",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"
