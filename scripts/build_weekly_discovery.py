@@ -56,6 +56,11 @@ def build() -> dict:
         return {"status": "SKIPPED", "reason": "close_snapshot_market_date_mismatch", "market_date": market_date}
     prior = load_json(OUTPUT, {})
     if str(prior.get("market_date") or "") == market_date and str(prior.get("week_end") or "") == market_date and str(prior.get("status") or "").upper() in {"READY", "DEGRADED"}:
+        generated = datetime.now(ZoneInfo("Asia/Shanghai")).isoformat(timespec="seconds")
+        if not str(prior.get("generated_at_beijing") or "").endswith("+08:00"):
+            prior["generated_at_beijing"] = generated
+            atomic_json_write(OUTPUT, prior)
+            return {"status": "ALREADY_FORMED_METADATA_REPAIRED", "market_date": market_date, "candidate_count": prior.get("candidate_count"), "output": str(OUTPUT.relative_to(ROOT))}
         return {"status": "ALREADY_FORMED", "market_date": market_date, "candidate_count": prior.get("candidate_count"), "output": str(OUTPUT.relative_to(ROOT))}
     if str(snapshot.get("quality_status") or "").upper() not in {"PASS", "DEGRADED"}:
         return {"status": "SKIPPED", "reason": "close_snapshot_quality_not_publishable", "market_date": market_date}
