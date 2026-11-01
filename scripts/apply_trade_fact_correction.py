@@ -94,7 +94,7 @@ def reconcile_account_cash_projection(event: dict, fee: float, request: dict, st
 
 
 def persist_statement_scope(request: dict, stamp: str) -> dict:
-    """Persist broker-statement coverage without inventing order or cancellation facts."""
+    """Persist the complete executed-transaction scope from the broker statement without inferring unexecuted orders."""
     scope = request.get("statement_scope")
     if not isinstance(scope, dict):
         return {"status": "NOT_APPLICABLE", "reason": "statement_scope_not_supplied"}
@@ -110,6 +110,8 @@ def persist_statement_scope(request: dict, stamp: str) -> dict:
     return {
         "status": "UPDATED" if changed else "ALREADY_ANNOTATED",
         "statement_scope_status": merged.get("statement_scope_status"),
+        "executed_transaction_scope_status": merged.get("executed_transaction_scope_status"),
+        "unmatched_executed_transaction_entry_count": merged.get("unmatched_executed_transaction_entry_count"),
         "orders_and_cancellations_status": merged.get("orders_and_cancellations_status"),
         "round_trip_status": merged.get("round_trip_status"),
         "capital_release_status": merged.get("capital_release_status"),
