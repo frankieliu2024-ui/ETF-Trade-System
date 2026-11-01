@@ -284,6 +284,39 @@ def _has_any(text: str, terms: tuple[str, ...]) -> bool:
     return any(term in text for term in terms)
 
 
+def _explicit_reentry_answer(item: str) -> bool:
+    """Check for an explicit, reasoned answer to the zero-position question.
+
+    This is a coverage check; it cannot establish the truth of market evidence.
+    """
+    triggers = ("如果当前没有", "若当前没有", "假设当前没有", "零持仓", "按当前价格重新买入")
+    for sentence in re.split(r"[。；;\\n]", item):
+        if not any(term in sentence for term in triggers):
+            continue
+        # Merely asking whether to buy or saying that it needs comparing
+        # is not a decision. Require an explicit yes/no commitment.
+        if not re.search(
+            r"(?:不会|不愿意|不选择|不考虑|不买入|不配置|暂不|不再)"
+            r"[^。；;\\n]{0,24}(?:买入|配置|建仓|持有|投入)"
+            r"|(?:会|愿意|选择|决定|建议|应当)"
+            r"[^。；;\\n]{0,24}(?:重新买入|买入|配置|建仓|持有|投入)"
+            r"|(?:愿意|不愿意|会|不会)[^。；;\\n]{0,16}重新配置资本",
+            sentence,
+        ):
+            continue
+        # The explanation must contain substantive text after the causal link.
+        reason = re.search(r"(?:因为|由于|基于|考虑到|鉴于)([^，,：:]{4,})", sentence)
+        if reason and re.search(r"[\u4e00-\u9fff]{3,}", reason.group(1)):
+            return True
+        # Existing compliant reports can state the reason before the
+        # zero-position decision, linked by a semicolon or full stop.
+        preceding = item[:item.find(sentence)].rstrip("。；;\\n ")
+        previous = re.split(r"[。；;\\n]", preceding)[-1]
+        if previous and re.search(r"(?:因为|由于|基于|考虑到|鉴于)[^。；;\\n]{6,}", previous):
+            return True
+    return False
+
+
 def formal_decision_semantic_errors(content: str) -> list[str]:
     """Shared semantic coverage gate for Formal Decision freeze and report delivery.
 
@@ -347,8 +380,8 @@ def formal_decision_semantic_errors(content: str) -> list[str]:
             errors.append(prefix + "missing_reduce_alternative")
         if not _has_any(item, ("全部退出", "全部清仓", "全部卖出", "退出")):
             errors.append(prefix + "missing_exit_alternative")
-        if not _has_any(item, ("如果当前没有", "若当前没有", "假设当前没有", "零持仓", "重新配置资本", "按当前价格重新买入", "重新买入")):
-            errors.append(prefix + "missing_zero_base_reentry_counterfactual")
+        if not _explicit_reentry_answer(item):
+            errors.append(prefix + "missing_answered_zero_base_reentry_counterfactual")
         holding_action = _has_any(item, ("继续持有", "持有管理")) and not _has_any(item, ("建议减持", "建议退出", "建议全部退出", "建议全部清仓"))
         if holding_action:
             if not _has_any(item, ("继续占资", "继续配置", "保留该持仓")) or not _has_any(item, ("优于", "胜出", "更优")):
