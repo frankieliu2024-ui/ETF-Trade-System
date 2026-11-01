@@ -36,6 +36,40 @@ class DecisionTemporalSemanticsTests(unittest.TestCase):
             self.assertEqual(linked, "d")
             self.assertEqual(status, "EXPLICIT_ASYNC_CANONICALIZATION")
 
+    def test_quality_closes_review_case_mapping_ineligibility(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            trade_dir = root / "events/trades"
+            review_dir = root / "events/reviews"
+            trade_dir.mkdir(parents=True)
+            review_dir.mkdir(parents=True)
+            trade = {
+                "event_id": "BROKER_TRADE_20260924_095255_159981_BUY_2800",
+                "execution_date": "2026-09-24",
+                "confirmed_at_beijing": "2026-09-24T09:52:55+08:00",
+                "linked_decision_id": "historically-unrecoverable",
+                "code": "159981",
+                "name": "能源化工ETF",
+                "side": "BUY",
+                "execution_status": "EXECUTED",
+            }
+            review = {
+                "review": {
+                    "case_mapping": {
+                        "ineligible_executed_trades": [{
+                            "trade_event_id": trade["event_id"],
+                            "eligibility": "EXPLICIT_CANONICAL_INELIGIBILITY",
+                            "reason": "no canonical case",
+                        }]
+                    }
+                }
+            }
+            (trade_dir / "trade.json").write_text(json.dumps(trade), encoding="utf-8")
+            (review_dir / "2026-09-24.json").write_text(json.dumps(review), encoding="utf-8")
+            item = build_quality(root)["items"][0]
+            self.assertEqual(item["status"], "INELIGIBLE_UNRECOVERABLE_TRADE")
+            self.assertEqual(item["link_status"], "EXPLICIT_CANONICAL_INELIGIBILITY")
+
     def test_quality_never_emits_false_negative_delay(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp); d=root/"events/decisions"; t=root/"events/trades"
