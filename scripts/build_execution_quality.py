@@ -93,6 +93,7 @@ def build(root: Path = ROOT) -> dict:
             "status": "READY" if decision_price is not None and execution_price is not None and ((delay is not None and delay >= 0) or bounded_before_execution) else "PARTIAL",
         })
 
+    unlinked = [x for x in items if x.get("status") == "UNLINKED_TRADE"]
     adverse = [safe_float(x.get("adverse_execution_cost_pct")) for x in items]
     adverse = [x for x in adverse if x is not None]
     delays = [safe_float(x.get("decision_to_execution_seconds")) for x in items]
@@ -105,6 +106,12 @@ def build(root: Path = ROOT) -> dict:
         "read_only": True,
         "trade_event_count": len(items),
         "linked_trade_count": len([x for x in items if x.get("decision_id")]),
+        "unlinked_trade_count": len(unlinked),
+        "attribution_backlog": {
+            "status": "OPEN" if unlinked else "CLEAR",
+            "items": unlinked,
+            "rule": "未找到PIT有效正式决策时保留UNLINKED_TRADE；不得按时间、标的或持仓结果自动追认decision_id。后续必须补齐正式决策证据，或由正式复盘记录不可恢复归因。",
+        },
         "corrected_future_or_invalid_link_count": corrected_links,
         "execution_cost_sample_count": len(adverse),
         "mean_adverse_execution_cost_pct": round(mean(adverse), 4) if adverse else None,
