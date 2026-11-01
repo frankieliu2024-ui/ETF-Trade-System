@@ -297,9 +297,10 @@ def _explicit_reentry_answer(item: str) -> bool:
         # is not a decision. Require an explicit yes/no commitment.
         if not re.search(
             r"(?:不会|不愿意|不选择|不考虑|不买入|不配置|暂不|不再)"
-            r"[^。；;\\n]{0,16}(?:买入|配置|建仓|持有|投入)"
+            r"[^。；;\\n]{0,24}(?:买入|配置|建仓|持有|投入)"
             r"|(?:会|愿意|选择|决定|建议|应当)"
-            r"[^。；;\\n]{0,16}(?:重新买入|买入|配置|建仓|持有|投入)",
+            r"[^。；;\\n]{0,24}(?:重新买入|买入|配置|建仓|持有|投入)"
+            r"|(?:愿意|不愿意|会|不会)[^。；;\\n]{0,16}重新配置资本",
             sentence,
         ):
             continue
