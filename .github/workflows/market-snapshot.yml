@@ -638,6 +638,14 @@ jobs:
               if [ "$attempt" = "3" ]; then exit 1; fi
             done
           fi
+      - name: Form weekly Discovery after the last legal close
+        id: weekly_discovery
+        # Weekly review consumes a durable close-time Discovery artifact. The
+        # producer itself decides whether this close is the last legal session
+        # of the week and is idempotent for the same market date.
+        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' && github.event_name != 'push' }}
+        run: python scripts/build_weekly_discovery.py
+
       - name: Quick retry failed core objects after initial publish
         id: quick_retry
         # A user request gets the first publishable PASS/DEGRADED/FAILED result
