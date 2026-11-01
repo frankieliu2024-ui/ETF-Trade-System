@@ -3503,7 +3503,7 @@ def _account_fact_trade_is_executable(trade: dict) -> bool:
         return False
     valid_side = side in {"BUY", "SELL", "B", "S", "买", "卖", "买入", "卖出"} or "买" in side or "卖" in side
     return bool(
-        re.fullmatch(r"\\d{6}", code)
+        re.fullmatch(r"\d{6}", code)
         and valid_side
         and trade.get("quantity") is not None
         and trade.get("price") is not None
