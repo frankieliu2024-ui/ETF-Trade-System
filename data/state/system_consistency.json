@@ -1,42 +1,62 @@
 {
-  "generated_at": "2026-11-01T22:47:43Z",
-  "generated_at_beijing": "2026-11-02T06:47:43+08:00",
+  "generated_at": "2026-11-01T22:50:36Z",
+  "generated_at_beijing": "2026-11-02T06:50:36+08:00",
   "repository": {
-    "head_sha": "5cd3615909bf0e9acd6893ebc1f6dc1ddc717814",
-    "github_sha": "5cd3615909bf0e9acd6893ebc1f6dc1ddc717814",
-    "github_run_id": "41358763521",
+    "head_sha": "5c6e484b1a529356fcfffa294ecdb226525cdf50",
+    "github_sha": "5c6e484b1a529356fcfffa294ecdb226525cdf50",
+    "github_run_id": "41359075885",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "5cd3615909bf0e9acd6893ebc1f6dc1ddc717814",
-    "workflow_sha": "5cd3615909bf0e9acd6893ebc1f6dc1ddc717814",
+    "checked_commit": "5c6e484b1a529356fcfffa294ecdb226525cdf50",
+    "workflow_sha": "5c6e484b1a529356fcfffa294ecdb226525cdf50",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
   "semantic_freshness": {
-    "base": "1325d4c6dec28598a7e93bd3a6f7efc7be975f44",
-    "head": "5cd3615909bf0e9acd6893ebc1f6dc1ddc717814",
+    "base": "5cd3615909bf0e9acd6893ebc1f6dc1ddc717814",
+    "head": "5c6e484b1a529356fcfffa294ecdb226525cdf50",
     "changed_paths": [
+      "data/state/e2e_status.json",
+      "data/state/execution_quality.json",
+      "data/state/provider_metrics.json",
+      "data/state/relative_strength.json",
+      "data/state/research_context.json",
+      "data/state/review_context.json",
+      "data/state/runtime_health.json",
+      "data/state/self_healing_status.json",
+      "data/state/skfolio_risk_evidence.json",
       "data/state/system_consistency.json",
-      "scripts/build_weekly_return_attribution.py",
-      "tests/test_weekly_return_attribution.py"
+      "data/state/weekly_return_attribution.json",
+      "events/research/daily_features/2026-10-30.json",
+      "post_market_review/post_market_review_event.json"
     ],
     "categories": {
-      "STABLE_PRODUCTION_CHANGE": [
-        "scripts/build_weekly_return_attribution.py",
-        "tests/test_weekly_return_attribution.py"
-      ],
+      "STABLE_PRODUCTION_CHANGE": [],
       "DYNAMIC_RUNTIME_FACT": [
-        "data/state/system_consistency.json"
+        "data/state/e2e_status.json",
+        "data/state/execution_quality.json",
+        "data/state/provider_metrics.json",
+        "data/state/relative_strength.json",
+        "data/state/research_context.json",
+        "data/state/review_context.json",
+        "data/state/runtime_health.json",
+        "data/state/self_healing_status.json",
+        "data/state/skfolio_risk_evidence.json",
+        "data/state/system_consistency.json",
+        "data/state/weekly_return_attribution.json"
       ],
-      "FORMAL_FACT_MUTATION": [],
+      "FORMAL_FACT_MUTATION": [
+        "events/research/daily_features/2026-10-30.json",
+        "post_market_review/post_market_review_event.json"
+      ],
       "REQUEST_OR_TRIGGER_FACT": [],
       "UNKNOWN": []
     },
-    "decision": "REPLAY_REQUIRED",
-    "integration_action": "REPLAY_REQUIRED",
-    "validated_commit": "1325d4c6dec28598a7e93bd3a6f7efc7be975f44",
-    "current_head": "5cd3615909bf0e9acd6893ebc1f6dc1ddc717814",
+    "decision": "REVIEW_REQUIRED",
+    "integration_action": "REVIEW_MAIN_DELTA",
+    "validated_commit": "5cd3615909bf0e9acd6893ebc1f6dc1ddc717814",
+    "current_head": "5c6e484b1a529356fcfffa294ecdb226525cdf50",
     "head_advanced": true,
     "stable_contract_freshness": "REVIEW_REQUIRED",
     "runtime_fact_freshness": "CURRENT"
@@ -48,12 +68,12 @@
     {
       "name": "tests:market_data_and_quote_router",
       "status": "PASS",
-      "detail": "{\"status\": \"BATCHED\", \"results\": [{\"status\": \"SENT\"}]}\n{\"status\": \"RETRYING_REPORT_DELIVERY\", \"retry_number\": 1, \"delay_seconds\": 2.0, \"source_event_id\": \"report-delivery:test\"}\n{\"status\": \"RETRYING_REPORT_DELIVERY\", \"retry_number\": 2, \"delay_seconds\": 8.0, \"source_event_id\": \"report-delivery:test\"}\n{\"status\": \"RETRYING_REPORT_DELIVERY\", \"retry_number\": 1, \"delay_seconds\": 2.0, \"source_event_id\": \"report-delivery:test\"}\n{\"status\": \"RETRYING_REPORT_DELIVERY\", \"retry_number\": 2, \"delay_seconds\": 8.0, \"source_event_id\": \"report-delivery:test\"}\nFORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-09-23:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-09-23\",\"provider\":\"EASTMONEY_PUSH2HIS\",\"pattern_match\":false,\"reason\":null}}\n...................................................................................................................../opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpozkloz2w'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpw8w0esas'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmp9lhrot9b'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpqpg5y3r0'>\n  _warnings.warn(warn_message, ResourceWarning)\n....../opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmp1wag50if'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmp6u1reva1'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmp8sb05eiv'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpqpd7okzc'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpk4r5t7f3'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmplz0n85fl'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpg2_uv8nq'>\n  _warnings.warn(warn_message, ResourceWarning)\n................................................./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpj3qqz2u8'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmp9rgb4h8a'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpq0rq382e'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpwgbuw8kv'>\n  _warnings.warn(warn_message, ResourceWarning)\n....../opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmp4pf5s5kx'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpeld5kd9t'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpjxvhndyq'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpyqdzv7tp'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmplzzhogka'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpz6lyboka'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpcsl1b5bh'>\n  _warnings.warn(warn_message, ResourceWarning)\n......................................................................................................................................\n----------------------------------------------------------------------\nRan 330 tests in 2.835s\n\nOK\n"
+      "detail": "{\"status\": \"BATCHED\", \"results\": [{\"status\": \"SENT\"}]}\n{\"status\": \"RETRYING_REPORT_DELIVERY\", \"retry_number\": 1, \"delay_seconds\": 2.0, \"source_event_id\": \"report-delivery:test\"}\n{\"status\": \"RETRYING_REPORT_DELIVERY\", \"retry_number\": 2, \"delay_seconds\": 8.0, \"source_event_id\": \"report-delivery:test\"}\n{\"status\": \"RETRYING_REPORT_DELIVERY\", \"retry_number\": 1, \"delay_seconds\": 2.0, \"source_event_id\": \"report-delivery:test\"}\n{\"status\": \"RETRYING_REPORT_DELIVERY\", \"retry_number\": 2, \"delay_seconds\": 8.0, \"source_event_id\": \"report-delivery:test\"}\nFORMAL_DYNAMIC_EVIDENCE={\"if_ic\":{\"status\":\"DEGRADED\",\"fact_latest_date\":null,\"provider\":null,\"reason\":\"dynamic input fetch failed: RuntimeError: daily_probe 2026-09-23:URLError:<urlopen error [Errno 101] Network is unreachable>; cffex_host_network_unreachable: same-host monthly fallback skipped\"},\"300750\":{\"status\":\"READY\",\"completed_bar_date\":\"2026-09-23\",\"provider\":\"EASTMONEY_PUSH2HIS\",\"pattern_match\":false,\"reason\":null}}\n...................................................................................................................../opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpoxmthzri'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpzgym2z39'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmp0sg3gy2s'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmp6_h6upk_'>\n  _warnings.warn(warn_message, ResourceWarning)\n....../opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpyeld6irx'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpn1cyjg_4'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpuc7m_6gk'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmp3aows01y'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpizrhv0y0'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpgyervrqd'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmphr_nwb28'>\n  _warnings.warn(warn_message, ResourceWarning)\n................................................./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpwkmbts2b'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmp948r2rqn'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpz0r9ore0'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmp1udlje23'>\n  _warnings.warn(warn_message, ResourceWarning)\n....../opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmp8ym69got'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpgd93flqm'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmp08okljuq'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmprb2nfjvk'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmppnemg0wk'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmpx1h7qu3l'>\n  _warnings.warn(warn_message, ResourceWarning)\n./opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/tempfile.py:934: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/tmp0m4c4pbz'>\n  _warnings.warn(warn_message, ResourceWarning)\n......................................................................................................................................\n----------------------------------------------------------------------\nRan 330 tests in 2.849s\n\nOK\n"
     },
     {
       "name": "tests:opening_current_self_healing",
       "status": "PASS",
-      "detail": "............................\n----------------------------------------------------------------------\nRan 28 tests in 0.429s\n\nOK\n"
+      "detail": "............................\n----------------------------------------------------------------------\nRan 28 tests in 0.444s\n\nOK\n"
     },
     {
       "name": "tests:semantic_latest_main",
@@ -63,7 +83,7 @@
     {
       "name": "tests:research_artifact_contract",
       "status": "PASS",
-      "detail": ".......\n----------------------------------------------------------------------\nRan 7 tests in 1.414s\n\nOK\n"
+      "detail": ".......\n----------------------------------------------------------------------\nRan 7 tests in 1.423s\n\nOK\n"
     },
     {
       "name": "tests:research_historical_stop_gate",
@@ -83,7 +103,7 @@
     {
       "name": "tests:executed_trade_case_lifecycle",
       "status": "PASS",
-      "detail": "{\"schema_version\": \"1.1\", \"generated_at\": \"2026-11-02T06:47:42+08:00\", \"status\": \"RECONCILED\", \"lookback_days\": 5, \"supported_intents\": [\"正式正金额买入\", \"明确份额减持/卖出\", \"全部退出/清仓（仅在事实足够时匹配）\"], \"matches\": [{\"status\": \"CONFIRMED_BY_TRADE_EVENT\", \"requires_user_confirmation\": false, \"intent\": {\"decision_id\": \"20260902_141753_trade_159326\", \"decision_time\": \"2026-11-02T06:37:42+08:00\", \"decision_market_date\": \"2026-11-02\", \"source_event\": \"events/decisions/20260902_141753_trade_159326.json\", \"code\": \"159326\", \"name\": \"电网设备ETF\", \"side\": \"BUY\", \"lifecycle\": \"Trial\", \"planned_amount_yuan\": 4953, \"planned_quantity\": 3000}, \"trade_event_ids\": [\"20260902_141753_trade_159326\"], \"fill_status\": \"FULL_OR_ROUNDING_MATCH\", \"fill_ratio\": 1.0, \"execution_date\": \"2026-11-02\", \"confirmation_date\": \"\", \"lifecycle_t_date\": \"2026-11-02\"}], \"actionable_count\": 0, \"account_fact_updated_at\": \"2026-10-30T15:17:00+08:00\", \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n{\"schema_version\": \"1.1\", \"generated_at\": \"2026-09-07T22:00:00+08:00\", \"status\": \"NO_MATCH\", \"lookback_days\": 5, \"supported_intents\": [\"正式正金额买入\", \"明确份额减持/卖出\", \"全部退出/清仓（仅在事实足够时匹配）\"], \"matches\": [], \"actionable_count\": 0, \"account_fact_updated_at\": null, \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n{\"schema_version\": \"1.1\", \"generated_at\": \"2026-09-07T22:01:00+08:00\", \"status\": \"RECONCILED\", \"lookback_days\": 5, \"supported_intents\": [\"正式正金额买入\", \"明确份额减持/卖出\", \"全部退出/清仓（仅在事实足够时匹配）\"], \"matches\": [{\"status\": \"CONFIRMED_BY_TRADE_EVENT\", \"requires_user_confirmation\": false, \"intent\": {\"decision_id\": \"20260907_220500_trade_159326\", \"decision_time\": \"2026-11-02T06:37:42+08:00\", \"decision_market_date\": \"2026-11-02\", \"source_event\": \"events/decisions/20260907_220500_trade_159326.json\", \"code\": \"159326\", \"name\": \"电网设备ETF\", \"side\": \"BUY\", \"lifecycle\": \"Trial\", \"planned_amount_yuan\": 4953, \"planned_quantity\": 3000}, \"trade_event_ids\": [\"20260907_220500_trade_159326\"], \"fill_status\": \"FULL_OR_ROUNDING_MATCH\", \"fill_ratio\": 1.0, \"execution_date\": \"2026-11-02\", \"confirmation_date\": \"\", \"lifecycle_t_date\": \"2026-11-02\"}], \"actionable_count\": 0, \"account_fact_updated_at\": null, \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n{\"schema_version\": \"1.1\", \"generated_at\": \"2026-09-07T22:00:00+08:00\", \"status\": \"NO_MATCH\", \"lookback_days\": 5, \"supported_intents\": [\"正式正金额买入\", \"明确份额减持/卖出\", \"全部退出/清仓（仅在事实足够时匹配）\"], \"matches\": [], \"actionable_count\": 0, \"account_fact_updated_at\": null, \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n{\"schema_version\": \"1.1\", \"generated_at\": \"2026-09-07T22:00:00+08:00\", \"status\": \"NO_MATCH\", \"lookback_days\": 5, \"supported_intents\": [\"正式正金额买入\", \"明确份额减持/卖出\", \"全部退出/清仓（仅在事实足够时匹配）\"], \"matches\": [], \"actionable_count\": 0, \"account_fact_updated_at\": null, \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n...............\n----------------------------------------------------------------------\nRan 15 tests in 0.024s\n\nOK\n"
+      "detail": "{\"schema_version\": \"1.1\", \"generated_at\": \"2026-11-02T06:50:35+08:00\", \"status\": \"RECONCILED\", \"lookback_days\": 5, \"supported_intents\": [\"正式正金额买入\", \"明确份额减持/卖出\", \"全部退出/清仓（仅在事实足够时匹配）\"], \"matches\": [{\"status\": \"CONFIRMED_BY_TRADE_EVENT\", \"requires_user_confirmation\": false, \"intent\": {\"decision_id\": \"20260902_141753_trade_159326\", \"decision_time\": \"2026-11-02T06:40:35+08:00\", \"decision_market_date\": \"2026-11-02\", \"source_event\": \"events/decisions/20260902_141753_trade_159326.json\", \"code\": \"159326\", \"name\": \"电网设备ETF\", \"side\": \"BUY\", \"lifecycle\": \"Trial\", \"planned_amount_yuan\": 4953, \"planned_quantity\": 3000}, \"trade_event_ids\": [\"20260902_141753_trade_159326\"], \"fill_status\": \"FULL_OR_ROUNDING_MATCH\", \"fill_ratio\": 1.0, \"execution_date\": \"2026-11-02\", \"confirmation_date\": \"\", \"lifecycle_t_date\": \"2026-11-02\"}], \"actionable_count\": 0, \"account_fact_updated_at\": \"2026-10-30T15:17:00+08:00\", \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n{\"schema_version\": \"1.1\", \"generated_at\": \"2026-09-07T22:00:00+08:00\", \"status\": \"NO_MATCH\", \"lookback_days\": 5, \"supported_intents\": [\"正式正金额买入\", \"明确份额减持/卖出\", \"全部退出/清仓（仅在事实足够时匹配）\"], \"matches\": [], \"actionable_count\": 0, \"account_fact_updated_at\": null, \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n{\"schema_version\": \"1.1\", \"generated_at\": \"2026-09-07T22:01:00+08:00\", \"status\": \"RECONCILED\", \"lookback_days\": 5, \"supported_intents\": [\"正式正金额买入\", \"明确份额减持/卖出\", \"全部退出/清仓（仅在事实足够时匹配）\"], \"matches\": [{\"status\": \"CONFIRMED_BY_TRADE_EVENT\", \"requires_user_confirmation\": false, \"intent\": {\"decision_id\": \"20260907_220500_trade_159326\", \"decision_time\": \"2026-11-02T06:40:35+08:00\", \"decision_market_date\": \"2026-11-02\", \"source_event\": \"events/decisions/20260907_220500_trade_159326.json\", \"code\": \"159326\", \"name\": \"电网设备ETF\", \"side\": \"BUY\", \"lifecycle\": \"Trial\", \"planned_amount_yuan\": 4953, \"planned_quantity\": 3000}, \"trade_event_ids\": [\"20260907_220500_trade_159326\"], \"fill_status\": \"FULL_OR_ROUNDING_MATCH\", \"fill_ratio\": 1.0, \"execution_date\": \"2026-11-02\", \"confirmation_date\": \"\", \"lifecycle_t_date\": \"2026-11-02\"}], \"actionable_count\": 0, \"account_fact_updated_at\": null, \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n{\"schema_version\": \"1.1\", \"generated_at\": \"2026-09-07T22:00:00+08:00\", \"status\": \"NO_MATCH\", \"lookback_days\": 5, \"supported_intents\": [\"正式正金额买入\", \"明确份额减持/卖出\", \"全部退出/清仓（仅在事实足够时匹配）\"], \"matches\": [], \"actionable_count\": 0, \"account_fact_updated_at\": null, \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n{\"schema_version\": \"1.1\", \"generated_at\": \"2026-09-07T22:00:00+08:00\", \"status\": \"NO_MATCH\", \"lookback_days\": 5, \"supported_intents\": [\"正式正金额买入\", \"明确份额减持/卖出\", \"全部退出/清仓（仅在事实足够时匹配）\"], \"matches\": [], \"actionable_count\": 0, \"account_fact_updated_at\": null, \"design_rule\": \"对账只消费正式决策事实，不重新执法MASTER金额档或风险许可；允许交易决策与实际成交异步确认，并支持部分成交和多次操作歧义识别。execution_date、confirmation_date、lifecycle_t_date必须分离。\", \"known_limitation\": \"仅凭最终持仓截图无法唯一还原同日买入后又卖出、卖出后又买回等净数量为零的往返交易；遇到此类情况必须补充券商成交明细。\", \"safety_boundary\": \"不凭账户差异自动认定成交，不自动修改MASTER、交易权限或订单；模糊、部分或多笔操作只请求最小人工确认。\"}\n...............\n----------------------------------------------------------------------\nRan 15 tests in 0.024s\n\nOK\n"
     },
     {
       "name": "tests:settlement_obligations",
@@ -98,7 +118,7 @@
     {
       "name": "tests:post_close_review_canonical",
       "status": "PASS",
-      "detail": "........................\n----------------------------------------------------------------------\nRan 24 tests in 0.074s\n\nOK\n"
+      "detail": "........................\n----------------------------------------------------------------------\nRan 24 tests in 0.075s\n\nOK\n"
     },
     {
       "name": "tests:review_prerequisite_lifecycle",
@@ -108,7 +128,7 @@
     {
       "name": "tests:production_reliability",
       "status": "PASS",
-      "detail": "{\"status\": \"FAILED\", \"notification_id\": \"notification_727be442ac3d8174d19c\", \"lifecycle_status\": \"FAILED\"}\n.........................................\n----------------------------------------------------------------------\nRan 41 tests in 0.041s\n\nOK\n"
+      "detail": "{\"status\": \"FAILED\", \"notification_id\": \"notification_727be442ac3d8174d19c\", \"lifecycle_status\": \"FAILED\"}\n.........................................\n----------------------------------------------------------------------\nRan 41 tests in 0.042s\n\nOK\n"
     },
     {
       "name": "tests:workflow_sha_snapshot",
@@ -388,17 +408,17 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=5cd3615909bf0e9acd6893ebc1f6dc1ddc717814"
+      "detail": "HEAD=5c6e484b1a529356fcfffa294ecdb226525cdf50"
     },
     {
       "name": "git:semantic_latest_main",
       "status": "PASS",
-      "detail": "{\"base\": \"1325d4c6dec28598a7e93bd3a6f7efc7be975f44\", \"head\": \"5cd3615909bf0e9acd6893ebc1f6dc1ddc717814\", \"changed_paths\": [\"data/state/system_consistency.json\", \"scripts/build_weekly_return_attribution.py\", \"tests/test_weekly_return_attribution.py\"], \"categories\": {\"STABLE_PRODUCTION_CHANGE\": [\"scripts/build_weekly_return_attribution.py\", \"tests/test_weekly_return_attribution.py\"], \"DYNAMIC_RUNTIME_FACT\": [\"data/state/system_consistency.json\"], \"FORMAL_FACT_MUTATION\": [], \"REQUEST_OR_TRIGGER_FACT\": [], \"UNKNOWN\": []}, \"decision\": \"REPLAY_REQUIRED\", \"integration_action\": \"REPLAY_REQUIRED\"}"
+      "detail": "{\"base\": \"5cd3615909bf0e9acd6893ebc1f6dc1ddc717814\", \"head\": \"5c6e484b1a529356fcfffa294ecdb226525cdf50\", \"changed_paths\": [\"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/provider_metrics.json\", \"data/state/relative_strength.json\", \"data/state/research_context.json\", \"data/state/review_context.json\", \"data/state/runtime_health.json\", \"data/state/self_healing_status.json\", \"data/state/skfolio_risk_evidence.json\", \"data/state/system_consistency.json\", \"data/state/weekly_return_attribution.json\", \"events/research/daily_features/2026-10-30.json\", \"post_market_review/post_market_review_event.json\"], \"categories\": {\"STABLE_PRODUCTION_CHANGE\": [], \"DYNAMIC_RUNTIME_FACT\": [\"data/state/e2e_status.json\", \"data/state/execution_quality.json\", \"data/state/provider_metrics.json\", \"data/state/relative_strength.json\", \"data/state/research_context.json\", \"data/state/review_context.json\", \"data/state/runtime_health.json\", \"data/state/self_healing_status.json\", \"data/state/skfolio_risk_evidence.json\", \"data/state/system_consistency.json\", \"data/state/weekly_return_attribution.json\"], \"FORMAL_FACT_MUTATION\": [\"events/research/daily_features/2026-10-30.json\", \"post_market_review/post_market_review_event.json\"], \"REQUEST_OR_TRIGGER_FACT\": [], \"UNKNOWN\": []}, \"decision\": \"REVIEW_REQUIRED\", \"integration_action\": \"REVIEW_MAIN_DELTA\"}"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=5cd3615909bf0e9acd6893ebc1f6dc1ddc717814 GITHUB_SHA=5cd3615909bf0e9acd6893ebc1f6dc1ddc717814"
+      "detail": "HEAD=5c6e484b1a529356fcfffa294ecdb226525cdf50 GITHUB_SHA=5c6e484b1a529356fcfffa294ecdb226525cdf50"
     },
     {
       "name": "git:critical_files_tracked",
@@ -2246,5 +2266,5 @@
       "最新main上的正式源文件 > 旧分支生成的动态状态"
     ]
   },
-  "persisted_at_beijing": "2026-11-02T06:48:07.973744+08:00"
+  "persisted_at_beijing": "2026-11-02T06:51:01.202244+08:00"
 }
