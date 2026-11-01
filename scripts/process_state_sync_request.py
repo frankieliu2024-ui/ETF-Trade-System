@@ -3476,15 +3476,83 @@ def _explicit_fact_type(request: dict) -> str:
 
 
 
+def _account_fact_trade_is_executable(trade: dict) -> bool:
+    """Recognize an executed security row explicitly present in a broker statement.
+
+    Account screenshots may also carry non-ETF account transactions such as
+    convertible-bond allotment/payment rows.  Those remain account facts and
+    must not be promoted into the ETF execution-event stream.  No trade is
+    inferred from balances, positions, or cash deltas.
+    """
+    if not isinstance(trade, dict):
+        return False
+    code = str(trade.get("code") or trade.get("security_code") or "").strip()
+    side = str(trade.get("side") or trade.get("operation") or "").strip().upper()
+    execution_time = (
+        trade.get("executed_at")
+        or trade.get("executed_at_beijing")
+        or trade.get("trade_time")
+        or trade.get("trade_time_beijing")
+    )
+    asset_marker = " ".join(
+        str(trade.get(key) or "").strip().upper()
+        for key in ("asset_type", "security_type", "trade_type")
+    )
+    non_execution_markers = ("BOND", "债", "配售", "申购", "中签", "缴款")
+    if any(marker in asset_marker for marker in non_execution_markers):
+        return False
+    valid_side = side in {"BUY", "SELL", "B", "S", "买", "卖", "买入", "卖出"} or "买" in side or "卖" in side
+    return bool(
+        re.fullmatch(r"\\d{6}", code)
+        and valid_side
+        and trade.get("quantity") is not None
+        and trade.get("price") is not None
+        and execution_time
+    )
+
+
 def _request_trade_events(request: dict) -> list[dict]:
-    """Normalize the existing singular and batch broker trade ingress shapes."""
+    """Normalize all explicit broker trade ingress shapes.
+
+    Top-level trade_event/trade_events remain the preferred canonical shape.
+    When a broker screenshot request carries its transaction rows under the
+    canonical account_fact.trades field, promote only rows with explicit
+    execution evidence into the same event path.  This closes the ingress
+    gap without inferring trades from account balances or positions.
+    """
     plural = request.get("trade_events")
     if isinstance(plural, list) and plural and all(isinstance(item, dict) for item in plural):
         return plural
     if "trade_events" in request:
         return []
     singular = request.get("trade_event")
-    return [singular] if isinstance(singular, dict) else []
+    if isinstance(singular, dict):
+        return [singular]
+
+    account_fact = request.get("account_fact")
+    statement_trades = account_fact.get("trades") if isinstance(account_fact, dict) else None
+    if not isinstance(statement_trades, list) or not statement_trades:
+        return []
+    screenshot_confirmed_at = (
+        request.get("screenshot_captured_at_beijing")
+        or request.get("account_updated_at")
+        or account_fact.get("account_screenshot_captured_at_beijing")
+        or account_fact.get("updated_at")
+        or request.get("requested_at_beijing")
+    )
+    source = account_fact.get("source") or request.get("source") or "BROKER_SCREENSHOT"
+    normalized = []
+    for raw in statement_trades:
+        if not _account_fact_trade_is_executable(raw):
+            continue
+        trade = dict(raw)
+        if not trade.get("executed_at") and trade.get("executed_at_beijing"):
+            trade["executed_at"] = trade["executed_at_beijing"]
+        if not trade.get("confirmed_at_beijing") and screenshot_confirmed_at:
+            trade["confirmed_at_beijing"] = str(screenshot_confirmed_at)
+        trade.setdefault("source", source)
+        normalized.append(trade)
+    return normalized
 
 
 def _trade_event_id(request: dict, trade: dict, idempotency_key: str, ordinal: int, total: int) -> str:
