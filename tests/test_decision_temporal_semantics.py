@@ -141,6 +141,15 @@ class DecisionTemporalSemanticsTests(unittest.TestCase):
                         "executed_at": "2026-11-02T09:05:00+08:00",
                     },
                     {
+                        "security_name": "能源化工ETF",
+                        "security_code": "159981",
+                        "operation": "证券买入-能源化工ETF",
+                        "quantity": 100,
+                        "price": 1.938,
+                        "amount": 193.80,
+                        "executed_at": "2026-11-02T09:06:00+08:00",
+                    },
+                    {
                         "name": "华纬发债",
                         "code": "127118",
                         "side": "BUY",
@@ -154,9 +163,11 @@ class DecisionTemporalSemanticsTests(unittest.TestCase):
             },
         }
         trades = state_sync._request_trade_events(request)
-        self.assertEqual([trade["code"] for trade in trades], ["159056"])
+        self.assertEqual([trade["code"] for trade in trades], ["159056", "159981"])
         self.assertEqual(trades[0]["confirmed_at_beijing"], "2026-11-02T09:08:00+08:00")
         self.assertEqual(trades[0]["source"], "BROKER_STATEMENT_SCREENSHOT_USER_CONFIRMED")
+        self.assertEqual(trades[1]["side"], "BUY")
+        self.assertEqual(trades[1]["name"], "能源化工ETF")
 
     def test_quality_never_emits_false_negative_delay(self):
         with tempfile.TemporaryDirectory() as tmp:
