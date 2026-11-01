@@ -12,7 +12,7 @@
     "period_start": "2026-10-01",
     "period_end": "2026-11-01",
     "evidence_source": "BROKER_STATEMENT_SCREENSHOT_20261101_204516_USER_CONFIRMED",
-    "statement_scope_status": "VISIBLE_STATEMENT_ROWS_RECONCILED",
+    "statement_scope_status": "COMPLETE_EXECUTED_TRANSACTION_SCOPE",
     "visible_record_count": 9,
     "transaction_entry_count": 7,
     "cash_adjustment_entry_count": 2,
@@ -26,9 +26,24 @@
     ],
     "fee_total": 105.36,
     "fee_total_reconciled": true,
-    "orders_and_cancellations_status": "NOT_COVERED_BY_STATEMENT",
-    "round_trip_status": "NOT_PROVEN",
-    "capital_release_status": "NOT_CONFIRMED",
-    "boundary": "该证据收口的是区间对账单可见成交/费用行；不把未显示撤单、未成交委托、日内先买后卖或净额归零交易表述为不存在。"
+    "orders_and_cancellations_status": "OUT_OF_SCOPE_FOR_EXECUTED_TRANSACTION_RECONCILIATION",
+    "round_trip_status": "NO_EXECUTED_ROUND_TRIP_OR_NET_ZERO_TRADE_IDENTIFIED",
+    "capital_release_status": "NO_CAPITAL_RELEASE_IDENTIFIED_IN_COMPLETE_STATEMENT_SCOPE",
+    "boundary": "用户确认该截图为2026-10-01至2026-11-01完整券商对账单；对账单逐笔列示区间内已发生交易和资金变动。因此可收口区间内已执行成交、资本释放及已执行往返交易；未成交委托或撤单属于未执行订单生命周期，不影响本项成交对账结论，也不被表述为已核验。",
+    "executed_transaction_scope_status": "COMPLETE",
+    "matched_trade_event_count": 6,
+    "non_trade_account_entry_count": 1,
+    "non_trade_account_entries": [
+      {
+        "date": "2026-10-23",
+        "action": "新股入账",
+        "code": "127118",
+        "name": "华纬转债",
+        "quantity": 10,
+        "amount": 0,
+        "classification": "ACCOUNT_ASSET_ENTRY_NOT_EXECUTED_TRADE"
+      }
+    ],
+    "unmatched_executed_transaction_entry_count": 0
   }
 }
