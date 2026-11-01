@@ -47,7 +47,7 @@ def canonical_ineligibility(root: Path, trade: dict) -> dict:
         return {}
     review = load_json(root / "events" / "reviews" / f"{execution_date}.json", {})
     payload = review.get("review") if isinstance(review.get("review"), dict) else review
-    mapping = ((payload.get("account_close") or {}).get("case_mapping") or {}) if isinstance(payload, dict) else {}
+    mapping = ((payload.get("account_close") or {}).get("case_mapping") or payload.get("case_mapping") or {}) if isinstance(payload, dict) else {}
     for item in mapping.get("ineligible_executed_trades") or []:
         if (
             str(item.get("trade_event_id") or "") == event_id
