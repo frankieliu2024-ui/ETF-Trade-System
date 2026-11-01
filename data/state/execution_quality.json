@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-11-01T13:51:35Z",
+  "generated_at": "2026-11-01T14:05:15Z",
   "mode": "DECISION_EXECUTION_ATTRIBUTION",
   "read_only": true,
   "trade_event_count": 52,
@@ -11,6 +11,11 @@
     "status": "CLEAR",
     "items": [],
     "rule": "未找到PIT有效正式决策时保留UNLINKED_TRADE；不得按时间、标的或持仓结果自动追认decision_id。后续必须补齐正式决策证据，或由正式复盘记录不可恢复归因。"
+  },
+  "attribution_gate": {
+    "status": "PASS",
+    "unlinked_trade_ids": [],
+    "rule": "每一笔EXECUTED成交必须存在PIT有效正式决策；无法关联时只能进入硬失败门，不得作为普通警告、不得自动追认、不得进入健康闭环。"
   },
   "corrected_future_or_invalid_link_count": 35,
   "execution_cost_sample_count": 9,
