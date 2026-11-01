@@ -308,6 +308,12 @@ def _explicit_reentry_answer(item: str) -> bool:
         reason = re.search(r"(?:因为|由于|基于|考虑到|鉴于)([^，,：:]{4,})", sentence)
         if reason and re.search(r"[\u4e00-\u9fff]{3,}", reason.group(1)):
             return True
+        # Existing compliant reports can state the reason before the
+        # zero-position decision, linked by a semicolon or full stop.
+        preceding = item[:item.find(sentence)].rstrip("。；;\\n ")
+        previous = re.split(r"[。；;\\n]", preceding)[-1]
+        if previous and re.search(r"(?:因为|由于|基于|考虑到|鉴于)[^。；;\\n]{6,}", previous):
+            return True
     return False
 
 
