@@ -284,6 +284,24 @@ def _has_any(text: str, terms: tuple[str, ...]) -> bool:
     return any(term in text for term in terms)
 
 
+def _explicit_reentry_answer(item: str) -> bool:
+    """Require a local yes/no conclusion and rationale, not scattered keywords.
+
+    This checks whether the zero-position counterfactual was answered. It does
+    not certify the investment rationale or the truth of cited market facts.
+    """
+    triggers = ("如果当前没有", "若当前没有", "假设当前没有", "零持仓", "按当前价格重新买入")
+    for sentence in re.split(r"[。；;\\n]", item):
+        if not any(term in sentence for term in triggers):
+            continue
+        if not re.search(r"(?:会|愿意|选择|考虑|不会|不愿意|不选择|不考虑|是|否|买入|不买入|配置|不配置)", sentence):
+            continue
+        # A conclusion must be tied to a reason in the same local argument.
+        if re.search(r"(?:因为|由于|理由|依据|基于|考虑到|鉴于|证据)", sentence):
+            return True
+    return False
+
+
 def formal_decision_semantic_errors(content: str) -> list[str]:
     """Shared semantic coverage gate for Formal Decision freeze and report delivery.
 
@@ -347,8 +365,8 @@ def formal_decision_semantic_errors(content: str) -> list[str]:
             errors.append(prefix + "missing_reduce_alternative")
         if not _has_any(item, ("全部退出", "全部清仓", "全部卖出", "退出")):
             errors.append(prefix + "missing_exit_alternative")
-        if not _has_any(item, ("如果当前没有", "若当前没有", "假设当前没有", "零持仓", "重新配置资本", "按当前价格重新买入", "重新买入")):
-            errors.append(prefix + "missing_zero_base_reentry_counterfactual")
+        if not _explicit_reentry_answer(item):
+            errors.append(prefix + "missing_answered_zero_base_reentry_counterfactual")
         holding_action = _has_any(item, ("继续持有", "持有管理")) and not _has_any(item, ("建议减持", "建议退出", "建议全部退出", "建议全部清仓"))
         if holding_action:
             if not _has_any(item, ("继续占资", "继续配置", "保留该持仓")) or not _has_any(item, ("优于", "胜出", "更优")):
