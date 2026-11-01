@@ -6,6 +6,7 @@ from pathlib import Path
 from scripts.build_execution_quality import build as build_quality
 from scripts.build_execution_reconciliation import parse_money
 from scripts.decision_trade_link import resolve_link
+import scripts.process_state_sync_request as state_sync
 
 
 class DecisionTemporalSemanticsTests(unittest.TestCase):
@@ -90,6 +91,38 @@ class DecisionTemporalSemanticsTests(unittest.TestCase):
             self.assertEqual(result["attribution_backlog"]["status"], "OPEN")
             self.assertEqual(result["attribution_gate"]["status"], "BLOCKED")
             self.assertEqual(result["attribution_gate"]["unlinked_trade_ids"], ["future-unlinked-trade"])
+    def test_trade_ingress_persists_pit_link_without_explicit_id(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            decision_dir = root / "events/decisions"
+            decision_dir.mkdir(parents=True)
+            decision = {
+                "decision_id": "formal-before-trade",
+                "decision_time_beijing": "2026-11-02T09:00:00+08:00",
+                "recorded_at_beijing": "2026-11-02T09:00:00+08:00",
+                "candidate_code": "159056",
+                "candidate_name": "全指器械ETF",
+                "formal_decision": {"amount_action": "买入 全指器械ETF（159056）"},
+            }
+            (decision_dir / "formal-before-trade.json").write_text(
+                json.dumps(decision, ensure_ascii=False),
+                encoding="utf-8",
+            )
+            trade = {
+                "event_id": "screenshot-trade",
+                "confirmed_at_beijing": "2026-11-02T09:05:00+08:00",
+                "code": "159056",
+                "name": "全指器械ETF",
+                "side": "BUY",
+            }
+            prior_root = state_sync.ROOT
+            state_sync.ROOT = root
+            try:
+                linked = state_sync.resolve_trade_linked_decision_id(trade)
+            finally:
+                state_sync.ROOT = prior_root
+            self.assertEqual(linked, "formal-before-trade")
+
     def test_quality_never_emits_false_negative_delay(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp); d=root/"events/decisions"; t=root/"events/trades"
