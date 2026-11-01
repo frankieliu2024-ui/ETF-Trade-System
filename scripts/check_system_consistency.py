@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone, timedelta, date
 from pathlib import Path
 from zoneinfo import ZoneInfo
 import os
@@ -804,6 +804,138 @@ def _execution_quality_projection_required() -> bool:
     return _is_full_day_review_completion(review_event)
 
 
+
+def _validate_weekly_projection_contract(report: dict) -> None:
+    """Keep weekly Discovery, attribution and execution backlog visible and bound."""
+    current = _read_json("data/state/CURRENT.json")
+    market_date = str(current.get("market_date") or "").strip()
+    node = str(current.get("latest_valid_node") or "").strip().lower()
+    node_status = str(current.get("node_status") or "").strip().upper()
+    calendar = _read_json("config/market/a_share_trading_calendar_2026.json")
+    closed_dates = set(calendar.get("closed_dates") or [])
+
+    def is_last_legal_day(value: str) -> bool:
+        try:
+            day = date.fromisoformat(value)
+        except ValueError:
+            return False
+        for offset in range(1, 7 - day.weekday()):
+            candidate = day + timedelta(days=offset)
+            if candidate.weekday() < 5 and candidate.isoformat() not in closed_dates:
+                return False
+        return True
+
+    close_due = bool(
+        market_date
+        and node == "close"
+        and node_status in {"READY", "DEGRADED"}
+        and is_last_legal_day(market_date)
+    )
+
+    weekly_path = ROOT / "data/state/weekly_formal_discovery.json"
+    weekly = _read_json("data/state/weekly_formal_discovery.json") if weekly_path.exists() else {}
+    weekly_errors = []
+    if not weekly:
+        if close_due:
+            report.setdefault("warnings", []).append(
+                "weekly_projection:missing_formal_discovery_after_verified_last_close"
+            )
+            weekly_status = "WARNING"
+            weekly_detail = f"missing weekly_formal_discovery.json for market_date={market_date}"
+        else:
+            weekly_status = "PASS"
+            weekly_detail = "weekly Discovery not due at current verified close"
+    else:
+        if str(weekly.get("market_date") or "") != market_date:
+            weekly_errors.append("market_date_mismatch")
+        if str(weekly.get("latest_valid_node") or "").lower() != "close":
+            weekly_errors.append("latest_valid_node_not_close")
+        if str(weekly.get("formation_rule") or "") != "LAST_LEGAL_A_SHARE_TRADING_DAY_AFTER_VERIFIED_CLOSE":
+            weekly_errors.append("formation_rule_mismatch")
+        if "不得在周日临时发起全市场Discovery" not in str(weekly.get("consumption_rule") or ""):
+            weekly_errors.append("sunday_consumption_rule_missing")
+        nested = weekly.get("discovery") if isinstance(weekly.get("discovery"), dict) else {}
+        if weekly.get("candidate_count") != nested.get("candidate_count"):
+            weekly_errors.append("candidate_count_mismatch")
+        if str(weekly.get("status") or "").upper() not in {"READY", "DEGRADED"}:
+            weekly_errors.append("status_not_publishable")
+        if weekly_errors:
+            report.setdefault("errors", []).extend(
+                f"weekly_projection:{item}" for item in weekly_errors
+            )
+            weekly_status = "FAIL"
+            weekly_detail = "; ".join(weekly_errors)
+        else:
+            weekly_status = "PASS"
+            weekly_detail = (
+                f"market_date={market_date} status={weekly.get('status')} "
+                f"candidate_count={weekly.get('candidate_count')}"
+            )
+    report.setdefault("checks", []).append({
+        "name": "state:weekly_formal_discovery_contract",
+        "status": weekly_status,
+        "detail": weekly_detail,
+    })
+
+    attribution_path = ROOT / "data/state/weekly_return_attribution.json"
+    attribution = _read_json("data/state/weekly_return_attribution.json") if attribution_path.exists() else {}
+    if not attribution:
+        attribution_status = "WARNING" if close_due else "PASS"
+        attribution_detail = "missing weekly_return_attribution.json" if close_due else "weekly attribution not due"
+        if close_due:
+            report.setdefault("warnings", []).append(
+                "weekly_projection:missing_return_attribution_after_verified_last_close"
+            )
+    else:
+        attr_errors = []
+        if str(attribution.get("market_date") or "") != market_date:
+            attr_errors.append("return_attribution_market_date_mismatch")
+        if str(attribution.get("strict_decomposition_status") or "").upper() not in {"NOT_COMPLETE", "COMPLETE"}:
+            attr_errors.append("strict_decomposition_status_missing")
+        if attr_errors:
+            report.setdefault("errors", []).extend(f"weekly_projection:{item}" for item in attr_errors)
+            attribution_status = "FAIL"
+            attribution_detail = "; ".join(attr_errors)
+        elif str(attribution.get("strict_decomposition_status") or "").upper() != "COMPLETE":
+            attribution_status = "WARNING"
+            attribution_detail = "weekly return bridge exists; strict price/realized/unrealized decomposition remains open"
+            report.setdefault("warnings", []).append(
+                "weekly_projection:strict_return_decomposition_open"
+            )
+        else:
+            attribution_status = "PASS"
+            attribution_detail = "weekly return attribution contract complete"
+    report.setdefault("checks", []).append({
+        "name": "state:weekly_return_attribution_contract",
+        "status": attribution_status,
+        "detail": attribution_detail,
+    })
+
+    execution_path = ROOT / "data/state/execution_quality.json"
+    execution = _read_json("data/state/execution_quality.json") if execution_path.exists() else {}
+    items = execution.get("items") if isinstance(execution.get("items"), list) else []
+    unlinked = [item for item in items if isinstance(item, dict) and item.get("status") == "UNLINKED_TRADE"]
+    stored_count = execution.get("unlinked_trade_count")
+    backlog_status = str((execution.get("attribution_backlog") or {}).get("status") or "").upper()
+    execution_errors = []
+    if stored_count != len(unlinked):
+        execution_errors.append("unlinked_trade_count_mismatch")
+    if unlinked and backlog_status != "OPEN":
+        execution_errors.append("open_backlog_status_missing")
+    if execution_errors:
+        report.setdefault("errors", []).extend(f"execution_quality:{item}" for item in execution_errors)
+    if unlinked:
+        report.setdefault("warnings", []).append(
+            f"execution_quality:attribution_backlog_open count={len(unlinked)}"
+        )
+    report.setdefault("checks", []).append({
+        "name": "state:execution_attribution_backlog",
+        "status": "FAIL" if execution_errors else ("WARNING" if unlinked else "PASS"),
+        "detail": f"unlinked_trade_count={len(unlinked)} backlog_status={backlog_status or 'MISSING'}",
+    })
+    _recount(report)
+
+
 def _validate_execution_quality_projection(report: dict) -> None:
     persisted = _read_json("data/state/execution_quality.json")
     try:
@@ -999,6 +1131,7 @@ def main() -> int:
     _validate_historical_trade_case_mapping(report)
     _validate_formal_completion_decision_readback(report)
     _validate_semantic_formal_structure(report)
+    _validate_weekly_projection_contract(report)
     _validate_execution_quality_projection(report)
     _validate_current_formal_decision_projection(report)
     _validate_readme_front_door(report)
