@@ -3546,6 +3546,13 @@ def _request_trade_events(request: dict) -> list[dict]:
         if not _account_fact_trade_is_executable(raw):
             continue
         trade = dict(raw)
+        if not trade.get("code") and trade.get("security_code"):
+            trade["code"] = trade["security_code"]
+        if not trade.get("name") and trade.get("security_name"):
+            trade["name"] = trade["security_name"]
+        if not trade.get("side") and trade.get("operation"):
+            operation = str(trade["operation"]).strip()
+            trade["side"] = "BUY" if "买" in operation else "SELL" if "卖" in operation else operation
         if not trade.get("executed_at") and trade.get("executed_at_beijing"):
             trade["executed_at"] = trade["executed_at_beijing"]
         if not trade.get("confirmed_at_beijing") and screenshot_confirmed_at:
