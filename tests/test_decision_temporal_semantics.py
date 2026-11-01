@@ -169,6 +169,42 @@ class DecisionTemporalSemanticsTests(unittest.TestCase):
         self.assertEqual(trades[1]["side"], "BUY")
         self.assertEqual(trades[1]["name"], "能源化工ETF")
 
+    def test_statement_rows_merge_with_top_level_trade_without_dropping_distinct_rows(self):
+        request = {
+            "source": "CHATGPT_USER_BROKER_SCREENSHOT",
+            "trade_event": {
+                "code": "159056",
+                "name": "全指器械ETF",
+                "side": "BUY",
+                "quantity": 4700,
+                "price": 1.042,
+                "executed_at": "2026-11-02T09:05:00+08:00",
+            },
+            "account_fact": {
+                "source": "BROKER_STATEMENT_SCREENSHOT_USER_CONFIRMED",
+                "trades": [
+                    {
+                        "code": "159056",
+                        "name": "全指器械ETF",
+                        "side": "BUY",
+                        "quantity": 4700,
+                        "price": 1.042,
+                        "executed_at": "2026-11-02T09:05:00+08:00",
+                    },
+                    {
+                        "code": "159981",
+                        "name": "能源化工ETF",
+                        "side": "SELL",
+                        "quantity": 100,
+                        "price": 1.938,
+                        "executed_at": "2026-11-02T09:06:00+08:00",
+                    },
+                ],
+            },
+        }
+        trades = state_sync._request_trade_events(request)
+        self.assertEqual([(trade["code"], trade["side"]) for trade in trades], [("159056", "BUY"), ("159981", "SELL")])
+
     def test_quality_never_emits_false_negative_delay(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp); d=root/"events/decisions"; t=root/"events/trades"
