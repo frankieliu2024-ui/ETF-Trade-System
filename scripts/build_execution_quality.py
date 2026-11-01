@@ -168,6 +168,11 @@ def build(root: Path = ROOT) -> dict:
             "items": unlinked,
             "rule": "未找到PIT有效正式决策时保留UNLINKED_TRADE；不得按时间、标的或持仓结果自动追认decision_id。后续必须补齐正式决策证据，或由正式复盘记录不可恢复归因。",
         },
+        "attribution_gate": {
+            "status": "BLOCKED" if unlinked else "PASS",
+            "unlinked_trade_ids": [str(x.get("trade_event_id") or "") for x in unlinked],
+            "rule": "每一笔EXECUTED成交必须存在PIT有效正式决策；无法关联时只能进入硬失败门，不得作为普通警告、不得自动追认、不得进入健康闭环。",
+        },
         "corrected_future_or_invalid_link_count": corrected_links,
         "execution_cost_sample_count": len(adverse),
         "mean_adverse_execution_cost_pct": round(mean(adverse), 4) if adverse else None,
