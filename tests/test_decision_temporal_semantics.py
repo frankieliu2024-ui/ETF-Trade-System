@@ -123,6 +123,41 @@ class DecisionTemporalSemanticsTests(unittest.TestCase):
                 state_sync.ROOT = prior_root
             self.assertEqual(linked, "formal-before-trade")
 
+    def test_broker_statement_rows_enter_attribution_path_without_promoting_bond_rows(self):
+        request = {
+            "source": "CHATGPT_USER_BROKER_SCREENSHOT",
+            "interaction_scenario": "BROKER_SCREENSHOT_SYNC",
+            "screenshot_captured_at_beijing": "2026-11-02T09:08:00+08:00",
+            "account_fact": {
+                "source": "BROKER_STATEMENT_SCREENSHOT_USER_CONFIRMED",
+                "trades": [
+                    {
+                        "name": "全指器械ETF",
+                        "code": "159056",
+                        "side": "BUY",
+                        "quantity": 4700,
+                        "price": 1.042,
+                        "amount": 4897.40,
+                        "executed_at": "2026-11-02T09:05:00+08:00",
+                    },
+                    {
+                        "name": "华纬发债",
+                        "code": "127118",
+                        "side": "BUY",
+                        "quantity": 10,
+                        "price": 100,
+                        "amount": 1000,
+                        "executed_at": "2026-11-01T21:14:11+08:00",
+                        "trade_type": "配售申购",
+                    },
+                ],
+            },
+        }
+        trades = state_sync._request_trade_events(request)
+        self.assertEqual([trade["code"] for trade in trades], ["159056"])
+        self.assertEqual(trades[0]["confirmed_at_beijing"], "2026-11-02T09:08:00+08:00")
+        self.assertEqual(trades[0]["source"], "BROKER_STATEMENT_SCREENSHOT_USER_CONFIRMED")
+
     def test_quality_never_emits_false_negative_delay(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp); d=root/"events/decisions"; t=root/"events/trades"
