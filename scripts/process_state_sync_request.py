@@ -2950,11 +2950,14 @@ def resolve_trade_linked_decision_id(
     decision_id: str = "",
     existing_linked_decision_id: str = "",
 ) -> str:
-    """Resolve one durable decision association without weakening legacy inputs.
+    """Resolve and persist the strongest available decision association.
 
-    An already-persisted association wins on replay.  For a new event, an
-    explicit trade-event link is authoritative, followed by the legacy
-    decision_id and same-request formal decision compatibility.
+    Existing explicit links remain authoritative.  When a screenshot-confirmed
+    trade carries no explicit link, resolve_link is the canonical PIT resolver:
+    it may use a prior formal decision or an existing Formal Decision
+    completion, but only when that evidence is valid before the execution.
+    Without such evidence this returns an empty value and the hard gate remains
+    blocking.
     """
     for value in (
         existing_linked_decision_id,
@@ -2965,6 +2968,20 @@ def resolve_trade_linked_decision_id(
         resolved = str(value or "").strip()
         if resolved:
             return resolved
+    try:
+        from decision_trade_link import resolve_link
+        resolved, _decision, resolution = resolve_link(ROOT, trade, "")
+        if resolved and resolution in {
+            "EXPLICIT_PIT_VALID",
+            "EXPLICIT_ASYNC_CANONICALIZATION",
+            "CANONICAL_CORRECTION",
+            "CANONICAL_COMPLETION_PIT_MATCH",
+            "AUTO_PRIOR_MATCH",
+        }:
+            return str(resolved).strip()
+    except Exception:
+        # The downstream execution-quality hard gate remains the safety net.
+        pass
     return ""
 
 def _latest_trade_event_id() -> str:
@@ -4496,8 +4513,13 @@ def main() -> int:
                 changed = True
             # Idempotent fee/account replays must also converge stale linkage and
             # attribution written by an older producer; they never create another event.
+            link_trade = {
+                **trade,
+                "confirmed_at_beijing": requested_confirmed_at
+                or str(event.get("confirmed_at_beijing") or confirmed_at),
+            }
             linked_decision_id = resolve_trade_linked_decision_id(
-                trade,
+                link_trade,
                 decision_id,
                 existing_linked_decision_id=str(event.get("linked_decision_id") or ""),
             )
@@ -4517,8 +4539,9 @@ def main() -> int:
                 atomic_json_write(ROOT / "events" / "trades" / f"{event_id}.json", event)
         else:
             event_id = _trade_event_id(request, trade, idempotency_key, trade_index, len(trades))
-            linked_decision_id = resolve_trade_linked_decision_id(trade, decision_id)
-            attribution = execution_attribution({**trade, "confirmed_at_beijing": confirmed_at}, linked_decision_id)
+            link_trade = {**trade, "confirmed_at_beijing": confirmed_at}
+            linked_decision_id = resolve_trade_linked_decision_id(link_trade, decision_id)
+            attribution = execution_attribution(link_trade, linked_decision_id)
             event = {"event_id": event_id, "idempotency_key": idempotency_key, "confirmed_at_beijing": confirmed_at, "execution_date": trade.get("execution_date") or str(confirmed_at)[:10], "confirmation_date": trade.get("confirmation_date") or str(confirmed_at)[:10], "notification_id": trade.get("notification_id"), "name": trade.get("name"), "code": trade.get("code"), "side": trade.get("side"), "quantity": trade.get("quantity"), "price": trade.get("price"), "amount": trade.get("amount"), "lifecycle": trade.get("lifecycle"), "source": trade.get("source", account.get("source")), "source_confidence": trade.get("source_confidence"), "linked_decision_id": linked_decision_id or None, "hypothesis_id": trade.get("hypothesis_id") or attribution.get("hypothesis_id") or None, "execution_status": "EXECUTED", "execution_attribution": attribution}
             event_path = ROOT / "events" / "trades" / f"{event_id}.json"
             event_path.parent.mkdir(parents=True, exist_ok=True)
