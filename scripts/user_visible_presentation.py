@@ -291,10 +291,12 @@ def _explicit_reentry_answer(item: str) -> bool:
     not certify the investment rationale or the truth of cited market facts.
     """
     triggers = ("如果当前没有", "若当前没有", "假设当前没有", "零持仓", "按当前价格重新买入")
-    for sentence in re.split(r"[。；;\\n]", item):
+    for sentence in re.split(r"[。；;\n]", item):
         if not any(term in sentence for term in triggers):
             continue
-        if not re.search(r"(?:会|愿意|选择|考虑|不会|不愿意|不选择|不考虑|是|否|买入|不买入|配置|不配置)", sentence):
+        # Explicit action is required; generic words such as "机会" do not
+        # constitute an answer to the reentry question.
+        if not re.search(r"(?:不会|不愿意|不选择|不考虑|不买入|不配置|愿意|选择|考虑|买入|配置)", sentence):
             continue
         # A conclusion must be tied to a reason in the same local argument.
         if re.search(r"(?:因为|由于|理由|依据|基于|考虑到|鉴于|证据)", sentence):
