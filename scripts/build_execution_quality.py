@@ -37,6 +37,28 @@ def parse_time(value):
         return None
 
 
+
+def execution_time_for_trade(root: Path, trade: dict) -> str | None:
+    """Prefer the broker-confirmed execution timestamp over screenshot confirmation time."""
+    event_id = str(trade.get("event_id") or "").strip()
+    request_dir = root / "requests" / "live_snapshot"
+    if event_id and request_dir.exists():
+        for path in sorted(request_dir.glob("*.json")):
+            request = load_json(path, {})
+            nested = request.get("trade_event") if isinstance(request.get("trade_event"), dict) else {}
+            if str(nested.get("event_id") or "").strip() != event_id:
+                continue
+            executed = nested.get("executed_at") or nested.get("executed_at_beijing")
+            if executed:
+                return str(executed)
+    return str(
+        trade.get("executed_at")
+        or trade.get("executed_at_beijing")
+        or trade.get("confirmed_at_beijing")
+        or ""
+    ) or None
+
+
 def build(root: Path = ROOT) -> dict:
     trade_dir = root / "events/trades"
     items = []
@@ -64,7 +86,8 @@ def build(root: Path = ROOT) -> dict:
         is_sell = side in {"SELL", "S", "卖", "卖出"} or "卖" in side
         adverse = diff_pct if is_buy else (-diff_pct if is_sell and diff_pct is not None else None)
         t0 = parse_time(decision.get("decision_effective_at_beijing") or decision.get("issued_at_beijing") or decision.get("decision_time_beijing"))
-        t1 = parse_time(trade.get("confirmed_at_beijing"))
+        execution_time = execution_time_for_trade(root, trade)
+        t1 = parse_time(execution_time)
         delay = (t1 - t0).total_seconds() if t0 and t1 else None
         ordering = str(decision.get("decision_effective_ordering") or "").upper()
         timing_quality = str(decision.get("timing_quality") or "").upper()
@@ -85,7 +108,7 @@ def build(root: Path = ROOT) -> dict:
             "decision_effective_ordering": decision.get("decision_effective_ordering"),
             "timing_quality": decision.get("timing_quality"),
             "timing_status": "EXACT" if delay is not None and delay >= 0 else "BOUNDED_BEFORE_EXECUTION" if bounded_before_execution else "UNAVAILABLE",
-            "execution_time_beijing": trade.get("confirmed_at_beijing"),
+            "execution_time_beijing": execution_time,
             "decision_price": decision_price,
             "execution_price": execution_price,
             "decision_to_execution_seconds": round(delay, 1) if delay is not None and delay >= 0 else None,
