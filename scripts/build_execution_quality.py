@@ -38,6 +38,25 @@ def parse_time(value):
 
 
 
+
+def canonical_ineligibility(root: Path, trade: dict) -> dict:
+    """Return an explicit review closure for a trade that cannot be legally linked."""
+    execution_date = str(trade.get("execution_date") or trade.get("confirmed_at_beijing") or "")[:10]
+    event_id = str(trade.get("event_id") or "").strip()
+    if not execution_date or not event_id:
+        return {}
+    review = load_json(root / "events" / "reviews" / f"{execution_date}.json", {})
+    payload = review.get("review") if isinstance(review.get("review"), dict) else review
+    mapping = ((payload.get("account_close") or {}).get("case_mapping") or {}) if isinstance(payload, dict) else {}
+    for item in mapping.get("ineligible_executed_trades") or []:
+        if (
+            str(item.get("trade_event_id") or "") == event_id
+            and str(item.get("eligibility") or "").upper() == "EXPLICIT_CANONICAL_INELIGIBILITY"
+        ):
+            return item
+    return {}
+
+
 def execution_time_for_trade(root: Path, trade: dict) -> str | None:
     """Prefer the broker-confirmed execution timestamp over screenshot confirmation time."""
     event_id = str(trade.get("event_id") or "").strip()
@@ -67,13 +86,25 @@ def build(root: Path = ROOT) -> dict:
         requested = str(trade.get("linked_decision_id") or "")
         linked, decision, link_status = resolve_link(root, trade, requested)
         if not linked:
-            items.append({
-                "trade_event_id": trade.get("event_id") or path.stem,
-                "status": "UNLINKED_TRADE",
-                "link_status": link_status,
-                "code": trade.get("code"),
-                "name": trade.get("name"),
-            })
+            ineligibility = canonical_ineligibility(root, trade)
+            if ineligibility:
+                items.append({
+                    "trade_event_id": trade.get("event_id") or path.stem,
+                    "status": "INELIGIBLE_UNRECOVERABLE_TRADE",
+                    "link_status": "EXPLICIT_CANONICAL_INELIGIBILITY",
+                    "code": trade.get("code"),
+                    "name": trade.get("name"),
+                    "ineligibility_reason": ineligibility.get("reason"),
+                    "ineligibility_record": ineligibility,
+                })
+            else:
+                items.append({
+                    "trade_event_id": trade.get("event_id") or path.stem,
+                    "status": "UNLINKED_TRADE",
+                    "link_status": link_status,
+                    "code": trade.get("code"),
+                    "name": trade.get("name"),
+                })
             continue
 
         decision_price = decision_price_for_trade(decision, trade)
@@ -117,6 +148,7 @@ def build(root: Path = ROOT) -> dict:
         })
 
     unlinked = [x for x in items if x.get("status") == "UNLINKED_TRADE"]
+    ineligible = [x for x in items if x.get("status") == "INELIGIBLE_UNRECOVERABLE_TRADE"]
     adverse = [safe_float(x.get("adverse_execution_cost_pct")) for x in items]
     adverse = [x for x in adverse if x is not None]
     delays = [safe_float(x.get("decision_to_execution_seconds")) for x in items]
@@ -130,6 +162,7 @@ def build(root: Path = ROOT) -> dict:
         "trade_event_count": len(items),
         "linked_trade_count": len([x for x in items if x.get("decision_id")]),
         "unlinked_trade_count": len(unlinked),
+        "ineligible_unrecoverable_trade_count": len(ineligible),
         "attribution_backlog": {
             "status": "OPEN" if unlinked else "CLEAR",
             "items": unlinked,
