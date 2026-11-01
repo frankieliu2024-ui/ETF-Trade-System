@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import os
 from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
 from pathlib import Path
 
 try:
@@ -84,7 +85,7 @@ def build() -> dict:
         managed_codes=managed_codes,
         held_codes=held_codes,
     )
-    generated = datetime.now().astimezone().isoformat(timespec="seconds")
+    generated = datetime.now(ZoneInfo("Asia/Shanghai")).isoformat(timespec="seconds")
     artifact = {
         "schema_version": "1.0",
         "layer": "WEEKLY_DISCOVERY",
