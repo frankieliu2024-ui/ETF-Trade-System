@@ -46,7 +46,10 @@
     {
       "trade_event_id": "trade-20261026-145504-159056-buy",
       "code": "159056",
+      "name": "全指器械",
       "side": "BUY",
+      "quantity": 4700.0,
+      "price": 1.042,
       "execution_date": "2026-10-26",
       "gross_amount": 4897.4,
       "fee_amount": 5.0,
@@ -82,6 +85,55 @@
     "round_trip_status": "NO_EXECUTED_ROUND_TRIP_OR_NET_ZERO_TRADE_IDENTIFIED",
     "complete_statement_boundary": "用户确认该截图为2026-10-01至2026-11-01完整券商对账单；对账单逐笔列示区间内已发生交易和资金变动。因此可收口区间内已执行成交、资本释放及已执行往返交易；未成交委托或撤单属于未执行订单生命周期，不影响本项成交对账结论，也不被表述为已核验。"
   },
+  "strict_decomposition": {
+    "status": "NOT_COMPLETE",
+    "method": "DATE_ALIGNED_ENDPOINT_MARK_TO_MARKET_PLUS_EXECUTED_BUY_LOTS_PLUS_FEES",
+    "price_change_effect": -327.8,
+    "realized_pnl": 0.0,
+    "unrealized_pnl": -327.8,
+    "fee_effect": -5.0,
+    "other_asset_effect": 4850.2,
+    "residual": -4569.6,
+    "reason": "STRICT_BRIDGE_RESIDUAL_NONZERO",
+    "security_components": [
+      {
+        "code": "159056",
+        "name": "全指器械",
+        "quantity": 4700.0,
+        "purchase_price": 1.042,
+        "end_price": 1.01,
+        "effect": -150.4,
+        "classification": "UNREALIZED_PNL"
+      },
+      {
+        "code": "159941",
+        "name": "纳指ETF",
+        "quantity": 12200.0,
+        "start_price": 1.668,
+        "end_price": 1.626,
+        "effect": -512.4,
+        "classification": "UNREALIZED_PNL"
+      },
+      {
+        "code": "159981",
+        "name": "能源化工",
+        "quantity": 8500.0,
+        "start_price": 1.848,
+        "end_price": 1.938,
+        "effect": 765.0,
+        "classification": "UNREALIZED_PNL"
+      },
+      {
+        "code": "159992",
+        "name": "创新药",
+        "quantity": 17200.0,
+        "start_price": 0.81,
+        "end_price": 0.785,
+        "effect": -430.0,
+        "classification": "UNREALIZED_PNL"
+      }
+    ]
+  },
   "unresolved_components": {
     "price_change_effect": "NOT_SEPARATELY_RECONCILED",
     "realized_pnl": "NOT_SEPARATELY_RECONCILED",
@@ -90,6 +142,6 @@
     "same_day_round_trip_or_net_zero_trades": "NO_EXECUTED_ROUND_TRIP_OR_NET_ZERO_TRADE_IDENTIFIED"
   },
   "strict_decomposition_status": "NOT_COMPLETE",
-  "boundary": "账户总资产变化与已确认成交/费用先形成桥接；在完整成交、委托撤单、逐日持仓和成本基础齐备前，不把剩余变化拆写成已实现或未实现收益。",
+  "boundary": "具备日期对齐的周初/周末持仓、完整成交对账和可核对费用时，按端点持仓市值变动、成交后新增批次市值变动、已实现盈亏和费用严格闭合；缺失卖出成本基础、端点持仓或完整成交范围时自动保持未完成，不猜测拆分。",
   "read_only": true
 }
