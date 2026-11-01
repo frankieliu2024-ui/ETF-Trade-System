@@ -23,6 +23,76 @@ EXPERIENCE_START = "<!-- AUTO_TRADE_FACT_CORRECTIONS_START -->"
 EXPERIENCE_END = "<!-- AUTO_TRADE_FACT_CORRECTIONS_END -->"
 
 
+def reconcile_account_cash_projection(event: dict, fee: float, request: dict, stamp: str) -> dict:
+    """Annotate the observed account cash row without rewriting the observed balance chain.
+
+    A broker statement can confirm the trade's net cash effect while the account
+    snapshot still contains an older fee-derived cash delta. Preserve that
+    observed chain, expose the canonical trade cash effect, and retain any
+    residual as explicitly unreconciled evidence.
+    """
+    account = read_json(STATE / "account_fact.json", {}) or {}
+    rows = account.get("account_change_events_after_confirmed_at") or []
+    event_id = str(event.get("event_id") or "").strip()
+    confirmed_at = str(event.get("confirmed_at_beijing") or "").strip()
+    expected = net_cash_effect(event, fee)
+    if not event_id or not confirmed_at or expected is None or not isinstance(rows, list):
+        return {"status": "NOT_APPLICABLE", "reason": "missing_event_identity_or_cash_effect"}
+
+    candidates = [
+        row for row in rows
+        if isinstance(row, dict)
+        and str(row.get("object") or "").strip().lower() == "cash"
+        and str(row.get("event_time") or "").strip() == confirmed_at
+    ]
+    if len(candidates) != 1:
+        return {
+            "status": "NOT_APPLIED",
+            "reason": "cash_projection_match_not_unique",
+            "candidate_count": len(candidates),
+        }
+
+    row = candidates[0]
+    observed = safe_float(row.get("amount_delta"))
+    row_changed = False
+    annotations = {
+        "reconciled_trade_event_id": event_id,
+        "reconciled_trade_cash_effect": expected,
+        "reconciled_trade_fee_amount": round(fee, 2),
+        "reconciled_trade_fee_source": str(request.get("source") or "BROKER_SCREENSHOT_CONFIRMED"),
+    }
+    for key, value in annotations.items():
+        if row.get(key) != value:
+            row[key] = value
+            row_changed = True
+    if observed is not None:
+        residual = round(observed - expected, 2)
+        if row.get("unreconciled_delta") != residual:
+            row["unreconciled_delta"] = residual
+            row_changed = True
+        status = "RECONCILED_BY_CONFIRMED_TRADE" if abs(residual) < 0.005 else "UNRECONCILED_ACCOUNT_CHANGE"
+        if row.get("reconciliation_status") != status:
+            row["reconciliation_status"] = status
+            row_changed = True
+        note = (
+            f"成交事实净现金影响{expected:.2f}元；账户快照观察现金变化{observed:.2f}元；"
+            f"残差{residual:.2f}元，保留原始账户余额链，不据此改写后续现金调整。"
+        )
+        if row.get("reconciliation_note") != note:
+            row["reconciliation_note"] = note
+            row_changed = True
+    if row_changed:
+        account["fee_fact_updated_at"] = stamp
+        account["fee_fact_source"] = str(request.get("source") or "BROKER_SCREENSHOT_CONFIRMED")
+        write_json(STATE / "account_fact.json", account)
+    return {
+        "status": "UPDATED" if row_changed else "ALREADY_ANNOTATED",
+        "observed_delta": observed,
+        "expected_delta": expected,
+        "unreconciled_delta": round(observed - expected, 2) if observed is not None else None,
+    }
+
+
 def read_json(path: Path, default: Any = None) -> Any:
     try:
         return json.loads(path.read_text(encoding="utf-8"))
