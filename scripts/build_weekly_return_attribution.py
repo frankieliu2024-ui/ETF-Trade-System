@@ -101,6 +101,15 @@ def build() -> dict:
         for row in cash_rows
         if f(row.get("unreconciled_delta")) not in (None, 0.0)
     ]
+    statement_scope = account.get("broker_statement_reconciliation") if isinstance(account.get("broker_statement_reconciliation"), dict) else {}
+    statement_complete = str(statement_scope.get("statement_scope_status") or "").upper() == "COMPLETE_EXECUTED_TRANSACTION_SCOPE"
+    execution_reconciliation = {
+        "statement_scope_status": statement_scope.get("statement_scope_status") or "NOT_AVAILABLE",
+        "executed_transaction_scope_status": statement_scope.get("executed_transaction_scope_status") or "NOT_AVAILABLE",
+        "capital_release_status": statement_scope.get("capital_release_status") or "NOT_CONFIRMED",
+        "round_trip_status": statement_scope.get("round_trip_status") or "NOT_PROVEN",
+        "complete_statement_boundary": statement_scope.get("boundary") or "",
+    }
     artifact = {
         "schema_version": "1.0",
         "layer": "WEEKLY_RETURN_ATTRIBUTION",
@@ -124,12 +133,19 @@ def build() -> dict:
             "confirmed_trade_fees": confirmed_fees,
             "daily_account_delta_sum": round(sum(row["amount_delta"] or 0 for row in daily_deltas), 2),
         },
+        "execution_reconciliation": execution_reconciliation,
         "unresolved_components": {
             "price_change_effect": "NOT_SEPARATELY_RECONCILED",
             "realized_pnl": "NOT_SEPARATELY_RECONCILED",
             "unrealized_pnl": "NOT_SEPARATELY_RECONCILED",
-            "complete_order_and_cancellation_flow": "NOT_AVAILABLE",
-            "same_day_round_trip_or_net_zero_trades": "NOT_PROVEN",
+            "complete_order_and_cancellation_flow": (
+                "OUT_OF_SCOPE_FOR_EXECUTED_TRANSACTION_RECONCILIATION"
+                if statement_complete else "NOT_AVAILABLE"
+            ),
+            "same_day_round_trip_or_net_zero_trades": (
+                "NO_EXECUTED_ROUND_TRIP_OR_NET_ZERO_TRADE_IDENTIFIED"
+                if statement_complete else "NOT_PROVEN"
+            ),
         },
         "strict_decomposition_status": "NOT_COMPLETE",
         "boundary": "账户总资产变化与已确认成交/费用先形成桥接；在完整成交、委托撤单、逐日持仓和成本基础齐备前，不把剩余变化拆写成已实现或未实现收益。",
