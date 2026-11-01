@@ -55,6 +55,67 @@ def _load_attribution_correction(root: Path, trade: dict) -> tuple[str, dict, st
     return next(iter(ids)), matches[0], "CANONICAL_CORRECTION"
 
 
+
+def _completion_candidates(root: Path, trade: dict, trade_time: datetime) -> list[tuple[datetime, str, dict]]:
+    """Read existing Formal Decision completions as decision evidence.
+
+    A completion is not a second decision object. It is the already-frozen
+    business decision record produced by the task. This fallback is used only
+    when no canonical events/decisions object exists, and only for a PIT-valid
+    completion that explicitly names the traded code and compatible action.
+    """
+    completion_dir = root / "requests" / "live_snapshot"
+    code = str(trade.get("code") or "").strip()
+    name = str(trade.get("name") or "").strip()
+    side = str(trade.get("side") or "").upper()
+    if not code or not completion_dir.exists():
+        return []
+    candidates: list[tuple[datetime, str, dict]] = []
+    for path in sorted(completion_dir.glob("*__scheduled_review_completion.json")):
+        completion = _load(path)
+        if (
+            str(completion.get("report_type") or "").upper() != "ETF_FORMAL_DECISION"
+            or str(completion.get("task_id") or "").strip() != "ETF正式决策"
+        ):
+            continue
+        decision_time = _time(completion.get("requested_at_beijing"))
+        if decision_time is None or decision_time > trade_time:
+            continue
+        content = str(completion.get("final_content") or "")
+        if code not in content and (not name or name not in content):
+            continue
+        if side in {"BUY", "B", "买", "买入"} or "买" in side:
+            if not any(token in content for token in ("Trial", "Confirm", "新增部署", "买入")):
+                continue
+        elif side in {"SELL", "S", "卖", "卖出"} or "卖" in side:
+            if not any(token in content for token in ("减持", "退出", "释放", "卖出", "降低风险")):
+                continue
+        proxy_id = f"FORMAL_COMPLETION:{completion.get('request_id') or path.stem}"
+        proxy = {
+            "event_type": "FORMAL_DECISION_COMPLETION_EVIDENCE",
+            "decision_id": proxy_id,
+            "request_id": completion.get("request_id"),
+            "parent_request_id": completion.get("parent_request_id"),
+            "task_id": completion.get("task_id"),
+            "report_type": completion.get("report_type"),
+            "decision_effective_at_beijing": completion.get("requested_at_beijing"),
+            "issued_at_beijing": completion.get("requested_at_beijing"),
+            "recorded_at_beijing": completion.get("requested_at_beijing"),
+            "decision_effective_ordering": "BEFORE_EXECUTION",
+            "timing_quality": "USER_CONFIRMED_BOUNDED",
+            "candidate_code": code,
+            "candidate_name": name,
+            "formal_decision": {
+                "completion_request_id": completion.get("request_id"),
+                "final_content": content,
+                "source": completion.get("source"),
+            },
+            "attribution_source": str(path.relative_to(root)).replace("\\", "/"),
+        }
+        candidates.append((decision_time, proxy_id, proxy))
+    return candidates
+
+
 def resolve_link(root: Path, trade: dict, requested_id: str = "") -> tuple[str, dict, str]:
     """Return a decision no later than the confirmed trade time.
 
@@ -104,10 +165,15 @@ def resolve_link(root: Path, trade: dict, requested_id: str = "") -> tuple[str, 
         if not _decision_mentions_trade(event, trade):
             continue
         candidates.append((decision_time, str(event.get("decision_id") or path.stem), event))
-    if not candidates:
-        return "", {}, "NO_PRIOR_MATCHING_DECISION"
-    _, decision_id, event = max(candidates, key=lambda x: x[0])
-    return decision_id, event, "AUTO_PRIOR_MATCH"
+    if candidates:
+        _, decision_id, event = max(candidates, key=lambda x: x[0])
+        return decision_id, event, "AUTO_PRIOR_MATCH"
+
+    completion_candidates = _completion_candidates(root, trade, trade_time)
+    if completion_candidates:
+        _, decision_id, event = max(completion_candidates, key=lambda x: x[0])
+        return decision_id, event, "CANONICAL_COMPLETION_PIT_MATCH"
+    return "", {}, "NO_PRIOR_MATCHING_DECISION"
 
 
 def decision_price_for_trade(event: dict, trade: dict):
