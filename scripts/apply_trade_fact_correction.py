@@ -93,6 +93,29 @@ def reconcile_account_cash_projection(event: dict, fee: float, request: dict, st
     }
 
 
+def persist_statement_scope(request: dict, stamp: str) -> dict:
+    """Persist broker-statement coverage without inventing order or cancellation facts."""
+    scope = request.get("statement_scope")
+    if not isinstance(scope, dict):
+        return {"status": "NOT_APPLICABLE", "reason": "statement_scope_not_supplied"}
+    account = read_json(STATE / "account_fact.json", {}) or {}
+    prior = account.get("broker_statement_reconciliation")
+    merged = dict(prior) if isinstance(prior, dict) else {}
+    merged.update(scope)
+    merged["updated_at_beijing"] = stamp
+    changed = account.get("broker_statement_reconciliation") != merged
+    if changed:
+        account["broker_statement_reconciliation"] = merged
+        write_json(STATE / "account_fact.json", account)
+    return {
+        "status": "UPDATED" if changed else "ALREADY_ANNOTATED",
+        "statement_scope_status": merged.get("statement_scope_status"),
+        "orders_and_cancellations_status": merged.get("orders_and_cancellations_status"),
+        "round_trip_status": merged.get("round_trip_status"),
+        "capital_release_status": merged.get("capital_release_status"),
+    }
+
+
 def read_json(path: Path, default: Any = None) -> Any:
     try:
         return json.loads(path.read_text(encoding="utf-8"))
@@ -341,6 +364,7 @@ def main() -> int:
     # TRADE_EVENT marker; it never creates a second trade or CASE.
     sync_experience_transaction_index(event)
     account_cash_projection = reconcile_account_cash_projection(event, fee, req, stamp)
+    statement_scope_projection = persist_statement_scope(req, stamp)
 
     target = f"{event.get('name') or ''}（{event.get('code') or ''}）"
     correction_key = f"FEE_{event_id}"
@@ -362,6 +386,7 @@ def main() -> int:
         "experience_updated": True,
         "account_fact_updated": account_cash_projection.get("status") == "UPDATED",
         "account_cash_projection": account_cash_projection,
+        "statement_scope_projection": statement_scope_projection,
         "master_updated": False,
         "pending_fee_count": pending_fee_count(trades, ROOT),
         "known_fees": summary.get("known_fees"),
