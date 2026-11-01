@@ -924,14 +924,24 @@ def _validate_weekly_projection_contract(report: dict) -> None:
         execution_errors.append("open_backlog_status_missing")
     if execution_errors:
         report.setdefault("errors", []).extend(f"execution_quality:{item}" for item in execution_errors)
+    attribution_gate = execution.get("attribution_gate") if isinstance(execution.get("attribution_gate"), dict) else {}
+    attribution_gate_status = str(attribution_gate.get("status") or "").upper()
+    if unlinked and attribution_gate_status != "BLOCKED":
+        execution_errors.append("attribution_gate_status_mismatch_for_open_backlog")
+    if not unlinked and attribution_gate_status != "PASS":
+        execution_errors.append("attribution_gate_missing_or_not_pass")
+    # An executed trade without a PIT-valid formal decision is not an ordinary
+    # warning. It blocks the system from claiming a closed attribution chain.
+    # Historical canonical ineligibility is represented separately and is not
+    # included in the unlinked list.
     if unlinked:
-        report.setdefault("warnings", []).append(
-            f"execution_quality:attribution_backlog_open count={len(unlinked)}"
-        )
+        message = f"execution_quality:attribution_backlog_open count={len(unlinked)}"
+        if message not in report.setdefault("errors", []):
+            report["errors"].append(message)
     report.setdefault("checks", []).append({
         "name": "state:execution_attribution_backlog",
-        "status": "FAIL" if execution_errors else ("WARNING" if unlinked else "PASS"),
-        "detail": f"unlinked_trade_count={len(unlinked)} backlog_status={backlog_status or 'MISSING'}",
+        "status": "FAIL" if execution_errors or unlinked else "PASS",
+        "detail": f"unlinked_trade_count={len(unlinked)} backlog_status={backlog_status or 'MISSING'} attribution_gate={attribution_gate_status or 'MISSING'}",
     })
     _recount(report)
 
