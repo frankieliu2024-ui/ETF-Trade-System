@@ -938,6 +938,10 @@ def _validate_weekly_projection_contract(report: dict) -> None:
         message = f"execution_quality:attribution_backlog_open count={len(unlinked)}"
         if message not in report.setdefault("errors", []):
             report["errors"].append(message)
+    for item in execution_errors:
+        message = "execution_quality:" + item
+        if message not in report.setdefault("errors", []):
+            report["errors"].append(message)
     report.setdefault("checks", []).append({
         "name": "state:execution_attribution_backlog",
         "status": "FAIL" if execution_errors or unlinked else "PASS",
