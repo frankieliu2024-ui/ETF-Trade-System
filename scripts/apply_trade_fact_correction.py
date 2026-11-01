@@ -340,6 +340,7 @@ def main() -> int:
     # This updates both marker-based rows and legacy rows that predate the
     # TRADE_EVENT marker; it never creates a second trade or CASE.
     sync_experience_transaction_index(event)
+    account_cash_projection = reconcile_account_cash_projection(event, fee, req, stamp)
 
     target = f"{event.get('name') or ''}（{event.get('code') or ''}）"
     correction_key = f"FEE_{event_id}"
@@ -359,6 +360,8 @@ def main() -> int:
         "dashboard_updated": True,
         "archive_updated": True,
         "experience_updated": True,
+        "account_fact_updated": account_cash_projection.get("status") == "UPDATED",
+        "account_cash_projection": account_cash_projection,
         "master_updated": False,
         "pending_fee_count": pending_fee_count(trades, ROOT),
         "known_fees": summary.get("known_fees"),
