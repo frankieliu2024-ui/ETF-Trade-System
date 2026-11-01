@@ -1,23 +1,15 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-11-01T13:48:51Z",
+  "generated_at": "2026-11-01T13:51:35Z",
   "mode": "DECISION_EXECUTION_ATTRIBUTION",
   "read_only": true,
   "trade_event_count": 52,
   "linked_trade_count": 51,
-  "unlinked_trade_count": 1,
-  "ineligible_unrecoverable_trade_count": 0,
+  "unlinked_trade_count": 0,
+  "ineligible_unrecoverable_trade_count": 1,
   "attribution_backlog": {
-    "status": "OPEN",
-    "items": [
-      {
-        "trade_event_id": "BROKER_TRADE_20260924_095255_159981_BUY_2800",
-        "status": "UNLINKED_TRADE",
-        "link_status": "NO_PRIOR_MATCHING_DECISION",
-        "code": "159981",
-        "name": "能源化工ETF"
-      }
-    ],
+    "status": "CLEAR",
+    "items": [],
     "rule": "未找到PIT有效正式决策时保留UNLINKED_TRADE；不得按时间、标的或持仓结果自动追认decision_id。后续必须补齐正式决策证据，或由正式复盘记录不可恢复归因。"
   },
   "corrected_future_or_invalid_link_count": 35,
@@ -270,10 +262,18 @@
     },
     {
       "trade_event_id": "BROKER_TRADE_20260924_095255_159981_BUY_2800",
-      "status": "UNLINKED_TRADE",
-      "link_status": "NO_PRIOR_MATCHING_DECISION",
+      "status": "INELIGIBLE_UNRECOVERABLE_TRADE",
+      "link_status": "EXPLICIT_CANONICAL_INELIGIBILITY",
       "code": "159981",
-      "name": "能源化工ETF"
+      "name": "能源化工ETF",
+      "ineligibility_reason": "正式复盘已完成，但当前不存在该证券既有CASE，且本次退出不满足既有通用CASE intake语义；不创建新CASE。",
+      "ineligibility_record": {
+        "trade_event_id": "BROKER_TRADE_20260924_095255_159981_BUY_2800",
+        "decision_id": "20260924_0945_chatgpt_decision_analysis_decision",
+        "security_code": "159981",
+        "eligibility": "EXPLICIT_CANONICAL_INELIGIBILITY",
+        "reason": "正式复盘已完成，但当前不存在该证券既有CASE，且本次退出不满足既有通用CASE intake语义；不创建新CASE。"
+      }
     },
     {
       "trade_event_id": "HISTORICAL_ACQUISITION_20260901_301689_500",
