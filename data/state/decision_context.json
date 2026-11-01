@@ -7,12 +7,12 @@
     "snapshot_commit": "26af087d421e94dfbd7ecce40a0f4b386fac560f",
     "boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
     "timing": {
-      "state_builder_started_at": "2026-11-01T12:52:34Z",
+      "state_builder_started_at": "2026-11-01T13:03:30Z",
       "current_published_at": "2026-10-30T15:17:19+08:00",
-      "market_regime_ready_at": "2026-11-01T12:52:42Z",
-      "market_structure_ready_at": "2026-11-01T12:52:43Z",
-      "full_state_context_observation_at": "2026-11-01T12:52:43Z",
-      "decision_context_written_at": "2026-11-01T12:52:44Z"
+      "market_regime_ready_at": "2026-11-01T13:03:36Z",
+      "market_structure_ready_at": "2026-11-01T13:03:37Z",
+      "full_state_context_observation_at": "2026-11-01T13:03:37Z",
+      "decision_context_written_at": "2026-11-01T13:03:38Z"
     },
     "trigger": {
       "request_id": "",
@@ -25,7 +25,7 @@
       "market_date": "2026-10-30"
     }
   },
-  "generated_at": "2026-11-01T12:52:43Z",
+  "generated_at": "2026-11-01T13:03:37Z",
   "rules_version": "V2.2.34",
   "market_date": "2026-10-30",
   "latest_node": "close",
@@ -1757,7 +1757,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 11.55,
-    "age_seconds": 192924
+    "age_seconds": 193578
   },
   "freshness_at_context_build": {
     "status": "STALE",
@@ -1774,7 +1774,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 11.55,
-    "age_seconds": 192924
+    "age_seconds": 193578
   },
   "data_quality_summary": {
     "pass_count": 18,
@@ -1875,7 +1875,7 @@
     "account_fact_time": "2026-10-30T15:17:00+08:00",
     "market_snapshot_time": "2026-10-30T15:17:19+08:00",
     "market_phase": "POST_CLOSE_GRACE",
-    "context_generated_time": "2026-11-01T12:52:43Z",
+    "context_generated_time": "2026-11-01T13:03:37Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
@@ -1917,7 +1917,7 @@
     "read_only": true
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-11-01T20:52:43+08:00",
+    "generated_at_beijing": "2026-11-01T21:03:37+08:00",
     "refresh_mode": "CACHED_STATE",
     "refresh_failures": [],
     "decision_freshness": {
@@ -1926,8 +1926,8 @@
       "captured_at": "2026-10-30T07:17:19+00:00",
       "provider_as_of": "2026-10-30T07:17:11+00:00",
       "effective_as_of": "2026-10-30T07:17:11+00:00",
-      "request_time": "2026-11-01T12:52:43.503871+00:00",
-      "age_seconds": 192932,
+      "request_time": "2026-11-01T13:03:37.472041+00:00",
+      "age_seconds": 193586,
       "post_request": false,
       "preferred_max_age_seconds": 300,
       "fallback_max_age_seconds": 900,
@@ -2737,7 +2737,7 @@
   },
   "decision_trigger": {
     "schema_version": "1.2",
-    "generated_at": "2026-11-01T20:52:43+08:00",
+    "generated_at": "2026-11-01T21:03:37+08:00",
     "status": "NO_NEW_TRIGGER",
     "trigger_type": "",
     "triggered_at": "",
@@ -2767,7 +2767,7 @@
   },
   "capital_efficiency_ranking": {
     "schema_version": "1.2",
-    "generated_at": "2026-11-01T20:52:43+08:00",
+    "generated_at": "2026-11-01T21:03:37+08:00",
     "as_of": "2026-10-30T15:17:19+08:00",
     "e2e_status": "BLOCKED",
     "risk_zone": "RISK_CONTROL",
@@ -3648,6 +3648,17 @@
         "data_availability": "DEGRADED",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
+          "category": "OBSERVATION_EVALUATION_INPUT",
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-10-30",
+            "sample_count": 90,
+            "avg_amount_20": 78641520.65
+          },
+          "eligibility": "OBSERVATION_FULL_EVALUATION",
+          "name": "恒生互联网ETF万家",
+          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+          "code": "159202",
           "discovery_spot": {
             "price": 0.669,
             "change_pct": 0.2998500749625155,
@@ -3662,17 +3673,6 @@
             "return_60d_pct": null,
             "return_ytd_pct": null,
             "provider_timestamp": 1793348055000
-          },
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "code": "159202",
-          "name": "恒生互联网ETF万家",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-10-30",
-            "sample_count": 90,
-            "avg_amount_20": 78641520.65
           }
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
@@ -3685,6 +3685,17 @@
         "data_availability": "DEGRADED",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
+          "category": "OBSERVATION_EVALUATION_INPUT",
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-10-30",
+            "sample_count": 90,
+            "avg_amount_20": 100516992.3
+          },
+          "eligibility": "OBSERVATION_FULL_EVALUATION",
+          "name": "红利低波100ETF博时",
+          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+          "code": "159307",
           "discovery_spot": {
             "price": 1.044,
             "change_pct": 0.8695652173913215,
@@ -3699,17 +3710,6 @@
             "return_60d_pct": null,
             "return_ytd_pct": null,
             "provider_timestamp": 1793348082000
-          },
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "code": "159307",
-          "name": "红利低波100ETF博时",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-10-30",
-            "sample_count": 90,
-            "avg_amount_20": 100516992.3
           }
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
@@ -3722,6 +3722,17 @@
         "data_availability": "DEGRADED",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
+          "category": "OBSERVATION_EVALUATION_INPUT",
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-10-30",
+            "sample_count": 90,
+            "avg_amount_20": 18717536.79
+          },
+          "eligibility": "OBSERVATION_FULL_EVALUATION",
+          "name": "创业板医药ETF国泰",
+          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+          "code": "159377",
           "discovery_spot": {
             "price": 0.972,
             "change_pct": 1.5673981191222541,
@@ -3736,17 +3747,6 @@
             "return_60d_pct": null,
             "return_ytd_pct": null,
             "provider_timestamp": 1793348082000
-          },
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "code": "159377",
-          "name": "创业板医药ETF国泰",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-10-30",
-            "sample_count": 90,
-            "avg_amount_20": 18717536.79
           }
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
@@ -3759,6 +3759,17 @@
         "data_availability": "DEGRADED",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
+          "category": "OBSERVATION_EVALUATION_INPUT",
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-10-30",
+            "sample_count": 90,
+            "avg_amount_20": 60869562.8
+          },
+          "eligibility": "OBSERVATION_FULL_EVALUATION",
+          "name": "港股红利低波ETF景顺",
+          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+          "code": "159569",
           "discovery_spot": {
             "price": 1.38,
             "change_pct": 2.2222222222222143,
@@ -3773,17 +3784,6 @@
             "return_60d_pct": null,
             "return_ytd_pct": null,
             "provider_timestamp": 1793348085000
-          },
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "code": "159569",
-          "name": "港股红利低波ETF景顺",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-10-30",
-            "sample_count": 90,
-            "avg_amount_20": 60869562.8
           }
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
@@ -3796,6 +3796,17 @@
         "data_availability": "DEGRADED",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
+          "category": "OBSERVATION_EVALUATION_INPUT",
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-10-30",
+            "sample_count": 90,
+            "avg_amount_20": 170887400.85
+          },
+          "eligibility": "OBSERVATION_FULL_EVALUATION",
+          "name": "港股红利ETF工银",
+          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+          "code": "159691",
           "discovery_spot": {
             "price": 1.149,
             "change_pct": 1.6814159292035447,
@@ -3810,17 +3821,6 @@
             "return_60d_pct": null,
             "return_ytd_pct": null,
             "provider_timestamp": 1793348043000
-          },
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "code": "159691",
-          "name": "港股红利ETF工银",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-10-30",
-            "sample_count": 90,
-            "avg_amount_20": 170887400.85
           }
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
@@ -3833,6 +3833,17 @@
         "data_availability": "DEGRADED",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
+          "category": "OBSERVATION_EVALUATION_INPUT",
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-10-30",
+            "sample_count": 90,
+            "avg_amount_20": 12644112.41
+          },
+          "eligibility": "OBSERVATION_FULL_EVALUATION",
+          "name": "恒生消费ETF广发",
+          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+          "code": "159699",
           "discovery_spot": {
             "price": 0.834,
             "change_pct": 3.4739454094292688,
@@ -3847,17 +3858,6 @@
             "return_60d_pct": null,
             "return_ytd_pct": null,
             "provider_timestamp": 1793348070000
-          },
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "code": "159699",
-          "name": "恒生消费ETF广发",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-10-30",
-            "sample_count": 90,
-            "avg_amount_20": 12644112.41
           }
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
@@ -3870,6 +3870,17 @@
         "data_availability": "DEGRADED",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
+          "category": "OBSERVATION_EVALUATION_INPUT",
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-10-30",
+            "sample_count": 90,
+            "avg_amount_20": 415754459.7
+          },
+          "eligibility": "OBSERVATION_FULL_EVALUATION",
+          "name": "纳指生物科技ETF汇添富",
+          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+          "code": "513290",
           "discovery_spot": {
             "price": 1.881,
             "change_pct": 0.32000000000000917,
@@ -3884,17 +3895,6 @@
             "return_60d_pct": null,
             "return_ytd_pct": null,
             "provider_timestamp": 1793348078000
-          },
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "code": "513290",
-          "name": "纳指生物科技ETF汇添富",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-10-30",
-            "sample_count": 90,
-            "avg_amount_20": 415754459.7
           }
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
@@ -3907,6 +3907,17 @@
         "data_availability": "DEGRADED",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
+          "category": "OBSERVATION_EVALUATION_INPUT",
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-10-30",
+            "sample_count": 90,
+            "avg_amount_20": 220852476.15
+          },
+          "eligibility": "OBSERVATION_FULL_EVALUATION",
+          "name": "港股低波红利ETF摩根",
+          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+          "code": "513630",
           "discovery_spot": {
             "price": 1.575,
             "change_pct": 1.744186046511631,
@@ -3921,17 +3932,6 @@
             "return_60d_pct": null,
             "return_ytd_pct": null,
             "provider_timestamp": 1793348084000
-          },
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "code": "513630",
-          "name": "港股低波红利ETF摩根",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-10-30",
-            "sample_count": 90,
-            "avg_amount_20": 220852476.15
           }
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
@@ -3944,6 +3944,17 @@
         "data_availability": "DEGRADED",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
+          "category": "OBSERVATION_EVALUATION_INPUT",
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-10-30",
+            "sample_count": 90,
+            "avg_amount_20": 372207169.9
+          },
+          "eligibility": "OBSERVATION_FULL_EVALUATION",
+          "name": "港股通非银ETF广发",
+          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+          "code": "513750",
           "discovery_spot": {
             "price": 1.365,
             "change_pct": 0.8869179600886845,
@@ -3958,17 +3969,6 @@
             "return_60d_pct": null,
             "return_ytd_pct": null,
             "provider_timestamp": 1793348098000
-          },
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "code": "513750",
-          "name": "港股通非银ETF广发",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-10-30",
-            "sample_count": 90,
-            "avg_amount_20": 372207169.9
           }
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
@@ -3981,6 +3981,17 @@
         "data_availability": "DEGRADED",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
+          "category": "OBSERVATION_EVALUATION_INPUT",
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-10-30",
+            "sample_count": 90,
+            "avg_amount_20": 351529010.0
+          },
+          "eligibility": "OBSERVATION_FULL_EVALUATION",
+          "name": "中证红利ETF招商",
+          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+          "code": "515080",
           "discovery_spot": {
             "price": 1.578,
             "change_pct": 0.766283524904221,
@@ -3995,17 +4006,6 @@
             "return_60d_pct": null,
             "return_ytd_pct": null,
             "provider_timestamp": 1793348095000
-          },
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "code": "515080",
-          "name": "中证红利ETF招商",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-10-30",
-            "sample_count": 90,
-            "avg_amount_20": 351529010.0
           }
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
@@ -4018,6 +4018,17 @@
         "data_availability": "DEGRADED",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
+          "category": "OBSERVATION_EVALUATION_INPUT",
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-10-30",
+            "sample_count": 90,
+            "avg_amount_20": 86964424.9
+          },
+          "eligibility": "OBSERVATION_FULL_EVALUATION",
+          "name": "标普A股红利ETF华宝",
+          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+          "code": "562060",
           "discovery_spot": {
             "price": 0.601,
             "change_pct": 0.8389261744966348,
@@ -4032,17 +4043,6 @@
             "return_60d_pct": null,
             "return_ytd_pct": null,
             "provider_timestamp": 1793348090000
-          },
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "code": "562060",
-          "name": "标普A股红利ETF华宝",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-10-30",
-            "sample_count": 90,
-            "avg_amount_20": 86964424.9
           }
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
@@ -4055,6 +4055,17 @@
         "data_availability": "DEGRADED",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
+          "category": "OBSERVATION_EVALUATION_INPUT",
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-10-30",
+            "sample_count": 90,
+            "avg_amount_20": 1783205.16
+          },
+          "eligibility": "OBSERVATION_FULL_EVALUATION",
+          "name": "科创综指ETF兴银",
+          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+          "code": "589580",
           "discovery_spot": {
             "price": 1.218,
             "change_pct": 1.4154870940882525,
@@ -4069,17 +4080,6 @@
             "return_60d_pct": null,
             "return_ytd_pct": null,
             "provider_timestamp": 1793348100000
-          },
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "code": "589580",
-          "name": "科创综指ETF兴银",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-10-30",
-            "sample_count": 90,
-            "avg_amount_20": 1783205.16
           }
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
@@ -4087,7 +4087,7 @@
     ]
   },
   "intraday_path_features": {
-    "generated_at": "2026-11-01T12:52:34Z",
+    "generated_at": "2026-11-01T13:03:30Z",
     "market_date": "2026-10-30",
     "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
     "read_only": true,
@@ -5859,7 +5859,7 @@
     },
     "market_structure_context": {
       "schema_version": "1.4",
-      "generated_at": "2026-11-01T12:52:42Z",
+      "generated_at": "2026-11-01T13:03:36Z",
       "market_date": "2026-10-30",
       "as_of_beijing": "2026-10-30T15:17:19+08:00",
       "source_snapshot": "data/market/snapshots/2026-10-30_151719.json",
@@ -9004,12 +9004,23 @@
     "market_date": "2026-10-30",
     "latest_valid_node": "close",
     "latest_snapshot": "data/market/snapshots/2026-10-30_151719.json",
-    "generated_at_beijing": "2026-11-01T20:52:21+08:00",
+    "generated_at_beijing": "2026-11-01T21:03:17+08:00",
     "status": "READY",
     "coverage_status": "COMPLETE",
     "candidate_count": 12,
     "candidates": [
       {
+        "category": "OBSERVATION_EVALUATION_INPUT",
+        "historical_context": {
+          "status": "READY",
+          "as_of": "2026-10-30",
+          "sample_count": 90,
+          "avg_amount_20": 78641520.65
+        },
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "name": "恒生互联网ETF万家",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "code": "159202",
         "discovery_spot": {
           "price": 0.669,
           "change_pct": 0.2998500749625155,
@@ -9024,20 +9035,20 @@
           "return_60d_pct": null,
           "return_ytd_pct": null,
           "provider_timestamp": 1793348055000
-        },
+        }
+      },
+      {
         "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "code": "159202",
-        "name": "恒生互联网ETF万家",
         "historical_context": {
           "status": "READY",
           "as_of": "2026-10-30",
           "sample_count": 90,
-          "avg_amount_20": 78641520.65
-        }
-      },
-      {
+          "avg_amount_20": 100516992.3
+        },
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "name": "红利低波100ETF博时",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "code": "159307",
         "discovery_spot": {
           "price": 1.044,
           "change_pct": 0.8695652173913215,
@@ -9052,20 +9063,20 @@
           "return_60d_pct": null,
           "return_ytd_pct": null,
           "provider_timestamp": 1793348082000
-        },
+        }
+      },
+      {
         "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "code": "159307",
-        "name": "红利低波100ETF博时",
         "historical_context": {
           "status": "READY",
           "as_of": "2026-10-30",
           "sample_count": 90,
-          "avg_amount_20": 100516992.3
-        }
-      },
-      {
+          "avg_amount_20": 18717536.79
+        },
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "name": "创业板医药ETF国泰",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "code": "159377",
         "discovery_spot": {
           "price": 0.972,
           "change_pct": 1.5673981191222541,
@@ -9080,20 +9091,20 @@
           "return_60d_pct": null,
           "return_ytd_pct": null,
           "provider_timestamp": 1793348082000
-        },
+        }
+      },
+      {
         "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "code": "159377",
-        "name": "创业板医药ETF国泰",
         "historical_context": {
           "status": "READY",
           "as_of": "2026-10-30",
           "sample_count": 90,
-          "avg_amount_20": 18717536.79
-        }
-      },
-      {
+          "avg_amount_20": 60869562.8
+        },
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "name": "港股红利低波ETF景顺",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "code": "159569",
         "discovery_spot": {
           "price": 1.38,
           "change_pct": 2.2222222222222143,
@@ -9108,20 +9119,20 @@
           "return_60d_pct": null,
           "return_ytd_pct": null,
           "provider_timestamp": 1793348085000
-        },
+        }
+      },
+      {
         "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "code": "159569",
-        "name": "港股红利低波ETF景顺",
         "historical_context": {
           "status": "READY",
           "as_of": "2026-10-30",
           "sample_count": 90,
-          "avg_amount_20": 60869562.8
-        }
-      },
-      {
+          "avg_amount_20": 170887400.85
+        },
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "name": "港股红利ETF工银",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "code": "159691",
         "discovery_spot": {
           "price": 1.149,
           "change_pct": 1.6814159292035447,
@@ -9136,20 +9147,20 @@
           "return_60d_pct": null,
           "return_ytd_pct": null,
           "provider_timestamp": 1793348043000
-        },
+        }
+      },
+      {
         "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "code": "159691",
-        "name": "港股红利ETF工银",
         "historical_context": {
           "status": "READY",
           "as_of": "2026-10-30",
           "sample_count": 90,
-          "avg_amount_20": 170887400.85
-        }
-      },
-      {
+          "avg_amount_20": 12644112.41
+        },
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "name": "恒生消费ETF广发",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "code": "159699",
         "discovery_spot": {
           "price": 0.834,
           "change_pct": 3.4739454094292688,
@@ -9164,20 +9175,20 @@
           "return_60d_pct": null,
           "return_ytd_pct": null,
           "provider_timestamp": 1793348070000
-        },
+        }
+      },
+      {
         "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "code": "159699",
-        "name": "恒生消费ETF广发",
         "historical_context": {
           "status": "READY",
           "as_of": "2026-10-30",
           "sample_count": 90,
-          "avg_amount_20": 12644112.41
-        }
-      },
-      {
+          "avg_amount_20": 415754459.7
+        },
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "name": "纳指生物科技ETF汇添富",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "code": "513290",
         "discovery_spot": {
           "price": 1.881,
           "change_pct": 0.32000000000000917,
@@ -9192,20 +9203,20 @@
           "return_60d_pct": null,
           "return_ytd_pct": null,
           "provider_timestamp": 1793348078000
-        },
+        }
+      },
+      {
         "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "code": "513290",
-        "name": "纳指生物科技ETF汇添富",
         "historical_context": {
           "status": "READY",
           "as_of": "2026-10-30",
           "sample_count": 90,
-          "avg_amount_20": 415754459.7
-        }
-      },
-      {
+          "avg_amount_20": 220852476.15
+        },
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "name": "港股低波红利ETF摩根",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "code": "513630",
         "discovery_spot": {
           "price": 1.575,
           "change_pct": 1.744186046511631,
@@ -9220,20 +9231,20 @@
           "return_60d_pct": null,
           "return_ytd_pct": null,
           "provider_timestamp": 1793348084000
-        },
+        }
+      },
+      {
         "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "code": "513630",
-        "name": "港股低波红利ETF摩根",
         "historical_context": {
           "status": "READY",
           "as_of": "2026-10-30",
           "sample_count": 90,
-          "avg_amount_20": 220852476.15
-        }
-      },
-      {
+          "avg_amount_20": 372207169.9
+        },
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "name": "港股通非银ETF广发",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "code": "513750",
         "discovery_spot": {
           "price": 1.365,
           "change_pct": 0.8869179600886845,
@@ -9248,20 +9259,20 @@
           "return_60d_pct": null,
           "return_ytd_pct": null,
           "provider_timestamp": 1793348098000
-        },
+        }
+      },
+      {
         "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "code": "513750",
-        "name": "港股通非银ETF广发",
         "historical_context": {
           "status": "READY",
           "as_of": "2026-10-30",
           "sample_count": 90,
-          "avg_amount_20": 372207169.9
-        }
-      },
-      {
+          "avg_amount_20": 351529010.0
+        },
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "name": "中证红利ETF招商",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "code": "515080",
         "discovery_spot": {
           "price": 1.578,
           "change_pct": 0.766283524904221,
@@ -9276,20 +9287,20 @@
           "return_60d_pct": null,
           "return_ytd_pct": null,
           "provider_timestamp": 1793348095000
-        },
+        }
+      },
+      {
         "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "code": "515080",
-        "name": "中证红利ETF招商",
         "historical_context": {
           "status": "READY",
           "as_of": "2026-10-30",
           "sample_count": 90,
-          "avg_amount_20": 351529010.0
-        }
-      },
-      {
+          "avg_amount_20": 86964424.9
+        },
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "name": "标普A股红利ETF华宝",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "code": "562060",
         "discovery_spot": {
           "price": 0.601,
           "change_pct": 0.8389261744966348,
@@ -9304,20 +9315,20 @@
           "return_60d_pct": null,
           "return_ytd_pct": null,
           "provider_timestamp": 1793348090000
-        },
+        }
+      },
+      {
         "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "code": "562060",
-        "name": "标普A股红利ETF华宝",
         "historical_context": {
           "status": "READY",
           "as_of": "2026-10-30",
           "sample_count": 90,
-          "avg_amount_20": 86964424.9
-        }
-      },
-      {
+          "avg_amount_20": 1783205.16
+        },
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "name": "科创综指ETF兴银",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "code": "589580",
         "discovery_spot": {
           "price": 1.218,
           "change_pct": 1.4154870940882525,
@@ -9332,17 +9343,6 @@
           "return_60d_pct": null,
           "return_ytd_pct": null,
           "provider_timestamp": 1793348100000
-        },
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "code": "589580",
-        "name": "科创综指ETF兴银",
-        "historical_context": {
-          "status": "READY",
-          "as_of": "2026-10-30",
-          "sample_count": 90,
-          "avg_amount_20": 1783205.16
         }
       }
     ],
