@@ -643,12 +643,12 @@ jobs:
         # Weekly review consumes a durable close-time Discovery artifact. The
         # producer itself decides whether this close is the last legal session
         # of the week and is idempotent for the same market date.
-        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' && github.event_name != 'push' }}
+        if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && github.event.inputs.probe_only != 'true' && github.event_name != 'push' }}
         run: python scripts/build_weekly_discovery.py
 
       - name: Build weekly return attribution bridge
         id: weekly_return_attribution
-        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' && github.event_name != 'push' }}
+        if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && github.event.inputs.probe_only != 'true' && github.event_name != 'push' }}
         run: python scripts/build_weekly_return_attribution.py
 
       - name: Quick retry failed core objects after initial publish
