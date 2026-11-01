@@ -53,6 +53,9 @@ def build() -> dict:
         return {"status": "SKIPPED", "reason": "not_last_legal_day_of_week", "market_date": market_date}
     if str(snapshot.get("market_date") or "") != market_date:
         return {"status": "SKIPPED", "reason": "close_snapshot_market_date_mismatch", "market_date": market_date}
+    prior = load_json(OUTPUT, {})
+    if str(prior.get("market_date") or "") == market_date and str(prior.get("week_end") or "") == market_date and str(prior.get("status") or "").upper() in {"READY", "DEGRADED"}:
+        return {"status": "ALREADY_FORMED", "market_date": market_date, "candidate_count": prior.get("candidate_count"), "output": str(OUTPUT.relative_to(ROOT))}
     if str(snapshot.get("quality_status") or "").upper() not in {"PASS", "DEGRADED"}:
         return {"status": "SKIPPED", "reason": "close_snapshot_quality_not_publishable", "market_date": market_date}
 
