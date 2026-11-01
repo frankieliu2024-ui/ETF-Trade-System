@@ -3515,24 +3515,27 @@ def _request_trade_events(request: dict) -> list[dict]:
     """Normalize all explicit broker trade ingress shapes.
 
     Top-level trade_event/trade_events remain the preferred canonical shape.
-    When a broker screenshot request carries its transaction rows under the
-    canonical account_fact.trades field, promote only rows with explicit
-    execution evidence into the same event path.  This closes the ingress
-    gap without inferring trades from account balances or positions.
+    When a broker screenshot request also carries transaction rows under the
+    canonical account_fact.trades field, merge only rows with explicit
+    execution evidence into the same event path.  Exact duplicates are
+    suppressed; distinct statement rows are never discarded.  This closes the
+    ingress gap without inferring trades from account balances or positions.
     """
+    explicit: list[dict] = []
     plural = request.get("trade_events")
     if isinstance(plural, list) and plural and all(isinstance(item, dict) for item in plural):
-        return plural
-    if "trade_events" in request:
+        explicit.extend(plural)
+    elif "trade_events" in request:
         return []
     singular = request.get("trade_event")
     if isinstance(singular, dict):
-        return [singular]
+        explicit.append(singular)
 
     account_fact = request.get("account_fact")
     statement_trades = account_fact.get("trades") if isinstance(account_fact, dict) else None
     if not isinstance(statement_trades, list) or not statement_trades:
-        return []
+        return explicit
+
     screenshot_confirmed_at = (
         request.get("screenshot_captured_at_beijing")
         or request.get("account_updated_at")
@@ -3541,7 +3544,23 @@ def _request_trade_events(request: dict) -> list[dict]:
         or request.get("requested_at_beijing")
     )
     source = account_fact.get("source") or request.get("source") or "BROKER_SCREENSHOT"
-    normalized = []
+
+    def same_trade(left: dict, right: dict) -> bool:
+        left_code = str(left.get("code") or left.get("security_code") or "").strip()
+        right_code = str(right.get("code") or right.get("security_code") or "").strip()
+        left_side = str(left.get("side") or left.get("action") or "").upper().strip()
+        right_side = str(right.get("side") or right.get("action") or "").upper().strip()
+        if not left_code or left_code != right_code or not left_side or left_side != right_side:
+            return False
+        if str(left.get("quantity") or "") != str(right.get("quantity") or ""):
+            return False
+        if str(left.get("price") or "") != str(right.get("price") or ""):
+            return False
+        left_time = str(left.get("executed_at") or left.get("executed_at_beijing") or "").strip()
+        right_time = str(right.get("executed_at") or right.get("executed_at_beijing") or "").strip()
+        return not left_time or not right_time or left_time == right_time
+
+    normalized = list(explicit)
     for raw in statement_trades:
         if not _account_fact_trade_is_executable(raw):
             continue
@@ -3558,9 +3577,9 @@ def _request_trade_events(request: dict) -> list[dict]:
         if not trade.get("confirmed_at_beijing") and screenshot_confirmed_at:
             trade["confirmed_at_beijing"] = str(screenshot_confirmed_at)
         trade.setdefault("source", source)
-        normalized.append(trade)
+        if not any(same_trade(trade, existing) for existing in normalized):
+            normalized.append(trade)
     return normalized
-
 
 def _trade_event_id(request: dict, trade: dict, idempotency_key: str, ordinal: int, total: int) -> str:
     """Use stable, collision-resistant IDs when a batch omits explicit event IDs."""
