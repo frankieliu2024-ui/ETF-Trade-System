@@ -234,7 +234,7 @@ def formal_parent_handoff_gap(*, allow_manual: bool = True) -> tuple[str | None,
         completion = completion or (
             request_type == "SCHEDULED_REVIEW_COMPLETION"
             and source == "CHATGPT_SCHEDULED_REVIEW_COMPLETION_OWNER"
-            and fact_type == "FORMAL_POST_CLOSE_REVIEW"
+            and fact_type in {"FORMAL_POST_CLOSE_REVIEW", "FORMAL_CURRENT_MAIN_DECISION"}
             and report_type == "ETF_FORMAL_DECISION"
         )
     event_found = False
@@ -245,7 +245,7 @@ def formal_parent_handoff_gap(*, allow_manual: bool = True) -> tuple[str | None,
         report_type = str(item.get("report_type") or ((item.get("presentation_binding") or {}).get("report_type") or "")).upper()
         if (
             (str(item.get("parent_request_id") or "").strip() == parent_id or str(item.get("request_id") or "").strip() == parent_id)
-            and event_type == "FORMAL_POST_CLOSE_REVIEW"
+            and event_type in {"FORMAL_POST_CLOSE_REVIEW", "FORMAL_CURRENT_MAIN_DECISION"}
             and report_type == "ETF_FORMAL_DECISION"
         ):
             event_found = True
