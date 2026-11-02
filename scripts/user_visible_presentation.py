@@ -140,8 +140,11 @@ def _single_item_numbering_errors(text: str) -> list[str]:
         nonlocal top_level_count
         object_sections = {
             "【全市场发现逐只评估】",
+            "【全市场发现】",
             "【观察ETF逐只评估】",
+            "【观察ETF】",
             "【机会ETF逐只评估】",
+            "【机会ETF】",
             "【全部实际持仓】",
         }
         if current_heading and current_heading not in object_sections and top_level_count == 1:
@@ -169,10 +172,6 @@ def _formal_object_numbering_errors(text: str) -> list[str]:
         "【观察ETF逐只评估】",
         "【机会ETF逐只评估】",
         "【全部实际持仓】",
-        "【市场监测】",
-        "【全市场发现】",
-        "【观察ETF】",
-        "【机会ETF】",
     }
     errors: list[str] = []
     current = ""
@@ -204,6 +203,20 @@ def _formal_object_numbering_errors(text: str) -> list[str]:
             nums = [int(re.match(r"^(\d+)\.", item).group(1)) for item in primary]
             if nums != list(range(1, len(nums) + 1)):
                 errors.append(f"object numbering must restart at 1 and be sequential: {current}")
+            primary_positions = [
+                index for index, item in enumerate(entries)
+                if re.match(r"^\\d+\\.\\s+\\S", item)
+            ]
+            for position, start in enumerate(primary_positions):
+                end = primary_positions[position + 1] if position + 1 < len(primary_positions) else len(entries)
+                has_secondary = any(
+                    re.match(r"^(?:（\\d+）|\\d+）)\\s+\\S", item)
+                    for item in entries[start + 1:end]
+                )
+                if not has_secondary:
+                    errors.append(
+                        f"each object must contain separately numbered secondary analysis items: {current}"
+                    )
 
     for line in text.splitlines() + ["【__END__】"]:
         stripped = line.strip()
