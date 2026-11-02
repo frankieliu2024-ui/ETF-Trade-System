@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "checked_at": "2026-11-02T12:05:10+08:00",
+  "checked_at": "2026-11-02T12:07:10+08:00",
   "mode": "DETERMINISTIC_RUNTIME_SELF_HEALING",
   "enabled": true,
   "classification": "CONSISTENCY_REGRESSION",
@@ -11,7 +11,7 @@
   "same_day_current_required": true,
   "same_day_current_missing": false,
   "current_capture_at": "2026-11-02T11:38:33+08:00",
-  "current_capture_age_seconds": 1597,
+  "current_capture_age_seconds": 1717,
   "expected_pulse_at": null,
   "expected_pulse_missing": false,
   "runtime_health_status": "SKIPPED",
@@ -21,7 +21,7 @@
     "blocks_market_recovery": true,
     "classification": "GLOBAL_FAIL_BLOCKS_MARKET_RECOVERY_FAIL_SAFE",
     "errors": [
-      "tests:production_reliability: {\"status\": \"FAILED\", \"notification_id\": \"notification_727be442ac3d8174d19c\", \"lifecycle_status\": \"FAILED\"}\n.................E.......................\n======================================================================\nERROR: test_formal_content_event_consumes_presentation_binding_full_content (tests.test_production_reliability.PushPlusNotificationClosureTests.test_formal_content_event_consumes_presentation_binding_full_content)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/tests/test_production_reliability.py\", line 103, in test_formal_content_event_consumes_presentation_binding_full_content\n    event = center.formal_content_event(source)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/scripts/notification_center.py\", line 1421, in formal_content_event\n    accepted, _reason = validate_formal_presentation_contract({\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/scripts/notification_center.py\", line 297, in validate_formal_presentation_contract\n    layout_error = _validate_formal_presentation_layout(content)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/scripts/notification_center.py\", line 198, in _validate_formal_presentation_layout\n    raise ValueError(\"formal presentation secondary numbering requires whitespace after marker\")\nValueError: formal presentation secondary numbering requires whitespace after marker\n\n----------------------------------------------------------------------\nRan 41 tests in 0.022s\n\nFAILED (errors=1)"
+      "tests:production_reliability: {\"status\": \"FAILED\", \"notification_id\": \"notification_727be442ac3d8174d19c\", \"lifecycle_status\": \"FAILED\"}\n.................F.......................\n======================================================================\nFAIL: test_formal_content_event_consumes_presentation_binding_full_content (tests.test_production_reliability.PushPlusNotificationClosureTests.test_formal_content_event_consumes_presentation_binding_full_content)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/tests/test_production_reliability.py\", line 104, in test_formal_content_event_consumes_presentation_binding_full_content\n    self.assertIsNotNone(event)\nAssertionError: unexpectedly None\n\n----------------------------------------------------------------------\nRan 41 tests in 0.047s\n\nFAILED (failures=1)"
     ]
   },
   "master_rules_version": "V2.2.34",
