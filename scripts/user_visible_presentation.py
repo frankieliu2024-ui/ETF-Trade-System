@@ -470,7 +470,7 @@ def formal_decision_semantic_errors(content: str) -> list[str]:
         if not _has_any(item, ("下一复核节点", "下次正式决策", "下一次正式决策", "最近复核节点", "下一节点")):
             errors.append(prefix + "missing_next_review_node")
 
-    if not re.search(r"(?m)^\d+\.\s+|(?m)^（\d+）(?:\s+)?\S", text):
+    if not re.search(r"(?m)^(?:\d+\.\s+|（\d+）(?:\s+)?\S)", text):
         errors.append("formal_presentation_missing_secondary_numbering")
     return errors
 
