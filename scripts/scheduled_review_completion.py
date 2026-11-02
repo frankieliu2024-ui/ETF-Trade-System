@@ -600,7 +600,7 @@ def build_report_delivery_from_completion(completion: dict) -> dict:
         "task_run_id": task_run_id,
         "generated_at": str(completion.get("requested_at_beijing") or ""),
         "effective_market_date": effective_market_date,
-        "source_actor": str(completion.get("source") or "Scheduled Review Completion Owner"),
+        "source_actor": str(completion.get("source") or "CHATGPT_DIRECT_GITHUB_CONTENTS_WRITER"),
         "source_reference": f"scheduled-review-completion:{completion.get('request_id')}",
         "title": (
             "【ETF交易复盘】" if report_type == "ETF_TRADE_REVIEW"
@@ -732,6 +732,8 @@ def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | N
         raise ValueError("Formal Decision completion report identity mismatch")
     if str(payload.get("interaction_scenario") or "").strip().upper() != "FORMAL_DECISION":
         raise ValueError("Formal Decision completion scenario mismatch")
+    if str(payload.get("source") or "").strip().upper() != "CHATGPT_DIRECT_GITHUB_CONTENTS_WRITER":
+        raise ValueError("Formal Decision completion source mismatch")
     if str(payload.get("formal_fact_type") or "").strip().upper() not in {"FORMAL_POST_CLOSE_REVIEW", "FORMAL_CURRENT_MAIN_DECISION"}:
         raise ValueError("Formal Decision completion fact type mismatch")
     if not str(payload.get("report_id") or binding.get("report_id") or "").strip():
