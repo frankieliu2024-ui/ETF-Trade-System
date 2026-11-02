@@ -734,7 +734,7 @@ def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | N
         raise ValueError("Formal Decision completion scenario mismatch")
     if str(payload.get("source") or "").strip().upper() != "CHATGPT_DIRECT_GITHUB_CONTENTS_WRITER":
         raise ValueError("Formal Decision completion source mismatch")
-    if str(payload.get("formal_fact_type") or "").strip().upper() not in {"FORMAL_POST_CLOSE_REVIEW", "FORMAL_CURRENT_MAIN_DECISION"}:
+    if str(payload.get("formal_fact_type") or "").strip().upper() != "FORMAL_CURRENT_MAIN_DECISION":
         raise ValueError("Formal Decision completion fact type mismatch")
     if not str(payload.get("report_id") or binding.get("report_id") or "").strip():
         raise ValueError("Formal Decision completion missing report_id")
