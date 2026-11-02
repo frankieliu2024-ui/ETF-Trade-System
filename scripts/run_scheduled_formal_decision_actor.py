@@ -405,7 +405,6 @@ def main() -> int:
     if hard_failures:
         raise RuntimeError("formal runtime completion readback mismatch: " + ", ".join(hard_failures))
 
-    started_at = datetime.now(timezone.utc)
     completion_path, persistence = _persist_completion_to_main(target)
     canonical_path = completion_path
     # A generic Contents push is only a passive wake signal and is never
