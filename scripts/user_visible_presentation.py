@@ -249,7 +249,7 @@ def _formal_required_sections_errors(text: str) -> list[str]:
     errors = [
         f"Formal Decision missing required section: {heading}"
         for heading in required
-        if heading not in text and aliases.get(heading) not in text
+        if heading not in text and (heading not in aliases or aliases[heading] not in text)
     ]
     if "【后置交接状态】" in text:
         errors.append("technical handoff state must not be included in Formal Decision body")
