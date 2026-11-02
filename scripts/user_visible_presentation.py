@@ -115,7 +115,7 @@ def _presentation_structure_errors(text: str) -> list[str]:
             errors.append("secondary numbering requires a space after the marker")
 
         primary = re.match(r"^(\d+)\.\s+\S", stripped)
-        secondary = re.match(r"^(?:（(\d+)）|(\d+)）(?:\s+)?\S", stripped)
+        secondary = re.match(r"^(?:（(\d+)）|(\d+)）)(?:\s+)?\S", stripped)
         if primary:
             flush_parent()
             section_top.append(int(primary.group(1)))
