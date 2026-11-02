@@ -225,10 +225,15 @@ def verify_published_snapshot(target: Path, *, market_date: str, node: str, expe
         unexpected = sorted(actual_symbols - set(expected_symbols))
         raise RuntimeError(f"published snapshot object identity mismatch: missing={missing}; unexpected={unexpected}")
     for row in rows:
-        if str(row.get("quality_status") or "").upper() not in {"PASS", "DEGRADED"}:
-            raise RuntimeError(f"published snapshot contains non-consumable row: {row.get('symbol')}")
-        if not row.get("as_of_beijing") or not row.get("captured_at_beijing"):
-            raise RuntimeError(f"published snapshot row missing timestamp: {row.get('symbol')}")
+        status = str(row.get("quality_status") or "").upper()
+        if status in {"PASS", "DEGRADED"}:
+            if not row.get("as_of_beijing") or not row.get("captured_at_beijing"):
+                raise RuntimeError(f"published snapshot row missing timestamp: {row.get('symbol')}")
+        elif status in {"FAILED", "FAIL"}:
+            if not row.get("error"):
+                raise RuntimeError(f"failed snapshot row missing error: {row.get('symbol')}")
+        else:
+            raise RuntimeError(f"published snapshot contains unknown quality status: {row.get('symbol')}")
     if str(current.get("market_date") or "") != market_date:
         raise RuntimeError("CURRENT.market_date mismatch after publication")
     if str(current.get("latest_valid_node") or "") != node:
@@ -762,13 +767,6 @@ def main() -> int:
     target = snapshot_dir / name
     temp.write_text(json.dumps(snapshot, ensure_ascii=False, indent=2), encoding="utf-8")
     temp.replace(target)
-
-    if failed_rows:
-        failed_symbols = ",".join(sorted(str(item.get("symbol") or "") for item in failed_rows))
-        raise RuntimeError(
-            "snapshot contains non-consumable rows; previous CURRENT preserved: "
-            + failed_symbols
-        )
 
     capture_mode = "OPENING_AUCTION_PULSE" if market_phase == "OPENING_CALL_AUCTION" else ("MIDDAY_REVIEW_REFERENCE" if node == "1130" else ("CLOSE" if node == "close" else "INTRADAY_PULSE"))
     provider_times = [str(item.get("as_of_beijing") or "") for item in rows if item.get("as_of_beijing")]
