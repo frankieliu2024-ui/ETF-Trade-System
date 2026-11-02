@@ -223,9 +223,10 @@ def _formal_required_sections_errors(text: str) -> list[str]:
         "【信息不足在哪里】", "【执行边界】", "【置信度】", "【最可能出错的地方】",
         "【执行状态】",
     )
-    return [f"Formal Decision missing required section: {heading}" for heading in required if heading not in text]
+    errors = [f"Formal Decision missing required section: {heading}" for heading in required if heading not in text]
     if "【后置交接状态】" in text:
-        return ["technical handoff state must not be included in Formal Decision body"]
+        errors.append("technical handoff state must not be included in Formal Decision body")
+    return errors
 
 
 def _time_presentation_errors(text: str) -> list[str]:
