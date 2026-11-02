@@ -68,6 +68,7 @@ def _security_identity_errors(content: str, security_map: dict[str, str]) -> lis
             # Formal Decision object labels may append quantity inside the same
             # full-width parentheses; the canonical identity is still name+code.
             expected_prefix = f"{name}（{code}"
+            expected = f"{name}（{code}）"
             if re.search(rf"{re.escape(name)}（{re.escape(code)}(?:，[^）]*)?）", content):
                 continue
             errors.append(f"known security must use canonical display identity: {expected}")
