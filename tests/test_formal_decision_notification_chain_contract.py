@@ -321,6 +321,14 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
         self.assertIn("Formal Decision completion fact_binding mismatch", completion)
 
 
+    def test_formal_index_exposes_only_direct_completion_route(self):
+        index = (ROOT / "ETF_SYSTEM_INDEX.md").read_text(encoding="utf-8")
+        self.assertNotIn("CHATGPT_SCHEDULED_REVIEW_ACTOR", index)
+        self.assertNotIn("CHATGPT_SCHEDULED_REVIEW_COMPLETION_OWNER", index)
+        self.assertIn("direct completion writer", index)
+        self.assertIn("显式派发既有通知工作流", index)
+
+
 
 if __name__ == "__main__":
     unittest.main()
