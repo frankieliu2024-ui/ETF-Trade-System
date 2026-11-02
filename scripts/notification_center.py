@@ -1516,6 +1516,10 @@ CANONICAL_TEMPLATE_FAMILIES = {
     "SYSTEM_EVENT": "系统阻塞",
     "CHANNEL_TEST": "测试",
     "收盘账户": "收盘账户",
+    # Scheduled Trade Review is a bound full-report event. It must not be
+    # treated as an unsupported/no-op notification family.
+    "FORMAL_SCHEDULED_TRADE_REVIEW": "REPORT",
+    "FORMAL_SCHEDULED_SYSTEM_REVIEW": "REPORT",
 }
 def canonical_template_family(event: dict) -> str | None:
     event_type = str(event.get("event_type") or event.get("type") or "")
@@ -1563,7 +1567,13 @@ def render_canonical_notification(event: dict) -> dict | None:
     if family is None:
         return None
     if family == "REPORT":
-        return event
+        rendered = dict(event)
+        binding = event.get("presentation_binding") or {}
+        rendered["title"] = binding.get("full_content", "").splitlines()[0].strip() or event.get("title") or "ETF正式复盘"
+        rendered["content"] = binding.get("full_content") or event.get("content") or ""
+        rendered["user_action"] = event.get("user_action") or "无需交易操作；如需交易，必须由用户人工确认和执行。"
+        rendered["template_family"] = "REPORT"
+        return rendered
     rendered = dict(event)
     rendered["template_family"] = family
     target = _canonical_target(event)
