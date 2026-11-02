@@ -192,7 +192,7 @@ def _wait_for_projection(occurrence_id: str, report_id: str) -> dict[str, object
 
 
 def _dispatch_notification(completion_path: str) -> dict[str, object]:
-    """Use explicit dispatch only as same-run recovery after canonical push readback is absent."""
+    """Explicitly dispatch the bound notification workflow for this completion."""
     token = (os.environ.get("GITHUB_TOKEN", "").strip()
              or os.environ.get("GH_TOKEN", "").strip())
     repository = (os.environ.get("GITHUB_REPOSITORY", "").strip()
@@ -207,7 +207,7 @@ def _dispatch_notification(completion_path: str) -> dict[str, object]:
         "ref": "main",
         # Formal Decision uses the same Scheduled Review completion owner and input as Trade Review;
         # the completion payload remains the sole business-type discriminator.
-        "inputs": {"scheduled_review_completion_path": completion_path},
+        "inputs": {"scheduled_review_completion_path": completion_path, "force_resend": "false"},
     }).encode("utf-8")
     base = f"https://api.github.com/repos/{owner}/{repo}"
     dispatch_endpoint = f"{base}/actions/workflows/decision-notification.yml/dispatches"
@@ -408,11 +408,11 @@ def main() -> int:
     started_at = datetime.now(timezone.utc)
     completion_path, persistence = _persist_completion_to_main(target)
     canonical_path = completion_path
-    # A generic push-triggered run is only a wake signal and is not bound to
-    # this completion. It must never satisfy the handoff gate.
-    push = _wait_for_completion_push(canonical_path, started_at)
+    # A generic Contents push is only a passive wake signal and is never
+    # used as the notification handoff. Explicit dispatch is the primary path.
+    push = {"used_as_handoff_proof": False, "reason": "passive push is not used as completion proof"}
     dispatch = _dispatch_notification(canonical_path)
-    dispatch["fallback_after"] = "PUSH_WAKE_NOT_ACCEPTED_AS_COMPLETION_PROOF"
+    dispatch["explicit_workflow_dispatch"] = True
 
     projection = _wait_for_projection(occurrence_id, expected_decision_id)
     handoff_ok = (
