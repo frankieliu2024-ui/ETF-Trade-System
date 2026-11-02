@@ -169,6 +169,7 @@ def _formal_object_numbering_errors(text: str) -> list[str]:
         "【观察ETF逐只评估】",
         "【机会ETF逐只评估】",
         "【全部实际持仓】",
+        "【机会ETF】",
     }
     errors: list[str] = []
     current = ""
@@ -223,7 +224,17 @@ def _formal_required_sections_errors(text: str) -> list[str]:
         "【信息不足在哪里】", "【执行边界】", "【置信度】", "【最可能出错的地方】",
         "【执行状态】",
     )
-    errors = [f"Formal Decision missing required section: {heading}" for heading in required if heading not in text]
+    aliases = {
+        "【三层监测】": "【市场监测】",
+        "【全市场发现逐只评估】": "【全市场发现】",
+        "【观察ETF逐只评估】": "【观察ETF】",
+        "【机会ETF逐只评估】": "【机会ETF】",
+    }
+    errors = [
+        f"Formal Decision missing required section: {heading}"
+        for heading in required
+        if heading not in text and aliases.get(heading) not in text
+    ]
     if "【后置交接状态】" in text:
         errors.append("technical handoff state must not be included in Formal Decision body")
     return errors
