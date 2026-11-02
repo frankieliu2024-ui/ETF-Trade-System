@@ -1538,7 +1538,15 @@ def canonical_template_family(event: dict) -> str | None:
         if ctx.get("risk_permission") != ctx.get("previous_risk_permission"):
             return "风险许可"
         return "观察机会" if status and status != "无机会" else "机会失效"
-    return CANONICAL_TEMPLATE_FAMILIES.get(event_type)
+    family = CANONICAL_TEMPLATE_FAMILIES.get(event_type)
+    if family is not None:
+        return family
+    binding = event.get("presentation_binding") or {}
+    report_type = str(binding.get("report_type") or event.get("report_type") or "").strip().upper()
+    task_id = str(binding.get("task_id") or event.get("task_id") or "").strip()
+    if report_type in {"ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW"} or task_id in {"ETF交易复盘", "ETF系统复核"}:
+        return "REPORT"
+    return None
 def _canonical_target(event: dict) -> str:
     ctx = event.get("confirmation_context") or {}
     name = str(event.get("security_name") or ctx.get("security_name") or "")
