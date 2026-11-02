@@ -46,13 +46,13 @@ class CanonicalSnapshotReadinessTests(unittest.TestCase):
         self.assertEqual(row["volume"], None)
         self.assertIn("OPENING_CALL_AUCTION", row["semantic_note"])
 
-    def test_failed_snapshot_does_not_advance_current_or_bypass_other_objects(self):
+    def test_failed_snapshot_is_explicit_and_nonblocking(self):
         source = (ROOT / "scripts" / "cloud_runner_snapshot.py").read_text(encoding="utf-8")
         self.assertNotIn("PRIMARY_RUN_BYPASS", source)
-        guard_pos = source.index("snapshot contains non-consumable rows; previous CURRENT preserved")
-        update_pos = source.index("update_current(root=ROOT, market_date=market_date")
-        self.assertLess(guard_pos, update_pos)
-        self.assertIn("failed_symbols = ", source)
+        self.assertIn('status in {"FAILED", "FAIL"}', source)
+        self.assertIn('if not row.get("error")', source)
+        self.assertIn("analysis_coverage", source)
+        self.assertNotIn("previous CURRENT preserved", source)
 
     def test_failure_is_fail_closed_before_health_is_written(self):
         source = (ROOT / "scripts" / "cloud_runner_snapshot.py").read_text(encoding="utf-8")
