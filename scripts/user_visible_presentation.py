@@ -279,9 +279,12 @@ def _formal_holding_items(section: str) -> list[str]:
     current: list[str] = []
     for line in str(section or "").splitlines():
         stripped = line.strip()
-        numbered = bool(re.match(r"^(?:\d+\.\s+|\d+[）)]\s*|（\d+）\s*)", stripped))
-        named = bool(re.match(r"^(?:\d+[）)]\s*|（\d+）\s*)?[^：\n]{1,50}（\d{6}）：", stripped))
-        if numbered or named:
+        numbered_object = bool(
+            re.match(r"^\d+\.\s+[^：\n]{1,50}（\d{6}）：", stripped)
+            or re.match(r"^\d+[）)]\s*[^：\n]{1,50}（\d{6}）：", stripped)
+        )
+        named = bool(re.match(r"^(?:\d+\.\s+|\d+[）)]\s*|（\d+）\s*)?[^：\n]{1,50}（\d{6}）：", stripped))
+        if numbered_object or named:
             if current:
                 items.append("\n".join(current))
             current = [stripped]
