@@ -175,6 +175,119 @@ class FormalDecisionE2EContractTests(unittest.TestCase):
 
 
 
+class BrokerScreenshotE2EConsumptionTests(unittest.TestCase):
+    def evaluate(self, account, request):
+        from scripts import build_e2e_status as e2e
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            request_dir = root / "requests" / "live_snapshot"
+            request_dir.mkdir(parents=True)
+            (request_dir / "broker.json").write_text(
+                json.dumps(request, ensure_ascii=False), encoding="utf-8"
+            )
+            with patch.object(e2e, "ROOT", root):
+                return e2e.account_component(account, {"needs_account_update": False})
+
+    def base_account(self):
+        return {
+            "status": "VALID",
+            "updated_at": "2026-11-02T16:17:00+08:00",
+            "source": "BROKER_HOLDINGS_SCREENSHOT_20261102_1617_USER_PROVIDED",
+            "last_confirmed_market_date": "2026-11-02",
+            "total_asset": 171396.27,
+            "stock_market_value": 56101.8,
+            "cash": 115294.47,
+            "holding_pnl": 615.4,
+            "daily_pnl": 262,
+            "daily_pnl_pct": 0.15,
+            "reserved_cash_for_settlement": 0,
+            "settlement_constraint_status": "NONE",
+            "positions": [
+                {"asset_type": "ETF", "name": "纳指ETF", "code": "159941", "quantity": 12200,
+                 "available_quantity": 12200, "cost_price": 1.626, "current_price": 1.653,
+                 "market_value": 20166.6, "holding_pnl": 330, "holding_pnl_pct": 1.664},
+                {"asset_type": "ETF", "name": "能源化工", "code": "159981", "quantity": 8500,
+                 "available_quantity": 8500, "cost_price": 1.744, "current_price": 1.941,
+                 "market_value": 16498.5, "holding_pnl": 1677.9, "holding_pnl_pct": 11.321},
+                {"asset_type": "ETF", "name": "创新药", "code": "159992", "quantity": 17200,
+                 "available_quantity": 17200, "cost_price": 0.868, "current_price": 0.794,
+                 "market_value": 13656.8, "holding_pnl": -1270, "holding_pnl_pct": -8.508},
+                {"asset_type": "ETF", "name": "全指器械", "code": "159056", "quantity": 4700,
+                 "available_quantity": 4700, "cost_price": 1.043, "current_price": 1.017,
+                 "market_value": 4779.9, "holding_pnl": -122.5, "holding_pnl_pct": -2.499},
+                {"asset_type": "OTHER", "security_type": "CONVERTIBLE_BOND", "name": "华纬转债",
+                 "code": "127118", "quantity": 10, "available_quantity": 10, "cost_price": 100,
+                 "current_price": 100, "market_value": 1000, "holding_pnl": 0, "holding_pnl_pct": 0},
+            ],
+        }
+
+    def base_request(self, account):
+        return {
+            "request_id": "broker-close-20261102-1618-chatgpt",
+            "requested_at_beijing": "2026-11-02T16:18:00+08:00",
+            "screenshot_captured_at_beijing": "2026-11-02T16:17:00+08:00",
+            "source": "CHATGPT_USER_BROKER_SCREENSHOT",
+            "interaction_scenario": "BROKER_SCREENSHOT_SYNC",
+            "account_fact": {
+                **account,
+                "updated_at": "2026-11-02T15:00:00+08:00",
+                "positions": [
+                    {"code": "159941", "name": "纳指ETF", "asset_type": "ETF", "quantity": 12200,
+                     "available_quantity": 12200, "cost": 1.626, "last_price": 1.653,
+                     "market_value": 20166.6, "holding_pnl": 330, "holding_pnl_pct": 1.664},
+                    {"code": "159981", "name": "能源化工", "asset_type": "ETF", "quantity": 8500,
+                     "available_quantity": 8500, "cost": 1.744, "last_price": 1.941,
+                     "market_value": 16498.5, "holding_pnl": 1677.9, "holding_pnl_pct": 11.321},
+                    {"code": "159992", "name": "创新药", "asset_type": "ETF", "quantity": 17200,
+                     "available_quantity": 17200, "cost": 0.868, "last_price": 0.794,
+                     "market_value": 13656.8, "holding_pnl": -1270, "holding_pnl_pct": -8.508},
+                    {"code": "159056", "name": "全指器械", "asset_type": "ETF", "quantity": 4700,
+                     "available_quantity": 4700, "cost": 1.043, "last_price": 1.017,
+                     "market_value": 4779.9, "holding_pnl": -122.5, "holding_pnl_pct": -2.499},
+                    {"code": "127118", "name": "华纬转债", "asset_type": "CONVERTIBLE_BOND", "quantity": 10,
+                     "available_quantity": 10, "cost": 100, "last_price": 100, "market_value": 1000,
+                     "holding_pnl": 0, "holding_pnl_pct": 0},
+                ],
+            },
+        }
+
+    def test_exact_duplicate_screenshot_is_consumed_idempotently(self):
+        account = self.base_account()
+        request = self.base_request(account)
+        first = self.evaluate(account, request)
+        second = self.evaluate(account, request)
+        self.assertEqual(first["status"], "READY")
+        self.assertEqual(second, first)
+        self.assertNotIn("ACCOUNT_SYNC_NOT_PERFORMED", first["reason"])
+
+    def test_duplicate_provenance_does_not_hide_changed_scalar_or_position_facts(self):
+        account = self.base_account()
+        request = self.base_request(account)
+        request["account_fact"]["cash"] = 115294.46
+        self.assertEqual(self.evaluate(account, request)["status"], "BLOCKED")
+        request = self.base_request(account)
+        request["account_fact"]["positions"][0]["quantity"] = 12201
+        self.assertEqual(self.evaluate(account, request)["status"], "BLOCKED")
+
+    def test_duplicate_provenance_requires_exact_capture_time_and_source(self):
+        account = self.base_account()
+        request = self.base_request(account)
+        request["screenshot_captured_at_beijing"] = "2026-11-02T16:16:00+08:00"
+        self.assertEqual(self.evaluate(account, request)["status"], "BLOCKED")
+        request = self.base_request(account)
+        request["account_fact"]["source"] = "OTHER_SCREENSHOT"
+        self.assertEqual(self.evaluate(account, request)["status"], "BLOCKED")
+
+    def test_duplicate_provenance_requires_complete_unique_positions(self):
+        account = self.base_account()
+        request = self.base_request(account)
+        request["account_fact"]["positions"] = request["account_fact"]["positions"][:-1]
+        self.assertEqual(self.evaluate(account, request)["status"], "BLOCKED")
+        request = self.base_request(account)
+        request["account_fact"]["positions"][1]["code"] = "159941"
+        self.assertEqual(self.evaluate(account, request)["status"], "BLOCKED")
+
+
 class FormalDecisionLessonsProtocolTests(unittest.TestCase):
     def test_protocol_uses_one_formal_chain_for_three_entries(self):
         root = Path(__file__).parents[1]
