@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-11-02T21:04:02+08:00",
+  "updated_at": "2026-11-02T23:25:15+08:00",
   "last_status": "SENT",
-  "last_type": "REPORT_DELIVERY_REQUEST",
-  "last_title": "【ETF交易复盘】2026-11-02 20:41 完整日复盘",
+  "last_type": "US_OPEN_VALUE_ALERT",
+  "last_title": "【市场异动】美股科技指数开盘出现显著分化",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -42993,27 +42993,67 @@
       },
       "last_attempted_at": "2026-11-02T21:04:02+08:00",
       "pushplus_template": "markdown"
-    }
-  ],
-  "recent": [
+    },
     {
-      "key": "market-value:a-share:2026-10-22:513350:UP:EXTREME:2026-10-22T15:15:18+08:00",
-      "type": "MARKET_VALUE_ALERT",
-      "title": "【市场异动】标普油气ETF（513350）出现极端波动 +3.12%",
-      "content": "### 核心结论\n- **事件类型**：极端波动\n- **对象/结构**：标普油气ETF（513350）\n- **当日涨跌**：+3.12%\n\n**判断**：当前幅度已进入通知层的非常规区间，可能实质改变风险偏好、风险收益或资本比较。\n\n### 对ETF系统的影响\n标普油气ETF（513350）是监测ETF。本次异动提高其注意力优先级，但只有相对强弱、风险收益和独立机会假设共同改善，才可能升级为主候选或Trial/Confirm机会。\n\n### 当前动作\n**提高观察优先级但不直接交易；等待正式机会判断形成。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-10-22 15:15:18\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。\n\n- **分钟级结构**：1分钟路径先低后高（低点09:54、高点14:26）；最近10分钟+0.41%，成交额为前10分钟1.24倍，短线承接增强\n\n> 这是收盘总结数据截止2026-10-22T15:00:00+08:00后的新增事实；不否定此前总结，仅作为增量变化展示。",
-      "source": "market_delta+CURRENT+stock_market_context+minute_context",
+      "notification_id": "notification_10a8d0cb999b6dc5233b",
+      "event_type": "US_OPEN_VALUE_ALERT",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "us-session-summary:2026-11-02:OPEN",
+      "request_id": "",
+      "parent_request_id": "",
+      "report_id": "",
+      "content_hash": "",
+      "related_decision_id": "",
+      "security_code": "",
+      "security_name": "",
       "user_severity": "需要关注",
-      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
-      "status": "SENT",
-      "attempted_at": "2026-10-22T15:30:18+08:00",
+      "user_action": "纳入下一A股交易节点复核，无需机械交易",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-11-02T23:25:14+08:00",
+      "sent_at": "2026-11-02T23:25:15+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-11-04T23:25:14+08:00",
+      "title": "【市场异动】美股科技指数开盘出现显著分化",
+      "content": "### 核心结论\n- **触发原因**：现金盘当前最大绝对涨跌1.30%。\n- **外部结构**：美股科技风险偏好偏强。\n- **宽科技**：纳斯达克100指数（NDX）+1.07%。\n- **半导体**：费城半导体指数（SOX）+1.30%。\n- **数据口径**：纳斯达克100指数（NDX）/费城半导体指数（SOX）直接指数。\n\n### 关键路径\n- **纳斯达克100指数（NDX）**：开盘后暂未形成新的强化。\n- **费城半导体指数（SOX）**：开盘后继续走强。\n\n### 对ETF系统的影响\n- **外部含义**：美股科技风险偏好提供正向背景。\n- **本地验证**：下一A股节点先确认本地科技方向是否接受该外部信号。\n- **资本比较**：重点复核纳指ETF（159941）、通信/科创/半导体风险篮子的自身反馈与边际资本效率。\n\n### 当前动作\n**纳入下一A股正式节点复核：先看本地传导，再看相关ETF自身反馈和资本效率；不因海外单一信号机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-11-02 23:23:49\n- **通知生成（北京时间）**：2026-11-02 23:25:14\n- **边界**：这是海外结构证据，不是A股买卖信号；实际现金盘开盘事实可在同一常规交易时段恢复，但不得把后续累计涨跌伪装成开盘跳空。",
+      "source": "us_extended_hours_context",
+      "confirmation_context": {
+        "market": "US",
+        "market_date": "2026-11-02",
+        "us_market_date": "2026-11-02",
+        "session": "REGULAR",
+        "direction": "UP",
+        "event_category": "OPEN_SIGNAL",
+        "fact_family": "US_SESSION_STRUCTURE",
+        "object_codes": [
+          "NDX",
+          "SOX"
+        ],
+        "source_fact_ids": [
+          "2026-11-02:NDX:2026-11-02T23:23:49+08:00",
+          "2026-11-02:SOX:2026-11-02T23:23:49+08:00"
+        ],
+        "session_node": "OPEN",
+        "direct_cash_indices_used": true,
+        "tech_open_gap_pct": 0.6112061960808157,
+        "semi_open_gap_pct": 0.6729060880314108,
+        "tech_change_pct": 1.0733,
+        "semi_change_pct": 1.2988,
+        "market_as_of_beijing": "2026-11-02T23:23:49+08:00",
+        "cash_close_as_of_beijing": "",
+        "generated_at_beijing": "2026-11-02 23:25:14",
+        "event_family_id": "US:2026-11-02:REGULAR::OPEN_SIGNAL:UP:"
+      },
       "response": {
         "http_status": 200,
         "pushplus_code": 200,
         "pushplus_message": "执行成功"
       },
-      "notification_id": "notification_387a6b2d771d9a0228ca",
-      "lifecycle_status": "SENT"
-    },
+      "last_attempted_at": "2026-11-02T23:25:15+08:00"
+    }
+  ],
+  "recent": [
     {
       "key": "report-completion:ETF_SYSTEM_REVIEW:manual-system-review-20261022T155326-r9p7v3",
       "type": "REPORT_DELIVERY_REQUEST",
@@ -46595,6 +46635,24 @@
       },
       "notification_id": "notification_bf5f5cf1c409cefc88bf",
       "lifecycle_status": "SENT"
+    },
+    {
+      "key": "us-session-summary:2026-11-02:OPEN",
+      "type": "US_OPEN_VALUE_ALERT",
+      "title": "【市场异动】美股科技指数开盘出现显著分化",
+      "content": "### 核心结论\n- **触发原因**：现金盘当前最大绝对涨跌1.30%。\n- **外部结构**：美股科技风险偏好偏强。\n- **宽科技**：纳斯达克100指数（NDX）+1.07%。\n- **半导体**：费城半导体指数（SOX）+1.30%。\n- **数据口径**：纳斯达克100指数（NDX）/费城半导体指数（SOX）直接指数。\n\n### 关键路径\n- **纳斯达克100指数（NDX）**：开盘后暂未形成新的强化。\n- **费城半导体指数（SOX）**：开盘后继续走强。\n\n### 对ETF系统的影响\n- **外部含义**：美股科技风险偏好提供正向背景。\n- **本地验证**：下一A股节点先确认本地科技方向是否接受该外部信号。\n- **资本比较**：重点复核纳指ETF（159941）、通信/科创/半导体风险篮子的自身反馈与边际资本效率。\n\n### 当前动作\n**纳入下一A股正式节点复核：先看本地传导，再看相关ETF自身反馈和资本效率；不因海外单一信号机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-11-02 23:23:49\n- **通知生成（北京时间）**：2026-11-02 23:25:14\n- **边界**：这是海外结构证据，不是A股买卖信号；实际现金盘开盘事实可在同一常规交易时段恢复，但不得把后续累计涨跌伪装成开盘跳空。",
+      "source": "us_extended_hours_context",
+      "user_severity": "需要关注",
+      "user_action": "纳入下一A股交易节点复核，无需机械交易",
+      "status": "SENT",
+      "attempted_at": "2026-11-02T23:25:15+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_10a8d0cb999b6dc5233b",
+      "lifecycle_status": "SENT"
     }
   ],
   "pending_questions": [
@@ -46605,6 +46663,6 @@
     "notification_fd7763215037ab96f889",
     "notification_4c76f6ceea74a9bcb597"
   ],
-  "policy": "只推送会改变用户关注、风险许可、机会状态、持仓动作、执行确认或系统可靠性的实质事件；总资产/市值/浮动盈亏等纯盯市变化不作为账户异常；同一实质账户事件和同一正式decision_id不得重复推送；收盘账户提醒仅在A股交易日触发。",
-  "safety_boundary": "通知中心只转发已有正式判断，不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"
+  "policy": "canonical bounded market notification batch",
+  "safety_boundary": "通知只总结已取得的行情、账户、研究或系统事实；不生成自动交易，不修改MASTER、风险许可、金额或卖出份额。"
 }
