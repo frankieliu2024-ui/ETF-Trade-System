@@ -1,9 +1,9 @@
-"""Compatibility adapter for the shared Scheduled Review completion owner.
+"""Compatibility adapter for Formal Decision completion tooling.
 
-The actor freezes one user-visible investment judgment, delegates persistence
-to the same completion owner used by Trade Review, and explicitly wakes the
-existing notification workflow after completion readback. It does not create
-a BDS, publish an event, or execute a trade.
+The production task writes and reads back its completion directly through the
+GitHub Contents path. This adapter is compatibility-only for controlled tests
+and recovery; it is not a task entry point or a required production owner.
+It does not create a BDS, publish an event, or execute a trade.
 """
 from __future__ import annotations
 
@@ -205,7 +205,7 @@ def _dispatch_notification(completion_path: str) -> dict[str, object]:
 
     payload = json.dumps({
         "ref": "main",
-        # Formal Decision uses the same Scheduled Review completion owner and input as Trade Review;
+        # Formal Decision compatibility tooling uses the same completion contract as Trade Review;
         # the completion payload remains the sole business-type discriminator.
         "inputs": {"scheduled_review_completion_path": completion_path, "force_resend": "false"},
     }).encode("utf-8")
