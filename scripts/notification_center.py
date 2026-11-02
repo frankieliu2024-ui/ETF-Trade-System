@@ -300,7 +300,7 @@ def validate_formal_presentation_contract(envelope: dict[str, Any]) -> tuple[boo
     # Formal Decision's live Prompt uses （1） subitems; keep the shared
     # validator unchanged for System Review and Trade Review.
     import re
-    formal_numbering_content = re.sub(r"(?m)^(\\s*)（(\\d+)）(?=\\s)", r"\\1\\2）", content)
+    formal_numbering_content = re.sub(r"(?m)^(\s*)（(\d+)）(?=\s)", r"\1\2）", content)
     numbering_error = validate_user_visible_numbering(formal_numbering_content)
     if numbering_error:
         return False, numbering_error
