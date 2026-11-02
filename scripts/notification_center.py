@@ -13,9 +13,9 @@ from typing import Any
 from notification_materiality_guard import decision_critical_blockage
 
 try:
-    from user_visible_presentation import formal_decision_semantic_errors
+    from user_visible_presentation import validate_user_visible_content
 except ModuleNotFoundError:
-    from scripts.user_visible_presentation import formal_decision_semantic_errors
+    from scripts.user_visible_presentation import validate_user_visible_content
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 STATE = ROOT / "data" / "state"
@@ -275,7 +275,7 @@ def validate_formal_presentation_contract(envelope: dict[str, Any]) -> tuple[boo
         "【机会ETF逐只评估】", "【全市场机会与资本竞争】", "【现金管理】",
         "【全部实际持仓】", "【最终管理动作】", "【关键风险与改变判断的条件】",
         "【信息不足在哪里】", "【执行边界】", "【置信度】",
-        "【最可能出错的地方】", "【后置交接状态】",
+        "【最可能出错的地方】", "【执行状态】",
     )
     # The scheduled task's live Prompt is the runtime presentation contract.
     # Accept its current section labels as well as legacy canonical labels;
@@ -318,16 +318,23 @@ def validate_formal_presentation_contract(envelope: dict[str, Any]) -> tuple[boo
                 missing_objects.append(key)
     if missing_objects:
         return False, "formal_presentation_missing_objects:" + ",".join(missing_objects)
-    if "持有管理" not in content or "不追加" not in content:
+    if not any(term in content for term in ("继续持有", "持有管理", "持有观察", "小仓持有", "保留持仓", "按其他证券持有")) or "不追加" not in content:
         return False, "formal_presentation_missing_holding_addition_boundary"
     if "可释放资本" not in content or "实际新增部署" not in content:
         return False, "formal_presentation_missing_capital_boundary"
-    if "Trial" not in content or "Confirm" not in content:
+    if not any(term in content for term in ("Trial", "试探性部署")) or not any(term in content for term in ("Confirm", "确认部署")):
         return False, "formal_presentation_missing_trial_confirm_boundary"
 
-    semantic_errors = formal_decision_semantic_errors(content)
-    if semantic_errors:
-        return False, semantic_errors[0]
+    # Use the same canonical presentation validator as the completion builder.
+    # Notification delivery must never apply a stale, second body contract.
+    try:
+        validate_user_visible_content(content, root=ROOT, canonical_closure_confirmed=False)
+    except ValueError as exc:
+        message = str(exc)
+        prefix = "user-visible presentation contract failed: "
+        if message.startswith(prefix):
+            message = message[len(prefix):]
+        return False, message.split("; ", 1)[0]
     return True, ""
 
 
