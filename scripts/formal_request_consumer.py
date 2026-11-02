@@ -147,7 +147,7 @@ def classify_formal_request_consumer_state(
             "ready_handoff": {
                 "required": True,
                 "submission_type": "SCHEDULED_REVIEW_COMPLETION",
-                "source": "CHATGPT_SCHEDULED_REVIEW_COMPLETION_OWNER",
+                "source": "CHATGPT_DIRECT_GITHUB_CONTENTS_WRITER",
                 "parent_request_id": parent,
                 "required_payload_fields": [
                     "request_id",
@@ -166,7 +166,7 @@ def classify_formal_request_consumer_state(
                 "binding_rules": {
                     "parent_request_id": parent,
                     "allowed_sources": [
-                        "CHATGPT_SCHEDULED_REVIEW_COMPLETION_OWNER",
+                        "CHATGPT_DIRECT_GITHUB_CONTENTS_WRITER",
                     ],
                     "forbid_historical_fallback": True,
                     "read_back_required": True,
