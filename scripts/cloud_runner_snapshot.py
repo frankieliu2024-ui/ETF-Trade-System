@@ -324,6 +324,25 @@ def row(asset_class: str, code: str, thscode: str, item: dict, captured: str, pr
         and item.get("prev_price") is not None
         and provider_ts not in (None, "")
     )
+    auction_invalid_ohlc = (
+        market_phase == "OPENING_CALL_AUCTION"
+        and item.get("last_price") is not None
+        and item.get("prev_price") is not None
+        and provider_ts not in (None, "")
+        and all(item.get(key) is not None for key in ("open_price", "high_price", "low_price"))
+        and (
+            item["high_price"] < max(item["open_price"], item["last_price"])
+            or item["low_price"] > min(item["open_price"], item["last_price"])
+        )
+    )
+    if auction_invalid_ohlc:
+        # Auction quotes may expose fields before continuous-trading OHLC
+        # semantics are valid. Keep only current/previous price and real time.
+        auction_partial = True
+        item = dict(item)
+        for key in ("open_price", "high_price", "low_price"):
+            item[key] = None
+
     explicit_halt = (
         str(item.get("trading_status") or "").upper() in {"SUSPENDED", "HALTED"}
         and item.get("last_price") is not None
