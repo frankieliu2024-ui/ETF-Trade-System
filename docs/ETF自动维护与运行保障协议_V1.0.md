@@ -21,7 +21,7 @@
 |行情刷新/即时补采|市场刷新请求或既有行情节点|cloud_runner_snapshot.py、query_time_market_refresh.py及市场数据owner|行情快照、质量和request-bound上下文|
 |系统复核|既有System Review入口|既有System Review owner|复核事实、报告和主动通知|
 |交易复盘|既有Trade Review入口|既有Trade Review owner|复盘事件、行情档案和经验投影|
-|正式决策后置交接|Formal Decision completion ingress|既有completion owner与decision-notification.yml|event、REPORT、notification、provider result|
+|正式决策后置交接|Formal Decision direct completion write/readback|直接completion写入与decision-notification.yml|event、REPORT、notification、provider result|
 |研究/历史事实回补|既有research/backfill request|对应research/backfill owner|研究或历史事实，不直接扩大权限|
 |一致性/可靠性审计|push、schedule或手动审计|既有consistency/checker owner|一致性报告、失败归因和验收证据|
 
