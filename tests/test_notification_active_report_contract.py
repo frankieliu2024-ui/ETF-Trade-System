@@ -391,7 +391,7 @@ class FormalPresentationSemanticGateTests(unittest.TestCase):
         import scripts.notification_center as center
 
         content = self._content().replace(
-            "若当前没有该持仓，按当前价格和证据仍愿意重新配置资本",
+            "若当前没有该持仓，仍愿意重新配置资本",
             "若当前没有该持仓，需要重新比较现金与机会",
         )
         accepted, reason = center.validate_formal_presentation_contract({

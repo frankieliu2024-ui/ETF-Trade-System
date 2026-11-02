@@ -171,7 +171,18 @@ def _single_item_numbering_errors(text: str) -> list[str]:
 
 def _formal_object_numbering_errors(text: str) -> list[str]:
     """Require Formal Decision object paragraphs and their nested analysis items."""
-    if not text.startswith("【ETF正式决策】"):
+    if not text.startswith("【ETF正式决策】") and not any(
+        text.startswith(heading)
+        for heading in (
+            "【全市场发现逐只评估】",
+            "【全市场发现】",
+            "【观察ETF逐只评估】",
+            "【观察ETF】",
+            "【机会ETF逐只评估】",
+            "【机会ETF】",
+            "【全部实际持仓】",
+        )
+    ):
         return []
     target_headings = {
         "【全市场发现逐只评估】",
