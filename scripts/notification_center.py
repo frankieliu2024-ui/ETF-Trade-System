@@ -1577,8 +1577,18 @@ def render_canonical_notification(event: dict) -> dict | None:
     if family == "REPORT":
         rendered = dict(event)
         binding = event.get("presentation_binding") or {}
-        rendered["title"] = binding.get("full_content", "").splitlines()[0].strip() or event.get("title") or "ETF正式复盘"
-        rendered["content"] = binding.get("full_content") or event.get("content") or ""
+        full_content = str(binding.get("full_content") or event.get("content") or "")
+        if not full_content:
+            completion_path = os.environ.get("SCHEDULED_REVIEW_COMPLETION_PATH", "").strip()
+            if completion_path:
+                candidate = Path(completion_path)
+                candidate = candidate if candidate.is_absolute() else ROOT / completion_path
+                completion = read_json(candidate, {})
+                completion_binding = completion.get("presentation_binding") or {}
+                full_content = str(completion_binding.get("full_content") or "")
+        first_line = full_content.splitlines()[0].strip() if full_content.splitlines() else ""
+        rendered["title"] = first_line or event.get("title") or "ETF正式复盘"
+        rendered["content"] = full_content
         rendered["user_action"] = event.get("user_action") or "无需交易操作；如需交易，必须由用户人工确认和执行。"
         rendered["template_family"] = "REPORT"
         return rendered
