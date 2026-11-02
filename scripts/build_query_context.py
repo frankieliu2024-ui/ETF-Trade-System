@@ -211,19 +211,6 @@ def consistency_projection_status(root: Path = ROOT) -> dict:
         head = ""
     identity_matches = bool(checked and head and checked == head)
     current_evidence = identity_matches and status in {"PASS", "WARNING", "FAIL"}
-    source_value = str(request.get("requested_by") or request.get("source") or "INTERACTIVE_QUERY").strip().upper()
-    entry_mode = {
-        "CHATGPT_MANUAL_FORMAL_ANALYSIS": "MANUAL_CONVERSATION",
-        "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS": "MANUAL_SCHEDULED_TASK",
-        "CHATGPT_SCHEDULED_FORMAL_ANALYSIS": "AUTOMATIC_SCHEDULED_TASK",
-    }.get(source_value, "")
-    requested_at_value = _request_received_at_beijing(request)
-    requested_date = requested_at_value[:10] if requested_at_value else str(request.get("market_date") or "")
-    occurrence_value = str(request.get("occurrence_id") or request.get("occurrence") or "").strip()
-    if not occurrence_value:
-        occurrence_value = requested_at_value or str(request.get("request_id") or "")
-    task_id_value = str(request.get("task_id") or ("ETF正式决策" if entry_mode else "")).strip()
-    task_run_value = str(request.get("task_run_id") or request.get("request_id") or "").strip()
     return {
         "path": CANONICAL_FILES["system_consistency"],
         "reported_status": status,
