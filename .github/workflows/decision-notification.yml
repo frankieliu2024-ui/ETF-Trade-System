@@ -664,7 +664,7 @@ jobs:
         run: |
           set -euo pipefail
           test -f "$COMPLETION_PATH"
-          result=$(python - "$COMPLETION_PATH" <<'PY'
+          result=$(PYTHONPATH=scripts python - "$COMPLETION_PATH" <<'PY'
           import json
           import sys
           from pathlib import Path
