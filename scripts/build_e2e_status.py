@@ -209,7 +209,11 @@ def _request_account_fact_consumed(request: dict, canonical: dict) -> bool:
             return False
     supplied_positions = supplied.get("positions")
     canonical_positions = canonical.get("positions")
-    if not isinstance(supplied_positions, list) or not isinstance(canonical_positions, list):
+    if (
+        not isinstance(supplied_positions, list)
+        or not isinstance(canonical_positions, list)
+        or len(supplied_positions) != len(canonical_positions)
+    ):
         return False
     canonical_by_code = {
         str(position.get("code") or ""): position
@@ -217,13 +221,15 @@ def _request_account_fact_consumed(request: dict, canonical: dict) -> bool:
         if isinstance(position, dict)
     }
     position_aliases = {"cost": "cost_price", "last_price": "current_price"}
+    seen_codes = set()
     for position in supplied_positions:
         if not isinstance(position, dict):
             return False
         code = str(position.get("code") or "")
         current = canonical_by_code.get(code)
-        if not code or current is None:
+        if not code or code in seen_codes or current is None:
             return False
+        seen_codes.add(code)
         for key, value in position.items():
             if key == "asset_type" and value == "CONVERTIBLE_BOND":
                 if (
