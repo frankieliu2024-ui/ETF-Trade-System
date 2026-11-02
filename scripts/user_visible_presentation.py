@@ -314,20 +314,14 @@ def _formal_holding_items(section: str) -> list[str]:
     current: list[str] = []
     # Formal object headers may include quantity after the canonical code:
     # 名称（代码，数量）. The quantity does not change object identity.
+    # Production reports commonly put the first analysis sentence on the same
+    # line as the object header, so match the header prefix rather than
+    # requiring the line to end immediately after the identity.
     identity = r"（\d{6}(?:，[^）]*)?）"
+    header = rf"^(?:\d+\.\s+|\d+[）)]\s*|（\d+）\s*)?[^：\n]{{1,80}}{identity}(?:：|$)"
     for line in str(section or "").splitlines():
         stripped = line.strip()
-        numbered_object = bool(
-            re.match(rf"^\d+\.\s+[^：\n]{{1,80}}{identity}(?:：)?$", stripped)
-            or re.match(rf"^\d+[）)]\s*[^：\n]{{1,80}}{identity}(?:：)?$", stripped)
-        )
-        named = bool(
-            re.match(
-                rf"^(?:\d+\.\s+|\d+[）)]\s*|（\d+）\s*)?[^：\n]{{1,80}}{identity}(?:：)?$",
-                stripped,
-            )
-        )
-        if numbered_object or named:
+        if re.match(header, stripped):
             if current:
                 items.append("\n".join(current))
             current = [stripped]
