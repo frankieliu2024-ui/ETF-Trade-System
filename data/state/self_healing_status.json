@@ -1,26 +1,28 @@
 {
   "schema_version": "1.1",
-  "checked_at": "2026-11-02T11:57:16+08:00",
+  "checked_at": "2026-11-02T12:03:42+08:00",
   "mode": "DETERMINISTIC_RUNTIME_SELF_HEALING",
   "enabled": true,
-  "classification": "HEALTHY",
-  "recommended_action": "NONE",
-  "reason": "runtime state is within self-healing bounds",
+  "classification": "CONSISTENCY_REGRESSION",
+  "recommended_action": "ESCALATE",
+  "reason": "system consistency has a hard failure that is not proven orthogonal to canonical market recovery",
   "market_open_date": true,
   "watch_window_active": false,
   "same_day_current_required": true,
   "same_day_current_missing": false,
   "current_capture_at": "2026-11-02T11:38:33+08:00",
-  "current_capture_age_seconds": 1123,
+  "current_capture_age_seconds": 1509,
   "expected_pulse_at": null,
   "expected_pulse_missing": false,
   "runtime_health_status": "SKIPPED",
-  "system_consistency_status": "PASS",
+  "system_consistency_status": "FAIL",
   "market_recovery_consistency_gate": {
-    "global_status": "PASS",
-    "blocks_market_recovery": false,
-    "classification": "NO_GLOBAL_HARD_FAIL",
-    "errors": []
+    "global_status": "FAIL",
+    "blocks_market_recovery": true,
+    "classification": "GLOBAL_FAIL_BLOCKS_MARKET_RECOVERY_FAIL_SAFE",
+    "errors": [
+      "tests:production_reliability: {\"status\": \"FAILED\", \"notification_id\": \"notification_727be442ac3d8174d19c\", \"lifecycle_status\": \"FAILED\"}\n.................E.......................\n======================================================================\nERROR: test_formal_content_event_consumes_presentation_binding_full_content (tests.test_production_reliability.PushPlusNotificationClosureTests.test_formal_content_event_consumes_presentation_binding_full_content)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/tests/test_production_reliability.py\", line 103, in test_formal_content_event_consumes_presentation_binding_full_content\n    event = center.formal_content_event(source)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/scripts/notification_center.py\", line 1421, in formal_content_event\n    accepted, _reason = validate_formal_presentation_contract({\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/scripts/notification_center.py\", line 297, in validate_formal_presentation_contract\n    layout_error = _validate_formal_presentation_layout(content)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/ETF-Trade-System/ETF-Trade-System/scripts/notification_center.py\", line 198, in _validate_formal_presentation_layout\n    raise ValueError(\"formal presentation secondary numbering requires whitespace after marker\")\nValueError: formal presentation secondary numbering requires whitespace after marker\n\n----------------------------------------------------------------------\nRan 41 tests in 0.041s\n\nFAILED (errors=1)"
+    ]
   },
   "master_rules_version": "V2.2.34",
   "current_rules_version": "V2.2.34",
