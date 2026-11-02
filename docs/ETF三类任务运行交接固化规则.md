@@ -4,7 +4,7 @@
 
 ## 唯一业务链
 
-ETF正式决策、ETF交易复盘、ETF系统复核各自保持独立业务对象，但共享同一个 Scheduled Review completion owner、同一个 canonical review event/REPORT/notification 交接路径。每次运行只允许一份 FINAL_CONTENT、一份 completion、一份事件和一条通知链。
+ETF正式决策、ETF交易复盘、ETF系统复核各自保持独立业务对象；三者共享同一 completion 校验、canonical review event/REPORT/notification 交接路径。任务直接写入各自唯一 completion，后端只负责校验、投影和通知。每次运行只允许一份 FINAL_CONTENT、一份 completion、一份事件和一条通知链。
 
 ## 必须逐层确认
 
