@@ -169,6 +169,9 @@ def _formal_object_numbering_errors(text: str) -> list[str]:
         "【观察ETF逐只评估】",
         "【机会ETF逐只评估】",
         "【全部实际持仓】",
+        "【市场监测】",
+        "【全市场发现】",
+        "【观察ETF】",
         "【机会ETF】",
     }
     errors: list[str] = []
