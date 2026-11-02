@@ -76,6 +76,49 @@ def _formal_decisions(root: Path) -> list[dict[str, Any]]:
     return result
 
 
+def _completion_trial_decisions(root: Path, executions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Recover executed Trial identity from the linked canonical completion.
+
+    No hypothesis ID is fabricated: the completion identity remains the
+    attribution key, and this projection never grants trading authority.
+    """
+    result = []
+    for execution in executions:
+        if str(execution.get("side") or "").upper() != "BUY":
+            continue
+        linked = str(execution.get("linked_decision_id") or "")
+        prefix = "FORMAL_COMPLETION:"
+        if not linked.startswith(prefix):
+            continue
+        request_id = linked[len(prefix):]
+        if not request_id or "/" in request_id or "\\\\" in request_id:
+            continue
+        completion = _load(
+            root / "requests" / "live_snapshot" / (request_id + "__scheduled_review_completion.json"), {}
+        )
+        if completion.get("request_id") != request_id or completion.get("report_type") != "ETF_FORMAL_DECISION":
+            continue
+        content = str(completion.get("final_content") or "")
+        code = str(execution.get("code") or "")
+        if "【机会ETF逐只评估】" not in content:
+            continue
+        opportunity_section = content.split("【机会ETF逐只评估】", 1)[1].split("【", 1)[0]
+        if code not in opportunity_section or not any(
+            phrase in opportunity_section for phrase in ("Trial评估成立", "达到Trial评估标准")
+        ):
+            continue
+        result.append({
+            "decision_id": linked,
+            "candidate_code": code,
+            "candidate_name": execution.get("name"),
+            "hypothesis_id": None,
+            "decision_time_beijing": completion.get("requested_at_beijing"),
+            "_linked_execution_id": execution.get("event_id"),
+            "_completion_trial": True,
+        })
+    return result
+
+
 def _executions(root: Path) -> list[dict[str, Any]]:
     result = []
     directory = root / "events" / "trades"
@@ -144,7 +187,7 @@ def build_lifecycle_projection(root: Path, as_of_market_date: str | None = None)
         as_of = datetime.now(SHANGHAI).date()
     executions = _executions(root)
     trials = []
-    for decision in _formal_decisions(root):
+    for decision in _formal_decisions(root) + _completion_trial_decisions(root, executions):
         candidate_code = str(decision.get("candidate_code") or "").strip()
         linked = [
             x for x in executions
@@ -156,6 +199,8 @@ def build_lifecycle_projection(root: Path, as_of_market_date: str | None = None)
                 )
             )
         ]
+        if decision.get("_completion_trial"):
+            linked = [x for x in linked if x.get("event_id") == decision.get("_linked_execution_id")]
         if not linked:
             # A decision alone is not a real position lifecycle.
             continue
@@ -167,7 +212,7 @@ def build_lifecycle_projection(root: Path, as_of_market_date: str | None = None)
             continue
         t_plus = trading_day_offset(start_date, as_of, calendar)
         mandatory = add_trading_days(start_date, 3, calendar)
-        resolution = _resolution(root, decision, as_of)
+        resolution = None if decision.get("_completion_trial") else _resolution(root, decision, as_of)
         resolved = resolution is not None
         trials.append({
             "source_decision_id": decision.get("decision_id"),
