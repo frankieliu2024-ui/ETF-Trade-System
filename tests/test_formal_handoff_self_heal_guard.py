@@ -46,7 +46,7 @@ class FormalHandoffSelfHealGuardTests(unittest.TestCase):
                 "formal-current__formal_decision_completion.json": {
                     "request_type": "SCHEDULED_REVIEW_COMPLETION",
                     "source": "CHATGPT_DIRECT_GITHUB_CONTENTS_WRITER",
-                    "formal_fact_type": "FORMAL_POST_CLOSE_REVIEW",
+                    "formal_fact_type": "FORMAL_CURRENT_MAIN_DECISION",
                     "parent_request_id": "formal-current",
                     "report_type": "ETF_FORMAL_DECISION",
                 },
