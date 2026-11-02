@@ -32,6 +32,10 @@ def test_formal_runtime_completion_does_not_require_fact_request_binding():
     assert payload["presentation_binding"]["full_content"] == body
     assert payload["fact_source"] == "CURRENT_MAIN_LATEST_VALID_FIXED_PERIOD_FACTS"
     assert payload["decision_path"] == "timeout"
+    assert payload["final_content"] == body
+    assert payload["report_type"] == "ETF_FORMAL_DECISION"
+    assert payload["report_id"] == "ETF_FORMAL_DECISION:manual-formal-20261026T210000-test"
+    assert payload["content_hash"] == hashlib.sha256(body.encode("utf-8")).hexdigest()
     assert "parent_request_id" not in payload
     assert "fact_binding" not in payload["formal_review"] if "formal_review" in payload else True
     assert payload["presentation_binding"]["report_type"] == "ETF_FORMAL_DECISION"
