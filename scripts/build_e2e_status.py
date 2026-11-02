@@ -238,7 +238,10 @@ def _request_account_fact_consumed(request: dict, canonical: dict) -> bool:
                 ):
                     return False
                 continue
-            canonical_key = position_aliases.get(key, key)
+            # Canonical account facts use cost/last_price; accept legacy
+            # cost_price/current_price aliases only when the canonical position
+            # actually exposes those fields.
+            canonical_key = key if key in current else position_aliases.get(key, key)
             if canonical_key not in current or not _same_fact_value(value, current.get(canonical_key)):
                 return False
     return True
