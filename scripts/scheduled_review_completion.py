@@ -649,9 +649,35 @@ def write_completion_request(
         if market_date and str(payload.get("market_date") or "") != str(market_date):
             raise ValueError("scheduled system review completion market_date must match the review")
     elif str(task_id or "").strip() == "ETF正式决策":
-        payload = build_formal_review_completion_request(
-            review, request_id, requested_at_beijing, market_date, parent_request_id, account,
-            final_content, task_id, task_run_id, occurrence_id, entry_mode
+        # Formal Decision uses the direct current-main completion contract.
+        # Do not route it through the legacy formal-review/parent-request
+        # builder: this task consumes already-published facts and has no
+        # parent market-fact request.
+        fact_binding = review.get("fact_binding") if isinstance(review.get("fact_binding"), dict) else {}
+        supplied_summary = review.get("fact_summary") if isinstance(review.get("fact_summary"), dict) else {}
+        fact_summary = dict(supplied_summary)
+        if "fact_binding" not in fact_summary and fact_binding:
+            fact_summary["fact_binding"] = fact_binding
+        title = str(final_content or "").splitlines()[0].strip() if str(final_content or "").splitlines() else ""
+        decision_path = {
+            "正式判断": "formal",
+            "降级判断": "degraded",
+            "超时判断": "timeout",
+        }.get(title.rsplit(" ", 1)[-1], "")
+        if not decision_path:
+            decision_path = str(review.get("decision_path") or "").strip().lower()
+        identity = {
+            "task_run_id": task_run_id or request_id,
+            "occurrence_id": occurrence_id or task_run_id or request_id,
+            "requested_at_beijing": requested_at_beijing,
+            "entry_mode": entry_mode,
+        }
+        payload = build_formal_runtime_completion_request(
+            run_identity=identity,
+            market_date=market_date or str(review.get("market_date") or ""),
+            final_content=final_content,
+            decision_path=decision_path,
+            fact_summary=fact_summary,
         )
     else:
         payload = build_trade_review_completion_request(
@@ -849,6 +875,10 @@ def build_formal_runtime_completion_request(
             else {}
         ),
         "decision_id": decision_id,
+        "report_type": "ETF_FORMAL_DECISION",
+        "report_id": decision_id,
+        "final_content": content,
+        "content_hash": frozen_hash,
         "presentation_binding": {
             "report_type": "ETF_FORMAL_DECISION",
             "task_id": "ETF正式决策",
