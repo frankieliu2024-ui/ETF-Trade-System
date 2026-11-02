@@ -224,10 +224,12 @@ class FormalReadyHandoffContractTests(unittest.TestCase):
         self.assertIn('"notification_attempt_precondition": True', text)
         self.assertIn('"provider_success_not_required_for_user_reply": True', text)
         self.assertIn('"historical_fallback_forbidden": True', text)
-        self.assertIn('"post_reply_async": True', text)
+        self.assertIn('"post_reply_async": False', text)
         self.assertIn('"provider_success_async": True', text)
-        self.assertIn('"must_read_back_before_reply": False', text)
-        self.assertNotIn('HANDOFF_BEFORE_REPLY', text)
+        self.assertIn('"must_read_back_before_reply": True', text)
+        self.assertIn('"handoff_before_reply": True', text)
+        self.assertIn('"user_reply_precondition": True', text)
+        self.assertIn('"completion_must_be_written_and_read_back_before_user_reply": True', text)
         self.assertNotIn("BDS_AUDIT_AND_PROVIDER_READBACK", text)
 
     def test_protocol_publishes_before_post_reply_handoff(self):
