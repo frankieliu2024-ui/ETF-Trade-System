@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-11-02T22:15:30+08:00",
+  "generated_at": "2026-11-03T07:05:14+08:00",
   "status": "BLOCKED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -15,14 +15,14 @@
     "account": {
       "status": "BLOCKED",
       "reason": "ACCOUNT_SYNC_NOT_PERFORMED: latest broker screenshot request has not converged into canonical account_fact",
-      "updated_at": "2026-11-02T16:17:00+08:00",
-      "source": "BROKER_HOLDINGS_SCREENSHOT_20261102_161700_USER_PROVIDED",
+      "updated_at": "2026-11-03T07:00:00+08:00",
+      "source": "BROKER_HOLDINGS_SCREENSHOT_20261103_070059_USER_PROVIDED",
       "pending_change_events": [],
       "historical_audit_event_count": 128,
       "pending_broker_request": {
-        "path": "requests/live_snapshot/broker-close-20261102-1618-chatgpt.json",
-        "request_id": "broker-close-20261102-1618-chatgpt",
-        "request_time": "2026-11-02T16:18:00+08:00",
+        "path": "requests/live_snapshot/broker-sync-20261103-070300-chatgpt.json",
+        "request_id": "broker-sync-20261103-070300-chatgpt",
+        "request_time": "2026-11-03T07:03:03+08:00",
         "has_account_fact": true,
         "status": "ACCOUNT_SYNC_NOT_PERFORMED"
       }
@@ -48,24 +48,27 @@
       "business_completion_status": "COMPLETE"
     },
     "decision_context": {
-      "status": "BLOCKED",
-      "reason": "canonical request-bound query context is empty, invalid, or missing a consumable fact pack",
-      "query_context": false,
+      "status": "READY",
+      "reason": "query and decision contexts are available; legacy minimum-ready observability is diagnostic only",
+      "query_context": true,
       "decision_context": true,
+      "minimum_decision_context": "READY_OR_NOT_APPLICABLE",
+      "observability_boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
+      "request_bound": false,
       "formal_reply_gate": {
         "request_id": "conversation-formal-20261026T212023+0800-90d3c2b2",
         "requested_at_beijing": "2026-10-26T21:20:23.000+08:00",
-        "status": "TERMINAL_FAILURE",
+        "status": "IN_FLIGHT",
         "reply_freezable": false,
         "blockers": [
-          "FORMAL_PARENT_RECOVERY_TIMEOUT"
+          "REQUEST_BOUND_QUERY_CONTEXT_NOT_PUBLISHED"
         ],
         "source": "durable_parent_request_waiting_for_request_bound_projection",
-        "actor_action": "TERMINATE_ON_EXPLICIT_FAILURE",
-        "user_output_allowed": true,
+        "actor_action": "CONTINUE_SAME_REQUEST_SILENTLY",
+        "user_output_allowed": false,
         "business_decision_allowed": false,
         "final_content_generation_allowed": false,
-        "consumer_status": "TERMINAL_FAILURE",
+        "consumer_status": "REQUEST_BOUND_FACTS_BUILDING",
         "projection_scope": "FORMAL_DECISION_REQUEST",
         "superseded_request_id": "fd_20261026_112739_scheduled_formal_review_0bba5094",
         "request_bound": false,
@@ -86,15 +89,15 @@
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 1614387,
-          "sha256": "9d0aef1fed80206699bb50797c8a1fdad12d9e9e61a960fdc2e11ddfa638be2c",
+          "byte_count": 1546814,
+          "sha256": "48758dfc9cab01fe6edac8805f4b2d278bde7cecf7f07809085c6c6d528d0f39",
           "parsed_object": true
         },
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 470327,
-          "sha256": "4c2fb279aa5f9b029365c637c86e23532bffada7067dfaff6beda26d2af6bee8",
+          "byte_count": 472802,
+          "sha256": "743dbeaa5938360ee3553a54ebb11112ad3c6399cc0b6bfb45e4eae825ee8d46",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -112,12 +115,11 @@
     "maintenance": {
       "status": "READY",
       "reason": "maintenance guard passed",
-      "checked_at": "2026-11-02T20:47:52+08:00"
+      "checked_at": "2026-11-03T07:04:58+08:00"
     }
   },
   "blockers": [
-    "account",
-    "decision_context"
+    "account"
   ],
   "degradations": [
     "close_review"
@@ -126,15 +128,15 @@
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 1614387,
-      "sha256": "9d0aef1fed80206699bb50797c8a1fdad12d9e9e61a960fdc2e11ddfa638be2c",
+      "byte_count": 1546814,
+      "sha256": "48758dfc9cab01fe6edac8805f4b2d278bde7cecf7f07809085c6c6d528d0f39",
       "parsed_object": true
     },
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 470327,
-      "sha256": "4c2fb279aa5f9b029365c637c86e23532bffada7067dfaff6beda26d2af6bee8",
+      "byte_count": 472802,
+      "sha256": "743dbeaa5938360ee3553a54ebb11112ad3c6399cc0b6bfb45e4eae825ee8d46",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"
