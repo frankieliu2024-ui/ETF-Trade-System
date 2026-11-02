@@ -831,6 +831,26 @@ def _validate_weekly_projection_contract(report: dict) -> None:
         and is_last_legal_day(market_date)
     )
 
+    def latest_completed_week_end(value: str) -> str:
+        """Return the latest completed legal week-end before the current week."""
+        try:
+            day = date.fromisoformat(value)
+        except ValueError:
+            return ""
+        cursor = day - timedelta(days=day.weekday() + 1)
+        for _ in range(7):
+            if cursor.weekday() < 5 and cursor.isoformat() not in closed_dates:
+                return cursor.isoformat()
+            cursor -= timedelta(days=1)
+        return ""
+
+    # A verified close on the last legal day publishes the new weekly object.
+    # Live/non-close nodes consume the prior completed week; they must not
+    # compare that legitimate carry-forward object with today's market date.
+    weekly_reference_date = market_date if close_due else latest_completed_week_end(market_date)
+    if not weekly_reference_date:
+        weekly_reference_date = market_date
+
     weekly_path = ROOT / "data/state/weekly_formal_discovery.json"
     weekly = _read_json("data/state/weekly_formal_discovery.json") if weekly_path.exists() else {}
     weekly_errors = []
@@ -845,8 +865,10 @@ def _validate_weekly_projection_contract(report: dict) -> None:
             weekly_status = "PASS"
             weekly_detail = "weekly Discovery not due at current verified close"
     else:
-        if str(weekly.get("market_date") or "") != market_date:
+        if str(weekly.get("market_date") or "") != weekly_reference_date:
             weekly_errors.append("market_date_mismatch")
+        if str(weekly.get("week_end") or "") != weekly_reference_date:
+            weekly_errors.append("week_end_mismatch")
         if str(weekly.get("latest_valid_node") or "").lower() != "close":
             weekly_errors.append("latest_valid_node_not_close")
         if str(weekly.get("formation_rule") or "") != "LAST_LEGAL_A_SHARE_TRADING_DAY_AFTER_VERIFIED_CLOSE":
@@ -867,7 +889,7 @@ def _validate_weekly_projection_contract(report: dict) -> None:
         else:
             weekly_status = "PASS"
             weekly_detail = (
-                f"market_date={market_date} status={weekly.get('status')} "
+                f"market_date={weekly_reference_date} status={weekly.get('status')} "
                 f"candidate_count={weekly.get('candidate_count')}"
             )
     report.setdefault("checks", []).append({
@@ -887,7 +909,7 @@ def _validate_weekly_projection_contract(report: dict) -> None:
             )
     else:
         attr_errors = []
-        if str(attribution.get("market_date") or "") != market_date:
+        if str(attribution.get("market_date") or "") != weekly_reference_date:
             attr_errors.append("return_attribution_market_date_mismatch")
         if str(attribution.get("strict_decomposition_status") or "").upper() not in {"NOT_COMPLETE", "COMPLETE"}:
             attr_errors.append("strict_decomposition_status_missing")
