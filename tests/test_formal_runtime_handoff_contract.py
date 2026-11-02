@@ -1,3 +1,4 @@
+import hashlib
 import json
 from pathlib import Path
 
@@ -22,6 +23,13 @@ def test_formal_runtime_completion_does_not_require_fact_request_binding():
         decision_path="timeout",
     )
     assert payload["request_type"] == "SCHEDULED_REVIEW_COMPLETION"
+    assert payload["formal_fact_type"] == "FORMAL_CURRENT_MAIN_DECISION"
+    assert payload["source"] == "CHATGPT_DIRECT_GITHUB_CONTENTS_WRITER"
+    assert payload["task_run_id"] == "manual-formal-20261026T210000-test"
+    assert payload["occurrence_id"] == "manual_formal_20261026T210000_test"
+    assert len(payload["presentation_binding"]["content_hash"]) == 64
+    assert payload["presentation_binding"]["content_hash"] == hashlib.sha256(body.encode("utf-8")).hexdigest()
+    assert payload["presentation_binding"]["full_content"] == body
     assert payload["fact_source"] == "CURRENT_MAIN_LATEST_VALID_FIXED_PERIOD_FACTS"
     assert payload["decision_path"] == "timeout"
     assert "parent_request_id" not in payload
