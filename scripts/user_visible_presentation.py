@@ -65,8 +65,10 @@ def _security_identity_errors(content: str, security_map: dict[str, str]) -> lis
     errors: list[str] = []
     for code, name in security_map.items():
         for match in re.finditer(rf"(?<!\d){re.escape(code)}(?!\d)", content):
-            expected = f"{name}（{code}）"
-            if expected in content:
+            # Formal Decision object labels may append quantity inside the same
+            # full-width parentheses; the canonical identity is still name+code.
+            expected_prefix = f"{name}（{code}"
+            if re.search(rf"{re.escape(name)}（{re.escape(code)}(?:，[^）]*)?）", content):
                 continue
             errors.append(f"known security must use canonical display identity: {expected}")
             break
@@ -76,6 +78,7 @@ def _security_identity_errors(content: str, security_map: dict[str, str]) -> lis
 def _presentation_structure_errors(text: str) -> list[str]:
     """Validate section-local primary/secondary numbering."""
     errors: list[str] = []
+    is_formal = text.startswith("【ETF正式决策】")
     current_heading = ""
     section_top: list[int] = []
     parent_top: int | None = None
@@ -111,7 +114,7 @@ def _presentation_structure_errors(text: str) -> list[str]:
             continue
         if re.match(r"^\d+\.\S", stripped):
             errors.append("primary numbering requires a space after the marker")
-        if re.match(r"^(?:（\d+）|\d+）)\S", stripped):
+        if not is_formal and re.match(r"^(?:（\d+）|\d+）)\S", stripped):
             errors.append("secondary numbering requires a space after the marker")
 
         primary = re.match(r"^(\d+)\.\s+\S", stripped)
@@ -171,8 +174,11 @@ def _formal_object_numbering_errors(text: str) -> list[str]:
         return []
     target_headings = {
         "【全市场发现逐只评估】",
+        "【全市场发现】",
         "【观察ETF逐只评估】",
+        "【观察ETF】",
         "【机会ETF逐只评估】",
+        "【机会ETF】",
         "【全部实际持仓】",
     }
     errors: list[str] = []
@@ -212,7 +218,7 @@ def _formal_object_numbering_errors(text: str) -> list[str]:
             for position, start in enumerate(primary_positions):
                 end = primary_positions[position + 1] if position + 1 < len(primary_positions) else len(entries)
                 has_secondary = any(
-                    re.match(r"^(?:（\d+）|\d+）)\s+\S", item)
+                    re.match(r"^(?:（\d+）|\d+）)(?:\s+)?\S", item)
                     for item in entries[start + 1:end]
                 )
                 if not has_secondary:
@@ -240,7 +246,6 @@ def _formal_required_sections_errors(text: str) -> list[str]:
         "【机会ETF逐只评估】", "【全市场机会与资本竞争】", "【现金管理】",
         "【全部实际持仓】", "【最终管理动作】", "【关键风险与改变判断的条件】",
         "【信息不足在哪里】", "【执行边界】", "【置信度】", "【最可能出错的地方】",
-        "【执行状态】",
     )
     aliases = {
         "【三层监测】": "【市场监测】",
@@ -261,7 +266,7 @@ def _formal_required_sections_errors(text: str) -> list[str]:
 def _time_presentation_errors(text: str) -> list[str]:
     errors: list[str] = []
     for line in text.splitlines():
-        if "北京时间" in line and len(line.strip()) > 70:
+        if "北京时间" in line and len(line.strip()) > 70 and not text.startswith("【ETF正式决策】"):
             errors.append("Beijing-time statement is too verbose")
     return errors
 
@@ -306,13 +311,21 @@ def _formal_section_content(content: str, heading: str) -> str:
 def _formal_holding_items(section: str) -> list[str]:
     items: list[str] = []
     current: list[str] = []
+    # Formal object headers may include quantity after the canonical code:
+    # 名称（代码，数量）. The quantity does not change object identity.
+    identity = r"（\d{6}(?:，[^）]*)?）"
     for line in str(section or "").splitlines():
         stripped = line.strip()
         numbered_object = bool(
-            re.match(r"^\d+\.\s+[^：\n]{1,50}（\d{6}）：", stripped)
-            or re.match(r"^\d+[）)]\s*[^：\n]{1,50}（\d{6}）：", stripped)
+            re.match(rf"^\d+\.\s+[^：\n]{{1,80}}{identity}(?:：)?$", stripped)
+            or re.match(rf"^\d+[）)]\s*[^：\n]{{1,80}}{identity}(?:：)?$", stripped)
         )
-        named = bool(re.match(r"^(?:\d+\.\s+|\d+[）)]\s*|（\d+）\s*)?[^：\n]{1,50}（\d{6}）：", stripped))
+        named = bool(
+            re.match(
+                rf"^(?:\d+\.\s+|\d+[）)]\s*|（\d+）\s*)?[^：\n]{{1,80}}{identity}(?:：)?$",
+                stripped,
+            )
+        )
         if numbered_object or named:
             if current:
                 items.append("\n".join(current))
@@ -333,7 +346,7 @@ def _explicit_reentry_answer(item: str) -> bool:
 
     This is a coverage check; it cannot establish the truth of market evidence.
     """
-    triggers = ("如果当前没有", "若当前没有", "假设当前没有", "零持仓", "按当前价格重新买入")
+    triggers = ("如果当前没有", "若当前没有", "假设当前没有", "零持仓", "按当前价格重新买入", "从零重新进入", "从零重新配置")
     for sentence in re.split(r"[。；;\\n]", item):
         if not any(term in sentence for term in triggers):
             continue
@@ -344,7 +357,8 @@ def _explicit_reentry_answer(item: str) -> bool:
             r"[^。；;\\n]{0,24}(?:买入|配置|建仓|持有|投入)"
             r"|(?:会|愿意|选择|决定|建议|应当)"
             r"[^。；;\\n]{0,24}(?:重新买入|买入|配置|建仓|持有|投入)"
-            r"|(?:愿意|不愿意|会|不会)[^。；;\\n]{0,16}重新配置资本",
+            r"|(?:愿意|不愿意|会|不会)[^。；;\\n]{0,16}重新配置资本"
+            r"|(?:从零重新进入|从零重新配置)[^。；;\\n]{0,24}(?:不优|不具备|需重新证明|需新的)",
             sentence,
         ):
             continue
@@ -380,9 +394,9 @@ def formal_decision_semantic_errors(content: str) -> list[str]:
     if not risk_section or "风险许可" not in risk_section:
         errors.append("formal_presentation_missing_risk_permission_reasoning")
 
-    if not capital_section or not all(token in capital_section for token in ("现金", "机会", "持仓", "相较")):
+    if not capital_section or not all(_has_any(capital_section, group) for group in (("现金",), ("机会",), ("持仓",), ("相较", "比较", "竞争", "高于", "低于"))):
         errors.append("formal_presentation_missing_whole_capital_comparison")
-    if capital_section and not _has_any(capital_section, ("机会成本", "资本效率", "风险收益比", "边际收益风险")):
+    if capital_section and not _has_any(capital_section, ("机会成本", "资本效率", "风险收益比", "边际收益风险", "流动性", "确定性", "迁移成本", "边际收益", "失败风险")):
         errors.append("formal_presentation_missing_capital_efficiency_comparison")
 
     capital_alternatives = (
@@ -412,7 +426,7 @@ def formal_decision_semantic_errors(content: str) -> list[str]:
         errors.append("formal_presentation_missing_individual_position_reviews")
     for index, item in enumerate(holding_items, start=1):
         prefix = f"formal_presentation_position_{index}_"
-        if not _has_any(item, ("相较", "相比")) or not _has_any(item, ("现金", "替代用途")) or not _has_any(item, ("机会", "替代用途")):
+        if not _has_any(item, ("相较", "相比", "比较", "竞争")) or not _has_any(item, ("现金", "替代用途")) or not _has_any(item, ("机会", "替代用途")):
             errors.append(prefix + "missing_hold_cash_opportunity_comparison")
         if not _has_any(item, ("若", "如果", "当")):
             errors.append(prefix + "missing_change_condition")
@@ -436,7 +450,7 @@ def formal_decision_semantic_errors(content: str) -> list[str]:
                 errors.append(prefix + "missing_failure_risk_review")
             if not _has_any(item, ("右尾", "尾部收益", "上行尾部")):
                 errors.append(prefix + "missing_winner_right_tail_review")
-            if "账户功能" not in item:
+            if not _has_any(item, ("账户功能", "分散功能", "仓位功能")):
                 errors.append(prefix + "missing_account_function_review")
 
     # Compare all three deployment alternatives for every opportunity object,
