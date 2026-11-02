@@ -1506,7 +1506,7 @@ jobs:
         # Full decision preparation is request/state-sync bound. Scheduled
         # snapshots keep canonical market facts and reusable Discovery current;
         # formal requests/recovery rebuild the canonical decision context.
-        if: ${{ steps.query_context.outcome == 'success' && (steps.state_sync.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (steps.triggering_request.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (github.event_name == 'push' || steps.state_sync.outputs.processed == 'true' || steps.snapshot_result.outputs.snapshot_written == 'true' || github.event.inputs.formal_context_recovery_request != '') && github.event.inputs.probe_only != 'true' }}
+        if: ${{ steps.query_context.outcome == 'success' && (github.event_name == 'push' || steps.state_sync.outputs.processed == 'true' || steps.snapshot_result.outputs.snapshot_written == 'true' || github.event.inputs.formal_context_recovery_request != '') && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_state_context.py --decision-ready-only
 
       - name: Promote formal request gate after full context validation
