@@ -182,6 +182,18 @@ class UserVisiblePresentationContractTests(unittest.TestCase):
             ["object section requires one separately numbered paragraph per object: 【机会ETF逐只评估】"],
         )
 
+    def test_rejects_object_without_nested_secondary_analysis(self):
+        content = (
+            "【ETF正式决策】2026-11-02 10:00 正式判断\\n\\n"
+            "【全市场发现逐只评估】\\n\\n"
+            "1. 候选甲（159001）：\\n\\n"
+            "仅有对象标题，没有对象内分析项。"
+        )
+        self.assertEqual(
+            _formal_object_numbering_errors(content),
+            ["each object must contain separately numbered secondary analysis items: 【全市场发现逐只评估】"],
+        )
+
     def test_rejects_global_primary_numbering_across_sections(self):
         content = "【第一节】\n\n1. 第一项\n\n【第二节】\n\n2. 第二项\n\n【第三节】\n\n3. 第三项"
         with self.assertRaisesRegex(ValueError, "globally across sections"):
