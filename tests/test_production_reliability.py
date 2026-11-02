@@ -62,13 +62,13 @@ class PushPlusNotificationClosureTests(unittest.TestCase):
             return Response()
 
         with patch.object(center.urllib.request, "urlopen", side_effect=fake_urlopen):
-            ok, response = center.send("token", "【ETF正式决策】", "（1）第一项。\\n\\n（2）第二项。", template="txt")
+            ok, response = center.send("token", "【ETF正式决策】", "（1） 第一项。\\n\\n（2） 第二项。", template="txt")
 
         self.assertTrue(ok)
         self.assertEqual(response["http_status"], 200)
         self.assertEqual(response["pushplus_code"], 200)
         self.assertEqual(captured["payload"]["template"], "txt")
-        self.assertEqual(captured["payload"]["content"], "（1）第一项。\\n\\n（2）第二项。")
+        self.assertEqual(captured["payload"]["content"], "（1） 第一项。\\n\\n（2） 第二项。")
         self.assertNotIn("\\\\n", captured["payload"]["content"])
 
     def test_formal_content_event_consumes_presentation_binding_full_content(self):
