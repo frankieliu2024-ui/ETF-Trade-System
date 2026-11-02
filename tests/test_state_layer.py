@@ -322,6 +322,36 @@ class StateLayerTests(unittest.TestCase):
         self.assertEqual(result["status"], "BLOCKED")
         self.assertIn("ACCOUNT_SYNC_NOT_PERFORMED", result["reason"])
 
+    def test_duplicate_screenshot_requires_complete_unique_position_set(self) -> None:
+        account = {
+            "status": "VALID",
+            "updated_at": "2026-11-02T16:17:00+08:00",
+            "source": "BROKER_HOLDINGS_SCREENSHOT_20261102_1617_USER_PROVIDED",
+            "cash": 100.0,
+            "positions": [
+                {"code": "159941", "quantity": 100},
+                {"code": "159981", "quantity": 200},
+            ],
+        }
+        self._write_broker_request({
+            "request_id": "broker-duplicate-incomplete-positions",
+            "requested_at_beijing": "2026-11-02T16:18:00+08:00",
+            "screenshot_captured_at_beijing": "2026-11-02T16:17:00+08:00",
+            "source": "CHATGPT_USER_BROKER_SCREENSHOT",
+            "interaction_scenario": "BROKER_SCREENSHOT_SYNC",
+            "account_fact": {
+                "status": "VALID",
+                "updated_at": "2026-11-02T15:00:00+08:00",
+                "source": "BROKER_HOLDINGS_SCREENSHOT_20261102_1617_USER_PROVIDED",
+                "cash": 100.0,
+                "positions": [{"code": "159941", "quantity": 100}],
+            },
+        })
+        with patch.object(e2e, "ROOT", self.root):
+            result = e2e.account_component(account, {"needs_account_update": False})
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertIn("ACCOUNT_SYNC_NOT_PERFORMED", result["reason"])
+
     def test_duplicate_screenshot_requires_capture_time_and_source_to_match(self) -> None:
         account = {
             "status": "VALID",
