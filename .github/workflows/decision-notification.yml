@@ -167,10 +167,22 @@ jobs:
               and str(payload.get("task_id") or "").strip() == "ETF正式决策"
           ):
               print("FORMAL")
-          elif payload.get("request_type") == "SCHEDULED_REVIEW_COMPLETION":
-              print("SCHEDULED_REVIEW")
           else:
-              print("UNKNOWN")
+              task_id = str(
+                  payload.get("task_id") or binding.get("task_id") or ""
+              ).strip()
+              if (
+                  report_type in {"ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW"}
+                  and task_id in {"ETF交易复盘", "ETF系统复核"}
+              ):
+                  # Current direct completion builders carry the task identity
+                  # inside presentation_binding; accept that canonical shape
+                  # without weakening the formal-decision branch above.
+                  print("SCHEDULED_REVIEW")
+              elif payload.get("request_type") == "SCHEDULED_REVIEW_COMPLETION":
+                  print("SCHEDULED_REVIEW")
+              else:
+                  print("UNKNOWN")
           PY
           )
             case "$completion_kind" in
