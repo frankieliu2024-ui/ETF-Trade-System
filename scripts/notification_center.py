@@ -1571,6 +1571,10 @@ def _canonical_boundary(family: str) -> str:
         return "收盘提醒只请求账户事实确认，不生成交易指令。"
     return "这是通知通道测试，不代表真实行情、账户、交易或系统故障。"
 def render_canonical_notification(event: dict) -> dict | None:
+    # REPORT delivery is already a frozen canonical payload. The shared
+    # interrupt renderer must not rewrite its title, body, or envelope.
+    if str(event.get("event_type") or "") == "REPORT_DELIVERY_REQUEST":
+        return event
     family = canonical_template_family(event)
     if family is None:
         return None
