@@ -154,6 +154,24 @@ class UserVisiblePresentationContractTests(unittest.TestCase):
         )
         self.assertEqual(_formal_object_numbering_errors(content), [])
 
+    def test_accepts_current_primary_object_and_nested_secondary_numbering(self):
+        content = (
+            "【ETF正式决策】2026-11-02 10:00 正式判断\n\n"
+            "【全市场发现逐只评估】\n\n"
+            "1. 候选甲（159001）：\n\n"
+            "（1）仅为发现输入。\n\n"
+            "【执行状态】\n\n"
+            "本次仅形成管理建议，无交易。"
+        )
+        self.assertEqual(_formal_object_numbering_errors(content), [])
+
+    def test_rejects_technical_handoff_heading_in_business_body(self):
+        with self.assertRaisesRegex(ValueError, "technical handoff state"):
+            validate_user_visible_content(
+                "【ETF正式决策】2026-11-02 10:00 正式判断\n\n【后置交接状态】\n\n技术状态。",
+                security_map=SECURITIES,
+            )
+
     def test_still_requires_numbering_for_nonzero_opportunity_objects(self):
         content = (
             "【机会ETF逐只评估】\n"
