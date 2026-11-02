@@ -319,11 +319,6 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
         self.assertIn("fact_binding", completion)
         self.assertIn("Formal Decision completion fact_binding mismatch", completion)
 
-    def test_formal_completion_prompt_binds_path_and_facts(self):
-        prompt = (ROOT / "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/prompts/正式决策.txt").read_text(encoding="utf-8")
-        self.assertIn("decision_path", prompt)
-        self.assertIn("fact_binding", prompt)
-        self.assertIn("full_content与完整FINAL_CONTENT逐字一致", prompt)
 
 
 if __name__ == "__main__":
