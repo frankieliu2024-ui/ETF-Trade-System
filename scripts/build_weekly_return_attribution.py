@@ -19,6 +19,7 @@ except ModuleNotFoundError:
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 OUTPUT = ROOT / "data/state/weekly_return_attribution.json"
+CALENDAR = ROOT / "config/market/a_share_trading_calendar_2026.json"
 
 
 def load_json(path: Path, default):
@@ -26,6 +27,18 @@ def load_json(path: Path, default):
         return json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return default
+
+
+def is_last_legal_day_of_week(market_date: str, closed_dates: set[str]) -> bool:
+    try:
+        day = date.fromisoformat(market_date)
+    except ValueError:
+        return False
+    for offset in range(1, 7 - day.weekday()):
+        candidate = day + timedelta(days=offset)
+        if candidate.weekday() < 5 and candidate.isoformat() not in closed_dates:
+            return False
+    return True
 
 
 def f(value):
@@ -226,8 +239,13 @@ def build() -> dict:
     current = load_json(ROOT / "data/state/CURRENT.json", {})
     market_date = str(current.get("market_date") or "").strip()
     node = str(current.get("latest_valid_node") or "").strip().lower()
+    calendar = load_json(CALENDAR, {})
+    closed_dates = set(calendar.get("closed_dates") or [])
+
     if not market_date or node != "close":
         return {"status": "SKIPPED", "reason": "verified_close_not_current", "market_date": market_date, "latest_valid_node": node}
+    if not is_last_legal_day_of_week(market_date, closed_dates):
+        return {"status": "SKIPPED", "reason": "not_last_legal_day_of_week", "market_date": market_date, "latest_valid_node": node}
 
     end = date.fromisoformat(market_date)
     start = end - timedelta(days=4)

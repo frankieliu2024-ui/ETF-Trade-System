@@ -1,6 +1,6 @@
 import unittest
 
-from scripts.build_weekly_return_attribution import _strict_decomposition
+from scripts.build_weekly_return_attribution import _strict_decomposition, is_last_legal_day_of_week
 
 
 def _position(code, quantity, market_value, asset_class="ETF", name=""):
@@ -14,6 +14,11 @@ def _position(code, quantity, market_value, asset_class="ETF", name=""):
 
 
 class StrictWeeklyReturnAttributionTests(unittest.TestCase):
+    def test_attribution_only_runs_on_last_legal_day_of_week(self):
+        self.assertFalse(is_last_legal_day_of_week("2026-11-02", set()))
+        self.assertTrue(is_last_legal_day_of_week("2026-11-06", set()))
+        self.assertTrue(is_last_legal_day_of_week("2026-10-30", set()))
+
     def test_complete_bridge_for_statement_backed_week(self):
         prior = {
             "positions": [
