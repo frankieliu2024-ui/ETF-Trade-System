@@ -22,7 +22,10 @@ class TaskEntrySchedulingGovernanceTests(unittest.TestCase):
         self.assertNotIn("entry_adapter", decision)
         self.assertNotIn("entry_builder", decision)
         self.assertNotIn("production_adapter", decision)
-        self.assertEqual(decision["completion_builder"], "build_formal_review_completion_request")
+        self.assertEqual(decision["completion_builder"], "build_formal_runtime_completion_request")
+        self.assertNotIn("completion_owner", decision)
+        self.assertEqual(decision["handoff_contract"]["production_entry"], "DIRECT_GITHUB_CONTENTS_WRITER")
+        self.assertEqual(decision["handoff_execution"]["production_entry"], "DIRECT_GITHUB_CONTENTS_WRITER")
         facts = decision["fact_consumption"]
         self.assertFalse(facts["request_required"])
         self.assertFalse(facts["parent_request_required"])
