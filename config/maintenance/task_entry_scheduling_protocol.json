@@ -151,7 +151,7 @@
       "sunday_rule": "按current main正式日历判定",
       "manual_allowed": true,
       "route": "FORMAL_DECISION",
-      "completion_builder": "build_formal_review_completion_request",
+      "completion_builder": "build_formal_runtime_completion_request",
       "manual_entry_modes": [
         "MANUAL_CONVERSATION",
         "MANUAL_SCHEDULED_TASK"
@@ -175,15 +175,12 @@
           "persistence metadata"
         ],
         "bds_required": false,
-        "owner": "TASK_DIRECT_GITHUB_CONTENTS_WRITER",
-        "completion_owner_is_primary": true
+        "production_entry": "DIRECT_GITHUB_CONTENTS_WRITER",
       },
-      "completion_owner": "TASK_DIRECT_GITHUB_CONTENTS_WRITER",
       "handoff_execution": {
-        "owner": "TASK_DIRECT_GITHUB_CONTENTS_WRITER",
+        "production_entry": "DIRECT_GITHUB_CONTENTS_WRITER",
         "primary_mode": "DIRECT_GITHUB_CONTENTS_COMPLETION_WRITE_AND_READBACK",
-        "completion_owner_is_primary": true,
-        "notification_wake": "CANONICAL_COMPLETION_PUSH_PRIMARY_EXPLICIT_DISPATCH_RECOVERY",
+        "notification_wake": "EXPLICIT_DISPATCH_WITH_EXACT_COMPLETION_PATH",
         "adapter_unavailable_must_not_block_completion": true,
         "completion_readback_must_continue_to_notification_dispatch": true,
         "same_run_required": true,
@@ -211,7 +208,7 @@
         "explicit_dispatch_role": "SAME_RUN_RECOVERY_ONLY",
         "automatic_task_pause_forbidden": true,
         "partial_fact_judgment_required": true,
-        "production_entry": "TASK_DIRECT_GITHUB_CONTENTS_WRITER"
+        "production_entry": "DIRECT_GITHUB_CONTENTS_WRITER"
       },
       "fact_consumption": {
         "source": "CURRENT_MAIN_LATEST_VALID_FIXED_PERIOD_FACTS",
