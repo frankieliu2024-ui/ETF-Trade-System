@@ -48,6 +48,8 @@ on:
       - "requests/research_backfill/*.json"
       - "requests/trade_fact_correction/*.json"
       - "data/state/account_fact.json"
+      # Projection changes must re-run the canonical consistency gate.
+      - "data/state/execution_quality.json"
       # Canonical runtime state changes must re-run the global consistency gate;
       # otherwise a repaired producer can land without any post-merge acceptance.
       - "data/state/CURRENT.json"
