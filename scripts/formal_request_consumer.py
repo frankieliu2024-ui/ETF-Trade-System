@@ -130,7 +130,7 @@ def classify_formal_request_consumer_state(
             "user_visible_output": BUSINESS_REPLY_OUTPUT,
             "actor_action": ACTOR_DECIDE,
             "user_output_allowed": True,
-            "handoff_before_reply": False,
+            "handoff_before_reply": True,
             "required_problem_ids": required_problem_ids,
             "required_problem_count": len(required_problem_ids),
             "business_answer_contract": "DWP_COVERAGE_FOR_JUDGMENT",
@@ -145,7 +145,7 @@ def classify_formal_request_consumer_state(
             # downstream completion, event, report, notification and provider
             # delivery remain post-reply asynchronous work.
             "ready_handoff": {
-                "required": False,
+                "required": True,
                 "submission_type": "SCHEDULED_REVIEW_COMPLETION",
                 "source": "CHATGPT_SCHEDULED_REVIEW_COMPLETION_OWNER",
                 "parent_request_id": parent,
@@ -170,13 +170,13 @@ def classify_formal_request_consumer_state(
                     ],
                     "forbid_historical_fallback": True,
                     "read_back_required": True,
-                    "completion_must_be_written_and_read_back_before_user_reply": False,
+                    "completion_must_be_written_and_read_back_before_user_reply": True,
                 },
                 # The task freezes one FINAL_CONTENT and completes the bounded
                 # handoff. Provider delivery remains a separately read-back layer.
                 "business_decision_allowed": True,
                 "final_content_generation_allowed": True,
-                "user_reply_precondition": False,
+                "user_reply_precondition": True,
                 "notification_attempt_precondition": True,
                 "provider_success_not_required_for_user_reply": True,
                 "user_reply_contract": {
@@ -186,9 +186,9 @@ def classify_formal_request_consumer_state(
                     "handoff_status_cannot_replace_content": True,
                     "completion_must_reuse_exact_final_content": True,
                 },
-                "post_reply_async": True,
+                "post_reply_async": False,
                 "provider_success_async": True,
-                "must_read_back_before_reply": False,
+                "must_read_back_before_reply": True,
                 "historical_fallback_forbidden": True,
             },
         }
