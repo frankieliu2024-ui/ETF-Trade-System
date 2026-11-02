@@ -3646,12 +3646,19 @@ def _validate_formal_completion_identity(request: dict) -> None:
         value for value in supplied_hashes
         if re.fullmatch(r"[0-9a-fA-F]{8,128}", value) and len(value) % 2 == 0
     ]
-    if not supplied_hashes or len(valid_hashes) != len(supplied_hashes):
-        raise ValueError("Formal Decision completion requires a valid content_hash")
-
     expected_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
-    if any(value.lower() != expected_hash for value in supplied_hashes):
-        # Preserve the immutable completion metadata.  The canonical event owner
+    if not supplied_hashes or len(valid_hashes) != len(supplied_hashes):
+        # The live task writer may persist a human-readable run label or omit
+        # the hash even though the frozen body is complete. Preserve the
+        # immutable completion metadata, but make the canonical event
+        # self-verifiable from the frozen body instead of failing before event
+        # projection. The warning remains visible for audit and remediation.
+        binding["content_hash_original"] = supplied_hashes[0] if supplied_hashes else ""
+        binding["content_hash_warning"] = "content_hash_missing_or_malformed"
+        binding["content_hash"] = expected_hash
+        binding["content_hash_source"] = "canonical_owner_recomputed_from_final_content"
+    elif any(value.lower() != expected_hash for value in supplied_hashes):
+        # Preserve the immutable completion metadata. The canonical event owner
         # recomputes SHA-256 from final_content and records this drift explicitly.
         binding["content_hash_warning"] = "content_hash_mismatch"
         binding["content_hash_source"] = "canonical_owner_normalized_after_mismatch"

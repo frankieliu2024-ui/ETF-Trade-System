@@ -196,7 +196,8 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
             "canonical_owner_normalized_after_mismatch",
         )
 
-    def test_formal_completion_rejects_missing_or_malformed_hashes(self):
+    def test_formal_completion_normalizes_missing_or_malformed_hashes(self):
+        import hashlib
         from scripts.process_state_sync_request import _validate_formal_completion_identity
 
         content = "【ETF正式决策】2026-10-30 09:03 正式判断\n\n正式决策正文。"
@@ -209,15 +210,26 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
             "request_id": "formal-request-0903",
             "requested_at_beijing": "2026-10-30T09:03:00+08:00",
             "final_content": content,
-            "presentation_binding": {"task_id": "ETF正式决策", "report_type": "ETF_FORMAL_DECISION"},
+            "presentation_binding": {
+                "task_id": "ETF正式决策",
+                "report_type": "ETF_FORMAL_DECISION",
+            },
         }
-        for value in ("", "placeholder", "not-a-sha256"):
+        expected = hashlib.sha256(content.encode("utf-8")).hexdigest()
+        for value in ("", "placeholder", "formal_20261102_1018"):
             request = dict(base)
             request["presentation_binding"] = dict(base["presentation_binding"])
-            request["presentation_binding"]["content_hash"] = value
-            with self.subTest(content_hash=value):
-                with self.assertRaisesRegex(ValueError, "requires a valid content_hash"):
-                    _validate_formal_completion_identity(request)
+            if value:
+                request["presentation_binding"]["content_hash"] = value
+            _validate_formal_completion_identity(request)
+            binding = request["presentation_binding"]
+            self.assertEqual(binding["content_hash"], expected)
+            self.assertEqual(binding["content_hash_original"], value)
+            self.assertEqual(binding["content_hash_warning"], "content_hash_missing_or_malformed")
+            self.assertEqual(
+                binding["content_hash_source"],
+                "canonical_owner_recomputed_from_final_content",
+            )
 
     def test_formal_completion_rejects_presentation_body_drift_when_duplicate_exists(self):
         from scripts.process_state_sync_request import _validate_formal_completion_identity
