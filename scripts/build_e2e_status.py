@@ -175,41 +175,66 @@ def _same_fact_value(left: object, right: object) -> bool:
 
 
 def _request_account_fact_consumed(request: dict, canonical: dict) -> bool:
-    """Prove a broker request was consumed without using request time as account time."""
+    """Prove request consumption from effective time or exact screenshot provenance."""
     supplied = request.get("account_fact") if isinstance(request, dict) else None
     if not isinstance(supplied, dict):
         return False
-    if supplied.get("updated_at") != canonical.get("updated_at"):
+
+    same_effective_time = supplied.get("updated_at") == canonical.get("updated_at")
+    captured_at = parse_time(request.get("screenshot_captured_at_beijing"))
+    canonical_updated_at = parse_time(canonical.get("updated_at"))
+    same_screenshot_provenance = bool(
+        captured_at
+        and canonical_updated_at
+        and captured_at == canonical_updated_at
+        and supplied.get("source")
+        and supplied.get("source") == canonical.get("source")
+    )
+    # A request can be a duplicate envelope for the exact screenshot already
+    # consumed. In that case its market-time field may differ from the account
+    # capture/effective time; only the explicit capture timestamp + source
+    # provenance can establish equivalence. Request creation time is never used.
+    if not (same_effective_time or same_screenshot_provenance):
         return False
+    if same_screenshot_provenance and supplied.get("source") != canonical.get("source"):
+        return False
+
     scalar_keys = (
         "status", "last_confirmed_market_date", "total_asset", "stock_market_value",
         "cash", "holding_pnl", "daily_pnl", "daily_pnl_pct", "validity_mode",
+        "reserved_cash_for_settlement", "settlement_constraint_status",
     )
     for key in scalar_keys:
         if key in supplied and not _same_fact_value(supplied.get(key), canonical.get(key)):
             return False
     supplied_positions = supplied.get("positions")
     canonical_positions = canonical.get("positions")
-    if not isinstance(supplied_positions, list):
+    if not isinstance(supplied_positions, list) or not isinstance(canonical_positions, list):
         return False
-    if isinstance(supplied_positions, list):
-        if not isinstance(canonical_positions, list):
+    canonical_by_code = {
+        str(position.get("code") or ""): position
+        for position in canonical_positions
+        if isinstance(position, dict)
+    }
+    position_aliases = {"cost": "cost_price", "last_price": "current_price"}
+    for position in supplied_positions:
+        if not isinstance(position, dict):
             return False
-        canonical_by_code = {
-            str(position.get("code") or ""): position
-            for position in canonical_positions
-            if isinstance(position, dict)
-        }
-        for position in supplied_positions:
-            if not isinstance(position, dict):
-                return False
-            code = str(position.get("code") or "")
-            current = canonical_by_code.get(code)
-            if not code or current is None:
-                return False
-            for key, value in position.items():
-                if key not in current or not _same_fact_value(value, current.get(key)):
+        code = str(position.get("code") or "")
+        current = canonical_by_code.get(code)
+        if not code or current is None:
+            return False
+        for key, value in position.items():
+            if key == "asset_type" and value == "CONVERTIBLE_BOND":
+                if (
+                    current.get("asset_type") != "OTHER"
+                    or current.get("security_type") != "CONVERTIBLE_BOND"
+                ):
                     return False
+                continue
+            canonical_key = position_aliases.get(key, key)
+            if canonical_key not in current or not _same_fact_value(value, current.get(canonical_key)):
+                return False
     return True
 
 
