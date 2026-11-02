@@ -721,10 +721,14 @@ def main() -> int:
     lifecycle = decision_context.get("lifecycle_projection") or {}
     check("lifecycle:projection_present", lifecycle.get("status") == "READY" and isinstance(lifecycle.get("active_lifecycles"), list), f"status={lifecycle.get('status', 'MISSING')}")
     for item in lifecycle.get("active_lifecycles") or []:
-        complete = all(item.get(key) not in (None, "") for key in ("source_decision_id", "source_trade_event_id", "hypothesis_id", "start_market_date", "current_t_plus", "mandatory_decision_market_date", "next_lifecycle_node"))
-        check("lifecycle:source_and_clock", complete, f"code={item.get('security_code')} source_decision={item.get('source_decision_id')} source_trade={item.get('source_trade_event_id')}")
+        required_clock_fields = ("source_decision_id", "source_trade_event_id", "start_market_date", "current_t_plus", "mandatory_decision_market_date", "next_lifecycle_node")
+        clock_complete = all(item.get(key) not in (None, "") for key in required_clock_fields)
+        source_decision_id = str(item.get("source_decision_id") or "")
+        hypothesis_valid = item.get("hypothesis_id") not in (None, "") or source_decision_id.startswith("FORMAL_COMPLETION:")
+        check("lifecycle:source_and_clock", clock_complete and hypothesis_valid, f"code={item.get('security_code')} source_decision={source_decision_id} source_trade={item.get('source_trade_event_id')} hypothesis_id_present={item.get('hypothesis_id') not in (None, '')}")
         if item.get("decision_due"):
             check("lifecycle:due_exposed", item.get("next_lifecycle_node") == "TRADE_MANDATORY_LIFECYCLE_NODE:T+3", f"code={item.get('security_code')} due={item.get('decision_due')}")
+            check("lifecycle:overdue_exposed", isinstance(item.get("overdue"), bool), f"code={item.get('security_code')} overdue={item.get('overdue')}")
 
     for script_path in ("scripts/build_phase4_automation.py", "scripts/process_state_sync_request.py", "scripts/build_state_context.py", "scripts/build_query_context.py", "scripts/build_post_market_review.py", "scripts/lifecycle_state.py", "scripts/notification_center.py", "scripts/confirm_execution_reconciliation.py"):
         try:
