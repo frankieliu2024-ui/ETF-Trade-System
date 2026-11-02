@@ -28,6 +28,15 @@ def _credentials() -> tuple[str, str]:
 
 
 def persist_completion(target: Path) -> tuple[str, dict[str, object]]:
+    payload = json.loads(target.read_text(encoding="utf-8"))
+    binding = payload.get("presentation_binding") if isinstance(payload.get("presentation_binding"), dict) else {}
+    report_type = str(payload.get("report_type") or binding.get("report_type") or "").strip().upper()
+    if report_type == "ETF_FORMAL_DECISION":
+        try:
+            from scheduled_review_completion import validate_formal_runtime_completion_contract
+        except ModuleNotFoundError:
+            from scripts.scheduled_review_completion import validate_formal_runtime_completion_contract
+        validate_formal_runtime_completion_contract(payload, root=ROOT)
     token, repository = _credentials()
     relative = target.resolve().relative_to(ROOT).as_posix()
     owner, repo = repository.split("/", 1)
