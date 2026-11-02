@@ -353,18 +353,18 @@ def _explicit_reentry_answer(item: str) -> bool:
     This is a coverage check; it cannot establish the truth of market evidence.
     """
     triggers = ("如果当前没有", "若当前没有", "假设当前没有", "零持仓", "按当前价格重新买入", "从零进入", "从零重新进入", "从零重新配置")
-    for sentence in re.split(r"[。；;\n]", item):
+    for sentence in re.split(r"[。；;\\n]", item):
         if not any(term in sentence for term in triggers):
             continue
         # Merely asking whether to buy or saying that it needs comparing
         # is not a decision. Require an explicit yes/no commitment.
         if not re.search(
             r"(?:不会|不愿意|不选择|不考虑|不买入|不配置|暂不|不再)"
-            r"[^。；;\n]{0,24}(?:买入|配置|建仓|持有|投入)"
+            r"[^。；;\\n]{0,24}(?:买入|配置|建仓|持有|投入)"
             r"|(?:会|愿意|选择|决定|建议|应当)"
-            r"[^。；;\n]{0,24}(?:重新买入|买入|配置|建仓|持有|投入)"
-            r"|(?:愿意|不愿意|会|不会)[^。；;\n]{0,16}重新配置资本"
-            r"|(?:从零进入|从零重新进入|从零重新配置)[^。；;\n]{0,24}(?:不优|不具备|需重新证明|需新的)",
+            r"[^。；;\\n]{0,24}(?:重新买入|买入|配置|建仓|持有|投入)"
+            r"|(?:愿意|不愿意|会|不会)[^。；;\\n]{0,16}重新配置资本"
+            r"|(?:从零进入|从零重新进入|从零重新配置)[^。；;\\n]{0,24}(?:不优|不具备|需重新证明|需新的)",
             sentence,
         ):
             continue
@@ -374,9 +374,9 @@ def _explicit_reentry_answer(item: str) -> bool:
             return True
         # Existing compliant reports can state the reason before the
         # zero-position decision, linked by a semicolon or full stop.
-        preceding = item[:item.find(sentence)].rstrip("。；;\n ")
-        previous = re.split(r"[。；;\n]", preceding)[-1]
-        if previous and re.search(r"(?:因为|由于|基于|考虑到|鉴于)[^。；;\n]{6,}", previous):
+        preceding = item[:item.find(sentence)].rstrip("。；;\\n ")
+        previous = re.split(r"[。；;\\n]", preceding)[-1]
+        if previous and re.search(r"(?:因为|由于|基于|考虑到|鉴于)[^。；;\\n]{6,}", previous):
             return True
     return False
 
