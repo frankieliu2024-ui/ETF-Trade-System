@@ -762,29 +762,31 @@ def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | N
     if not isinstance(fact_binding, dict):
         raise ValueError("Formal Decision completion requires fact_binding")
     base = (root or ROOT).resolve()
-    current_path = base / "data" / "state" / "CURRENT.json"
-    if not current_path.exists():
-        raise ValueError("Formal Decision completion fact pointer CURRENT.json is unavailable")
-    current = json.loads(current_path.read_text(encoding="utf-8"))
-    snapshot_ref = str(current.get("latest_snapshot") or "").strip().replace("\\", "/")
-    snapshot_path = (base / snapshot_ref).resolve() if snapshot_ref else base / "__missing_snapshot__"
+    # Validate the snapshot pinned by the run, not whatever CURRENT points to
+    # later. CURRENT may legitimately advance between decision and handoff.
+    snapshot_ref = str(fact_binding.get("latest_snapshot") or "").strip().replace("\\", "/")
+    if not snapshot_ref:
+        raise ValueError("Formal Decision completion fact_binding missing latest_snapshot")
+    snapshot_path = (base / snapshot_ref).resolve()
     if base not in snapshot_path.parents or not snapshot_path.exists():
-        raise ValueError("Formal Decision completion latest snapshot pointer is invalid")
+        raise ValueError("Formal Decision completion bound snapshot pointer is invalid")
     snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
     expected_binding = {
-        "market_date": str(current.get("market_date") or "").strip(),
-        "latest_valid_node": str(current.get("latest_valid_node") or "").strip(),
+        "market_date": str(fact_binding.get("market_date") or "").strip(),
+        "latest_valid_node": str(fact_binding.get("latest_valid_node") or "").strip(),
         "latest_snapshot": snapshot_ref,
-        "captured_at_beijing": str(snapshot.get("captured_at_beijing") or snapshot.get("captured_at") or "").strip(),
-        "fact_status": str(current.get("node_status") or "").strip(),
+        "captured_at_beijing": str(fact_binding.get("captured_at_beijing") or "").strip(),
+        "fact_status": str(fact_binding.get("fact_status") or "").strip(),
     }
     for key, expected in expected_binding.items():
+        if not expected:
+            raise ValueError("Formal Decision completion fact_binding missing " + key)
         if str(fact_binding.get(key) or "").strip() != expected:
             raise ValueError("Formal Decision completion fact_binding mismatch: " + key)
     if str(snapshot.get("market_date") or "").strip() != expected_binding["market_date"]:
-        raise ValueError("Formal Decision completion snapshot market_date mismatch")
+        raise ValueError("Formal Decision completion bound snapshot market_date mismatch")
     if str(snapshot.get("quality_status") or "").strip().upper() != "PASS":
-        raise ValueError("Formal Decision completion snapshot quality is not PASS")
+        raise ValueError("Formal Decision completion bound snapshot quality is not PASS")
     return {
         "task_run_id": str(payload["task_run_id"]).strip(),
         "occurrence_id": str(payload["occurrence_id"]).strip(),
