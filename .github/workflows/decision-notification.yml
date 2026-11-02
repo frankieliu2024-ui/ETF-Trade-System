@@ -769,18 +769,7 @@ jobs:
             projection=$(python scripts/process_state_sync_request.py "$completion_path")
             REVIEW_EVENT_PATH=$(python -c 'import json,sys; print(json.loads(sys.argv[1]).get("canonical_publication", ""))' "$projection")
             if [ -z "$REVIEW_EVENT_PATH" ]; then
-              REVIEW_EVENT_PATH=$(python - "$completion_path" <<'PY'
-import json, sys
-p = json.load(open(sys.argv[1], encoding="utf-8"))
-b = p.get("presentation_binding") or {}
-report_type = str(p.get("report_type") or b.get("report_type") or "").strip().upper()
-task_run_id = str(b.get("task_run_id") or p.get("task_run_id") or "").strip()
-if report_type == "ETF_TRADE_REVIEW" and task_run_id:
-    print(f"events/reviews/trade-{task_run_id}.json")
-elif report_type == "ETF_SYSTEM_REVIEW" and task_run_id:
-    print(f"events/reviews/system_{task_run_id}.json")
-PY
-)
+              REVIEW_EVENT_PATH=$(python -c 'import json,sys; p=json.load(open(sys.argv[1])); b=p.get("presentation_binding") or {}; t=str(p.get("report_type") or b.get("report_type") or "").strip().upper(); r=str(b.get("task_run_id") or p.get("task_run_id") or "").strip(); print(("events/reviews/trade-"+r+".json") if t=="ETF_TRADE_REVIEW" and r else ("events/reviews/system_"+r+".json" if t=="ETF_SYSTEM_REVIEW" and r else ""))' "$completion_path")
             fi
             case "$REVIEW_EVENT_PATH" in
               events/reviews/*.json) ;;
