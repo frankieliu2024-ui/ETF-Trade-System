@@ -100,10 +100,11 @@ def _completion_trial_decisions(root: Path, executions: list[dict[str, Any]]) ->
             continue
         content = str(completion.get("final_content") or "")
         code = str(execution.get("code") or "")
-        if not code or not any(
-            code in section and ("Trial评估成立" in section or "达到Trial评估标准" in section)
-            for section in (content.split("【机会ETF逐只评估】")[1].split("【")[0:1]
-                            if "【机会ETF逐只评估】" in content else [])
+        if "【机会ETF逐只评估】" not in content:
+            continue
+        opportunity_section = content.split("【机会ETF逐只评估】", 1)[1].split("【", 1)[0]
+        if code not in opportunity_section or not any(
+            phrase in opportunity_section for phrase in ("Trial评估成立", "达到Trial评估标准")
         ):
             continue
         result.append({
@@ -198,6 +199,8 @@ def build_lifecycle_projection(root: Path, as_of_market_date: str | None = None)
                 )
             )
         ]
+        if decision.get("_completion_trial"):
+            linked = [x for x in linked if x.get("event_id") == decision.get("_linked_execution_id")]
         if not linked:
             # A decision alone is not a real position lifecycle.
             continue
