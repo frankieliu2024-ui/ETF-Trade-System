@@ -93,21 +93,49 @@ def _discovery_delta_identity(root: Path) -> str:
     return hashlib.sha256(json.dumps(semantic, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()[:16]
 
 
+def _same_node_persisted_formal_discovery(root: Path, current: dict, universe_identity: str) -> dict | None:
+    """Return an existing valid Discovery instead of treating a downstream rebuild as absence.
+
+    Query/state rebuilds may not run Discovery.  In that case they must carry
+    forward the latest terminal same-node result; writing NOT_REQUESTED over a
+    valid result would make a later Formal Decision consume a false absence.
+    """
+    sources: list[dict] = []
+    projection = read_json(root / "data" / "state" / "formal_discovery_current.json", {})
+    if isinstance(projection, dict):
+        sources.append(projection)
+    query = read_json(root / "data" / "state" / "query_context.json", {})
+    query_discovery = query.get("formal_etf_discovery") if isinstance(query, dict) else None
+    if isinstance(query_discovery, dict):
+        sources.append(query_discovery)
+
+    current_market_date = str(current.get("market_date") or "")
+    current_node = str(current.get("latest_valid_node") or "")
+    current_snapshot = str(current.get("latest_snapshot") or "")
+    current_delta = _discovery_delta_identity(root)
+    for discovery in sources:
+        if str(discovery.get("status") or "").upper() != "READY":
+            continue
+        if str(discovery.get("market_date") or "") != current_market_date:
+            continue
+        if str(discovery.get("latest_valid_node") or "") != current_node:
+            continue
+        discovery_snapshot = str(discovery.get("latest_snapshot") or "")
+        if discovery_snapshot and current_snapshot and discovery_snapshot != current_snapshot:
+            continue
+        discovery_universe = str(discovery.get("universe_identity") or "")
+        if universe_identity and discovery_universe and discovery_universe != universe_identity:
+            continue
+        discovery_delta = str(discovery.get("discovery_delta_identity") or "")
+        if discovery_delta and current_delta and discovery_delta != current_delta:
+            continue
+        return dict(discovery)
+    return None
+
 def _reusable_formal_discovery(root: Path, current: dict, universe_identity: str, managed_codes: set[str]) -> dict | None:
     """Reuse a terminal result only when it belongs to the same legal market node."""
-    prior = read_json(root / "data" / "state" / "query_context.json", {})
-    discovery = prior.get("formal_etf_discovery") or {}
-    if str(discovery.get("status") or "").upper() != "READY":
-        return None
-    prior_current = prior.get("current") or {}
-    if str(prior.get("market_date") or prior_current.get("market_date") or "") != str(current.get("market_date") or ""):
-        return None
-    if str(prior.get("latest_valid_node") or prior_current.get("latest_valid_node") or "") != str(current.get("latest_valid_node") or ""):
-        return None
-    if str(discovery.get("universe_identity") or "") != universe_identity:
-        return None
-    prior_delta_identity = str(discovery.get("discovery_delta_identity") or "")
-    if not prior_delta_identity or prior_delta_identity != _discovery_delta_identity(root):
+    discovery = _same_node_persisted_formal_discovery(root, current, universe_identity)
+    if discovery is None:
         return None
     reused = dict(discovery)
     candidates = []
@@ -1647,7 +1675,7 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
         if x.get("code") or x.get("symbol") or x.get("security_code")
     )
     held_etf_codes = {str(x) for x in active_account_asset_codes(root, account).get("etf", set())}
-    formal_discovery = {"status": "NOT_REQUESTED", "candidates": []}
+    formal_discovery = _same_node_persisted_formal_discovery(root, current, universe_identity) or {"status": "NOT_REQUESTED", "candidates": []}
     weekly_formal_discovery = read_json(
         root / "data" / "state" / "weekly_formal_discovery.json",
         {
