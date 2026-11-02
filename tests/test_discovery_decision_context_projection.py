@@ -6,6 +6,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import build_state_context as state_context
+import build_query_context as query_context
 
 
 def write_json(path: Path, value: dict) -> None:
@@ -95,3 +96,49 @@ def test_compact_projection_snapshot_mismatch_fails_closed(tmp_path):
         "candidates": [{"code": "159303"}],
     })
     assert state_context.load_node_local_formal_discovery(tmp_path, current) is None
+
+
+def test_context_rebuild_preserves_same_node_ready_discovery(tmp_path):
+    current = {
+        "market_date": "2026-09-21",
+        "latest_valid_node": "close",
+        "latest_snapshot": "data/market/snapshots/2026-09-21_151500.json",
+    }
+    discovery = {
+        "status": "READY",
+        "market_date": current["market_date"],
+        "latest_valid_node": current["latest_valid_node"],
+        "latest_snapshot": current["latest_snapshot"],
+        "universe_identity": "same-universe",
+        "discovery_delta_identity": "",
+        "candidates": [{"code": "159303"}],
+    }
+    write_json(tmp_path / "data/state/formal_discovery_current.json", discovery)
+    write_json(tmp_path / "data/state/query_context.json", {
+        "market_date": current["market_date"],
+        "latest_valid_node": current["latest_valid_node"],
+        "formal_etf_discovery": {"status": "NOT_REQUESTED", "candidates": []},
+    })
+
+    assert query_context._same_node_persisted_formal_discovery(
+        tmp_path, current, "same-universe"
+    ) == discovery
+
+
+def test_context_rebuild_rejects_ready_discovery_from_other_node(tmp_path):
+    current = {
+        "market_date": "2026-09-21",
+        "latest_valid_node": "close",
+        "latest_snapshot": "data/market/snapshots/2026-09-21_151500.json",
+    }
+    write_json(tmp_path / "data/state/formal_discovery_current.json", {
+        "status": "READY",
+        "market_date": current["market_date"],
+        "latest_valid_node": "close",
+        "latest_snapshot": "data/market/snapshots/2026-09-20_151500.json",
+        "candidates": [{"code": "159303"}],
+    })
+
+    assert query_context._same_node_persisted_formal_discovery(
+        tmp_path, current, ""
+    ) is None
