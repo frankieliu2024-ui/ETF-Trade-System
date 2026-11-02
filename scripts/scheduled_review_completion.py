@@ -713,6 +713,76 @@ if __name__ == "__main__":
 
 
 
+def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | None = None) -> dict:
+    """Fail closed before a Formal Decision completion can enter the notification chain.
+
+    The completion must bind the frozen presentation to the exact current-main
+    fact pointer consumed by the decision. This prevents an old snapshot from
+    being delivered as a current run while preserving the existing immutable
+    body/hash contract.
+    """
+    if not isinstance(payload, dict):
+        raise ValueError("Formal Decision completion must be an object")
+    binding = payload.get("presentation_binding")
+    if not isinstance(binding, dict):
+        raise ValueError("Formal Decision completion requires presentation_binding")
+    if str(payload.get("task_id") or binding.get("task_id") or "").strip() != "ETF正式决策":
+        raise ValueError("Formal Decision completion task identity mismatch")
+    if str(payload.get("report_type") or binding.get("report_type") or "").strip().upper() != "ETF_FORMAL_DECISION":
+        raise ValueError("Formal Decision completion report identity mismatch")
+    for key in ("task_run_id", "occurrence_id", "request_id", "requested_at_beijing", "market_date", "decision_path"):
+        if not str(payload.get(key) or "").strip():
+            raise ValueError("Formal Decision completion missing " + key)
+    content = str(payload.get("final_content") or "")
+    bound_content = str(binding.get("full_content") or "")
+    if not content or not bound_content or bound_content != content:
+        raise ValueError("Formal Decision completion frozen content is missing or mismatched")
+    validate_user_visible_content(content, canonical_closure_confirmed=False)
+    validate_formal_decision_presentation_timestamp(content, str(payload["requested_at_beijing"]))
+    title = content.splitlines()[0].strip() if content.splitlines() else ""
+    expected_label = {
+        "formal": "正式判断",
+        "degraded": "降级判断",
+        "timeout": "超时判断",
+    }.get(str(payload["decision_path"]).strip().lower())
+    if expected_label and not title.endswith(expected_label):
+        raise ValueError("Formal Decision completion decision_path does not match title")
+    fact_binding = payload.get("fact_binding")
+    if not isinstance(fact_binding, dict):
+        raise ValueError("Formal Decision completion requires fact_binding")
+    base = (root or ROOT).resolve()
+    current_path = base / "data" / "state" / "CURRENT.json"
+    if not current_path.exists():
+        raise ValueError("Formal Decision completion fact pointer CURRENT.json is unavailable")
+    current = json.loads(current_path.read_text(encoding="utf-8"))
+    snapshot_ref = str(current.get("latest_snapshot") or "").strip().replace("\\", "/")
+    snapshot_path = (base / snapshot_ref).resolve() if snapshot_ref else base / "__missing_snapshot__"
+    if base not in snapshot_path.parents or not snapshot_path.exists():
+        raise ValueError("Formal Decision completion latest snapshot pointer is invalid")
+    snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+    expected_binding = {
+        "market_date": str(current.get("market_date") or "").strip(),
+        "latest_valid_node": str(current.get("latest_valid_node") or "").strip(),
+        "latest_snapshot": snapshot_ref,
+        "captured_at_beijing": str(snapshot.get("captured_at_beijing") or snapshot.get("captured_at") or "").strip(),
+        "fact_status": str(current.get("node_status") or "").strip(),
+    }
+    for key, expected in expected_binding.items():
+        if str(fact_binding.get(key) or "").strip() != expected:
+            raise ValueError("Formal Decision completion fact_binding mismatch: " + key)
+    if str(snapshot.get("market_date") or "").strip() != expected_binding["market_date"]:
+        raise ValueError("Formal Decision completion snapshot market_date mismatch")
+    if str(snapshot.get("quality_status") or "").strip().upper() != "PASS":
+        raise ValueError("Formal Decision completion snapshot quality is not PASS")
+    return {
+        "task_run_id": str(payload["task_run_id"]).strip(),
+        "occurrence_id": str(payload["occurrence_id"]).strip(),
+        "request_id": str(payload["request_id"]).strip(),
+        "decision_path": str(payload["decision_path"]).strip().lower(),
+        "fact_binding": dict(fact_binding),
+    }
+
+
 def build_formal_runtime_completion_request(
     *,
     run_identity: dict,
@@ -760,6 +830,11 @@ def build_formal_runtime_completion_request(
         "decision_path": path,
         "fact_source": "CURRENT_MAIN_LATEST_VALID_FIXED_PERIOD_FACTS",
         "fact_summary": fact_summary if isinstance(fact_summary, dict) else {},
+        "fact_binding": (
+            fact_summary.get("fact_binding")
+            if isinstance(fact_summary, dict) and isinstance(fact_summary.get("fact_binding"), dict)
+            else {}
+        ),
         "decision_id": decision_id,
         "presentation_binding": {
             "report_type": "ETF_FORMAL_DECISION",
