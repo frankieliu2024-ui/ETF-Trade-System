@@ -62,9 +62,10 @@ def dispatch_notification(completion_path: str, *, force_resend: bool = False) -
     token, repository = _credentials()
     owner, repo = repository.split("/", 1)
     endpoint = f"https://api.github.com/repos/{owner}/{repo}/actions/workflows/decision-notification.yml/dispatches"
-    inputs = {"scheduled_review_completion_path": completion_path}
-    if force_resend:
-        inputs["force_resend"] = "true"
+    inputs = {
+        "scheduled_review_completion_path": completion_path,
+        "force_resend": "true" if force_resend else "false",
+    }
     payload = json.dumps({"ref": "main", "inputs": inputs}).encode("utf-8")
     headers = {"Accept": "application/vnd.github+json", "Authorization": f"Bearer {token}", "Content-Type": "application/json", "X-GitHub-Api-Version": "2022-11-28"}
     with urllib_request.urlopen(urllib_request.Request(endpoint, data=payload, method="POST", headers=headers), timeout=30) as response:
