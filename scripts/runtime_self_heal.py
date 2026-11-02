@@ -234,7 +234,7 @@ def formal_parent_handoff_gap(*, allow_manual: bool = True) -> tuple[str | None,
         completion = completion or (
             request_type == "SCHEDULED_REVIEW_COMPLETION"
             and source == "CHATGPT_DIRECT_GITHUB_CONTENTS_WRITER"
-            and fact_type in {"FORMAL_POST_CLOSE_REVIEW", "FORMAL_CURRENT_MAIN_DECISION"}
+            and fact_type == "FORMAL_CURRENT_MAIN_DECISION"
             and report_type == "ETF_FORMAL_DECISION"
         )
     event_found = False
