@@ -734,9 +734,14 @@ def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | N
         raise ValueError("Formal Decision completion scenario mismatch")
     if str(payload.get("formal_fact_type") or "").strip().upper() not in {"FORMAL_POST_CLOSE_REVIEW", "FORMAL_CURRENT_MAIN_DECISION"}:
         raise ValueError("Formal Decision completion fact type mismatch")
+    if not str(payload.get("report_id") or binding.get("report_id") or "").strip():
+        raise ValueError("Formal Decision completion missing report_id")
     for key in ("task_run_id", "occurrence_id", "request_id", "requested_at_beijing", "market_date", "decision_path"):
         if not str(payload.get(key) or "").strip():
             raise ValueError("Formal Decision completion missing " + key)
+    for key in ("task_run_id", "occurrence_id", "request_id"):
+        if any(part in str(payload.get(key) or "") for part in ("/", "\\", "..")):
+            raise ValueError("Formal Decision completion identity is not path-safe")
     content = str(payload.get("final_content") or "")
     bound_content = str(binding.get("full_content") or "")
     if not content or not bound_content or bound_content != content:
