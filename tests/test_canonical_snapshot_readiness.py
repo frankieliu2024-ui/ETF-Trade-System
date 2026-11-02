@@ -13,6 +13,15 @@ class CanonicalSnapshotReadinessTests(unittest.TestCase):
         self.assertIn("non-consumable row", source)
         self.assertIn("row missing timestamp", source)
 
+
+    def test_failed_snapshot_does_not_advance_current_or_bypass_other_objects(self):
+        source = (ROOT / "scripts" / "cloud_runner_snapshot.py").read_text(encoding="utf-8")
+        self.assertNotIn("PRIMARY_RUN_BYPASS", source)
+        guard_pos = source.index("snapshot contains non-consumable rows; previous CURRENT preserved")
+        update_pos = source.index("update_current(root=ROOT, market_date=market_date")
+        self.assertLess(guard_pos, update_pos)
+        self.assertIn("failed_symbols = ", source)
+
     def test_failure_is_fail_closed_before_health_is_written(self):
         source = (ROOT / "scripts" / "cloud_runner_snapshot.py").read_text(encoding="utf-8")
         verify_pos = source.index("verify_published_snapshot(target")
