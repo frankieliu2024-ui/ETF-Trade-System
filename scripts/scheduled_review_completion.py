@@ -730,6 +730,10 @@ def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | N
         raise ValueError("Formal Decision completion task identity mismatch")
     if str(payload.get("report_type") or binding.get("report_type") or "").strip().upper() != "ETF_FORMAL_DECISION":
         raise ValueError("Formal Decision completion report identity mismatch")
+    if str(payload.get("interaction_scenario") or "").strip().upper() != "FORMAL_DECISION":
+        raise ValueError("Formal Decision completion scenario mismatch")
+    if str(payload.get("formal_fact_type") or "").strip().upper() not in {"FORMAL_POST_CLOSE_REVIEW", "FORMAL_CURRENT_MAIN_DECISION"}:
+        raise ValueError("Formal Decision completion fact type mismatch")
     for key in ("task_run_id", "occurrence_id", "request_id", "requested_at_beijing", "market_date", "decision_path"):
         if not str(payload.get(key) or "").strip():
             raise ValueError("Formal Decision completion missing " + key)
