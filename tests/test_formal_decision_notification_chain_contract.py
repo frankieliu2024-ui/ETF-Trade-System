@@ -311,6 +311,7 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
         formal_end = workflow.index("Persist Formal Decision canonical review event", formal_start)
         formal_block = workflow[formal_start:formal_end]
         self.assertNotIn('process_state_sync_request.py "$COMPLETION_PATH"', formal_block)
+        self.assertIn("PYTHONPATH=scripts python", formal_block)
 
     def test_formal_completion_persistence_has_current_fact_gate(self):
         owner = (ROOT / "scripts" / "scheduled_review_completion_owner.py").read_text(encoding="utf-8")
