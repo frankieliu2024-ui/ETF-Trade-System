@@ -124,7 +124,10 @@ def _dispatch_notification(completion_path: str) -> dict[str, object]:
         return {"submitted": False, "reason": "invalid GITHUB_REPOSITORY"}
     payload = json.dumps({
         "ref": "main",
-        "inputs": {"scheduled_review_completion_path": completion_path},
+        "inputs": {
+            "scheduled_review_completion_path": completion_path,
+            "force_resend": "false",
+        },
     }).encode("utf-8")
     base = "https://api.github.com/repos/" + owner + "/" + repo
     dispatch_endpoint = base + "/actions/workflows/decision-notification.yml/dispatches"
@@ -154,7 +157,12 @@ def _dispatch_notification(completion_path: str) -> dict[str, object]:
                 if not created_at:
                     continue
                 created = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
-                if created >= dispatched_at and str(run.get("event") or "") == "workflow_dispatch" and str(run.get("head_branch") or "") == "main":
+                if (
+                    created >= dispatched_at
+                    and str(run.get("event") or "") == "workflow_dispatch"
+                    and str(run.get("head_branch") or "") == "main"
+                    and str(run.get("name") or "") == f"ETF decision notification — {completion_path}"
+                ):
                     return {
                         "submitted": True,
                         "run_id": run.get("id"),
@@ -236,13 +244,11 @@ def main() -> int:
         failed = ", ".join(key for key, ok in checks.items() if not ok)
         raise RuntimeError(f"trade review completion readback mismatch: {failed}")
     persisted_path, persistence = _persist_completion_to_main(Path(target))
-    push_started_at = datetime.now(timezone.utc)
     canonical_path = persisted_path
-    # A generic push-triggered run is only a wake signal and is not bound to
-    # this completion. It must never satisfy the handoff gate.
-    push = _wait_for_completion_push(canonical_path, push_started_at)
+    # Passive push wakes are not completion proof. Explicit workflow dispatch
+    # is the primary handoff path for this completion.
     dispatch = _dispatch_notification(canonical_path)
-    dispatch["fallback_after"] = "PUSH_WAKE_NOT_ACCEPTED_AS_COMPLETION_PROOF"
+    dispatch["explicit_workflow_dispatch"] = True
     # Same-run hard gate: completion persistence alone is not a successful
     # handoff. The actor must dispatch the canonical notification workflow and
     # read back the matching run before reporting success.
