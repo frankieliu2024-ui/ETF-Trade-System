@@ -74,7 +74,7 @@ def _security_identity_errors(content: str, security_map: dict[str, str]) -> lis
 
 
 def _presentation_structure_errors(text: str) -> list[str]:
-    """Validate section-local numbering without forcing single paragraphs to be numbered."""
+    """Validate section-local primary/secondary numbering."""
     errors: list[str] = []
     current_heading = ""
     section_top: list[int] = []
@@ -109,31 +109,27 @@ def _presentation_structure_errors(text: str) -> list[str]:
             flush_section()
             current_heading = stripped
             continue
-        if re.match(r"^\\d+\\.\\S", stripped):
+        if re.match(r"^\d+\.\S", stripped):
             errors.append("primary numbering requires a space after the marker")
-        if re.match(r"^\\d+）\\S", stripped):
-            # The frozen presentation contract permits the compact Chinese
-            # marker 1） as well as 1） followed by a space.
-            pass
+        if re.match(r"^(?:（\d+）|\d+）)\S", stripped):
+            errors.append("secondary numbering requires a space after the marker")
 
-        primary = re.match(r"^(\\d+)\\.\\s+", stripped)
-        secondary = re.match(r"^(\\d+)）(?:\\s+)?\\S", stripped)
+        primary = re.match(r"^(\d+)\.\s+\S", stripped)
+        secondary = re.match(r"^(?:（(\d+)）|(\d+)）(?:\s+)?\S", stripped)
         if primary:
-            if not current_heading:
-                errors.append("numbered items must follow a section heading")
             flush_parent()
-            value = int(primary.group(1))
-            section_top.append(value)
-            parent_top = value
+            section_top.append(int(primary.group(1)))
+            parent_top = int(primary.group(1))
             continue
         if secondary:
             if parent_top is None:
                 errors.append("secondary numbering must follow a primary item")
-            parent_secondary.append(int(secondary.group(1)))
+            parent_secondary.append(int(secondary.group(1) or secondary.group(2)))
             continue
 
     flush_section()
     return list(dict.fromkeys(errors))
+
 def _single_item_numbering_errors(text: str) -> list[str]:
     """Reject artificial numbering when a section has one complete item."""
     errors: list[str] = []
@@ -142,7 +138,13 @@ def _single_item_numbering_errors(text: str) -> list[str]:
 
     def flush() -> None:
         nonlocal top_level_count
-        if current_heading and top_level_count == 1:
+        object_sections = {
+            "【全市场发现逐只评估】",
+            "【观察ETF逐只评估】",
+            "【机会ETF逐只评估】",
+            "【全部实际持仓】",
+        }
+        if current_heading and current_heading not in object_sections and top_level_count == 1:
             errors.append(
                 f"single-item section must not use primary numbering: {current_heading}"
             )
@@ -161,7 +163,7 @@ def _single_item_numbering_errors(text: str) -> list[str]:
 
 
 def _formal_object_numbering_errors(text: str) -> list[str]:
-    """Require per-object coverage and section-local Chinese numbering for Formal Decision."""
+    """Require one primary numbered paragraph per object in the four object sections."""
     target_headings = {
         "【全市场发现逐只评估】",
         "【观察ETF逐只评估】",
@@ -171,38 +173,44 @@ def _formal_object_numbering_errors(text: str) -> list[str]:
     errors: list[str] = []
     current = ""
     entries: list[str] = []
+
+    def flush() -> None:
+        if current not in target_headings:
+            return
+        primary = [item for item in entries if re.match(r"^\d+\.\s+\S", item)]
+        legacy_object = [
+            item for item in entries
+            if re.match(r"^\d+）(?:\s+)?[^：\n]{1,80}（\d{6}）：", item)
+        ]
+        decimal = [item for item in entries if re.match(r"^\d+\.\d+\s+", item)]
+        explicit_zero = (
+            current == "【机会ETF逐只评估】"
+            and _has_any(
+                "\n".join(entries),
+                ("0只", "未形成机会对象", "暂无机会对象", "没有形成机会对象"),
+            )
+        )
+        if decimal:
+            errors.append(f"object section must not use decimal numbering: {current}")
+        if legacy_object:
+            errors.append(f"object list must use primary numbering 1., 2., 3.：{current}")
+        if entries and not primary and not explicit_zero:
+            errors.append(f"object section requires one separately numbered paragraph per object: {current}")
+        if primary:
+            nums = [int(re.match(r"^(\d+)\.", item).group(1)) for item in primary]
+            if nums != list(range(1, len(nums) + 1)):
+                errors.append(f"object numbering must restart at 1 and be sequential: {current}")
+
     for line in text.splitlines() + ["【__END__】"]:
         stripped = line.strip()
         if stripped.startswith("【") and stripped.endswith("】"):
-            if current in target_headings:
-                numbered = [item for item in entries if re.match(r"^\d+）(?:\s+)?\S", item)]
-                bad_primary = [item for item in entries if re.match(r"^\d+\.\s+", item)]
-                bad_decimal = [item for item in entries if re.match(r"^\d+\.\d+\s+", item)]
-                if bad_decimal:
-                    errors.append(f"object section must not use decimal numbering: {current}")
-                if bad_primary:
-                    errors.append(f"object list must use secondary numbering 1）、2）、3）：{current}")
-                if entries and not numbered:
-                    explicit_zero_opportunities = (
-                        current == "【机会ETF逐只评估】"
-                        and _has_any(
-                            "\n".join(entries),
-                            ("0只", "未形成机会对象", "暂无机会对象", "没有形成机会对象"),
-                        )
-                    )
-                    if not explicit_zero_opportunities:
-                        errors.append(f"object section requires one separately numbered paragraph per object: {current}")
-                if numbered:
-                    nums = [int(re.match(r"^(\d+)）", item).group(1)) for item in numbered]
-                    if nums != list(range(1, len(nums) + 1)):
-                        errors.append(f"object numbering must restart at 1 and be sequential: {current}")
+            flush()
             current = stripped
             entries = []
             continue
         if current in target_headings and stripped:
             entries.append(stripped)
-    return errors
-
+    return list(dict.fromkeys(errors))
 
 def _formal_required_sections_errors(text: str) -> list[str]:
     if not text.startswith("【ETF正式决策】"):
@@ -213,8 +221,11 @@ def _formal_required_sections_errors(text: str) -> list[str]:
         "【机会ETF逐只评估】", "【全市场机会与资本竞争】", "【现金管理】",
         "【全部实际持仓】", "【最终管理动作】", "【关键风险与改变判断的条件】",
         "【信息不足在哪里】", "【执行边界】", "【置信度】", "【最可能出错的地方】",
+        "【执行状态】",
     )
     return [f"Formal Decision missing required section: {heading}" for heading in required if heading not in text]
+    if "【后置交接状态】" in text:
+        return ["technical handoff state must not be included in Formal Decision body"]
 
 
 def _time_presentation_errors(text: str) -> list[str]:
@@ -267,7 +278,7 @@ def _formal_holding_items(section: str) -> list[str]:
     current: list[str] = []
     for line in str(section or "").splitlines():
         stripped = line.strip()
-        numbered = bool(re.match(r"^(?:\d+[）)]|（\d+）)\s*", stripped))
+        numbered = bool(re.match(r"^(?:\d+\.\s+|\d+[）)]\s*|（\d+）\s*)", stripped))
         named = bool(re.match(r"^(?:\d+[）)]\s*|（\d+）\s*)?[^：\n]{1,50}（\d{6}）：", stripped))
         if numbered or named:
             if current:
@@ -372,7 +383,7 @@ def formal_decision_semantic_errors(content: str) -> list[str]:
             errors.append(prefix + "missing_hold_cash_opportunity_comparison")
         if not _has_any(item, ("若", "如果", "当")):
             errors.append(prefix + "missing_change_condition")
-        if not _has_any(item, ("继续持有", "持有管理")):
+        if not _has_any(item, ("继续持有", "持有管理", "持有观察", "小仓持有", "保留持仓", "按其他证券持有")):
             errors.append(prefix + "missing_hold_alternative")
         if "追加" not in item:
             errors.append(prefix + "missing_add_alternative")
@@ -382,7 +393,7 @@ def formal_decision_semantic_errors(content: str) -> list[str]:
             errors.append(prefix + "missing_exit_alternative")
         if not _explicit_reentry_answer(item):
             errors.append(prefix + "missing_answered_zero_base_reentry_counterfactual")
-        holding_action = _has_any(item, ("继续持有", "持有管理")) and not _has_any(item, ("建议减持", "建议退出", "建议全部退出", "建议全部清仓"))
+        holding_action = _has_any(item, ("继续持有", "持有管理", "持有观察", "小仓持有", "保留持仓", "按其他证券持有")) and not _has_any(item, ("建议减持", "建议退出", "建议全部退出", "建议全部清仓"))
         if holding_action:
             if not _has_any(item, ("继续占资", "继续配置", "保留该持仓")) or not _has_any(item, ("优于", "胜出", "更优")):
                 errors.append(prefix + "missing_affirmative_hold_over_release_reason")
@@ -398,15 +409,24 @@ def formal_decision_semantic_errors(content: str) -> list[str]:
     # Compare all three deployment alternatives for every opportunity object,
     # rather than allowing one generic paragraph to cover an entire section.
     opportunity_items = _formal_holding_items(opportunity_section)
-    if not opportunity_items and not _has_any(opportunity_section, ("0只", "未形成机会对象", "暂无机会对象", "没有形成机会对象")):
+    explicit_zero_opportunities = _has_any(
+        opportunity_section,
+        ("0只", "未形成机会对象", "暂无机会对象", "没有形成机会对象"),
+    )
+    if not opportunity_items and not explicit_zero_opportunities:
         errors.append("formal_presentation_opportunity_missing_explicit_zero_or_object_count")
-    if not opportunity_items:
-        opportunity_items = [opportunity_section]
+    if not opportunity_items and explicit_zero_opportunities:
+        if not _has_any(opportunity_section, ("Trial", "试探性部署")):
+            errors.append("formal_presentation_zero_opportunity_missing_trial_boundary")
+        if not _has_any(opportunity_section, ("Confirm", "确认部署")):
+            errors.append("formal_presentation_zero_opportunity_missing_confirm_boundary")
+        if "0元" not in opportunity_section:
+            errors.append("formal_presentation_zero_opportunity_missing_zero_deployment")
     for index, item in enumerate(opportunity_items, start=1):
         prefix = f"formal_presentation_opportunity_{index}_"
-        if "Trial" not in item:
+        if not _has_any(item, ("Trial", "试探性部署")):
             errors.append(prefix + "missing_trial_review")
-        if "Confirm" not in item:
+        if not _has_any(item, ("Confirm", "确认部署")):
             errors.append(prefix + "missing_direct_confirm_review")
         if "0元" not in item:
             errors.append(prefix + "missing_zero_deployment_comparison")
@@ -417,7 +437,7 @@ def formal_decision_semantic_errors(content: str) -> list[str]:
         if not _has_any(item, ("下一复核节点", "下次正式决策", "下一次正式决策", "最近复核节点", "下一节点")):
             errors.append(prefix + "missing_next_review_node")
 
-    if not _has_any(text, ("1）", "2）", "3）", "（1）", "（2）", "（3）")):
+    if not re.search(r"(?m)^\d+\.\s+|(?m)^（\d+）(?:\s+)?\S", text):
         errors.append("formal_presentation_missing_secondary_numbering")
     return errors
 
