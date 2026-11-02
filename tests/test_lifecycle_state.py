@@ -93,6 +93,33 @@ class LifecycleStateTests(unittest.TestCase):
         self.assertEqual(item["lifecycle_status"], "RESOLVED")
         self.assertFalse(item["decision_due"])
 
+    def test_completion_linked_trial_without_hypothesis_is_due_and_overdue(self):
+        request_id = "formal-completion-generic-trial"
+        write(self.root, f"requests/live_snapshot/{request_id}__scheduled_review_completion.json", {
+            "request_id": request_id,
+            "report_type": "ETF_FORMAL_DECISION",
+            "requested_at_beijing": "2026-10-26T15:20:00+08:00",
+            "final_content": "【机会ETF逐只评估】\\n1. 通用试探ETF（159057）：Trial评估成立。",
+        })
+        write(self.root, "events/trades/completion-buy-159057.json", {
+            "event_id": "completion-buy-159057",
+            "code": "159057",
+            "name": "通用试探ETF",
+            "side": "BUY",
+            "execution_status": "EXECUTED",
+            "execution_date": "2026-10-26",
+            "linked_decision_id": f"FORMAL_COMPLETION:{request_id}",
+            "quantity": 100,
+        })
+        result = build_lifecycle_projection(self.root, "2026-11-02")
+        self.assertEqual(len(result["active_lifecycles"]), 1)
+        item = result["active_lifecycles"][0]
+        self.assertEqual(item["source_decision_id"], f"FORMAL_COMPLETION:{request_id}")
+        self.assertIsNone(item["hypothesis_id"])
+        self.assertTrue(item["decision_due"])
+        self.assertTrue(item["overdue"])
+        self.assertEqual(item["next_lifecycle_node"], "TRADE_MANDATORY_LIFECYCLE_NODE:T+3")
+
     def test_partial_sell_does_not_resolve_linked_trial(self):
         self.add_trial(hypothesis="H-partial")
         write(self.root, "events/trades/sell-partial.json", {
