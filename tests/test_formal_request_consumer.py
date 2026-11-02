@@ -119,8 +119,10 @@ class FormalRequestConsumerLifecycleTests(unittest.TestCase):
         self.assertFalse(state["user_output_allowed"])
         self.assertTrue(state["business_decision_allowed"])
         self.assertTrue(state["final_content_generation_allowed"])
-        self.assertFalse(state["ready_handoff"]["user_reply_precondition"])
-        self.assertTrue(state["ready_handoff"]["post_reply_async"])
+        self.assertTrue(state["ready_handoff"]["user_reply_precondition"])
+        self.assertTrue(state["ready_handoff"]["required"])
+        self.assertTrue(state["ready_handoff"]["must_read_back_before_reply"])
+        self.assertFalse(state["ready_handoff"]["post_reply_async"])
 
 
     def test_ready_exposes_exact_dwp_problem_checklist_before_presentation(self):
