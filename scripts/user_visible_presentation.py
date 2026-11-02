@@ -205,12 +205,12 @@ def _formal_object_numbering_errors(text: str) -> list[str]:
                 errors.append(f"object numbering must restart at 1 and be sequential: {current}")
             primary_positions = [
                 index for index, item in enumerate(entries)
-                if re.match(r"^\\d+\\.\\s+\\S", item)
+                if re.match(r"^\d+\.\s+\S", item)
             ]
             for position, start in enumerate(primary_positions):
                 end = primary_positions[position + 1] if position + 1 < len(primary_positions) else len(entries)
                 has_secondary = any(
-                    re.match(r"^(?:（\\d+）|\\d+）)\\s+\\S", item)
+                    re.match(r"^(?:（\d+）|\d+）)\s+\S", item)
                     for item in entries[start + 1:end]
                 )
                 if not has_secondary:
