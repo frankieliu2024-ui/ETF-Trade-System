@@ -177,6 +177,47 @@ class LifecycleStateTests(unittest.TestCase):
         self.assertEqual(result["status"], "RESOLVED")
         self.assertEqual(result["resolution_event_ids"], ["sell1"])
 
+    def test_observation_only_candidate_with_trial_permission_is_not_trial(self):
+        write(self.root, "events/decisions/observation-only.json", {
+            "decision_id": "observation-only", "candidate_code": "518880",
+            "candidate_name": "黄金ETF", "hypothesis_id": "H518880",
+            "formal_decision": {
+                "risk_permission": "允许Trial",
+                "lifecycle": "通信ETF（515880）原Trial退出；黄金ETF（518880）继续观察。",
+                "main_candidate": "黄金ETF（518880）—观察，尚未达到执行。",
+                "amount_action": "新增买入0元",
+            },
+        })
+        write(self.root, "events/trades/observation-only-buy.json", {
+            "event_id": "observation-only-buy", "linked_decision_id": "observation-only",
+            "hypothesis_id": "H518880", "execution_status": "EXECUTED",
+            "execution_date": "2026-09-03", "code": "518880", "side": "BUY", "quantity": 500,
+        })
+        self.assertEqual(build_lifecycle_projection(self.root)["active_lifecycles"], [])
+
+    def test_completion_trial_accepts_explicit_followup_decision(self):
+        request_id = "formal-completion-followup"
+        write(self.root, f"requests/live_snapshot/{request_id}__scheduled_review_completion.json", {
+            "request_id": request_id, "report_type": "ETF_FORMAL_DECISION",
+            "requested_at_beijing": "2026-10-26T15:20:00+08:00",
+            "final_content": "【机会ETF逐只评估】\n1. 通用试探ETF（159057）：Trial评估成立。",
+        })
+        opening_id = "completion-buy-159057"
+        write(self.root, "events/trades/completion-buy-159057.json", {
+            "event_id": opening_id, "code": "159057", "name": "通用试探ETF",
+            "side": "BUY", "execution_status": "EXECUTED", "execution_date": "2026-10-26",
+            "linked_decision_id": f"FORMAL_COMPLETION:{request_id}", "quantity": 100,
+        })
+        write(self.root, "events/decisions/completion-followup.json", {
+            "decision_id": "completion-followup", "candidate_code": "159057",
+            "linked_trade_event_id": opening_id, "decision_time_beijing": "2026-10-30T10:00:00+08:00",
+            "formal_decision": {"lifecycle": "通用试探ETF（159057）Confirm评估"},
+        })
+        item = build_lifecycle_projection(self.root, "2026-11-03")["active_lifecycles"][0]
+        self.assertEqual(item["lifecycle_status"], "RESOLVED")
+        self.assertEqual(item["hypothesis_status"], "CONFIRM_EVALUATION")
+        self.assertEqual(item["resolution"]["decision_id"], "completion-followup")
+
 
     def test_empty_hypothesis_does_not_match_other_decisions(self):
         from scripts.lifecycle_state import _resolution
