@@ -178,5 +178,16 @@ class LifecycleStateTests(unittest.TestCase):
         self.assertEqual(result["resolution_event_ids"], ["sell1"])
 
 
+    def test_empty_hypothesis_does_not_match_other_decisions(self):
+        from scripts.lifecycle_state import _resolution
+        write(self.root, "events/decisions/unrelated.json", {
+            "decision_id": "unrelated", "decision_time_beijing": "2026-09-30T10:00:00+08:00",
+            "hypothesis_closed": True, "formal_decision": {"lifecycle": "退出"},
+        })
+        trial = {"decision_id": "trial", "candidate_code": "159992",
+                 "hypothesis_id": "", "decision_time_beijing": "2026-09-29T09:00:00+08:00"}
+        self.assertIsNone(_resolution(self.root, trial, __import__("datetime").date(2026, 10, 9)))
+
+
 if __name__ == "__main__":
     unittest.main()
