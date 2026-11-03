@@ -89,6 +89,29 @@ class SimulatedCanonicalChain:
 
 
 class FullThreeTaskE2EReplayTests(unittest.TestCase):
+    def test_trade_review_blocks_discovery_claim_that_conflicts_with_read_object(self):
+        review = full_review()
+        review["formal_discovery"] = {"status": "READY", "candidates": [{"code": "159133"}]}
+        with self.assertRaisesRegex(ValueError, "Discovery object"):
+            completion.validate_trade_review_presentation_semantics(
+                review, "本日没有可确认的独立全市场Discovery记录。"
+            )
+
+    def test_trade_review_allows_explicit_correction_of_discovery_misreading(self):
+        review = full_review()
+        review["formal_discovery"] = {"status": "READY", "candidates": [{"code": "159133"}]}
+        completion.validate_trade_review_presentation_semantics(
+            review, "不能把本次Discovery资料不足写成没有Discovery；本段仅说明复盘未消费该对象。"
+        )
+
+    def test_trade_review_blocks_nonzero_opportunity_as_zero(self):
+        review = full_review()
+        review["formal_opportunity"] = {"status": "READY", "opportunity_count": 2}
+        with self.assertRaisesRegex(ValueError, "opportunity object"):
+            completion.validate_trade_review_presentation_semantics(
+                review, "机会ETF数量为0。"
+            )
+
     def _system(self):
         request_id = "sim-system-request"
         review = {"status": "PASS", "request_id": request_id, "market_date": "2026-09-23"}
