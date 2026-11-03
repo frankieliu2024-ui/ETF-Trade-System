@@ -187,8 +187,11 @@ jobs:
           )
             case "$completion_kind" in
               FORMAL)
-                echo "formal_completion=true" >> "$GITHUB_OUTPUT"
-                echo "formal_review_source_path=$completion_path" >> "$GITHUB_OUTPUT"
+                # Formal Decision completion is dispatched explicitly by the
+                # frozen run.  A passive push must never become a second wake
+                # path or manufacture a notification after a write race.
+                echo "formal_completion=false" >> "$GITHUB_OUTPUT"
+                echo "formal_review_source_path=" >> "$GITHUB_OUTPUT"
                 ;;
               SCHEDULED_REVIEW)
                 # A Scheduled Review completion is itself the canonical handoff
