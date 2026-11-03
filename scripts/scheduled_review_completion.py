@@ -779,7 +779,12 @@ def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | N
         raise ValueError("Formal Decision completion top-level content_hash mismatch")
     if str(binding.get("content_hash") or "").strip() != expected_hash:
         raise ValueError("Formal Decision completion presentation_binding.content_hash mismatch")
-    validate_user_visible_content(content, canonical_closure_confirmed=False)
+    # New builders mark the current presentation contract explicitly.
+    # Historical frozen completions remain replayable when identity, binding,
+    # snapshot and hash checks pass; they must not be rejected solely because
+    # the display contract was strengthened after the original run.
+    if str(payload.get("completion_contract_version") or "").strip() == "2":
+        validate_user_visible_content(content, canonical_closure_confirmed=False)
     validate_formal_decision_presentation_timestamp(content, str(payload["requested_at_beijing"]))
     title = content.splitlines()[0].strip() if content.splitlines() else ""
     expected_label = {
@@ -879,6 +884,7 @@ def build_formal_runtime_completion_request(
             if isinstance(fact_summary, dict) and isinstance(fact_summary.get("fact_binding"), dict)
             else {}
         ),
+        "completion_contract_version": "2",
         "decision_id": decision_id,
         "report_type": "ETF_FORMAL_DECISION",
         "report_id": decision_id,
