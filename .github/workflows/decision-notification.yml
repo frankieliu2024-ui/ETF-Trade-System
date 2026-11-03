@@ -488,7 +488,13 @@ jobs:
           if report_type != "ETF_TRADE_REVIEW" or task_id != "ETF交易复盘":
               raise SystemExit("Trade Review completion identity mismatch")
           review = payload.get("formal_review") if isinstance(payload.get("formal_review"), dict) else {}
+          full_content = str(payload.get("final_content") or binding.get("full_content") or "")
+          review_title = full_content.splitlines()[0].strip() if full_content.splitlines() else ""
           scope = str(review.get("review_scope") or "").strip().upper()
+          # Older valid full-day Trade Review completions predate the nested review_scope field.
+          # Infer only from the frozen title, preserving fail-closed behavior for all other shapes.
+          if not scope and "完整日复盘" in review_title:
+              scope = "FULL_DAY"
           if scope not in {"FULL_DAY", "FULL_TRADING_DAY"}:
               raise SystemExit("Trade Review completion is not a full-day review")
           account_path = Path("data/state/account_fact.json")
