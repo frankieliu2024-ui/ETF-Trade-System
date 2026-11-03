@@ -2348,6 +2348,24 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     # Legacy/recovery requests without a presentation binding remain compatible;
     # a present binding must satisfy the exact scheduled-delivery contract.
     raw_presentation_binding = request.get("presentation_binding")
+    # Legacy full-day Trade Review completions may carry the builder hash only
+    # at the top level. Normalize it into the production binding only when it
+    # exactly matches the frozen body; all other missing/mismatched shapes remain
+    # fail-closed in _validate_presentation_binding.
+    if isinstance(raw_presentation_binding, dict) and not str(raw_presentation_binding.get("content_hash") or "").strip():
+        top_level_hash = str(request.get("content_hash") or "").strip()
+        bound_content = str(
+            request.get("final_content")
+            or raw_presentation_binding.get("full_content")
+            or ""
+        )
+        expected_bound_hash = hashlib.sha256(bound_content.encode("utf-8")).hexdigest()
+        if top_level_hash and top_level_hash == expected_bound_hash:
+            raw_presentation_binding = dict(raw_presentation_binding)
+            raw_presentation_binding["content_hash"] = top_level_hash
+            raw_presentation_binding["content_hash_source"] = str(
+                request.get("content_hash_source") or "completion_builder"
+            ).strip() or "completion_builder"
     is_trade_review_production = (
         str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION"
         and str(request.get("source") or "").strip().upper() in {"CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR", "CHATGPT_SCHEDULED_TRADE_REVIEW", "CHATGPT_MANUAL_TRADE_REVIEW", "CHATGPT_DIRECT_GITHUB_CONTENTS_WRITER"}
