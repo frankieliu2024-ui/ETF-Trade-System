@@ -1184,6 +1184,9 @@ jobs:
         if: ${{ (steps.state_sync.outcome == 'success' && (steps.state_sync.outputs.processed == 'true' || steps.triggering_request.outputs.account_fact_refresh == 'true' || steps.triggering_request.outputs.trade_fact == 'true')) || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close' && github.event.inputs.probe_only != 'true') }}
         run: python scripts/build_execution_quality.py
 
+      - name: Re-evaluate maintenance health after account projection rebuild
+        if: ${{ steps.account_projection_rebuild.outcome == 'success' && steps.state_sync.outputs.processed == 'true' && github.event.inputs.probe_only != 'true' }}
+        run: python scripts/maintenance_guard.py
       - name: Record broker account sync maintenance receipt
         if: ${{ always() && ((github.event_name == 'push' && env.TRIGGERING_REQUEST_ID != '' && env.TRIGGERING_REQUEST_FILE != '') || (github.event_name == 'workflow_dispatch' && github.event.inputs.replay_request != '')) }}
         shell: bash
