@@ -12,6 +12,7 @@ ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1
 CFG = ROOT / "config/research/active_return_stage1.json"
 DAILY_DIR = ROOT / "events/research/daily_features"
 OUT = ROOT / "research/backtests/active_return_stage1_validation.json"
+EVENTS_OUT = ROOT / "research/backtests/active_return_stage1_events.json"
 STATUS = ROOT / "data/state/active_return_research_status.json"
 BJ = timezone(timedelta(hours=8), name="Asia/Shanghai")
 
@@ -71,16 +72,22 @@ def main() -> int:
         if d < start or d > end:
             continue
         payload = load_json(path)
-        if not payload.get("historical_backfill") and payload.get("mode") != "OBJECTIVE_RESEARCH_FEATURES_HISTORICAL_BACKFILL":
-            # Current/live research days are still objective facts; accept only if CLOSED and fields are present.
-            if payload.get("market_phase") != "CLOSED":
+        historical = bool(payload.get("historical_backfill")) or payload.get("mode") == "OBJECTIVE_RESEARCH_FEATURES_HISTORICAL_BACKFILL"
+        if not historical:
+            # Current/live research days are objective facts only after the
+            # close-quality contract and filename/PIT identity are satisfied.
+            if payload.get("market_date") != d or payload.get("market_phase") not in {"CLOSED", "POST_CLOSE_GRACE"}:
+                continue
+            if payload.get("quality_status") != "PASS":
                 continue
         rows = {}
         for item in payload.get("features") or []:
             code = str(item.get("code") or "")
             o, c = finite(item.get("open")), finite(item.get("close"))
+            if not historical and item.get("quality_status") != "PASS":
+                continue
             if code and o is not None and c is not None and o > 0 and c > 0:
-                rows[code] = {"open": o, "close": c, "name": item.get("name")}
+                rows[code] = {"open": o, "close": c, "name": item.get("name"), "quality_status": item.get("quality_status")}
         if rows:
             day_rows[d] = rows
 
@@ -118,8 +125,8 @@ def main() -> int:
         r5 = rank_desc({c: m5[c] for c in common})
         r20 = rank_desc({c: m20[c] for c in common})
         n = len(common)
-        leaders = [c for c in common if r5[c] <= 3 and r20[c] <= 3 and m5[c] > 0 and m20[c] > 0]
-        laggards = [c for c in common if r5[c] >= n - 2 and r20[c] >= n - 2]
+        leaders = sorted(c for c in common if r5[c] <= 3 and r20[c] <= 3 and m5[c] > 0 and m20[c] > 0)
+        laggards = sorted(c for c in common if r5[c] >= n - 2 and r20[c] >= n - 2)
         new_high_leaders = [c for c in leaders if high20.get(c)]
         signals[d] = {
             "n": n,
@@ -144,6 +151,23 @@ def main() -> int:
         exit_c = day_rows[exit_d][code]["close"]
         return exit_c / entry - 1.0 if entry > 0 else None
 
+    def fwd_trade(signal_date: str, code: str, h: int):
+        i = date_idx[signal_date]
+        if i + 1 >= len(dates) or i + h >= len(dates):
+            return None
+        entry_date, exit_date = dates[i + 1], dates[i + h]
+        entry_row = day_rows.get(entry_date, {}).get(code)
+        exit_row = day_rows.get(exit_date, {}).get(code)
+        if not entry_row or not exit_row or entry_row["open"] <= 0:
+            return None
+        return {
+            "entry_date": entry_date,
+            "entry_price": r6(entry_row["open"]),
+            "exit_date": exit_date,
+            "exit_price": r6(exit_row["close"]),
+            "return": r6(exit_row["close"] / entry_row["open"] - 1.0),
+        }
+
     # Precompute same-date universe forward medians for cross-sectional excess returns.
     universe_median: dict[tuple[str, int], float] = {}
     for d, sig in signals.items():
@@ -159,6 +183,7 @@ def main() -> int:
     leadership = {}
     right_tail = {}
     migration = {}
+    event_details = []
 
     for h in horizons:
         lead_events = []
@@ -198,6 +223,37 @@ def main() -> int:
             if lr and br:
                 spread = mean(lr) - mean(br)
                 migration_days.append(spread)
+                event_details.append({
+                    "signal_date": d,
+                    "horizon_days": h,
+                    "fold": next((f["name"] for f in folds if in_fold(d, f)), None),
+                    "leader_codes": sig["leaders"],
+                    "laggard_codes": sig["laggards"],
+                    "leader_forward_returns": {
+                        c: fwd_return(d, c, h) for c in sig["leaders"]
+                        if fwd_return(d, c, h) is not None
+                    },
+                    "leader_trades": {
+                        c: fwd_trade(d, c, h) for c in sig["leaders"]
+                        if fwd_trade(d, c, h) is not None
+                    },
+                    "laggard_trades": {
+                        c: fwd_trade(d, c, h) for c in sig["laggards"]
+                        if fwd_trade(d, c, h) is not None
+                    },
+                    "laggard_forward_returns": {
+                        c: fwd_return(d, c, h) for c in sig["laggards"]
+                        if fwd_return(d, c, h) is not None
+                    },
+                    "leader_mean_forward_return": r6(mean(lr)),
+                    "laggard_mean_forward_return": r6(mean(br)),
+                    "gross_spread": r6(spread),
+                    "cost_scenarios_bps_round_trip": {
+                        str(bps): r6(spread - float(bps) / 10000.0)
+                        for bps in cfg["cost_scenarios_bps_round_trip"]
+                    },
+                    "pit_rule": cfg["data"]["point_in_time"],
+                })
                 for f in folds:
                     if in_fold(d, f):
                         mig_by_fold[f["name"]].append(spread)
@@ -301,6 +357,16 @@ def main() -> int:
         "boundary": "Research evidence may inform opportunity comparison, holding right-tail protection, and opportunity-cost review only after formal conversion. It must not create mechanical top-rank buying, bottom-rank selling, rotation, amount, or risk permission."
     }
     dump(OUT, result)
+    dump(EVENTS_OUT, {
+        "schema_version": "1.0",
+        "research_id": cfg["research_id"],
+        "generated_at_beijing": result["generated_at_beijing"],
+        "source_validation_artifact": "research/backtests/active_return_stage1_validation.json",
+        "point_in_time": cfg["data"]["point_in_time"],
+        "historical_decision_reconstruction": False,
+        "event_count": len(event_details),
+        "events": event_details,
+    })
     dump(STATUS, {
         "research_id": cfg["research_id"],
         "generated_at_beijing": result["generated_at_beijing"],
