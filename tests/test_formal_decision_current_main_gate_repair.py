@@ -29,6 +29,25 @@ class FormalDecisionCurrentMainGateRepairTests(unittest.TestCase):
         )
         self.assertEqual(result["status"], "BLOCKED")
 
+    def test_direct_mode_requires_discovery_object_and_market_date(self):
+        for query in (
+            {"market_date": "", "formal_etf_discovery": {"status": "READY"},
+             "formal_reply_freeze": {"status": "NOT_APPLICABLE"}},
+            {"market_date": "2026-11-03", "formal_etf_discovery": {},
+             "formal_reply_freeze": {"status": "NOT_APPLICABLE"}},
+            {"market_date": "2026-11-03", "formal_reply_freeze": {"status": "NOT_APPLICABLE"}},
+        ):
+            result = e2e.context_component(query, {"market_date": "2026-11-03"})
+            self.assertEqual(result["status"], "BLOCKED")
+
+    def test_incomplete_current_main_payload_is_not_direct_mode(self):
+        result = e2e.context_component(
+            {"market_date": "2026-11-03", "formal_etf_discovery": {"status": "READY"},
+             "formal_reply_freeze": {"status": "NOT_APPLICABLE"}},
+            {},
+        )
+        self.assertEqual(result["status"], "BLOCKED")
+
 
 if __name__ == "__main__":
     unittest.main()
