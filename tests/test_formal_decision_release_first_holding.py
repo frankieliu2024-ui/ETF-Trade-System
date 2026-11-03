@@ -31,3 +31,19 @@ def test_formal_decision_uses_release_first_holding_policy():
 def test_formal_decision_does_not_turn_release_first_into_auto_trading():
     protocol = (ROOT / "docs" / "Formal Decision执行与用户回复协议.md").read_text(encoding="utf-8")
     assert "不构成自动卖出、自动清仓或证券订单授权" in protocol
+
+
+def test_holding_thesis_projection_preserves_distinct_business_meanings():
+    """A holding thesis is not interchangeable with its capital comparison."""
+    import ast
+
+    tree = ast.parse((ROOT / "scripts" / "business_decision_source.py").read_text(encoding="utf-8"))
+    projected = [value for mapping in ast.walk(tree) if isinstance(mapping, ast.Dict)
+                 for key, value in zip(mapping.keys, mapping.values)
+                 if isinstance(key, ast.Constant) and key.value == "holding_thesis_status"]
+    assert projected, "holding thesis projection must exist"
+    answer = {"holding_thesis_status": "假设已失效", "capital_comparison": "释放资本更优"}
+    values = [eval(compile(ast.Expression(node), "<holding-thesis-expression>", "eval"),
+                   {"__builtins__": {}}, {"answer": answer}) for node in projected]
+    assert "假设已失效" in values
+    assert "释放资本更优" not in values
