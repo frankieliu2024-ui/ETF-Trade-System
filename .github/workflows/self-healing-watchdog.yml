@@ -23,6 +23,7 @@ on:
       - "scripts/runtime_self_heal.py"
       - "scripts/production_health_guard.py"
       - "config/runtime_policy.json"
+      - "requests/live_snapshot/**"
       - ".github/workflows/self-healing-watchdog.yml"
       - ".github/workflows/us-extended-hours-pulse.yml"
       - ".github/workflows/overseas-preopen-pulse.yml"
@@ -120,6 +121,36 @@ jobs:
             fi
             gh workflow run market-snapshot.yml --ref main -f replay_request="$request_file" -f node=scheduled -f probe_only=false
             echo "Replayed interrupted broker synchronization through the canonical market-snapshot owner: $request_file"
+          done
+      - name: Explicitly dispatch broker account synchronization
+        if: ${{ github.event_name == 'push' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          files="$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/live_snapshot/*.json' || true)"
+          for request_file in $files; do
+            is_broker_sync="$(python - "$request_file" <<'PY'
+          import json, sys
+          from pathlib import Path
+          try:
+              obj=json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
+          except Exception:
+              print('false'); raise SystemExit(0)
+          print('true' if (
+              str(obj.get('request_type') or '').upper() in {'STATE_SYNC_ONLY','ACCOUNT_FACT_REFRESH'}
+              and str(obj.get('formal_fact_type') or '').upper() == 'BROKER_SCREENSHOT_ACCOUNT_FACT'
+              and str(obj.get('interaction_scenario') or '').upper() == 'BROKER_SCREENSHOT_SYNC'
+          ) else 'false')
+          PY
+          )"
+            [ "$is_broker_sync" = "true" ] || continue
+            active="$(gh run list --workflow market-snapshot.yml --limit 20 --json status --jq '[.[] | select(.status == "queued" or .status == "in_progress")] | length')"
+            if [ "$active" != "0" ]; then
+              echo "A market-snapshot run is already active; no duplicate dispatch."
+              continue
+            fi
+            gh workflow run market-snapshot.yml --ref main -f replay_request="$request_file" -f node=scheduled -f probe_only=false
+            echo "Explicitly dispatched canonical broker synchronization: $request_file"
           done
       - name: Assess dedicated cross-market pulse heartbeats
         id: pulse_guard
