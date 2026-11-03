@@ -89,6 +89,10 @@ class SimulatedCanonicalChain:
 
 
 class FullThreeTaskE2EReplayTests(unittest.TestCase):
+
+    def test_verified_close_normalization_removes_unavailable_gap(self):
+        from scripts.trade_review_semantic_guard import normalize_verified_close_data_time
+        self.assertEqual(normalize_verified_close_data_time({"close_data_status": "VERIFIED_SESSION_CLOSE", "close_data_gap": "unavailable"}), {"close_data_status": "VERIFIED_SESSION_CLOSE"})
     def test_trade_review_blocks_discovery_claim_that_conflicts_with_read_object(self):
         review = full_review()
         review["formal_discovery"] = {"status": "READY", "candidates": [{"code": "159133"}]}
