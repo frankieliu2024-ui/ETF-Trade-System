@@ -7,6 +7,7 @@ canonical notification workflow, and reads back the canonical projections.
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
 import os
 import time
@@ -29,6 +30,28 @@ def _credentials() -> tuple[str, str]:
 
 def persist_completion(target: Path) -> tuple[str, dict[str, object]]:
     payload = json.loads(target.read_text(encoding="utf-8"))
+    # The completion writer is the single authoritative handoff boundary.
+    # Compute a missing fingerprint here so callers do not need a separate
+    # crypto/intermediate chain before invoking the writer.
+    final_content = payload.get("final_content")
+    if isinstance(final_content, str):
+        computed_hash = hashlib.sha256(final_content.encode("utf-8")).hexdigest()
+        existing_hash = str(payload.get("content_hash") or "").strip().lower()
+        if existing_hash and existing_hash != computed_hash:
+            raise RuntimeError("completion content_hash does not match final_content")
+        payload["content_hash"] = computed_hash
+        binding_value = payload.get("presentation_binding")
+        if isinstance(binding_value, dict):
+            binding_hash = str(binding_value.get("content_hash") or "").strip().lower()
+            if binding_hash and binding_hash != computed_hash:
+                raise RuntimeError("presentation_binding content_hash does not match final_content")
+            binding_value["content_hash"] = computed_hash
+        if "final_content_hash" in payload:
+            final_hash = str(payload.get("final_content_hash") or "").strip().lower()
+            if final_hash and final_hash != computed_hash:
+                raise RuntimeError("final_content_hash does not match final_content")
+            payload["final_content_hash"] = computed_hash
+        target.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     binding = payload.get("presentation_binding") if isinstance(payload.get("presentation_binding"), dict) else {}
     report_type = str(payload.get("report_type") or binding.get("report_type") or "").strip().upper()
     if report_type == "ETF_FORMAL_DECISION":
