@@ -399,9 +399,11 @@ def main() -> int:
         "binding_decision_id": binding.get("decision_id") == expected_decision_id,
         "binding_report_id": binding.get("report_id") == expected_decision_id,
         "content_hash": binding.get("content_hash") == expected_hash,
+        "top_level_content_hash": persisted.get("content_hash") == expected_hash,
         "full_content": binding.get("full_content") == args.final_content,
+        "top_level_final_content": persisted.get("final_content") == args.final_content,
     }
-    hard_failures = [key for key, ok in checks.items() if not ok and key != "content_hash"]
+    hard_failures = [key for key, ok in checks.items() if not ok]
     if hard_failures:
         raise RuntimeError("formal runtime completion readback mismatch: " + ", ".join(hard_failures))
 
