@@ -107,21 +107,50 @@ def main() -> int:
         prior_account_updated_at = str(data.get("account_fact_updated_at") or "").strip()
         current_account_updated_at = str(account.get("updated_at") or "").strip()
         if current_account_updated_at and current_account_updated_at != prior_account_updated_at:
-            data["status"] = "MAINTENANCE_INCOMPLETE"
-            data["failure_class"] = "PROJECTION_INCOMPLETE"
-            data["projection_status"] = "ACCOUNT_FACT_UPDATED_REQUIRES_REBUILD"
             data["account_fact_updated_at"] = current_account_updated_at
-            data["reconciliation_stale"] = True
-            data["reconciliation_stale_reason"] = (
-                "account_fact changed; prior reconciliation was not rebuilt from the new canonical account fact"
+            equity_path = root / "data/state/etf_strategy_equity.json"
+            dashboard_path = root / "ETF当前状态_DASHBOARD.md"
+            equity = {}
+            try:
+                equity = json.loads(equity_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                equity = {}
+            replay_cutoff = str(equity.get("replay_cutoff") or (equity.get("summary") or {}).get("as_of_transaction_date") or "")
+            account_date = current_account_updated_at[:10]
+            dashboard_text = ""
+            try:
+                dashboard_text = dashboard_path.read_text(encoding="utf-8")
+            except OSError:
+                dashboard_text = ""
+            projections_fresh = (
+                replay_cutoff >= account_date
+                and current_account_updated_at in dashboard_text
+                and str((equity.get("summary") or {}).get("coverage_status") or "").upper()
+                not in {"", "DEGRADED_PENDING_LATEST_VALUATION"}
             )
-            data["projection_required"] = [
-                "strategy_equity",
-                "risk",
-                "lifecycle",
-                "dashboard",
-                "reconciliation",
-            ]
+            if projections_fresh:
+                data["status"] = "PASS"
+                data["failure_class"] = ""
+                data["projection_status"] = "REBUILT_AND_READ_BACK"
+                data["reconciliation_stale"] = False
+                data["reconciliation_stale_reason"] = ""
+                data["projection_required"] = []
+                data["projections_rebuilt_at"] = now
+            else:
+                data["status"] = "MAINTENANCE_INCOMPLETE"
+                data["failure_class"] = "PROJECTION_INCOMPLETE"
+                data["projection_status"] = "ACCOUNT_FACT_UPDATED_REQUIRES_REBUILD"
+                data["reconciliation_stale"] = True
+                data["reconciliation_stale_reason"] = (
+                    "account_fact changed; projection rebuild or same-fact Dashboard readback was not confirmed"
+                )
+                data["projection_required"] = [
+                    "strategy_equity",
+                    "risk",
+                    "lifecycle",
+                    "dashboard",
+                    "reconciliation",
+                ]
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(data["account_sync"], ensure_ascii=False))
