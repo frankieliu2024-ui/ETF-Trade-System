@@ -1544,7 +1544,7 @@ def canonical_template_family(event: dict) -> str | None:
     binding = event.get("presentation_binding") or {}
     report_type = str(binding.get("report_type") or event.get("report_type") or "").strip().upper()
     task_id = str(binding.get("task_id") or event.get("task_id") or "").strip()
-    if report_type in {"ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW"} or task_id in {"ETF交易复盘", "ETF系统复核"}:
+    if report_type in {"ETF_FORMAL_DECISION", "ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW"} or task_id in {"ETF正式决策", "ETF交易复盘", "ETF系统复核"}:
         return "REPORT"
     return None
 def _canonical_target(event: dict) -> str:
