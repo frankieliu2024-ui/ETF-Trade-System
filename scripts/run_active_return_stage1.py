@@ -12,6 +12,7 @@ ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1
 CFG = ROOT / "config/research/active_return_stage1.json"
 DAILY_DIR = ROOT / "events/research/daily_features"
 OUT = ROOT / "research/backtests/active_return_stage1_validation.json"
+EVENTS_OUT = ROOT / "research/backtests/active_return_stage1_events.json"
 STATUS = ROOT / "data/state/active_return_research_status.json"
 BJ = timezone(timedelta(hours=8), name="Asia/Shanghai")
 
@@ -73,7 +74,7 @@ def main() -> int:
         payload = load_json(path)
         if not payload.get("historical_backfill") and payload.get("mode") != "OBJECTIVE_RESEARCH_FEATURES_HISTORICAL_BACKFILL":
             # Current/live research days are still objective facts; accept only if CLOSED and fields are present.
-            if payload.get("market_phase") != "CLOSED":
+            if payload.get("market_phase") not in {"CLOSED", "POST_CLOSE_GRACE"}:
                 continue
         rows = {}
         for item in payload.get("features") or []:
@@ -159,6 +160,7 @@ def main() -> int:
     leadership = {}
     right_tail = {}
     migration = {}
+    event_details = []
 
     for h in horizons:
         lead_events = []
@@ -198,6 +200,29 @@ def main() -> int:
             if lr and br:
                 spread = mean(lr) - mean(br)
                 migration_days.append(spread)
+                event_details.append({
+                    "signal_date": d,
+                    "horizon_days": h,
+                    "fold": next((f["name"] for f in folds if in_fold(d, f)), None),
+                    "leader_codes": sig["leaders"],
+                    "laggard_codes": sig["laggards"],
+                    "leader_forward_returns": {
+                        c: fwd_return(d, c, h) for c in sig["leaders"]
+                        if fwd_return(d, c, h) is not None
+                    },
+                    "laggard_forward_returns": {
+                        c: fwd_return(d, c, h) for c in sig["laggards"]
+                        if fwd_return(d, c, h) is not None
+                    },
+                    "leader_mean_forward_return": r6(mean(lr)),
+                    "laggard_mean_forward_return": r6(mean(br)),
+                    "gross_spread": r6(spread),
+                    "cost_scenarios_bps_round_trip": {
+                        str(bps): r6(spread - float(bps) / 10000.0)
+                        for bps in cfg["cost_scenarios_bps_round_trip"]
+                    },
+                    "pit_rule": cfg["data"]["point_in_time"],
+                })
                 for f in folds:
                     if in_fold(d, f):
                         mig_by_fold[f["name"]].append(spread)
@@ -301,6 +326,16 @@ def main() -> int:
         "boundary": "Research evidence may inform opportunity comparison, holding right-tail protection, and opportunity-cost review only after formal conversion. It must not create mechanical top-rank buying, bottom-rank selling, rotation, amount, or risk permission."
     }
     dump(OUT, result)
+    dump(EVENTS_OUT, {
+        "schema_version": "1.0",
+        "research_id": cfg["research_id"],
+        "generated_at_beijing": result["generated_at_beijing"],
+        "source_validation_artifact": "research/backtests/active_return_stage1_validation.json",
+        "point_in_time": cfg["data"]["point_in_time"],
+        "historical_decision_reconstruction": False,
+        "event_count": len(event_details),
+        "events": event_details,
+    })
     dump(STATUS, {
         "research_id": cfg["research_id"],
         "generated_at_beijing": result["generated_at_beijing"],
