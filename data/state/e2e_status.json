@@ -1,24 +1,24 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-11-03T09:28:01+08:00",
-  "status": "BLOCKED",
+  "generated_at": "2026-11-03T16:01:25+08:00",
+  "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
   "components": {
     "market": {
-      "status": "DEGRADED",
-      "reason": "market data quality=DEGRADED, node=DEGRADED",
-      "snapshot": "data/market/snapshots/2026-11-03_092722.json",
-      "captured_at": "2026-11-03T09:27:22+08:00",
-      "market_phase": "OPENING_CALL_AUCTION"
+      "status": "READY",
+      "reason": "latest market snapshot is valid",
+      "snapshot": "data/market/snapshots/2026-11-03_150529.json",
+      "captured_at": "2026-11-03T15:05:29+08:00",
+      "market_phase": "POST_CLOSE_GRACE"
     },
     "account": {
       "status": "READY",
       "reason": "confirmed account facts remain valid; historical audit deltas are not pending updates",
-      "updated_at": "2026-11-03T07:00:00+08:00",
-      "source": "BROKER_HOLDINGS_SCREENSHOT_20261103_070059_USER_PROVIDED",
+      "updated_at": "2026-11-03T15:37:00+08:00",
+      "source": "BROKER_HOLDINGS_SCREENSHOT_20261103_153700_USER_PROVIDED",
       "pending_change_events": [],
-      "historical_audit_event_count": 128,
+      "historical_audit_event_count": 129,
       "cash": 115294.47,
       "reserved_cash_for_settlement": 0,
       "deployable_cash": 115294.47,
@@ -38,32 +38,35 @@
     "close_review": {
       "status": "DEGRADED",
       "reason": "close review closure exists but evidence or business completion is not sufficient",
-      "market_date": "2026-10-30",
-      "formal_review_market_date": "2026-10-30",
-      "formal_review_path": "events/reviews/2026-10-30.json",
-      "closure_path": "data/state/close_review_closure_2026-10-30.json",
+      "market_date": "2026-11-02",
+      "formal_review_market_date": "2026-11-02",
+      "formal_review_path": "events/reviews/2026-11-02.json",
+      "closure_path": "data/state/close_review_closure_2026-11-02.json",
       "review_evidence_status": "DEGRADED",
-      "business_completion_status": "COMPLETE"
+      "business_completion_status": "DEGRADED"
     },
     "decision_context": {
-      "status": "BLOCKED",
-      "reason": "canonical request-bound query context is empty, invalid, or missing a consumable fact pack",
-      "query_context": false,
+      "status": "READY",
+      "reason": "query and decision contexts are available; legacy minimum-ready observability is diagnostic only",
+      "query_context": true,
       "decision_context": true,
+      "minimum_decision_context": "READY_OR_NOT_APPLICABLE",
+      "observability_boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
+      "request_bound": false,
       "formal_reply_gate": {
         "request_id": "conversation-formal-20261026T212023+0800-90d3c2b2",
         "requested_at_beijing": "2026-10-26T21:20:23.000+08:00",
-        "status": "TERMINAL_FAILURE",
+        "status": "IN_FLIGHT",
         "reply_freezable": false,
         "blockers": [
-          "FORMAL_PARENT_RECOVERY_TIMEOUT"
+          "REQUEST_BOUND_QUERY_CONTEXT_NOT_PUBLISHED"
         ],
         "source": "durable_parent_request_waiting_for_request_bound_projection",
-        "actor_action": "TERMINATE_ON_EXPLICIT_FAILURE",
-        "user_output_allowed": true,
+        "actor_action": "CONTINUE_SAME_REQUEST_SILENTLY",
+        "user_output_allowed": false,
         "business_decision_allowed": false,
         "final_content_generation_allowed": false,
-        "consumer_status": "TERMINAL_FAILURE",
+        "consumer_status": "REQUEST_BOUND_FACTS_BUILDING",
         "projection_scope": "FORMAL_DECISION_REQUEST",
         "superseded_request_id": "fd_20261026_112739_scheduled_formal_review_0bba5094",
         "request_bound": false,
@@ -84,15 +87,15 @@
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 1271932,
-          "sha256": "334e96b5f80ba4d868b070ece0a13bec8356343da0209de585dbbf078b352edb",
+          "byte_count": 1560153,
+          "sha256": "8c065f61c8d03d9b77933b5d2662b482b410165e071644dd8fe8ab4448c073e9",
           "parsed_object": true
         },
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 340259,
-          "sha256": "24ac5eddcb0689b6490322edaf9466c6ca011309618c049b84d6517676915a0f",
+          "byte_count": 469883,
+          "sha256": "6e3bcdc76fd12436e8ccc3f1320ce08b235edd3cd8a9f65ac31d4f4c1c2e2306",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -110,14 +113,11 @@
     "maintenance": {
       "status": "READY",
       "reason": "maintenance guard passed",
-      "checked_at": "2026-11-03T07:16:57+08:00"
+      "checked_at": "2026-11-03T16:01:12+08:00"
     }
   },
-  "blockers": [
-    "decision_context"
-  ],
+  "blockers": [],
   "degradations": [
-    "market",
     "risk",
     "close_review"
   ],
@@ -125,15 +125,15 @@
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 1271932,
-      "sha256": "334e96b5f80ba4d868b070ece0a13bec8356343da0209de585dbbf078b352edb",
+      "byte_count": 1560153,
+      "sha256": "8c065f61c8d03d9b77933b5d2662b482b410165e071644dd8fe8ab4448c073e9",
       "parsed_object": true
     },
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 340259,
-      "sha256": "24ac5eddcb0689b6490322edaf9466c6ca011309618c049b84d6517676915a0f",
+      "byte_count": 469883,
+      "sha256": "6e3bcdc76fd12436e8ccc3f1320ce08b235edd3cd8a9f65ac31d4f4c1c2e2306",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"
