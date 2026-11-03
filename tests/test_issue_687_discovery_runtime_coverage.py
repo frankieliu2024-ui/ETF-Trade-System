@@ -4,6 +4,8 @@ import tempfile
 import unittest
 import threading
 import time
+from pathlib import Path
+from unittest import mock
 from unittest.mock import patch
 
 from scripts import formal_etf_opportunity_discovery as discovery
@@ -230,7 +232,8 @@ class DiscoveryRuntimeCoverageTests(unittest.TestCase):
         sys.modules["tencent_quote"] = fake
         try:
             with patch.object(builtins, "__import__", side_effect=import_without_scripts), \
-                 patch.object(discovery, "fetch_official_etf_master", return_value=([], {"sse_official_master_count": 0, "szse_official_master_count": 0})):
+                 patch.object(discovery, "fetch_official_etf_master", return_value=([], {"sse_official_master_count": 0, "szse_official_master_count": 0})), \
+                 patch.object(discovery, "fetch_hithink_etf_master", side_effect=RuntimeError("hithink unavailable")):
                 rows, meta = discovery.fetch_official_tencent_broad_spot("2026-09-18")
         finally:
             if previous is None:
@@ -311,9 +314,9 @@ class DiscoveryRuntimeCoverageTests(unittest.TestCase):
 
     def test_any_history_failure_degrades_discovery_instead_of_false_ready(self) -> None:
         rows = [spot("510001"), spot("510002")]
-        with patch.object(discovery, "fetch_daily_history", side_effect=[history(), RuntimeError("provider closed")]):
+        with patch.object(discovery, "load_discovery_history_snapshot", return_value={}), patch.object(discovery, "load_validated_history", return_value=None), patch.object(discovery, "fetch_daily_history", side_effect=[history(), RuntimeError("provider closed")]):
             result = discovery.discover_formal_candidates(
-                discovery.Path("."), market_date="2026-09-18", managed_codes=set(), spot_rows=rows
+                discovery.Path("."), market_date="2026-09-18", required_history_end_date="2026-09-18", managed_codes=set(), spot_rows=rows
             )
         self.assertEqual(result["status"], "DEGRADED")
         self.assertEqual(result["coverage_status"], "PARTIAL")
@@ -325,7 +328,7 @@ class DiscoveryRuntimeCoverageTests(unittest.TestCase):
         rows = [spot("510001")]
         with patch.object(discovery, "fetch_daily_history", return_value=history()):
             result = discovery.discover_formal_candidates(
-                discovery.Path("."), market_date="2026-09-18", managed_codes=set(), spot_rows=rows
+                discovery.Path("."), market_date="2026-09-18", required_history_end_date="2026-09-18", managed_codes=set(), spot_rows=rows
             )
         self.assertEqual(result["status"], "READY")
         self.assertEqual(result["coverage_status"], "COMPLETE")
@@ -342,7 +345,7 @@ class DiscoveryRuntimeCoverageTests(unittest.TestCase):
         rows = [spot("510001")]
         with patch.object(discovery, "fetch_daily_history", return_value=history()):
             result = discovery.discover_formal_candidates(
-                discovery.Path("."), market_date="2026-09-18", managed_codes={"510001"}, spot_rows=rows
+                discovery.Path("."), market_date="2026-09-18", required_history_end_date="2026-09-18", managed_codes={"510001"}, spot_rows=rows
             )
         self.assertEqual(result["managed_excluded_count"], 0)
         self.assertEqual(result["managed_identity_count"], 1)
@@ -355,9 +358,11 @@ class DiscoveryRuntimeCoverageTests(unittest.TestCase):
 
     def test_validated_existing_history_precedes_network_repair(self) -> None:
         rows = [spot("510001")]
-        with patch.object(discovery, "load_validated_history", return_value=history()) as local_history, patch.object(discovery, "fetch_daily_history") as repair:
+        existing = history()
+        existing[-1]["date"] = "2026-09-18"
+        with patch.object(discovery, "load_discovery_history_snapshot", return_value={}), patch.object(discovery, "load_validated_history", return_value=existing) as local_history, patch.object(discovery, "fetch_daily_history") as repair:
             result = discovery.discover_formal_candidates(
-                discovery.Path("."), market_date="2026-09-18", managed_codes=set(), spot_rows=rows
+                discovery.Path("."), market_date="2026-09-18", required_history_end_date="2026-09-18", managed_codes=set(), spot_rows=rows
             )
         local_history.assert_called_once()
         repair.assert_not_called()
@@ -400,11 +405,13 @@ class DiscoveryRuntimeCoverageTests(unittest.TestCase):
 
     def test_successful_repair_is_reused_on_same_market_date_node(self) -> None:
         rows = [spot("510001")]
+        repaired = history()
+        repaired[-1]["date"] = "2026-09-18"
         with tempfile.TemporaryDirectory() as td:
             root = discovery.Path(td)
-            with patch.object(discovery, "fetch_daily_history", return_value=history()) as repair:
-                first = discovery.discover_formal_candidates(root, market_date="2026-09-18", managed_codes=set(), spot_rows=rows)
-                second = discovery.discover_formal_candidates(root, market_date="2026-09-18", managed_codes=set(), spot_rows=rows)
+            with patch.object(discovery, "fetch_daily_history", return_value=repaired) as repair:
+                first = discovery.discover_formal_candidates(root, market_date="2026-09-18", required_history_end_date="2026-09-18", managed_codes=set(), spot_rows=rows)
+                second = discovery.discover_formal_candidates(root, market_date="2026-09-18", required_history_end_date="2026-09-18", managed_codes=set(), spot_rows=rows)
         self.assertEqual(repair.call_count, 1)
         self.assertEqual(first["history_repair_attempted_count"], 1)
         self.assertEqual(second["history_repair_attempted_count"], 0)
