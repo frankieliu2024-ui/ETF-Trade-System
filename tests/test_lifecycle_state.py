@@ -45,6 +45,35 @@ class LifecycleStateTests(unittest.TestCase):
         self.assertTrue(item["decision_due"])
         self.assertEqual(build_lifecycle_projection(self.root, "2026-08-31")["active_lifecycles"][0]["current_t_plus"], 2)
 
+    def test_explicit_trial_permission_without_hypothesis_is_recovered_from_linked_buy(self):
+        write(self.root, "events/decisions/159992.json", {
+            "decision_id": "D159992",
+            "decision_time_beijing": "2026-09-29T09:04:12+08:00",
+            "candidate_code": "159992",
+            "candidate_name": "创新药ETF",
+            "hypothesis_id": "",
+            "formal_decision": {"risk_permission": "允许Trial"},
+        })
+        write(self.root, "events/trades/159992-buy.json", {
+            "event_id": "trade-159992-buy",
+            "linked_decision_id": "D159992",
+            "hypothesis_id": "",
+            "execution_status": "EXECUTED",
+            "execution_date": "2026-09-29",
+            "code": "159992",
+            "name": "创新药ETF",
+            "side": "BUY",
+            "quantity": 5800,
+        })
+        result = build_lifecycle_projection(self.root, "2026-11-03")
+        self.assertEqual(len(result["active_lifecycles"]), 1)
+        item = result["active_lifecycles"][0]
+        self.assertEqual(item["security_code"], "159992")
+        self.assertEqual(item["lifecycle_status"], "ACTIVE_TRIAL")
+        self.assertTrue(item["decision_due"])
+        self.assertTrue(item["overdue"])
+        self.assertEqual(item["source_trade_event_id"], "trade-159992-buy")
+
     def test_decision_without_execution_does_not_start_real_lifecycle(self):
         write(self.root, "events/decisions/no-trade.json", {
             "decision_id": "no-trade", "decision_time_beijing": "2026-08-27T09:00:00+08:00",

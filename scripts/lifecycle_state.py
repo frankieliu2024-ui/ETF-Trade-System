@@ -68,9 +68,15 @@ def _formal_decisions(root: Path) -> list[dict[str, Any]]:
         event = _load(path, {})
         formal = event.get("formal_decision") or {}
         lifecycle = str(formal.get("lifecycle") or event.get("lifecycle") or "")
-        if not isinstance(formal, dict) or "Trial" not in lifecycle:
+        risk_permission = str(formal.get("risk_permission") or event.get("risk_permission") or "")
+        # Some canonical Formal Decision events recorded the Trial grant in
+        # risk_permission while leaving lifecycle/hypothesis_id unresolved.
+        # The linked executed BUY remains the required second fact; this
+        # recovery must never infer a lifecycle from holdings or a symbol alone.
+        trial_granted = "Trial" in lifecycle or "允许Trial" in risk_permission
+        if not isinstance(formal, dict) or not trial_granted:
             continue
-        if not event.get("hypothesis_id"):
+        if not event.get("hypothesis_id") and not ("允许Trial" in risk_permission and event.get("candidate_code")):
             continue
         result.append(event)
     return result
