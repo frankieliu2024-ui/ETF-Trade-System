@@ -7,12 +7,12 @@
     "snapshot_commit": "5f6e7f6ee8613f48ef99bf80413f39feee9450bd",
     "boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
     "timing": {
-      "state_builder_started_at": "2026-11-03T12:23:32Z",
+      "state_builder_started_at": "2026-11-03T12:24:59Z",
       "current_published_at": "2026-11-03T15:05:29+08:00",
-      "market_regime_ready_at": "2026-11-03T12:23:39Z",
-      "market_structure_ready_at": "2026-11-03T12:23:40Z",
-      "full_state_context_observation_at": "2026-11-03T12:23:40Z",
-      "decision_context_written_at": "2026-11-03T12:23:41Z"
+      "market_regime_ready_at": "2026-11-03T12:25:05Z",
+      "market_structure_ready_at": "2026-11-03T12:25:05Z",
+      "full_state_context_observation_at": "2026-11-03T12:25:06Z",
+      "decision_context_written_at": "2026-11-03T12:25:06Z"
     },
     "trigger": {
       "request_id": "",
@@ -25,7 +25,7 @@
       "market_date": "2026-11-03"
     }
   },
-  "generated_at": "2026-11-03T12:23:40Z",
+  "generated_at": "2026-11-03T12:25:06Z",
   "rules_version": "V2.2.34",
   "market_date": "2026-11-03",
   "latest_node": "close",
@@ -1802,7 +1802,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 12.781,
-    "age_seconds": 19091
+    "age_seconds": 19177
   },
   "freshness_at_context_build": {
     "status": "STALE",
@@ -1819,7 +1819,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 12.781,
-    "age_seconds": 19091
+    "age_seconds": 19177
   },
   "data_quality_summary": {
     "pass_count": 18,
@@ -1920,7 +1920,7 @@
     "account_fact_time": "2026-11-03T15:37:00+08:00",
     "market_snapshot_time": "2026-11-03T15:05:29+08:00",
     "market_phase": "POST_CLOSE_GRACE",
-    "context_generated_time": "2026-11-03T12:23:40Z",
+    "context_generated_time": "2026-11-03T12:25:06Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
@@ -1962,7 +1962,7 @@
     "read_only": true
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-11-03T20:23:40+08:00",
+    "generated_at_beijing": "2026-11-03T20:25:06+08:00",
     "refresh_mode": "CACHED_STATE",
     "refresh_failures": [],
     "decision_freshness": {
@@ -1971,8 +1971,8 @@
       "captured_at": "2026-11-03T07:05:29+00:00",
       "provider_as_of": "2026-11-03T07:05:21+00:00",
       "effective_as_of": "2026-11-03T07:05:21+00:00",
-      "request_time": "2026-11-03T12:23:40.944394+00:00",
-      "age_seconds": 19099,
+      "request_time": "2026-11-03T12:25:06.058088+00:00",
+      "age_seconds": 19185,
       "post_request": false,
       "preferred_max_age_seconds": 300,
       "fallback_max_age_seconds": 900,
@@ -2801,7 +2801,7 @@
   },
   "decision_trigger": {
     "schema_version": "1.2",
-    "generated_at": "2026-11-03T20:23:40+08:00",
+    "generated_at": "2026-11-03T20:25:05+08:00",
     "status": "NO_NEW_TRIGGER",
     "trigger_type": "",
     "triggered_at": "",
@@ -2831,7 +2831,7 @@
   },
   "capital_efficiency_ranking": {
     "schema_version": "1.2",
-    "generated_at": "2026-11-03T20:23:40+08:00",
+    "generated_at": "2026-11-03T20:25:05+08:00",
     "as_of": "2026-11-03T15:05:29+08:00",
     "e2e_status": "BLOCKED",
     "risk_zone": "RISK_CONTROL",
@@ -3712,6 +3712,13 @@
         "data_availability": "DEGRADED",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-11-02",
+            "sample_count": 90,
+            "avg_amount_20": 29852068.65
+          },
+          "name": "化工ETF天弘",
           "discovery_spot": {
             "price": 0.933,
             "change_pct": 1.5233949945593128,
@@ -3727,17 +3734,10 @@
             "return_ytd_pct": null,
             "provider_timestamp": 1793689524000
           },
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-11-02",
-            "sample_count": 90,
-            "avg_amount_20": 29852068.65
-          },
-          "code": "159133",
           "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "name": "化工ETF天弘"
+          "code": "159133",
+          "category": "OBSERVATION_EVALUATION_INPUT",
+          "eligibility": "OBSERVATION_FULL_EVALUATION"
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
       },
@@ -3749,6 +3749,13 @@
         "data_availability": "DEGRADED",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-11-02",
+            "sample_count": 90,
+            "avg_amount_20": 18237882.7
+          },
+          "name": "港股通消费ETF汇添富",
           "discovery_spot": {
             "price": 0.756,
             "change_pct": 3.137789904502042,
@@ -3764,17 +3771,10 @@
             "return_ytd_pct": null,
             "provider_timestamp": 1793689503000
           },
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-11-02",
-            "sample_count": 90,
-            "avg_amount_20": 18237882.7
-          },
-          "code": "159268",
           "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "name": "港股通消费ETF汇添富"
+          "code": "159268",
+          "category": "OBSERVATION_EVALUATION_INPUT",
+          "eligibility": "OBSERVATION_FULL_EVALUATION"
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
       },
@@ -3786,6 +3786,13 @@
         "data_availability": "DEGRADED",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-11-02",
+            "sample_count": 90,
+            "avg_amount_20": 11652689.37
+          },
+          "name": "农牧ETF建信",
           "discovery_spot": {
             "price": 0.733,
             "change_pct": 1.9471488178025131,
@@ -3801,17 +3808,10 @@
             "return_ytd_pct": null,
             "provider_timestamp": 1793689518000
           },
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-11-02",
-            "sample_count": 90,
-            "avg_amount_20": 11652689.37
-          },
-          "code": "159616",
           "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "name": "农牧ETF建信"
+          "code": "159616",
+          "category": "OBSERVATION_EVALUATION_INPUT",
+          "eligibility": "OBSERVATION_FULL_EVALUATION"
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
       },
@@ -3823,6 +3823,13 @@
         "data_availability": "DEGRADED",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-11-02",
+            "sample_count": 90,
+            "avg_amount_20": 8463780.59
+          },
+          "name": "消费ETF易方达",
           "discovery_spot": {
             "price": 0.92,
             "change_pct": 2.7932960893854775,
@@ -3838,17 +3845,10 @@
             "return_ytd_pct": null,
             "provider_timestamp": 1793689527000
           },
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-11-02",
-            "sample_count": 90,
-            "avg_amount_20": 8463780.59
-          },
-          "code": "159798",
           "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "name": "消费ETF易方达"
+          "code": "159798",
+          "category": "OBSERVATION_EVALUATION_INPUT",
+          "eligibility": "OBSERVATION_FULL_EVALUATION"
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
       },
@@ -3860,6 +3860,13 @@
         "data_availability": "DEGRADED",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-11-02",
+            "sample_count": 90,
+            "avg_amount_20": 412325777.5
+          },
+          "name": "证券保险ETF易方达",
           "discovery_spot": {
             "price": 0.77,
             "change_pct": 2.257636122177953,
@@ -3875,17 +3882,10 @@
             "return_ytd_pct": null,
             "provider_timestamp": 1793689543000
           },
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-11-02",
-            "sample_count": 90,
-            "avg_amount_20": 412325777.5
-          },
-          "code": "512070",
           "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "name": "证券保险ETF易方达"
+          "code": "512070",
+          "category": "OBSERVATION_EVALUATION_INPUT",
+          "eligibility": "OBSERVATION_FULL_EVALUATION"
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
       },
@@ -3897,6 +3897,13 @@
         "data_availability": "DEGRADED",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-11-02",
+            "sample_count": 90,
+            "avg_amount_20": 23269668.72
+          },
+          "name": "中概互联ETF招商",
           "discovery_spot": {
             "price": 0.862,
             "change_pct": 1.531213191990588,
@@ -3912,17 +3919,10 @@
             "return_ytd_pct": null,
             "provider_timestamp": 1793689539000
           },
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-11-02",
-            "sample_count": 90,
-            "avg_amount_20": 23269668.72
-          },
-          "code": "513220",
           "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "name": "中概互联ETF招商"
+          "code": "513220",
+          "category": "OBSERVATION_EVALUATION_INPUT",
+          "eligibility": "OBSERVATION_FULL_EVALUATION"
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
       },
@@ -3934,6 +3934,13 @@
         "data_availability": "DEGRADED",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-11-02",
+            "sample_count": 90,
+            "avg_amount_20": 128334577.55
+          },
+          "name": "新能源车ETF华夏",
           "discovery_spot": {
             "price": 1.318,
             "change_pct": 1.4626635873749239,
@@ -3949,17 +3956,10 @@
             "return_ytd_pct": null,
             "provider_timestamp": 1793689541000
           },
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-11-02",
-            "sample_count": 90,
-            "avg_amount_20": 128334577.55
-          },
-          "code": "515030",
           "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "name": "新能源车ETF华夏"
+          "code": "515030",
+          "category": "OBSERVATION_EVALUATION_INPUT",
+          "eligibility": "OBSERVATION_FULL_EVALUATION"
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
       },
@@ -3971,6 +3971,13 @@
         "data_availability": "DEGRADED",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-11-02",
+            "sample_count": 90,
+            "avg_amount_20": 8505611.94
+          },
+          "name": "高端制造ETF易方达",
           "discovery_spot": {
             "price": 0.7,
             "change_pct": 1.744186046511631,
@@ -3986,24 +3993,17 @@
             "return_ytd_pct": null,
             "provider_timestamp": 1793689540000
           },
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-11-02",
-            "sample_count": 90,
-            "avg_amount_20": 8505611.94
-          },
-          "code": "562910",
           "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "name": "高端制造ETF易方达"
+          "code": "562910",
+          "category": "OBSERVATION_EVALUATION_INPUT",
+          "eligibility": "OBSERVATION_FULL_EVALUATION"
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
       }
     ]
   },
   "intraday_path_features": {
-    "generated_at": "2026-11-03T12:23:32Z",
+    "generated_at": "2026-11-03T12:24:59Z",
     "market_date": "2026-11-03",
     "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
     "read_only": true,
@@ -5760,7 +5760,7 @@
     },
     "market_structure_context": {
       "schema_version": "1.4",
-      "generated_at": "2026-11-03T12:23:40Z",
+      "generated_at": "2026-11-03T12:25:05Z",
       "market_date": "2026-11-03",
       "as_of_beijing": "2026-11-03T15:05:29+08:00",
       "source_snapshot": "data/market/snapshots/2026-11-03_150529.json",
@@ -8905,12 +8905,19 @@
     "market_date": "2026-11-03",
     "latest_valid_node": "close",
     "latest_snapshot": "data/market/snapshots/2026-11-03_150529.json",
-    "generated_at_beijing": "2026-11-03T20:23:19+08:00",
+    "generated_at_beijing": "2026-11-03T20:24:39+08:00",
     "status": "READY",
     "coverage_status": "COMPLETE",
     "candidate_count": 8,
     "candidates": [
       {
+        "historical_context": {
+          "status": "READY",
+          "as_of": "2026-11-02",
+          "sample_count": 90,
+          "avg_amount_20": 29852068.65
+        },
+        "name": "化工ETF天弘",
         "discovery_spot": {
           "price": 0.933,
           "change_pct": 1.5233949945593128,
@@ -8926,19 +8933,19 @@
           "return_ytd_pct": null,
           "provider_timestamp": 1793689524000
         },
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "code": "159133",
         "category": "OBSERVATION_EVALUATION_INPUT",
+        "eligibility": "OBSERVATION_FULL_EVALUATION"
+      },
+      {
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-02",
           "sample_count": 90,
-          "avg_amount_20": 29852068.65
+          "avg_amount_20": 18237882.7
         },
-        "code": "159133",
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "name": "化工ETF天弘"
-      },
-      {
+        "name": "港股通消费ETF汇添富",
         "discovery_spot": {
           "price": 0.756,
           "change_pct": 3.137789904502042,
@@ -8954,19 +8961,19 @@
           "return_ytd_pct": null,
           "provider_timestamp": 1793689503000
         },
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "code": "159268",
         "category": "OBSERVATION_EVALUATION_INPUT",
+        "eligibility": "OBSERVATION_FULL_EVALUATION"
+      },
+      {
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-02",
           "sample_count": 90,
-          "avg_amount_20": 18237882.7
+          "avg_amount_20": 11652689.37
         },
-        "code": "159268",
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "name": "港股通消费ETF汇添富"
-      },
-      {
+        "name": "农牧ETF建信",
         "discovery_spot": {
           "price": 0.733,
           "change_pct": 1.9471488178025131,
@@ -8982,19 +8989,19 @@
           "return_ytd_pct": null,
           "provider_timestamp": 1793689518000
         },
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "code": "159616",
         "category": "OBSERVATION_EVALUATION_INPUT",
+        "eligibility": "OBSERVATION_FULL_EVALUATION"
+      },
+      {
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-02",
           "sample_count": 90,
-          "avg_amount_20": 11652689.37
+          "avg_amount_20": 8463780.59
         },
-        "code": "159616",
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "name": "农牧ETF建信"
-      },
-      {
+        "name": "消费ETF易方达",
         "discovery_spot": {
           "price": 0.92,
           "change_pct": 2.7932960893854775,
@@ -9010,19 +9017,19 @@
           "return_ytd_pct": null,
           "provider_timestamp": 1793689527000
         },
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "code": "159798",
         "category": "OBSERVATION_EVALUATION_INPUT",
+        "eligibility": "OBSERVATION_FULL_EVALUATION"
+      },
+      {
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-02",
           "sample_count": 90,
-          "avg_amount_20": 8463780.59
+          "avg_amount_20": 412325777.5
         },
-        "code": "159798",
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "name": "消费ETF易方达"
-      },
-      {
+        "name": "证券保险ETF易方达",
         "discovery_spot": {
           "price": 0.77,
           "change_pct": 2.257636122177953,
@@ -9038,19 +9045,19 @@
           "return_ytd_pct": null,
           "provider_timestamp": 1793689543000
         },
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "code": "512070",
         "category": "OBSERVATION_EVALUATION_INPUT",
+        "eligibility": "OBSERVATION_FULL_EVALUATION"
+      },
+      {
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-02",
           "sample_count": 90,
-          "avg_amount_20": 412325777.5
+          "avg_amount_20": 23269668.72
         },
-        "code": "512070",
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "name": "证券保险ETF易方达"
-      },
-      {
+        "name": "中概互联ETF招商",
         "discovery_spot": {
           "price": 0.862,
           "change_pct": 1.531213191990588,
@@ -9066,19 +9073,19 @@
           "return_ytd_pct": null,
           "provider_timestamp": 1793689539000
         },
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "code": "513220",
         "category": "OBSERVATION_EVALUATION_INPUT",
+        "eligibility": "OBSERVATION_FULL_EVALUATION"
+      },
+      {
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-02",
           "sample_count": 90,
-          "avg_amount_20": 23269668.72
+          "avg_amount_20": 128334577.55
         },
-        "code": "513220",
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "name": "中概互联ETF招商"
-      },
-      {
+        "name": "新能源车ETF华夏",
         "discovery_spot": {
           "price": 1.318,
           "change_pct": 1.4626635873749239,
@@ -9094,19 +9101,19 @@
           "return_ytd_pct": null,
           "provider_timestamp": 1793689541000
         },
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "code": "515030",
         "category": "OBSERVATION_EVALUATION_INPUT",
+        "eligibility": "OBSERVATION_FULL_EVALUATION"
+      },
+      {
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-02",
           "sample_count": 90,
-          "avg_amount_20": 128334577.55
+          "avg_amount_20": 8505611.94
         },
-        "code": "515030",
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "name": "新能源车ETF华夏"
-      },
-      {
+        "name": "高端制造ETF易方达",
         "discovery_spot": {
           "price": 0.7,
           "change_pct": 1.744186046511631,
@@ -9122,17 +9129,10 @@
           "return_ytd_pct": null,
           "provider_timestamp": 1793689540000
         },
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "historical_context": {
-          "status": "READY",
-          "as_of": "2026-11-02",
-          "sample_count": 90,
-          "avg_amount_20": 8505611.94
-        },
-        "code": "562910",
         "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "name": "高端制造ETF易方达"
+        "code": "562910",
+        "category": "OBSERVATION_EVALUATION_INPUT",
+        "eligibility": "OBSERVATION_FULL_EVALUATION"
       }
     ],
     "universe_identity": "3ac8e9cfa849ca9e",
