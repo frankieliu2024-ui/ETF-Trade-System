@@ -1165,6 +1165,20 @@ jobs:
           done
           fi
 
+      - name: Rebuild ETF strategy projection after canonical account sync
+        id: account_projection_rebuild
+        if: ${{ steps.state_sync.outcome == 'success' && steps.state_sync.outputs.processed == 'true' && github.event.inputs.probe_only != 'true' }}
+        run: |
+          python scripts/build_research_features.py
+          python scripts/rebuild_etf_strategy_equity.py --output data/state/etf_strategy_equity.json
+          python - <<'PY'
+          from pathlib import Path
+          from scripts.sync_formal_files import sync_dashboard_projection
+          result = sync_dashboard_projection(Path('.'))
+          print(result)
+          if not result.get('dashboard_changed') and result.get('status') not in {'PASS', 'UNCHANGED'}:
+              raise SystemExit('account projection Dashboard reconciliation failed')
+          PY
       - name: Rebuild execution-quality projection after canonical account/trade sync
         id: execution_quality_projection
         if: ${{ (steps.state_sync.outcome == 'success' && (steps.state_sync.outputs.processed == 'true' || steps.triggering_request.outputs.account_fact_refresh == 'true' || steps.triggering_request.outputs.trade_fact == 'true')) || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close' && github.event.inputs.probe_only != 'true') }}
