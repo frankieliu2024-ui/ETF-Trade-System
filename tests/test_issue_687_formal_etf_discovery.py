@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
 
 from scripts import formal_etf_opportunity_discovery as discovery
 from scripts import state_manager
@@ -30,7 +31,7 @@ class FormalEtfOpportunityDiscoveryTest(unittest.TestCase):
             "return_60d_pct": 10.0, "return_ytd_pct": 15.0,
         }]
         result = discovery.discover_formal_candidates(
-            None, market_date="2026-09-19", managed_codes={"510300"},
+            Path("."), market_date="2026-09-19", required_history_end_date="2026-09-18", managed_codes={"510300"},
             spot_rows=spot, history_by_code={"510300": history()},
         )
         self.assertEqual(result["managed_excluded_count"], 0)
@@ -43,7 +44,7 @@ class FormalEtfOpportunityDiscoveryTest(unittest.TestCase):
             "return_60d_pct": 12.0, "return_ytd_pct": 20.0,
         }]
         result = discovery.discover_formal_candidates(
-            None, market_date="2026-09-19", managed_codes=set(),
+            Path("."), market_date="2026-09-19", required_history_end_date="2026-09-18", managed_codes=set(),
             spot_rows=spot, history_by_code={"588080": history()},
         )
         self.assertEqual(result["candidate_count"], 1)
@@ -59,8 +60,8 @@ class FormalEtfOpportunityDiscoveryTest(unittest.TestCase):
         states = discovery.classify_states(history())
         self.assertTrue(any(x["state"] == "PERSISTENT_TREND" for x in states))
         result = discovery.discover_formal_candidates(
-            None,
-            market_date="2026-09-19",
+            Path("."),
+            market_date="2026-09-19", required_history_end_date="2026-09-18",
             managed_codes=set(),
             spot_rows=[{
                 "code": "588080", "name": "科创50ETF易方达", "market_id": 1, "price": 1.4,
@@ -126,7 +127,7 @@ class FormalEtfOpportunityDiscoveryTest(unittest.TestCase):
         out = state_manager._extend_capital_comparison_with_discovery(base, formal)
         self.assertEqual(out["comparison_universe"], base["comparison_universe"])
         self.assertFalse(out["formal_discovery_included"])
-        self.assertEqual(out["formal_discovery_ingress_status"], "BLOCKED_INCOMPLETE_COVERAGE")
+        self.assertEqual(out["formal_discovery_ingress_status"], "ELIGIBILITY_ONLY")
 
 
 if __name__ == "__main__":
