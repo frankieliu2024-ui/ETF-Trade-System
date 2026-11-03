@@ -92,7 +92,7 @@ concurrency:
   # after one second while they are waiting for the shared main-state writer.
   # The persistence step retains its bounded fetch/reset/push retry for the
   # short commit race with other main writers.
-  group: ${{ github.event_name == 'workflow_dispatch' && format('etf-system-consistency-manual-{0}', github.run_id) || (github.ref == 'refs/heads/main' && 'etf-main-state-writer' || format('etf-system-consistency-pr-{0}', github.event.pull_request.number)) }}
+  group: ${{ github.event_name == 'workflow_dispatch' && format('etf-system-consistency-manual-{0}', github.run_id) || (github.ref == 'refs/heads/main' && 'etf-consistency-state-writer' || format('etf-system-consistency-pr-{0}', github.event.pull_request.number)) }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
