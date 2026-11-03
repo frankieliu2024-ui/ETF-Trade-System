@@ -2,11 +2,10 @@
   "status": "DEGRADED",
   "pulse_success": true,
   "hard_error_count": 0,
-  "warning_count": 3,
+  "warning_count": 2,
   "hard_errors": [],
   "warnings": [
-    "N225: quality=DEGRADED as_of_beijing=2026-11-02T14:30:00+08:00",
-    "HSTECH: quality=DEGRADED error=",
+    "N225: quality=PASS as_of_beijing=2026-11-02T14:30:00+08:00",
     "ambiguous_scheduled_pulse: occurrence identity unavailable; current refresh is not natural-pulse fulfillment"
   ],
   "scheduled_for": "5,15,25,35,45,55 0-8 * * 1-5",
@@ -16,26 +15,26 @@
   "schedule_delay_class": "AMBIGUOUS",
   "natural_pulse_identity": null,
   "natural_pulse_identity_status": "AMBIGUOUS",
-  "latest_candidate_slot_at": "2026-11-03T14:15:00+08:00",
-  "candidate_delay_seconds": 467,
+  "latest_candidate_slot_at": "2026-11-03T14:25:00+08:00",
+  "candidate_delay_seconds": 595,
   "candidate_delay_class": "BOUNDED_DELAY",
   "natural_pulse_eligible": false,
   "trigger": "schedule",
-  "started_at": "2026-11-03T06:22:47Z",
-  "provider_as_of": "2026-11-03T14:22:20+08:00",
+  "started_at": "2026-11-03T06:34:55Z",
+  "provider_as_of": "2026-11-03T14:34:28+08:00",
   "provider_as_of_by_object": {
     "NDX": "2026-11-03T05:00:00+08:00",
     "SOX": "2026-11-03T05:00:00+08:00",
     "N225": "2026-11-02T14:30:00+08:00",
-    "KOSPI": "2026-11-03T14:22:20+08:00",
+    "KOSPI": "2026-11-03T14:34:00+08:00",
     "TWII": "2026-11-03T13:33:00+08:00",
-    "HSTECH": "2026-11-03T14:07:40+08:00"
+    "HSTECH": "2026-11-03T14:34:28+08:00"
   },
-  "finished_at": "2026-11-03T06:22:47Z",
-  "commit_sha": "cc22973570e6d990552a668baa072029e50fa723",
-  "run_id": "41589407033",
+  "finished_at": "2026-11-03T06:34:55Z",
+  "commit_sha": "255147150e188014c4f658d460272a7ec2bb5f7b",
+  "run_id": "41590678421",
   "market_date_beijing": "2026-11-03",
-  "overseas_quality_status": "DEGRADED",
+  "overseas_quality_status": "PASS",
   "us_extended_hours_status": "PASS",
   "objects": {
     "NDX": {
@@ -46,7 +45,7 @@
       "symbol": "^NDX",
       "market_phase": "PRE_OPEN",
       "freshness_status": "PREVIOUS_SESSION_REFERENCE",
-      "delay_minutes": 562.27,
+      "delay_minutes": 574.36,
       "error": ""
     },
     "SOX": {
@@ -57,29 +56,29 @@
       "symbol": "^SOX",
       "market_phase": "PRE_OPEN",
       "freshness_status": "PREVIOUS_SESSION_REFERENCE",
-      "delay_minutes": 562.27,
+      "delay_minutes": 574.36,
       "error": ""
     },
     "N225": {
-      "quality_status": "DEGRADED",
+      "quality_status": "PASS",
       "as_of_beijing": "2026-11-02T14:30:00+08:00",
       "market_date_local": "2026-11-02",
       "provider": "yahoo_chart_api",
       "symbol": "^N225",
-      "market_phase": "OPEN",
-      "freshness_status": "STALE",
-      "delay_minutes": 1432.27,
+      "market_phase": "CLOSED",
+      "freshness_status": "PREVIOUS_SESSION_REFERENCE",
+      "delay_minutes": 1444.36,
       "error": ""
     },
     "KOSPI": {
       "quality_status": "PASS",
-      "as_of_beijing": "2026-11-03T14:22:20+08:00",
+      "as_of_beijing": "2026-11-03T14:34:00+08:00",
       "market_date_local": "2026-11-03",
       "provider": "naver_finance",
       "symbol": "KOSPI",
-      "market_phase": "OPEN",
-      "freshness_status": "FRESH",
-      "delay_minutes": 0.0,
+      "market_phase": "CLOSED",
+      "freshness_status": "SESSION_REFERENCE",
+      "delay_minutes": 0.36,
       "error": ""
     },
     "TWII": {
@@ -90,18 +89,18 @@
       "symbol": "tse_t00.tw",
       "market_phase": "CLOSED",
       "freshness_status": "SESSION_REFERENCE",
-      "delay_minutes": 49.27,
+      "delay_minutes": 61.36,
       "error": ""
     },
     "HSTECH": {
-      "quality_status": "DEGRADED",
-      "as_of_beijing": "2026-11-03T14:07:40+08:00",
+      "quality_status": "PASS",
+      "as_of_beijing": "2026-11-03T14:34:28+08:00",
       "market_date_local": "2026-11-03",
-      "provider": "yahoo_chart_api",
-      "symbol": "HSTECH.HK",
+      "provider": "eastmoney_push2",
+      "symbol": "124.HSTECH",
       "market_phase": "OPEN",
-      "freshness_status": "DELAYED",
-      "delay_minutes": 14.6,
+      "freshness_status": "FRESH",
+      "delay_minutes": 0.0,
       "error": ""
     }
   },
@@ -109,7 +108,7 @@
     "hithink-finance:HS2083": {
       "status": "ACTIVE",
       "consecutive_failures": 0,
-      "failure_class": "UNKNOWN",
+      "failure_class": "TRANSIENT",
       "bypass_date": "2026-11-03",
       "last_failure_at": "2026-10-12T00:33:54+00:00",
       "reason": "HS2083\",\"hint\":\"Check the command schema and correct the supplied parameters.\",\"retryable\":false,\"request_id\":\"ec02e37e24b441df89f5fcdb606553b9\"},\"meta\":{\"cli_version\":\"0.1.13\",\"schema_version\":\"1\"}}\n"
@@ -117,14 +116,14 @@
     "yahoo_chart_api:HSTECH.HK": {
       "status": "ACTIVE",
       "consecutive_failures": 0,
-      "last_success_at": "2026-11-03T06:22:16+00:00",
+      "last_success_at": "2026-11-03T06:34:21+00:00",
       "failure_class": "UNKNOWN",
       "bypass_date": "2026-11-02"
     },
     "eastmoney_push2:124.HSTECH": {
       "status": "ACTIVE",
       "consecutive_failures": 0,
-      "last_success_at": "2026-11-03T05:57:11+00:00",
+      "last_success_at": "2026-11-03T06:34:21+00:00",
       "failure_class": "TRANSIENT",
       "bypass_date": "2026-11-03"
     }
