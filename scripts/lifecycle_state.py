@@ -224,6 +224,7 @@ def build_lifecycle_projection(root: Path, as_of_market_date: str | None = None)
             "source_decision_id": decision.get("decision_id"),
             "source_trade_event_id": execution.get("event_id"),
             "hypothesis_id": decision.get("hypothesis_id"),
+            "hypothesis_link_status": "RESOLVED" if decision.get("hypothesis_id") else "UNRESOLVED",
             "security_code": decision.get("candidate_code") or execution.get("code"),
             "security_name": decision.get("candidate_name") or execution.get("name"),
             "lifecycle": "Trial",
