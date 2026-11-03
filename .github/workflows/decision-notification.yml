@@ -474,68 +474,34 @@ jobs:
             # process_state_sync_request.py: that projector validates Formal
             # Decision managed-position/lifecycle semantics that do not belong
             # to a review whose contract is exact full-body forwarding.
-            result=$(python - "$completion_path" <<'PY'
-          import hashlib
+            result=$(PYTHONPATH=scripts python - "$completion_path" <<'PY'
           import json
-          import re
           import sys
           from pathlib import Path
+          from scripts.process_state_sync_request import record_post_close_review
 
           completion_path = Path(sys.argv[1])
           payload = json.loads(completion_path.read_text(encoding="utf-8"))
           binding = payload.get("presentation_binding") or {}
           report_type = str(payload.get("report_type") or binding.get("report_type") or "").strip().upper()
           task_id = str(payload.get("task_id") or binding.get("task_id") or "").strip()
-          task_run_id = str(payload.get("task_run_id") or binding.get("task_run_id") or "").strip()
-          occurrence_id = str(payload.get("occurrence_id") or binding.get("occurrence_id") or "").strip()
-          request_id = str(payload.get("request_id") or binding.get("request_id") or "").strip()
-          report_id = str(binding.get("report_id") or "").strip()
-          content = str(binding.get("full_content") or "")
           if report_type != "ETF_TRADE_REVIEW" or task_id != "ETF交易复盘":
               raise SystemExit("Trade Review completion identity mismatch")
-          required = {
-              "task_run_id": task_run_id,
-              "occurrence_id": occurrence_id,
-              "request_id": request_id,
-              "report_id": report_id,
-              "full_content": content,
-          }
-          missing = [key for key, value in required.items() if not value]
-          if missing:
-              raise SystemExit("Trade Review completion missing: " + ",".join(missing))
-          if not content.startswith("【ETF交易复盘】"):
-              raise SystemExit("Trade Review full_content title mismatch")
-          if not re.fullmatch(r"[A-Za-z0-9_.:-]+", occurrence_id):
-              raise SystemExit("Trade Review occurrence_id is not path-safe")
-          content_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
-          event_path = Path("events/reviews") / f"trade-{occurrence_id}.json"
-          event = {
-              "schema_version": "1.0",
-              "event_type": "FORMAL_SCHEDULED_TRADE_REVIEW",
-              "task_id": task_id,
-              "task_run_id": task_run_id,
-              "occurrence_id": occurrence_id,
-              "request_id": request_id,
-              "report_id": report_id,
-              "content_hash": content_hash,
-              "market_date": str(payload.get("market_date") or "").strip(),
-              "interaction_scenario": str(payload.get("interaction_scenario") or "MIDDAY_REVIEW").strip(),
-              "source": "CHATGPT_SCHEDULED_REVIEW_ACTOR",
-              "no_trade_authority": True,
-              "review": payload.get("formal_review") if isinstance(payload.get("formal_review"), dict) else {},
-              "presentation_binding": binding,
-          }
-          serialized = json.dumps(event, ensure_ascii=False, indent=2) + "\n"
-          if event_path.exists():
-              existing = event_path.read_text(encoding="utf-8")
-              if existing != serialized:
-                  raise SystemExit("canonical review event path conflict: " + str(event_path))
-          else:
-              event_path.parent.mkdir(parents=True, exist_ok=True)
-              event_path.write_text(serialized, encoding="utf-8")
-          print(json.dumps({"canonical_publication": str(event_path).replace("\\\\", "/")}, ensure_ascii=False))
-          PY
-          )
+          review = payload.get("formal_review") if isinstance(payload.get("formal_review"), dict) else {}
+          scope = str(review.get("review_scope") or "").strip().upper()
+          if scope not in {"FULL_DAY", "FULL_TRADING_DAY"}:
+              raise SystemExit("Trade Review completion is not a full-day review")
+          account_path = Path("data/state/account_fact.json")
+          account = json.loads(account_path.read_text(encoding="utf-8"))
+          ok, duplicate = record_post_close_review(account, payload)
+          if not ok:
+              raise SystemExit("canonical post-close trade review projection was not accepted")
+          market_date = str(review.get("market_date") or payload.get("market_date") or "").strip()
+          event_path = Path("events/reviews") / f"{market_date}.json"
+          if not event_path.exists():
+              raise SystemExit("canonical post-close trade review event was not persisted")
+          print(json.dumps({"canonical_publication": str(event_path).replace("\\\\", "/"), "duplicate": duplicate}, ensure_ascii=False))
+          PY)
             echo "$result"
             event_path=$(python -c 'import json,sys; print(json.loads(sys.argv[1]).get("canonical_publication",""))' "$result")
           else
