@@ -72,16 +72,22 @@ def main() -> int:
         if d < start or d > end:
             continue
         payload = load_json(path)
-        if not payload.get("historical_backfill") and payload.get("mode") != "OBJECTIVE_RESEARCH_FEATURES_HISTORICAL_BACKFILL":
-            # Current/live research days are still objective facts; accept only if CLOSED and fields are present.
-            if payload.get("market_phase") not in {"CLOSED", "POST_CLOSE_GRACE"}:
+        historical = bool(payload.get("historical_backfill")) or payload.get("mode") == "OBJECTIVE_RESEARCH_FEATURES_HISTORICAL_BACKFILL"
+        if not historical:
+            # Current/live research days are objective facts only after the
+            # close-quality contract and filename/PIT identity are satisfied.
+            if payload.get("market_date") != d or payload.get("market_phase") not in {"CLOSED", "POST_CLOSE_GRACE"}:
+                continue
+            if payload.get("quality_status") != "PASS":
                 continue
         rows = {}
         for item in payload.get("features") or []:
             code = str(item.get("code") or "")
             o, c = finite(item.get("open")), finite(item.get("close"))
+            if not historical and item.get("quality_status") != "PASS":
+                continue
             if code and o is not None and c is not None and o > 0 and c > 0:
-                rows[code] = {"open": o, "close": c, "name": item.get("name")}
+                rows[code] = {"open": o, "close": c, "name": item.get("name"), "quality_status": item.get("quality_status")}
         if rows:
             day_rows[d] = rows
 
@@ -119,8 +125,8 @@ def main() -> int:
         r5 = rank_desc({c: m5[c] for c in common})
         r20 = rank_desc({c: m20[c] for c in common})
         n = len(common)
-        leaders = [c for c in common if r5[c] <= 3 and r20[c] <= 3 and m5[c] > 0 and m20[c] > 0]
-        laggards = [c for c in common if r5[c] >= n - 2 and r20[c] >= n - 2]
+        leaders = sorted(c for c in common if r5[c] <= 3 and r20[c] <= 3 and m5[c] > 0 and m20[c] > 0)
+        laggards = sorted(c for c in common if r5[c] >= n - 2 and r20[c] >= n - 2)
         new_high_leaders = [c for c in leaders if high20.get(c)]
         signals[d] = {
             "n": n,
@@ -144,6 +150,23 @@ def main() -> int:
         entry = day_rows[entry_d][code]["open"]
         exit_c = day_rows[exit_d][code]["close"]
         return exit_c / entry - 1.0 if entry > 0 else None
+
+    def fwd_trade(signal_date: str, code: str, h: int):
+        i = date_idx[signal_date]
+        if i + 1 >= len(dates) or i + h >= len(dates):
+            return None
+        entry_date, exit_date = dates[i + 1], dates[i + h]
+        entry_row = day_rows.get(entry_date, {}).get(code)
+        exit_row = day_rows.get(exit_date, {}).get(code)
+        if not entry_row or not exit_row or entry_row["open"] <= 0:
+            return None
+        return {
+            "entry_date": entry_date,
+            "entry_price": r6(entry_row["open"]),
+            "exit_date": exit_date,
+            "exit_price": r6(exit_row["close"]),
+            "return": r6(exit_row["close"] / entry_row["open"] - 1.0),
+        }
 
     # Precompute same-date universe forward medians for cross-sectional excess returns.
     universe_median: dict[tuple[str, int], float] = {}
@@ -209,6 +232,14 @@ def main() -> int:
                     "leader_forward_returns": {
                         c: fwd_return(d, c, h) for c in sig["leaders"]
                         if fwd_return(d, c, h) is not None
+                    },
+                    "leader_trades": {
+                        c: fwd_trade(d, c, h) for c in sig["leaders"]
+                        if fwd_trade(d, c, h) is not None
+                    },
+                    "laggard_trades": {
+                        c: fwd_trade(d, c, h) for c in sig["laggards"]
+                        if fwd_trade(d, c, h) is not None
                     },
                     "laggard_forward_returns": {
                         c: fwd_return(d, c, h) for c in sig["laggards"]
