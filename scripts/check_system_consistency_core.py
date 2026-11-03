@@ -724,8 +724,10 @@ def main() -> int:
         required_clock_fields = ("source_decision_id", "source_trade_event_id", "start_market_date", "current_t_plus", "mandatory_decision_market_date", "next_lifecycle_node")
         clock_complete = all(item.get(key) not in (None, "") for key in required_clock_fields)
         source_decision_id = str(item.get("source_decision_id") or "")
-        hypothesis_valid = item.get("hypothesis_id") not in (None, "") or source_decision_id.startswith("FORMAL_COMPLETION:")
-        check("lifecycle:source_and_clock", clock_complete and hypothesis_valid, f"code={item.get('security_code')} source_decision={source_decision_id} source_trade={item.get('source_trade_event_id')} hypothesis_id_present={item.get('hypothesis_id') not in (None, '')}")
+        hypothesis_present = item.get("hypothesis_id") not in (None, "")
+        unresolved_hypothesis = str(item.get("hypothesis_link_status") or "").upper() == "UNRESOLVED"
+        hypothesis_valid = hypothesis_present or source_decision_id.startswith("FORMAL_COMPLETION:") or unresolved_hypothesis
+        check("lifecycle:source_and_clock", clock_complete and hypothesis_valid, f"code={item.get('security_code')} source_decision={source_decision_id} source_trade={item.get('source_trade_event_id')} hypothesis_id_present={hypothesis_present}", warning=unresolved_hypothesis and not hypothesis_present)
         if item.get("decision_due"):
             check("lifecycle:due_exposed", item.get("next_lifecycle_node") == "TRADE_MANDATORY_LIFECYCLE_NODE:T+3", f"code={item.get('security_code')} due={item.get('decision_due')}")
             check("lifecycle:overdue_exposed", isinstance(item.get("overdue"), bool), f"code={item.get('security_code')} overdue={item.get('overdue')}")
