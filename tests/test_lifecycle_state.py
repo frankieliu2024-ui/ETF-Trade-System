@@ -159,5 +159,24 @@ class LifecycleStateTests(unittest.TestCase):
         self.assertEqual(item["lifecycle_status"], "ACTIVE_TRIAL")
 
 
+    def test_completion_exit_requires_unique_linked_lot(self):
+        from scripts.lifecycle_state import _completion_explicit_exit
+        decision = {"decision_id": "FORMAL_COMPLETION:R1", "candidate_code": "159057",
+                    "_linked_execution_id": "buy1"}
+        buy = {"event_id": "buy1", "linked_decision_id": "FORMAL_COMPLETION:R1",
+               "code": "159057", "side": "BUY", "quantity": 100}
+        unrelated = {"event_id": "sell-other", "linked_decision_id": "OTHER",
+                     "code": "159057", "side": "SELL", "quantity": 100}
+        partial = {"event_id": "sell1", "linked_decision_id": "FORMAL_COMPLETION:R1",
+                   "code": "159057", "side": "SELL", "quantity": 40}
+        self.assertIsNone(_completion_explicit_exit(self.root, decision, [buy, unrelated]))
+        self.assertIsNone(_completion_explicit_exit(self.root, decision, [buy, partial]))
+        self.assertIsNone(_completion_explicit_exit(self.root, decision, [buy, buy, partial]))
+        complete = dict(partial, quantity=100)
+        result = _completion_explicit_exit(self.root, decision, [buy, complete])
+        self.assertEqual(result["status"], "RESOLVED")
+        self.assertEqual(result["resolution_event_ids"], ["sell1"])
+
+
 if __name__ == "__main__":
     unittest.main()
