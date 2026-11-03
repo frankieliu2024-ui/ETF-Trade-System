@@ -38,14 +38,12 @@ def test_holding_thesis_projection_preserves_distinct_business_meanings():
     import ast
 
     tree = ast.parse((ROOT / "scripts" / "business_decision_source.py").read_text(encoding="utf-8"))
-    projected = [node.value for node in ast.walk(tree)
-                 if isinstance(node, ast.Dict)
-                 for key, node_value in zip(node.keys, node.values)
-                 if isinstance(key, ast.Constant) and key.value == "holding_thesis_status"
-                 for node in [ast.Dict(keys=[key], values=[node_value])]]
+    projected = [value for mapping in ast.walk(tree) if isinstance(mapping, ast.Dict)
+                 for key, value in zip(mapping.keys, mapping.values)
+                 if isinstance(key, ast.Constant) and key.value == "holding_thesis_status"]
     assert projected, "holding thesis projection must exist"
     answer = {"holding_thesis_status": "假设已失效", "capital_comparison": "释放资本更优"}
-    values = [eval(compile(ast.Expression(node.values[0]), "<holding-thesis-expression>", "eval"),
+    values = [eval(compile(ast.Expression(node), "<holding-thesis-expression>", "eval"),
                    {"__builtins__": {}}, {"answer": answer}) for node in projected]
     assert "假设已失效" in values
     assert "释放资本更优" not in values
