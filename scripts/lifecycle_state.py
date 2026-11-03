@@ -179,9 +179,26 @@ def _resolution(root: Path, trial: dict[str, Any], as_of: date) -> dict[str, Any
     # The canonical decision may be recorded after an already-linked, user-confirmed
     # execution.  Attribution identity, not recording time, owns the opening lot.
     buy_qty = sum(float(x.get("quantity") or 0) for x in buys)
-    sell_qty = sum(float(x.get("quantity") or 0) for x in eligible)
-    if code and eligible and buy_qty > 0 and sell_qty >= buy_qty:
-        return {"status": "RESOLVED", "resolution_reason": "CONFIRMED_COMPLETE_SELL", "resolution_event_ids": [x.get("event_id") for x in eligible], "resolution_time_beijing": max((x.get("confirmed_at_beijing") or x.get("executed_at_beijing") or x.get("execution_date") or "") for x in eligible)}
+    # An unlinked same-symbol sale can be attributed only when this is the
+    # sole executed opening lot for the symbol. Otherwise a sale may belong
+    # to another Trial, Confirm tranche, or pre-existing position.
+    other_buys = [
+        x for x in executions
+        if str(x.get("code") or "").strip() == code
+        and str(x.get("side") or x.get("action") or "").upper() == "BUY"
+        and x not in buys
+    ]
+    explicit_sells = [
+        x for x in eligible
+        if str(x.get("linked_decision_id") or "") == str(trial.get("decision_id") or "")
+        or (bool(hypothesis) and str(x.get("hypothesis_id") or "") == hypothesis)
+    ]
+    attributable_sells = explicit_sells if len(explicit_sells) == len(eligible) else (
+        eligible if len(buys) == 1 and not other_buys else []
+    )
+    sell_qty = sum(float(x.get("quantity") or 0) for x in attributable_sells)
+    if code and attributable_sells and buy_qty > 0 and sell_qty >= buy_qty:
+        return {"status": "RESOLVED", "resolution_reason": "CONFIRMED_COMPLETE_SELL", "resolution_event_ids": [x.get("event_id") for x in attributable_sells], "resolution_time_beijing": max((x.get("confirmed_at_beijing") or x.get("executed_at_beijing") or x.get("execution_date") or "") for x in attributable_sells)}
     return None
 
 def _completion_explicit_exit(root: Path, trial: dict[str, Any], executions: list[dict[str, Any]]) -> dict[str, Any] | None:
