@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 
 try:
@@ -161,6 +162,55 @@ def validate_formal_object_coverage(review: dict, account: dict | None = None) -
     }
 
 
+def validate_trade_review_presentation_semantics(
+    review: dict, final_content: str, account: dict | None = None
+) -> None:
+    """Fail closed on direct contradictions between frozen prose and read objects.
+
+    This is deliberately a narrow semantic guard, not a keyword-based content
+    scorer.  It only blocks an explicit user-facing claim when the request-bound
+    Discovery/opportunity projection proves the opposite.  A degraded or missing
+    object therefore remains reportable; it cannot be converted into a false
+    zero or a false "not available" claim.
+    """
+    content = str(final_content or "")
+    discovery = review.get("formal_discovery") if isinstance(review, dict) else None
+    opportunity = review.get("formal_opportunity") if isinstance(review, dict) else None
+    if not isinstance(discovery, dict) and not isinstance(opportunity, dict):
+        return
+
+    # A correction/disclaimer is itself an acceptable semantic outcome.  For
+    # example: “不能把资料不足写成没有机会”.
+    correction = re.compile(r"(?:不能|不得|不可|不应|不能将|不得将).{0,20}(?:写成|断言|误读|等同|替代)")
+
+    discovery_status = str((discovery or {}).get("status") or "").upper()
+    discovery_count = len((discovery or {}).get("candidates") or [])
+    discovery_ready = discovery_status in {"READY", "COMPLETED", "COMPLETE"} and discovery_count > 0
+    discovery_missing_claim = re.compile(
+        r"(?:没有|缺失|未形成|不可用|未完成).{0,16}(?:DISCOVERY|全市场发现)|"
+        r"(?:DISCOVERY|全市场发现).{0,16}(?:没有|缺失|未形成|不可用|未完成)",
+        re.IGNORECASE,
+    )
+    if discovery_ready and discovery_missing_claim.search(content) and not correction.search(content):
+        raise ValueError(
+            "trade review prose contradicts the request-bound Discovery object: "
+            f"status={discovery_status}, candidate_count={discovery_count}"
+        )
+
+    opportunity_status = str((opportunity or {}).get("status") or "").upper()
+    opportunity_count = (opportunity or {}).get("opportunity_count")
+    opportunity_ready_count = (
+        opportunity_count is not None
+        and str(opportunity_status) not in {"", "UNKNOWN", "MISSING"}
+    )
+    zero_claim = re.compile(r"(?:机会(?:ETF)?(?:数量)?|机会层).{0,8}(?:为|是)?\s*0|没有机会", re.IGNORECASE)
+    if opportunity_ready_count and opportunity_count not in (0, "0") and zero_claim.search(content) and not correction.search(content):
+        raise ValueError(
+            "trade review prose contradicts the request-bound opportunity object: "
+            f"status={opportunity_status}, opportunity_count={opportunity_count}"
+        )
+
+
 def build_trade_review_completion_request(
     formal_review: dict,
     request_id: str,
@@ -188,6 +238,7 @@ def build_trade_review_completion_request(
         validate_midday_review(formal_review, account)
     else:
         validate_full_day_review(formal_review, account)
+    validate_trade_review_presentation_semantics(formal_review, final_content, account)
     coverage = validate_formal_object_coverage(formal_review, account)
     validate_user_visible_content(str(final_content or ""), canonical_closure_confirmed=False)
     effective_entry_mode = str(entry_mode or "").strip().upper()
