@@ -501,7 +501,8 @@ jobs:
           if not event_path.exists():
               raise SystemExit("canonical post-close trade review event was not persisted")
           print(json.dumps({"canonical_publication": str(event_path).replace("\\\\", "/"), "duplicate": duplicate}, ensure_ascii=False))
-          PY)
+          PY
+          )
             echo "$result"
             event_path=$(python -c 'import json,sys; print(json.loads(sys.argv[1]).get("canonical_publication",""))' "$result")
           else
