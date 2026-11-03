@@ -2261,6 +2261,22 @@ def _is_effective_close_timestamp(
 def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     review = request.get("formal_review")
     interaction_scenario = str(request.get("interaction_scenario") or "").strip().upper()
+    # Legacy full-day Trade Review completions may predate the nested
+    # formal_review object. Accept only the unambiguous frozen-title shape;
+    # every other missing/invalid review remains fail-closed.
+    if not review:
+        binding = request.get("presentation_binding") if isinstance(request.get("presentation_binding"), dict) else {}
+        report_type = str(request.get("report_type") or binding.get("report_type") or "").strip().upper()
+        task_id = str(request.get("task_id") or binding.get("task_id") or "").strip()
+        full_content = str(request.get("final_content") or binding.get("full_content") or "")
+        review_title = full_content.splitlines()[0].strip() if full_content.splitlines() else ""
+        if report_type == "ETF_TRADE_REVIEW" and task_id == "ETF交易复盘" and "完整日复盘" in review_title:
+            review = {
+                "review_scope": "FULL_DAY",
+                "market_date": str(request.get("market_date") or "").strip(),
+                "reviewed_at_beijing": str(request.get("requested_at_beijing") or "").strip(),
+                "data_time": {},
+            }
     if interaction_scenario not in {"SCHEDULED_TRADE_REVIEW", "TRADE_REVIEW", "POST_CLOSE_REVIEW", "FORMAL_DECISION", "MIDDAY_REVIEW", "WEEKLY_REVIEW"} or not review:
         return False, False
     review_scope = str(review.get("review_scope") or "").strip().upper()
