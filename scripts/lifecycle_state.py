@@ -144,7 +144,8 @@ def _resolution(root: Path, trial: dict[str, Any], as_of: date) -> dict[str, Any
     directory = root / "events" / "decisions"
     for path in sorted(directory.glob("*.json")) if directory.exists() else []:
         event = _load(path, {})
-        if event.get("decision_id") == trial.get("decision_id") or str(event.get("hypothesis_id") or "") != hypothesis:
+        if (not hypothesis or event.get("decision_id") == trial.get("decision_id")
+                or str(event.get("hypothesis_id") or "") != hypothesis):
             continue
         event_time = parse_time(event.get("decision_time_beijing"))
         if decision_time and (event_time or decision_time) < decision_time:
@@ -169,7 +170,7 @@ def _resolution(root: Path, trial: dict[str, Any], as_of: date) -> dict[str, Any
         and str(x.get("side") or x.get("action") or "").upper() == "BUY"
         and (
             str(x.get("linked_decision_id") or "") == str(trial.get("decision_id") or "")
-            or str(x.get("hypothesis_id") or "") == hypothesis
+            or (bool(hypothesis) and str(x.get("hypothesis_id") or "") == hypothesis)
         )
     ]
     sells = [x for x in executions if str(x.get("code") or "").strip() == code and str(x.get("side") or x.get("action") or "").upper() == "SELL"]
