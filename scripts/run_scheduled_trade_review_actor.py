@@ -46,19 +46,10 @@ def _persist_completion_to_main(completion_path: str) -> str:
         "Content-Type": "application/json",
         "X-GitHub-Api-Version": "2022-11-28",
     }
-    try:
-        read_req = urllib_request.Request(endpoint + "?ref=main", method="GET", headers=headers)
-        with urllib_request.urlopen(read_req, timeout=30) as response:
-            existing = json.loads(response.read().decode("utf-8"))
-        existing_body = __import__("base64").b64decode(str(existing.get("content") or "").replace("\\n", ""))
-        if existing_body != body:
-            raise RuntimeError("different completion already exists on main: " + relative_path)
-        return relative_path
-    except Exception as exc:
-        if getattr(exc, "code", None) != 404:
-            if isinstance(exc, RuntimeError):
-                raise
-            raise RuntimeError("failed to read existing completion on main: " + str(exc)) from exc
+    # Write directly first. The Contents API is the authoritative create/
+    # idempotency/conflict decision; a target-path pre-read is intentionally
+    # avoided so a missing path, race, or transient read failure cannot block
+    # the completion handoff before the write is attempted.
     payload = json.dumps({
         "message": "Persist Scheduled Review completion",
         "content": __import__("base64").b64encode(body).decode("ascii"),
