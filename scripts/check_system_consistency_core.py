@@ -29,6 +29,10 @@ try:
     from build_stock_context import active_account_asset_codes
 except ModuleNotFoundError:
     from scripts.build_stock_context import active_account_asset_codes
+try:
+    from lifecycle_state import build_lifecycle_projection
+except ModuleNotFoundError:
+    from scripts.lifecycle_state import build_lifecycle_projection
 
 ROOT = Path(__file__).resolve().parents[1]
 REPORT = Path(os.environ.get("ETF_CONSISTENCY_REPORT_PATH", str(ROOT / "data" / "state" / "system_consistency.json"))).resolve()
@@ -718,7 +722,9 @@ def main() -> int:
     check("scheduled_pulse:observable", all(key in pulse for key in ("expected_slots", "observed_slots", "missing_slots", "status")), f"status={pulse.get('status', 'MISSING')}", warning=True)
     action = decision_context.get("formal_action") or {}
     check("formal_action:execution_boundary", action.get("execution_status") in {"UNKNOWN", "PENDING", "EXECUTED", "SUPERSEDED"} or not action, f"execution_status={action.get('execution_status', 'MISSING')}")
-    lifecycle = decision_context.get("lifecycle_projection") or {}
+    # Rebuild the read-only lifecycle projection in memory so consistency validation
+    # never consumes a stale persisted decision_context after a producer change.
+    lifecycle = build_lifecycle_projection(ROOT)
     check("lifecycle:projection_present", lifecycle.get("status") == "READY" and isinstance(lifecycle.get("active_lifecycles"), list), f"status={lifecycle.get('status', 'MISSING')}")
     for item in lifecycle.get("active_lifecycles") or []:
         required_clock_fields = ("source_decision_id", "source_trade_event_id", "start_market_date", "current_t_plus", "mandatory_decision_market_date", "next_lifecycle_node")
