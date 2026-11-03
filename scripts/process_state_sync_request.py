@@ -8,6 +8,11 @@ import re
 import subprocess
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
+
+try:
+    from trade_review_semantic_guard import normalize_verified_close_data_time, validate_trade_review_presentation_semantics
+except ModuleNotFoundError:
+    from scripts.trade_review_semantic_guard import normalize_verified_close_data_time, validate_trade_review_presentation_semantics
 from statistics import median
 
 from state_manager import atomic_json_write, build_etf_strategy_risk_metrics
@@ -2398,6 +2403,12 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
         if raw_presentation_binding is not None
         else {}
     )
+    if is_trade_review_production:
+        validate_trade_review_presentation_semantics(
+            ROOT,
+            review,
+            str((presentation_binding or {}).get("full_content") or request.get("final_content") or ""),
+        )
     if presentation_binding:
         presentation_binding["request_id"] = str(request.get("request_id") or "")
         presentation_binding["report_id"] = (
@@ -2416,7 +2427,7 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
             "it is not a full-day session close."
         )
         review = dict(review)
-        review["data_time"] = data_time
+        review["data_time"] = normalize_verified_close_data_time(data_time)
     else:
         current_path = ROOT / "data" / "state" / "CURRENT.json"
         current = load_json(current_path) if current_path.exists() else {}
