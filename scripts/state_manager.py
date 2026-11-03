@@ -554,11 +554,12 @@ def _extend_analysis_coverage_with_discovery(base: dict[str, Any], formal_discov
 
 
 def _extend_capital_comparison_with_discovery(base: dict[str, Any], formal_discovery: dict[str, Any] | None) -> dict[str, Any]:
-    """Expose Discovery as eligibility evidence, never as a final capital competitor.
+    """Expose Discovery as node-opportunity evidence before final judgment.
 
-    Observation identity is a formal-decision result.  The machine layer must not
-    append OBSERVATION_EVALUATION_INPUT into the legal capital universe before
-    the same-node ADMIT/RETAIN/EXIT decision exists.
+    Observation is a continuous-information identity and is independent from the
+    node-level opportunity role.  The machine layer must not grant trade authority
+    or create a final capital ranking, but it must preserve that a Discovery object
+    can be qualified as a node-level opportunity without first entering Observation.
     """
     discovery = formal_discovery or {}
     candidates = [x for x in (discovery.get("candidates") or []) if isinstance(x, dict)]
@@ -567,15 +568,25 @@ def _extend_capital_comparison_with_discovery(base: dict[str, Any], formal_disco
         code = str(item.get("code") or "")
         if not code:
             continue
+        history_ready = (item.get("historical_context") or {}).get("status") == "READY"
+        quote_status = str(item.get("formal_quote_status") or "UNAVAILABLE").upper()
+        if not history_ready:
+            data_availability = "DEGRADED"
+        elif quote_status == "READY":
+            data_availability = "READY"
+        elif quote_status == "SESSION_REFERENCE_READY":
+            data_availability = "REFERENCE_READY"
+        else:
+            data_availability = "UNAVAILABLE"
         eligibility_inputs.append({
             "display_name": item.get("display_name") or f'{item.get("name", code)}（{code}）',
             "code": code,
             "category": "OBSERVATION_EVALUATION_INPUT",
             "eligibility": "OBSERVATION_FULL_EVALUATION",
-            "data_availability": "READY" if (item.get("historical_context") or {}).get("status") == "READY" and item.get("formal_quote_status") == "READY" else "DEGRADED",
-            "formal_quote_status": item.get("formal_quote_status") or "UNAVAILABLE",
+            "data_availability": data_availability,
+            "formal_quote_status": quote_status,
             "discovery_evidence": item,
-            "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。",
+            "action_boundary": "必须先完成本节点机会资格评估；Discovery不产生交易权限。持续Observation的ADMIT/RETAIN是独立身份判断，不是节点级机会形成的前置条件；只有正式形成机会资格后才能进入统一资本竞争。",
         })
     return {
         **base,
@@ -584,7 +595,7 @@ def _extend_capital_comparison_with_discovery(base: dict[str, Any], formal_disco
         "formal_discovery_ingress_status": "ELIGIBILITY_ONLY",
         "formal_discovery_coverage_status": discovery.get("coverage_status") or "NOT_REQUESTED",
         "observation_eligibility_inputs": eligibility_inputs,
-        "next_unit_capital_use": "由ChatGPT按MASTER对现金、全部持仓、本节点ADMIT/RETAIN后的合法Observation及可释放资本完成最终比较；Discovery临时对象不直接进入最终资本竞争。",
+        "next_unit_capital_use": "由ChatGPT按MASTER对现金、全部持仓、已完成本节点机会资格判断的Discovery/观察机会、可释放资本及其他合法资本状态完成最终比较；Discovery本身不直接形成交易动作或最终排名。",
         "order_semantics": "LEGAL_CAPITAL_UNIVERSE_ONLY_NOT_RANKING",
     }
 
