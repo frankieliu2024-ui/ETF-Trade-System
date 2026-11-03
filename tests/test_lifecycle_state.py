@@ -164,11 +164,11 @@ class LifecycleStateTests(unittest.TestCase):
         decision = {"decision_id": "FORMAL_COMPLETION:R1", "candidate_code": "159057",
                     "_linked_execution_id": "buy1"}
         buy = {"event_id": "buy1", "linked_decision_id": "FORMAL_COMPLETION:R1",
-               "code": "159057", "side": "BUY", "quantity": 100}
+               "code": "159057", "side": "BUY", "quantity": 100, "execution_date": "2026-10-26"}
         unrelated = {"event_id": "sell-other", "linked_decision_id": "OTHER",
                      "code": "159057", "side": "SELL", "quantity": 100}
         partial = {"event_id": "sell1", "linked_decision_id": "FORMAL_COMPLETION:R1",
-                   "code": "159057", "side": "SELL", "quantity": 40}
+                   "code": "159057", "side": "SELL", "quantity": 40, "execution_date": "2026-10-29"}
         self.assertIsNone(_completion_explicit_exit(self.root, decision, [buy, unrelated]))
         self.assertIsNone(_completion_explicit_exit(self.root, decision, [buy, partial]))
         self.assertIsNone(_completion_explicit_exit(self.root, decision, [buy, buy, partial]))
