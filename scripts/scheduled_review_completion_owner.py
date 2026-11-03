@@ -31,27 +31,25 @@ def _credentials() -> tuple[str, str]:
 def persist_completion(target: Path) -> tuple[str, dict[str, object]]:
     payload = json.loads(target.read_text(encoding="utf-8"))
     # The completion writer is the single authoritative handoff boundary.
-    # Compute a missing fingerprint here so callers do not need a separate
-    # crypto/intermediate chain before invoking the writer.
+    # Hashes are produced by the frozen-completion builder.  The writer must
+    # fail closed if the builder omitted or corrupted one; silently repairing
+    # it here would change the frozen body and is the failure seen in the
+    # 2026-11-03 13:30 run.
     final_content = payload.get("final_content")
     if isinstance(final_content, str):
         computed_hash = hashlib.sha256(final_content.encode("utf-8")).hexdigest()
         existing_hash = str(payload.get("content_hash") or "").strip().lower()
-        if existing_hash and existing_hash != computed_hash:
-            raise RuntimeError("completion content_hash does not match final_content")
-        payload["content_hash"] = computed_hash
+        if existing_hash != computed_hash:
+            raise RuntimeError("completion content_hash is missing or does not match final_content")
         binding_value = payload.get("presentation_binding")
         if isinstance(binding_value, dict):
             binding_hash = str(binding_value.get("content_hash") or "").strip().lower()
-            if binding_hash and binding_hash != computed_hash:
-                raise RuntimeError("presentation_binding content_hash does not match final_content")
-            binding_value["content_hash"] = computed_hash
+            if binding_hash != computed_hash:
+                raise RuntimeError("presentation_binding content_hash is missing or does not match final_content")
         if "final_content_hash" in payload:
             final_hash = str(payload.get("final_content_hash") or "").strip().lower()
-            if final_hash and final_hash != computed_hash:
+            if final_hash != computed_hash:
                 raise RuntimeError("final_content_hash does not match final_content")
-            payload["final_content_hash"] = computed_hash
-        target.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     binding = payload.get("presentation_binding") if isinstance(payload.get("presentation_binding"), dict) else {}
     report_type = str(payload.get("report_type") or binding.get("report_type") or "").strip().upper()
     if report_type == "ETF_FORMAL_DECISION":
@@ -66,28 +64,31 @@ def persist_completion(target: Path) -> tuple[str, dict[str, object]]:
     endpoint = f"https://api.github.com/repos/{owner}/{repo}/contents/{relative}"
     headers = {"Accept": "application/vnd.github+json", "Authorization": f"Bearer {token}", "Content-Type": "application/json", "X-GitHub-Api-Version": "2022-11-28"}
     body = target.read_bytes()
+    # Write first.  A pre-read is not a production prerequisite: it can race
+    # with the notification consumer and was the source of false handoff
+    # failures.  If GitHub reports an existing path, read it only to establish
+    # idempotency or a path conflict.
+    payload = json.dumps({"message": "Persist Scheduled Review completion", "content": base64.b64encode(body).decode("ascii"), "branch": "main"}).encode("utf-8")
     try:
+        with urllib_request.urlopen(urllib_request.Request(endpoint, data=payload, method="PUT", headers=headers), timeout=30) as response:
+            if response.status not in (200, 201):
+                raise RuntimeError(f"completion owner write returned HTTP {response.status}")
+        written = True
+    except Exception as exc:
+        if getattr(exc, "code", None) not in (409, 422):
+            raise RuntimeError("completion owner write failed: " + str(exc)) from exc
         req = urllib_request.Request(endpoint + "?ref=main", headers=headers)
         with urllib_request.urlopen(req, timeout=30) as response:
             remote = json.loads(response.read().decode("utf-8"))
         if base64.b64decode(str(remote.get("content") or "").replace("\\n", "")) != body:
             raise RuntimeError("different completion already exists on main")
-        return relative, {"written": False, "read_back": True, "attempts": 1}
-    except Exception as exc:
-        if getattr(exc, "code", None) != 404:
-            if isinstance(exc, RuntimeError):
-                raise
-            raise RuntimeError("completion owner read failed: " + str(exc)) from exc
-    payload = json.dumps({"message": "Persist Scheduled Review completion", "content": base64.b64encode(body).decode("ascii"), "branch": "main"}).encode("utf-8")
-    with urllib_request.urlopen(urllib_request.Request(endpoint, data=payload, method="PUT", headers=headers), timeout=30) as response:
-        if response.status not in (200, 201):
-            raise RuntimeError(f"completion owner write returned HTTP {response.status}")
+        written = False
     req = urllib_request.Request(endpoint + "?ref=main", headers=headers)
     with urllib_request.urlopen(req, timeout=30) as response:
         verified = json.loads(response.read().decode("utf-8"))
     if base64.b64decode(str(verified.get("content") or "").replace("\\n", "")) != body:
         raise RuntimeError("completion owner readback mismatch")
-    return relative, {"written": True, "read_back": True, "attempts": 1}
+    return relative, {"written": written, "read_back": True, "attempts": 1}
 
 
 def dispatch_notification(completion_path: str, *, force_resend: bool = False) -> dict[str, object]:
@@ -117,7 +118,10 @@ def dispatch_notification_with_one_recovery(completion_path: str) -> dict[str, o
     try:
         primary = dispatch_notification(completion_path)
     except Exception as exc:
+        # A timeout/connection error does not prove GitHub rejected the
+        # dispatch.  Retrying would create a second notification chain.
         primary = {"submitted": False, "accepted": False, "reason": str(exc), "exception": True}
+        return {"primary": primary, "recovery": None, "recovery_attempted": False, "same_completion_path": True}
     if primary.get("submitted") or primary.get("accepted"):
         return {"primary": primary, "recovery": None, "recovery_attempted": False}
     try:
@@ -160,13 +164,16 @@ def readback_projection(target: Path, *, timeout_seconds: int = 60) -> dict[str,
         report_path = f"requests/report_delivery/{actual_report_id.replace(':', '__')}.json" if actual_report_id else ""
         report = read_main_json(report_path) if report_path else None
         center = read_main_json("data/state/notification_center.json")
+        center_bound = isinstance(center, dict) and actual_report_id and contains_text(center, actual_report_id)
         provider = None
-        if isinstance(center, dict) and actual_report_id and contains_text(center, actual_report_id):
-            provider = "BOUND_RECORD_PRESENT"
+        if center_bound and isinstance(center, dict):
+            # A notification-center record is not provider delivery evidence.
+            # Only an explicit provider result may be reported as such.
+            provider = _provider_status(center, actual_report_id)
         last = {
             "event": {"status": event_status, "path": event_path},
             "report": {"status": "READ_BACK" if isinstance(report, dict) else "NOT_READ_BACK", "path": report_path},
-            "notification_center": {"status": "READ_BACK" if isinstance(center, dict) and actual_report_id and contains_text(center, actual_report_id) else "NOT_READ_BACK"},
+            "notification_center": {"status": "READ_BACK" if center_bound else "NOT_READ_BACK"},
             "provider": {"status": provider or "NOT_CONFIRMED"},
         }
         if all(item.get("status") == "READ_BACK" for item in (last["event"], last["report"])) and last["notification_center"]["status"] == "READ_BACK":
@@ -198,6 +205,27 @@ def contains_text(value: object, needle: str) -> bool:
     if isinstance(value, list):
         return any(contains_text(item, needle) for item in value)
     return needle in str(value) if value is not None else False
+
+
+def _provider_status(center: dict[str, object], report_id: str) -> str | None:
+    """Return only an explicit provider status for this report, never binding presence."""
+    def walk(value: object) -> str | None:
+        if isinstance(value, dict):
+            if report_id in {str(value.get("report_id") or ""), str(value.get("reportId") or "")}:
+                for key in ("provider_status", "provider_delivery_status", "pushplus_status"):
+                    if value.get(key):
+                        return str(value[key])
+            for child in value.values():
+                found = walk(child)
+                if found:
+                    return found
+        elif isinstance(value, list):
+            for child in value:
+                found = walk(child)
+                if found:
+                    return found
+        return None
+    return walk(center)
 
 
 def execute_post_handoff(target: Path, *, completion_kind: str = "SCHEDULED_REVIEW_COMPLETION") -> dict[str, object]:
