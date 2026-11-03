@@ -99,6 +99,29 @@ def main() -> int:
         "canonical_fact_persisted": success,
         "recorded_at_beijing": now,
     }
+    # A confirmed account-fact update invalidates any older reconciliation
+    # projection. Do not preserve a stale overall PASS while only refreshing
+    # the account_sync receipt; downstream maintenance must rebuild all
+    # projections before health can return to PASS.
+    if success:
+        prior_account_updated_at = str(data.get("account_fact_updated_at") or "").strip()
+        current_account_updated_at = str(account.get("updated_at") or "").strip()
+        if current_account_updated_at and current_account_updated_at != prior_account_updated_at:
+            data["status"] = "MAINTENANCE_INCOMPLETE"
+            data["failure_class"] = "PROJECTION_INCOMPLETE"
+            data["projection_status"] = "ACCOUNT_FACT_UPDATED_REQUIRES_REBUILD"
+            data["account_fact_updated_at"] = current_account_updated_at
+            data["reconciliation_stale"] = True
+            data["reconciliation_stale_reason"] = (
+                "account_fact changed; prior reconciliation was not rebuilt from the new canonical account fact"
+            )
+            data["projection_required"] = [
+                "strategy_equity",
+                "risk",
+                "lifecycle",
+                "dashboard",
+                "reconciliation",
+            ]
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(data["account_sync"], ensure_ascii=False))
