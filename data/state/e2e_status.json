@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-11-03T20:18:14+08:00",
-  "status": "DEGRADED",
+  "generated_at": "2026-11-03T20:23:31+08:00",
+  "status": "BLOCKED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
   "components": {
@@ -45,27 +45,24 @@
       "business_completion_status": "DEGRADED"
     },
     "decision_context": {
-      "status": "READY",
-      "reason": "query and decision contexts are available; legacy minimum-ready observability is diagnostic only",
-      "query_context": true,
+      "status": "BLOCKED",
+      "reason": "canonical request-bound query context is empty, invalid, or missing a consumable fact pack",
+      "query_context": false,
       "decision_context": true,
-      "minimum_decision_context": "READY_OR_NOT_APPLICABLE",
-      "observability_boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
-      "request_bound": false,
       "formal_reply_gate": {
         "request_id": "conversation-formal-20261026T212023+0800-90d3c2b2",
         "requested_at_beijing": "2026-10-26T21:20:23.000+08:00",
-        "status": "IN_FLIGHT",
+        "status": "TERMINAL_FAILURE",
         "reply_freezable": false,
         "blockers": [
-          "REQUEST_BOUND_QUERY_CONTEXT_NOT_PUBLISHED"
+          "FORMAL_PARENT_RECOVERY_TIMEOUT"
         ],
         "source": "durable_parent_request_waiting_for_request_bound_projection",
-        "actor_action": "CONTINUE_SAME_REQUEST_SILENTLY",
-        "user_output_allowed": false,
+        "actor_action": "TERMINATE_ON_EXPLICIT_FAILURE",
+        "user_output_allowed": true,
         "business_decision_allowed": false,
         "final_content_generation_allowed": false,
-        "consumer_status": "REQUEST_BOUND_FACTS_BUILDING",
+        "consumer_status": "TERMINAL_FAILURE",
         "projection_scope": "FORMAL_DECISION_REQUEST",
         "superseded_request_id": "fd_20261026_112739_scheduled_formal_review_0bba5094",
         "request_bound": false,
@@ -78,7 +75,7 @@
           "error_class": "MAINTENANCE_INCOMPLETE",
           "reason": "request-bound query context remained unbound beyond the existing workflow timeout",
           "requested_at_beijing": "2026-10-26T21:20:23.000+08:00",
-          "terminated_at_beijing": "2026-11-03T20:11:31+08:00",
+          "terminated_at_beijing": "2026-11-03T20:23:30+08:00",
           "query_context_request_id": ""
         }
       },
@@ -86,15 +83,15 @@
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 1566291,
-          "sha256": "7a6e4b41abaaf56606dae8202db6ff1e825872c70e2cf059b87f45c926510a39",
+          "byte_count": 1648745,
+          "sha256": "fe96cb170b895490986ee900d8c0b3063bead44ce8d0ca86d602680e2bf1e03c",
           "parsed_object": true
         },
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 471927,
-          "sha256": "66091742ac050d5bf28407cab69e41e22c14055edcac87f1a0c95b91b3929818",
+          "byte_count": 469915,
+          "sha256": "73942f722a963dfd58113c2ca308c71c328e25752505a0c658a0713cc9cc6113",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -115,7 +112,9 @@
       "checked_at": "2026-11-03T20:17:54+08:00"
     }
   },
-  "blockers": [],
+  "blockers": [
+    "decision_context"
+  ],
   "degradations": [
     "close_review"
   ],
@@ -123,15 +122,15 @@
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 1566291,
-      "sha256": "7a6e4b41abaaf56606dae8202db6ff1e825872c70e2cf059b87f45c926510a39",
+      "byte_count": 1648745,
+      "sha256": "fe96cb170b895490986ee900d8c0b3063bead44ce8d0ca86d602680e2bf1e03c",
       "parsed_object": true
     },
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 471927,
-      "sha256": "66091742ac050d5bf28407cab69e41e22c14055edcac87f1a0c95b91b3929818",
+      "byte_count": 469915,
+      "sha256": "73942f722a963dfd58113c2ca308c71c328e25752505a0c658a0713cc9cc6113",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"
