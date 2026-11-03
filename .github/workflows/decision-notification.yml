@@ -194,6 +194,11 @@ jobs:
                 # remain mandatory and prevent duplicate or drifted delivery.
                 echo "formal_completion=true" >> "$GITHUB_OUTPUT"
                 echo "formal_review_source_path=$completion_path" >> "$GITHUB_OUTPUT"
+                if grep -Eq '\"force_resend\"[[:space:]]*:[[:space:]]*true' "$completion_path"; then
+                  echo "formal_force_resend=true" >> "$GITHUB_OUTPUT"
+                else
+                  echo "formal_force_resend=false" >> "$GITHUB_OUTPUT"
+                fi
                 ;;
               SCHEDULED_REVIEW)
                 # A Scheduled Review completion is itself the canonical handoff
@@ -729,7 +734,7 @@ jobs:
           REVIEW_EVENT_PATH: ${{ steps.scheduled_completion_event.outputs.review_event_path || steps.formal_completion_event.outputs.review_event_path || steps.push_kind.outputs.review_event_path || steps.workflow_review.outputs.review_event_path }}
           SCHEDULED_REVIEW_COMPLETION_PATH: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path || '' }}
           FORMAL_COMPLETION_EVENT: ${{ steps.formal_completion_event.outputs.review_event_path != '' && 'true' || 'false' }}
-          FORCE_NOTIFICATION_RESEND: ${{ github.event_name == 'workflow_dispatch' && inputs.force_resend || 'false' }}
+          FORCE_NOTIFICATION_RESEND: ${{ github.event_name == 'workflow_dispatch' && inputs.force_resend || (github.event_name == 'push' && steps.push_kind.outputs.formal_force_resend == 'true' && 'true' || 'false') }}
         run: |
           set -euo pipefail
           # A manual dispatch must remain self-contained. If an earlier
