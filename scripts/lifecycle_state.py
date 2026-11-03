@@ -202,6 +202,12 @@ def _completion_explicit_exit(root: Path, trial: dict[str, Any], executions: lis
     sells = [x for x in executions if str(x.get("linked_decision_id") or "") == decision_id
              and str(x.get("code") or "") == code
              and str(x.get("side") or "").upper() == "SELL"]
+    opening_time = parse_time(buys[0].get("confirmed_at_beijing") or buys[0].get("executed_at_beijing") or buys[0].get("execution_date"))
+    if opening_time is None or any(
+        (parse_time(x.get("confirmed_at_beijing") or x.get("executed_at_beijing") or x.get("execution_date")) or
+         datetime.min.replace(tzinfo=SHANGHAI)) < opening_time for x in sells
+    ):
+        return None
     sold = sum(float(x.get("quantity") or 0) for x in sells)
     if not sells or sold < quantity:
         return None
