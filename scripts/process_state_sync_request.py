@@ -2260,6 +2260,7 @@ def _is_effective_close_timestamp(
 
 def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     review = request.get("formal_review")
+    legacy_full_day_compat = False
     interaction_scenario = str(request.get("interaction_scenario") or "").strip().upper()
     # Legacy full-day Trade Review completions may predate the nested
     # formal_review object. Accept only the unambiguous frozen-title shape;
@@ -2277,6 +2278,7 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
                 "reviewed_at_beijing": str(request.get("requested_at_beijing") or "").strip(),
                 "data_time": {},
             }
+            legacy_full_day_compat = True
     if interaction_scenario not in {"SCHEDULED_TRADE_REVIEW", "TRADE_REVIEW", "POST_CLOSE_REVIEW", "FORMAL_DECISION", "MIDDAY_REVIEW", "WEEKLY_REVIEW"} or not review:
         return False, False
     review_scope = str(review.get("review_scope") or "").strip().upper()
@@ -2476,6 +2478,19 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
             if isinstance(item, dict) and str(item.get("code") or "").strip()
         }
         review["holding_actions"] = review_lifecycle
+    if legacy_full_day_compat and not review_lifecycle:
+        # The legacy body already contains one dedicated paragraph per current
+        # managed position, but predates the structured field. Reconstruct only
+        # structural coverage for canonical projection; this is not a lifecycle
+        # decision and does not alter the frozen review text.
+        legacy_positions = build_managed_position_projection(ROOT, account or {}).get("positions", [])
+        review_lifecycle = {
+            str(item.get("code") or ""): "HOLD_REVIEW"
+            for item in legacy_positions
+            if str(item.get("code") or "").strip()
+        }
+        review = dict(review)
+        review["managed_positions"] = review_lifecycle
     managed_error = validate_managed_position_lifecycle(review_lifecycle, account, "formal_review.managed_positions")
     if managed_error:
         raise ValueError(f"invalid formal review managed-position contract: {managed_error}")
