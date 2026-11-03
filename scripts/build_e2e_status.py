@@ -406,6 +406,14 @@ def context_component(query: dict, decision: dict) -> dict:
     """Expose current-product usability while preserving diagnostic observability."""
     query_ok = bool(query)
     decision_ok = bool(decision)
+    direct_current_main = bool(
+        query_ok
+        and decision_ok
+        and isinstance(query.get("formal_reply_freeze"), dict)
+        and str(query.get("formal_reply_freeze", {}).get("status") or "").upper() == "NOT_APPLICABLE"
+        and isinstance(query.get("formal_etf_discovery"), dict)
+        and str(query.get("market_date") or "").strip()
+    )
     # A non-empty decision context or projected gate cannot substitute for
     # the canonical request-bound query context. Fail closed if the handoff
     # is empty or lacks a consumable fact pack.
@@ -419,6 +427,16 @@ def context_component(query: dict, decision: dict) -> dict:
         and bool(query_pack.get("decision_work_package", {}).get("problem_graph"))
     )
     if query_ok and not query_has_request_facts:
+        if direct_current_main:
+            return {
+                "status": "READY",
+                "reason": "current-main fixed facts are directly consumable; no request-bound Formal Decision context is applicable",
+                "query_context": True,
+                "decision_context": decision_ok,
+                "request_bound": False,
+                "formal_reply_gate": None,
+                "direct_current_main": True,
+            }
         query_ok = False
     if not query_ok:
         return {
@@ -965,7 +983,7 @@ def main() -> int:
     account_gate = account_component(data["account"], data["current"])
     current_gate = components["decision_context"].get("formal_reply_gate")
     prior_gate = (prior.get("components") or {}).get("decision_context", {}).get("formal_reply_gate")
-    if not current_gate and isinstance(prior_gate, dict):
+    if not components["decision_context"].get("direct_current_main") and not current_gate and isinstance(prior_gate, dict):
         prior_parent = formal_parent_request(prior_gate.get("request_id"))
         if prior_parent:
             prior_request_id = str(prior_gate.get("request_id") or "").strip()
