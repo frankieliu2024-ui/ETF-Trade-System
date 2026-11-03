@@ -7,25 +7,25 @@
     "snapshot_commit": "5f6e7f6ee8613f48ef99bf80413f39feee9450bd",
     "boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
     "timing": {
-      "state_builder_started_at": "2026-11-03T12:44:44Z",
+      "state_builder_started_at": "2026-11-03T12:46:02Z",
       "current_published_at": "2026-11-03T15:05:29+08:00",
-      "market_regime_ready_at": "2026-11-03T12:44:50Z",
-      "market_structure_ready_at": "2026-11-03T12:44:50Z",
-      "full_state_context_observation_at": "2026-11-03T12:44:51Z",
-      "decision_context_written_at": "2026-11-03T12:44:53Z"
+      "market_regime_ready_at": "2026-11-03T12:46:10Z",
+      "market_structure_ready_at": "2026-11-03T12:46:10Z",
+      "full_state_context_observation_at": "2026-11-03T12:46:11Z",
+      "decision_context_written_at": "2026-11-03T12:46:12Z"
     },
     "trigger": {
-      "request_id": "20261103_203003_trade_review",
-      "parent_request_id": "20261103_203003_trade_review",
-      "task_run_id": "manual_20261103_203003_trade_review",
-      "occurrence_id": "manual_20261103_203003_trade_review",
-      "source": "CHATGPT_DIRECT_GITHUB_CONTENTS_WRITER",
-      "entry_mode": "MANUAL_CONVERSATION",
-      "requested_at_beijing": "2026-11-03T20:30:03+08:00",
+      "request_id": "",
+      "parent_request_id": "",
+      "task_run_id": "",
+      "occurrence_id": "",
+      "source": "",
+      "entry_mode": "",
+      "requested_at_beijing": "",
       "market_date": "2026-11-03"
     }
   },
-  "generated_at": "2026-11-03T12:44:51Z",
+  "generated_at": "2026-11-03T12:46:11Z",
   "rules_version": "V2.2.34",
   "market_date": "2026-11-03",
   "latest_node": "close",
@@ -1802,7 +1802,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 12.781,
-    "age_seconds": 20362
+    "age_seconds": 20442
   },
   "freshness_at_context_build": {
     "status": "STALE",
@@ -1819,7 +1819,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 12.781,
-    "age_seconds": 20362
+    "age_seconds": 20442
   },
   "data_quality_summary": {
     "pass_count": 18,
@@ -1920,7 +1920,7 @@
     "account_fact_time": "2026-11-03T15:37:00+08:00",
     "market_snapshot_time": "2026-11-03T15:05:29+08:00",
     "market_phase": "POST_CLOSE_GRACE",
-    "context_generated_time": "2026-11-03T12:44:51Z",
+    "context_generated_time": "2026-11-03T12:46:11Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
@@ -1962,90 +1962,28 @@
     "read_only": true
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-11-03T20:44:51+08:00",
-    "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
-    "refresh_failures": [
-      {
-        "symbol": "NDX",
-        "error": "NDX active-market immediate refresh rejected non-FRESH provider result: PREVIOUS_SESSION_REFERENCE"
-      },
-      {
-        "symbol": "SOX",
-        "error": "SOX active-market immediate refresh rejected non-FRESH provider result: PREVIOUS_SESSION_REFERENCE"
-      }
-    ],
+    "generated_at_beijing": "2026-11-03T20:46:11+08:00",
+    "refresh_mode": "CACHED_STATE",
+    "refresh_failures": [],
     "decision_freshness": {
-      "status": "DIRECT",
+      "status": "REFRESH_REQUIRED",
       "quality_status": "UNKNOWN",
       "captured_at": "2026-11-03T07:05:29+00:00",
       "provider_as_of": "2026-11-03T07:05:21+00:00",
       "effective_as_of": "2026-11-03T07:05:21+00:00",
-      "request_time": "2026-11-03T12:30:03+00:00",
-      "age_seconds": 20370,
+      "request_time": "2026-11-03T12:46:11.404461+00:00",
+      "age_seconds": 20450,
       "post_request": false,
       "preferred_max_age_seconds": 300,
       "fallback_max_age_seconds": 900,
-      "formal_decision_allowed": true,
-      "refresh_required": false,
+      "formal_decision_allowed": false,
+      "refresh_required": true,
       "fallback_allowed": false,
-      "reason": "CURRENT quality PASS does not override decision freshness; query-time refresh required",
-      "resolved_post_request": true,
-      "request_scoped_resolution_mode": "CLOSED_SESSION_CANONICAL_REUSE",
-      "request_scoped_resolution_reason": "closed A-share session legally reuses latest canonical close",
-      "a_share_market_phase": "OFF_SESSION",
-      "resolved_as_of": "2026-11-03T12:44:46+00:00"
+      "reason": "CURRENT quality PASS does not override decision freshness; query-time refresh required"
     },
     "route_version": "V1.1",
     "query_entry": "market_quote_router",
     "quotes": [
-      {
-        "market": "US",
-        "market_name": "美国",
-        "symbol": "QQQ",
-        "name": "QQQ",
-        "latest_price": 683.42,
-        "open": 683.42,
-        "high": 683.42,
-        "low": 683.42,
-        "prev_close": 690.49,
-        "volume": 0,
-        "amount": null,
-        "turnover": null,
-        "data_time_beijing": "2026-11-03T20:44:46+08:00",
-        "data_time_local": "2026-11-03T07:44:46-05:00",
-        "market_phase": "PRE_MARKET",
-        "market_status_cn": "美股盘前",
-        "data_nature_cn": "盘前行情（附最近正式收盘基准）",
-        "source": "yahoo_chart_api",
-        "freshness": "FRESH",
-        "quality_status": "PASS",
-        "direct_quote": true,
-        "refresh_source": "QUERY_TIME_PROVIDER"
-      },
-      {
-        "market": "US",
-        "market_name": "美国",
-        "symbol": "SOXX",
-        "name": "SOXX",
-        "latest_price": 465.93,
-        "open": 465.93,
-        "high": 465.93,
-        "low": 465.93,
-        "prev_close": 471.51,
-        "volume": 0,
-        "amount": null,
-        "turnover": null,
-        "data_time_beijing": "2026-11-03T20:44:13+08:00",
-        "data_time_local": "2026-11-03T07:44:13-05:00",
-        "market_phase": "PRE_MARKET",
-        "market_status_cn": "美股盘前",
-        "data_nature_cn": "盘前行情（附最近正式收盘基准）",
-        "source": "yahoo_chart_api",
-        "freshness": "FRESH",
-        "quality_status": "PASS",
-        "direct_quote": true,
-        "refresh_source": "QUERY_TIME_PROVIDER"
-      },
       {
         "market": "CN",
         "market_name": "中国大陆",
@@ -2947,7 +2885,7 @@
   },
   "decision_trigger": {
     "schema_version": "1.2",
-    "generated_at": "2026-11-03T20:44:50+08:00",
+    "generated_at": "2026-11-03T20:46:10+08:00",
     "status": "NO_NEW_TRIGGER",
     "trigger_type": "",
     "triggered_at": "",
@@ -2955,7 +2893,7 @@
     "previous_decision_id": "FORMAL_COMPLETION:fd_20261026_144323_scheduled_formal_review_b7e14c92",
     "evidence_change": "",
     "evidence_time": "2026-11-03T15:05:29+08:00",
-    "e2e_status": "DEGRADED",
+    "e2e_status": "BLOCKED",
     "requires_formal_reassessment": false,
     "pending_trigger": false,
     "idempotency_key": "",
@@ -2963,23 +2901,23 @@
     "enhanced_risk_review_required": true,
     "risk_zone_semantics": "REVIEW_CONTEXT_ONLY_NOT_TRADING_PERMISSION",
     "last_trade_event_id": "trade-20261026-145504-159056-buy",
-    "request_id": "20261103_203003_trade_review",
+    "request_id": "",
     "safety_boundary": "确定性识别仅生成重评请求，不生成风险许可、金额、份额或交易动作。",
     "read_only": true,
-    "parent_request_id": "20261103_203003_trade_review",
-    "task_run_id": "manual_20261103_203003_trade_review",
-    "occurrence_id": "manual_20261103_203003_trade_review",
-    "source": "CHATGPT_DIRECT_GITHUB_CONTENTS_WRITER",
-    "entry_mode": "MANUAL_CONVERSATION",
-    "requested_at_beijing": "2026-11-03T20:30:03+08:00",
+    "parent_request_id": "",
+    "task_run_id": "",
+    "occurrence_id": "",
+    "source": "",
+    "entry_mode": "",
+    "requested_at_beijing": "",
     "market_date": "2026-11-03",
-    "request_bound": true
+    "request_bound": false
   },
   "capital_efficiency_ranking": {
     "schema_version": "1.2",
-    "generated_at": "2026-11-03T20:44:50+08:00",
+    "generated_at": "2026-11-03T20:46:10+08:00",
     "as_of": "2026-11-03T15:05:29+08:00",
-    "e2e_status": "DEGRADED",
+    "e2e_status": "BLOCKED",
     "risk_zone": "RISK_CONTROL",
     "risk_zone_semantics": "REVIEW_CONTEXT_ONLY_NOT_TRADING_PERMISSION",
     "enhanced_risk_review_required": true,
@@ -2998,7 +2936,9 @@
         "eligibility": "COMPARISON_AVAILABLE",
         "data_availability": "READY",
         "reason": "等待价值与风险缓冲属于合法资本用途；是否优于其他用途由MASTER完整判断决定。",
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3023,7 +2963,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3048,7 +2990,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3073,7 +3017,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3098,7 +3044,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3123,7 +3071,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3148,7 +3098,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3173,7 +3125,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3198,7 +3152,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3223,7 +3179,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3248,7 +3206,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3273,7 +3233,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3298,7 +3260,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3323,7 +3287,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3348,7 +3314,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3373,7 +3341,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3389,7 +3359,9 @@
         "eligibility": "COMPARISON_AVAILABLE",
         "data_availability": "READY",
         "reason": "等待价值与风险缓冲属于合法资本用途；是否优于其他用途由MASTER完整判断决定。",
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3414,7 +3386,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3439,7 +3413,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3464,7 +3440,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3489,7 +3467,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3514,7 +3494,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3539,7 +3521,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3564,7 +3548,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3589,7 +3575,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3614,7 +3602,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3639,7 +3629,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3664,7 +3656,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3689,7 +3683,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3714,7 +3710,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3739,7 +3737,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3764,7 +3764,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3773,7 +3775,9 @@
       }
     ],
     "excluded_candidates": [],
-    "execution_constraints": [],
+    "execution_constraints": [
+      "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+    ],
     "key_reason": "机器层只枚举完整资本比较全集与真实数据/执行约束；风险复核边界只提高复核强度，不自动生成风险许可或删除合法机会。",
     "previous_top_candidate": null,
     "order_semantics": "LEGAL_CAPITAL_UNIVERSE_ONLY_NOT_RANKING",
@@ -3792,6 +3796,16 @@
         "data_availability": "DEGRADED",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
+          "code": "159133",
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-11-02",
+            "sample_count": 90,
+            "avg_amount_20": 29852068.65
+          },
+          "name": "化工ETF天弘",
+          "eligibility": "OBSERVATION_FULL_EVALUATION",
+          "category": "OBSERVATION_EVALUATION_INPUT",
           "discovery_spot": {
             "price": 0.933,
             "change_pct": 1.5233949945593128,
@@ -3807,17 +3821,7 @@
             "return_ytd_pct": null,
             "provider_timestamp": 1793689524000
           },
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "name": "化工ETF天弘",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "code": "159133",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-11-02",
-            "sample_count": 90,
-            "avg_amount_20": 29852068.65
-          }
+          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。"
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
       },
@@ -3829,6 +3833,16 @@
         "data_availability": "DEGRADED",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
+          "code": "159268",
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-11-02",
+            "sample_count": 90,
+            "avg_amount_20": 18237882.7
+          },
+          "name": "港股通消费ETF汇添富",
+          "eligibility": "OBSERVATION_FULL_EVALUATION",
+          "category": "OBSERVATION_EVALUATION_INPUT",
           "discovery_spot": {
             "price": 0.756,
             "change_pct": 3.137789904502042,
@@ -3844,17 +3858,7 @@
             "return_ytd_pct": null,
             "provider_timestamp": 1793689503000
           },
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "name": "港股通消费ETF汇添富",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "code": "159268",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-11-02",
-            "sample_count": 90,
-            "avg_amount_20": 18237882.7
-          }
+          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。"
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
       },
@@ -3866,6 +3870,16 @@
         "data_availability": "DEGRADED",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
+          "code": "159616",
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-11-02",
+            "sample_count": 90,
+            "avg_amount_20": 11652689.37
+          },
+          "name": "农牧ETF建信",
+          "eligibility": "OBSERVATION_FULL_EVALUATION",
+          "category": "OBSERVATION_EVALUATION_INPUT",
           "discovery_spot": {
             "price": 0.733,
             "change_pct": 1.9471488178025131,
@@ -3881,17 +3895,7 @@
             "return_ytd_pct": null,
             "provider_timestamp": 1793689518000
           },
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "name": "农牧ETF建信",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "code": "159616",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-11-02",
-            "sample_count": 90,
-            "avg_amount_20": 11652689.37
-          }
+          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。"
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
       },
@@ -3903,6 +3907,16 @@
         "data_availability": "DEGRADED",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
+          "code": "159798",
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-11-02",
+            "sample_count": 90,
+            "avg_amount_20": 8463780.59
+          },
+          "name": "消费ETF易方达",
+          "eligibility": "OBSERVATION_FULL_EVALUATION",
+          "category": "OBSERVATION_EVALUATION_INPUT",
           "discovery_spot": {
             "price": 0.92,
             "change_pct": 2.7932960893854775,
@@ -3918,17 +3932,7 @@
             "return_ytd_pct": null,
             "provider_timestamp": 1793689527000
           },
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "name": "消费ETF易方达",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "code": "159798",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-11-02",
-            "sample_count": 90,
-            "avg_amount_20": 8463780.59
-          }
+          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。"
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
       },
@@ -3940,6 +3944,16 @@
         "data_availability": "DEGRADED",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
+          "code": "512070",
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-11-02",
+            "sample_count": 90,
+            "avg_amount_20": 412325777.5
+          },
+          "name": "证券保险ETF易方达",
+          "eligibility": "OBSERVATION_FULL_EVALUATION",
+          "category": "OBSERVATION_EVALUATION_INPUT",
           "discovery_spot": {
             "price": 0.77,
             "change_pct": 2.257636122177953,
@@ -3955,17 +3969,7 @@
             "return_ytd_pct": null,
             "provider_timestamp": 1793689543000
           },
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "name": "证券保险ETF易方达",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "code": "512070",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-11-02",
-            "sample_count": 90,
-            "avg_amount_20": 412325777.5
-          }
+          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。"
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
       },
@@ -3977,6 +3981,16 @@
         "data_availability": "DEGRADED",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
+          "code": "513220",
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-11-02",
+            "sample_count": 90,
+            "avg_amount_20": 23269668.72
+          },
+          "name": "中概互联ETF招商",
+          "eligibility": "OBSERVATION_FULL_EVALUATION",
+          "category": "OBSERVATION_EVALUATION_INPUT",
           "discovery_spot": {
             "price": 0.862,
             "change_pct": 1.531213191990588,
@@ -3992,17 +4006,7 @@
             "return_ytd_pct": null,
             "provider_timestamp": 1793689539000
           },
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "name": "中概互联ETF招商",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "code": "513220",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-11-02",
-            "sample_count": 90,
-            "avg_amount_20": 23269668.72
-          }
+          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。"
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
       },
@@ -4014,6 +4018,16 @@
         "data_availability": "DEGRADED",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
+          "code": "515030",
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-11-02",
+            "sample_count": 90,
+            "avg_amount_20": 128334577.55
+          },
+          "name": "新能源车ETF华夏",
+          "eligibility": "OBSERVATION_FULL_EVALUATION",
+          "category": "OBSERVATION_EVALUATION_INPUT",
           "discovery_spot": {
             "price": 1.318,
             "change_pct": 1.4626635873749239,
@@ -4029,17 +4043,7 @@
             "return_ytd_pct": null,
             "provider_timestamp": 1793689541000
           },
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "name": "新能源车ETF华夏",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "code": "515030",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-11-02",
-            "sample_count": 90,
-            "avg_amount_20": 128334577.55
-          }
+          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。"
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
       },
@@ -4051,6 +4055,16 @@
         "data_availability": "DEGRADED",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
+          "code": "562910",
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-11-02",
+            "sample_count": 90,
+            "avg_amount_20": 8505611.94
+          },
+          "name": "高端制造ETF易方达",
+          "eligibility": "OBSERVATION_FULL_EVALUATION",
+          "category": "OBSERVATION_EVALUATION_INPUT",
           "discovery_spot": {
             "price": 0.7,
             "change_pct": 1.744186046511631,
@@ -4066,24 +4080,14 @@
             "return_ytd_pct": null,
             "provider_timestamp": 1793689540000
           },
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-          "name": "高端制造ETF易方达",
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "category": "OBSERVATION_EVALUATION_INPUT",
-          "code": "562910",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-11-02",
-            "sample_count": 90,
-            "avg_amount_20": 8505611.94
-          }
+          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。"
         },
         "action_boundary": "必须先完成本节点Observation资格评估；只有正式ADMIT/RETAIN后的Observation才能进入最终资本效率结论。"
       }
     ]
   },
   "intraday_path_features": {
-    "generated_at": "2026-11-03T12:44:44Z",
+    "generated_at": "2026-11-03T12:46:02Z",
     "market_date": "2026-11-03",
     "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
     "read_only": true,
@@ -5840,7 +5844,7 @@
     },
     "market_structure_context": {
       "schema_version": "1.4",
-      "generated_at": "2026-11-03T12:44:50Z",
+      "generated_at": "2026-11-03T12:46:10Z",
       "market_date": "2026-11-03",
       "as_of_beijing": "2026-11-03T15:05:29+08:00",
       "source_snapshot": "data/market/snapshots/2026-11-03_150529.json",
@@ -8985,12 +8989,22 @@
     "market_date": "2026-11-03",
     "latest_valid_node": "close",
     "latest_snapshot": "data/market/snapshots/2026-11-03_150529.json",
-    "generated_at_beijing": "2026-11-03T20:44:25+08:00",
+    "generated_at_beijing": "2026-11-03T20:45:23+08:00",
     "status": "READY",
     "coverage_status": "COMPLETE",
     "candidate_count": 8,
     "candidates": [
       {
+        "code": "159133",
+        "historical_context": {
+          "status": "READY",
+          "as_of": "2026-11-02",
+          "sample_count": 90,
+          "avg_amount_20": 29852068.65
+        },
+        "name": "化工ETF天弘",
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "category": "OBSERVATION_EVALUATION_INPUT",
         "discovery_spot": {
           "price": 0.933,
           "change_pct": 1.5233949945593128,
@@ -9006,19 +9020,19 @@
           "return_ytd_pct": null,
           "provider_timestamp": 1793689524000
         },
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "name": "化工ETF天弘",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "code": "159133",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。"
+      },
+      {
+        "code": "159268",
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-02",
           "sample_count": 90,
-          "avg_amount_20": 29852068.65
-        }
-      },
-      {
+          "avg_amount_20": 18237882.7
+        },
+        "name": "港股通消费ETF汇添富",
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "category": "OBSERVATION_EVALUATION_INPUT",
         "discovery_spot": {
           "price": 0.756,
           "change_pct": 3.137789904502042,
@@ -9034,19 +9048,19 @@
           "return_ytd_pct": null,
           "provider_timestamp": 1793689503000
         },
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "name": "港股通消费ETF汇添富",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "code": "159268",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。"
+      },
+      {
+        "code": "159616",
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-02",
           "sample_count": 90,
-          "avg_amount_20": 18237882.7
-        }
-      },
-      {
+          "avg_amount_20": 11652689.37
+        },
+        "name": "农牧ETF建信",
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "category": "OBSERVATION_EVALUATION_INPUT",
         "discovery_spot": {
           "price": 0.733,
           "change_pct": 1.9471488178025131,
@@ -9062,19 +9076,19 @@
           "return_ytd_pct": null,
           "provider_timestamp": 1793689518000
         },
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "name": "农牧ETF建信",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "code": "159616",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。"
+      },
+      {
+        "code": "159798",
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-02",
           "sample_count": 90,
-          "avg_amount_20": 11652689.37
-        }
-      },
-      {
+          "avg_amount_20": 8463780.59
+        },
+        "name": "消费ETF易方达",
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "category": "OBSERVATION_EVALUATION_INPUT",
         "discovery_spot": {
           "price": 0.92,
           "change_pct": 2.7932960893854775,
@@ -9090,19 +9104,19 @@
           "return_ytd_pct": null,
           "provider_timestamp": 1793689527000
         },
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "name": "消费ETF易方达",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "code": "159798",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。"
+      },
+      {
+        "code": "512070",
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-02",
           "sample_count": 90,
-          "avg_amount_20": 8463780.59
-        }
-      },
-      {
+          "avg_amount_20": 412325777.5
+        },
+        "name": "证券保险ETF易方达",
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "category": "OBSERVATION_EVALUATION_INPUT",
         "discovery_spot": {
           "price": 0.77,
           "change_pct": 2.257636122177953,
@@ -9118,19 +9132,19 @@
           "return_ytd_pct": null,
           "provider_timestamp": 1793689543000
         },
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "name": "证券保险ETF易方达",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "code": "512070",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。"
+      },
+      {
+        "code": "513220",
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-02",
           "sample_count": 90,
-          "avg_amount_20": 412325777.5
-        }
-      },
-      {
+          "avg_amount_20": 23269668.72
+        },
+        "name": "中概互联ETF招商",
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "category": "OBSERVATION_EVALUATION_INPUT",
         "discovery_spot": {
           "price": 0.862,
           "change_pct": 1.531213191990588,
@@ -9146,19 +9160,19 @@
           "return_ytd_pct": null,
           "provider_timestamp": 1793689539000
         },
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "name": "中概互联ETF招商",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "code": "513220",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。"
+      },
+      {
+        "code": "515030",
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-02",
           "sample_count": 90,
-          "avg_amount_20": 23269668.72
-        }
-      },
-      {
+          "avg_amount_20": 128334577.55
+        },
+        "name": "新能源车ETF华夏",
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "category": "OBSERVATION_EVALUATION_INPUT",
         "discovery_spot": {
           "price": 1.318,
           "change_pct": 1.4626635873749239,
@@ -9174,19 +9188,19 @@
           "return_ytd_pct": null,
           "provider_timestamp": 1793689541000
         },
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "name": "新能源车ETF华夏",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "code": "515030",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。"
+      },
+      {
+        "code": "562910",
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-02",
           "sample_count": 90,
-          "avg_amount_20": 128334577.55
-        }
-      },
-      {
+          "avg_amount_20": 8505611.94
+        },
+        "name": "高端制造ETF易方达",
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "category": "OBSERVATION_EVALUATION_INPUT",
         "discovery_spot": {
           "price": 0.7,
           "change_pct": 1.744186046511631,
@@ -9202,17 +9216,7 @@
           "return_ytd_pct": null,
           "provider_timestamp": 1793689540000
         },
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "name": "高端制造ETF易方达",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "code": "562910",
-        "historical_context": {
-          "status": "READY",
-          "as_of": "2026-11-02",
-          "sample_count": 90,
-          "avg_amount_20": 8505611.94
-        }
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。"
       }
     ],
     "universe_identity": "3ac8e9cfa849ca9e",
@@ -9222,10 +9226,10 @@
     "freshness_rule": "same-node fixed-slot evidence; absence is not zero"
   },
   "interaction_boundary": "ChatGPT聊天负责账户截图与正式交易判断；本文件不生成交易动作。正式机会比较完整覆盖全部持仓/观察ETF，并在本节点存在合格池外发现对象时把其作为临时正式评估输入加入同一次MASTER与全资本竞争；发现本身不产生管理身份或交易权限。",
-  "request_id": "20261103_203003_trade_review",
-  "parent_request_id": "20261103_203003_trade_review",
-  "task_run_id": "manual_20261103_203003_trade_review",
-  "occurrence_id": "manual_20261103_203003_trade_review",
+  "request_id": "",
+  "parent_request_id": "",
+  "task_run_id": "",
+  "occurrence_id": "",
   "managed_position_sell_review": {
     "status": "VALID",
     "account_updated_at": "2026-11-03T15:37:00+08:00",
