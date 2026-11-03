@@ -412,6 +412,7 @@ def context_component(query: dict, decision: dict) -> dict:
         and isinstance(query.get("formal_reply_freeze"), dict)
         and str(query.get("formal_reply_freeze", {}).get("status") or "").upper() == "NOT_APPLICABLE"
         and isinstance(query.get("formal_etf_discovery"), dict)
+        and str(query.get("formal_etf_discovery", {}).get("status") or "").upper() in {"READY", "DEGRADED", "NOT_REQUESTED"}
         and str(query.get("market_date") or "").strip()
     )
     # A non-empty decision context or projected gate cannot substitute for
