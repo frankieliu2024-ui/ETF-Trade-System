@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-11-03T20:11:33+08:00",
-  "status": "BLOCKED",
+  "generated_at": "2026-11-03T20:18:14+08:00",
+  "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
   "components": {
@@ -25,14 +25,13 @@
       "settlement_constraint_status": "NONE"
     },
     "risk": {
-      "status": "DEGRADED",
-      "reason": "ETF strategy equity reconstruction is stale for the current market date and Dashboard cannot be used as a fallback",
-      "etf_strategy_risk_pct": null,
+      "status": "READY",
+      "reason": "formal ETF strategy risk metric is available from a fresh canonical reconstruction",
+      "etf_strategy_risk_pct": -13.299,
       "source": "data/state/etf_strategy_equity.json",
-      "stale_reconstruction_risk_pct": -12.9016,
       "source_updated_at": null,
-      "reconstruction_as_of_transaction_date": "2026-11-02",
-      "reconstruction_fresh_for_market_date": false,
+      "reconstruction_as_of_transaction_date": "2026-11-03",
+      "reconstruction_fresh_for_market_date": true,
       "data_quality": null
     },
     "close_review": {
@@ -46,24 +45,27 @@
       "business_completion_status": "DEGRADED"
     },
     "decision_context": {
-      "status": "BLOCKED",
-      "reason": "canonical request-bound query context is empty, invalid, or missing a consumable fact pack",
-      "query_context": false,
+      "status": "READY",
+      "reason": "query and decision contexts are available; legacy minimum-ready observability is diagnostic only",
+      "query_context": true,
       "decision_context": true,
+      "minimum_decision_context": "READY_OR_NOT_APPLICABLE",
+      "observability_boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
+      "request_bound": false,
       "formal_reply_gate": {
         "request_id": "conversation-formal-20261026T212023+0800-90d3c2b2",
         "requested_at_beijing": "2026-10-26T21:20:23.000+08:00",
-        "status": "TERMINAL_FAILURE",
+        "status": "IN_FLIGHT",
         "reply_freezable": false,
         "blockers": [
-          "FORMAL_PARENT_RECOVERY_TIMEOUT"
+          "REQUEST_BOUND_QUERY_CONTEXT_NOT_PUBLISHED"
         ],
         "source": "durable_parent_request_waiting_for_request_bound_projection",
-        "actor_action": "TERMINATE_ON_EXPLICIT_FAILURE",
-        "user_output_allowed": true,
+        "actor_action": "CONTINUE_SAME_REQUEST_SILENTLY",
+        "user_output_allowed": false,
         "business_decision_allowed": false,
         "final_content_generation_allowed": false,
-        "consumer_status": "TERMINAL_FAILURE",
+        "consumer_status": "REQUEST_BOUND_FACTS_BUILDING",
         "projection_scope": "FORMAL_DECISION_REQUEST",
         "superseded_request_id": "fd_20261026_112739_scheduled_formal_review_0bba5094",
         "request_bound": false,
@@ -84,15 +86,15 @@
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 1647839,
-          "sha256": "48e3e4d8ae6b84d504d4fe84b9217e5737a679d65903748dde1117754d1177c8",
+          "byte_count": 1566291,
+          "sha256": "7a6e4b41abaaf56606dae8202db6ff1e825872c70e2cf059b87f45c926510a39",
           "parsed_object": true
         },
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 469427,
-          "sha256": "e11d6b2d5835b1137bd7e203aef6ca68d1556d9fa24bfe722ca8bc3f3774fd3c",
+          "byte_count": 471927,
+          "sha256": "66091742ac050d5bf28407cab69e41e22c14055edcac87f1a0c95b91b3929818",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -110,29 +112,26 @@
     "maintenance": {
       "status": "READY",
       "reason": "maintenance guard passed",
-      "checked_at": "2026-11-03T19:36:42+08:00"
+      "checked_at": "2026-11-03T20:17:54+08:00"
     }
   },
-  "blockers": [
-    "decision_context"
-  ],
+  "blockers": [],
   "degradations": [
-    "risk",
     "close_review"
   ],
   "context_read_contract": {
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 1647839,
-      "sha256": "48e3e4d8ae6b84d504d4fe84b9217e5737a679d65903748dde1117754d1177c8",
+      "byte_count": 1566291,
+      "sha256": "7a6e4b41abaaf56606dae8202db6ff1e825872c70e2cf059b87f45c926510a39",
       "parsed_object": true
     },
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 469427,
-      "sha256": "e11d6b2d5835b1137bd7e203aef6ca68d1556d9fa24bfe722ca8bc3f3774fd3c",
+      "byte_count": 471927,
+      "sha256": "66091742ac050d5bf28407cab69e41e22c14055edcac87f1a0c95b91b3929818",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"
