@@ -220,5 +220,17 @@ class LifecycleStateTests(unittest.TestCase):
         self.assertEqual(item["lifecycle_status"], "RESOLVED")
 
 
+    def test_explicit_exit_not_blocked_by_unrelated_same_symbol_sale(self):
+        self.test_explicitly_linked_sell_can_close_trial_despite_other_buy()
+        write(self.root, "events/trades/foreign-sell.json", {
+            "event_id": "foreign-sell", "linked_decision_id": "OTHER",
+            "execution_status": "EXECUTED", "execution_date": "2026-09-11",
+            "code": "515880", "side": "SELL", "quantity": 100,
+        })
+        item = build_lifecycle_projection(self.root, "2026-09-14")["active_lifecycles"][0]
+        self.assertEqual(item["lifecycle_status"], "RESOLVED")
+        self.assertEqual(item["resolution"]["resolution_event_ids"], ["sell-unlinked"])
+
+
 if __name__ == "__main__":
     unittest.main()
