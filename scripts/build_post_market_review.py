@@ -20,6 +20,16 @@ CLOSE_NODES = {"1500", "close"}
 CLOSE_PHASES = {"POST_CLOSE_GRACE", "CLOSED", "OUTSIDE_SESSION"}
 
 
+def load_projection(root: Path, relative_path: str) -> dict:
+    """Load a same-node object projection without inventing fallback facts."""
+    path = root / relative_path
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
 def load_snapshot(root: Path, current: dict) -> dict:
     rel = str(current.get("latest_snapshot") or "")
     if not rel:
@@ -90,6 +100,8 @@ def build(root: Path = ROOT) -> dict:
     data_status = current.get("data_freshness", {})
     market_phase = data_status.get("market_phase", "")
     close_contract = build_close_data_contract(root, current)
+    discovery_projection = load_projection(root, "data/state/formal_discovery_current.json")
+    opportunity_projection = load_projection(root, "data/state/formal_opportunity_current.json")
 
     # A verified explicit close node is authoritative even when the provider
     # observation/query timestamp is later than 15:00. For non-close nodes we
@@ -166,6 +178,11 @@ def build(root: Path = ROOT) -> dict:
         "formal_review_generated": formal_review_generated,
         "formal_review_allowed": bool(market_close and data_complete and not waiting),
         "lifecycle_projection": decision.get("lifecycle_projection") or build_lifecycle_projection(root),
+        # These are read-only same-node object projections. They are exposed to
+        # the Trade Review context so the review can report Discovery coverage
+        # and opportunity-layer status without becoming a Formal Decision.
+        "formal_discovery": discovery_projection,
+        "formal_opportunity": opportunity_projection,
         "same_day_review_idempotent": True,
         "review_boundary": "15:00后当天首次最终账户截图默认触发正式收盘复盘。A股显式close节点必须把15:00价格有效时点与provider后续查询/观察时间分离；provider时间晚于15:00不等于发生了盘后成交。账户事实只能来自用户或券商确认；重复截图如无账户/成交变化只做差异更新，不重复制造CASE。",
     }
