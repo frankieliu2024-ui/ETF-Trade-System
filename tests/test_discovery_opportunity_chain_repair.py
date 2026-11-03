@@ -8,6 +8,7 @@ if str(ROOT / "scripts") not in sys.path:
 
 from scripts import state_manager
 from scripts.build_query_context import _decision_problem_graph
+from scripts.business_decision_source import _capital_competition_opportunity_reviews
 
 
 class DiscoveryOpportunityChainRepairTests(unittest.TestCase):
@@ -49,6 +50,19 @@ class DiscoveryOpportunityChainRepairTests(unittest.TestCase):
         ids = {str(x.get("problem_id")) for x in graph}
         self.assertIn("DISCOVERY:588080", ids)
         self.assertNotIn("OBSERVATION:588080", ids)
+
+    def test_eight_discoveries_are_consumed_as_node_opportunity_reviews(self):
+        codes = ["159133", "159268", "159616", "159798", "512070", "513220", "515030", "562910"]
+        graph = [{"problem_id": f"DISCOVERY:{code}"} for code in codes]
+        reviews = [
+            {"code": code, "category": "OBSERVATION_EVALUATION_INPUT",
+             "opportunity_status": "待正式判断", "conclusion": "eligible for formal review",
+             "reason": "formal quote and historical evidence available"}
+            for code in codes
+        ]
+        result = _capital_competition_opportunity_reviews(reviews, graph)
+        self.assertEqual([item["code"] for item in result], codes)
+        self.assertEqual(len(result), 8)
 
 if __name__ == "__main__":
     unittest.main()
