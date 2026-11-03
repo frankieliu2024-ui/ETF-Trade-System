@@ -183,6 +183,32 @@ def _resolution(root: Path, trial: dict[str, Any], as_of: date) -> dict[str, Any
         return {"status": "RESOLVED", "resolution_reason": "CONFIRMED_COMPLETE_SELL", "resolution_event_ids": [x.get("event_id") for x in eligible], "resolution_time_beijing": max((x.get("confirmed_at_beijing") or x.get("executed_at_beijing") or x.get("execution_date") or "") for x in eligible)}
     return None
 
+def _completion_explicit_exit(root: Path, trial: dict[str, Any], executions: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """Resolve only a uniquely linked, fully sold completion Trial lot.
+
+    Same-symbol sales or later unlinked decisions cannot close this Trial.
+    """
+    decision_id = str(trial.get("decision_id") or "")
+    code = str(trial.get("candidate_code") or "")
+    opening_id = str(trial.get("_linked_execution_id") or "")
+    buys = [x for x in executions if str(x.get("linked_decision_id") or "") == decision_id
+            and str(x.get("code") or "") == code
+            and str(x.get("side") or "").upper() == "BUY"]
+    if len(buys) != 1 or str(buys[0].get("event_id") or "") != opening_id:
+        return None  # Multiple lots cannot be allocated safely by completion identity alone.
+    quantity = float(buys[0].get("quantity") or 0)
+    if quantity <= 0:
+        return None
+    sells = [x for x in executions if str(x.get("linked_decision_id") or "") == decision_id
+             and str(x.get("code") or "") == code
+             and str(x.get("side") or "").upper() == "SELL"]
+    sold = sum(float(x.get("quantity") or 0) for x in sells)
+    if not sells or sold < quantity:
+        return None
+    return {"status": "RESOLVED", "resolution_reason": "EXPLICIT_COMPLETION_LINKED_COMPLETE_SELL",
+            "resolution_event_ids": [x.get("event_id") for x in sells]}
+
+
 def build_lifecycle_projection(root: Path, as_of_market_date: str | None = None) -> dict[str, Any]:
     calendar = _load(root / "config" / "market" / "a_share_trading_calendar_2026.json", {})
     current = _load(root / "data" / "state" / "CURRENT.json", {})
@@ -218,7 +244,8 @@ def build_lifecycle_projection(root: Path, as_of_market_date: str | None = None)
             continue
         t_plus = trading_day_offset(start_date, as_of, calendar)
         mandatory = add_trading_days(start_date, 3, calendar)
-        resolution = None if decision.get("_completion_trial") else _resolution(root, decision, as_of)
+        resolution = (_completion_explicit_exit(root, decision, executions) if decision.get("_completion_trial")
+                      else _resolution(root, decision, as_of))
         resolved = resolution is not None
         trials.append({
             "source_decision_id": decision.get("decision_id"),
