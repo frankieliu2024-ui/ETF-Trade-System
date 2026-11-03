@@ -774,6 +774,11 @@ def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | N
     bound_content = str(binding.get("full_content") or "")
     if not content or not bound_content or bound_content != content:
         raise ValueError("Formal Decision completion frozen content is missing or mismatched")
+    expected_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
+    if str(payload.get("content_hash") or "").strip() != expected_hash:
+        raise ValueError("Formal Decision completion top-level content_hash mismatch")
+    if str(binding.get("content_hash") or "").strip() != expected_hash:
+        raise ValueError("Formal Decision completion presentation_binding.content_hash mismatch")
     validate_user_visible_content(content, canonical_closure_confirmed=False)
     validate_formal_decision_presentation_timestamp(content, str(payload["requested_at_beijing"]))
     title = content.splitlines()[0].strip() if content.splitlines() else ""
