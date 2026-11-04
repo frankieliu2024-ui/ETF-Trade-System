@@ -1,4 +1,4 @@
-"""Persist the weekly ETF Discovery at the last legal A-share close.
+"""Persist the current pulsed ETF Discovery and the weekly close artifact.
 
 The artifact is a research input only. It never promotes an opportunity, changes
 Observation identity, grants trading permission, or creates a trade fact.
@@ -21,6 +21,7 @@ except ModuleNotFoundError:
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 CALENDAR = ROOT / "config/market/a_share_trading_calendar_2026.json"
 OUTPUT = ROOT / "data/state/weekly_formal_discovery.json"
+CURRENT_OUTPUT = ROOT / "data/state/formal_discovery_current.json"
 
 
 def load_json(path: Path, default):
@@ -48,22 +49,12 @@ def build() -> dict:
     calendar = load_json(CALENDAR, {})
     closed_dates = set(calendar.get("closed_dates") or [])
 
-    if not market_date or node != "close" or node_status not in {"READY", "DEGRADED"}:
-        return {"status": "SKIPPED", "reason": "verified_close_not_current", "market_date": market_date, "latest_valid_node": node}
-    if not is_last_legal_day_of_week(market_date, closed_dates):
-        return {"status": "SKIPPED", "reason": "not_last_legal_day_of_week", "market_date": market_date}
+    if not market_date or node not in {"open", "midday", "close"} or node_status not in {"READY", "DEGRADED"}:
+        return {"status": "SKIPPED", "reason": "verified_a_share_node_not_current", "market_date": market_date, "latest_valid_node": node}
     if str(snapshot.get("market_date") or "") != market_date:
-        return {"status": "SKIPPED", "reason": "close_snapshot_market_date_mismatch", "market_date": market_date}
-    prior = load_json(OUTPUT, {})
-    if str(prior.get("market_date") or "") == market_date and str(prior.get("week_end") or "") == market_date and str(prior.get("status") or "").upper() in {"READY", "DEGRADED"}:
-        generated = datetime.now(ZoneInfo("Asia/Shanghai")).isoformat(timespec="seconds")
-        if not str(prior.get("generated_at_beijing") or "").endswith("+08:00"):
-            prior["generated_at_beijing"] = generated
-            atomic_json_write(OUTPUT, prior)
-            return {"status": "ALREADY_FORMED_METADATA_REPAIRED", "market_date": market_date, "candidate_count": prior.get("candidate_count"), "output": str(OUTPUT.relative_to(ROOT))}
-        return {"status": "ALREADY_FORMED", "market_date": market_date, "candidate_count": prior.get("candidate_count"), "output": str(OUTPUT.relative_to(ROOT))}
+        return {"status": "SKIPPED", "reason": "snapshot_market_date_mismatch", "market_date": market_date, "latest_valid_node": node}
     if str(snapshot.get("quality_status") or "").upper() not in {"PASS", "DEGRADED"}:
-        return {"status": "SKIPPED", "reason": "close_snapshot_quality_not_publishable", "market_date": market_date}
+        return {"status": "SKIPPED", "reason": "snapshot_quality_not_publishable", "market_date": market_date, "latest_valid_node": node}
 
     universe = load_json(ROOT / "config/market/etf_monitor_universe.json", {})
     account = load_json(ROOT / "data/state/account_fact.json", {})
@@ -112,13 +103,37 @@ def build() -> dict:
         "consumption_rule": "周日周复盘只读取本文件；不得在周日临时发起全市场Discovery。文件缺失或不可用必须显式报告，不得解释为候选为零。",
         "identity_boundary": "本文件是周级发现输入，不自动建立Observation、机会ETF、CASE、交易许可或交易事实。",
     }
-    atomic_json_write(OUTPUT, artifact)
+    current_artifact = {
+        **artifact,
+        "layer": "CURRENT_PULSE_DISCOVERY",
+        "latest_valid_node": node,
+        "latest_snapshot": current.get("latest_snapshot"),
+        "formation_rule": "EVERY_VERIFIED_A_SHARE_PULSE",
+        "consumption_rule": "Formal Decision and downstream contexts consume the latest same-node legal result; failure is explicit and never converted to zero candidates.",
+        "identity_boundary": "This current-pulse artifact is a discovery input only; it does not establish Observation, opportunity, Trial, Confirm, amount, sell quantity or order.",
+    }
+    atomic_json_write(CURRENT_OUTPUT, current_artifact)
+
+    weekly_written = False
+    if node == "close" and is_last_legal_day_of_week(market_date, closed_dates):
+        weekly_artifact = {
+            **artifact,
+            "layer": "WEEKLY_DISCOVERY",
+            "formation_rule": "LAST_LEGAL_A_SHARE_TRADING_DAY_AFTER_VERIFIED_CLOSE",
+            "consumption_rule": "周日周复盘只读取本文件；不得在周日临时发起全市场Discovery。文件缺失或不可用必须显式报告，不得解释为候选为零。",
+            "identity_boundary": "本文件是周级发现输入，不自动建立Observation、机会ETF、CASE、交易许可或交易事实。",
+        }
+        atomic_json_write(OUTPUT, weekly_artifact)
+        weekly_written = True
+
     return {
-        "status": artifact["status"],
+        "status": current_artifact["status"],
         "market_date": market_date,
-        "candidate_count": artifact["candidate_count"],
-        "coverage_status": artifact["coverage_status"],
-        "output": str(OUTPUT.relative_to(ROOT)),
+        "latest_valid_node": node,
+        "candidate_count": current_artifact["candidate_count"],
+        "coverage_status": current_artifact["coverage_status"],
+        "current_output": str(CURRENT_OUTPUT.relative_to(ROOT)),
+        "weekly_output_written": weekly_written,
     }
 
 
