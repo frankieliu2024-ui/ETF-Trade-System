@@ -319,10 +319,14 @@ def build_lifecycle_projection(root: Path, as_of_market_date: str | None = None)
     trials = []
     for decision in _formal_decisions(root) + _completion_trial_decisions(root, executions):
         candidate_code = str(decision.get("candidate_code") or "").strip()
+        # A Trial lifecycle starts from an executed BUY only.  A formal
+        # decision may also be linked to a SELL (for example a risk-reduction
+        # execution); that exit event must never manufacture a new Trial.
         linked = [
             x for x in executions
             if (
-                (not candidate_code or str(x.get("code") or "").strip() == candidate_code)
+                str(x.get("side") or x.get("action") or "").upper() == "BUY"
+                and (not candidate_code or str(x.get("code") or "").strip() == candidate_code)
                 and (
                     str(x.get("linked_decision_id") or "") == str(decision.get("decision_id") or "")
                     or (x.get("hypothesis_id") and x.get("hypothesis_id") == decision.get("hypothesis_id"))
