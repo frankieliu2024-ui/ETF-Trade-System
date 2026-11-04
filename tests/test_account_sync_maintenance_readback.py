@@ -1,5 +1,7 @@
 import json
 import tempfile
+import subprocess
+import sys
 import unittest
 from pathlib import Path
 
@@ -75,6 +77,56 @@ class AccountFactConsumptionContractTests(unittest.TestCase):
         supplied = {"holding_pnl": 320.0, "floating_pnl": 353.40}
         normalized, _ = normalize_broker_account_fact_ingress(request, supplied)
         self.assertEqual(normalized["holding_pnl"], 320.0)
+
+
+    def test_receipt_accepts_canonical_convertible_bond_alias(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            request = root / "requests/live_snapshot/broker.json"
+            state = root / "data/state"
+            request.parent.mkdir(parents=True)
+            state.mkdir(parents=True)
+            supplied = {
+                "updated_at": "2026-11-04T15:00:00+08:00",
+                "total_asset": 171685.07,
+                "stock_market_value": 56390.6,
+                "cash": 115294.47,
+                "positions": [{
+                    "code": "127118",
+                    "quantity": 10,
+                    "asset_type": "CONVERTIBLE_BOND",
+                    "security_type": "CONVERTIBLE_BOND",
+                }],
+            }
+            canonical = {
+                **supplied,
+                "positions": [{
+                    "code": "127118",
+                    "quantity": 10,
+                    "asset_type": "OTHER",
+                    "security_type": "CONVERTIBLE_BOND",
+                }],
+            }
+            request.write_text(json.dumps({"account_fact": supplied}), encoding="utf-8")
+            (state / "account_fact.json").write_text(json.dumps(canonical), encoding="utf-8")
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "scripts/record_account_sync_maintenance.py",
+                    "--root", str(root),
+                    "--request-id", "broker",
+                    "--request-path", "requests/live_snapshot/broker.json",
+                    "--owner-outcome", "success",
+                    "--run-id", "1",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            health = json.loads((state / "maintenance_health.json").read_text(encoding="utf-8"))
+            self.assertEqual(health["account_sync"]["status"], "PASS")
+            self.assertEqual(health["account_sync"]["readback_status"], "CONFIRMED")
 
 if __name__ == "__main__":
     unittest.main()
