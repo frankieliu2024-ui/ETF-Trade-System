@@ -900,8 +900,7 @@ def discover_formal_candidates(
             "decision_boundary": "广域发现失败不删除持仓/观察ETF，也不阻塞其现有正式MASTER链。",
         }
     broad_elapsed = round(time.monotonic() - broad_started, 3)
-    broad = _apply_external_driver_triggers(broad, external_driver_context)
-    prefilter_started = time.monotonic()
+    # Hyperliquid is a parallel decision fact domain; it does not create or promote Discovery candidates.\n    prefilter_started = time.monotonic()
     held_codes = {str(x) for x in (held_codes or set())}
     prefiltered = _bounded_prefilter(broad, held_codes, market_date)
     prefilter_elapsed = round(time.monotonic() - prefilter_started, 3)
