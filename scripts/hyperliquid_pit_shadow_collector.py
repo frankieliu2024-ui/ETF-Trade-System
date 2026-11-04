@@ -32,8 +32,8 @@ def post(payload: dict) -> tuple[object, str]:
         return json.load(response), requested_at
 
 
-def load_config() -> dict:
-    return json.loads(CONFIG.read_text(encoding="utf-8"))
+def load_config(path: pathlib.Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def target_names(config: dict) -> set[str]:
@@ -138,9 +138,10 @@ def discover(config: dict, started_at: str) -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output-root", default="data/research/hyperliquid_pit")
+    parser.add_argument("--config", default=str(CONFIG))
     args = parser.parse_args()
     started_at = utc_now()
-    config = load_config()
+    config = load_config(pathlib.Path(args.config))
     try:
         data = discover(config, started_at)
         error = None
