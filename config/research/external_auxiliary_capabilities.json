@@ -252,6 +252,31 @@
       "independent_fetch_group": "EVENT_VERIFICATION",
       "stop_when_sufficient": true,
       "notes": "Use for a real event/policy/official-source gap, not ceremonial duplicate searching or structured executable quotes."
+    },
+    {
+      "tool": "Hyperliquid",
+      "domain": "cross_market_perpetual_funding_oi_price_discovery",
+      "scope": [
+        "GLOBAL",
+        "US_ETF",
+        "US_STOCK",
+        "COMMODITY",
+        "ASIA",
+        "CN_RELATED"
+      ],
+      "observed_status": "TESTED_AVAILABLE",
+      "evidence_nature": "AUXILIARY_DERIVATIVE_MARKET_BEHAVIOR",
+      "allowed_business_uses": [
+        "THREE_LAYER_MONITORING",
+        "CANDIDATE_COMPARISON",
+        "HOLDING_REVIEW",
+        "CAPITAL_COMPETITION",
+        "RISK_EXPLANATION"
+      ],
+      "parallel_safe": true,
+      "independent_fetch_group": "CROSS_MARKET_DERIVATIVE_BEHAVIOR",
+      "stop_when_sufficient": true,
+      "notes": "Official read-only Info API has been tested for dynamic DEX discovery, per-DEX contract metadata, Mark/Mid/Oracle, Funding, OI, Premium, volume and candle history. Use only after per-contract identity, liquidity, PIT and data-quality validation. Historical OI/order-book coverage is not assumed; current dynamic collection must be established before using those fields as time-series evidence."
     }
   ],
   "global_prohibitions": [
