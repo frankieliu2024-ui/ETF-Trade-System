@@ -790,6 +790,43 @@ if __name__ == "__main__":
 
 
 
+def select_latest_qualified_formal_discovery(
+    discovery: dict, *, requested_at_beijing: str, market_date: str,
+) -> dict | None:
+    """Select the existing current-main Discovery only when legal at run start.
+
+    No weekly fallback, new producer, new request, or market refresh.  A
+    missing/invalid layer is None and must be disclosed as a limited layer.
+    """
+    from datetime import datetime
+    if not isinstance(discovery, dict):
+        return None
+    if str(discovery.get("market_date") or "") != str(market_date):
+        return None
+    if str(discovery.get("status") or "").upper() not in {"READY", "COMPLETE"}:
+        return None
+    if str(discovery.get("coverage_status") or "").upper() not in {"COMPLETE", "READY"}:
+        return None
+    try:
+        at = datetime.fromisoformat(str(discovery.get("generated_at_beijing") or ""))
+        cutoff = datetime.fromisoformat(str(requested_at_beijing))
+        if at.tzinfo is None or cutoff.tzinfo is None or at > cutoff:
+            return None
+    except (TypeError, ValueError):
+        return None
+    candidates = discovery.get("candidates")
+    if not isinstance(candidates, list):
+        return None
+    codes = [str(c.get("code") or "").strip() for c in candidates if isinstance(c, dict)]
+    if len(codes) != len(candidates) or any(not code for code in codes) or len(set(codes)) != len(codes):
+        return None
+    if discovery.get("candidate_count") != len(codes):
+        return None
+    if not str(discovery.get("latest_snapshot") or "").strip():
+        return None
+    return discovery
+
+
 def validate_formal_discovery_consumer_binding(
     discovery: dict, *, expected_market_date: str, expected_snapshot: str,
     candidate_codes: list[str],
