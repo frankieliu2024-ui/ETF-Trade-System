@@ -1089,6 +1089,7 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
             "focused_count": external_driver.get("focused_count"),
             "observations": external_driver_observations,
             "mapping": external_driver.get("mapping") or [],
+            "object_context": hyperliquid_object_context,
             "decision_boundary": "仅作为对象级辅助证据；不得独立生成Trial、Confirm、金额、卖出份额或订单。",
         },
         "decision_context": {
