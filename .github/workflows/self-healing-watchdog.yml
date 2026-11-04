@@ -345,6 +345,9 @@ jobs:
           python scripts/runtime_self_heal.py --record-trigger
 
       - name: Persist bounded self-healing state and deterministic repairs
+        # Keep PR validation read-only. Runtime repair is a main-branch owner
+        # operation and must never push a PR worktree to main.
+        if: ${{ github.ref == 'refs/heads/main' }}
         # The assessment artifact is itself canonical runtime state. Persist it
         # whenever the calculated status differs from main, including a return
         # to HEALTHY/NONE, so downstream consistency never consumes stale
