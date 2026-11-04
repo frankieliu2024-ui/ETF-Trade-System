@@ -296,5 +296,33 @@ class LifecycleStateTests(unittest.TestCase):
         self.assertEqual(item["resolution"]["resolution_event_ids"], ["sell-later"])
 
 
+    def test_sell_only_decision_cannot_create_trial_lifecycle(self):
+        write(self.root, "events/decisions/sell-only.json", {
+            "event_type": "FORMAL_DECISION",
+            "decision_id": "sell-only",
+            "decision_time_beijing": "2026-09-01T14:29:54+08:00",
+            "candidate_code": "561980",
+            "candidate_name": "半导体设备ETF",
+            "hypothesis_id": "",
+            "risk_permission": "允许Trial",
+            "formal_decision": {
+                "lifecycle": "Trial",
+                "main_candidate": "半导体设备ETF（561980）",
+            },
+        })
+        write(self.root, "events/trades/sell-only.json", {
+            "event_id": "sell-only",
+            "code": "561980",
+            "name": "半导体设备ETF",
+            "side": "SELL",
+            "quantity": 13000,
+            "execution_status": "EXECUTED",
+            "execution_date": "2026-09-01",
+            "linked_decision_id": "sell-only",
+        })
+        projection = build_lifecycle_projection(self.root, "2026-09-10")
+        self.assertEqual(projection["active_lifecycles"], [])
+
+
 if __name__ == "__main__":
     unittest.main()
