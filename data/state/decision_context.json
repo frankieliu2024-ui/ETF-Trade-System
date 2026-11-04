@@ -7,25 +7,25 @@
     "snapshot_commit": "759846738b9ae97f98d8799fc1dbcd1514959249",
     "boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
     "timing": {
-      "state_builder_started_at": "2026-11-04T09:37:16Z",
+      "state_builder_started_at": "2026-11-04T09:52:08Z",
       "current_published_at": "2026-11-04T15:15:25+08:00",
-      "market_regime_ready_at": "2026-11-04T09:37:22Z",
-      "market_structure_ready_at": "2026-11-04T09:37:22Z",
-      "full_state_context_observation_at": "2026-11-04T09:37:23Z",
-      "decision_context_written_at": "2026-11-04T09:37:24Z"
+      "market_regime_ready_at": "2026-11-04T09:52:14Z",
+      "market_structure_ready_at": "2026-11-04T09:52:15Z",
+      "full_state_context_observation_at": "2026-11-04T09:52:15Z",
+      "decision_context_written_at": "2026-11-04T09:52:17Z"
     },
     "trigger": {
-      "request_id": "",
-      "parent_request_id": "",
+      "request_id": "broker-close-20261104-1745-chatgpt",
+      "parent_request_id": "broker-close-20261104-1745-chatgpt",
       "task_run_id": "",
       "occurrence_id": "",
-      "source": "",
+      "source": "CHATGPT_USER_BROKER_SCREENSHOT",
       "entry_mode": "",
-      "requested_at_beijing": "",
+      "requested_at_beijing": "2026-11-04T17:45:00+08:00",
       "market_date": "2026-11-04"
     }
   },
-  "generated_at": "2026-11-04T09:37:23Z",
+  "generated_at": "2026-11-04T09:52:15Z",
   "rules_version": "V2.2.34",
   "market_date": "2026-11-04",
   "latest_node": "close",
@@ -941,8 +941,8 @@
     },
     "account_fact": {
       "status": "VALID",
-      "updated_at": "2026-11-03T15:37:00+08:00",
-      "source": "BROKER_HOLDINGS_SCREENSHOT_20261103_153700_USER_PROVIDED",
+      "updated_at": "2026-11-04T15:00:00+08:00",
+      "source": "BROKER_HOLDINGS_AND_TRADE_SCREENSHOTS_20261104_1745_USER_CONFIRMED_CLOSE",
       "cash": 115294.47,
       "reserved_cash_for_settlement": 0,
       "deployable_cash": 115294.47,
@@ -952,11 +952,11 @@
     "last_trade_event_id": "trade-20261026-145504-159056-buy",
     "rules_version": "V2.2.34",
     "generated_at": "2026-11-04T07:15:25Z",
-    "account_fact_reference_synced_at": "2026-11-03T20:36:37+08:00",
+    "account_fact_reference_synced_at": "2026-11-04T17:51:06+08:00",
     "account_fact_path": "data/state/account_fact.json",
-    "account_fact_updated_at": "2026-11-03T15:37:00+08:00",
+    "account_fact_updated_at": "2026-11-04T15:00:00+08:00",
     "account_fact_status": "VALID",
-    "account_fact_source": "BROKER_HOLDINGS_SCREENSHOT_20261103_153700_USER_PROVIDED",
+    "account_fact_source": "BROKER_HOLDINGS_AND_TRADE_SCREENSHOTS_20261104_1745_USER_CONFIRMED_CLOSE",
     "close_review_closure": {
       "status": "CLOSED",
       "market_date": "2026-11-03",
@@ -1827,7 +1827,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 15.411,
-    "age_seconds": 8518
+    "age_seconds": 9410
   },
   "freshness_at_context_build": {
     "status": "STALE",
@@ -1844,7 +1844,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 15.411,
-    "age_seconds": 8518
+    "age_seconds": 9410
   },
   "data_quality_summary": {
     "pass_count": 18,
@@ -1905,7 +1905,7 @@
     "reconstruction_risk_pct": -12.9396,
     "reconstruction_as_of_transaction_date": "2026-11-04",
     "reconstruction_fresh_for_market_date": true,
-    "etf_holding_unrealized_pct": -0.09,
+    "etf_holding_unrealized_pct": 0.27,
     "etf_drawdown_from_high_pct": null,
     "equity_data_quality": null,
     "strategy_equity_known_net": 174120.7,
@@ -1942,10 +1942,10 @@
     "formal_discovery_boundary": "节点临时正式评估对象；不改变持仓/观察管理身份。"
   },
   "point_in_time": {
-    "account_fact_time": "2026-11-03T15:37:00+08:00",
+    "account_fact_time": "2026-11-04T15:00:00+08:00",
     "market_snapshot_time": "2026-11-04T15:15:25+08:00",
     "market_phase": "POST_CLOSE_GRACE",
-    "context_generated_time": "2026-11-04T09:37:23Z",
+    "context_generated_time": "2026-11-04T09:52:15Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
@@ -1987,28 +1987,90 @@
     "read_only": true
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-11-04T17:37:23+08:00",
-    "refresh_mode": "CACHED_STATE",
-    "refresh_failures": [],
+    "generated_at_beijing": "2026-11-04T17:52:15+08:00",
+    "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
+    "refresh_failures": [
+      {
+        "symbol": "NDX",
+        "error": "NDX active-market immediate refresh rejected non-FRESH provider result: PREVIOUS_SESSION_REFERENCE"
+      },
+      {
+        "symbol": "SOX",
+        "error": "SOX active-market immediate refresh rejected non-FRESH provider result: PREVIOUS_SESSION_REFERENCE"
+      }
+    ],
     "decision_freshness": {
-      "status": "REFRESH_REQUIRED",
+      "status": "DIRECT",
       "quality_status": "UNKNOWN",
       "captured_at": "2026-11-04T07:15:25+00:00",
       "provider_as_of": "2026-11-04T07:15:16+00:00",
       "effective_as_of": "2026-11-04T07:15:16+00:00",
-      "request_time": "2026-11-04T09:37:23.235482+00:00",
-      "age_seconds": 8527,
+      "request_time": "2026-11-04T09:45:00+00:00",
+      "age_seconds": 9419,
       "post_request": false,
       "preferred_max_age_seconds": 300,
       "fallback_max_age_seconds": 900,
-      "formal_decision_allowed": false,
-      "refresh_required": true,
+      "formal_decision_allowed": true,
+      "refresh_required": false,
       "fallback_allowed": false,
-      "reason": "CURRENT quality PASS does not override decision freshness; query-time refresh required"
+      "reason": "CURRENT quality PASS does not override decision freshness; query-time refresh required",
+      "resolved_post_request": true,
+      "request_scoped_resolution_mode": "CLOSED_SESSION_CANONICAL_REUSE",
+      "request_scoped_resolution_reason": "closed A-share session legally reuses latest canonical close",
+      "a_share_market_phase": "OFF_SESSION",
+      "resolved_as_of": "2026-11-04T09:52:09+00:00"
     },
     "route_version": "V1.1",
     "query_entry": "market_quote_router",
     "quotes": [
+      {
+        "market": "US",
+        "market_name": "美国",
+        "symbol": "QQQ",
+        "name": "QQQ",
+        "latest_price": 689.09,
+        "open": 689.09,
+        "high": 689.09,
+        "low": 689.09,
+        "prev_close": 681.09,
+        "volume": 0,
+        "amount": null,
+        "turnover": null,
+        "data_time_beijing": "2026-11-04T17:51:12+08:00",
+        "data_time_local": "2026-11-04T04:51:12-05:00",
+        "market_phase": "PRE_MARKET",
+        "market_status_cn": "美股盘前",
+        "data_nature_cn": "盘前行情（附最近正式收盘基准）",
+        "source": "yahoo_chart_api",
+        "freshness": "FRESH",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "refresh_source": "QUERY_TIME_PROVIDER"
+      },
+      {
+        "market": "US",
+        "market_name": "美国",
+        "symbol": "SOXX",
+        "name": "SOXX",
+        "latest_price": 471.2,
+        "open": 471.2,
+        "high": 471.2,
+        "low": 471.2,
+        "prev_close": 453.65,
+        "volume": 0,
+        "amount": null,
+        "turnover": null,
+        "data_time_beijing": "2026-11-04T17:52:09+08:00",
+        "data_time_local": "2026-11-04T04:52:09-05:00",
+        "market_phase": "PRE_MARKET",
+        "market_status_cn": "美股盘前",
+        "data_nature_cn": "盘前行情（附最近正式收盘基准）",
+        "source": "yahoo_chart_api",
+        "freshness": "FRESH",
+        "quality_status": "PASS",
+        "direct_quote": true,
+        "refresh_source": "QUERY_TIME_PROVIDER"
+      },
       {
         "market": "CN",
         "market_name": "中国大陆",
@@ -2482,7 +2544,7 @@
         "market_name": "美国",
         "symbol": "NDX",
         "name": "纳斯达克100指数",
-        "latest_price": 687.74,
+        "latest_price": 689.5,
         "open": null,
         "high": null,
         "low": null,
@@ -2490,7 +2552,7 @@
         "volume": null,
         "amount": null,
         "turnover": null,
-        "data_time_beijing": "2026-11-04T17:28:41+08:00",
+        "data_time_beijing": "2026-11-04T17:48:51+08:00",
         "data_time_local": "",
         "market_phase": "PRE_MARKET",
         "market_status_cn": "美股盘前",
@@ -2508,7 +2570,7 @@
         "market_name": "美国",
         "symbol": "SOX",
         "name": "费城半导体指数",
-        "latest_price": 470.27,
+        "latest_price": 471.7,
         "open": null,
         "high": null,
         "low": null,
@@ -2516,7 +2578,7 @@
         "volume": null,
         "amount": null,
         "turnover": null,
-        "data_time_beijing": "2026-11-04T17:27:54+08:00",
+        "data_time_beijing": "2026-11-04T17:48:47+08:00",
         "data_time_local": "",
         "market_phase": "PRE_MARKET",
         "market_status_cn": "美股盘前",
@@ -2895,7 +2957,7 @@
   },
   "decision_trigger": {
     "schema_version": "1.2",
-    "generated_at": "2026-11-04T17:37:22+08:00",
+    "generated_at": "2026-11-04T17:52:15+08:00",
     "status": "NO_NEW_TRIGGER",
     "trigger_type": "",
     "triggered_at": "",
@@ -2911,21 +2973,21 @@
     "enhanced_risk_review_required": true,
     "risk_zone_semantics": "REVIEW_CONTEXT_ONLY_NOT_TRADING_PERMISSION",
     "last_trade_event_id": "trade-20261026-145504-159056-buy",
-    "request_id": "",
+    "request_id": "broker-close-20261104-1745-chatgpt",
     "safety_boundary": "确定性识别仅生成重评请求，不生成风险许可、金额、份额或交易动作。",
     "read_only": true,
-    "parent_request_id": "",
+    "parent_request_id": "broker-close-20261104-1745-chatgpt",
     "task_run_id": "",
     "occurrence_id": "",
-    "source": "",
+    "source": "CHATGPT_USER_BROKER_SCREENSHOT",
     "entry_mode": "",
-    "requested_at_beijing": "",
+    "requested_at_beijing": "2026-11-04T17:45:00+08:00",
     "market_date": "2026-11-04",
-    "request_bound": false
+    "request_bound": true
   },
   "capital_efficiency_ranking": {
     "schema_version": "1.2",
-    "generated_at": "2026-11-04T17:37:22+08:00",
+    "generated_at": "2026-11-04T17:52:15+08:00",
     "as_of": "2026-11-04T15:15:25+08:00",
     "e2e_status": "DEGRADED",
     "risk_zone": "RISK_CONTROL",
@@ -2962,7 +3024,7 @@
         "data_quality_status": "PASS",
         "reason": "当前持仓资本用途，继续比较持有、合法释放与其他用途。",
         "quantity": 4700,
-        "market_value": 4808.1,
+        "market_value": 4831.6,
         "releasable_capital_role": "CURRENT_CAPITAL_CAN_BE_EVALUATED_FOR_RELEASE",
         "comparison_basis": [
           "价格/结构",
@@ -3062,7 +3124,7 @@
         "data_quality_status": "PASS",
         "reason": "当前持仓资本用途，继续比较持有、合法释放与其他用途。",
         "quantity": 12200,
-        "market_value": 19642,
+        "market_value": 20056.8,
         "releasable_capital_role": "CURRENT_CAPITAL_CAN_BE_EVALUATED_FOR_RELEASE",
         "comparison_basis": [
           "价格/结构",
@@ -3087,7 +3149,7 @@
         "data_quality_status": "PASS",
         "reason": "当前持仓资本用途，继续比较持有、合法释放与其他用途。",
         "quantity": 8500,
-        "market_value": 16286,
+        "market_value": 15844,
         "releasable_capital_role": "CURRENT_CAPITAL_CAN_BE_EVALUATED_FOR_RELEASE",
         "comparison_basis": [
           "价格/结构",
@@ -3112,7 +3174,7 @@
         "data_quality_status": "PASS",
         "reason": "当前持仓资本用途，继续比较持有、合法释放与其他用途。",
         "quantity": 17200,
-        "market_value": 13570.8,
+        "market_value": 14293.2,
         "releasable_capital_role": "CURRENT_CAPITAL_CAN_BE_EVALUATED_FOR_RELEASE",
         "comparison_basis": [
           "价格/结构",
@@ -3353,7 +3415,7 @@
         "data_quality_status": "PASS",
         "reason": "当前持仓资本用途，继续比较持有、合法释放与其他用途。",
         "quantity": 4700,
-        "market_value": 4808.1,
+        "market_value": 4831.6,
         "releasable_capital_role": "CURRENT_CAPITAL_CAN_BE_EVALUATED_FOR_RELEASE",
         "comparison_basis": [
           "价格/结构",
@@ -3453,7 +3515,7 @@
         "data_quality_status": "PASS",
         "reason": "当前持仓资本用途，继续比较持有、合法释放与其他用途。",
         "quantity": 12200,
-        "market_value": 19642,
+        "market_value": 20056.8,
         "releasable_capital_role": "CURRENT_CAPITAL_CAN_BE_EVALUATED_FOR_RELEASE",
         "comparison_basis": [
           "价格/结构",
@@ -3478,7 +3540,7 @@
         "data_quality_status": "PASS",
         "reason": "当前持仓资本用途，继续比较持有、合法释放与其他用途。",
         "quantity": 8500,
-        "market_value": 16286,
+        "market_value": 15844,
         "releasable_capital_role": "CURRENT_CAPITAL_CAN_BE_EVALUATED_FOR_RELEASE",
         "comparison_basis": [
           "价格/结构",
@@ -3503,7 +3565,7 @@
         "data_quality_status": "PASS",
         "reason": "当前持仓资本用途，继续比较持有、合法释放与其他用途。",
         "quantity": 17200,
-        "market_value": 13570.8,
+        "market_value": 14293.2,
         "releasable_capital_role": "CURRENT_CAPITAL_CAN_BE_EVALUATED_FOR_RELEASE",
         "comparison_basis": [
           "价格/结构",
@@ -3740,15 +3802,10 @@
         "data_availability": "UNAVAILABLE",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
           "name": "800红利低波ETF华宝",
+          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
           "category": "OBSERVATION_EVALUATION_INPUT",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-11-03",
-            "sample_count": 90,
-            "avg_amount_20": 17130752.88
-          },
+          "code": "159355",
           "discovery_spot": {
             "price": 1.072,
             "change_pct": -0.65,
@@ -3764,8 +3821,13 @@
             "return_ytd_pct": 7.31,
             "provider_timestamp": 1793776515
           },
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "code": "159355"
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-11-03",
+            "sample_count": 90,
+            "avg_amount_20": 17130752.88
+          },
+          "eligibility": "OBSERVATION_FULL_EVALUATION"
         },
         "action_boundary": "必须先完成本节点机会资格评估；Discovery不产生交易权限。持续Observation的ADMIT/RETAIN是独立身份判断，不是节点级机会形成的前置条件；只有正式形成机会资格后才能进入统一资本竞争。"
       },
@@ -3777,15 +3839,10 @@
         "data_availability": "UNAVAILABLE",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
           "name": "标普消费ETF景顺",
+          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
           "category": "OBSERVATION_EVALUATION_INPUT",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-11-03",
-            "sample_count": 90,
-            "avg_amount_20": 646193140.9
-          },
+          "code": "159529",
           "discovery_spot": {
             "price": 1.348,
             "change_pct": -2.11,
@@ -3801,8 +3858,13 @@
             "return_ytd_pct": -1.75,
             "provider_timestamp": 1793776515
           },
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "code": "159529"
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-11-03",
+            "sample_count": 90,
+            "avg_amount_20": 646193140.9
+          },
+          "eligibility": "OBSERVATION_FULL_EVALUATION"
         },
         "action_boundary": "必须先完成本节点机会资格评估；Discovery不产生交易权限。持续Observation的ADMIT/RETAIN是独立身份判断，不是节点级机会形成的前置条件；只有正式形成机会资格后才能进入统一资本竞争。"
       },
@@ -3814,15 +3876,10 @@
         "data_availability": "UNAVAILABLE",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
           "name": "港股创新药ETF银华",
+          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
           "category": "OBSERVATION_EVALUATION_INPUT",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-11-03",
-            "sample_count": 90,
-            "avg_amount_20": 918709124.5
-          },
+          "code": "159567",
           "discovery_spot": {
             "price": 0.638,
             "change_pct": 7.05,
@@ -3838,8 +3895,13 @@
             "return_ytd_pct": -14.71,
             "provider_timestamp": 1793776500
           },
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "code": "159567"
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-11-03",
+            "sample_count": 90,
+            "avg_amount_20": 918709124.5
+          },
+          "eligibility": "OBSERVATION_FULL_EVALUATION"
         },
         "action_boundary": "必须先完成本节点机会资格评估；Discovery不产生交易权限。持续Observation的ADMIT/RETAIN是独立身份判断，不是节点级机会形成的前置条件；只有正式形成机会资格后才能进入统一资本竞争。"
       },
@@ -3851,15 +3913,10 @@
         "data_availability": "UNAVAILABLE",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
           "name": "沪深300成长ETF万家",
+          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
           "category": "OBSERVATION_EVALUATION_INPUT",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-11-03",
-            "sample_count": 90,
-            "avg_amount_20": 10854136.36
-          },
+          "code": "159656",
           "discovery_spot": {
             "price": 0.99,
             "change_pct": 4.98,
@@ -3875,8 +3932,13 @@
             "return_ytd_pct": -12.62,
             "provider_timestamp": 1793776515
           },
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "code": "159656"
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-11-03",
+            "sample_count": 90,
+            "avg_amount_20": 10854136.36
+          },
+          "eligibility": "OBSERVATION_FULL_EVALUATION"
         },
         "action_boundary": "必须先完成本节点机会资格评估；Discovery不产生交易权限。持续Observation的ADMIT/RETAIN是独立身份判断，不是节点级机会形成的前置条件；只有正式形成机会资格后才能进入统一资本竞争。"
       },
@@ -3888,15 +3950,10 @@
         "data_availability": "UNAVAILABLE",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
           "name": "恒生医药ETF华夏",
+          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
           "category": "OBSERVATION_EVALUATION_INPUT",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-11-03",
-            "sample_count": 90,
-            "avg_amount_20": 586417239.5
-          },
+          "code": "159892",
           "discovery_spot": {
             "price": 0.744,
             "change_pct": 8.45,
@@ -3912,8 +3969,13 @@
             "return_ytd_pct": -1.85,
             "provider_timestamp": 1793776470
           },
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "code": "159892"
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-11-03",
+            "sample_count": 90,
+            "avg_amount_20": 586417239.5
+          },
+          "eligibility": "OBSERVATION_FULL_EVALUATION"
         },
         "action_boundary": "必须先完成本节点机会资格评估；Discovery不产生交易权限。持续Observation的ADMIT/RETAIN是独立身份判断，不是节点级机会形成的前置条件；只有正式形成机会资格后才能进入统一资本竞争。"
       },
@@ -3925,15 +3987,10 @@
         "data_availability": "UNAVAILABLE",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
           "name": "智能驾驶ETF华泰柏瑞",
+          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
           "category": "OBSERVATION_EVALUATION_INPUT",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-11-03",
-            "sample_count": 90,
-            "avg_amount_20": 25042324.24
-          },
+          "code": "516520",
           "discovery_spot": {
             "price": 0.965,
             "change_pct": 4.78,
@@ -3949,8 +4006,13 @@
             "return_ytd_pct": -24.96,
             "provider_timestamp": 1793776524
           },
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "code": "516520"
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-11-03",
+            "sample_count": 90,
+            "avg_amount_20": 25042324.24
+          },
+          "eligibility": "OBSERVATION_FULL_EVALUATION"
         },
         "action_boundary": "必须先完成本节点机会资格评估；Discovery不产生交易权限。持续Observation的ADMIT/RETAIN是独立身份判断，不是节点级机会形成的前置条件；只有正式形成机会资格后才能进入统一资本竞争。"
       },
@@ -3962,15 +4024,10 @@
         "data_availability": "UNAVAILABLE",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
           "name": "A500红利ETF国联安",
+          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
           "category": "OBSERVATION_EVALUATION_INPUT",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-11-03",
-            "sample_count": 90,
-            "avg_amount_20": 26734991.2
-          },
+          "code": "560570",
           "discovery_spot": {
             "price": 1.048,
             "change_pct": -1.13,
@@ -3986,8 +4043,13 @@
             "return_ytd_pct": 6.07,
             "provider_timestamp": 1793776522
           },
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "code": "560570"
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-11-03",
+            "sample_count": 90,
+            "avg_amount_20": 26734991.2
+          },
+          "eligibility": "OBSERVATION_FULL_EVALUATION"
         },
         "action_boundary": "必须先完成本节点机会资格评估；Discovery不产生交易权限。持续Observation的ADMIT/RETAIN是独立身份判断，不是节点级机会形成的前置条件；只有正式形成机会资格后才能进入统一资本竞争。"
       },
@@ -3999,15 +4061,10 @@
         "data_availability": "UNAVAILABLE",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
           "name": "科技成长ETF兴业",
+          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
           "category": "OBSERVATION_EVALUATION_INPUT",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-11-03",
-            "sample_count": 90,
-            "avg_amount_20": 7394772.25
-          },
+          "code": "563560",
           "discovery_spot": {
             "price": 0.879,
             "change_pct": 8.65,
@@ -4023,8 +4080,13 @@
             "return_ytd_pct": -13.06,
             "provider_timestamp": 1793776520
           },
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "code": "563560"
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-11-03",
+            "sample_count": 90,
+            "avg_amount_20": 7394772.25
+          },
+          "eligibility": "OBSERVATION_FULL_EVALUATION"
         },
         "action_boundary": "必须先完成本节点机会资格评估；Discovery不产生交易权限。持续Observation的ADMIT/RETAIN是独立身份判断，不是节点级机会形成的前置条件；只有正式形成机会资格后才能进入统一资本竞争。"
       },
@@ -4036,15 +4098,10 @@
         "data_availability": "UNAVAILABLE",
         "formal_quote_status": "UNAVAILABLE",
         "discovery_evidence": {
-          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
           "name": "科创综指ETF华夏",
+          "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
           "category": "OBSERVATION_EVALUATION_INPUT",
-          "historical_context": {
-            "status": "READY",
-            "as_of": "2026-11-03",
-            "sample_count": 90,
-            "avg_amount_20": 124517861.1
-          },
+          "code": "589000",
           "discovery_spot": {
             "price": 1.232,
             "change_pct": 9.71,
@@ -4060,15 +4117,20 @@
             "return_ytd_pct": -5.67,
             "provider_timestamp": 1793776532
           },
-          "eligibility": "OBSERVATION_FULL_EVALUATION",
-          "code": "589000"
+          "historical_context": {
+            "status": "READY",
+            "as_of": "2026-11-03",
+            "sample_count": 90,
+            "avg_amount_20": 124517861.1
+          },
+          "eligibility": "OBSERVATION_FULL_EVALUATION"
         },
         "action_boundary": "必须先完成本节点机会资格评估；Discovery不产生交易权限。持续Observation的ADMIT/RETAIN是独立身份判断，不是节点级机会形成的前置条件；只有正式形成机会资格后才能进入统一资本竞争。"
       }
     ]
   },
   "intraday_path_features": {
-    "generated_at": "2026-11-04T09:37:16Z",
+    "generated_at": "2026-11-04T09:52:08Z",
     "market_date": "2026-11-04",
     "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
     "read_only": true,
@@ -6040,7 +6102,7 @@
     },
     "market_structure_context": {
       "schema_version": "1.4",
-      "generated_at": "2026-11-04T09:37:22Z",
+      "generated_at": "2026-11-04T09:52:15Z",
       "market_date": "2026-11-04",
       "as_of_beijing": "2026-11-04T15:15:25+08:00",
       "source_snapshot": "data/market/snapshots/2026-11-04_151525.json",
@@ -9199,21 +9261,16 @@
     "market_date": "2026-11-04",
     "latest_valid_node": "close",
     "latest_snapshot": "data/market/snapshots/2026-11-04_151525.json",
-    "generated_at_beijing": "2026-11-04T17:37:02+08:00",
+    "generated_at_beijing": "2026-11-04T17:51:45+08:00",
     "status": "READY",
     "coverage_status": "COMPLETE",
     "candidate_count": 9,
     "candidates": [
       {
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
         "name": "800红利低波ETF华宝",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
         "category": "OBSERVATION_EVALUATION_INPUT",
-        "historical_context": {
-          "status": "READY",
-          "as_of": "2026-11-03",
-          "sample_count": 90,
-          "avg_amount_20": 17130752.88
-        },
+        "code": "159355",
         "discovery_spot": {
           "price": 1.072,
           "change_pct": -0.65,
@@ -9229,19 +9286,19 @@
           "return_ytd_pct": 7.31,
           "provider_timestamp": 1793776515
         },
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "code": "159355"
-      },
-      {
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "name": "标普消费ETF景顺",
-        "category": "OBSERVATION_EVALUATION_INPUT",
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-03",
           "sample_count": 90,
-          "avg_amount_20": 646193140.9
+          "avg_amount_20": 17130752.88
         },
+        "eligibility": "OBSERVATION_FULL_EVALUATION"
+      },
+      {
+        "name": "标普消费ETF景顺",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "category": "OBSERVATION_EVALUATION_INPUT",
+        "code": "159529",
         "discovery_spot": {
           "price": 1.348,
           "change_pct": -2.11,
@@ -9257,19 +9314,19 @@
           "return_ytd_pct": -1.75,
           "provider_timestamp": 1793776515
         },
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "code": "159529"
-      },
-      {
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "name": "港股创新药ETF银华",
-        "category": "OBSERVATION_EVALUATION_INPUT",
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-03",
           "sample_count": 90,
-          "avg_amount_20": 918709124.5
+          "avg_amount_20": 646193140.9
         },
+        "eligibility": "OBSERVATION_FULL_EVALUATION"
+      },
+      {
+        "name": "港股创新药ETF银华",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "category": "OBSERVATION_EVALUATION_INPUT",
+        "code": "159567",
         "discovery_spot": {
           "price": 0.638,
           "change_pct": 7.05,
@@ -9285,19 +9342,19 @@
           "return_ytd_pct": -14.71,
           "provider_timestamp": 1793776500
         },
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "code": "159567"
-      },
-      {
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "name": "沪深300成长ETF万家",
-        "category": "OBSERVATION_EVALUATION_INPUT",
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-03",
           "sample_count": 90,
-          "avg_amount_20": 10854136.36
+          "avg_amount_20": 918709124.5
         },
+        "eligibility": "OBSERVATION_FULL_EVALUATION"
+      },
+      {
+        "name": "沪深300成长ETF万家",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "category": "OBSERVATION_EVALUATION_INPUT",
+        "code": "159656",
         "discovery_spot": {
           "price": 0.99,
           "change_pct": 4.98,
@@ -9313,19 +9370,19 @@
           "return_ytd_pct": -12.62,
           "provider_timestamp": 1793776515
         },
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "code": "159656"
-      },
-      {
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "name": "恒生医药ETF华夏",
-        "category": "OBSERVATION_EVALUATION_INPUT",
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-03",
           "sample_count": 90,
-          "avg_amount_20": 586417239.5
+          "avg_amount_20": 10854136.36
         },
+        "eligibility": "OBSERVATION_FULL_EVALUATION"
+      },
+      {
+        "name": "恒生医药ETF华夏",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "category": "OBSERVATION_EVALUATION_INPUT",
+        "code": "159892",
         "discovery_spot": {
           "price": 0.744,
           "change_pct": 8.45,
@@ -9341,19 +9398,19 @@
           "return_ytd_pct": -1.85,
           "provider_timestamp": 1793776470
         },
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "code": "159892"
-      },
-      {
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "name": "智能驾驶ETF华泰柏瑞",
-        "category": "OBSERVATION_EVALUATION_INPUT",
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-03",
           "sample_count": 90,
-          "avg_amount_20": 25042324.24
+          "avg_amount_20": 586417239.5
         },
+        "eligibility": "OBSERVATION_FULL_EVALUATION"
+      },
+      {
+        "name": "智能驾驶ETF华泰柏瑞",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "category": "OBSERVATION_EVALUATION_INPUT",
+        "code": "516520",
         "discovery_spot": {
           "price": 0.965,
           "change_pct": 4.78,
@@ -9369,19 +9426,19 @@
           "return_ytd_pct": -24.96,
           "provider_timestamp": 1793776524
         },
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "code": "516520"
-      },
-      {
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "name": "A500红利ETF国联安",
-        "category": "OBSERVATION_EVALUATION_INPUT",
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-03",
           "sample_count": 90,
-          "avg_amount_20": 26734991.2
+          "avg_amount_20": 25042324.24
         },
+        "eligibility": "OBSERVATION_FULL_EVALUATION"
+      },
+      {
+        "name": "A500红利ETF国联安",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "category": "OBSERVATION_EVALUATION_INPUT",
+        "code": "560570",
         "discovery_spot": {
           "price": 1.048,
           "change_pct": -1.13,
@@ -9397,19 +9454,19 @@
           "return_ytd_pct": 6.07,
           "provider_timestamp": 1793776522
         },
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "code": "560570"
-      },
-      {
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "name": "科技成长ETF兴业",
-        "category": "OBSERVATION_EVALUATION_INPUT",
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-03",
           "sample_count": 90,
-          "avg_amount_20": 7394772.25
+          "avg_amount_20": 26734991.2
         },
+        "eligibility": "OBSERVATION_FULL_EVALUATION"
+      },
+      {
+        "name": "科技成长ETF兴业",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "category": "OBSERVATION_EVALUATION_INPUT",
+        "code": "563560",
         "discovery_spot": {
           "price": 0.879,
           "change_pct": 8.65,
@@ -9425,19 +9482,19 @@
           "return_ytd_pct": -13.06,
           "provider_timestamp": 1793776520
         },
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "code": "563560"
-      },
-      {
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "name": "科创综指ETF华夏",
-        "category": "OBSERVATION_EVALUATION_INPUT",
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-03",
           "sample_count": 90,
-          "avg_amount_20": 124517861.1
+          "avg_amount_20": 7394772.25
         },
+        "eligibility": "OBSERVATION_FULL_EVALUATION"
+      },
+      {
+        "name": "科创综指ETF华夏",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "category": "OBSERVATION_EVALUATION_INPUT",
+        "code": "589000",
         "discovery_spot": {
           "price": 1.232,
           "change_pct": 9.71,
@@ -9453,8 +9510,13 @@
           "return_ytd_pct": -5.67,
           "provider_timestamp": 1793776532
         },
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "code": "589000"
+        "historical_context": {
+          "status": "READY",
+          "as_of": "2026-11-03",
+          "sample_count": 90,
+          "avg_amount_20": 124517861.1
+        },
+        "eligibility": "OBSERVATION_FULL_EVALUATION"
       }
     ],
     "universe_identity": "3ac8e9cfa849ca9e",
@@ -9464,13 +9526,13 @@
     "freshness_rule": "same-node fixed-slot evidence; absence is not zero"
   },
   "interaction_boundary": "ChatGPT聊天负责账户截图与正式交易判断；本文件不生成交易动作。正式机会比较完整覆盖全部持仓/观察ETF，并在本节点存在合格池外发现对象时把其作为临时正式评估输入加入同一次MASTER与全资本竞争；发现本身不产生管理身份或交易权限。",
-  "request_id": "",
-  "parent_request_id": "",
+  "request_id": "broker-close-20261104-1745-chatgpt",
+  "parent_request_id": "broker-close-20261104-1745-chatgpt",
   "task_run_id": "",
   "occurrence_id": "",
   "managed_position_sell_review": {
     "status": "VALID",
-    "account_updated_at": "2026-11-03T15:37:00+08:00",
+    "account_updated_at": "2026-11-04T15:00:00+08:00",
     "positions": [
       {
         "code": "159941",
@@ -9481,10 +9543,10 @@
         "management_scope": "HELD_ETF",
         "role": "",
         "origin": "",
-        "current_price": 1.61,
-        "market_value": 19642.0,
-        "pnl": -194.6,
-        "pnl_pct": -0.981,
+        "current_price": 1.644,
+        "market_value": 20056.8,
+        "pnl": 220.2,
+        "pnl_pct": 1.11,
         "source": "account_fact.positions"
       },
       {
@@ -9496,10 +9558,10 @@
         "management_scope": "HELD_ETF",
         "role": "",
         "origin": "",
-        "current_price": 1.916,
-        "market_value": 16286.0,
-        "pnl": 1465.4,
-        "pnl_pct": 9.888,
+        "current_price": 1.864,
+        "market_value": 15844.0,
+        "pnl": 1023.4,
+        "pnl_pct": 6.905,
         "source": "account_fact.positions"
       },
       {
@@ -9511,10 +9573,10 @@
         "management_scope": "HELD_ETF",
         "role": "",
         "origin": "",
-        "current_price": 0.789,
-        "market_value": 13570.8,
-        "pnl": -1356.0,
-        "pnl_pct": -9.084,
+        "current_price": 0.831,
+        "market_value": 14293.2,
+        "pnl": -633.6,
+        "pnl_pct": -4.245,
         "source": "account_fact.positions"
       },
       {
@@ -9526,10 +9588,10 @@
         "management_scope": "HELD_ETF",
         "role": "",
         "origin": "",
-        "current_price": 1.023,
-        "market_value": 4808.1,
-        "pnl": -94.3,
-        "pnl_pct": -1.924,
+        "current_price": 1.028,
+        "market_value": 4831.6,
+        "pnl": -70.8,
+        "pnl_pct": -1.444,
         "source": "account_fact.positions"
       },
       {
@@ -9541,10 +9603,10 @@
         "management_scope": "ACCOUNT_STOCK",
         "role": "",
         "origin": "",
-        "current_price": 142.999,
-        "market_value": 1429.99,
-        "pnl": 429.99,
-        "pnl_pct": 42.999,
+        "current_price": 136.5,
+        "market_value": 1365.0,
+        "pnl": 365.0,
+        "pnl_pct": 36.5,
         "source": "account_fact.positions"
       }
     ],
@@ -9719,7 +9781,7 @@
   },
   "execution_quality": {
     "schema_version": "1.1",
-    "generated_at": "2026-11-04T09:36:55Z",
+    "generated_at": "2026-11-04T09:51:20Z",
     "mode": "DECISION_EXECUTION_ATTRIBUTION",
     "read_only": true,
     "trade_event_count": 52,
