@@ -32,27 +32,6 @@ def history() -> list[dict]:
 
 
 class DiscoveryRuntimeCoverageTests(unittest.TestCase):
-    def test_szse_official_etf_list_parses_html_and_paginates(self) -> None:
-        page1 = [{"data": [{"sys_key": '<a>158022</a>', "zxjghj": '<a>创业板综增强ETF国联</a>',
-                            "nhzs": "399102 创业板综", "glrmc": "国联基金管理有限公司"}],
-                  "error": None, "metadata": {"catalogid": "1945", "pagecount": 2, "recordcount": 2}}]
-        page2 = [{"data": [{"sys_key": '<a>159001</a>', "zxjghj": '<a>货币ETF</a>',
-                            "nhzs": "", "glrmc": "示例基金"}],
-                  "error": None, "metadata": {"catalogid": "1945", "pagecount": 2, "recordcount": 2}}]
-        with patch.object(discovery, "_request_json_headers", side_effect=[page1, page2]) as request:
-            rows = discovery.fetch_szse_official_etf_master()
-        self.assertEqual(request.call_count, 2)
-        self.assertEqual([x["code"] for x in rows], ["158022", "159001"])
-        self.assertEqual(rows[0]["name"], "创业板综增强ETF国联")
-        self.assertEqual(rows[0]["identity_source"], "SZSE_OFFICIAL_ETF_LIST_1945")
-
-    def test_szse_official_etf_list_fails_closed_on_coverage_mismatch(self) -> None:
-        payload = [{"data": [{"sys_key": '<a>158022</a>', "zxjghj": '<a>ETF</a>'}],
-                    "error": None, "metadata": {"catalogid": "1945", "pagecount": 1, "recordcount": 2}}]
-        with patch.object(discovery, "_request_json_headers", return_value=payload):
-            with self.assertRaisesRegex(RuntimeError, "coverage mismatch"):
-                discovery.fetch_szse_official_etf_master()
-
     def test_reconciled_broad_path_unions_hithink_only_identity_without_full_duplicate_hydration(self) -> None:
         east = [
             {"code": "510001", "name": "主源ETF", "market_id": 1, "price": 1.0, "change_pct": 1.0, "amount": 20_000_000},
@@ -109,23 +88,6 @@ class DiscoveryRuntimeCoverageTests(unittest.TestCase):
         self.assertEqual(by_code["588000"]["market_id"], 1)
         self.assertEqual(by_code["159781"]["market_id"], 0)
         self.assertEqual(by_code["588000"]["identity_source"], "HITHINK_ETF_CATEGORY_ENUMERATION")
-
-    def test_official_master_survives_single_exchange_failure(self) -> None:
-        szse = [{"code": "159001", "name": "深市ETF", "market_id": 0, "exchange": "SZSE",
-                 "identity_source": "SZSE_OFFICIAL_ETF_LIST_1945"}]
-        with patch.object(discovery, "fetch_sse_official_etf_master", side_effect=ConnectionResetError("sse reset")), \
-             patch.object(discovery, "fetch_szse_official_etf_master", return_value=szse):
-            rows, meta = discovery.fetch_official_etf_master("2026-09-18")
-        self.assertEqual([x["code"] for x in rows], ["159001"])
-        self.assertEqual(meta["sse_official_master_count"], 0)
-        self.assertEqual(meta["szse_official_master_count"], 1)
-        self.assertIn("sse reset", meta["sse_official_master_error"])
-
-    def test_official_master_fails_only_when_both_exchanges_fail(self) -> None:
-        with patch.object(discovery, "fetch_sse_official_etf_master", side_effect=ConnectionResetError("sse reset")), \
-             patch.object(discovery, "fetch_szse_official_etf_master", side_effect=TimeoutError("szse timeout")):
-            with self.assertRaisesRegex(RuntimeError, "official ETF masters unavailable"):
-                discovery.fetch_official_etf_master("2026-09-18")
 
     def test_tencent_hydration_runs_batches_concurrently_but_preserves_input_order(self) -> None:
         identities = [
@@ -214,35 +176,38 @@ class DiscoveryRuntimeCoverageTests(unittest.TestCase):
         self.assertIn("eastmoney down", meta["eastmoney_error"])
         self.assertEqual(meta["universe_mode"], "HITHINK_ONLY")
 
-    def test_tencent_runtime_import_has_direct_script_fallback(self) -> None:
-        import builtins
+    def test_hithink_tencent_secondary_fallback_uses_no_exchange_directory(self) -> None:
         import sys
         import types
 
-        fake = types.ModuleType("tencent_quote")
-        fake.fetch_tencent_quotes = lambda symbols, timeout=10: {}
-        real_import = builtins.__import__
+        identities = [{"code": "510001", "name": "Fallback ETF", "market_id": 1}]
+        fake = types.ModuleType("scripts.tencent_quote")
+        fake.fetch_tencent_quotes = lambda symbols, timeout=10: {
+            symbol.upper(): {
+                "name": "Fallback ETF", "last_price": 1.0, "prev_price": 0.99,
+                "open_price": 1.0, "high_price": 1.01, "low_price": 0.98,
+                "turnover": 20_000_000, "price_change_ratio_pct": 1.01,
+                "provider_timestamp_ms": 1,
+            }
+            for symbol in symbols
+        }
+        with patch.object(discovery, "fetch_hithink_etf_master", return_value=identities), \
+             patch.dict(sys.modules, {"scripts.tencent_quote": fake}):
+            rows, meta = discovery.fetch_hithink_tencent_broad_spot()
+        self.assertEqual([row["code"] for row in rows], ["510001"])
+        self.assertEqual(meta["identity_master_source"], "HITHINK_ETF_CATEGORY")
+        self.assertEqual(meta["fallback_quote_source"], "TENCENT_QQ")
+        self.assertEqual(meta["tencent_failed_batch_count"], 0)
 
-        def import_without_scripts(name, globals=None, locals=None, fromlist=(), level=0):
-            if name == "scripts.tencent_quote":
-                raise ModuleNotFoundError("No module named 'scripts'")
-            return real_import(name, globals, locals, fromlist, level)
-
-        previous = sys.modules.get("tencent_quote")
-        sys.modules["tencent_quote"] = fake
-        try:
-            with patch.object(builtins, "__import__", side_effect=import_without_scripts), \
-                 patch.object(discovery, "fetch_official_etf_master", return_value=([], {"sse_official_master_count": 0, "szse_official_master_count": 0})), \
-                 patch.object(discovery, "fetch_hithink_etf_master", side_effect=RuntimeError("hithink unavailable")):
-                rows, meta = discovery.fetch_official_tencent_broad_spot("2026-09-18")
-        finally:
-            if previous is None:
-                sys.modules.pop("tencent_quote", None)
-            else:
-                sys.modules["tencent_quote"] = previous
-        self.assertEqual(rows, [])
-        self.assertEqual(meta["official_master_count"], 0)
-        self.assertEqual(meta["tencent_quote_count"], 0)
+    def test_discovery_source_contract_excludes_exchange_directory_enumeration(self) -> None:
+        source = Path(discovery.__file__).read_text(encoding="utf-8")
+        self.assertIn("EASTMONEY_PRIMARY", source)
+        self.assertIn("fetch_broad_etf_spot", source)
+        self.assertIn("fetch_hithink_tencent_broad_spot", source)
+        self.assertNotIn("query.sse.com.cn/commonQuery.do", source)
+        self.assertNotIn("www.szse.cn/api/report/ShowReport/data", source)
+        self.assertNotIn("fetch_sse_official_etf_master", source)
+        self.assertNotIn("fetch_szse_official_etf_master", source)
 
     def test_history_required_pit_uses_latest_completed_session_before_execution(self) -> None:
         with tempfile.TemporaryDirectory() as td:
