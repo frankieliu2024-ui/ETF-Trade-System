@@ -308,6 +308,16 @@ class NotificationMaterialityGuardTests(unittest.TestCase):
         self.assertNotIn("run: python scripts/send_market_shock_notification.py", us)
         self.assertNotIn("run: python scripts/send_us_session_summary.py", us)
 
+
+    def test_active_apac_and_us_batches_receive_previous_context(self):
+        decision = (ROOT / ".github/workflows/decision-notification.yml").read_text(encoding="utf-8")
+        apac = decision.split("id: apac_summary_notify", 1)[1].split("\n      - name:", 1)[0]
+        us = decision.split("id: us_summary_notify", 1)[1].split("\n      - name:", 1)[0]
+        self.assertIn("PREVIOUS_CONTEXT_PATH: data/state/overseas_context_previous.json", apac)
+        self.assertIn("PREVIOUS_CONTEXT_PATH: data/state/us_extended_hours_context_previous.json", us)
+        self.assertIn("run_guarded_notification.py batch --market apac", apac)
+        self.assertIn("run_guarded_notification.py batch --market us", us)
+
     def test_notification_state_persistence_merges_after_main_refresh(self):
         decision = (ROOT / ".github/workflows/decision-notification.yml").read_text(encoding="utf-8")
         self.assertIn("merge_notification_state.py", decision)
