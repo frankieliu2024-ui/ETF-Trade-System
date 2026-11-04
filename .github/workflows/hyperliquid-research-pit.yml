@@ -6,7 +6,7 @@ on:
     - cron: "*/15 * * * *"
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: hyperliquid-research-pit
@@ -18,15 +18,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Collect read-only Hyperliquid PIT observation
-        run: python3 scripts/hyperliquid_pit_shadow_collector.py
-      - name: Persist research observation
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/research/hyperliquid_pit
-          if git diff --cached --quiet; then
-            echo "No new observation"
-          else
-            git commit -m "research: persist Hyperliquid PIT observation"
-            git push
-          fi
+        run: python3 scripts/hyperliquid_pit_shadow_collector.py --output-root hyperliquid-pit-output
+      - name: Upload research artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hyperliquid-pit-${{ github.run_id }}
+          path: hyperliquid-pit-output
+          retention-days: 30
+          if-no-files-found: error
