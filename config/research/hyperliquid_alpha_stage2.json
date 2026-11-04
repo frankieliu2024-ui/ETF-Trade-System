@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0",
+  "mode": "RESEARCH_ONLY_HYPERLIQUID_ALPHA_STAGE2",
+  "read_only": true,
+  "production_eligible": false,
+  "priority": ["P0", "P1", "P2"],
+  "targets": {
+    "P0": {
+      "hyperliquid_assets": ["xyz:SMH", "xyz:DRAM", "xyz:SOXL"],
+      "ashare_etfs": ["561980", "159992", "588000", "159781", "515880"]
+    },
+    "P1": {
+      "features": ["price_return", "funding", "premium", "open_interest", "day_notional_volume", "day_base_volume"],
+      "hypothesis_families": ["direction", "timing", "conditional_filter", "crowding"]
+    },
+    "P2": {
+      "hyperliquid_assets": ["xyz:CXMT", "xyz:GIGADEV"],
+      "reference_assets": ["xyz:DRAM", "xyz:SMH"]
+    }
+  },
+  "horizons_trading_days": [1, 3, 5],
+  "pit_contract": {
+    "retain_raw_observation": true,
+    "retain_provider_timestamp": true,
+    "retain_collection_timestamp": true,
+    "retain_quality_status": true,
+    "never_use_future_bar": true,
+    "never_promote_to_formal_decision": true
+  },
+  "data_limitations": {
+    "historical_open_interest": "not_assumed_available",
+    "funding_history": "bounded_public_api_response",
+    "asset_universe": "discover_dynamically"
+  }
+}
