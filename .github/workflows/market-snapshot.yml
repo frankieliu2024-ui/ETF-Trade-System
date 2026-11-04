@@ -84,7 +84,7 @@ jobs:
           python-version: "3.11"
 
       - name: Canonicalize legacy formal request ingress
-        if: ${{ github.event_name == 'push' }}
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -121,7 +121,7 @@ jobs:
           done
           exit 1
       - name: Apply confirmed trade fact corrections
-        if: ${{ github.event_name == 'push' }}
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         shell: bash
         env:
           EVENT_BEFORE: ${{ github.event.before }}
@@ -604,7 +604,7 @@ jobs:
             cp "$REQUEST_FILE" "/tmp/etf-triggering-request/$REQUEST_FILE"
           fi
       - name: Publish core snapshot and CURRENT immediately
-        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
+        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.ref == 'refs/heads/main' && github.event.inputs.probe_only != 'true' }}
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
@@ -1126,7 +1126,7 @@ jobs:
           echo "processed=$processed" >> "$GITHUB_OUTPUT"
       - name: Project Formal Decision completion through market snapshot owner
         id: formal_completion_projection
-        if: ${{ github.event_name == 'push' && env.FORMAL_COMPLETION == 'true' && env.TRIGGERING_REQUEST_FILE != '' }}
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && env.FORMAL_COMPLETION == 'true' && env.TRIGGERING_REQUEST_FILE != '' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -1188,7 +1188,7 @@ jobs:
         if: ${{ steps.account_projection_rebuild.outcome == 'success' && steps.state_sync.outputs.processed == 'true' && github.event.inputs.probe_only != 'true' }}
         run: python scripts/maintenance_guard.py
       - name: Record broker account sync maintenance receipt
-        if: ${{ always() && ((github.event_name == 'push' && env.TRIGGERING_REQUEST_ID != '' && env.TRIGGERING_REQUEST_FILE != '') || (github.event_name == 'workflow_dispatch' && github.event.inputs.replay_request != '')) }}
+        if: ${{ always() && github.ref == 'refs/heads/main' && ((github.event_name == 'push' && env.TRIGGERING_REQUEST_ID != '' && env.TRIGGERING_REQUEST_FILE != '') || (github.event_name == 'workflow_dispatch' && github.event.inputs.replay_request != '')) }}
         shell: bash
         env:
           ACCOUNT_SYNC_OUTCOME: ${{ steps.state_sync.outcome }}
@@ -1594,7 +1594,7 @@ jobs:
       - name: Commit downstream runtime/data artifacts
         # A failed close-derived refresh must not publish a mixed generation
         # containing fresh market facts alongside stale risk/decision state.
-        if: ${{ always() && steps.state_sync.outcome != 'failure' && steps.risk_refresh.outcome != 'failure' && (steps.session_gate.outcome == 'success' || steps.capture.outcome == 'success' || steps.state_sync.outputs.processed == 'true') }}
+        if: ${{ always() && github.ref == 'refs/heads/main' && steps.state_sync.outcome != 'failure' && steps.risk_refresh.outcome != 'failure' && (steps.session_gate.outcome == 'success' || steps.capture.outcome == 'success' || steps.state_sync.outputs.processed == 'true') }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

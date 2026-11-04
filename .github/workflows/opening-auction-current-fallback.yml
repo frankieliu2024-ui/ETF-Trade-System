@@ -119,7 +119,9 @@ jobs:
           print(json.dumps({'verified': True, 'market_date': expected, 'phase': phase, 'snapshot': current.get('latest_snapshot')}, ensure_ascii=False))
           PY
       - name: Publish repaired CURRENT and contexts
-        if: ${{ steps.readiness.outputs.need_capture == 'true' }}
+        # Pull-request runs may validate the fallback producer, but only the
+        # default main branch may publish production state back to main.
+        if: ${{ steps.readiness.outputs.need_capture == 'true' && github.ref == 'refs/heads/main' }}
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
