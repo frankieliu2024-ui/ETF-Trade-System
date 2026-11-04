@@ -4,6 +4,7 @@ import unittest
 from scripts.scheduled_review_completion import (
     validate_formal_discovery_consumer_binding,
     build_formal_runtime_completion_request,
+    select_latest_qualified_formal_discovery,
 )
 
 
@@ -13,6 +14,9 @@ class FormalDiscoveryConsumerBindingTests(unittest.TestCase):
             "market_date": "2026-11-04",
             "latest_snapshot": "data/market/snapshots/2026-11-04_133004.json",
             "status": "READY",
+            "coverage_status": "COMPLETE",
+            "candidate_count": 2,
+            "generated_at_beijing": "2026-11-04T13:30:33+08:00",
             "candidates": [{"code": "159567"}, {"code": "588710"}],
         }
         self.kwargs = {
@@ -28,6 +32,33 @@ class FormalDiscoveryConsumerBindingTests(unittest.TestCase):
         validate_formal_discovery_consumer_binding(
             dict(self.discovery, status="COMPLETE"), **self.kwargs
         )
+
+    def test_latest_qualified_selector_is_pit_bounded(self):
+        kwargs = {
+            "requested_at_beijing": "2026-11-04T13:31:55+08:00",
+            "market_date": "2026-11-04",
+        }
+        self.assertIs(
+            select_latest_qualified_formal_discovery(self.discovery, **kwargs),
+            self.discovery,
+        )
+        for bad in (
+            dict(self.discovery, market_date="2026-10-30"),
+            dict(self.discovery, generated_at_beijing="2026-11-04T14:23:36+08:00"),
+            dict(self.discovery, coverage_status="PARTIAL"),
+            dict(self.discovery, candidate_count=12),
+            dict(self.discovery, status="DEGRADED"),
+        ):
+            with self.subTest(bad=bad):
+                self.assertIsNone(select_latest_qualified_formal_discovery(bad, **kwargs))
+
+    def test_qualified_empty_discovery_is_not_missing(self):
+        empty = dict(self.discovery, candidates=[], candidate_count=0)
+        self.assertIsNotNone(select_latest_qualified_formal_discovery(
+            empty,
+            requested_at_beijing="2026-11-04T13:31:55+08:00",
+            market_date="2026-11-04",
+        ))
 
     def test_weekly_fallback_rejected(self):
         old = dict(self.discovery, market_date="2026-10-30")
