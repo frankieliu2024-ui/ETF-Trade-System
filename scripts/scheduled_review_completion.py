@@ -808,10 +808,25 @@ def validate_formal_discovery_consumer_binding(
         raise ValueError("Formal Discovery snapshot mismatch")
     if str(discovery.get("status") or "").upper() not in {"READY", "COMPLETE"}:
         raise ValueError("Formal Discovery is not complete")
-    actual = [str(x.get("code") or "").strip() for x in discovery.get("candidates", [])]
-    if not actual or len(actual) != len(set(actual)):
+    candidates = discovery.get("candidates")
+    if not isinstance(candidates, list) or any(not isinstance(x, dict) for x in candidates):
         raise ValueError("Formal Discovery candidate set invalid")
-    if len(candidate_codes) != len(set(candidate_codes)) or set(actual) != set(candidate_codes):
+    actual = [str(x.get("code") or "").strip() for x in candidates]
+    if any(not code for code in actual) or len(actual) != len(set(actual)):
+        raise ValueError("Formal Discovery candidate set invalid")
+    declared_count = discovery.get("candidate_count")
+    if declared_count is not None and (
+        isinstance(declared_count, bool)
+        or not isinstance(declared_count, int)
+        or declared_count != len(actual)
+    ):
+        raise ValueError("Formal Discovery declared candidate count mismatch")
+    if (
+        not isinstance(candidate_codes, list)
+        or any(not isinstance(code, str) or not code.strip() for code in candidate_codes)
+        or len(candidate_codes) != len(set(candidate_codes))
+        or set(actual) != set(candidate_codes)
+    ):
         raise ValueError("Formal Decision Discovery candidate coverage mismatch")
 
 
