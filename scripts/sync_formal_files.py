@@ -253,6 +253,7 @@ def latest_canonical_formal_decision(root: Path = ROOT) -> dict:
         return {}
     parsed, event_path, decision = max(candidates, key=lambda item: (item[0], item[1]))
     decision = dict(decision)
+    decision["_event_market_date"] = str(event.get("market_date") or event.get("market_date_beijing") or "").strip()
     decision["_decision_path"] = event_path
     decision["_decision_stamp"] = parsed.isoformat()
 
