@@ -76,6 +76,34 @@ def _formal_decisions(root: Path) -> list[dict[str, Any]]:
         trial_granted = "Trial" in lifecycle or "允许Trial" in risk_permission
         if not isinstance(formal, dict) or not trial_granted:
             continue
+        # A few historical events carry a permissive risk_permission while the
+        # candidate-specific decision is only observation/exit.  Do not let
+        # that stale field manufacture a Trial, especially when the same
+        # hypothesis belongs to a later, genuinely executed BUY.
+        candidate_code = str(event.get("candidate_code") or formal.get("candidate_code") or "").strip()
+        candidate_name = str(event.get("candidate_name") or formal.get("candidate_name") or "").strip()
+        candidate_text = " ".join(
+            str(formal.get(key) or event.get(key) or "")
+            for key in ("lifecycle", "main_candidate", "amount_action", "decisive_reason")
+        )
+        identity_present = bool(
+            (candidate_code and candidate_code in candidate_text)
+            or (candidate_name and candidate_name in candidate_text)
+        )
+        main_candidate_text = str(formal.get("main_candidate") or event.get("main_candidate") or "")
+        amount_text = str(formal.get("amount_action") or event.get("amount_action") or "")
+        candidate_trial = any(token in main_candidate_text for token in (
+            "Trial机会成立", "Trial评估成立", "进入Trial并", "试探性部署成立",
+            "已执行Trial", "Trial已执行",
+        ))
+        candidate_observation_only = (
+            any(token in main_candidate_text for token in ("观察", "观察机会"))
+            and not candidate_trial
+            and candidate_code not in amount_text
+            and candidate_name not in amount_text
+        )
+        if identity_present and candidate_observation_only:
+            continue
         if not event.get("hypothesis_id") and not ("允许Trial" in risk_permission and event.get("candidate_code")):
             continue
         result.append(event)
@@ -243,6 +271,46 @@ def _completion_explicit_exit(root: Path, trial: dict[str, Any], executions: lis
             "resolution_event_ids": [x.get("event_id") for x in sells]}
 
 
+def _completion_followup_resolution(root: Path, trial: dict[str, Any]) -> dict[str, Any] | None:
+    """Accept only a later decision explicitly linked to the completion lot."""
+    decision_id = str(trial.get("decision_id") or "")
+    opening_id = str(trial.get("_linked_execution_id") or "")
+    code = str(trial.get("candidate_code") or "")
+    if not decision_id or not opening_id or not code:
+        return None
+    directory = root / "events" / "decisions"
+    candidates = []
+    for path in sorted(directory.glob("*.json")) if directory.exists() else []:
+        event = _load(path, {})
+        if str(event.get("candidate_code") or (event.get("formal_decision") or {}).get("candidate_code") or "") != code:
+            continue
+        links = {
+            str(event.get("linked_decision_id") or ""),
+            str(event.get("prior_decision_id") or ""),
+            str(event.get("source_trade_event_id") or ""),
+            str(event.get("linked_trade_event_id") or ""),
+        }
+        if decision_id not in links and opening_id not in links:
+            continue
+        when = parse_time(event.get("decision_time_beijing"))
+        if when is None:
+            continue
+        formal = event.get("formal_decision") or {}
+        text = str(formal.get("lifecycle") or event.get("lifecycle") or "")
+        if event.get("hypothesis_closed") or str(formal.get("hypothesis_status") or "").upper() == "CLOSED":
+            status = "FAILED_EXIT_EVALUATION" if any(token in text for token in ("退出", "失败")) else "RESOLVED"
+        elif "Confirm" in text or "确认部署" in text:
+            status = "CONFIRM_EVALUATION"
+        else:
+            continue
+        candidates.append((when, status, event))
+    if not candidates:
+        return None
+    _, status, event = max(candidates, key=lambda item: item[0])
+    return {"status": status, "decision_id": event.get("decision_id"),
+            "decision_time_beijing": event.get("decision_time_beijing", "")}
+
+
 def build_lifecycle_projection(root: Path, as_of_market_date: str | None = None) -> dict[str, Any]:
     calendar = _load(root / "config" / "market" / "a_share_trading_calendar_2026.json", {})
     current = _load(root / "data" / "state" / "CURRENT.json", {})
@@ -278,7 +346,8 @@ def build_lifecycle_projection(root: Path, as_of_market_date: str | None = None)
             continue
         t_plus = trading_day_offset(start_date, as_of, calendar)
         mandatory = add_trading_days(start_date, 3, calendar)
-        resolution = (_completion_explicit_exit(root, decision, executions) if decision.get("_completion_trial")
+        resolution = ((_completion_followup_resolution(root, decision)
+                       or _completion_explicit_exit(root, decision, executions)) if decision.get("_completion_trial")
                       else _resolution(root, decision, as_of))
         resolved = resolution is not None
         trials.append({
