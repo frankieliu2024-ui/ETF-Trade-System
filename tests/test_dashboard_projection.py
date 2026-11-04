@@ -376,7 +376,7 @@ class DashboardProjectionTests(unittest.TestCase):
             )
             (reviews / "formal_auto-20261104-142657.json").write_text(
                 json.dumps({
-                    "event_type": "FORMAL_DECISION_REPORT",
+                    "event_type": "FORMAL_DECISION",
                     "reviewed_at_beijing": "2026-11-04T14:26:57+08:00",
                     "source_completion_path": completion_rel,
                     "formal_decision": {"risk_permission": "保守"},
