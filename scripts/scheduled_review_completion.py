@@ -953,7 +953,7 @@ def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | N
         if not isinstance(discovery_binding, dict):
             raise ValueError("Formal Decision discovery_binding must be an object")
         discovery_status = str(discovery_binding.get("status") or "").upper()
-        if discovery_status == "READY":
+        if discovery_status in {"READY", "COMPLETE"}:
             selected = discovery_binding.get("selected_discovery")
             selected_codes = discovery_binding.get("candidate_codes")
             if not isinstance(selected, dict):
