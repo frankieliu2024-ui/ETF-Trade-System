@@ -250,6 +250,23 @@ def _same_day_close_ready(date_text: str) -> bool:
     )
 
 
+def should_process_latest_reference(
+    event_name: str,
+    request_class: str,
+    should_capture: bool,
+    probe_only: bool,
+    reference: dict,
+) -> bool:
+    """Route an ordinary manual dispatch to the latest legal close outside A-share capture."""
+    return bool(
+        event_name == "workflow_dispatch"
+        and not probe_only
+        and request_class not in {"STATE_SYNC_ONLY", "BUSINESS_DECISION_SOURCE"}
+        and not should_capture
+        and reference.get("available") is True
+    )
+
+
 def latest_legal_close_reference(root: Path, current_date: str, calendar: dict) -> dict:
     """Validate the canonical latest legal A-share close for off-session processing.
 
@@ -432,19 +449,21 @@ def main() -> int:
 
     probe_only = os.environ.get("GITHUB_EVENT_INPUTS_PROBE_ONLY", "false").strip().lower() == "true"
     latest_close_reference = latest_legal_close_reference(ROOT, date_text, calendar)
-    process_latest_reference = bool(
-        event_name == "workflow_dispatch"
-        and not probe_only
-        and request_class not in {"STATE_SYNC_ONLY", "BUSINESS_DECISION_SOURCE"}
-        and not should_capture
-        and latest_close_reference.get("available") is True
+    process_latest_reference = should_process_latest_reference(
+        event_name,
+        request_class,
+        should_capture,
+        probe_only,
+        latest_close_reference,
     )
+    is_nontrading_date = now.weekday() >= 5 or date_text in set(calendar.get("closed_dates") or [])
+    is_after_a_share_close = minute > 15 * 60
     close_intent = bool(
         scheduled_close_intent
         or boundary_close_intent
         or request_time_close_recovery
         or manual_close_intent
-        or process_latest_reference
+        or (process_latest_reference and (is_nontrading_date or is_after_a_share_close))
     )
     wait_for_close_boundary_seconds = 0
     if boundary_close_intent and minute < 15 * 60:
