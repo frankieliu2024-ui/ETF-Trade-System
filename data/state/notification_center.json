@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-11-04T13:53:17+08:00",
+  "updated_at": "2026-11-04T13:58:22+08:00",
   "last_status": "SENT",
-  "last_type": "REPORT_DELIVERY_REQUEST",
-  "last_title": "【ETF正式决策】",
+  "last_type": "MARKET_VALUE_ALERT",
+  "last_title": "【市场异动】A股核心指数出现显著分化",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -45409,27 +45409,54 @@
       },
       "last_attempted_at": "2026-11-04T13:53:17+08:00",
       "pushplus_template": "markdown"
-    }
-  ],
-  "recent": [
+    },
     {
-      "key": "apac-session-summary:2026-10-26:HK_LATE_UPDATE",
-      "type": "APAC_SESSION_SUMMARY",
-      "title": "【收盘总结】亚太香港收盘后主总结兜底",
-      "content": "### 核心结论\n- **节点**：香港16:00收盘后的价值更新\n- **区域最终判断**：区域普遍偏弱\n- **此前判断变化**：主总结缺失，本条作为兜底\n- **日经225指数（N225）**：较前收-0.80%\n- **韩国综合指数（KOSPI）**：较前收-1.46%\n\n### 关键路径\n- **日经225指数（N225）**：开盘62,449.96，日内高62,902.95、低62,094.34，收/现价62,189.65；较开盘-0.42%，自低点修复+0.15%，距高点-1.13%，收于日内区间低位。\n- **韩国综合指数（KOSPI）**：开盘5,499.05，日内高5,565.67、低5,455.11，收/现价5,469.47；较开盘-0.54%，自低点修复+0.26%，距高点-1.73%，收于日内区间低位。\n- **恒生科技指数（HSTECH）**：开盘3,888.14，日内高3,888.14、低3,806.25，收/现价3,858.91；较开盘-0.75%，自低点修复+1.38%，距高点-0.75%，收于日内区间中部。\n\n### 对ETF系统的影响\n香港收盘只在实质改变此前亚太判断时追加；属于A股收盘后的新证据，不能反向改写15:00已形成事实。\n\n### 当前动作\n**把更新后的亚太结构纳入下一A股交易节点。**\n\n### 数据与边界\n- **各市场最新有效时点上限**：2026-10-26 16:05:12\n- **通知生成**：2026-10-26 16:05:34\n- **边界**：本节点价值驱动，不是形式化第二次收盘总结；约0.8个百分点的香港增量变化只控制注意力。",
-      "source": "overseas_context",
+      "notification_id": "notification_c22698b0a7fb6445d11c",
+      "event_type": "MARKET_VALUE_ALERT",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "market-value:a-share:2026-11-04:A_SHARE_INDEX_DIVERGENCE:DIVERGED:DIVERGENCE:2026-11-04T13:57:16+08:00",
+      "request_id": "",
+      "parent_request_id": "",
+      "report_id": "",
+      "content_hash": "",
+      "related_decision_id": "",
+      "security_code": "A_SHARE_INDEX_DIVERGENCE",
+      "security_name": "A股核心指数",
       "user_severity": "需要关注",
-      "user_action": "纳入下一A股交易节点，不反向改写当日A股事实",
-      "status": "SENT",
-      "attempted_at": "2026-10-26T16:05:36+08:00",
+      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-11-04T13:58:21+08:00",
+      "sent_at": "2026-11-04T13:58:22+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-11-06T13:58:21+08:00",
+      "title": "【市场异动】A股核心指数出现显著分化",
+      "content": "### 核心结论\n- **事件类型**：显著分化\n- **对象/结构**：A股核心指数\n- **关键结构**：横截面两端：科创50（000688）+6.77%，上证指数（000001）+1.14%，涨跌幅相差5.63个百分点\n\n**判断**：相关对象之间的相对差已经扩大到值得单独关注的程度，不能再用单一市场方向概括全部机会和风险。\n\n### 对ETF系统的影响\nA股核心指数（A股核心指数）代表A股本地风险偏好或风格结构变化。先看变化是否扩散到当前持仓/观察ETF，再判断候选和资本效率是否真正改变。\n\n### 当前动作\n**先验证ETF层是否接受该指数信号；不因指数单一波动机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-11-04 13:57:16\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。",
+      "source": "market_delta+CURRENT+stock_market_context",
+      "confirmation_context": {
+        "market": "A_SHARE",
+        "market_date": "2026-11-04",
+        "direction": "DIVERGED",
+        "event_category": "DIVERGENCE",
+        "asset_class": "STRUCTURE",
+        "day_change_pct": null,
+        "sudden_change_pct": null,
+        "interval_minutes": 9.416666666666666,
+        "event_magnitude_pct": 5.626077991533163,
+        "market_as_of_beijing": "2026-11-04T13:57:16+08:00",
+        "source_fact_id": "2026-11-04:A_SHARE_INDEX_DIVERGENCE:DIVERGENCE:DIVERGED:2026-11-04T13:57:16+08:00",
+        "event_family_id": "A_SHARE:2026-11-04:A_SHARE:A_SHARE_INDEX_DIVERGENCE:DIVERGENCE:DIVERGED:"
+      },
       "response": {
         "http_status": 200,
         "pushplus_code": 200,
         "pushplus_message": "执行成功"
       },
-      "notification_id": "notification_54fcee1e885909799abc",
-      "lifecycle_status": "SENT"
-    },
+      "last_attempted_at": "2026-11-04T13:58:22+08:00"
+    }
+  ],
+  "recent": [
     {
       "key": "a-share-session-summary:2026-10-26:CLOSE",
       "type": "A_SHARE_SESSION_SUMMARY",
@@ -49011,6 +49038,24 @@
       },
       "notification_id": "notification_c8b031f412941d1561b1",
       "lifecycle_status": "SENT"
+    },
+    {
+      "key": "market-value:a-share:2026-11-04:A_SHARE_INDEX_DIVERGENCE:DIVERGED:DIVERGENCE:2026-11-04T13:57:16+08:00",
+      "type": "MARKET_VALUE_ALERT",
+      "title": "【市场异动】A股核心指数出现显著分化",
+      "content": "### 核心结论\n- **事件类型**：显著分化\n- **对象/结构**：A股核心指数\n- **关键结构**：横截面两端：科创50（000688）+6.77%，上证指数（000001）+1.14%，涨跌幅相差5.63个百分点\n\n**判断**：相关对象之间的相对差已经扩大到值得单独关注的程度，不能再用单一市场方向概括全部机会和风险。\n\n### 对ETF系统的影响\nA股核心指数（A股核心指数）代表A股本地风险偏好或风格结构变化。先看变化是否扩散到当前持仓/观察ETF，再判断候选和资本效率是否真正改变。\n\n### 当前动作\n**先验证ETF层是否接受该指数信号；不因指数单一波动机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-11-04 13:57:16\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。",
+      "source": "market_delta+CURRENT+stock_market_context",
+      "user_severity": "需要关注",
+      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
+      "status": "SENT",
+      "attempted_at": "2026-11-04T13:58:22+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_c22698b0a7fb6445d11c",
+      "lifecycle_status": "SENT"
     }
   ],
   "pending_questions": [
@@ -49020,6 +49065,6 @@
     "notification_d5f3ea1194565824a934",
     "notification_fd7763215037ab96f889"
   ],
-  "policy": "只推送会改变用户关注、风险许可、机会状态、持仓动作、执行确认或系统可靠性的实质事件；总资产/市值/浮动盈亏等纯盯市变化不作为账户异常；同一实质账户事件和同一正式decision_id不得重复推送；收盘账户提醒仅在A股交易日触发。",
-  "safety_boundary": "通知中心只转发已有正式判断，不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"
+  "policy": "canonical bounded market notification batch",
+  "safety_boundary": "通知只总结已取得的行情、账户、研究或系统事实；不生成自动交易，不修改MASTER、风险许可、金额或卖出份额。"
 }
