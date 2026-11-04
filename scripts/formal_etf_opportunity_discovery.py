@@ -138,7 +138,7 @@ def fetch_hithink_etf_master() -> list[dict[str, Any]]:
             continue
         code = str(raw.get("code") or "").strip()
         name = str(raw.get("name") or code).strip()
-        if not re.fullmatch(r"\\d{6}", code):
+        if not re.fullmatch(r"\d{6}", code):
             continue
         market_id = 1 if code.startswith(("5", "6")) else 0
         result[(market_id, code)] = {
