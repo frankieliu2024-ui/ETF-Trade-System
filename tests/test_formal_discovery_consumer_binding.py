@@ -87,6 +87,26 @@ class FormalDiscoveryConsumerBindingTests(unittest.TestCase):
                     "562060", "589580"])
             )
 
+    def test_verified_zero_candidates_is_not_a_missing_layer(self):
+        empty = dict(self.discovery, candidates=[], candidate_count=0)
+        validate_formal_discovery_consumer_binding(
+            empty, **dict(self.kwargs, candidate_codes=[])
+        )
+
+    def test_declared_count_mismatch_rejected(self):
+        with self.assertRaisesRegex(ValueError, "count"):
+            validate_formal_discovery_consumer_binding(
+                dict(self.discovery, candidate_count=12), **self.kwargs
+            )
+
+    def test_malformed_or_duplicate_candidates_rejected(self):
+        for bad in ([{"code": "159567"}, {"code": "159567"}],
+                    [{"code": ""}], ["159567"]):
+            with self.subTest(candidates=bad), self.assertRaisesRegex(ValueError, "invalid"):
+                validate_formal_discovery_consumer_binding(
+                    dict(self.discovery, candidates=bad), **self.kwargs
+                )
+
     def test_degraded_not_upgraded(self):
         with self.assertRaisesRegex(ValueError, "not complete"):
             validate_formal_discovery_consumer_binding(
