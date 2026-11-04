@@ -322,6 +322,8 @@ jobs:
         id: apac_summary_notify
         if: ${{ (github.event_name == 'workflow_run' && github.event.workflow_run.name == 'Overseas pre-open pulse') || (github.event_name == 'push' && steps.push_kind.outputs.apac_market == 'true') }}
         continue-on-error: true
+        env:
+          PREVIOUS_CONTEXT_PATH: data/state/overseas_context_previous.json
         run: python scripts/run_guarded_notification.py batch --market apac
 
       - name: Send APAC monitored-object value event when due
@@ -336,6 +338,8 @@ jobs:
         id: us_summary_notify
         if: ${{ (github.event_name == 'workflow_run' && (github.event.workflow_run.name == 'US extended-hours pulse' || github.event.workflow_run.name == 'Overseas pre-open pulse')) || (github.event_name == 'workflow_dispatch' && inputs.recovery_market == 'us') || (github.event_name == 'push' && steps.push_kind.outputs.us_market == 'true') }}
         continue-on-error: true
+        env:
+          PREVIOUS_CONTEXT_PATH: data/state/us_extended_hours_context_previous.json
         run: python scripts/run_guarded_notification.py batch --market us
 
       - name: Send US monitored-object value event when due
@@ -505,17 +509,42 @@ jobs:
           # Infer only from the frozen title, preserving fail-closed behavior for all other shapes.
           if not scope and "完整日复盘" in review_title:
               scope = "FULL_DAY"
+          # Direct task writers may carry the frozen morning review only in
+          # final_content/presentation_binding. The canonical owner already
+          # supports MORNING_SESSION_STAGE_ONLY; reconstruct that bounded
+          # scope from the immutable title and date rather than rejecting a
+          # valid midday completion as a full-day review.
+          inferred_morning_scope = False
+          if not scope and "上午复盘" in review_title:
+              scope = "MORNING_SESSION_STAGE_ONLY"
+              inferred_morning_scope = True
+              review = {
+                  "review_scope": scope,
+                  "market_date": str(payload.get("market_date") or "").strip(),
+                  "reviewed_at_beijing": str(payload.get("requested_at_beijing") or "").strip(),
+                  "market_phase": "MIDDAY_BREAK",
+                  "data_time": {
+                      "a_share_fact_boundary_beijing": str(payload.get("requested_at_beijing") or "").strip(),
+                      "market_snapshot": "FROZEN_MORNING_REVIEW_CONTENT",
+                  },
+              }
           if scope not in {"FULL_DAY", "FULL_TRADING_DAY"}:
-              raise SystemExit("Trade Review completion is not a full-day review")
+              if scope != "MORNING_SESSION_STAGE_ONLY":
+                  raise SystemExit("Trade Review completion has an unsupported review scope")
           account_path = Path("data/state/account_fact.json")
           account = json.loads(account_path.read_text(encoding="utf-8"))
-          # Pass the bounded compatibility projection to the canonical owner.
-          # The frozen completion remains unchanged; only the reconstructed
-          # morning-scope input is consumed by the existing projection path.
-          projection_payload = dict(payload)
           if inferred_morning_scope:
-              projection_payload["formal_review"] = review
-          ok, duplicate = record_post_close_review(account, projection_payload)
+              # The frozen morning body predates structured lifecycle coverage.
+              # Supply only mechanical coverage from the canonical account fact;
+              # this does not invent a decision or alter the frozen body.
+              managed = {
+                  str(item.get("code") or item.get("symbol") or item.get("security_code") or "").strip(): "HOLD_REVIEW"
+                  for item in (account.get("positions") or [])
+                  if isinstance(item, dict) and str(item.get("code") or item.get("symbol") or item.get("security_code") or "").strip()
+              }
+              review["lifecycle"] = {}
+              review["managed_positions"] = managed
+          # Pass the bounded compatibility projection to the canonical owner.\n          # The frozen completion remains unchanged; only the reconstructed\n          # morning-scope input is consumed by the existing projection path.\n          projection_payload = dict(payload)\n          if inferred_morning_scope:\n              projection_payload["formal_review"] = review\n          ok, duplicate = record_post_close_review(account, projection_payload)
           if not ok:
               raise SystemExit("canonical post-close trade review projection was not accepted")
           market_date = str(review.get("market_date") or payload.get("market_date") or "").strip()
