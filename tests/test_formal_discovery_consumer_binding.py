@@ -164,7 +164,7 @@ class FormalDiscoverySelectionTests(unittest.TestCase):
                 self.assertEqual(len(selected["candidates"]), expected_count)
                 codes = tuple(c["code"] for c in selected["candidates"])
                 body = ("【ETF正式决策】2026-11-04 " +
-                        at[11:16] + " 正式判断\\n\\n" +
+                        at[11:16] + " 正式判断\n\n" +
                         "Discovery逐只对象：" + "、".join(codes))
                 identity = {
                     "task_run_id": "sim-formal-" + str(index),
