@@ -2355,6 +2355,18 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     # Legacy/recovery requests without a presentation binding remain compatible;
     # a present binding must satisfy the exact scheduled-delivery contract.
     raw_presentation_binding = request.get("presentation_binding")
+    # Compatibility normalization for completions emitted before the binding
+    # contract carried entry_mode. The top-level value is already validated by
+    # the production identity contract below; copy it only in memory so replay
+    # can consume the same frozen completion without editing the request,
+    # creating a second completion, or weakening the equality check.
+    if (
+        isinstance(raw_presentation_binding, dict)
+        and not str(raw_presentation_binding.get("entry_mode") or "").strip()
+        and str(request.get("entry_mode") or "").strip()
+    ):
+        raw_presentation_binding = dict(raw_presentation_binding)
+        raw_presentation_binding["entry_mode"] = str(request.get("entry_mode")).strip()
     # Legacy full-day Trade Review completions may carry the builder hash only
     # at the top level. Normalize it into the production binding only when it
     # exactly matches the frozen body; all other missing/mismatched shapes remain
