@@ -15,10 +15,12 @@ try:
     from multi_source_market import _request_json
     from state_manager import atomic_json_write, now_utc
     from market_data_guard import classify_provider_failure, update_structural_health
+    from hyperliquid_external_context import build as build_hyperliquid_context
 except ModuleNotFoundError:
     from scripts.multi_source_market import _request_json
     from scripts.state_manager import atomic_json_write, now_utc
     from scripts.market_data_guard import classify_provider_failure, update_structural_health
+    from scripts.hyperliquid_external_context import build as build_hyperliquid_context
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 BEIJING = ZoneInfo("Asia/Shanghai")
@@ -698,6 +700,11 @@ def build() -> dict:
                 "error": str(exc)[-500:], "decision_note": "监测对象保留但当前数据不可用；不得用旧值冒充当前状态。",
             }
 
+    try:
+        hyperliquid_context = build_hyperliquid_context()
+    except Exception as exc:
+        hyperliquid_context = {"quality_status": "FAILED", "error": str(exc)[-500:], "observations": [], "catalog": [], "mapping": []}
+
     for record in objects.values():
         raw_quality = str(record.get("quality_status") or "MISSING").upper()
         raw_freshness = str(record.get("freshness_status") or "MISSING").upper()
@@ -715,6 +722,8 @@ def build() -> dict:
         "time_alignment_rule": "美国现金指数在A股交易时段通常代表上一美股交易时段；亚洲市场按同日盘中/已收盘/上一交易日分别解释。",
         "decision_boundary": "海外与亚洲指数只作风险背景、增强或反向证据；必须继续经过本地传导与目标ETF自身反馈，不能单独生成ETF买卖动作。",
         "provider_health": provider_health,
+        "hyperliquid": hyperliquid_context,
+        "external_driver_quality_status": hyperliquid_context.get("quality_status", "FAILED"),
     }
 
 
