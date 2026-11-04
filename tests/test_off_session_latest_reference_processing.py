@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from scripts.runtime_session_gate import latest_legal_close_reference
+from scripts.runtime_session_gate import latest_legal_close_reference, should_process_latest_reference
 
 
 def _fixture(tmp_path: Path, *, market_date: str = "2026-11-06", quality: str = "PASS") -> tuple[Path, dict]:
@@ -72,3 +72,15 @@ def test_latest_close_reference_workflow_rebuilds_query_context_and_discovery_wi
     assert "steps.session_gate.outputs.process_latest_reference == 'true'" in workflow
     assert "build_query_context.py --run-discovery" in workflow
     assert "No new live/close snapshot is fabricated" in workflow
+
+
+
+def test_latest_reference_processing_is_manual_only_and_respects_probe_and_state_sync_boundaries() -> None:
+    available = {"available": True}
+    assert should_process_latest_reference("workflow_dispatch", "NOT_APPLICABLE", False, False, available)
+    assert not should_process_latest_reference("workflow_dispatch", "NOT_APPLICABLE", False, True, available)
+    assert not should_process_latest_reference("workflow_dispatch", "STATE_SYNC_ONLY", False, False, available)
+    assert not should_process_latest_reference("workflow_dispatch", "BUSINESS_DECISION_SOURCE", False, False, available)
+    assert not should_process_latest_reference("schedule", "NOT_APPLICABLE", False, False, available)
+    assert not should_process_latest_reference("workflow_dispatch", "NOT_APPLICABLE", True, False, available)
+    assert not should_process_latest_reference("workflow_dispatch", "NOT_APPLICABLE", False, False, {"available": False})
