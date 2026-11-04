@@ -27,6 +27,22 @@ def test_runtime_workflows_use_existing_canonical_builder_hot_path_mode():
     assert "build_state_context.py --fast" not in market_snapshot
 
 
+def test_manual_close_rebuilds_canonical_decision_context_without_query_refresh():
+    workflow = _source(".github/workflows/market-snapshot.yml")
+    block = workflow[workflow.index("- name: Build state context and candidates"):]
+    condition = block[block.index("if: "):block.index("\n", block.index("if: "))]
+    assert "github.event.inputs.node == 'close'" in condition
+    assert "steps.query_context.outcome == 'skipped'" in condition
+    assert "python scripts/build_state_context.py --decision-ready-only --manual-close-recovery" in block
+
+
+def test_manual_close_recovery_does_not_reuse_request_bound_identity_or_pit():
+    source = _source("scripts/build_state_context.py")
+    assert 'parser.add_argument(\n        "--manual-close-recovery"' in source
+    assert 'query_context = {} if manual_close_recovery else load_json' in source
+    assert "request_time_text and not manual_close_recovery" in source
+
+
 def test_phase3_does_not_add_fixed_minute_eligibility_or_parallel_owner():
     source = _source("scripts/build_state_context.py")
     assert "TTL" not in source

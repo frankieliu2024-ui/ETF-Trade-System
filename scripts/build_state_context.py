@@ -291,8 +291,14 @@ def main() -> None:
         action="store_true",
         help="reuse persisted non-critical research/enrichment facts while rebuilding the canonical decision context",
     )
+    parser.add_argument(
+        "--manual-close-recovery",
+        action="store_true",
+        help="rebuild current derived state without reusing request-bound query identity or PIT time",
+    )
     args = parser.parse_args()
     decision_ready_only = bool(args.decision_ready_only)
+    manual_close_recovery = bool(args.manual_close_recovery)
     timing = {"state_builder_started_at": now_utc()}
     current = read_current(ROOT)
     timing["current_published_at"] = str(current.get("captured_at") or "")
@@ -401,10 +407,13 @@ def main() -> None:
     candidate = build_dashboard_candidate(ROOT)
     timing["full_state_context_observation_at"] = now_utc()
     formal_discovery = load_node_local_formal_discovery(ROOT, current)
-    query_context = load_json(ROOT / "data" / "state" / "query_context.json", {})
+    # A manual close is a derived-state recovery, not a Formal Decision replay.
+    # Never let an old request-bound context provide identity or requested_at
+    # for this run; current formal facts remain the only source for the rebuild.
+    query_context = {} if manual_close_recovery else load_json(ROOT / "data" / "state" / "query_context.json", {})
     request_time_text = str(((query_context.get("decision_fact_pack") or {}).get("trigger") or {}).get("requested_at_beijing") or "")
     request_time = None
-    if request_time_text:
+    if request_time_text and not manual_close_recovery:
         try:
             request_time = datetime.fromisoformat(request_time_text.replace("Z", "+00:00"))
         except ValueError:
