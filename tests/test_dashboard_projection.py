@@ -329,5 +329,33 @@ class DashboardProjectionTests(unittest.TestCase):
             self.assertEqual(decision["_current_applicability"], "HISTORICAL")
             self.assertIn("尚未纳入", decision["_stale_reason"])
 
+
+    def test_intraday_decision_before_close_account_fact_is_not_stale(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            decisions = root / "events" / "decisions"
+            state = root / "data" / "state"
+            decisions.mkdir(parents=True)
+            state.mkdir(parents=True)
+            (decisions / "formal_intraday.json").write_text(json.dumps({
+                "event_type": "FORMAL_DECISION",
+                "market_date": "2026-11-04",
+                "decision_time_beijing": "2026-11-04T14:30:00+08:00",
+                "formal_decision": {
+                    "risk_permission": "保守",
+                    "main_candidate": "现金",
+                    "data_as_of_beijing": "2026-11-04T14:23:00+08:00",
+                },
+            }, ensure_ascii=False), encoding="utf-8")
+            (state / "account_fact.json").write_text(json.dumps({
+                "updated_at": "2026-11-04T15:00:00+08:00",
+                "source": "BROKER_HOLDINGS_AND_TRADE_SCREENSHOTS_20261104_1745_USER_CONFIRMED_CLOSE",
+                "positions": [],
+            }), encoding="utf-8")
+            decision = latest_canonical_formal_decision(root)
+            self.assertEqual(decision["_current_applicability"], "CURRENT")
+            self.assertEqual(decision["_stale_reason"], "")
+
+
 if __name__ == "__main__":
     unittest.main()
