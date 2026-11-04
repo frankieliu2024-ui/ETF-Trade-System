@@ -834,10 +834,24 @@ def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | N
     if not content or not bound_content or bound_content != content:
         raise ValueError("Formal Decision completion frozen content is missing or mismatched")
     expected_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
-    if str(payload.get("content_hash") or "").strip() != expected_hash:
+    # The scheduled-task runtime may persist the same frozen completion before
+    # the canonical owner has had a chance to materialize derived hash fields.
+    # Normalize only missing hashes in-memory; any existing hash drift remains a
+    # hard failure. This preserves one completion/body while allowing the
+    # existing notification projection to consume the same run.
+    top_hash = str(payload.get("content_hash") or "").strip().lower()
+    if top_hash and top_hash != expected_hash:
         raise ValueError("Formal Decision completion top-level content_hash mismatch")
-    if str(binding.get("content_hash") or "").strip() != expected_hash:
+    binding_hash = str(binding.get("content_hash") or "").strip().lower()
+    if binding_hash and binding_hash != expected_hash:
         raise ValueError("Formal Decision completion presentation_binding.content_hash mismatch")
+    payload["content_hash"] = expected_hash
+    binding["content_hash"] = expected_hash
+    if "final_content_hash" in payload:
+        final_hash = str(payload.get("final_content_hash") or "").strip().lower()
+        if final_hash and final_hash != expected_hash:
+            raise ValueError("Formal Decision completion final_content_hash mismatch")
+        payload["final_content_hash"] = expected_hash
     # New builders mark the current presentation contract explicitly.
     # Historical frozen completions remain replayable when identity, binding,
     # snapshot and hash checks pass; they must not be rejected solely because
