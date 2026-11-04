@@ -31,10 +31,12 @@ def build() -> dict:
         if not isinstance(dexes, list):
             raise ValueError("perpDexs response is not a list")
     except Exception as exc:
+        finished = _now()
         return {
             "schema_version": "1.0", "mode": "FORMAL_EXTERNAL_DRIVER_DISCOVERY_INPUT",
             "provider": "hyperliquid_info_api", "read_only": True,
-            "started_at_utc": started, "finished_at_utc": _now(),
+            "collection_started_at_utc": started, "collection_finished_at_utc": finished,
+            "started_at_utc": started, "finished_at_utc": finished,
             "quality_status": "FAILED", "dex_count": 0, "catalog_count": 0,
             "focused_count": 0, "missing_focused_assets": sorted(targets),
             "dex_failures": [{"dex": "DIRECTORY", "error": type(exc).__name__,
@@ -48,35 +50,51 @@ def build() -> dict:
         request = {"type": "metaAndAssetCtxs"}
         if dex_name != "default":
             request["dex"] = dex_name
+        request_started = _now()
         try:
             response = _post(request)
+            request_finished = _now()
             if not isinstance(response, list) or len(response) != 2:
                 raise ValueError("invalid metaAndAssetCtxs response")
             meta, contexts = response
             universe = (meta or {}).get("universe") or []
             if not isinstance(universe, list) or not isinstance(contexts, list):
                 raise ValueError("invalid universe or contexts")
+            if len(contexts) != len(universe):
+                raise ValueError("universe and contexts length mismatch")
             for index, asset in enumerate(universe):
                 name = str((asset or {}).get("name") or "")
                 if not name:
                     raise ValueError("asset without name")
                 catalog.append({"dex": dex_name, "asset": asset})
-                if name in targets and index < len(contexts):
+                if name in targets:
+                    context = contexts[index]
+                    if not isinstance(context, dict):
+                        raise ValueError(f"invalid context for {name}")
+                    oi = context.get("openInterest")
+                    volume = context.get("dayNtlVlm")
+                    active = bool(oi not in (None, "", 0, "0") or volume not in (None, "", 0, "0"))
                     observations.append({
-                        "dex": dex_name, "asset": asset, "context": contexts[index],
+                        "dex": dex_name, "asset": asset, "context": context,
                         "provider_timestamp": None,
                         "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-                        "collected_at_utc": started
+                        "request_started_at_utc": request_started,
+                        "request_finished_at_utc": request_finished,
+                        "collected_at_utc": request_finished,
+                        "market_activity_status": "ACTIVE" if active else "INACTIVE_OR_NO_ACTIVITY",
+                        "quality_status": "PASS" if active else "DEGRADED",
                     })
         except Exception as exc:
             failures.append({"dex": dex_name, "error": type(exc).__name__, "message": str(exc)[-300:]})
     observed = {str(x["asset"].get("name")) for x in observations}
     missing = sorted(targets - observed)
-    status = "PASS" if not failures and not missing else ("DEGRADED" if observations else "FAILED")
+    status = "PASS" if not failures and not missing and all(x.get("quality_status") == "PASS" for x in observations) else ("DEGRADED" if observations else "FAILED")
+    finished = _now()
     return {
         "schema_version": "1.0", "mode": "FORMAL_EXTERNAL_DRIVER_DISCOVERY_INPUT",
         "provider": "hyperliquid_info_api", "read_only": True,
-        "started_at_utc": started, "finished_at_utc": _now(),
+        "collection_started_at_utc": started, "collection_finished_at_utc": finished,
+        "started_at_utc": started, "finished_at_utc": finished,
         "quality_status": status, "dex_count": len(dexes),
         "catalog_count": len(catalog), "focused_count": len(observations),
         "missing_focused_assets": missing, "dex_failures": failures,
