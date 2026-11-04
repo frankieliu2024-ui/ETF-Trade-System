@@ -937,6 +937,35 @@ def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | N
         raise ValueError("Formal Decision completion bound snapshot market_date mismatch")
     if str(snapshot.get("quality_status") or "").strip().upper() != "PASS":
         raise ValueError("Formal Decision completion bound snapshot quality is not PASS")
+    # Opt-in contract for a run-frozen Discovery selection.  This is validated
+    # against the snapshot pinned by the run, never a later CURRENT projection.
+    # A missing/degraded object layer remains a reportable limitation rather
+    # than a fabricated empty set or an automatic completion blocker.
+    discovery_binding = payload.get("discovery_binding")
+    if discovery_binding is not None:
+        if not isinstance(discovery_binding, dict):
+            raise ValueError("Formal Decision discovery_binding must be an object")
+        discovery_status = str(discovery_binding.get("status") or "").upper()
+        if discovery_status == "READY":
+            selected = discovery_binding.get("selected_discovery")
+            selected_codes = discovery_binding.get("candidate_codes")
+            if not isinstance(selected, dict):
+                raise ValueError("Formal Decision READY Discovery missing frozen selection")
+            if not isinstance(selected_codes, list):
+                raise ValueError("Formal Decision READY Discovery missing candidate_codes")
+            validate_formal_discovery_consumer_binding(
+                selected,
+                expected_market_date=expected_binding["market_date"],
+                expected_snapshot=expected_binding["latest_snapshot"],
+                candidate_codes=selected_codes,
+            )
+        elif discovery_status in {"MISSING", "DEGRADED", "UNAVAILABLE"}:
+            if discovery_binding.get("candidate_codes") not in (None, []):
+                raise ValueError("Formal Decision limited Discovery cannot claim candidate coverage")
+            if not str(discovery_binding.get("reason") or "").strip():
+                raise ValueError("Formal Decision limited Discovery requires reason")
+        else:
+            raise ValueError("Formal Decision discovery_binding status invalid")
     return {
         "task_run_id": str(payload["task_run_id"]).strip(),
         "occurrence_id": str(payload["occurrence_id"]).strip(),
@@ -996,6 +1025,11 @@ def build_formal_runtime_completion_request(
         "fact_binding": (
             fact_summary.get("fact_binding")
             if isinstance(fact_summary, dict) and isinstance(fact_summary.get("fact_binding"), dict)
+            else {}
+        ),
+        **(
+            {"discovery_binding": fact_summary["discovery_binding"]}
+            if isinstance(fact_summary, dict) and "discovery_binding" in fact_summary
             else {}
         ),
         "completion_contract_version": "2",
