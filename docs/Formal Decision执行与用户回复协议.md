@@ -58,6 +58,10 @@ Formal Decision不为本次判断新建市场事实请求、MARKET_QUOTE_REFRESH
 - Discovery、观察ETF和机会ETF；
 - 与目标固定时段直接相关的海外、亚洲、商品、利率和汇率事实。
 
+正式决策同时直接消费Hyperliquid外部事实域。Hyperliquid与A股行情、海外市场、Discovery、观察ETF、机会ETF和实际持仓并行读取、统一比较，不构成任何对象进入下一层的前置门槛。其用途限于对象级方向确认、跨市场传导、交易时机过滤、拥挤度/定价偏离和证据缺口识别；不得独立生成Trial、Confirm、金额、卖出份额或订单。Hyperliquid缺失、过时或接口降级时，只降低相关对象的外部证据强度，不阻断其他事实、正文、completion或通知链。
+
+对每个相关ETF对象，正式判断应将Hyperliquid证据归入以下一种或多种语义：SUPPORT（支持既有假设）、CONTRADICTION（与既有假设矛盾）、TIMING_FILTER（改变入场时机质量但不单独改变方向）、NO_INCREMENTAL_VALUE（存在但未改变本轮判断）。不得把单一价格上涨、正Funding、OI增长或Premium偏离直接写成买入结论。
+
 必须核验：
 
 - market_phase、market_date和runtime_now；
