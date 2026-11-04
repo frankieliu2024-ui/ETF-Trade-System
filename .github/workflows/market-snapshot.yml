@@ -74,6 +74,7 @@ jobs:
       ETF_FORMAL_REPLAY_FORENSIC: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.formal_replay_request != '' && github.event.inputs.formal_replay_forensic == 'true' && '1' || '0' }}
       FORMAL_CONTEXT_RECOVERY_REQUEST: ${{ github.event.inputs.formal_context_recovery_request || '' }}
       GITHUB_EVENT_INPUTS_NODE: ${{ github.event.inputs.node || '' }}
+      GITHUB_EVENT_INPUTS_PROBE_ONLY: ${{ github.event.inputs.probe_only || 'false' }}
       SCHEDULED_CRON: ${{ github.event.schedule || '' }}
     steps:
       - uses: actions/checkout@v5
@@ -1528,7 +1529,7 @@ jobs:
         # must refresh lifecycle_projection from current formal facts so
         # decision_context cannot remain behind review_context. No new market
         # fact, request, or decision is created by this branch.
-        if: ${{ (steps.query_context.outcome == 'success' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close' && steps.query_context.outcome == 'skipped')) && (github.event_name == 'push' || steps.state_sync.outputs.processed == 'true' || steps.snapshot_result.outputs.snapshot_written == 'true' || github.event.inputs.formal_context_recovery_request != '' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && github.event.inputs.probe_only != 'true' }}
+        if: ${{ (steps.query_context.outcome == 'success' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close' && steps.query_context.outcome == 'skipped')) && (github.event_name == 'push' || steps.state_sync.outputs.processed == 'true' || steps.snapshot_result.outputs.snapshot_written == 'true' || steps.session_gate.outputs.process_latest_reference == 'true' || github.event.inputs.formal_context_recovery_request != '' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && github.event.inputs.probe_only != 'true' }}
         run: |
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$GITHUB_EVENT_INPUTS_NODE" = "close" ] && [ "${{ steps.query_context.outcome }}" = "skipped" ]; then
             python scripts/build_state_context.py --decision-ready-only --manual-close-recovery
@@ -1599,7 +1600,7 @@ jobs:
         # The close-review producer must publish before the E2E consumer reads
         # closure/evidence/business-completion state; otherwise stale or future
         # close_review data can survive in e2e_status.
-        if: ${{ always() && steps.state_sync.outcome != 'failure' && (steps.query_context.outcome == 'success' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && (steps.state_sync.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (steps.triggering_request.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (github.event_name == 'push' || steps.state_sync.outputs.processed == 'true' || github.event.inputs.formal_context_recovery_request != '' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && github.event.inputs.probe_only != 'true' }}
+        if: ${{ always() && steps.state_sync.outcome != 'failure' && (steps.query_context.outcome == 'success' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && (steps.state_sync.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (steps.triggering_request.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (github.event_name == 'push' || steps.state_sync.outputs.processed == 'true' || steps.session_gate.outputs.process_latest_reference == 'true' || github.event.inputs.formal_context_recovery_request != '' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_e2e_status.py
       - name: Commit downstream runtime/data artifacts
         # A failed close-derived refresh must not publish a mixed generation
