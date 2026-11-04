@@ -24,6 +24,11 @@ class FormalDiscoveryConsumerBindingTests(unittest.TestCase):
     def test_same_node_same_candidates(self):
         validate_formal_discovery_consumer_binding(self.discovery, **self.kwargs)
 
+    def test_complete_status_is_valid_at_selection_layer(self):
+        validate_formal_discovery_consumer_binding(
+            dict(self.discovery, status="COMPLETE"), **self.kwargs
+        )
+
     def test_weekly_fallback_rejected(self):
         old = dict(self.discovery, market_date="2026-10-30")
         with self.assertRaisesRegex(ValueError, "market_date"):
