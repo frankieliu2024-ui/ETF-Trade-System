@@ -248,12 +248,29 @@ def latest_canonical_formal_decision(root: Path = ROOT) -> dict:
                 parsed = parsed.replace(tzinfo=SHANGHAI)
         except (TypeError, ValueError):
             continue
-        candidates.append((parsed, str(path), decision))
+        event_market_date = str(event.get("market_date") or event.get("market_date_beijing") or "").strip()
+    if not event_market_date:
+        completion_path = str(event.get("source_completion_path") or "").strip()
+        if completion_path:
+            try:
+                completion = load_json(root / completion_path)
+                event_market_date = str(
+                    completion.get("market_date")
+                    or completion.get("market_date_beijing")
+                    or ""
+                ).strip()
+            except (OSError, json.JSONDecodeError, TypeError):
+                event_market_date = ""
+    if not event_market_date:
+        event_market_date = str(parsed.astimezone(SHANGHAI).date())
+    candidates.append((parsed, str(path), decision, event_market_date))
     if not candidates:
         return {}
-    parsed, event_path, decision = max(candidates, key=lambda item: (item[0], item[1]))
+    parsed, event_path, decision, event_market_date = max(
+        candidates, key=lambda item: (item[0], item[1])
+    )
     decision = dict(decision)
-    decision["_event_market_date"] = str(event.get("market_date") or event.get("market_date_beijing") or "").strip()
+    decision["_event_market_date"] = event_market_date
     decision["_decision_path"] = event_path
     decision["_decision_stamp"] = parsed.isoformat()
 
