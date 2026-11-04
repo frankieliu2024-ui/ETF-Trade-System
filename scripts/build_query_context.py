@@ -1720,17 +1720,6 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
     )
     held_etf_codes = {str(x) for x in active_account_asset_codes(root, account).get("etf", set())}
     formal_discovery = _same_node_persisted_formal_discovery(root, current, universe_identity) or {"status": "NOT_REQUESTED", "candidates": []}
-    weekly_formal_discovery = read_json(
-        root / "data" / "state" / "weekly_formal_discovery.json",
-        {
-            "schema_version": "1.0",
-            "layer": "WEEKLY_DISCOVERY",
-            "status": "NOT_AVAILABLE",
-            "candidate_count": None,
-            "read_only": True,
-            "consumption_rule": "周日周复盘只读取最后合法交易日收盘后形成的周级Discovery；缺失不等于候选为零。",
-        },
-    )
     weekly_return_attribution = read_json(
         root / "data" / "state" / "weekly_return_attribution.json",
         {
@@ -1921,7 +1910,6 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
         "market_quote_router": market_quote,
         "system_objects": system_objects, "user_requested_objects": [], "market_domain_projection": market_domain_projection,
         "formal_etf_discovery": formal_discovery,
-        "weekly_formal_discovery": weekly_formal_discovery,
         "weekly_return_attribution": weekly_return_attribution,
         "canonical_files": CANONICAL_FILES, "data_status": {**(current.get("data_freshness") or {}), **freshness}, "freshness_at_context_build": freshness,
         "interactive_decision_freshness": market_quote.get("decision_freshness", {}),

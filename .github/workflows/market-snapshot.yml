@@ -640,11 +640,10 @@ jobs:
               if [ "$attempt" = "3" ]; then exit 1; fi
             done
           fi
-      - name: Form weekly Discovery after the last legal close
-        id: weekly_discovery
-        # Weekly review consumes a durable close-time Discovery artifact. The
-        # producer itself decides whether this close is the last legal session
-        # of the week and is idempotent for the same market date.
+      - name: Refresh current ETF Discovery on every verified A-share pulse
+        id: current_discovery
+        # Current and weekly reviews consume the same latest legal Discovery
+        # artifact. The producer is idempotent for the same verified pulse.
         if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.session_gate.outputs.process_latest_reference == 'true' || github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && github.event.inputs.probe_only != 'true' && github.event_name != 'push' }}
         run: python scripts/build_weekly_discovery.py
 

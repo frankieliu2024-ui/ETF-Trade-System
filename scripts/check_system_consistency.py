@@ -844,60 +844,6 @@ def _validate_weekly_projection_contract(report: dict) -> None:
             cursor -= timedelta(days=1)
         return ""
 
-    # A verified close on the last legal day publishes the new weekly object.
-    # Live/non-close nodes consume the prior completed week; they must not
-    # compare that legitimate carry-forward object with today's market date.
-    weekly_reference_date = market_date if close_due else latest_completed_week_end(market_date)
-    if not weekly_reference_date:
-        weekly_reference_date = market_date
-
-    weekly_path = ROOT / "data/state/weekly_formal_discovery.json"
-    weekly = _read_json("data/state/weekly_formal_discovery.json") if weekly_path.exists() else {}
-    weekly_errors = []
-    if not weekly:
-        if close_due:
-            report.setdefault("warnings", []).append(
-                "weekly_projection:missing_formal_discovery_after_verified_last_close"
-            )
-            weekly_status = "WARNING"
-            weekly_detail = f"missing weekly_formal_discovery.json for market_date={market_date}"
-        else:
-            weekly_status = "PASS"
-            weekly_detail = "weekly Discovery not due at current verified close"
-    else:
-        if str(weekly.get("market_date") or "") != weekly_reference_date:
-            weekly_errors.append("market_date_mismatch")
-        if str(weekly.get("week_end") or "") != weekly_reference_date:
-            weekly_errors.append("week_end_mismatch")
-        if str(weekly.get("latest_valid_node") or "").lower() != "close":
-            weekly_errors.append("latest_valid_node_not_close")
-        if str(weekly.get("formation_rule") or "") != "LAST_LEGAL_A_SHARE_TRADING_DAY_AFTER_VERIFIED_CLOSE":
-            weekly_errors.append("formation_rule_mismatch")
-        if "不得在周日临时发起全市场Discovery" not in str(weekly.get("consumption_rule") or ""):
-            weekly_errors.append("sunday_consumption_rule_missing")
-        nested = weekly.get("discovery") if isinstance(weekly.get("discovery"), dict) else {}
-        if weekly.get("candidate_count") != nested.get("candidate_count"):
-            weekly_errors.append("candidate_count_mismatch")
-        if str(weekly.get("status") or "").upper() not in {"READY", "DEGRADED"}:
-            weekly_errors.append("status_not_publishable")
-        if weekly_errors:
-            report.setdefault("errors", []).extend(
-                f"weekly_projection:{item}" for item in weekly_errors
-            )
-            weekly_status = "FAIL"
-            weekly_detail = "; ".join(weekly_errors)
-        else:
-            weekly_status = "PASS"
-            weekly_detail = (
-                f"market_date={weekly_reference_date} status={weekly.get('status')} "
-                f"candidate_count={weekly.get('candidate_count')}"
-            )
-    report.setdefault("checks", []).append({
-        "name": "state:weekly_formal_discovery_contract",
-        "status": weekly_status,
-        "detail": weekly_detail,
-    })
-
     attribution_path = ROOT / "data/state/weekly_return_attribution.json"
     attribution = _read_json("data/state/weekly_return_attribution.json") if attribution_path.exists() else {}
     if not attribution:
