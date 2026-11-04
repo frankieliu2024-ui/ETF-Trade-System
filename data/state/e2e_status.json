@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-11-03T21:08:19+08:00",
-  "status": "BLOCKED",
+  "generated_at": "2026-11-04T08:10:43+08:00",
+  "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
   "components": {
@@ -45,40 +45,13 @@
       "business_completion_status": "DEGRADED"
     },
     "decision_context": {
-      "status": "BLOCKED",
-      "reason": "canonical request-bound query context is empty, invalid, or missing a consumable fact pack",
-      "query_context": false,
+      "status": "READY",
+      "reason": "current-main fixed facts are directly consumable; no request-bound Formal Decision context is applicable",
+      "query_context": true,
       "decision_context": true,
-      "formal_reply_gate": {
-        "request_id": "conversation-formal-20261026T212023+0800-90d3c2b2",
-        "requested_at_beijing": "2026-10-26T21:20:23.000+08:00",
-        "status": "TERMINAL_FAILURE",
-        "reply_freezable": false,
-        "blockers": [
-          "FORMAL_PARENT_RECOVERY_TIMEOUT"
-        ],
-        "source": "durable_parent_request_waiting_for_request_bound_projection",
-        "actor_action": "TERMINATE_ON_EXPLICIT_FAILURE",
-        "user_output_allowed": true,
-        "business_decision_allowed": false,
-        "final_content_generation_allowed": false,
-        "consumer_status": "TERMINAL_FAILURE",
-        "projection_scope": "FORMAL_DECISION_REQUEST",
-        "superseded_request_id": "fd_20261026_112739_scheduled_formal_review_0bba5094",
-        "request_bound": false,
-        "required_problem_ids": [],
-        "required_problem_count": 0,
-        "business_answer_contract": null,
-        "ready_handoff": null,
-        "projection_preserved_from_non_formal_runtime_request": true,
-        "terminal_failure": {
-          "error_class": "MAINTENANCE_INCOMPLETE",
-          "reason": "request-bound query context remained unbound beyond the existing workflow timeout",
-          "requested_at_beijing": "2026-10-26T21:20:23.000+08:00",
-          "terminated_at_beijing": "2026-11-03T21:08:17+08:00",
-          "query_context_request_id": ""
-        }
-      },
+      "request_bound": false,
+      "formal_reply_gate": null,
+      "direct_current_main": true,
       "context_read_contract": {
         "query_context": {
           "status": "READ_OK",
@@ -91,7 +64,7 @@
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
           "byte_count": 476424,
-          "sha256": "ecb39e4faaf912cc17cdf853aaf326ae9a9ea50af74d82bcb229d7b20b58d720",
+          "sha256": "d88bc43e7fab39affbd91b857e90a04fae4ebbca52585482cdfb028afee032e3",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -99,11 +72,11 @@
     },
     "lifecycle": {
       "status": "READY",
-      "reason": "canonical lifecycle projection available; mandatory_due=3",
-      "active_trial_count": 3,
-      "decision_due_count": 3,
-      "overdue_count": 3,
-      "next_mandatory_node": "2026-09-30",
+      "reason": "canonical lifecycle projection available; mandatory_due=7",
+      "active_trial_count": 7,
+      "decision_due_count": 7,
+      "overdue_count": 7,
+      "next_mandatory_node": "2026-09-04",
       "source": "formal decision + executed trade facts"
     },
     "maintenance": {
@@ -112,9 +85,7 @@
       "checked_at": "2026-11-03T20:44:18+08:00"
     }
   },
-  "blockers": [
-    "decision_context"
-  ],
+  "blockers": [],
   "degradations": [
     "close_review"
   ],
@@ -130,7 +101,7 @@
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
       "byte_count": 476424,
-      "sha256": "ecb39e4faaf912cc17cdf853aaf326ae9a9ea50af74d82bcb229d7b20b58d720",
+      "sha256": "d88bc43e7fab39affbd91b857e90a04fae4ebbca52585482cdfb028afee032e3",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"
