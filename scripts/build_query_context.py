@@ -667,6 +667,35 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
             "external_driver_evidence": item.get("external_driver_evidence") or [],
         })
 
+    hyperliquid_object_context = {}
+    hyperliquid_by_asset = {str(x.get("asset") or ""): x for x in external_driver_observations}
+    for item in positions + observation_inputs + discovery_inputs:
+        if not isinstance(item, dict):
+            continue
+        code = str(item.get("code") or item.get("symbol") or "")
+        name = str(item.get("name") or "")
+        matches = []
+        for mapping in external_driver.get("mapping") or []:
+            if not isinstance(mapping, dict):
+                continue
+            asset_name = str(mapping.get("asset") or "")
+            by_code = code in {str(x) for x in (mapping.get("etf_codes") or [])}
+            by_marker = any(str(marker) and str(marker) in name for marker in (mapping.get("name_markers") or []))
+            observation = hyperliquid_by_asset.get(asset_name)
+            if observation and (by_code or by_marker):
+                matches.append({
+                    "asset": asset_name,
+                    "family": mapping.get("family"),
+                    "observation": observation,
+                })
+        if matches:
+            hyperliquid_object_context[code] = {
+                "code": code,
+                "name": name,
+                "evidence": matches,
+                "decision_boundary": "对象级辅助证据；不得独立生成Trial、Confirm、金额、卖出份额或订单。",
+            }
+
     request_id = str(request.get("request_id") or "").strip()
     requested_at = _request_received_at_beijing(request)
     request_source = str(request.get("source") or request.get("requested_by") or "").strip().upper()
