@@ -464,11 +464,11 @@ jobs:
           health_path.write_text(json.dumps(health, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
           PY
       - uses: actions/setup-node@v7
-        if: ${{ steps.session_gate.outputs.should_capture == 'true' || (github.event_name == 'push' && steps.session_gate.outputs.request_class != 'STATE_SYNC_ONLY' && steps.session_gate.outputs.request_class != 'BUSINESS_DECISION_SOURCE') }}
+        if: ${{ steps.session_gate.outputs.should_capture == 'true' || steps.session_gate.outputs.process_latest_reference == 'true' || (github.event_name == 'push' && steps.session_gate.outputs.request_class != 'STATE_SYNC_ONLY' && steps.session_gate.outputs.request_class != 'BUSINESS_DECISION_SOURCE') }}
         with:
           node-version: "22"
       - name: Start optional Hithink fallback CLI bootstrap
-        if: ${{ steps.session_gate.outputs.should_capture == 'true' || (github.event_name == 'push' && steps.session_gate.outputs.request_class != 'STATE_SYNC_ONLY' && steps.session_gate.outputs.request_class != 'BUSINESS_DECISION_SOURCE') }}
+        if: ${{ steps.session_gate.outputs.should_capture == 'true' || steps.session_gate.outputs.process_latest_reference == 'true' || (github.event_name == 'push' && steps.session_gate.outputs.request_class != 'STATE_SYNC_ONLY' && steps.session_gate.outputs.request_class != 'BUSINESS_DECISION_SOURCE') }}
         shell: bash
         run: |
           # Tencent is the primary A-share provider. Start the optional
@@ -478,7 +478,7 @@ jobs:
           npm install --global @hithink-tech/hithink-finance-cli >/tmp/hithink-finance-install.log 2>&1 &
           echo "HITHINK_CLI_INSTALL_PID=$!" >> "$GITHUB_ENV"
       - name: Load unified provider concurrency policy
-        if: ${{ steps.session_gate.outputs.should_capture == 'true' || (github.event_name == 'push' && steps.session_gate.outputs.request_class != 'STATE_SYNC_ONLY' && steps.session_gate.outputs.request_class != 'BUSINESS_DECISION_SOURCE') }}
+        if: ${{ steps.session_gate.outputs.should_capture == 'true' || steps.session_gate.outputs.process_latest_reference == 'true' || (github.event_name == 'push' && steps.session_gate.outputs.request_class != 'STATE_SYNC_ONLY' && steps.session_gate.outputs.request_class != 'BUSINESS_DECISION_SOURCE') }}
         shell: bash
         run: |
           python - <<'PY'
@@ -644,12 +644,12 @@ jobs:
         # Weekly review consumes a durable close-time Discovery artifact. The
         # producer itself decides whether this close is the last legal session
         # of the week and is idempotent for the same market date.
-        if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && github.event.inputs.probe_only != 'true' && github.event_name != 'push' }}
+        if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.session_gate.outputs.process_latest_reference == 'true' || github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && github.event.inputs.probe_only != 'true' && github.event_name != 'push' }}
         run: python scripts/build_weekly_discovery.py
 
       - name: Build weekly return attribution bridge
         id: weekly_return_attribution
-        if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && github.event.inputs.probe_only != 'true' && github.event_name != 'push' }}
+        if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.session_gate.outputs.process_latest_reference == 'true' || github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && github.event.inputs.probe_only != 'true' && github.event_name != 'push' }}
         run: python scripts/build_weekly_return_attribution.py
 
       - name: Quick retry failed core objects after initial publish
@@ -1239,22 +1239,22 @@ jobs:
           fi
       - name: Build objective intraday market delta
         # Derived observability must not block the formal decision critical path.
-        if: ${{ always() && steps.state_sync.outcome != 'failure' && steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
+        if: ${{ always() && steps.state_sync.outcome != 'failure' && (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.session_gate.outputs.process_latest_reference == 'true') && github.event.inputs.probe_only != 'true' }}
         continue-on-error: true
         run: python scripts/build_market_delta.py
       - name: Build dynamic stock context from current account
         # Decision input: run independently of unrelated prior-step failures.
-        if: ${{ always() && steps.state_sync.outcome != 'failure' && steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
+        if: ${{ always() && steps.state_sync.outcome != 'failure' && (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.session_gate.outputs.process_latest_reference == 'true') && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_stock_context.py
       - name: Collect current account-stock market facts
         # Decision input: run independently of unrelated prior-step failures.
-        if: ${{ always() && steps.state_sync.outcome != 'failure' && steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' }}
+        if: ${{ always() && steps.state_sync.outcome != 'failure' && (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.session_gate.outputs.process_latest_reference == 'true') && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_account_stock_market.py
       - name: Build on-demand query context
         id: query_context
         # Formal decision critical path. Do not let an unrelated optional/derived
         # step failure suppress request binding and PIT qualification.
-        if: ${{ always() && steps.state_sync.outcome != 'failure' && (steps.state_sync.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (steps.triggering_request.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (github.event_name == 'push' || steps.snapshot_result.outputs.snapshot_written == 'true' || steps.state_sync.outputs.processed == 'true' || github.event.inputs.formal_context_recovery_request != '') && github.event.inputs.probe_only != 'true' }}
+        if: ${{ always() && steps.state_sync.outcome != 'failure' && (steps.state_sync.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (steps.triggering_request.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (github.event_name == 'push' || steps.snapshot_result.outputs.snapshot_written == 'true' || steps.session_gate.outputs.process_latest_reference == 'true' || steps.state_sync.outputs.processed == 'true' || github.event.inputs.formal_context_recovery_request != '') && github.event.inputs.probe_only != 'true' }}
         run: |
           # Formal replay must use the canonical parent request. The state-sync
           # producer may expose the BDS child through TRIGGERING_REQUEST_FILE;
@@ -1403,9 +1403,12 @@ jobs:
             # but do not force a second refresh: --force-refresh also disables
             # legal same-node Discovery reuse inside build_query_context.
             python scripts/build_query_context.py --run-discovery "${REQUEST_ARGS[@]}"
-          elif [ "${{ steps.snapshot_result.outputs.snapshot_written }}" = "true" ]; then
-            # The core snapshot is already current in this run. Execute bounded
-            # all-market Discovery without forcing a duplicate core refresh.
+          elif [ "${{ steps.snapshot_result.outputs.snapshot_written }}" = "true" ] || [ "${{ steps.session_gate.outputs.process_latest_reference }}" = "true" ]; then
+            # A-share is closed or the exchange is not trading: consume only the
+            # canonical latest legal close reference. The builder reuses a valid
+            # same-node Discovery identity or runs the existing Discovery owner
+            # and obtains provider-backed SESSION_REFERENCE quotes for candidates.
+            # No new live/close snapshot is fabricated and CURRENT is not rewritten.
             python scripts/build_query_context.py --run-discovery "${REQUEST_ARGS[@]}"
           else
             python scripts/build_query_context.py "${REQUEST_ARGS[@]}"
