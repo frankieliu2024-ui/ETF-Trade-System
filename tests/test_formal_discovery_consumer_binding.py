@@ -59,9 +59,9 @@ class FormalDiscoveryConsumerBindingTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "coverage"):
             validate_formal_discovery_consumer_binding(
                 actual, **dict(correct, candidate_codes=[
-                    "159220", "159395", "159887", "159972", "511580",
-                    "513080", "513910", "516650", "516910", "562170",
-                    "563700", "563760",
+                    "159202", "159307", "159377", "159569", "159691",
+                    "159699", "513290", "513630", "513750", "515080",
+                    "562060", "589580",
                 ])
             )
 
@@ -82,7 +82,9 @@ class FormalDiscoveryConsumerBindingTests(unittest.TestCase):
         validate_formal_discovery_consumer_binding(actual, **correct)
         with self.assertRaisesRegex(ValueError, "coverage"):
             validate_formal_discovery_consumer_binding(
-                actual, **dict(correct, candidate_codes=["159567", "588710"])
+                actual, **dict(correct, candidate_codes=["159202", "159307", "159377", "159569", "159691",
+                    "159699", "513290", "513630", "513750", "515080",
+                    "562060", "589580"])
             )
 
     def test_degraded_not_upgraded(self):
