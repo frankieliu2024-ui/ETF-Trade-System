@@ -72,6 +72,7 @@ def test_latest_close_reference_workflow_rebuilds_query_context_and_discovery_wi
     assert "steps.session_gate.outputs.process_latest_reference == 'true'" in workflow
     assert "build_query_context.py --run-discovery" in workflow
     assert "No new live/close snapshot is fabricated" in workflow
+    assert 'reason = "latest_legal_close_reference"' in Path("scripts/runtime_session_gate.py").read_text(encoding="utf-8")
 
 
 def test_latest_reference_processing_is_manual_only_and_respects_probe_and_state_sync_boundaries() -> None:
