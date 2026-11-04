@@ -112,6 +112,47 @@ def _request_json_headers(url: str, params: dict[str, Any], headers: dict[str, s
         return json.loads(resp.read().decode("utf-8"))
 
 
+def fetch_hithink_etf_master() -> list[dict[str, Any]]:
+    """Enumerate Hithink ETF identities for the secondary resilience path only."""
+    req = Request(
+        HITHINK_ETF_MASTER_URL,
+        headers={
+            "User-Agent": "Mozilla/5.0",
+            "Referer": "https://fund.10jqka.com.cn/datacenter/jz/kfs/etf/",
+            "Accept": "application/json,text/javascript,*/*;q=0.8",
+        },
+    )
+    with urlopen(req, timeout=15) as resp:
+        payload_text = resp.read().decode("utf-8", errors="replace").strip()
+    if payload_text.startswith("g(") and payload_text.endswith(")"):
+        payload_text = payload_text[2:-1]
+    elif payload_text.startswith("(") and payload_text.endswith(")"):
+        payload_text = payload_text[1:-1]
+    payload = json.loads(payload_text)
+    raw_rows = ((payload.get("data") or {}).get("data") or {})
+    if not isinstance(raw_rows, dict) or not raw_rows:
+        raise RuntimeError("Hithink ETF master returned empty or unexpected data")
+    result: dict[tuple[int, str], dict[str, Any]] = {}
+    for raw in raw_rows.values():
+        if not isinstance(raw, dict):
+            continue
+        code = str(raw.get("code") or "").strip()
+        name = str(raw.get("name") or code).strip()
+        if not re.fullmatch(r"\\d{6}", code):
+            continue
+        market_id = 1 if code.startswith(("5", "6")) else 0
+        result[(market_id, code)] = {
+            "code": code,
+            "name": name or code,
+            "market_id": market_id,
+            "exchange": "SSE" if market_id == 1 else "SZSE",
+            "identity_source": "HITHINK_ETF_CATEGORY_ENUMERATION",
+        }
+    if not result:
+        raise RuntimeError("Hithink ETF master parsed zero six-digit ETF identities")
+    return [result[key] for key in sorted(result)]
+
+
 def _tencent_spot_row(identity: dict[str, Any], quote: dict[str, Any]) -> dict[str, Any]:
     return {
         "code": identity["code"], "name": str(quote.get("name") or identity.get("name") or identity["code"]),
