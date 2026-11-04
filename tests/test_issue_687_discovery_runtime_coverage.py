@@ -384,7 +384,7 @@ class DiscoveryRuntimeCoverageTests(unittest.TestCase):
         self.assertEqual(rows, fallback)
         self.assertTrue(meta["fallback_used"])
         self.assertEqual(meta["fallback_source"], "HITHINK_ETF_MASTER_PLUS_TENCENT")
-        self.assertEqual(meta["universe_mode"], "HITHINK_ONLY")
+        self.assertEqual(meta["universe_mode"], "HITHINK_TENCENT_SECONDARY_FALLBACK")
         self.assertIn("eastmoney down", meta["eastmoney_error"])
 
 
