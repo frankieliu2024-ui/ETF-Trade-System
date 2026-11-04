@@ -1719,6 +1719,7 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
                 market_date=str(current.get("market_date") or trading_day_status.get("market_date") or ""),
                 managed_codes=managed_etf_codes,
                 held_codes=held_etf_codes,
+                external_driver_context=overseas_context.get("hyperliquid"),
             )
             formal_discovery["universe_identity"] = universe_identity
             formal_discovery["discovery_delta_identity"] = _discovery_delta_identity(root)
