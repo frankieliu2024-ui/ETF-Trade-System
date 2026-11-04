@@ -32,39 +32,29 @@ def history() -> list[dict]:
 
 
 class DiscoveryRuntimeCoverageTests(unittest.TestCase):
-    def test_reconciled_broad_path_unions_hithink_only_identity_without_full_duplicate_hydration(self) -> None:
+    def test_eastmoney_primary_does_not_union_hithink_identities(self) -> None:
         east = [
             {"code": "510001", "name": "主源ETF", "market_id": 1, "price": 1.0, "change_pct": 1.0, "amount": 20_000_000},
             {"code": "159999", "name": "主源深市ETF", "market_id": 0, "price": 1.0, "change_pct": 0.5, "amount": 20_000_000},
         ]
-        hithink = [
-            {"code": "510001", "name": "主源ETF", "market_id": 1},
-            {"code": "159999", "name": "主源深市ETF", "market_id": 0},
-            {"code": "158888", "name": "补漏ETF", "market_id": 0},
-        ]
-        supplement = [{"code": "158888", "name": "补漏ETF", "market_id": 0, "price": 1.2, "amount": 30_000_000}]
         with patch.object(discovery, "fetch_broad_etf_spot", return_value=east), \
-             patch.object(discovery, "fetch_hithink_etf_master", return_value=hithink), \
-             patch.object(discovery, "_hydrate_tencent_identities",
-                          return_value=(supplement, {"requested_identity_count": 1, "tencent_quote_count": 1,
-                                                    "tencent_failed_batch_count": 0, "tencent_failures": []})) as hydrate:
+             patch.object(discovery, "fetch_hithink_etf_master", side_effect=AssertionError("secondary source must not run")):
             rows, meta = discovery.fetch_reconciled_broad_etf_spot("2026-09-23")
-        self.assertEqual({x["code"] for x in rows}, {"510001", "159999", "158888"})
-        self.assertEqual([x["code"] for x in hydrate.call_args.args[0]], ["158888"])
-        self.assertEqual(meta["universe_mode"], "DUAL_SOURCE_RECONCILED")
-        self.assertEqual(meta["hithink_only_identity_count"], 1)
-        self.assertEqual(meta["hithink_only_hydrated_count"], 1)
+        self.assertEqual(rows, east)
+        self.assertEqual(meta["universe_mode"], "EASTMONEY_PRIMARY")
+        self.assertEqual(meta["primary_source"], "EASTMONEY_PUSH2_ETF_CROSS_SECTION")
+        self.assertFalse(meta["fallback_used"])
+        self.assertEqual(meta["reconciled_count"], len(east))
 
-
-    def test_reconciled_broad_path_keeps_eastmoney_when_hithink_is_unavailable(self) -> None:
+    def test_eastmoney_primary_does_not_call_hithink_when_available(self) -> None:
         east = [{"code": "510001", "name": "主源ETF", "market_id": 1, "price": 1.0,
                  "change_pct": 1.0, "amount": 20_000_000}]
         with patch.object(discovery, "fetch_broad_etf_spot", return_value=east), \
-             patch.object(discovery, "fetch_hithink_etf_master", side_effect=TimeoutError("hithink down")):
+             patch.object(discovery, "fetch_hithink_etf_master") as hithink:
             rows, meta = discovery.fetch_reconciled_broad_etf_spot("2026-09-23")
         self.assertEqual(rows, east)
-        self.assertEqual(meta["universe_mode"], "EASTMONEY_ONLY_DEGRADED_RECONCILIATION")
-        self.assertIn("hithink down", meta["hithink_error"])
+        self.assertEqual(meta["universe_mode"], "EASTMONEY_PRIMARY")
+        hithink.assert_not_called()
 
     def test_hithink_master_normalizes_six_digit_etf_identities(self) -> None:
         payload = {
@@ -174,36 +164,28 @@ class DiscoveryRuntimeCoverageTests(unittest.TestCase):
             rows, meta = discovery.fetch_reconciled_broad_etf_spot("2026-09-18")
         self.assertEqual(len(rows), 1)
         self.assertIn("eastmoney down", meta["eastmoney_error"])
-        self.assertEqual(meta["universe_mode"], "HITHINK_ONLY")
+        self.assertEqual(meta["universe_mode"], "HITHINK_TENCENT_SECONDARY_FALLBACK")
 
-    def test_hithink_tencent_secondary_fallback_uses_no_exchange_directory(self) -> None:
-        import sys
-        import types
-
+    def test_hithink_is_used_only_as_secondary_fallback(self) -> None:
         identities = [{"code": "510001", "name": "Fallback ETF", "market_id": 1}]
-        fake = types.ModuleType("scripts.tencent_quote")
-        fake.fetch_tencent_quotes = lambda symbols, timeout=10: {
-            symbol.upper(): {
-                "name": "Fallback ETF", "last_price": 1.0, "prev_price": 0.99,
-                "open_price": 1.0, "high_price": 1.01, "low_price": 0.98,
-                "turnover": 20_000_000, "price_change_ratio_pct": 1.01,
-                "provider_timestamp_ms": 1,
-            }
-            for symbol in symbols
-        }
-        with patch.object(discovery, "fetch_hithink_etf_master", return_value=identities), \
-             patch.dict(sys.modules, {"scripts.tencent_quote": fake}):
-            rows, meta = discovery.fetch_hithink_tencent_broad_spot()
-        self.assertEqual([row["code"] for row in rows], ["510001"])
-        self.assertEqual(meta["identity_master_source"], "HITHINK_ETF_CATEGORY")
-        self.assertEqual(meta["fallback_quote_source"], "TENCENT_QQ")
-        self.assertEqual(meta["tencent_failed_batch_count"], 0)
+        hydrated = [{"code": "510001", "name": "Fallback ETF", "market_id": 1, "price": 1.0}]
+        with patch.object(discovery, "fetch_broad_etf_spot", side_effect=ConnectionError("eastmoney down")), \
+             patch.object(discovery, "fetch_hithink_etf_master", return_value=identities), \
+             patch.object(discovery, "_hydrate_tencent_identities",
+                          return_value=(hydrated, {"requested_identity_count": 1, "tencent_quote_count": 1,
+                                                   "tencent_failed_batch_count": 0, "tencent_failures": []})) as hydrate:
+            rows, meta = discovery.fetch_reconciled_broad_etf_spot("2026-09-23")
+        self.assertEqual(rows, hydrated)
+        self.assertTrue(meta["fallback_used"])
+        self.assertEqual(meta["fallback_source"], "HITHINK_ETF_MASTER_PLUS_TENCENT")
+        self.assertEqual(meta["universe_mode"], "HITHINK_TENCENT_SECONDARY_FALLBACK")
+        self.assertEqual(hydrate.call_args.args[0], identities)
 
     def test_discovery_source_contract_excludes_exchange_directory_enumeration(self) -> None:
         source = Path(discovery.__file__).read_text(encoding="utf-8")
         self.assertIn("EASTMONEY_PRIMARY", source)
         self.assertIn("fetch_broad_etf_spot", source)
-        self.assertIn("fetch_hithink_tencent_broad_spot", source)
+        self.assertIn("fetch_hithink_etf_master", source)
         self.assertNotIn("query.sse.com.cn/commonQuery.do", source)
         self.assertNotIn("www.szse.cn/api/report/ShowReport/data", source)
         self.assertNotIn("fetch_sse_official_etf_master", source)
@@ -406,14 +388,13 @@ class DiscoveryRuntimeCoverageTests(unittest.TestCase):
         self.assertIn("eastmoney down", meta["eastmoney_error"])
 
 
-    def test_official_master_requests_use_repo_proven_browser_contract(self) -> None:
-        with patch.object(discovery, "_request_json_headers", return_value={"result": []}) as req:
-            discovery.fetch_sse_official_etf_master("2026-09-18")
-        headers = req.call_args.args[2]
-        self.assertIn("Chrome/", headers["User-Agent"])
-        self.assertEqual(headers["X-Requested-With"], "XMLHttpRequest")
-        self.assertIn("zh-CN", headers["Accept-Language"])
-
+    def test_source_contract_uses_eastmoney_primary_without_exchange_directories(self) -> None:
+        source = Path(discovery.__file__).read_text(encoding="utf-8")
+        self.assertIn("EASTMONEY_PRIMARY", source)
+        self.assertNotIn("query.sse.com.cn/commonQuery.do", source)
+        self.assertNotIn("www.szse.cn/api/report/ShowReport/data", source)
+        self.assertNotIn("fetch_sse_official_etf_master", source)
+        self.assertNotIn("fetch_szse_official_etf_master", source)
 
     def test_eastmoney_broad_pages_fetch_concurrently_but_preserve_page_order(self):
         calls = []
