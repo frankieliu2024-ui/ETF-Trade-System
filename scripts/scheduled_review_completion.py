@@ -976,7 +976,21 @@ def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | N
                 expected_snapshot=expected_binding["latest_snapshot"],
                 candidate_codes=selected_codes,
             )
+            # A separate, structured record of objects actually evaluated
+            # must cover the entire selected Discovery.  This does not rely
+            # on keyword searches in prose or imply opportunity eligibility.
+            if str(payload.get("completion_contract_version") or "").strip() == "3":
+                evaluated = discovery_binding.get("evaluated_candidate_codes")
+                if (
+                    not isinstance(evaluated, list)
+                    or any(not isinstance(code, str) or not code.strip() for code in evaluated)
+                    or len(evaluated) != len(set(evaluated))
+                    or set(evaluated) != set(selected_codes)
+                ):
+                    raise ValueError("Formal Decision evaluated Discovery objects mismatch")
         elif discovery_status in {"MISSING", "DEGRADED", "UNAVAILABLE"}:
+            if discovery_binding.get("evaluated_candidate_codes") not in (None, []):
+                raise ValueError("Formal Decision limited Discovery cannot claim evaluated objects")
             if discovery_binding.get("candidate_codes") not in (None, []):
                 raise ValueError("Formal Decision limited Discovery cannot claim candidate coverage")
             if not str(discovery_binding.get("reason") or "").strip():
