@@ -997,16 +997,12 @@ def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | N
                 raise ValueError("Formal Decision READY Discovery missing frozen selection")
             if not isinstance(selected_codes, list):
                 raise ValueError("Formal Decision READY Discovery missing candidate_codes")
-            # The selection must have existed before this run began. A
-            # subsequently updated projection is not admissible as PIT proof.
-            from datetime import datetime
-            try:
-                selected_at = datetime.fromisoformat(str(selected.get("generated_at_beijing") or ""))
-                requested_at = datetime.fromisoformat(str(payload["requested_at_beijing"]))
-                if selected_at.tzinfo is None or requested_at.tzinfo is None or selected_at > requested_at:
-                    raise ValueError("Formal Discovery was not available at run start")
-            except (TypeError, ValueError) as exc:
-                raise ValueError("Formal Discovery PIT generation time invalid or future") from exc
+            if select_latest_qualified_formal_discovery(
+                selected,
+                requested_at_beijing=str(payload["requested_at_beijing"]),
+                market_date=expected_binding["market_date"],
+            ) is None:
+                raise ValueError("Formal Discovery PIT generation time invalid or future, or incomplete")
             validate_formal_discovery_consumer_binding(
                 selected,
                 expected_market_date=expected_binding["market_date"],
