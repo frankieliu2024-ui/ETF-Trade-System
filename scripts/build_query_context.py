@@ -1287,6 +1287,7 @@ def _write_formal_layer_projections(root: Path, current: dict, discovery: dict) 
             "discovery_spot", "historical_context", "quotes", "quote",
             "decision_boundary", "source", "provenance", "data_quality",
             "market_date", "required_history_end_date", "identity_status",
+            "information_classes", "external_driver_evidence",
         }
         candidates.append({k: item[k] for k in keep if k in item})
     status = str(discovery.get("status") or "NOT_REQUESTED").upper()
