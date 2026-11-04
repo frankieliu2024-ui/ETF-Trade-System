@@ -95,6 +95,46 @@ class FormalDiscoverySelectionTests(unittest.TestCase):
                 requested_at_beijing=cutoff, market_date="2026-11-04",
             ))
 
+    def test_fault_injection_rejects_time_and_identity_corruption(self):
+        """Offline fault matrix: no fallback, no mutation, no duplicate output."""
+        for name, patch in (
+            ("wrong_trading_day", {"market_date": "2026-11-03"}),
+            ("future_publication", {"generated_at_beijing": "2026-11-04T13:32:00+08:00"}),
+            ("naive_timestamp", {"generated_at_beijing": "2026-11-04T13:30:33"}),
+            ("broken_timestamp", {"generated_at_beijing": "invalid"}),
+            ("bad_status", {"status": "FAILED"}),
+            ("partial_coverage", {"coverage_status": "PARTIAL"}),
+            ("missing_snapshot", {"latest_snapshot": None}),
+            ("wrong_count", {"candidate_count": 9}),
+            ("null_candidates", {"candidates": None}),
+            ("duplicate_codes", {"candidates": [{"code": "159189"}] * 8}),
+            ("missing_code", {"candidates": [{"code": ""}] * 8}),
+        ):
+            with self.subTest(fault=name):
+                injected = dict(self.projection, **patch)
+                before = repr(injected)
+                self.assertIsNone(
+                    select_latest_qualified_formal_discovery(injected, **self.kwargs)
+                )
+                self.assertEqual(repr(injected), before)
+
+    def test_simulation_timezone_equivalence_and_boundary(self):
+        self.assertIs(
+            select_latest_qualified_formal_discovery(
+                self.projection,
+                requested_at_beijing="2026-11-04T05:30:33+00:00",
+                market_date="2026-11-04",
+            ),
+            self.projection,
+        )
+        self.assertIsNone(
+            select_latest_qualified_formal_discovery(
+                self.projection,
+                requested_at_beijing="2026-11-04T05:30:32+00:00",
+                market_date="2026-11-04",
+            )
+        )
+
     def test_valid_zero_candidates_is_not_missing(self):
         empty = dict(self.projection, candidate_count=0, candidates=[])
         self.assertIs(select_latest_qualified_formal_discovery(empty, **self.kwargs), empty)
