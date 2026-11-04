@@ -335,6 +335,7 @@ def latest_canonical_formal_decision(root: Path = ROOT) -> dict:
         "_stale_reason": decision.get("_stale_reason", ""),
         "_decision_stamp": decision.get("_decision_stamp", ""),
         "_decision_path": decision.get("_decision_path", ""),
+        "_event_market_date": decision.get("_event_market_date", ""),
     }
 
 
