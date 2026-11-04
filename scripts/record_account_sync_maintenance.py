@@ -63,6 +63,21 @@ def main() -> int:
             return float(left) == float(right)
         return left == right
 
+    def position_value_matches(supplied_item, account_item, key, value):
+        # The canonical owner normalizes convertible bonds to asset_type=OTHER
+        # and preserves security_type=CONVERTIBLE_BOND. Treat that representation
+        # as equivalent to the broker-ingress alias without weakening any other
+        # position-field comparison.
+        if key == "asset_type":
+            supplied_type = str(value or "").upper()
+            account_type = str(account_item.get("asset_type") or "").upper()
+            account_security_type = str(account_item.get("security_type") or "").upper()
+            if supplied_type == "CONVERTIBLE_BOND":
+                return account_type == "CONVERTIBLE_BOND" or (
+                    account_type == "OTHER" and account_security_type == "CONVERTIBLE_BOND"
+                )
+        return same(value, account_item.get(key))
+
     def converged():
         if outcome != "success" or not isinstance(supplied, dict):
             return False
@@ -81,7 +96,7 @@ def main() -> int:
             if target is None:
                 return False
             for key, value in item.items():
-                if not same(value, target.get(key)):
+                if not position_value_matches(item, target, key, value):
                     return False
         return True
 
