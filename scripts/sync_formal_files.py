@@ -249,21 +249,21 @@ def latest_canonical_formal_decision(root: Path = ROOT) -> dict:
         except (TypeError, ValueError):
             continue
         event_market_date = str(event.get("market_date") or event.get("market_date_beijing") or "").strip()
-    if not event_market_date:
-        completion_path = str(event.get("source_completion_path") or "").strip()
-        if completion_path:
-            try:
-                completion = load_json(root / completion_path)
-                event_market_date = str(
-                    completion.get("market_date")
-                    or completion.get("market_date_beijing")
-                    or ""
-                ).strip()
-            except (OSError, json.JSONDecodeError, TypeError):
-                event_market_date = ""
-    if not event_market_date:
-        event_market_date = str(parsed.astimezone(SHANGHAI).date())
-    candidates.append((parsed, str(path), decision, event_market_date))
+        if not event_market_date:
+            completion_path = str(event.get("source_completion_path") or "").strip()
+            if completion_path:
+                try:
+                    completion = load_json(root / completion_path)
+                    event_market_date = str(
+                        completion.get("market_date")
+                        or completion.get("market_date_beijing")
+                        or ""
+                    ).strip()
+                except (OSError, json.JSONDecodeError, TypeError):
+                    event_market_date = ""
+        if not event_market_date:
+            event_market_date = str(parsed.astimezone(SHANGHAI).date())
+        candidates.append((parsed, str(path), decision, event_market_date))
     if not candidates:
         return {}
     parsed, event_path, decision, event_market_date = max(
