@@ -827,46 +827,6 @@ def select_latest_qualified_formal_discovery(
     return discovery
 
 
-def validate_formal_discovery_consumer_binding(
-    discovery: dict, *, expected_market_date: str, expected_snapshot: str,
-    candidate_codes: list[str],
-) -> None:
-    """Verify a run's explicitly selected Discovery against its frozen object set.
-
-    This checks provenance and identity, not opportunity/trading eligibility.
-    Callers must select the newest legal pre-run Discovery separately; a weekly
-    fallback cannot silently masquerade as a current-node selection.
-    """
-    if not isinstance(discovery, dict):
-        raise ValueError("Formal Discovery binding missing")
-    if str(discovery.get("market_date") or "") != expected_market_date:
-        raise ValueError("Formal Discovery market_date mismatch")
-    if str(discovery.get("latest_snapshot") or "") != expected_snapshot:
-        raise ValueError("Formal Discovery snapshot mismatch")
-    if str(discovery.get("status") or "").upper() not in {"READY", "COMPLETE"}:
-        raise ValueError("Formal Discovery is not complete")
-    candidates = discovery.get("candidates")
-    if not isinstance(candidates, list) or any(not isinstance(x, dict) for x in candidates):
-        raise ValueError("Formal Discovery candidate set invalid")
-    actual = [str(x.get("code") or "").strip() for x in candidates]
-    if any(not code for code in actual) or len(actual) != len(set(actual)):
-        raise ValueError("Formal Discovery candidate set invalid")
-    declared_count = discovery.get("candidate_count")
-    if declared_count is not None and (
-        isinstance(declared_count, bool)
-        or not isinstance(declared_count, int)
-        or declared_count != len(actual)
-    ):
-        raise ValueError("Formal Discovery declared candidate count mismatch")
-    if (
-        not isinstance(candidate_codes, list)
-        or any(not isinstance(code, str) or not code.strip() for code in candidate_codes)
-        or len(candidate_codes) != len(set(candidate_codes))
-        or set(actual) != set(candidate_codes)
-    ):
-        raise ValueError("Formal Decision Discovery candidate coverage mismatch")
-
-
 def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | None = None) -> dict:
     """Fail closed before a Formal Decision completion can enter the notification chain.
 
@@ -925,8 +885,6 @@ def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | N
         raise ValueError("Formal Decision completion presentation_binding.content_hash mismatch")
     payload["content_hash"] = expected_hash
     binding["content_hash"] = expected_hash
-    if str(payload.get("completion_contract_version") or "").strip() == "3":
-        validate_user_visible_content(content, canonical_closure_confirmed=False)
     if "final_content_hash" in payload:
         final_hash = str(payload.get("final_content_hash") or "").strip().lower()
         if final_hash and final_hash != expected_hash:
@@ -976,60 +934,6 @@ def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | N
         raise ValueError("Formal Decision completion bound snapshot market_date mismatch")
     if str(snapshot.get("quality_status") or "").strip().upper() != "PASS":
         raise ValueError("Formal Decision completion bound snapshot quality is not PASS")
-    # Opt-in contract for a run-frozen Discovery selection.  This is validated
-    # against the snapshot pinned by the run, never a later CURRENT projection.
-    # A missing/degraded object layer remains a reportable limitation rather
-    # than a fabricated empty set or an automatic completion blocker.
-    discovery_binding = payload.get("discovery_binding")
-    # Version 3 is opt-in until every live task entrypoint can freeze and
-    # supply this evidence. Historical version-2 completions remain replayable.
-    # Once v3 is adopted, omission of the field is never a silent bypass.
-    if str(payload.get("completion_contract_version") or "").strip() == "3" and discovery_binding is None:
-        raise ValueError("Formal Decision v3 requires run-frozen discovery_binding")
-    if discovery_binding is not None:
-        if not isinstance(discovery_binding, dict):
-            raise ValueError("Formal Decision discovery_binding must be an object")
-        discovery_status = str(discovery_binding.get("status") or "").upper()
-        if discovery_status in {"READY", "COMPLETE"}:
-            selected = discovery_binding.get("selected_discovery")
-            selected_codes = discovery_binding.get("candidate_codes")
-            if not isinstance(selected, dict):
-                raise ValueError("Formal Decision READY Discovery missing frozen selection")
-            if not isinstance(selected_codes, list):
-                raise ValueError("Formal Decision READY Discovery missing candidate_codes")
-            if select_latest_qualified_formal_discovery(
-                selected,
-                requested_at_beijing=str(payload["requested_at_beijing"]),
-                market_date=expected_binding["market_date"],
-            ) is None:
-                raise ValueError("Formal Discovery PIT generation time invalid or future, or incomplete")
-            validate_formal_discovery_consumer_binding(
-                selected,
-                expected_market_date=expected_binding["market_date"],
-                expected_snapshot=expected_binding["latest_snapshot"],
-                candidate_codes=selected_codes,
-            )
-            # A separate, structured record of objects actually evaluated
-            # must cover the entire selected Discovery.  This does not rely
-            # on keyword searches in prose or imply opportunity eligibility.
-            if str(payload.get("completion_contract_version") or "").strip() == "3":
-                evaluated = discovery_binding.get("evaluated_candidate_codes")
-                if (
-                    not isinstance(evaluated, list)
-                    or any(not isinstance(code, str) or not code.strip() for code in evaluated)
-                    or len(evaluated) != len(set(evaluated))
-                    or set(evaluated) != set(selected_codes)
-                ):
-                    raise ValueError("Formal Decision evaluated Discovery objects mismatch")
-        elif discovery_status in {"MISSING", "DEGRADED", "UNAVAILABLE"}:
-            if discovery_binding.get("evaluated_candidate_codes") not in (None, []):
-                raise ValueError("Formal Decision limited Discovery cannot claim evaluated objects")
-            if discovery_binding.get("candidate_codes") not in (None, []):
-                raise ValueError("Formal Decision limited Discovery cannot claim candidate coverage")
-            if not str(discovery_binding.get("reason") or "").strip():
-                raise ValueError("Formal Decision limited Discovery requires reason")
-        else:
-            raise ValueError("Formal Decision discovery_binding status invalid")
     return {
         "task_run_id": str(payload["task_run_id"]).strip(),
         "occurrence_id": str(payload["occurrence_id"]).strip(),
@@ -1091,17 +995,7 @@ def build_formal_runtime_completion_request(
             if isinstance(fact_summary, dict) and isinstance(fact_summary.get("fact_binding"), dict)
             else {}
         ),
-        **(
-            {"discovery_binding": fact_summary["discovery_binding"]}
-            if isinstance(fact_summary, dict) and "discovery_binding" in fact_summary
-            else {}
-        ),
-        # A run that supplies frozen Discovery evidence must use the strict
-        # coverage contract. Legacy no-evidence runs remain v2 until live
-        # entrypoints are migrated under the existing task governance.
-        "completion_contract_version": (
-            "3" if isinstance(fact_summary, dict) and "discovery_binding" in fact_summary else "2"
-        ),
+        "completion_contract_version": "2",
         "decision_id": decision_id,
         "report_type": "ETF_FORMAL_DECISION",
         "report_id": decision_id,
