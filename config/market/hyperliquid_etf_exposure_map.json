@@ -6,25 +6,347 @@
   "production_eligible": false,
   "mapping_principle": "先按经济暴露族群映射，再用A股ETF自身行情和历史验证；不得只维护单一行业或固定少数ETF。",
   "asset_mappings": [
-    {"asset": "xyz:XYZ100", "family": "GLOBAL_RISK_APPETITE", "name_markers": ["纳指", "标普", "创业", "科创", "宽基", "成长", "中证1000", "中证2000"]},
-    {"asset": "xyz:SP500", "family": "GLOBAL_RISK_APPETITE", "name_markers": ["标普", "宽基", "成长", "价值"]},
-    {"asset": "xyz:SMH", "family": "SEMICONDUCTOR", "name_markers": ["半导体", "芯片", "科创", "通信", "电子", "设备"]},
-    {"asset": "xyz:SOXL", "family": "SEMICONDUCTOR_HIGH_BETA", "name_markers": ["半导体", "芯片", "科创", "通信", "电子", "设备"]},
-    {"asset": "xyz:DRAM", "family": "MEMORY", "name_markers": ["半导体", "芯片", "存储", "科创", "通信", "电子", "设备"]},
-    {"asset": "xyz:AMD", "family": "AI_COMPUTE", "name_markers": ["半导体", "芯片", "人工智能", "算力", "通信", "电子", "科创"]},
-    {"asset": "xyz:NVDA", "family": "AI_COMPUTE", "name_markers": ["半导体", "芯片", "人工智能", "算力", "通信", "电子", "科创"]},
-    {"asset": "xyz:XBI", "family": "BIOTECH", "name_markers": ["创新药", "医药", "生物", "医疗", "器械"]},
-    {"asset": "xyz:XLE", "family": "ENERGY", "name_markers": ["能源", "油气", "煤炭", "化工", "石化"]},
-    {"asset": "xyz:BRENTOIL", "family": "ENERGY", "name_markers": ["能源", "油气", "煤炭", "化工", "石化"]},
-    {"asset": "xyz:GOLD", "family": "GOLD", "name_markers": ["黄金", "有色", "资源"]},
-    {"asset": "xyz:COPPER", "family": "INDUSTRIAL_METALS", "name_markers": ["有色", "工业金属", "资源", "电网", "新能源"]},
-    {"asset": "xyz:EWY", "family": "KOREA_EQUITY", "name_markers": ["韩国", "亚洲", "恒生", "科技"]},
-    {"asset": "xyz:EWJ", "family": "JAPAN_EQUITY", "name_markers": ["日本", "日经", "亚洲"]},
-    {"asset": "xyz:EWT", "family": "TAIWAN_EQUITY", "name_markers": ["台湾", "亚洲", "半导体", "科技"]},
-    {"asset": "xyz:CXMT", "family": "CHINA_MEMORY_CHAIN", "name_markers": ["半导体", "芯片", "存储", "科创", "通信", "电子", "设备"]},
-    {"asset": "xyz:GIGADEV", "family": "CHINA_MEMORY_CHAIN", "name_markers": ["半导体", "芯片", "存储", "科创", "通信", "电子", "设备"]},
-    {"asset": "xyz:XYZ100", "family": "GLOBAL_RISK_APPETITE", "etf_codes": ["159941", "588000", "159781", "513180", "159561", "515080"]}
+    {
+      "asset": "xyz:XYZ100",
+      "family": "GLOBAL_RISK_APPETITE",
+      "name_markers": [
+        "纳指",
+        "标普",
+        "创业",
+        "科创",
+        "宽基",
+        "成长",
+        "中证1000",
+        "中证2000"
+      ]
+    },
+    {
+      "asset": "xyz:SP500",
+      "family": "GLOBAL_RISK_APPETITE",
+      "name_markers": [
+        "标普",
+        "宽基",
+        "成长",
+        "价值"
+      ]
+    },
+    {
+      "asset": "xyz:SMH",
+      "family": "SEMICONDUCTOR",
+      "name_markers": [
+        "半导体",
+        "芯片",
+        "科创",
+        "通信",
+        "电子",
+        "设备"
+      ]
+    },
+    {
+      "asset": "xyz:SOXL",
+      "family": "SEMICONDUCTOR_HIGH_BETA",
+      "name_markers": [
+        "半导体",
+        "芯片",
+        "科创",
+        "通信",
+        "电子",
+        "设备"
+      ]
+    },
+    {
+      "asset": "xyz:DRAM",
+      "family": "MEMORY",
+      "name_markers": [
+        "半导体",
+        "芯片",
+        "存储",
+        "科创",
+        "通信",
+        "电子",
+        "设备"
+      ]
+    },
+    {
+      "asset": "xyz:AMD",
+      "family": "AI_COMPUTE",
+      "name_markers": [
+        "半导体",
+        "芯片",
+        "人工智能",
+        "算力",
+        "通信",
+        "电子",
+        "科创"
+      ]
+    },
+    {
+      "asset": "xyz:NVDA",
+      "family": "AI_COMPUTE",
+      "name_markers": [
+        "半导体",
+        "芯片",
+        "人工智能",
+        "算力",
+        "通信",
+        "电子",
+        "科创"
+      ]
+    },
+    {
+      "asset": "xyz:XBI",
+      "family": "BIOTECH",
+      "name_markers": [
+        "创新药",
+        "医药",
+        "生物",
+        "医疗",
+        "器械"
+      ]
+    },
+    {
+      "asset": "xyz:XLE",
+      "family": "ENERGY",
+      "name_markers": [
+        "能源",
+        "油气",
+        "煤炭",
+        "化工",
+        "石化"
+      ]
+    },
+    {
+      "asset": "xyz:BRENTOIL",
+      "family": "ENERGY",
+      "name_markers": [
+        "能源",
+        "油气",
+        "煤炭",
+        "化工",
+        "石化"
+      ]
+    },
+    {
+      "asset": "xyz:GOLD",
+      "family": "GOLD",
+      "name_markers": [
+        "黄金",
+        "有色",
+        "资源"
+      ]
+    },
+    {
+      "asset": "xyz:COPPER",
+      "family": "INDUSTRIAL_METALS",
+      "name_markers": [
+        "有色",
+        "工业金属",
+        "资源",
+        "电网",
+        "新能源"
+      ]
+    },
+    {
+      "asset": "xyz:EWY",
+      "family": "KOREA_EQUITY",
+      "name_markers": [
+        "韩国",
+        "亚洲",
+        "恒生",
+        "科技"
+      ]
+    },
+    {
+      "asset": "xyz:EWJ",
+      "family": "JAPAN_EQUITY",
+      "name_markers": [
+        "日本",
+        "日经",
+        "亚洲"
+      ]
+    },
+    {
+      "asset": "xyz:EWT",
+      "family": "TAIWAN_EQUITY",
+      "name_markers": [
+        "台湾",
+        "亚洲",
+        "半导体",
+        "科技"
+      ]
+    },
+    {
+      "asset": "xyz:CXMT",
+      "family": "CHINA_MEMORY_CHAIN",
+      "name_markers": [
+        "半导体",
+        "芯片",
+        "存储",
+        "科创",
+        "通信",
+        "电子",
+        "设备"
+      ]
+    },
+    {
+      "asset": "xyz:GIGADEV",
+      "family": "CHINA_MEMORY_CHAIN",
+      "name_markers": [
+        "半导体",
+        "芯片",
+        "存储",
+        "科创",
+        "通信",
+        "电子",
+        "设备"
+      ]
+    },
+    {
+      "asset": "xyz:XYZ100",
+      "family": "GLOBAL_RISK_APPETITE",
+      "etf_codes": [
+        "159941",
+        "588000",
+        "159781",
+        "513180",
+        "159561",
+        "515080"
+      ]
+    },
+    {
+      "asset": "xyz:SNDK",
+      "family": "MEMORY",
+      "name_markers": [
+        "半导体",
+        "芯片",
+        "存储",
+        "科创",
+        "通信",
+        "电子",
+        "设备"
+      ]
+    },
+    {
+      "asset": "io:SNDK",
+      "family": "MEMORY",
+      "name_markers": [
+        "半导体",
+        "芯片",
+        "存储",
+        "科创",
+        "通信",
+        "电子",
+        "设备"
+      ]
+    },
+    {
+      "asset": "io:NVDA",
+      "family": "AI_COMPUTE",
+      "name_markers": [
+        "半导体",
+        "芯片",
+        "人工智能",
+        "算力",
+        "通信",
+        "电子",
+        "科创"
+      ]
+    },
+    {
+      "asset": "io:EWY",
+      "family": "KOREA_EQUITY",
+      "name_markers": [
+        "韩国",
+        "亚洲",
+        "恒生",
+        "科技"
+      ]
+    },
+    {
+      "asset": "xyz:BABA",
+      "family": "CHINA_TECH_RISK",
+      "name_markers": [
+        "中国",
+        "港股",
+        "互联网",
+        "科技",
+        "宽基"
+      ]
+    },
+    {
+      "asset": "xyz:AVGO",
+      "family": "AI_NETWORKING",
+      "name_markers": [
+        "半导体",
+        "芯片",
+        "人工智能",
+        "算力",
+        "通信",
+        "电子"
+      ]
+    },
+    {
+      "asset": "para:COHR",
+      "family": "AI_NETWORKING",
+      "name_markers": [
+        "半导体",
+        "芯片",
+        "人工智能",
+        "算力",
+        "通信",
+        "电子"
+      ]
+    },
+    {
+      "asset": "xyz:NBIS",
+      "family": "AI_COMPUTE",
+      "name_markers": [
+        "人工智能",
+        "算力",
+        "科技",
+        "通信",
+        "电子"
+      ]
+    },
+    {
+      "asset": "io:NBIS",
+      "family": "AI_COMPUTE",
+      "name_markers": [
+        "人工智能",
+        "算力",
+        "科技",
+        "通信",
+        "电子"
+      ]
+    }
   ],
-  "focused_assets": ["xyz:XYZ100", "xyz:SP500", "xyz:SMH", "xyz:SOXL", "xyz:DRAM", "xyz:AMD", "xyz:NVDA", "xyz:XBI", "xyz:XLE", "xyz:BRENTOIL", "xyz:GOLD", "xyz:COPPER", "xyz:EWY", "xyz:EWJ", "xyz:EWT", "xyz:CXMT", "xyz:GIGADEV"],
+  "focused_assets": [
+    "xyz:XYZ100",
+    "xyz:SP500",
+    "xyz:SMH",
+    "xyz:SOXL",
+    "xyz:DRAM",
+    "xyz:AMD",
+    "xyz:NVDA",
+    "xyz:XBI",
+    "xyz:XLE",
+    "xyz:BRENTOIL",
+    "xyz:GOLD",
+    "xyz:COPPER",
+    "xyz:EWY",
+    "xyz:EWJ",
+    "xyz:EWT",
+    "xyz:CXMT",
+    "xyz:GIGADEV",
+    "xyz:SNDK",
+    "io:SNDK",
+    "io:NVDA",
+    "io:EWY",
+    "xyz:BABA",
+    "xyz:AVGO",
+    "para:COHR",
+    "xyz:NBIS",
+    "io:NBIS"
+  ],
   "boundary": "External drivers can create Discovery evaluation input and modify evidence strength only; they cannot independently grant Trial, Confirm, amount, sell quantity or order."
 }
