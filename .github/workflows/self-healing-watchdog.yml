@@ -347,12 +347,12 @@ jobs:
       - name: Persist bounded self-healing state and deterministic repairs
         # Keep PR validation read-only. Runtime repair is a main-branch owner
         # operation and must never push a PR worktree to main.
-        if: ${{ github.ref == 'refs/heads/main' }}
+        # Keep PR validation read-only and persist only a successful assessment on main.
+        if: ${{ github.ref == 'refs/heads/main' && always() && steps.assess.outcome == 'success' }}
         # The assessment artifact is itself canonical runtime state. Persist it
         # whenever the calculated status differs from main, including a return
         # to HEALTHY/NONE, so downstream consistency never consumes stale
         # self-healing metadata after a successful recovery.
-        if: ${{ always() && steps.assess.outcome == 'success' }}
         shell: bash
         run: |
           set -euo pipefail
