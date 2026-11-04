@@ -790,6 +790,31 @@ if __name__ == "__main__":
 
 
 
+def validate_formal_discovery_consumer_binding(
+    discovery: dict, *, expected_market_date: str, expected_snapshot: str,
+    candidate_codes: list[str],
+) -> None:
+    """Verify a run's explicitly selected Discovery against its frozen object set.
+
+    This checks provenance and identity, not opportunity/trading eligibility.
+    Callers must select the newest legal pre-run Discovery separately; a weekly
+    fallback cannot silently masquerade as a current-node selection.
+    """
+    if not isinstance(discovery, dict):
+        raise ValueError("Formal Discovery binding missing")
+    if str(discovery.get("market_date") or "") != expected_market_date:
+        raise ValueError("Formal Discovery market_date mismatch")
+    if str(discovery.get("latest_snapshot") or "") != expected_snapshot:
+        raise ValueError("Formal Discovery snapshot mismatch")
+    if str(discovery.get("status") or "").upper() not in {"READY", "COMPLETE"}:
+        raise ValueError("Formal Discovery is not complete")
+    actual = [str(x.get("code") or "").strip() for x in discovery.get("candidates", [])]
+    if not actual or len(actual) != len(set(actual)):
+        raise ValueError("Formal Discovery candidate set invalid")
+    if len(candidate_codes) != len(set(candidate_codes)) or set(actual) != set(candidate_codes):
+        raise ValueError("Formal Decision Discovery candidate coverage mismatch")
+
+
 def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | None = None) -> dict:
     """Fail closed before a Formal Decision completion can enter the notification chain.
 
