@@ -26,9 +26,23 @@ def build() -> dict:
     catalog = []
     observations = []
     failures = []
-    dexes = _post({"type": "perpDexs"})
-    if not isinstance(dexes, list):
-        raise ValueError("perpDexs response is not a list")
+    try:
+        dexes = _post({"type": "perpDexs"})
+        if not isinstance(dexes, list):
+            raise ValueError("perpDexs response is not a list")
+    except Exception as exc:
+        return {
+            "schema_version": "1.0", "mode": "FORMAL_EXTERNAL_DRIVER_DISCOVERY_INPUT",
+            "provider": "hyperliquid_info_api", "read_only": True,
+            "started_at_utc": started, "finished_at_utc": _now(),
+            "quality_status": "FAILED", "dex_count": 0, "catalog_count": 0,
+            "focused_count": 0, "missing_focused_assets": sorted(targets),
+            "dex_failures": [{"dex": "DIRECTORY", "error": type(exc).__name__,
+                              "message": str(exc)[-300:]}],
+            "catalog": [], "observations": [],
+            "mapping": config["asset_mappings"],
+            "decision_boundary": config["boundary"]
+        }
     for dex in dexes:
         dex_name = (dex or {}).get("name") or "default"
         request = {"type": "metaAndAssetCtxs"}
