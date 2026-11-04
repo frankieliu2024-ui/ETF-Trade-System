@@ -2402,8 +2402,7 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
         top_level_hash = str(request.get("content_hash") or "").strip().lower()
         binding_hash = str(raw_presentation_binding.get("content_hash") or "").strip().lower()
         if (
-            (not top_level_hash or top_level_hash == candidate_hash)
-            and (not binding_hash or binding_hash == candidate_hash)
+            (not top_level_hash or not binding_hash or top_level_hash == binding_hash)
         ):
             raw_presentation_binding = dict(raw_presentation_binding)
             raw_presentation_binding["full_content"] = candidate_content
