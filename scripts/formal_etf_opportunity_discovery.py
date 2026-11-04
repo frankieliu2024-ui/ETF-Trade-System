@@ -167,43 +167,6 @@ def _tencent_spot_row(identity: dict[str, Any], quote: dict[str, Any]) -> dict[s
     }
 
 
-def fetch_hithink_tencent_broad_spot() -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    """Secondary identity fallback: Hithink ETF master hydrated with Tencent quotes.
-
-    Eastmoney remains the primary broad cross-section. This path is used only
-    when the Eastmoney cross-section is unavailable; exchange directory
-    enumeration is intentionally not part of the Discovery source chain.
-    """
-    try:
-        from scripts.tencent_quote import fetch_tencent_quotes
-    except ModuleNotFoundError:
-        from tencent_quote import fetch_tencent_quotes
-
-    master = fetch_hithink_etf_master()
-    rows: list[dict[str, Any]] = []
-    failures: list[dict[str, Any]] = []
-    for offset in range(0, len(master), 60):
-        batch = master[offset:offset + 60]
-        symbols = [f'{x["code"]}.{"SH" if x["market_id"] == 1 else "SZ"}' for x in batch]
-        try:
-            quotes = fetch_tencent_quotes(symbols, timeout=10)
-        except Exception as exc:
-            failures.append({"offset": offset, "count": len(batch), "error": str(exc)[-240:]})
-            continue
-        for identity, symbol in zip(batch, symbols):
-            quote = quotes.get(symbol.upper())
-            if quote:
-                rows.append(_tencent_spot_row(identity, quote))
-    return rows, {
-        "identity_master_source": "HITHINK_ETF_CATEGORY",
-        "hithink_master_count": len(master),
-        "fallback_quote_source": "TENCENT_QQ",
-        "fallback_quote_count": len(rows),
-        "tencent_failed_batch_count": len(failures),
-        "tencent_failures": failures,
-    }
-
-
 def _hydrate_tencent_identities(identities: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """Hydrate only the identities that need independent current-market facts."""
     try:
@@ -261,132 +224,78 @@ def _hydrate_tencent_identities(identities: list[dict[str, Any]]) -> tuple[list[
 
 
 def fetch_reconciled_broad_etf_spot(market_date: str) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    """High-recall dual-source universe; either source can keep Discovery available.
+    """Eastmoney-first broad ETF universe with Hithink/Tencent fallback only.
 
-    Eastmoney contributes its broad current cross-section. Hithink independently
-    contributes ETF identities. When both work, only Hithink identities absent
-    from Eastmoney are hydrated through Tencent before entering the cheap
-    Discovery gate. This prevents a successful Eastmoney response from becoming
-    a hidden completeness boundary without paying for full duplicate hydration.
+    When Eastmoney returns a valid broad cross-section, it is the complete
+    primary universe for this run. Hithink is not unioned into that universe.
+    Hithink identities are consulted only after Eastmoney fails, then hydrated
+    through Tencent as an explicitly degraded secondary path.
     """
-    east_rows: list[dict[str, Any]] = []
-    hithink_master: list[dict[str, Any]] = []
+    started = time.monotonic()
     east_error = None
-    hithink_error = None
+    try:
+        east_rows = fetch_broad_etf_spot()
+    except Exception as exc:
+        east_rows = []
+        east_error = str(exc)[-500:]
+    east_elapsed = round(time.monotonic() - started, 3)
 
-    def get_east() -> list[dict[str, Any]]:
-        return fetch_broad_etf_spot()
-
-    def get_hithink() -> list[dict[str, Any]]:
-        return fetch_hithink_etf_master()
-
-    source_started = time.monotonic()
-    source_finished: dict[str, float] = {}
-    with ThreadPoolExecutor(max_workers=2, thread_name_prefix="etf-universe") as executor:
-        future_sources = {executor.submit(get_east): "eastmoney", executor.submit(get_hithink): "hithink"}
-        for future in as_completed(future_sources):
-            source = future_sources[future]
-            source_finished[source] = round(time.monotonic() - source_started, 3)
-            try:
-                value = future.result()
-                if source == "eastmoney":
-                    east_rows = value
-                else:
-                    hithink_master = value
-            except Exception as exc:
-                if source == "eastmoney":
-                    east_error = str(exc)[-500:]
-                else:
-                    hithink_error = str(exc)[-500:]
-    source_join_elapsed = round(time.monotonic() - source_started, 3)
-
-    if not east_rows and not hithink_master:
-        # Preserve the existing deeper official-master fallback when both normal
-        # independent universe sources are unavailable.
-        fallback_rows, fallback_meta = fetch_hithink_tencent_broad_spot()
-        if not fallback_rows:
-            raise RuntimeError(
-                f"broad providers unavailable; eastmoney={east_error}; hithink={hithink_error}"
-            )
-        return fallback_rows, {
-            **fallback_meta,
-            "universe_mode": "HITHINK_TENCENT_SECONDARY_FALLBACK",
-            "eastmoney_count": 0,
-            "hithink_identity_count": 0,
-            "eastmoney_error": east_error,
-            "hithink_error": hithink_error,
-            "fallback_used": True,
-            "fallback_source": "HITHINK_MASTER_PLUS_TENCENT",
-            "reconciled_count": len(fallback_rows),
-            "source_elapsed_seconds": source_finished,
-            "source_join_elapsed_seconds": source_join_elapsed,
-        }
-
-    if not east_rows:
-        hydrated, hydration_meta = _hydrate_tencent_identities(hithink_master)
-        if not hydrated:
-            raise RuntimeError(f"Hithink universe available but Tencent hydration unavailable; eastmoney={east_error}")
-        return hydrated, {
-            **hydration_meta,
-            "universe_mode": "HITHINK_ONLY",
-            "eastmoney_count": 0,
-            "hithink_identity_count": len(hithink_master),
-            "eastmoney_error": east_error,
-            "hithink_error": hithink_error,
-            "hithink_only_identity_count": len(hithink_master),
-            "fallback_used": True,
-            "fallback_source": "HITHINK_ETF_MASTER_PLUS_TENCENT",
-            "reconciled_count": len(hydrated),
-            "source_elapsed_seconds": source_finished,
-            "source_join_elapsed_seconds": source_join_elapsed,
-        }
-
-    if not hithink_master:
+    if east_rows:
         return east_rows, {
-            "universe_mode": "EASTMONEY_ONLY_DEGRADED_RECONCILIATION",
+            "universe_mode": "EASTMONEY_PRIMARY",
+            "primary_source": "EASTMONEY_PUSH2_ETF_CROSS_SECTION",
             "eastmoney_count": len(east_rows),
             "hithink_identity_count": 0,
-            "eastmoney_error": east_error,
-            "hithink_error": hithink_error,
-            "hithink_only_identity_count": 0,
+            "eastmoney_error": None,
+            "hithink_error": None,
             "fallback_used": False,
             "fallback_source": None,
             "reconciled_count": len(east_rows),
-            "source_elapsed_seconds": source_finished,
-            "source_join_elapsed_seconds": source_join_elapsed,
+            "source_elapsed_seconds": {"eastmoney": east_elapsed},
+            "source_join_elapsed_seconds": east_elapsed,
+            "supplemental_hydration_elapsed_seconds": 0.0,
         }
 
-    east_keys = {(int(x.get("market_id") or 0), str(x.get("code") or "")) for x in east_rows}
-    missing = [
-        x for x in hithink_master
-        if (int(x.get("market_id") or 0), str(x.get("code") or "")) not in east_keys
-    ]
-    supplemental_started = time.monotonic()
-    supplemental_rows, hydration_meta = _hydrate_tencent_identities(missing) if missing else ([], {
-        "requested_identity_count": 0, "tencent_quote_count": 0,
-        "tencent_failed_batch_count": 0, "tencent_failures": [],
-    })
-    supplemental_hydration_elapsed = round(time.monotonic() - supplemental_started, 3)
-    merged = {(int(x.get("market_id") or 0), str(x.get("code") or "")): x for x in east_rows}
-    for row in supplemental_rows:
-        merged[(int(row.get("market_id") or 0), str(row.get("code") or ""))] = row
-    rows = [merged[key] for key in sorted(merged)]
-    return rows, {
+    hithink_started = time.monotonic()
+    try:
+        hithink_master = fetch_hithink_etf_master()
+    except Exception as exc:
+        hithink_master = []
+        hithink_error = str(exc)[-500:]
+    else:
+        hithink_error = None
+    hithink_elapsed = round(time.monotonic() - hithink_started, 3)
+
+    if not hithink_master:
+        raise RuntimeError(
+            f"primary and secondary ETF universe sources unavailable; "
+            f"eastmoney={east_error}; hithink={hithink_error}"
+        )
+
+    hydration_started = time.monotonic()
+    hydrated, hydration_meta = _hydrate_tencent_identities(hithink_master)
+    hydration_elapsed = round(time.monotonic() - hydration_started, 3)
+    if not hydrated:
+        raise RuntimeError(
+            f"Eastmoney unavailable and Hithink/Tencent fallback produced no ETF quotes; "
+            f"eastmoney={east_error}; hithink_quote_failures={hydration_meta.get('tencent_failures')}"
+        )
+    return hydrated, {
         **hydration_meta,
-        "universe_mode": "DUAL_SOURCE_RECONCILED",
-        "eastmoney_count": len(east_rows),
+        "universe_mode": "HITHINK_TENCENT_SECONDARY_FALLBACK",
+        "primary_source": "EASTMONEY_PUSH2_ETF_CROSS_SECTION",
+        "eastmoney_count": 0,
         "hithink_identity_count": len(hithink_master),
         "eastmoney_error": east_error,
         "hithink_error": hithink_error,
-        "hithink_only_identity_count": len(missing),
-        "hithink_only_hydrated_count": len(supplemental_rows),
-        "fallback_used": False,
-        "fallback_source": None,
-        "reconciled_count": len(rows),
-        "source_elapsed_seconds": source_finished,
-        "source_join_elapsed_seconds": source_join_elapsed,
-        "supplemental_hydration_elapsed_seconds": supplemental_hydration_elapsed,
+        "fallback_used": True,
+        "fallback_source": "HITHINK_ETF_MASTER_PLUS_TENCENT",
+        "reconciled_count": len(hydrated),
+        "source_elapsed_seconds": {"eastmoney": east_elapsed, "hithink": hithink_elapsed},
+        "source_join_elapsed_seconds": east_elapsed + hithink_elapsed,
+        "supplemental_hydration_elapsed_seconds": hydration_elapsed,
     }
+
 
 def _secid(code: str, market_id: int | None = None) -> str:
     market = market_id if market_id in {0, 1} else (1 if str(code).startswith("5") else 0)
