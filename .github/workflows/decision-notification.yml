@@ -914,6 +914,15 @@ jobs:
             git commit -m "state: record notification and execution reconciliation"
           done
 
+      - name: Trigger post-notification system consistency
+        if: ${{ always() && (steps.scheduled_completion_event.outputs.review_event_path != '' || steps.formal_completion_event.outputs.review_event_path != '' || steps.push_kind.outputs.report_path != '' || steps.push_kind.outputs.report_handoff_path != '') }}
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh workflow run system-consistency.yml --repo "${{ github.repository }}" --ref main
+
       - name: Surface notification delivery failure without blocking trading system
         if: ${{ steps.test_notify.outcome == 'failure' || steps.event_notify.outcome == 'failure' || steps.close_notify.outcome == 'failure' || steps.a_share_summary_notify.outcome == 'failure' || steps.a_share_shock_notify.outcome == 'failure' || steps.apac_summary_notify.outcome == 'failure' || steps.apac_shock_notify.outcome == 'failure' || steps.us_summary_notify.outcome == 'failure' || steps.us_shock_notify.outcome == 'failure' }}
         run: |
