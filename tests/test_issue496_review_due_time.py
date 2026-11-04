@@ -19,6 +19,8 @@ class ReviewDueTimeTests(unittest.TestCase):
         self.assertEqual(review_due_state("2026-09-10", "2026-09-10", t("2026-09-10T19:29:00+08:00"), "19:30"), "NOT_DUE_TODAY")
         self.assertEqual(review_due_state("2026-09-10", "2026-09-10", t("2026-09-10T19:30:00+08:00"), "19:30"), "DUE_OR_OVERDUE")
         self.assertEqual(review_due_state("2026-09-10", "2026-09-10", t("2026-09-10T20:29:00+08:00"), "20:30"), "NOT_DUE_TODAY")
+        # The 19:30 System Review must not require the 20:30 Trade Review yet.
+        self.assertEqual(review_due_state("2026-09-10", "2026-09-10", t("2026-09-10T19:30:00+08:00"), "20:30"), "NOT_DUE_TODAY")
         self.assertEqual(review_due_state("2026-09-10", "2026-09-10", t("2026-09-10T20:30:00+08:00"), "20:30"), "DUE_OR_OVERDUE")
         self.assertEqual(review_due_state("2026-09-10", "2026-09-10", t("2026-09-10T20:59:00+08:00"), "21:00"), "NOT_DUE_TODAY")
         self.assertEqual(review_due_state("2026-09-10", "2026-09-10", t("2026-09-10T21:00:00+08:00"), "21:00"), "DUE_OR_OVERDUE")
