@@ -79,6 +79,7 @@ def test_latest_reference_processing_is_manual_only_and_respects_probe_and_state
     available = {"available": True}
     assert should_process_latest_reference("workflow_dispatch", "NOT_APPLICABLE", False, False, available)
     assert not should_process_latest_reference("workflow_dispatch", "NOT_APPLICABLE", False, True, available)
+    assert not should_process_latest_reference("workflow_dispatch", "NOT_APPLICABLE", False, False, available, has_replay_request=True)
     assert not should_process_latest_reference("workflow_dispatch", "STATE_SYNC_ONLY", False, False, available)
     assert not should_process_latest_reference("workflow_dispatch", "BUSINESS_DECISION_SOURCE", False, False, available)
     assert not should_process_latest_reference("schedule", "NOT_APPLICABLE", False, False, available)
