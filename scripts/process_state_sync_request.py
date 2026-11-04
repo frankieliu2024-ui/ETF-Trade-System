@@ -2385,6 +2385,25 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
             raw_presentation_binding["content_hash_source"] = str(
                 request.get("content_hash_source") or "completion_builder"
             ).strip() or "completion_builder"
+    # Legacy completions may carry the frozen body at the request top level
+    # while omitting it from presentation_binding. Reconstruct this field only
+    # in memory, and only when every available hash agrees with that body. A
+    # present conflicting binding remains fail-closed.
+    if (
+        isinstance(raw_presentation_binding, dict)
+        and not str(raw_presentation_binding.get("full_content") or "")
+        and str(request.get("final_content") or "")
+    ):
+        candidate_content = str(request.get("final_content"))
+        candidate_hash = hashlib.sha256(candidate_content.encode("utf-8")).hexdigest()
+        top_level_hash = str(request.get("content_hash") or "").strip().lower()
+        binding_hash = str(raw_presentation_binding.get("content_hash") or "").strip().lower()
+        if (
+            (not top_level_hash or top_level_hash == candidate_hash)
+            and (not binding_hash or binding_hash == candidate_hash)
+        ):
+            raw_presentation_binding = dict(raw_presentation_binding)
+            raw_presentation_binding["full_content"] = candidate_content
     is_trade_review_production = (
         str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION"
         and str(request.get("source") or "").strip().upper() in {"CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR", "CHATGPT_SCHEDULED_TRADE_REVIEW", "CHATGPT_MANUAL_TRADE_REVIEW", "CHATGPT_DIRECT_GITHUB_CONTENTS_WRITER"}
