@@ -201,8 +201,13 @@ class FormalDiscoveryConsumerBindingTests(unittest.TestCase):
                         generated_at_beijing="2026-11-04T13:30:33+08:00",
                     ),
                     "candidate_codes": ["159567", "588710"],
+                    "evaluated_candidate_codes": ["588710", "159567"],
                 }
                 validate_formal_runtime_completion_contract(payload, root=root)
+                payload["discovery_binding"]["evaluated_candidate_codes"] = ["159567"]
+                with self.assertRaisesRegex(ValueError, "evaluated Discovery"):
+                    validate_formal_runtime_completion_contract(payload, root=root)
+                payload["discovery_binding"]["evaluated_candidate_codes"] = ["588710", "159567"]
                 payload["discovery_binding"]["selected_discovery"]["generated_at_beijing"] = (
                     "2026-11-04T14:23:36+08:00"
                 )
