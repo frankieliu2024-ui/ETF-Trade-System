@@ -256,11 +256,13 @@ def should_process_latest_reference(
     should_capture: bool,
     probe_only: bool,
     reference: dict,
+    has_replay_request: bool = False,
 ) -> bool:
     """Route an ordinary manual dispatch to the latest legal close outside A-share capture."""
     return bool(
         event_name == "workflow_dispatch"
         and not probe_only
+        and not has_replay_request
         and request_class not in {"STATE_SYNC_ONLY", "BUSINESS_DECISION_SOURCE"}
         and not should_capture
         and reference.get("available") is True
@@ -455,6 +457,10 @@ def main() -> int:
         should_capture,
         probe_only,
         latest_close_reference,
+        has_replay_request=any(
+            os.environ.get(name, "").strip()
+            for name in ("REPLAY_REQUEST", "FORMAL_REPLAY_REQUEST", "FORMAL_CONTEXT_RECOVERY_REQUEST")
+        ),
     )
     is_nontrading_date = now.weekday() >= 5 or date_text in set(calendar.get("closed_dates") or [])
     is_after_a_share_close = minute > 15 * 60
