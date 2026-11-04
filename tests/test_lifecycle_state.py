@@ -33,7 +33,7 @@ class LifecycleStateTests(unittest.TestCase):
         write(self.root, f"events/trades/{hypothesis}.json", {
             "event_id": f"trade-{hypothesis}", "linked_decision_id": hypothesis,
             "hypothesis_id": hypothesis, "execution_status": "EXECUTED", "execution_date": trade_date,
-            "code": "515880", "name": "通信ETF",
+            "code": "515880", "name": "通信ETF", "side": "BUY",
         })
 
     def test_515880_is_t3_on_2026_09_01_and_weekend_is_not_counted(self):
