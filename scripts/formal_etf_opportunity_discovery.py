@@ -766,6 +766,7 @@ def _candidate(row: dict[str, Any], history: list[dict[str, Any]], required_hist
             "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
             "entered_states": [], "surfaced_states": [],
             "information_classes": info_classes,
+            "external_driver_evidence": list(row.get("_external_driver_triggers") or []),
             "discovery_spot": {k: row.get(k) for k in (
                 "price", "change_pct", "amount", "amplitude_pct", "turnover_pct", "volume_ratio",
                 "high", "low", "open", "prev_close", "return_60d_pct", "return_ytd_pct", "provider_timestamp"
@@ -794,6 +795,7 @@ def _candidate(row: dict[str, Any], history: list[dict[str, Any]], required_hist
         "trial_confirm_permission": False, "trade_signal": None, "decision_output_generated": False,
         "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
         "entered_states": entered, "surfaced_states": current_states, "information_classes": info_classes,
+        "external_driver_evidence": list(row.get("_external_driver_triggers") or []),
         "discovery_spot": {k: row.get(k) for k in (
             "price", "change_pct", "amount", "amplitude_pct", "turnover_pct", "volume_ratio",
             "high", "low", "open", "prev_close", "return_60d_pct", "return_ytd_pct", "provider_timestamp"
