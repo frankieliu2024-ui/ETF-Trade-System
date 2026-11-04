@@ -272,6 +272,29 @@ class LifecycleStateTests(unittest.TestCase):
         self.assertEqual(item["lifecycle_status"], "RESOLVED")
         self.assertEqual(item["resolution"]["resolution_event_ids"], ["sell-unlinked"])
 
+    def test_unique_trial_lot_can_close_when_later_formal_decision_owns_sell(self):
+        self.add_trial(decision_date="2026-09-02", trade_date="2026-09-02", hypothesis="H-later")
+        decision = self.root / "events/decisions/H-later.json"
+        value = json.loads(decision.read_text(encoding="utf-8"))
+        value["candidate_code"] = "159326"
+        value["formal_decision"]["lifecycle"] = "电网设备ETF（159326）：Trial"
+        decision.write_text(json.dumps(value, ensure_ascii=False), encoding="utf-8")
+        trade = self.root / "events/trades/H-later.json"
+        buy = json.loads(trade.read_text(encoding="utf-8"))
+        buy.update({"event_id": "buy-later", "code": "159326", "side": "BUY",
+                    "quantity": 3000, "linked_decision_id": "H-later",
+                    "hypothesis_id": "H-later"})
+        trade.write_text(json.dumps(buy, ensure_ascii=False), encoding="utf-8")
+        write(self.root, "events/trades/sell-later.json", {
+            "event_id": "sell-later", "code": "159326", "side": "SELL",
+            "quantity": 3000, "execution_status": "EXECUTED",
+            "execution_date": "2026-09-10",
+            "linked_decision_id": "LATER_FORMAL_DECISION",
+        })
+        item = build_lifecycle_projection(self.root, "2026-09-14")["active_lifecycles"][0]
+        self.assertEqual(item["lifecycle_status"], "RESOLVED")
+        self.assertEqual(item["resolution"]["resolution_event_ids"], ["sell-later"])
+
 
 if __name__ == "__main__":
     unittest.main()
