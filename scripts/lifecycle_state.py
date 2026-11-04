@@ -222,17 +222,13 @@ def _resolution(root: Path, trial: dict[str, Any], as_of: date) -> dict[str, Any
         or (bool(hypothesis) and str(x.get("hypothesis_id") or "") == hypothesis)
     ]
     # Explicitly linked exits remain valid even when other, unrelated sales
-    # exist. Unlinked exits can supplement them only for a unique opening lot
-    # and only if no sale is explicitly attributed to another decision.
-    foreign_sells = [
-        x for x in eligible
-        if x.get("linked_decision_id")
-        and str(x.get("linked_decision_id")) != str(trial.get("decision_id") or "")
-        and not (hypothesis and str(x.get("hypothesis_id") or "") == hypothesis)
-    ]
+    # exist. A later formal decision may own the sell event even though it does
+    # not repeat the opening Trial hypothesis. When the opening lot is unique,
+    # the complete sell quantity is still an unambiguous batch fact; rejecting
+    # it merely because the later decision id differs leaves a real exit
+    # permanently overdue. Multiple opening lots remain fail-closed below.
     attributable_sells = (
-        [x for x in eligible if x not in foreign_sells]
-        if len(buys) == 1 and not other_buys else explicit_sells
+        eligible if len(buys) == 1 and not other_buys else explicit_sells
     )
     sell_qty = sum(float(x.get("quantity") or 0) for x in attributable_sells)
     if code and attributable_sells and buy_qty > 0 and sell_qty >= buy_qty:
