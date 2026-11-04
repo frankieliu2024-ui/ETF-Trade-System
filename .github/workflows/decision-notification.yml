@@ -537,11 +537,17 @@ jobs:
               # The frozen morning body predates structured lifecycle coverage.
               # Supply only mechanical coverage from the canonical account fact;
               # this does not invent a decision or alter the frozen body.
-              managed = {
-                  str(item.get("code") or item.get("symbol") or item.get("security_code") or "").strip(): "HOLD_REVIEW"
-                  for item in (account.get("positions") or [])
-                  if isinstance(item, dict) and str(item.get("code") or item.get("symbol") or item.get("security_code") or "").strip()
-              }
+              managed = {}
+              for item in (account.get("positions") or []):
+                  if not isinstance(item, dict):
+                      continue
+                  code = str(item.get("code") or item.get("symbol") or item.get("security_code") or "").strip()
+                  name = str(item.get("name") or item.get("security_name") or "").strip()
+                  if code:
+                      # Use the canonical display identity accepted by the
+                      # existing validator; code remains part of the key.
+                      key = f"{name}（{code}）" if name else code
+                      managed[key] = "HOLD_REVIEW"
               review["lifecycle"] = {}
               review["managed_positions"] = managed
           # Pass the bounded compatibility projection to the canonical owner.
