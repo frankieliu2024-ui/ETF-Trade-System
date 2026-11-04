@@ -514,8 +514,10 @@ jobs:
           # supports MORNING_SESSION_STAGE_ONLY; reconstruct that bounded
           # scope from the immutable title and date rather than rejecting a
           # valid midday completion as a full-day review.
+          inferred_morning_scope = False
           if not scope and "上午复盘" in review_title:
               scope = "MORNING_SESSION_STAGE_ONLY"
+              inferred_morning_scope = True
               review = {
                   "review_scope": scope,
                   "market_date": str(payload.get("market_date") or "").strip(),
@@ -531,6 +533,17 @@ jobs:
                   raise SystemExit("Trade Review completion has an unsupported review scope")
           account_path = Path("data/state/account_fact.json")
           account = json.loads(account_path.read_text(encoding="utf-8"))
+          if inferred_morning_scope:
+              # The frozen morning body predates structured lifecycle coverage.
+              # Supply only mechanical coverage from the canonical account fact;
+              # this does not invent a decision or alter the frozen body.
+              managed = {
+                  str(item.get("code") or item.get("symbol") or item.get("security_code") or "").strip(): "HOLD_REVIEW"
+                  for item in (account.get("positions") or [])
+                  if isinstance(item, dict) and str(item.get("code") or item.get("symbol") or item.get("security_code") or "").strip()
+              }
+              review["lifecycle"] = {}
+              review["managed_positions"] = managed
           ok, duplicate = record_post_close_review(account, payload)
           if not ok:
               raise SystemExit("canonical post-close trade review projection was not accepted")
