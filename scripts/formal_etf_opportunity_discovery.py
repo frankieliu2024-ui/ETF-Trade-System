@@ -17,10 +17,6 @@ from urllib.request import Request, urlopen
 
 BEIJING = timezone(timedelta(hours=8), name="Asia/Shanghai")
 SPOT_URL = "https://push2delay.eastmoney.com/api/qt/clist/get"
-SSE_MASTER_URL = "https://query.sse.com.cn/commonQuery.do"
-SSE_MASTER_SQL = "COMMON_SSE_ZQPZ_ETFZL_XXPL_ETFGM_SEARCH_L"
-SZSE_MASTER_URL = "https://www.szse.cn/api/report/ShowReport/data"
-SZSE_MASTER_CATALOG = "1945"
 HITHINK_ETF_MASTER_URL = "https://fund.10jqka.com.cn/data/Net/info/ETF_rate_desc_0_0_1_9999_0_0_0_jsonp_g.html"
 HISTORY_URL = "https://push2his.eastmoney.com/api/qt/stock/kline/get"
 ETF_FS = "b:MK0021,b:MK0022,b:MK0023,b:MK0024,b:MK0827"
@@ -116,94 +112,8 @@ def _request_json_headers(url: str, params: dict[str, Any], headers: dict[str, s
         return json.loads(resp.read().decode("utf-8"))
 
 
-def _plain_html(value: Any) -> str:
-    text = html.unescape(str(value or ""))
-    text = re.sub(r"<[^>]+>", " ", text)
-    return " ".join(text.split()).strip()
-
-
-def _six_digit(value: Any) -> str:
-    match = re.search(r"(?<!\d)(\d{6})(?!\d)", _plain_html(value))
-    return match.group(1) if match else ""
-
-
-def fetch_sse_official_etf_master(market_date: str) -> list[dict[str, Any]]:
-    """Enumerate SSE ETFs from the existing official broad ETF-scale owner."""
-    payload = _request_json_headers(
-        SSE_MASTER_URL,
-        {
-            "isPagination": "true", "pageHelp.pageSize": "2000", "pageHelp.pageNo": "1",
-            "pageHelp.beginPage": "1", "pageHelp.cacheSize": "1", "pageHelp.endPage": "1",
-            "sqlId": SSE_MASTER_SQL, "STAT_DATE": market_date,
-        },
-        {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
-         "Accept": "application/json, text/javascript, */*; q=0.01", "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-         "X-Requested-With": "XMLHttpRequest",
-         "Referer": "https://www.sse.com.cn/market/funddata/volumn/etfvolumn/"},
-        timeout=15,
-    )
-    rows = payload.get("result") or (payload.get("pageHelp") or {}).get("data") or []
-    result = []
-    for raw in rows:
-        code = str(raw.get("SEC_CODE") or "").strip()
-        if re.fullmatch(r"\d{6}", code):
-            result.append({"code": code, "name": str(raw.get("SEC_NAME") or code).strip(),
-                           "market_id": 1, "exchange": "SSE", "identity_source": "SSE_OFFICIAL_ETF_SCALE_ENUMERATION"})
-    return result
-
-
-def fetch_szse_official_etf_master() -> list[dict[str, Any]]:
-    """Enumerate the official SZSE ETF List (CATALOGID=1945) with explicit pagination."""
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
-        "Accept": "application/json, text/javascript, */*; q=0.01", "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-        "X-Requested-With": "XMLHttpRequest",
-        "Referer": "https://www.szse.cn/market/product/list/etfList/index.html",
-    }
-    result: list[dict[str, Any]] = []
-    page = 1
-    expected_records: int | None = None
-    while True:
-        payload = _request_json_headers(
-            SZSE_MASTER_URL,
-            {"SHOWTYPE": "JSON", "CATALOGID": SZSE_MASTER_CATALOG, "TABKEY": "tab1", "tab1PAGENO": str(page)},
-            headers, timeout=15,
-        )
-        block = payload[0] if isinstance(payload, list) and payload else {}
-        if block.get("error"):
-            raise RuntimeError(f"SZSE ETF List API error: {block.get('error')}")
-        metadata = block.get("metadata") or {}
-        if str(metadata.get("catalogid") or "") != SZSE_MASTER_CATALOG:
-            raise RuntimeError("SZSE ETF List returned unexpected catalog")
-        pages = int(metadata.get("pagecount") or 1)
-        if expected_records is None:
-            expected_records = int(metadata.get("recordcount") or 0)
-        for raw in block.get("data") or []:
-            code = _six_digit(raw.get("sys_key"))
-            name = _plain_html(raw.get("zxjghj"))
-            if not code:
-                continue
-            if name.startswith(code):
-                name = name[len(code):].strip()
-            result.append({
-                "code": code, "name": name or code, "market_id": 0, "exchange": "SZSE",
-                "identity_source": "SZSE_OFFICIAL_ETF_LIST_1945",
-                "tracking_index": _plain_html(raw.get("nhzs")),
-                "manager": _plain_html(raw.get("glrmc")),
-            })
-        if page >= pages:
-            break
-        page += 1
-        if page > 200:
-            raise RuntimeError("SZSE ETF List pagination exceeded safety bound")
-    unique = {row["code"]: row for row in result}
-    if expected_records and len(unique) != expected_records:
-        raise RuntimeError(f"SZSE ETF List coverage mismatch: expected={expected_records} parsed={len(unique)}")
-    return [unique[code] for code in sorted(unique)]
-
-
 def fetch_hithink_etf_master() -> list[dict[str, Any]]:
-    """Enumerate the Hithink ETF category as an independent security-master fallback."""
+    """Enumerate Hithink ETF identities for the secondary resilience path only."""
     req = Request(
         HITHINK_ETF_MASTER_URL,
         headers={
@@ -213,12 +123,12 @@ def fetch_hithink_etf_master() -> list[dict[str, Any]]:
         },
     )
     with urlopen(req, timeout=15) as resp:
-        text = resp.read().decode("utf-8", errors="replace").strip()
-    if text.startswith("g(") and text.endswith(")"):
-        text = text[2:-1]
-    elif text.startswith("(") and text.endswith(")"):
-        text = text[1:-1]
-    payload = json.loads(text)
+        payload_text = resp.read().decode("utf-8", errors="replace").strip()
+    if payload_text.startswith("g(") and payload_text.endswith(")"):
+        payload_text = payload_text[2:-1]
+    elif payload_text.startswith("(") and payload_text.endswith(")"):
+        payload_text = payload_text[1:-1]
+    payload = json.loads(payload_text)
     raw_rows = ((payload.get("data") or {}).get("data") or {})
     if not isinstance(raw_rows, dict) or not raw_rows:
         raise RuntimeError("Hithink ETF master returned empty or unexpected data")
@@ -243,34 +153,6 @@ def fetch_hithink_etf_master() -> list[dict[str, Any]]:
     return [result[key] for key in sorted(result)]
 
 
-def fetch_official_etf_master(market_date: str) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    """Enumerate SSE/SZSE independently so one exchange outage cannot erase the other."""
-    rows: list[dict[str, Any]] = []
-    errors: dict[str, str | None] = {"sse": None, "szse": None}
-    counts = {"sse": 0, "szse": 0}
-    try:
-        sse_rows = fetch_sse_official_etf_master(market_date)
-        rows.extend(sse_rows)
-        counts["sse"] = len(sse_rows)
-    except Exception as exc:
-        errors["sse"] = str(exc)[-300:]
-    try:
-        szse_rows = fetch_szse_official_etf_master()
-        rows.extend(szse_rows)
-        counts["szse"] = len(szse_rows)
-    except Exception as exc:
-        errors["szse"] = str(exc)[-300:]
-    unique = {(row["market_id"], row["code"]): row for row in rows}
-    if not unique:
-        raise RuntimeError(f"official ETF masters unavailable; sse={errors['sse']}; szse={errors['szse']}")
-    return [unique[key] for key in sorted(unique)], {
-        "sse_official_master_count": counts["sse"],
-        "szse_official_master_count": counts["szse"],
-        "sse_official_master_error": errors["sse"],
-        "szse_official_master_error": errors["szse"],
-    }
-
-
 def _tencent_spot_row(identity: dict[str, Any], quote: dict[str, Any]) -> dict[str, Any]:
     return {
         "code": identity["code"], "name": str(quote.get("name") or identity.get("name") or identity["code"]),
@@ -282,58 +164,6 @@ def _tencent_spot_row(identity: dict[str, Any], quote: dict[str, Any]) -> dict[s
         "return_60d_pct": None, "return_ytd_pct": None, "listing_date": "",
         "provider_timestamp": quote.get("provider_timestamp_ms"),
         "broad_quote_source": "TENCENT_QQ", "identity_source": identity.get("identity_source"),
-    }
-
-
-def fetch_official_tencent_broad_spot(market_date: str) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    """Independent ETF identity fallback + Tencent hydration; partial batches degrade explicitly."""
-    try:
-        from scripts.tencent_quote import fetch_tencent_quotes
-    except ModuleNotFoundError:
-        # market-snapshot executes this owner both as an imported package and from
-        # repository script context; keep the existing Tencent owner reachable in both.
-        from tencent_quote import fetch_tencent_quotes
-
-    hithink_error = None
-    official_error = None
-    master_source = "HITHINK_ETF_CATEGORY"
-    try:
-        master = fetch_hithink_etf_master()
-        master_meta = {"hithink_master_count": len(master)}
-    except Exception as exc:
-        hithink_error = str(exc)[-300:]
-        master_source = "SSE_SZSE_OFFICIAL_FALLBACK"
-        try:
-            master, master_meta = fetch_official_etf_master(market_date)
-        except Exception as official_exc:
-            official_error = str(official_exc)[-300:]
-            raise RuntimeError(
-                f"independent ETF masters unavailable; hithink={hithink_error}; official={official_error}"
-            ) from official_exc
-    master_meta = {
-        **master_meta,
-        "identity_master_source": master_source,
-        "hithink_master_error": hithink_error,
-        "official_master_fallback_error": official_error,
-    }
-    rows: list[dict[str, Any]] = []
-    failures: list[dict[str, Any]] = []
-    for offset in range(0, len(master), 60):
-        batch = master[offset:offset + 60]
-        symbols = [f'{x["code"]}.{"SH" if x["market_id"] == 1 else "SZ"}' for x in batch]
-        try:
-            quotes = fetch_tencent_quotes(symbols, timeout=10)
-        except Exception as exc:
-            failures.append({"offset": offset, "count": len(batch), "error": str(exc)[-240:]})
-            continue
-        for identity, symbol in zip(batch, symbols):
-            quote = quotes.get(symbol.upper())
-            if quote:
-                rows.append(_tencent_spot_row(identity, quote))
-    return rows, {
-        **master_meta,
-        "official_master_count": len(master), "tencent_quote_count": len(rows),
-        "tencent_failed_batch_count": len(failures), "tencent_failures": failures,
     }
 
 
@@ -394,132 +224,78 @@ def _hydrate_tencent_identities(identities: list[dict[str, Any]]) -> tuple[list[
 
 
 def fetch_reconciled_broad_etf_spot(market_date: str) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    """High-recall dual-source universe; either source can keep Discovery available.
+    """Eastmoney-first broad ETF universe with Hithink/Tencent fallback only.
 
-    Eastmoney contributes its broad current cross-section. Hithink independently
-    contributes ETF identities. When both work, only Hithink identities absent
-    from Eastmoney are hydrated through Tencent before entering the cheap
-    Discovery gate. This prevents a successful Eastmoney response from becoming
-    a hidden completeness boundary without paying for full duplicate hydration.
+    When Eastmoney returns a valid broad cross-section, it is the complete
+    primary universe for this run. Hithink is not unioned into that universe.
+    Hithink identities are consulted only after Eastmoney fails, then hydrated
+    through Tencent as an explicitly degraded secondary path.
     """
-    east_rows: list[dict[str, Any]] = []
-    hithink_master: list[dict[str, Any]] = []
+    started = time.monotonic()
     east_error = None
-    hithink_error = None
+    try:
+        east_rows = fetch_broad_etf_spot()
+    except Exception as exc:
+        east_rows = []
+        east_error = str(exc)[-500:]
+    east_elapsed = round(time.monotonic() - started, 3)
 
-    def get_east() -> list[dict[str, Any]]:
-        return fetch_broad_etf_spot()
-
-    def get_hithink() -> list[dict[str, Any]]:
-        return fetch_hithink_etf_master()
-
-    source_started = time.monotonic()
-    source_finished: dict[str, float] = {}
-    with ThreadPoolExecutor(max_workers=2, thread_name_prefix="etf-universe") as executor:
-        future_sources = {executor.submit(get_east): "eastmoney", executor.submit(get_hithink): "hithink"}
-        for future in as_completed(future_sources):
-            source = future_sources[future]
-            source_finished[source] = round(time.monotonic() - source_started, 3)
-            try:
-                value = future.result()
-                if source == "eastmoney":
-                    east_rows = value
-                else:
-                    hithink_master = value
-            except Exception as exc:
-                if source == "eastmoney":
-                    east_error = str(exc)[-500:]
-                else:
-                    hithink_error = str(exc)[-500:]
-    source_join_elapsed = round(time.monotonic() - source_started, 3)
-
-    if not east_rows and not hithink_master:
-        # Preserve the existing deeper official-master fallback when both normal
-        # independent universe sources are unavailable.
-        fallback_rows, fallback_meta = fetch_official_tencent_broad_spot(market_date)
-        if not fallback_rows:
-            raise RuntimeError(
-                f"broad providers unavailable; eastmoney={east_error}; hithink={hithink_error}"
-            )
-        return fallback_rows, {
-            **fallback_meta,
-            "universe_mode": "DEEP_FALLBACK",
-            "eastmoney_count": 0,
-            "hithink_identity_count": 0,
-            "eastmoney_error": east_error,
-            "hithink_error": hithink_error,
-            "fallback_used": True,
-            "fallback_source": "OFFICIAL_MASTER_PLUS_TENCENT",
-            "reconciled_count": len(fallback_rows),
-            "source_elapsed_seconds": source_finished,
-            "source_join_elapsed_seconds": source_join_elapsed,
-        }
-
-    if not east_rows:
-        hydrated, hydration_meta = _hydrate_tencent_identities(hithink_master)
-        if not hydrated:
-            raise RuntimeError(f"Hithink universe available but Tencent hydration unavailable; eastmoney={east_error}")
-        return hydrated, {
-            **hydration_meta,
-            "universe_mode": "HITHINK_ONLY",
-            "eastmoney_count": 0,
-            "hithink_identity_count": len(hithink_master),
-            "eastmoney_error": east_error,
-            "hithink_error": hithink_error,
-            "hithink_only_identity_count": len(hithink_master),
-            "fallback_used": True,
-            "fallback_source": "HITHINK_ETF_MASTER_PLUS_TENCENT",
-            "reconciled_count": len(hydrated),
-            "source_elapsed_seconds": source_finished,
-            "source_join_elapsed_seconds": source_join_elapsed,
-        }
-
-    if not hithink_master:
+    if east_rows:
         return east_rows, {
-            "universe_mode": "EASTMONEY_ONLY_DEGRADED_RECONCILIATION",
+            "universe_mode": "EASTMONEY_PRIMARY",
+            "primary_source": "EASTMONEY_PUSH2_ETF_CROSS_SECTION",
             "eastmoney_count": len(east_rows),
             "hithink_identity_count": 0,
-            "eastmoney_error": east_error,
-            "hithink_error": hithink_error,
-            "hithink_only_identity_count": 0,
+            "eastmoney_error": None,
+            "hithink_error": None,
             "fallback_used": False,
             "fallback_source": None,
             "reconciled_count": len(east_rows),
-            "source_elapsed_seconds": source_finished,
-            "source_join_elapsed_seconds": source_join_elapsed,
+            "source_elapsed_seconds": {"eastmoney": east_elapsed},
+            "source_join_elapsed_seconds": east_elapsed,
+            "supplemental_hydration_elapsed_seconds": 0.0,
         }
 
-    east_keys = {(int(x.get("market_id") or 0), str(x.get("code") or "")) for x in east_rows}
-    missing = [
-        x for x in hithink_master
-        if (int(x.get("market_id") or 0), str(x.get("code") or "")) not in east_keys
-    ]
-    supplemental_started = time.monotonic()
-    supplemental_rows, hydration_meta = _hydrate_tencent_identities(missing) if missing else ([], {
-        "requested_identity_count": 0, "tencent_quote_count": 0,
-        "tencent_failed_batch_count": 0, "tencent_failures": [],
-    })
-    supplemental_hydration_elapsed = round(time.monotonic() - supplemental_started, 3)
-    merged = {(int(x.get("market_id") or 0), str(x.get("code") or "")): x for x in east_rows}
-    for row in supplemental_rows:
-        merged[(int(row.get("market_id") or 0), str(row.get("code") or ""))] = row
-    rows = [merged[key] for key in sorted(merged)]
-    return rows, {
+    hithink_started = time.monotonic()
+    try:
+        hithink_master = fetch_hithink_etf_master()
+    except Exception as exc:
+        hithink_master = []
+        hithink_error = str(exc)[-500:]
+    else:
+        hithink_error = None
+    hithink_elapsed = round(time.monotonic() - hithink_started, 3)
+
+    if not hithink_master:
+        raise RuntimeError(
+            f"primary and secondary ETF universe sources unavailable; "
+            f"eastmoney={east_error}; hithink={hithink_error}"
+        )
+
+    hydration_started = time.monotonic()
+    hydrated, hydration_meta = _hydrate_tencent_identities(hithink_master)
+    hydration_elapsed = round(time.monotonic() - hydration_started, 3)
+    if not hydrated:
+        raise RuntimeError(
+            f"Eastmoney unavailable and Hithink/Tencent fallback produced no ETF quotes; "
+            f"eastmoney={east_error}; hithink_quote_failures={hydration_meta.get('tencent_failures')}"
+        )
+    return hydrated, {
         **hydration_meta,
-        "universe_mode": "DUAL_SOURCE_RECONCILED",
-        "eastmoney_count": len(east_rows),
+        "universe_mode": "HITHINK_TENCENT_SECONDARY_FALLBACK",
+        "primary_source": "EASTMONEY_PUSH2_ETF_CROSS_SECTION",
+        "eastmoney_count": 0,
         "hithink_identity_count": len(hithink_master),
         "eastmoney_error": east_error,
         "hithink_error": hithink_error,
-        "hithink_only_identity_count": len(missing),
-        "hithink_only_hydrated_count": len(supplemental_rows),
-        "fallback_used": False,
-        "fallback_source": None,
-        "reconciled_count": len(rows),
-        "source_elapsed_seconds": source_finished,
-        "source_join_elapsed_seconds": source_join_elapsed,
-        "supplemental_hydration_elapsed_seconds": supplemental_hydration_elapsed,
+        "fallback_used": True,
+        "fallback_source": "HITHINK_ETF_MASTER_PLUS_TENCENT",
+        "reconciled_count": len(hydrated),
+        "source_elapsed_seconds": {"eastmoney": east_elapsed, "hithink": hithink_elapsed},
+        "source_join_elapsed_seconds": east_elapsed + hithink_elapsed,
+        "supplemental_hydration_elapsed_seconds": hydration_elapsed,
     }
+
 
 def _secid(code: str, market_id: int | None = None) -> str:
     market = market_id if market_id in {0, 1} else (1 if str(code).startswith("5") else 0)
@@ -1057,7 +833,7 @@ def discover_formal_candidates(
             broad, broad_source_meta = fetch_reconciled_broad_etf_spot(market_date)
     except Exception as exc:
         return {
-            "status": "DEGRADED", "generated_at_beijing": generated, "source": "DUAL_SOURCE_ETF_UNIVERSE_WITH_INDEPENDENT_FALLBACK",
+            "status": "DEGRADED", "generated_at_beijing": generated, "source": "EASTMONEY_PRIMARY_WITH_HITHINK_SECONDARY_FALLBACK",
             "broad_universe_count": 0, "candidates": [], "error": str(exc)[-500:],
             "broad_acquisition_elapsed_seconds": round(time.monotonic() - broad_started, 3),
             "decision_boundary": "广域发现失败不删除持仓/观察ETF，也不阻塞其现有正式MASTER链。",
@@ -1165,10 +941,10 @@ def discover_formal_candidates(
     candidates.sort(key=lambda item: str(item.get("code") or ""))
     candidates = candidates[:MAX_OBSERVATION_CANDIDATES]
     return {
-        "schema_version": "1.0", "status": "READY" if broad and not failures else "DEGRADED",
+        "schema_version": "1.0", "status": "READY" if broad and not failures and not broad_source_meta.get("fallback_used") else "DEGRADED",
         "generated_at_beijing": generated, "market_date": market_date,
         "required_history_end_date": required_history_end_date,
-        "source": "EASTMONEY_HITHINK_DUAL_SOURCE_UNIVERSE_PLUS_BOUNDED_HISTORY_REPAIR",
+        "source": "EASTMONEY_PRIMARY_HITHINK_SECONDARY_UNIVERSE_PLUS_BOUNDED_HISTORY_REPAIR",
         "broad_source_reconciliation": broad_source_meta,
         "source_role": "DISCOVERY_ONLY; formal trade decision remains MASTER-owned",
         "broad_universe_count": len(broad),
@@ -1186,7 +962,7 @@ def discover_formal_candidates(
             "history_validation_elapsed_seconds": elapsed,
             "measurement_role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE",
         },
-        "coverage_status": "COMPLETE" if not failures else ("UNAVAILABLE" if history_succeeded == 0 else "PARTIAL"),
+        "coverage_status": "COMPLETE" if not failures and not broad_source_meta.get("fallback_used") else ("UNAVAILABLE" if history_succeeded == 0 else "PARTIAL"),
         "history_failures": failures, "candidates": candidates,
         "observation_capacity": {"target_typical": "5-10", "allowed_min": 0, "resource_protection_max": MAX_OBSERVATION_CANDIDATES},
         "selection_contract": {
