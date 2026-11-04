@@ -600,7 +600,7 @@ def _request_query_intent(request: dict) -> str:
     return str(value).strip().upper()
 
 
-def build_decision_fact_pack(root: Path, request: dict, current: dict, account: dict, decision: dict, market_quote: dict, formal_discovery: dict | None = None) -> dict:
+def build_decision_fact_pack(root: Path, request: dict, current: dict, account: dict, decision: dict, market_quote: dict, formal_discovery: dict | None = None, external_driver_context: dict | None = None) -> dict:
     """Project one request's minimum sufficient, decision-ready PIT inputs.
 
     This remains an in-memory read-only projection.  It normalizes already
@@ -610,6 +610,22 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
     freshness = market_quote.get("decision_freshness") or {}
     universe = read_json(root / CANONICAL_FILES["etf_monitor_universe"], {})
     discovery = formal_discovery or {}
+    external_driver = external_driver_context or {}
+    external_driver_observations = []
+    for item in external_driver.get("observations") or []:
+        if not isinstance(item, dict):
+            continue
+        asset = item.get("asset") or {}
+        ctx = item.get("context") or {}
+        external_driver_observations.append({
+            "asset": asset.get("name") if isinstance(asset, dict) else str(asset),
+            "dex": item.get("dex"), "mark": ctx.get("markPx"), "oracle": ctx.get("oraclePx"),
+            "mid": ctx.get("midPx"), "funding": ctx.get("funding"), "open_interest": ctx.get("openInterest"),
+            "premium": ctx.get("premium"), "day_notional_volume": ctx.get("dayNtlVlm"),
+            "provider_timestamp": item.get("provider_timestamp"),
+            "provider_timestamp_status": item.get("provider_timestamp_status"),
+            "collected_at_utc": item.get("collected_at_utc"),
+        })
     positions = []
     for item in account.get("positions") or []:
         if not isinstance(item, dict) or float(item.get("quantity") or 0) <= 0:
@@ -648,6 +664,7 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
             "eligibility": item.get("eligibility") or item.get("status") or "",
             "formal_quote_status": item.get("formal_quote_status") or "",
             "evidence": item.get("evidence") or item.get("features") or {},
+            "external_driver_evidence": item.get("external_driver_evidence") or [],
         })
 
     request_id = str(request.get("request_id") or "").strip()
@@ -1036,6 +1053,14 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
             "provider": (current.get("data_freshness") or {}).get("provider") or "",
         },
         "qualified_market_facts": quotes,
+        "hyperliquid_external_driver_context": {
+            "quality_status": external_driver.get("quality_status") or "NOT_REQUESTED",
+            "dex_count": external_driver.get("dex_count"),
+            "catalog_count": external_driver.get("catalog_count"),
+            "focused_count": external_driver.get("focused_count"),
+            "observations": external_driver_observations,
+            "decision_boundary": "仅作为对象级辅助证据；不得独立生成Trial、Confirm、金额、卖出份额或订单。",
+        },
         "decision_context": {
             "generated_at_beijing": decision.get("generated_at_beijing") or decision.get("generated_at") or "",
             "source": "scripts/state_manager.py::build_decision_context",
@@ -1791,7 +1816,7 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
     decision_context_elapsed = round(time.monotonic() - decision_context_started, 3)
     generated_at = datetime.now(SHANGHAI).isoformat(timespec="seconds")
     fact_pack_started = time.monotonic()
-    fact_pack = build_decision_fact_pack(root, request_payload, current, account, decision, market_quote, formal_discovery=formal_discovery)
+    fact_pack = build_decision_fact_pack(root, request_payload, current, account, decision, market_quote, formal_discovery=formal_discovery, external_driver_context=overseas_context.get("hyperliquid"))
     fact_pack_elapsed = round(time.monotonic() - fact_pack_started, 3)
     latency = build_fast_path_latency(request_payload, current, account, decision, market_quote, generated_at, root)
     bds = _business_decision_source_observation(root, str(request_payload.get("request_id") or "").strip()) if latency.get("may_measure_original_decision_latency") else {
