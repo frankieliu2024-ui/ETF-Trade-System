@@ -379,6 +379,7 @@ class DashboardProjectionTests(unittest.TestCase):
                     "event_type": "FORMAL_DECISION_REPORT",
                     "reviewed_at_beijing": "2026-11-04T14:26:57+08:00",
                     "source_completion_path": completion_rel,
+                    "formal_decision": {"risk_permission": "保守"},
                     "presentation_binding": {"full_content": "test"},
                 }),
                 encoding="utf-8",
