@@ -1,7 +1,10 @@
 """Regression tests for Formal Decision Discovery provenance and object coverage."""
 import unittest
 
-from scripts.scheduled_review_completion import validate_formal_discovery_consumer_binding
+from scripts.scheduled_review_completion import (
+    validate_formal_discovery_consumer_binding,
+    build_formal_runtime_completion_request,
+)
 
 
 class FormalDiscoveryConsumerBindingTests(unittest.TestCase):
@@ -106,6 +109,51 @@ class FormalDiscoveryConsumerBindingTests(unittest.TestCase):
                 validate_formal_discovery_consumer_binding(
                     dict(self.discovery, candidates=bad), **self.kwargs
                 )
+
+    def test_builder_preserves_frozen_discovery_binding(self):
+        binding = {
+            "status": "READY",
+            "selected_discovery": self.discovery,
+            "candidate_codes": ["159567", "588710"],
+        }
+        # Builder performs user-visible content checks; this test isolates
+        # transport of the already-validated frozen binding.
+        from unittest.mock import patch
+        with patch("scripts.scheduled_review_completion.validate_user_visible_content"), patch(
+            "scripts.scheduled_review_completion.validate_formal_decision_presentation_timestamp"
+        ):
+            payload = build_formal_runtime_completion_request(
+                run_identity={
+                    "task_run_id": "fd-20261104-test",
+                    "occurrence_id": "fd-20261104-test",
+                    "requested_at_beijing": "2026-11-04T13:31:55+08:00",
+                    "entry_mode": "MANUAL_CONVERSATION",
+                },
+                market_date="2026-11-04",
+                final_content="【ETF正式决策】2026-11-04 13:31 正式判断",
+                decision_path="formal",
+                fact_summary={"discovery_binding": binding},
+            )
+        self.assertEqual(payload["discovery_binding"], binding)
+        self.assertEqual(payload["fact_summary"]["discovery_binding"], binding)
+
+    def test_builder_does_not_invent_discovery_binding(self):
+        from unittest.mock import patch
+        with patch("scripts.scheduled_review_completion.validate_user_visible_content"), patch(
+            "scripts.scheduled_review_completion.validate_formal_decision_presentation_timestamp"
+        ):
+            payload = build_formal_runtime_completion_request(
+                run_identity={
+                    "task_run_id": "fd-20261104-test",
+                    "occurrence_id": "fd-20261104-test",
+                    "requested_at_beijing": "2026-11-04T13:31:55+08:00",
+                    "entry_mode": "MANUAL_CONVERSATION",
+                },
+                market_date="2026-11-04",
+                final_content="【ETF正式决策】2026-11-04 13:31 正式判断",
+                decision_path="formal",
+            )
+        self.assertNotIn("discovery_binding", payload)
 
     def test_degraded_not_upgraded(self):
         with self.assertRaisesRegex(ValueError, "not complete"):
