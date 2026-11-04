@@ -888,6 +888,8 @@ def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | N
         raise ValueError("Formal Decision completion presentation_binding.content_hash mismatch")
     payload["content_hash"] = expected_hash
     binding["content_hash"] = expected_hash
+    if str(payload.get("completion_contract_version") or "").strip() == "3":
+        validate_user_visible_content(content, canonical_closure_confirmed=False)
     if "final_content_hash" in payload:
         final_hash = str(payload.get("final_content_hash") or "").strip().lower()
         if final_hash and final_hash != expected_hash:
@@ -942,6 +944,11 @@ def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | N
     # A missing/degraded object layer remains a reportable limitation rather
     # than a fabricated empty set or an automatic completion blocker.
     discovery_binding = payload.get("discovery_binding")
+    # Version 3 is opt-in until every live task entrypoint can freeze and
+    # supply this evidence. Historical version-2 completions remain replayable.
+    # Once v3 is adopted, omission of the field is never a silent bypass.
+    if str(payload.get("completion_contract_version") or "").strip() == "3" and discovery_binding is None:
+        raise ValueError("Formal Decision v3 requires run-frozen discovery_binding")
     if discovery_binding is not None:
         if not isinstance(discovery_binding, dict):
             raise ValueError("Formal Decision discovery_binding must be an object")
@@ -953,6 +960,16 @@ def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | N
                 raise ValueError("Formal Decision READY Discovery missing frozen selection")
             if not isinstance(selected_codes, list):
                 raise ValueError("Formal Decision READY Discovery missing candidate_codes")
+            # The selection must have existed before this run began. A
+            # subsequently updated projection is not admissible as PIT proof.
+            from datetime import datetime
+            try:
+                selected_at = datetime.fromisoformat(str(selected.get("generated_at_beijing") or ""))
+                requested_at = datetime.fromisoformat(str(payload["requested_at_beijing"]))
+                if selected_at.tzinfo is None or requested_at.tzinfo is None or selected_at > requested_at:
+                    raise ValueError("Formal Discovery was not available at run start")
+            except (TypeError, ValueError) as exc:
+                raise ValueError("Formal Discovery PIT generation time invalid or future") from exc
             validate_formal_discovery_consumer_binding(
                 selected,
                 expected_market_date=expected_binding["market_date"],
