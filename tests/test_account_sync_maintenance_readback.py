@@ -128,5 +128,50 @@ class AccountFactConsumptionContractTests(unittest.TestCase):
             self.assertEqual(health["account_sync"]["status"], "PASS")
             self.assertEqual(health["account_sync"]["readback_status"], "CONFIRMED")
 
+
+    def test_non_account_maintenance_does_not_overwrite_account_sync_receipt(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            request = root / "requests/live_snapshot/system-review.json"
+            state = root / "data/state"
+            request.parent.mkdir(parents=True)
+            state.mkdir(parents=True)
+            request.write_text(json.dumps({"request_id": "system-review"}), encoding="utf-8")
+            previous = {
+                "status": "PASS",
+                "account_sync": {
+                    "request_id": "broker-close",
+                    "status": "PASS",
+                    "readback_status": "CONFIRMED",
+                    "canonical_fact_persisted": True,
+                },
+            }
+            (state / "maintenance_health.json").write_text(
+                json.dumps(previous), encoding="utf-8"
+            )
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "scripts/record_account_sync_maintenance.py",
+                    "--root", str(root),
+                    "--request-id", "system-review",
+                    "--request-path", "requests/live_snapshot/system-review.json",
+                    "--owner-outcome", "success",
+                    "--run-id", "2",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            health = json.loads(
+                (state / "maintenance_health.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(health["account_sync"]["request_id"], "broker-close")
+            self.assertEqual(health["account_sync"]["status"], "PASS")
+            self.assertEqual(
+                health["last_non_account_maintenance"]["request_id"], "system-review"
+            )
+
 if __name__ == "__main__":
     unittest.main()

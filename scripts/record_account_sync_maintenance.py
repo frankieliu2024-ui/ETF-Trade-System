@@ -37,25 +37,25 @@ def main() -> int:
         except (OSError, json.JSONDecodeError):
             account = {}
 
-    # A Formal request is not itself an account-sync request.  Record that
-    # explicitly so a successful Formal job cannot be mistaken for a
-    # successful broker-fact readback.
+    # A Formal/System Review request is not an account-sync request.  It
+    # must never overwrite the last broker account-sync receipt: that receipt
+    # belongs to the account-sync owner and is the only evidence used by
+    # downstream freshness/readback consumers.  Keep the non-account request
+    # visible in a separate maintenance field without changing account_sync.
     if not isinstance(supplied, dict):
         data["checked_at"] = now
-        data["account_sync"] = {
+        data["last_non_account_maintenance"] = {
             "request_id": args.request_id,
             "request_path": args.request_path,
             "owner": "scripts/process_state_sync_request.py",
             "workflow_run_id": args.run_id,
             "status": "NOT_APPLICABLE",
             "failure_class": "NO_ACCOUNT_SYNC_REQUEST",
-            "readback_status": "NOT_APPLICABLE",
-            "canonical_fact_persisted": False,
             "recorded_at_beijing": now,
         }
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        print(json.dumps(data["account_sync"], ensure_ascii=False))
+        print(json.dumps(data["last_non_account_maintenance"], ensure_ascii=False))
         return 0
 
     def same(left, right):
