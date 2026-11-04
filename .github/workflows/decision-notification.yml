@@ -322,6 +322,8 @@ jobs:
         id: apac_summary_notify
         if: ${{ (github.event_name == 'workflow_run' && github.event.workflow_run.name == 'Overseas pre-open pulse') || (github.event_name == 'push' && steps.push_kind.outputs.apac_market == 'true') }}
         continue-on-error: true
+        env:
+          PREVIOUS_CONTEXT_PATH: data/state/overseas_context_previous.json
         run: python scripts/run_guarded_notification.py batch --market apac
 
       - name: Send APAC monitored-object value event when due
@@ -336,6 +338,8 @@ jobs:
         id: us_summary_notify
         if: ${{ (github.event_name == 'workflow_run' && (github.event.workflow_run.name == 'US extended-hours pulse' || github.event.workflow_run.name == 'Overseas pre-open pulse')) || (github.event_name == 'workflow_dispatch' && inputs.recovery_market == 'us') || (github.event_name == 'push' && steps.push_kind.outputs.us_market == 'true') }}
         continue-on-error: true
+        env:
+          PREVIOUS_CONTEXT_PATH: data/state/us_extended_hours_context_previous.json
         run: python scripts/run_guarded_notification.py batch --market us
 
       - name: Send US monitored-object value event when due
