@@ -941,7 +941,7 @@ def discover_formal_candidates(
     candidates.sort(key=lambda item: str(item.get("code") or ""))
     candidates = candidates[:MAX_OBSERVATION_CANDIDATES]
     return {
-        "schema_version": "1.0", "status": "READY" if broad and not failures else "DEGRADED",
+        "schema_version": "1.0", "status": "READY" if broad and not failures and not broad_source_meta.get("fallback_used") else "DEGRADED",
         "generated_at_beijing": generated, "market_date": market_date,
         "required_history_end_date": required_history_end_date,
         "source": "EASTMONEY_PRIMARY_HITHINK_SECONDARY_UNIVERSE_PLUS_BOUNDED_HISTORY_REPAIR",
@@ -962,7 +962,7 @@ def discover_formal_candidates(
             "history_validation_elapsed_seconds": elapsed,
             "measurement_role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE",
         },
-        "coverage_status": "COMPLETE" if not failures else ("UNAVAILABLE" if history_succeeded == 0 else "PARTIAL"),
+        "coverage_status": "COMPLETE" if not failures and not broad_source_meta.get("fallback_used") else ("UNAVAILABLE" if history_succeeded == 0 else "PARTIAL"),
         "history_failures": failures, "candidates": candidates,
         "observation_capacity": {"target_typical": "5-10", "allowed_min": 0, "resource_protection_max": MAX_OBSERVATION_CANDIDATES},
         "selection_contract": {
