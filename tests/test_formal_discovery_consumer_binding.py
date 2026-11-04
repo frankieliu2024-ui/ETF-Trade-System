@@ -63,6 +63,38 @@ class FormalDiscoverySelectionTests(unittest.TestCase):
             with self.subTest(bad=bad):
                 self.assertIsNone(select_latest_qualified_formal_discovery(bad, **self.kwargs))
 
+    def test_producer_to_consumer_current_projection(self):
+        import json
+        import tempfile
+        from pathlib import Path
+        from datetime import datetime, timedelta
+        from scripts.build_query_context import _write_formal_layer_projections
+
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            current = {
+                "market_date": "2026-11-04",
+                "latest_valid_node": "live",
+                "latest_snapshot": self.projection["latest_snapshot"],
+            }
+            _write_formal_layer_projections(root, current, {
+                "status": "READY",
+                "coverage_status": "COMPLETE",
+                "candidates": self.projection["candidates"],
+            })
+            actual = json.loads((root / "data/state/formal_discovery_current.json").read_text())
+            cutoff = (datetime.fromisoformat(actual["generated_at_beijing"]) +
+                      timedelta(seconds=1)).isoformat()
+            selected = select_latest_qualified_formal_discovery(
+                actual, requested_at_beijing=cutoff, market_date="2026-11-04"
+            )
+            self.assertEqual(selected["candidate_count"], 8)
+            self.assertEqual(selected["latest_snapshot"], current["latest_snapshot"])
+            self.assertIsNone(select_latest_qualified_formal_discovery(
+                dict(actual, market_date="2026-10-30"),
+                requested_at_beijing=cutoff, market_date="2026-11-04",
+            ))
+
     def test_valid_zero_candidates_is_not_missing(self):
         empty = dict(self.projection, candidate_count=0, candidates=[])
         self.assertIs(select_latest_qualified_formal_discovery(empty, **self.kwargs), empty)
