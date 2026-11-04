@@ -566,6 +566,53 @@ def _broad_return_median(rows: list[dict[str, Any]]) -> float | None:
     return values[mid] if len(values) % 2 else (values[mid - 1] + values[mid]) / 2.0
 
 
+
+def _apply_external_driver_triggers(rows: list[dict[str, Any]], context: dict[str, Any] | None) -> list[dict[str, Any]]:
+    """Attach Hyperliquid evidence to existing A-share rows; never creates ETF rows."""
+    if not context or str(context.get("quality_status") or "").upper() not in {"PASS", "DEGRADED"}:
+        return rows
+    mappings = context.get("mapping") or []
+    observations = {
+        str(item.get("asset", {}).get("name") or ""): item
+        for item in (context.get("observations") or [])
+        if isinstance(item, dict)
+    }
+    by_code: dict[str, list[dict[str, Any]]] = {}
+    for mapping in mappings:
+        asset = str(mapping.get("asset") or "")
+        observation = observations.get(asset)
+        if not observation:
+            continue
+        raw = observation.get("context") or {}
+        def number(key: str) -> float | None:
+            return _num(raw.get(key))
+        mark, prev = number("markPx"), number("prevDayPx")
+        premium, funding = number("premium"), number("funding")
+        if mark is None or prev in (None, 0):
+            continue
+        direction = "SUPPORTIVE" if mark > prev else ("NEGATIVE" if mark < prev else "NEUTRAL")
+        crowding = "ELEVATED" if abs(funding or 0) >= 0.0001 or abs(premium or 0) >= 0.002 else "NORMAL"
+        evidence = {
+            "asset": asset, "dex": observation.get("dex"), "family": mapping.get("family"),
+            "direction": direction, "crowding": crowding, "mark": mark,
+            "oracle": number("oraclePx"), "premium": premium, "funding": funding,
+            "open_interest": number("openInterest"), "day_notional_volume": number("dayNtlVlm"),
+            "provider_timestamp": observation.get("provider_timestamp"),
+            "provider_timestamp_status": observation.get("provider_timestamp_status"),
+            "as_of_collection_utc": observation.get("collected_at_utc"),
+            "decision_boundary": "仅作为外部驱动发现和机会比较证据，不独立生成交易权限或动作"
+        }
+        for code in mapping.get("etf_codes") or []:
+            by_code.setdefault(str(code), []).append(evidence)
+    enriched = []
+    for row in rows:
+        copy = dict(row)
+        triggers = by_code.get(str(row.get("code") or ""), [])
+        if triggers:
+            copy["_external_driver_triggers"] = triggers
+        enriched.append(copy)
+    return enriched
+
 def _information_classes(row: dict[str, Any], broad_median: float | None) -> list[str]:
     """Cheap evidence-acquisition classes. They are not trade/capital rankings."""
     if (_num(row.get("amount")) or 0) < MIN_AMOUNT or (_num(row.get("price")) or 0) <= 0:
@@ -585,6 +632,8 @@ def _information_classes(row: dict[str, Any], broad_median: float | None) -> lis
         classes.append("PERSISTENT_STRUCTURE")
     if r60 is None and daily is not None and broad_median is not None and daily - broad_median >= RELATIVE_DIVERGENCE_PCT:
         classes.append("SHORT_HISTORY_CURRENT_CHANGE")
+    if row.get("_external_driver_triggers"):
+        classes.append("EXTERNAL_DRIVER_TRIGGER")
     return classes
 
 
@@ -631,6 +680,7 @@ def _bounded_prefilter(rows: list[dict[str, Any]], held_codes: set[str] | None =
     """Allocate scarce validation work by information class, never by return score."""
     held_codes = {str(x) for x in (held_codes or set())}
     class_priority = (
+        "EXTERNAL_DRIVER_TRIGGER",
         "NEW_RELATIVE_DIVERGENCE",
         "STRUCTURAL_CHANGE",
         "SHORT_HISTORY_CURRENT_CHANGE",
@@ -819,6 +869,7 @@ def discover_formal_candidates(
     held_codes: set[str] | None = None,
     spot_rows: list[dict[str, Any]] | None = None,
     history_by_code: dict[str, list[dict[str, Any]]] | None = None,
+    external_driver_context: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     generated_dt = datetime.now(BEIJING)
     generated = generated_dt.isoformat(timespec="seconds")
@@ -839,6 +890,7 @@ def discover_formal_candidates(
             "decision_boundary": "广域发现失败不删除持仓/观察ETF，也不阻塞其现有正式MASTER链。",
         }
     broad_elapsed = round(time.monotonic() - broad_started, 3)
+    broad = _apply_external_driver_triggers(broad, external_driver_context)
     prefilter_started = time.monotonic()
     held_codes = {str(x) for x in (held_codes or set())}
     prefiltered = _bounded_prefilter(broad, held_codes, market_date)
