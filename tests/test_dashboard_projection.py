@@ -367,7 +367,7 @@ class DashboardProjectionTests(unittest.TestCase):
             state.mkdir(parents=True)
             requests.mkdir(parents=True)
             completion_rel = "requests/live_snapshot/fd_20261104_142657__scheduled_review_completion.json"
-            (requests / "live_snapshot" / "fd_20261104_142657__scheduled_review_completion.json").write_text(
+            (requests / "fd_20261104_142657__scheduled_review_completion.json").write_text(
                 json.dumps({
                     "market_date": "2026-11-04",
                     "requested_at_beijing": "2026-11-04T14:26:57+08:00",
