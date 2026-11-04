@@ -357,5 +357,44 @@ class DashboardProjectionTests(unittest.TestCase):
             self.assertEqual(decision["_stale_reason"], "")
 
 
+    def test_formal_report_uses_market_date_from_source_completion(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            reviews = root / "events" / "reviews"
+            state = root / "data" / "state"
+            requests = root / "requests" / "live_snapshot"
+            reviews.mkdir(parents=True)
+            state.mkdir(parents=True)
+            requests.mkdir(parents=True)
+            completion_rel = "requests/live_snapshot/fd_20261104_142657__scheduled_review_completion.json"
+            (requests / "live_snapshot" / "fd_20261104_142657__scheduled_review_completion.json").write_text(
+                json.dumps({
+                    "market_date": "2026-11-04",
+                    "requested_at_beijing": "2026-11-04T14:26:57+08:00",
+                }),
+                encoding="utf-8",
+            )
+            (reviews / "formal_auto-20261104-142657.json").write_text(
+                json.dumps({
+                    "event_type": "FORMAL_DECISION_REPORT",
+                    "reviewed_at_beijing": "2026-11-04T14:26:57+08:00",
+                    "source_completion_path": completion_rel,
+                    "presentation_binding": {"full_content": "test"},
+                }),
+                encoding="utf-8",
+            )
+            (state / "account_fact.json").write_text(
+                json.dumps({
+                    "updated_at": "2026-11-04T15:00:00+08:00",
+                    "source": "BROKER_HOLDINGS_AND_TRADE_SCREENSHOTS_20261104_1745_USER_CONFIRMED_CLOSE",
+                    "positions": [],
+                }),
+                encoding="utf-8",
+            )
+            decision = latest_canonical_formal_decision(root)
+            self.assertEqual(decision["_event_market_date"], "2026-11-04")
+            self.assertEqual(decision["_current_applicability"], "CURRENT")
+
+
 if __name__ == "__main__":
     unittest.main()
