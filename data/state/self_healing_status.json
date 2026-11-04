@@ -1,28 +1,26 @@
 {
   "schema_version": "1.1",
-  "checked_at": "2026-11-04T17:12:08+08:00",
+  "checked_at": "2026-11-04T17:15:59+08:00",
   "mode": "DETERMINISTIC_RUNTIME_SELF_HEALING",
   "enabled": true,
-  "classification": "CONSISTENCY_REGRESSION",
-  "recommended_action": "ESCALATE",
-  "reason": "system consistency has a hard failure that is not proven orthogonal to canonical market recovery",
+  "classification": "HEALTHY",
+  "recommended_action": "NONE",
+  "reason": "runtime state is within self-healing bounds",
   "market_open_date": true,
   "watch_window_active": false,
   "same_day_current_required": false,
   "same_day_current_missing": false,
   "current_capture_at": "2026-11-04T15:15:25+08:00",
-  "current_capture_age_seconds": 7003,
+  "current_capture_age_seconds": 7234,
   "expected_pulse_at": null,
   "expected_pulse_missing": false,
   "runtime_health_status": "SKIPPED",
-  "system_consistency_status": "FAIL",
+  "system_consistency_status": "PASS",
   "market_recovery_consistency_gate": {
-    "global_status": "FAIL",
-    "blocks_market_recovery": true,
-    "classification": "GLOBAL_FAIL_BLOCKS_MARKET_RECOVERY_FAIL_SAFE",
-    "errors": [
-      "us_extended:live_freshness: phase=PRE_MARKET required=['QQQ', 'SOXX'] failures=['QQQ:NASDAQ100_EXTENDED_HOURS_PROXY:age=29503:freshness=PREVIOUS_SESSION_REFERENCE', 'SOXX:SEMICONDUCTOR_EXTENDED_HOURS_PROXY:age=29568:freshness=PREVIOUS_SESSION_REFERENCE'] limit=900"
-    ]
+    "global_status": "PASS",
+    "blocks_market_recovery": false,
+    "classification": "NO_GLOBAL_HARD_FAIL",
+    "errors": []
   },
   "master_rules_version": "V2.2.34",
   "current_rules_version": "V2.2.34",
