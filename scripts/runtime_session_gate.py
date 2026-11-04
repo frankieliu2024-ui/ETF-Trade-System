@@ -250,6 +250,63 @@ def _same_day_close_ready(date_text: str) -> bool:
     )
 
 
+def latest_legal_close_reference(root: Path, current_date: str, calendar: dict) -> dict:
+    """Validate the canonical latest legal A-share close for off-session processing.
+
+    This is a session-reference path, not a new quote capture. It never promotes
+    a previous-session snapshot to a current/live quote and never writes CURRENT.
+    """
+    current_path = root / "data" / "state" / "CURRENT.json"
+    try:
+        current = load_json(current_path)
+    except (OSError, json.JSONDecodeError):
+        return {"available": False, "reason": "current_missing_or_invalid"}
+
+    market_date = str(current.get("market_date") or "").strip()
+    if not market_date or market_date > current_date:
+        return {"available": False, "reason": "current_market_date_missing_or_future"}
+    if str(current.get("latest_valid_node") or "").strip().lower() != "close":
+        return {"available": False, "reason": "latest_valid_node_not_close"}
+    if str(current.get("node_status") or "").strip().upper() not in {"READY", "DEGRADED"}:
+        return {"available": False, "reason": "current_close_not_usable"}
+
+    try:
+        legal_date = datetime.fromisoformat(market_date).date()
+    except ValueError:
+        return {"available": False, "reason": "current_market_date_invalid"}
+    if legal_date.weekday() >= 5 or market_date in set(calendar.get("closed_dates") or []):
+        return {"available": False, "reason": "current_market_date_not_legal_session"}
+
+    relative = str(current.get("latest_snapshot") or "").strip()
+    if not relative:
+        return {"available": False, "reason": "latest_snapshot_missing"}
+    snapshot_path = (root / relative).resolve()
+    if not snapshot_path.is_relative_to(root.resolve()) or not snapshot_path.is_file():
+        return {"available": False, "reason": "latest_snapshot_path_invalid_or_missing"}
+    try:
+        snapshot = load_json(snapshot_path)
+    except (OSError, json.JSONDecodeError):
+        return {"available": False, "reason": "latest_snapshot_invalid"}
+
+    if str(snapshot.get("market_date") or "") != market_date:
+        return {"available": False, "reason": "snapshot_market_date_mismatch"}
+    if str(snapshot.get("node") or "").strip().lower() != "close":
+        return {"available": False, "reason": "snapshot_node_not_close"}
+    if str(snapshot.get("quality_status") or "").strip().upper() not in {"PASS", "DEGRADED"}:
+        return {"available": False, "reason": "snapshot_quality_not_usable"}
+    rows = snapshot.get("rows")
+    if not isinstance(rows, list) or not rows:
+        return {"available": False, "reason": "snapshot_rows_missing"}
+
+    return {
+        "available": True,
+        "reason": "latest_legal_close_reference_available",
+        "market_date": market_date,
+        "snapshot": relative,
+        "quality_status": str(snapshot.get("quality_status") or "").upper(),
+    }
+
+
 def _event_has_manual_formal_refresh_request(policy: dict) -> bool:
     for path in _event_request_files():
         try:
@@ -373,7 +430,22 @@ def main() -> int:
         reason = "business_decision_source_request" if request_class == "BUSINESS_DECISION_SOURCE" else "state_sync_only_request"
         request_time_close_recovery = False
 
-    close_intent = bool(scheduled_close_intent or boundary_close_intent or request_time_close_recovery or manual_close_intent)
+    probe_only = os.environ.get("GITHUB_EVENT_INPUTS_PROBE_ONLY", "false").strip().lower() == "true"
+    latest_close_reference = latest_legal_close_reference(ROOT, date_text, calendar)
+    process_latest_reference = bool(
+        event_name == "workflow_dispatch"
+        and not probe_only
+        and request_class not in {"STATE_SYNC_ONLY", "BUSINESS_DECISION_SOURCE"}
+        and not should_capture
+        and latest_close_reference.get("available") is True
+    )
+    close_intent = bool(
+        scheduled_close_intent
+        or boundary_close_intent
+        or request_time_close_recovery
+        or manual_close_intent
+        or process_latest_reference
+    )
     wait_for_close_boundary_seconds = 0
     if boundary_close_intent and minute < 15 * 60:
         wait_for_close_boundary_seconds = 15 * 60 - (now.hour * 60 * 60 + now.minute * 60 + now.second)
@@ -384,7 +456,9 @@ def main() -> int:
     elif event_name == "workflow_dispatch":
         # A manually requested close consumes the latest legal close snapshot
         # and must continue close-review projection outside capture hours.
-        if manual_close_intent and not should_capture:
+        if process_latest_reference:
+            reason = "manual_dispatch_latest_legal_close_reference"
+        elif manual_close_intent and not should_capture:
             reason = "manual_dispatch_close_existing_snapshot"
         # Preserve the canonical outside-window enum consumed by downstream
         # phase-consistency gates; dispatch observability must not rewrite it.
@@ -400,10 +474,14 @@ def main() -> int:
     set_output("market_phase", phase)
     set_output("close_intent", "true" if close_intent else "false")
     set_output("request_time_close_recovery", "true" if request_time_close_recovery else "false")
+    set_output("process_latest_reference", "true" if process_latest_reference else "false")
+    set_output("latest_reference_market_date", latest_close_reference.get("market_date", ""))
+    set_output("latest_reference_snapshot", latest_close_reference.get("snapshot", ""))
+    set_output("latest_reference_reason", latest_close_reference.get("reason", ""))
     set_output("wait_for_close_boundary_seconds", str(max(0, wait_for_close_boundary_seconds)))
     for key, value in schedule_observation.items():
         set_output(key, "" if value is None else str(value))
-    print(json.dumps({"should_capture": should_capture, "request_class": request_class, "reason": reason, "market_date": date_text, "market_phase": phase, "close_intent": close_intent, "request_time_close_recovery": request_time_close_recovery, "wait_for_close_boundary_seconds": max(0, wait_for_close_boundary_seconds), "captured_at_beijing": now.isoformat(timespec="seconds"), "schedule_observability": schedule_observation}, ensure_ascii=False))
+    print(json.dumps({"should_capture": should_capture, "request_class": request_class, "reason": reason, "market_date": date_text, "market_phase": phase, "close_intent": close_intent, "request_time_close_recovery": request_time_close_recovery, "process_latest_reference": process_latest_reference, "latest_close_reference": latest_close_reference, "wait_for_close_boundary_seconds": max(0, wait_for_close_boundary_seconds), "captured_at_beijing": now.isoformat(timespec="seconds"), "schedule_observability": schedule_observation}, ensure_ascii=False))
     return 0
 
 
