@@ -1063,7 +1063,12 @@ def build_formal_runtime_completion_request(
             if isinstance(fact_summary, dict) and "discovery_binding" in fact_summary
             else {}
         ),
-        "completion_contract_version": "2",
+        # A run that supplies frozen Discovery evidence must use the strict
+        # coverage contract. Legacy no-evidence runs remain v2 until live
+        # entrypoints are migrated under the existing task governance.
+        "completion_contract_version": (
+            "3" if isinstance(fact_summary, dict) and "discovery_binding" in fact_summary else "2"
+        ),
         "decision_id": decision_id,
         "report_type": "ETF_FORMAL_DECISION",
         "report_id": decision_id,
