@@ -136,6 +136,7 @@ class FormalDiscoveryConsumerBindingTests(unittest.TestCase):
             )
         self.assertEqual(payload["discovery_binding"], binding)
         self.assertEqual(payload["fact_summary"]["discovery_binding"], binding)
+        self.assertEqual(payload["completion_contract_version"], "3")
 
     def test_builder_does_not_invent_discovery_binding(self):
         from unittest.mock import patch
@@ -154,6 +155,7 @@ class FormalDiscoveryConsumerBindingTests(unittest.TestCase):
                 decision_path="formal",
             )
         self.assertNotIn("discovery_binding", payload)
+        self.assertEqual(payload["completion_contract_version"], "2")
 
     def test_v3_requires_binding_and_checks_run_start_pit(self):
         import json
