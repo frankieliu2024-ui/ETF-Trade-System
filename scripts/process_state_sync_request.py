@@ -2392,9 +2392,12 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
     if (
         isinstance(raw_presentation_binding, dict)
         and not str(raw_presentation_binding.get("full_content") or "")
-        and str(request.get("final_content") or "")
+        and str(request.get("final_content") or raw_presentation_binding.get("final_content") or "")
     ):
-        candidate_content = str(request.get("final_content"))
+        candidate_content = str(
+            request.get("final_content")
+            or raw_presentation_binding.get("final_content")
+        )
         candidate_hash = hashlib.sha256(candidate_content.encode("utf-8")).hexdigest()
         top_level_hash = str(request.get("content_hash") or "").strip().lower()
         binding_hash = str(raw_presentation_binding.get("content_hash") or "").strip().lower()
