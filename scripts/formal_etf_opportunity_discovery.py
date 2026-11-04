@@ -604,10 +604,18 @@ def _apply_external_driver_triggers(rows: list[dict[str, Any]], context: dict[st
         }
         for code in mapping.get("etf_codes") or []:
             by_code.setdefault(str(code), []).append(evidence)
+        mapping["_evidence_template"] = evidence
     enriched = []
     for row in rows:
         copy = dict(row)
-        triggers = by_code.get(str(row.get("code") or ""), [])
+        triggers = list(by_code.get(str(row.get("code") or ""), []))
+        row_name = str(row.get("name") or "")
+        for mapping in mappings:
+            markers = [str(x) for x in (mapping.get("name_markers") or []) if str(x)]
+            if markers and any(marker in row_name for marker in markers):
+                template = mapping.get("_evidence_template")
+                if template and template not in triggers:
+                    triggers.append(template)
         if triggers:
             copy["_external_driver_triggers"] = triggers
         enriched.append(copy)
