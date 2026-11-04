@@ -763,7 +763,7 @@ def _candidate(row: dict[str, Any], history: list[dict[str, Any]], required_hist
     completed = [x for x in history if str(x.get("date") or "") <= required_history_end_date]
     info_classes = list(row.get("_discovery_information_classes") or [])
     if len(completed) < MIN_HISTORY:
-        if len(completed) < SHORT_HISTORY_MIN or not set(info_classes) & {"NEW_RELATIVE_DIVERGENCE", "SHORT_HISTORY_CURRENT_CHANGE"}:
+        if len(completed) < SHORT_HISTORY_MIN or not set(info_classes) & {"NEW_RELATIVE_DIVERGENCE", "SHORT_HISTORY_CURRENT_CHANGE", "EXTERNAL_DRIVER_TRIGGER"}:
             return None
         avg_amount = sum(float(x.get("amount") or 0) for x in completed[-20:]) / min(20, len(completed))
         return {
@@ -793,7 +793,7 @@ def _candidate(row: dict[str, Any], history: list[dict[str, Any]], required_hist
     entered = sorted({x["state"] for x in current_states} - previous_states)
     aligned = [x for x in current_states if x["state"] in set(_potential_families(row))]
     relative_only = "NEW_RELATIVE_DIVERGENCE" in info_classes
-    if not entered and not aligned and not relative_only:
+    if not entered and not aligned and not relative_only and "EXTERNAL_DRIVER_TRIGGER" not in info_classes:
         return None
     avg_amount = sum(float(x.get("amount") or 0) for x in completed[-20:]) / min(20, len(completed))
     return {
