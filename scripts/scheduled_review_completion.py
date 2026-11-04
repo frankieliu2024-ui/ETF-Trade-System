@@ -815,6 +815,7 @@ def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | N
     # checks below; this is source-contract compatibility, not a validation bypass.
     allowed_sources = {
         "CHATGPT_DIRECT_GITHUB_CONTENTS_WRITER",
+        "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
         "CHATGPT_SCHEDULED_TASK",
     }
     if str(payload.get("source") or "").strip().upper() not in allowed_sources:
