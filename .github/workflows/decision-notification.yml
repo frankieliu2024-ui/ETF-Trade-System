@@ -554,6 +554,9 @@ jobs:
               # Copy it into the replay binding without mutating the frozen file.
               binding = dict(payload.get("presentation_binding") or {})
               binding["entry_mode"] = str(payload.get("entry_mode") or "").strip()
+              binding["full_content"] = str(
+                  binding.get("full_content") or payload.get("final_content") or ""
+              )
               projection_payload["presentation_binding"] = binding
           ok, duplicate = record_post_close_review(account, projection_payload)
           if not ok:
