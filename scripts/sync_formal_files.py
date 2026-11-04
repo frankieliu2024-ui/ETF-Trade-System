@@ -164,6 +164,31 @@ def _structured_decision_from_report(event: dict) -> dict:
         "data_as_of_beijing": data_as_of or event.get("reviewed_at_beijing") or event.get("market_date") or "",
     }
 
+
+
+def _expected_same_day_close_account_update(decision: dict, decision_stamp, account_stamp, account: dict) -> bool:
+    """A close account snapshot after an intraday decision is expected, not stale.
+
+    Formal Decision has a 14:30 node while the broker close fact is published at
+    15:00.  The later close snapshot must not make the earlier intraday decision
+    look invalid merely because it was produced later.  Real account changes
+    remain stale; this exception is limited to the same market date and the
+    configured 15:00 close fact.
+    """
+    if not decision_stamp or not account_stamp:
+        return False
+    market_date = str(decision.get("_event_market_date") or decision.get("market_date") or "").strip()
+    if not market_date or decision_stamp.astimezone(SHANGHAI).date().isoformat() != market_date:
+        return False
+    if account_stamp.astimezone(SHANGHAI).date().isoformat() != market_date:
+        return False
+    if decision_stamp.astimezone(SHANGHAI).time().isoformat(timespec="minutes") >= "15:00":
+        return False
+    if account_stamp.astimezone(SHANGHAI).time().isoformat(timespec="minutes") != "15:00":
+        return False
+    source = str(account.get("source") or "").upper()
+    return "CLOSE" in source or "收盘" in source or str(account.get("capture_mode") or "").upper() == "CLOSE"
+
 def latest_canonical_formal_decision(root: Path = ROOT) -> dict:
     """Return the newest canonical decision/report, explicitly marked when stale.
 
@@ -250,7 +275,7 @@ def latest_canonical_formal_decision(root: Path = ROOT) -> dict:
             account_stamp = datetime.fromisoformat(account_time.replace("Z", "+00:00"))
             if account_stamp.tzinfo is None:
                 account_stamp = account_stamp.replace(tzinfo=SHANGHAI)
-            if account_stamp > parsed:
+            if account_stamp > parsed and not _expected_same_day_close_account_update(decision, parsed, account_stamp, account):
                 stale_reasons.append("正式决策早于最新账户事实；该账户变化尚未纳入本次正式判断")
         except (TypeError, ValueError):
             pass
