@@ -482,7 +482,7 @@ def main() -> int:
         # A manually requested close consumes the latest legal close snapshot
         # and must continue close-review projection outside capture hours.
         if process_latest_reference:
-            reason = "manual_dispatch_latest_legal_close_reference"
+            reason = "latest_legal_close_reference"
         elif manual_close_intent and not should_capture:
             reason = "manual_dispatch_close_existing_snapshot"
         # Preserve the canonical outside-window enum consumed by downstream
