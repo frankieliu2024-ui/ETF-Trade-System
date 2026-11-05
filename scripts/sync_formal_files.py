@@ -339,6 +339,106 @@ def latest_canonical_formal_decision(root: Path = ROOT) -> dict:
     }
 
 
+def _formal_decision_index_records(root: Path, market_date: str) -> list[dict]:
+    """Read compact same-day Formal Decision records from canonical events."""
+    records: list[dict] = []
+    seen: set[str] = set()
+    for directory in (root / "events" / "reviews", root / "events" / "decisions"):
+        if not directory.exists():
+            continue
+        for path in directory.glob("*.json"):
+            try:
+                event = load_json(path)
+            except (OSError, json.JSONDecodeError, TypeError):
+                continue
+            if str(event.get("event_type") or "").upper() not in {"FORMAL_DECISION", "FORMAL_DECISION_REPORT"}:
+                continue
+            stamp = event.get("decision_time_beijing") or event.get("decision_effective_at_beijing") or event.get("reviewed_at_beijing") or event.get("recorded_at_beijing")
+            try:
+                from datetime import datetime
+                parsed = datetime.fromisoformat(str(stamp).replace("Z", "+00:00"))
+                if parsed.tzinfo is None:
+                    parsed = parsed.replace(tzinfo=SHANGHAI)
+                parsed = parsed.astimezone(SHANGHAI)
+            except (TypeError, ValueError):
+                continue
+            event_date = str(event.get("market_date") or event.get("market_date_beijing") or parsed.date())
+            if event_date != market_date:
+                continue
+            identity = str(event.get("decision_id") or event.get("report_id") or event.get("task_run_id") or event.get("source_completion_path") or event.get("content_hash") or path)
+            if identity in seen:
+                continue
+            seen.add(identity)
+            binding = event.get("presentation_binding") or {}
+            content = str(binding.get("full_content") or event.get("final_content") or "")
+            decision = event.get("formal_decision") or event.get("decision") or event.get("decision_response") or {}
+            if not isinstance(decision, dict):
+                decision = {}
+            answers = decision.get("answers") if isinstance(decision.get("answers"), dict) else {}
+            risk = decision.get("risk_permission") or (answers.get("RISK_PERMISSION") or {}).get("final_action")
+            candidate = decision.get("main_candidate") or (answers.get("MAIN_CANDIDATE") or {}).get("candidate_name")
+            capital = decision.get("capital_competition") if isinstance(decision.get("capital_competition"), dict) else {}
+            amount = decision.get("amount_action") or decision.get("action") or capital.get("next_unit_capital_use") or (answers.get("NEXT_UNIT_CAPITAL_USE") or {}).get("final_action")
+            new_amount = capital.get("new_amount_yuan")
+            if new_amount in (None, ""):
+                new_amount = (answers.get("NEXT_UNIT_CAPITAL_USE") or {}).get("new_amount_yuan")
+            release = decision.get("release_action") or capital.get("release_action") or "未提供"
+            if not candidate and content:
+                found = re.search(r"(?:唯一主候选|重点候选|最接近可执行的候选)[：:]?\s*([^。；\n]+)", content)
+                candidate = found.group(1).strip() if found else ""
+            if not risk and content:
+                risk = "Trial不授予" if re.search(r"Trial\s*不授予", content, re.I) else ""
+                if not risk and re.search(r"Confirm\s*不授予", content, re.I):
+                    risk = "Confirm不授予"
+            if not amount:
+                found = re.search(r"建议新增部署\s*([^，。；\n]+)", content)
+                amount = "新增部署" + found.group(1).strip() if found else "未提供"
+            if new_amount not in (None, ""):
+                amount = f"{amount}；{float(new_amount):,.2f}元"
+            judgment_kind = str(event.get("judgment_kind") or event.get("decision_status") or event.get("assessment_status") or "").strip()
+            if not judgment_kind:
+                judgment_kind = "超时判断" if "超时判断" in content else ("降级判断" if "降级判断" in content else "正式判断")
+            records.append({"stamp": parsed, "judgment_kind": judgment_kind, "candidate": candidate or "未结构化摘要", "risk": risk or "未结构化", "amount": amount or "未提供", "release": release, "identity": identity})
+    records.sort(key=lambda item: (item["stamp"], item["identity"]))
+    for index, item in enumerate(records):
+        item["status"] = "当前判断" if index == len(records) - 1 else "已被后续判断覆盖"
+    return records
+
+
+def render_same_day_formal_decision_index(root: Path, account: dict) -> str:
+    current_path = root / "data/state/CURRENT.json"
+    current = load_json(current_path) if current_path.exists() else {}
+    market_date = str(account.get("updated_at") or current.get("market_date") or "")[:10]
+    records = _formal_decision_index_records(root, market_date) if market_date else []
+    lines = ["### 当日正式决策索引", ""]
+    if not records:
+        return "\n".join(lines + ["- 当日尚未形成可回读的正式决策记录。"])
+    lines += [
+        "仅列当日【ETF正式决策】的紧凑摘要；正式判断、降级判断和超时判断均保留，重试不重复计数。",
+        "",
+        "|时间|类型|主要对象/动作|Trial/Confirm|金额/释放|当日成交关联|状态|",
+        "|-|-|-|-|-|-|-|",
+    ]
+    trades = account.get("trades") or []
+    for item in records:
+        linked = [trade for trade in trades if str(trade.get("decision_id") or trade.get("linked_decision_id") or "") == item["identity"]]
+        decision_text = f"{item['candidate']} {item['release']}"
+        same_day_object = [
+            trade for trade in trades
+            if str(trade.get("trade_time") or "")[:10] == market_date
+            and str(trade.get("security_code") or trade.get("code") or "")
+            and str(trade.get("security_code") or trade.get("code") or "") in decision_text
+        ]
+        if linked:
+            execution = "已关联成交"
+        elif same_day_object:
+            execution = "同日成交、对象匹配；归因未确认"
+        else:
+            execution = "未确认"
+        lines.append(f"|{item['stamp'].strftime('%H:%M')}|{item['judgment_kind']}|{item['candidate']}|{item['risk']}|{item['amount']}；释放{item['release']}|{execution}|{item['status']}|")
+    return "\n".join(lines)
+
+
 def render_decision_projection(decision: dict) -> str:
     """Render current or historical decision without presenting stale facts as current."""
     applicability = str(decision.get("_current_applicability") or "CURRENT")
@@ -566,6 +666,8 @@ def build_dashboard_block(account: dict, equity: dict, existing: str, root: Path
             "",
             render_decision_projection(decision),
             f"- 决策与当前风险事实关系：{freshness}（决策事实 {decision_as_of or '未提供'}；风险事实 {risk_as_of or '未提供'}）",
+            "",
+            render_same_day_formal_decision_index(root, account),
         ]
     else:
         lines += ["", "最近一次正式决策未随本次账户维护请求提供；脚本不自行推断。"]
