@@ -1019,8 +1019,19 @@ def discover_formal_candidates(
     # opportunities by state or liquidity: that would recreate a hidden Top-N.
     candidates.sort(key=lambda item: str(item.get("code") or ""))
     candidates = candidates[:MAX_OBSERVATION_CANDIDATES]
+    # A broad snapshot with no prefiltered objects is not a completed empty
+    # Discovery. It means the current node did not provide enough executable
+    # fields to start the required historical validation, so it must remain
+    # visibly degraded and must not be consumed as a legal empty set.
+    empty_reason = ""
+    if not prefiltered:
+        empty_reason = "NO_ELIGIBLE_OBJECTS_FOR_HISTORY_VALIDATION"
+    coverage_status = (
+        "INCOMPLETE" if not prefiltered
+        else ("COMPLETE" if not failures and not broad_source_meta.get("fallback_used") else ("UNAVAILABLE" if history_succeeded == 0 else "PARTIAL"))
+    )
     return {
-        "schema_version": "1.0", "status": "READY" if broad and not failures and not broad_source_meta.get("fallback_used") else "DEGRADED",
+        "schema_version": "1.0", "status": "READY" if broad and prefiltered and not failures and not broad_source_meta.get("fallback_used") else "DEGRADED",
         "generated_at_beijing": generated, "market_date": market_date,
         "required_history_end_date": required_history_end_date,
         "source": "EASTMONEY_PRIMARY_HITHINK_SECONDARY_UNIVERSE_PLUS_BOUNDED_HISTORY_REPAIR",
@@ -1035,13 +1046,14 @@ def discover_formal_candidates(
         "history_attempted_count": history_attempted, "history_succeeded_count": history_succeeded,
         "history_reused_count": history_reused, "history_repair_attempted_count": history_repair_attempted,
         "history_failure_count": len(failures), "history_elapsed_seconds": elapsed,
+        "empty_reason": empty_reason,
         "latency_observability": {
             "broad_acquisition_elapsed_seconds": broad_elapsed,
             "prefilter_elapsed_seconds": prefilter_elapsed,
             "history_validation_elapsed_seconds": elapsed,
             "measurement_role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE",
         },
-        "coverage_status": "COMPLETE" if not failures and not broad_source_meta.get("fallback_used") else ("UNAVAILABLE" if history_succeeded == 0 else "PARTIAL"),
+        "coverage_status": coverage_status,
         "history_failures": failures, "candidates": candidates,
         "observation_capacity": {"target_typical": "5-10", "allowed_min": 0, "resource_protection_max": MAX_OBSERVATION_CANDIDATES},
         "selection_contract": {
@@ -1051,5 +1063,5 @@ def discover_formal_candidates(
             "prefilter": "single broad cross-section; minimum executability; explicit information-acquisition classes for relative divergence, structural change, short-history current change and persistent structure; exact cheap-label clone control; no return ranking; date hash is tie-break only within equivalent information class/exposure",
             "final_ingress": "history budget counts successful evidence acquisition, with a bounded attempt cap; provider failure is explicit, does not consume a successful-evidence seat, and does not convert successful peers into legal capital competitors",
         },
-        "decision_boundary": "发现对象是本节点临时正式评估输入，不是第三种ETF身份；不得自动写观察池、生成Trial/Confirm或交易动作。",
+        "decision_boundary": "发现对象是本节点临时正式评估输入，不是第三种ETF身份；不得自动写观察池、生成Trial/Confirm或交易动作。只有在广域获取、预筛选和所需历史验证均完成时，candidate_count=0才表示合法空集合；empty_reason存在或coverage_status不是COMPLETE时，必须按发现未完成/降级处理。",
     }
