@@ -4068,6 +4068,19 @@ def merge_account_fact(prior: dict, supplied: dict) -> dict:
     for key, value in (supplied or {}).items():
         if key != "settlement_obligations" and value is not None:
             merged[key] = json.loads(json.dumps(value))
+
+    # The screenshot-confirmed market date is authoritative.  Older account
+    # facts may still carry a legacy top-level market_date from a prior
+    # screenshot; retaining that value makes current state appear stale even
+    # though the canonical ingress was processed successfully.
+    confirmed_market_date = (
+        supplied.get("last_confirmed_market_date")
+        or supplied.get("account_fact_market_date")
+        or supplied.get("market_date")
+    )
+    if confirmed_market_date:
+        merged["last_confirmed_market_date"] = str(confirmed_market_date)
+        merged["market_date"] = str(confirmed_market_date)
     # An ordinary screenshot is a partial observation.  Empty history-shaped
     # defaults from an ingress adapter must not erase canonical trade,
     # decision, fee, lifecycle, or reconciliation facts.
