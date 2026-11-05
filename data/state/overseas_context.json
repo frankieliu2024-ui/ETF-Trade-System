@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-11-05T08:21:03Z",
-  "generated_at_beijing": "2026-11-05T16:20:31+08:00",
+  "generated_at": "2026-11-05T08:32:53Z",
+  "generated_at_beijing": "2026-11-05T16:31:42+08:00",
   "display_timezone": "Asia/Shanghai",
   "a_share_reference_timezone": "Asia/Shanghai",
   "scope": "FORMAL_OVERSEAS_AND_ASIA_INDEX_LAYER",
@@ -63,7 +63,7 @@
           "provider_timestamp_field": "chart.timestamp",
           "as_of_beijing": "2026-11-05T05:00:00+08:00",
           "market_phase": "PRE_OPEN",
-          "delay_minutes": 680.52
+          "delay_minutes": 691.71
         }
       ],
       "direct_source_chain": [
@@ -72,7 +72,7 @@
       ],
       "configured_primary": "yahoo_chart_api",
       "freshness_status": "PREVIOUS_SESSION_REFERENCE",
-      "delay_minutes": 680.52,
+      "delay_minutes": 691.71,
       "stable_for_pulse": false,
       "quality_status_cn": "数据可用",
       "freshness_status_cn": "上一交易时段参考"
@@ -108,7 +108,7 @@
       "decision_note": "不同市场非同一时点，不得把上一收盘、盘中和当日收盘混为同步信号。",
       "selection_basis": "configured_primary_yahoo_valid_for_current_market_phase",
       "freshness_status": "PREVIOUS_SESSION_REFERENCE",
-      "delay_minutes": 680.52,
+      "delay_minutes": 691.71,
       "stable_for_pulse": false,
       "quality_status_cn": "数据可用",
       "freshness_status_cn": "上一交易时段参考"
@@ -117,54 +117,74 @@
       "object": "N225",
       "name": "日经225指数",
       "reference_role": "JAPAN_EQUITY",
-      "provider": "eastmoney_push2",
-      "provider_result": "HTTP 200",
-      "provider_timestamp_field": "f86",
-      "provider_endpoint": "push2delay.eastmoney.com",
-      "symbol": "100.N225",
+      "provider": "yahoo_chart_api",
+      "symbol": "^N225",
       "market_timezone": "Asia/Tokyo",
       "market_phase_at_generation": "CLOSED",
       "time_relation_to_a_share": "SAME_DAY_SESSION_REFERENCE",
       "quality_status": "PASS",
       "latest": {
-        "open": 62384.73,
-        "high": 62653.98,
-        "low": 60786.19,
-        "close": 61077.9,
+        "open": 61077.8984375,
+        "high": 61077.8984375,
+        "low": 61077.8984375,
+        "close": 61077.8984375,
         "volume": 0,
-        "amount": "-",
-        "previous_close": 62188.63,
+        "previous_close": 62021.328125,
         "timestamp": 1793860200,
         "as_of_utc": "2026-11-05T06:30:00Z",
         "as_of_local": "2026-11-05T15:30:00+09:00",
         "as_of_beijing": "2026-11-05T14:30:00+08:00",
         "market_date_local": "2026-11-05",
-        "provider_timezone": "Asia/Tokyo",
-        "symbol": "100.N225"
+        "provider_timezone": "JST",
+        "symbol": "^N225"
       },
+      "provider_result": "HTTP 200",
+      "provider_timestamp_field": "chart.timestamp",
       "display_time_rule": "正式输出优先显示latest.as_of_beijing（北京时间）；同时保留本地市场时区和market_phase。",
-      "decision_note": "东方财富对象级直接行情；按当前对象级正式主备策略使用，并始终以provider自身时间戳通过质量门禁。",
-      "selected_provider_id": "eastmoney_push2delay:100.N225",
+      "decision_note": "不同市场非同一时点，不得把上一收盘、盘中和当日收盘混为同步信号。",
+      "selected_provider_id": "yahoo_chart_api",
       "selection_basis": "validated_live_priority_first_usable_direct_source",
       "provider_attempts": [
         {
           "provider": "eastmoney_push2delay:100.N225",
+          "result": "FAILED",
+          "http_or_cli_result": "<urlopen error _ssl.c:1001: The handshake operation timed out>",
+          "quality_status": "FAILED",
+          "freshness_status": "MISSING",
+          "stable_for_10m_pulse": false,
+          "as_of_beijing": "",
+          "market_phase": "CLOSED",
+          "delay_minutes": null
+        },
+        {
+          "provider": "eastmoney_push2:100.N225",
+          "result": "FAILED",
+          "http_or_cli_result": "<urlopen error _ssl.c:1001: The handshake operation timed out>",
+          "quality_status": "FAILED",
+          "freshness_status": "MISSING",
+          "stable_for_10m_pulse": false,
+          "as_of_beijing": "",
+          "market_phase": "CLOSED",
+          "delay_minutes": null
+        },
+        {
+          "provider": "yahoo_chart_api",
           "result": "PASS",
           "http_or_cli_result": "HTTP 200",
           "quality_status": "PASS",
           "freshness_status": "SESSION_REFERENCE",
           "stable_for_10m_pulse": true,
-          "symbol": "100.N225",
-          "latest_price": 61077.9,
-          "open": 62384.73,
-          "high": 62653.98,
-          "low": 60786.19,
-          "close": 61077.9,
+          "symbol": "^N225",
+          "latest_price": 61077.8984375,
+          "open": 61077.8984375,
+          "high": 61077.8984375,
+          "low": 61077.8984375,
+          "close": 61077.8984375,
           "provider_timestamp": 1793860200,
-          "provider_timestamp_field": "f86",
+          "provider_timestamp_field": "chart.timestamp",
           "as_of_beijing": "2026-11-05T14:30:00+08:00",
           "market_phase": "CLOSED",
-          "delay_minutes": 110.52
+          "delay_minutes": 121.71
         }
       ],
       "direct_source_chain": [
@@ -174,7 +194,7 @@
       ],
       "configured_primary": "eastmoney_push2delay:100.N225",
       "freshness_status": "SESSION_REFERENCE",
-      "delay_minutes": 110.52,
+      "delay_minutes": 121.71,
       "stable_for_pulse": true,
       "quality_status_cn": "数据可用",
       "freshness_status_cn": "已结束交易时段参考"
@@ -232,7 +252,7 @@
           "provider_timestamp_field": "localTradedAt",
           "as_of_beijing": "2026-11-05T15:15:00+08:00",
           "market_phase": "CLOSED",
-          "delay_minutes": 65.52
+          "delay_minutes": 76.71
         }
       ],
       "direct_source_chain": [
@@ -243,7 +263,7 @@
       ],
       "configured_primary": "naver_finance:KOSPI",
       "freshness_status": "SESSION_REFERENCE",
-      "delay_minutes": 65.52,
+      "delay_minutes": 76.71,
       "stable_for_pulse": true,
       "quality_status_cn": "数据可用",
       "freshness_status_cn": "已结束交易时段参考"
@@ -297,7 +317,7 @@
           "provider_timestamp_field": "tlong",
           "as_of_beijing": "2026-11-05T13:33:00+08:00",
           "market_phase": "CLOSED",
-          "delay_minutes": 167.52
+          "delay_minutes": 178.71
         }
       ],
       "direct_source_chain": [
@@ -308,7 +328,7 @@
       ],
       "configured_primary": "twse_mis:tse_t00.tw",
       "freshness_status": "SESSION_REFERENCE",
-      "delay_minutes": 167.52,
+      "delay_minutes": 178.71,
       "stable_for_pulse": true,
       "quality_status_cn": "数据可用",
       "freshness_status_cn": "已结束交易时段参考"
@@ -330,10 +350,10 @@
         "close": 4152.3701171875,
         "volume": 0,
         "previous_close": 3936.02001953125,
-        "timestamp": 1793865600,
-        "as_of_utc": "2026-11-05T08:00:00Z",
-        "as_of_local": "2026-11-05T16:00:00+08:00",
-        "as_of_beijing": "2026-11-05T16:00:00+08:00",
+        "timestamp": 1793865900,
+        "as_of_utc": "2026-11-05T08:05:00Z",
+        "as_of_local": "2026-11-05T16:05:00+08:00",
+        "as_of_beijing": "2026-11-05T16:05:00+08:00",
         "market_date_local": "2026-11-05",
         "provider_timezone": "HKT",
         "symbol": "HSTECH.HK"
@@ -369,16 +389,16 @@
           "high": 4152.3701171875,
           "low": 4152.3701171875,
           "close": 4152.3701171875,
-          "provider_timestamp": 1793865600,
+          "provider_timestamp": 1793865900,
           "provider_timestamp_field": "chart.timestamp",
-          "as_of_beijing": "2026-11-05T16:00:00+08:00",
+          "as_of_beijing": "2026-11-05T16:05:00+08:00",
           "market_phase": "CLOSED",
-          "delay_minutes": 20.52
+          "delay_minutes": 26.71
         },
         {
           "provider": "hithink-finance:HS2083",
           "result": "FAILED",
-          "http_or_cli_result": "CLI exit=2: {\"ok\":false,\"command\":\"index\",\"error\":{\"code\":\"FUYAO_1002\",\"category\":\"validation\",\"message\":\"Invalid parameter format: thscodes\",\"hint\":\"Check the command schema and correct the supplied parameters.\",\"retryable\":false,\"request_id\":\"cdbcdcfd43534c299ff6e306091fbc95\"},\"meta\":{\"cli_version\":\"0.1.13\",\"schema_version\":\"1\"}}\n",
+          "http_or_cli_result": "CLI exit=2: {\"ok\":false,\"command\":\"index\",\"error\":{\"code\":\"FUYAO_1002\",\"category\":\"validation\",\"message\":\"Invalid parameter format: thscodes\",\"hint\":\"Check the command schema and correct the supplied parameters.\",\"retryable\":false,\"request_id\":\"167513970747486687774958b5428a67\"},\"meta\":{\"cli_version\":\"0.1.13\",\"schema_version\":\"1\"}}\n",
           "quality_status": "FAILED",
           "freshness_status": "MISSING",
           "stable_for_10m_pulse": false,
@@ -398,7 +418,7 @@
       ],
       "configured_primary": "eastmoney_push2:124.HSTECH",
       "freshness_status": "SESSION_REFERENCE",
-      "delay_minutes": 20.52,
+      "delay_minutes": 26.71,
       "stable_for_pulse": true,
       "quality_status_cn": "数据可用",
       "freshness_status_cn": "已结束交易时段参考"
@@ -419,7 +439,7 @@
     "yahoo_chart_api:HSTECH.HK": {
       "status": "ACTIVE",
       "consecutive_failures": 0,
-      "last_success_at": "2026-11-05T08:20:31+00:00",
+      "last_success_at": "2026-11-05T08:31:42+00:00",
       "failure_class": "UNKNOWN",
       "bypass_date": "2026-11-02"
     },
@@ -436,13 +456,13 @@
     "mode": "FORMAL_EXTERNAL_DRIVER_DISCOVERY_INPUT",
     "provider": "hyperliquid_info_api",
     "read_only": true,
-    "collection_started_at_utc": "2026-11-05T08:20:59+00:00",
-    "collection_finished_at_utc": "2026-11-05T08:21:03+00:00",
-    "started_at_utc": "2026-11-05T08:20:59+00:00",
-    "finished_at_utc": "2026-11-05T08:21:03+00:00",
-    "context_id": "hl-443f3c421db05e9a",
-    "earliest_observation_collected_at_utc": "2026-11-05T08:21:00+00:00",
-    "latest_observation_collected_at_utc": "2026-11-05T08:21:03+00:00",
+    "collection_started_at_utc": "2026-11-05T08:32:50+00:00",
+    "collection_finished_at_utc": "2026-11-05T08:32:53+00:00",
+    "started_at_utc": "2026-11-05T08:32:50+00:00",
+    "finished_at_utc": "2026-11-05T08:32:53+00:00",
+    "context_id": "hl-6c389e8c7c2429de",
+    "earliest_observation_collected_at_utc": "2026-11-05T08:32:51+00:00",
+    "latest_observation_collected_at_utc": "2026-11-05T08:32:53+00:00",
     "observation_count": 26,
     "quality_status": "PASS",
     "dex_count": 11,
@@ -7070,25 +7090,25 @@
         },
         "context": {
           "funding": "0.00000625",
-          "openInterest": "9271.2596",
+          "openInterest": "9270.4386",
           "prevDayPx": "28227.0",
-          "dayNtlVlm": "398235707.3046001792",
-          "premium": "0.0003511723",
-          "oraclePx": "28234.0",
-          "markPx": "28244.0",
-          "midPx": "28243.5",
+          "dayNtlVlm": "398940046.4345996976",
+          "premium": "0.0003363427",
+          "oraclePx": "28245.0",
+          "markPx": "28254.0",
+          "midPx": "28254.5",
           "impactPxs": [
-            "28243.0",
-            "28244.83"
+            "28254.0",
+            "28255.0"
           ],
-          "dayBaseVlm": "14003.5689"
+          "dayBaseVlm": "14028.5279"
         },
         "provider_timestamp": null,
         "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-        "request_started_at_utc": "2026-11-05T08:21:00+00:00",
-        "request_finished_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_beijing": "2026-11-05T16:21:00+08:00",
+        "request_started_at_utc": "2026-11-05T08:32:51+00:00",
+        "request_finished_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_beijing": "2026-11-05T16:32:51+08:00",
         "observation_time_basis": "COLLECTION_FINISHED_TIME_AS_VISIBLE_STATE_BOUNDARY",
         "market_activity_status": "ACTIVE",
         "quality_status": "PASS"
@@ -7105,26 +7125,26 @@
           "deployerFeeScale": "1.0"
         },
         "context": {
-          "funding": "0.000012651",
-          "openInterest": "463795.7459999999",
+          "funding": "0.0000099497",
+          "openInterest": "464133.65",
           "prevDayPx": "207.73",
-          "dayNtlVlm": "164362330.2507199645",
-          "premium": "0.0001835647",
-          "oraclePx": "198.84",
-          "markPx": "198.88",
-          "midPx": "198.875",
+          "dayNtlVlm": "165216543.2910399437",
+          "premium": "0.0006118662",
+          "oraclePx": "199.39",
+          "markPx": "199.48",
+          "midPx": "199.52",
           "impactPxs": [
-            "198.87",
-            "198.883"
+            "199.493",
+            "199.531"
           ],
-          "dayBaseVlm": "809438.1740000007"
+          "dayBaseVlm": "813740.7420000009"
         },
         "provider_timestamp": null,
         "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-        "request_started_at_utc": "2026-11-05T08:21:00+00:00",
-        "request_finished_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_beijing": "2026-11-05T16:21:00+08:00",
+        "request_started_at_utc": "2026-11-05T08:32:51+00:00",
+        "request_finished_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_beijing": "2026-11-05T16:32:51+08:00",
         "observation_time_basis": "COLLECTION_FINISHED_TIME_AS_VISIBLE_STATE_BOUNDARY",
         "market_activity_status": "ACTIVE",
         "quality_status": "PASS"
@@ -7140,26 +7160,26 @@
           "deployerFeeScale": "1.0"
         },
         "context": {
-          "funding": "-0.0000017828",
-          "openInterest": "77297.2794",
+          "funding": "-0.0000009899",
+          "openInterest": "77293.5654",
           "prevDayPx": "4028.9",
-          "dayNtlVlm": "117786051.7823000848",
-          "premium": "-0.0003027587",
-          "oraclePx": "4128.7",
-          "markPx": "4127.4",
-          "midPx": "4127.45",
+          "dayNtlVlm": "117857962.8639600873",
+          "premium": "-0.0004002134",
+          "oraclePx": "4122.8",
+          "markPx": "4121.4",
+          "midPx": "4121.15",
           "impactPxs": [
-            "4127.4",
-            "4127.5"
+            "4121.1",
+            "4121.2"
           ],
-          "dayBaseVlm": "28887.5704"
+          "dayBaseVlm": "28904.9975"
         },
         "provider_timestamp": null,
         "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-        "request_started_at_utc": "2026-11-05T08:21:00+00:00",
-        "request_finished_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_beijing": "2026-11-05T16:21:00+08:00",
+        "request_started_at_utc": "2026-11-05T08:32:51+00:00",
+        "request_finished_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_beijing": "2026-11-05T16:32:51+08:00",
         "observation_time_basis": "COLLECTION_FINISHED_TIME_AS_VISIBLE_STATE_BOUNDARY",
         "market_activity_status": "ACTIVE",
         "quality_status": "PASS"
@@ -7178,26 +7198,26 @@
           "deployerFeeScale": "1.0"
         },
         "context": {
-          "funding": "0.0000118272",
-          "openInterest": "56804.534",
+          "funding": "0.0000115169",
+          "openInterest": "56801.292",
           "prevDayPx": "520.34",
-          "dayNtlVlm": "109036670.3405199945",
-          "premium": "0.0003720891",
-          "oraclePx": "478.38",
-          "markPx": "478.55",
-          "midPx": "478.535",
+          "dayNtlVlm": "109099139.8588499427",
+          "premium": "0.0009713616",
+          "oraclePx": "477.68",
+          "markPx": "478.02",
+          "midPx": "478.14",
           "impactPxs": [
-            "478.498",
-            "478.618"
+            "478.08",
+            "478.208"
           ],
-          "dayBaseVlm": "222343.617"
+          "dayBaseVlm": "222474.504"
         },
         "provider_timestamp": null,
         "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-        "request_started_at_utc": "2026-11-05T08:21:00+00:00",
-        "request_finished_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_beijing": "2026-11-05T16:21:00+08:00",
+        "request_started_at_utc": "2026-11-05T08:32:51+00:00",
+        "request_finished_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_beijing": "2026-11-05T16:32:51+08:00",
         "observation_time_basis": "COLLECTION_FINISHED_TIME_AS_VISIBLE_STATE_BOUNDARY",
         "market_activity_status": "ACTIVE",
         "quality_status": "PASS"
@@ -7214,26 +7234,26 @@
           "deployerFeeScale": "1.0"
         },
         "context": {
-          "funding": "0.0000184496",
-          "openInterest": "191551.19",
+          "funding": "0.0000235102",
+          "openInterest": "191607.418",
           "prevDayPx": "1129.9",
-          "dayNtlVlm": "265851724.0528100729",
-          "premium": "0.0005449861",
-          "oraclePx": "1009.2",
-          "markPx": "1009.7",
-          "midPx": "1009.75",
+          "dayNtlVlm": "266026161.6542099714",
+          "premium": "0.0008413248",
+          "oraclePx": "1011.5",
+          "markPx": "1012.4",
+          "midPx": "1012.35",
           "impactPxs": [
-            "1009.7",
-            "1009.8"
+            "1012.244",
+            "1012.458"
           ],
-          "dayBaseVlm": "248565.4219999999"
+          "dayBaseVlm": "248738.1849999999"
         },
         "provider_timestamp": null,
         "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-        "request_started_at_utc": "2026-11-05T08:21:00+00:00",
-        "request_finished_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_beijing": "2026-11-05T16:21:00+08:00",
+        "request_started_at_utc": "2026-11-05T08:32:51+00:00",
+        "request_finished_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_beijing": "2026-11-05T16:32:51+08:00",
         "observation_time_basis": "COLLECTION_FINISHED_TIME_AS_VISIBLE_STATE_BOUNDARY",
         "market_activity_status": "ACTIVE",
         "quality_status": "PASS"
@@ -7252,26 +7272,26 @@
           "deployerFeeScale": "1.0"
         },
         "context": {
-          "funding": "0.0000125575",
-          "openInterest": "119538.318",
+          "funding": "0.0000100947",
+          "openInterest": "119533.3",
           "prevDayPx": "102.72",
-          "dayNtlVlm": "9630227.2977800034",
-          "premium": "0.0003870039",
-          "oraclePx": "111.11",
-          "markPx": "111.14",
-          "midPx": "111.155",
+          "dayNtlVlm": "9630601.1754600015",
+          "premium": "0.0007011866",
+          "oraclePx": "111.24",
+          "markPx": "111.29",
+          "midPx": "111.325",
           "impactPxs": [
-            "111.131",
-            "111.175"
+            "111.288",
+            "111.348"
           ],
-          "dayBaseVlm": "89884.426"
+          "dayBaseVlm": "89887.79"
         },
         "provider_timestamp": null,
         "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-        "request_started_at_utc": "2026-11-05T08:21:00+00:00",
-        "request_finished_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_beijing": "2026-11-05T16:21:00+08:00",
+        "request_started_at_utc": "2026-11-05T08:32:51+00:00",
+        "request_finished_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_beijing": "2026-11-05T16:32:51+08:00",
         "observation_time_basis": "COLLECTION_FINISHED_TIME_AS_VISIBLE_STATE_BOUNDARY",
         "market_activity_status": "ACTIVE",
         "quality_status": "PASS"
@@ -7294,22 +7314,22 @@
           "openInterest": "1281529.5800000001",
           "prevDayPx": "6.4202",
           "dayNtlVlm": "3114583.2040849985",
-          "premium": "0.0005023548",
-          "oraclePx": "6.37",
-          "markPx": "6.3718",
-          "midPx": "6.3732",
+          "premium": "0.0003602757",
+          "oraclePx": "6.384",
+          "markPx": "6.3859",
+          "midPx": "6.3863",
           "impactPxs": [
-            "6.3724",
-            "6.374"
+            "6.3857",
+            "6.3869"
           ],
           "dayBaseVlm": "485395.1199999999"
         },
         "provider_timestamp": null,
         "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-        "request_started_at_utc": "2026-11-05T08:21:00+00:00",
-        "request_finished_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_beijing": "2026-11-05T16:21:00+08:00",
+        "request_started_at_utc": "2026-11-05T08:32:51+00:00",
+        "request_finished_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_beijing": "2026-11-05T16:32:51+08:00",
         "observation_time_basis": "COLLECTION_FINISHED_TIME_AS_VISIBLE_STATE_BOUNDARY",
         "market_activity_status": "ACTIVE",
         "quality_status": "PASS"
@@ -7328,26 +7348,26 @@
           "deployerFeeScale": "1.0"
         },
         "context": {
-          "funding": "0.0000104311",
-          "openInterest": "71661.382",
+          "funding": "0.000013357",
+          "openInterest": "71677.552",
           "prevDayPx": "154.92",
-          "dayNtlVlm": "46125722.3806499988",
-          "premium": "0.0007426246",
-          "oraclePx": "147.45",
-          "markPx": "147.53",
-          "midPx": "147.56",
+          "dayNtlVlm": "46191814.0895100161",
+          "premium": "0.0009362915",
+          "oraclePx": "147.39",
+          "markPx": "147.49",
+          "midPx": "147.535",
           "impactPxs": [
-            "147.539",
-            "147.58"
+            "147.516",
+            "147.54"
           ],
-          "dayBaseVlm": "303421.295"
+          "dayBaseVlm": "303869.513"
         },
         "provider_timestamp": null,
         "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-        "request_started_at_utc": "2026-11-05T08:21:00+00:00",
-        "request_finished_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_beijing": "2026-11-05T16:21:00+08:00",
+        "request_started_at_utc": "2026-11-05T08:32:51+00:00",
+        "request_finished_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_beijing": "2026-11-05T16:32:51+08:00",
         "observation_time_basis": "COLLECTION_FINISHED_TIME_AS_VISIBLE_STATE_BOUNDARY",
         "market_activity_status": "ACTIVE",
         "quality_status": "PASS"
@@ -7366,26 +7386,26 @@
           "deployerFeeScale": "1.0"
         },
         "context": {
-          "funding": "0.0000202553",
+          "funding": "0.00000625",
           "openInterest": "14728.204",
-          "prevDayPx": "92.48",
-          "dayNtlVlm": "821872.9356150001",
-          "premium": "-0.0010145162",
-          "oraclePx": "92.655",
-          "markPx": "92.655",
-          "midPx": "92.537",
+          "prevDayPx": "92.389",
+          "dayNtlVlm": "801266.6344949999",
+          "premium": "-0.0002104127",
+          "oraclePx": "92.675",
+          "markPx": "92.64",
+          "midPx": "92.644",
           "impactPxs": [
-            "92.466",
-            "92.656"
+            "92.559",
+            "92.752"
           ],
-          "dayBaseVlm": "8818.169"
+          "dayBaseVlm": "8595.35"
         },
         "provider_timestamp": null,
         "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-        "request_started_at_utc": "2026-11-05T08:21:00+00:00",
-        "request_finished_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_beijing": "2026-11-05T16:21:00+08:00",
+        "request_started_at_utc": "2026-11-05T08:32:51+00:00",
+        "request_finished_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_beijing": "2026-11-05T16:32:51+08:00",
         "observation_time_basis": "COLLECTION_FINISHED_TIME_AS_VISIBLE_STATE_BOUNDARY",
         "market_activity_status": "ACTIVE",
         "quality_status": "PASS"
@@ -7402,26 +7422,26 @@
           "deployerFeeScale": "1.0"
         },
         "context": {
-          "funding": "-0.0000213124",
-          "openInterest": "3450902.4399999995",
+          "funding": "-0.0000208541",
+          "openInterest": "3450898.0999999987",
           "prevDayPx": "104.0",
-          "dayNtlVlm": "408522476.2176300287",
-          "premium": "-0.0014053628",
-          "oraclePx": "95.1",
-          "markPx": "95.044",
-          "midPx": "94.9655",
+          "dayNtlVlm": "409865494.9021199346",
+          "premium": "-0.0006156599",
+          "oraclePx": "95.02",
+          "markPx": "94.965",
+          "midPx": "94.9615",
           "impactPxs": [
             "94.961",
-            "94.9717"
+            "94.962"
           ],
-          "dayBaseVlm": "4200409.6100000003"
+          "dayBaseVlm": "4214542.9500000039"
         },
         "provider_timestamp": null,
         "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-        "request_started_at_utc": "2026-11-05T08:21:00+00:00",
-        "request_finished_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_beijing": "2026-11-05T16:21:00+08:00",
+        "request_started_at_utc": "2026-11-05T08:32:51+00:00",
+        "request_finished_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_beijing": "2026-11-05T16:32:51+08:00",
         "observation_time_basis": "COLLECTION_FINISHED_TIME_AS_VISIBLE_STATE_BOUNDARY",
         "market_activity_status": "ACTIVE",
         "quality_status": "PASS"
@@ -7438,26 +7458,26 @@
           "deployerFeeScale": "1.0"
         },
         "context": {
-          "funding": "-0.0000009689",
-          "openInterest": "52200.836",
+          "funding": "-0.0000004816",
+          "openInterest": "52301.528",
           "prevDayPx": "7578.0",
-          "dayNtlVlm": "542521200.8235998154",
-          "premium": "-0.0003576631",
-          "oraclePx": "7688.8",
-          "markPx": "7686.4",
-          "midPx": "7686.05",
+          "dayNtlVlm": "543567946.4257998466",
+          "premium": "-0.0002796639",
+          "oraclePx": "7687.8",
+          "markPx": "7685.6",
+          "midPx": "7685.65",
           "impactPxs": [
-            "7686.0",
-            "7686.1"
+            "7685.6",
+            "7685.7"
           ],
-          "dayBaseVlm": "70768.483"
+          "dayBaseVlm": "70904.699"
         },
         "provider_timestamp": null,
         "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-        "request_started_at_utc": "2026-11-05T08:21:00+00:00",
-        "request_finished_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_beijing": "2026-11-05T16:21:00+08:00",
+        "request_started_at_utc": "2026-11-05T08:32:51+00:00",
+        "request_finished_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_beijing": "2026-11-05T16:32:51+08:00",
         "observation_time_basis": "COLLECTION_FINISHED_TIME_AS_VISIBLE_STATE_BOUNDARY",
         "market_activity_status": "ACTIVE",
         "quality_status": "PASS"
@@ -7476,26 +7496,26 @@
           "deployerFeeScale": "1.0"
         },
         "context": {
-          "funding": "0.0000125842",
-          "openInterest": "12936.42",
-          "prevDayPx": "66.302",
-          "dayNtlVlm": "870738.3755100002",
-          "premium": "0.0007052996",
-          "oraclePx": "63.59",
-          "markPx": "63.627",
-          "midPx": "63.6355",
+          "funding": "0.0000159191",
+          "openInterest": "12931.7",
+          "prevDayPx": "66.397",
+          "dayNtlVlm": "863966.4648300001",
+          "premium": "0.0006710195",
+          "oraclePx": "63.56",
+          "markPx": "63.576",
+          "midPx": "63.6095",
           "impactPxs": [
-            "63.5986",
-            "63.6711"
+            "63.5622",
+            "63.6431"
           ],
-          "dayBaseVlm": "13536.35"
+          "dayBaseVlm": "13434.31"
         },
         "provider_timestamp": null,
         "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-        "request_started_at_utc": "2026-11-05T08:21:00+00:00",
-        "request_finished_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_beijing": "2026-11-05T16:21:00+08:00",
+        "request_started_at_utc": "2026-11-05T08:32:51+00:00",
+        "request_finished_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_beijing": "2026-11-05T16:32:51+08:00",
         "observation_time_basis": "COLLECTION_FINISHED_TIME_AS_VISIBLE_STATE_BOUNDARY",
         "market_activity_status": "ACTIVE",
         "quality_status": "PASS"
@@ -7513,25 +7533,25 @@
         },
         "context": {
           "funding": "0.00000625",
-          "openInterest": "1953606.4000000001",
+          "openInterest": "1953178.0",
           "prevDayPx": "47.576",
-          "dayNtlVlm": "154196664.8137000799",
-          "premium": "0.0003301822",
-          "oraclePx": "43.37",
-          "markPx": "43.377",
-          "midPx": "43.383",
+          "dayNtlVlm": "154275346.4142001271",
+          "premium": "0.0007052316",
+          "oraclePx": "43.39",
+          "markPx": "43.4",
+          "midPx": "43.4185",
           "impactPxs": [
-            "43.37859",
-            "43.39005"
+            "43.41514",
+            "43.42606"
           ],
-          "dayBaseVlm": "3398655.0"
+          "dayBaseVlm": "3400470.6999999988"
         },
         "provider_timestamp": null,
         "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-        "request_started_at_utc": "2026-11-05T08:21:00+00:00",
-        "request_finished_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_beijing": "2026-11-05T16:21:00+08:00",
+        "request_started_at_utc": "2026-11-05T08:32:51+00:00",
+        "request_finished_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_beijing": "2026-11-05T16:32:51+08:00",
         "observation_time_basis": "COLLECTION_FINISHED_TIME_AS_VISIBLE_STATE_BOUNDARY",
         "market_activity_status": "ACTIVE",
         "quality_status": "PASS"
@@ -7550,26 +7570,26 @@
           "deployerFeeScale": "1.0"
         },
         "context": {
-          "funding": "-0.0000588088",
-          "openInterest": "9925.34",
+          "funding": "-0.0000233135",
+          "openInterest": "9926.44",
           "prevDayPx": "98.345",
-          "dayNtlVlm": "370713.5430300003",
-          "premium": "0.0010032103",
-          "oraclePx": "93.45",
-          "markPx": "93.461",
-          "midPx": "93.5945",
+          "dayNtlVlm": "370921.4330800003",
+          "premium": "-0.0002035583",
+          "oraclePx": "93.585",
+          "markPx": "93.585",
+          "midPx": "93.5715",
           "impactPxs": [
-            "93.4472",
-            "93.6403"
+            "93.5041",
+            "93.6278"
           ],
-          "dayBaseVlm": "3816.89"
+          "dayBaseVlm": "3819.12"
         },
         "provider_timestamp": null,
         "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-        "request_started_at_utc": "2026-11-05T08:21:00+00:00",
-        "request_finished_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_beijing": "2026-11-05T16:21:00+08:00",
+        "request_started_at_utc": "2026-11-05T08:32:51+00:00",
+        "request_finished_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_beijing": "2026-11-05T16:32:51+08:00",
         "observation_time_basis": "COLLECTION_FINISHED_TIME_AS_VISIBLE_STATE_BOUNDARY",
         "market_activity_status": "ACTIVE",
         "quality_status": "PASS"
@@ -7589,25 +7609,25 @@
         },
         "context": {
           "funding": "0.00000625",
-          "openInterest": "29678.98",
+          "openInterest": "29677.52",
           "prevDayPx": "334.52",
-          "dayNtlVlm": "4341749.2246000003",
-          "premium": "0.0003853746",
-          "oraclePx": "319.17",
-          "markPx": "319.29",
-          "midPx": "319.35",
+          "dayNtlVlm": "4345449.979199999",
+          "premium": "0.0003948316",
+          "oraclePx": "319.25",
+          "markPx": "319.36",
+          "midPx": "319.415",
           "impactPxs": [
-            "319.2033",
-            "319.3827"
+            "319.2882",
+            "319.4639"
           ],
-          "dayBaseVlm": "13209.44"
+          "dayBaseVlm": "13221.03"
         },
         "provider_timestamp": null,
         "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-        "request_started_at_utc": "2026-11-05T08:21:00+00:00",
-        "request_finished_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_beijing": "2026-11-05T16:21:00+08:00",
+        "request_started_at_utc": "2026-11-05T08:32:51+00:00",
+        "request_finished_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_beijing": "2026-11-05T16:32:51+08:00",
         "observation_time_basis": "COLLECTION_FINISHED_TIME_AS_VISIBLE_STATE_BOUNDARY",
         "market_activity_status": "ACTIVE",
         "quality_status": "PASS"
@@ -7626,26 +7646,26 @@
           "deployerFeeScale": "1.0"
         },
         "context": {
-          "funding": "0.00002162",
-          "openInterest": "283130.9",
+          "funding": "0.0000216309",
+          "openInterest": "283241.24",
           "prevDayPx": "151.49",
-          "dayNtlVlm": "40198595.3148999959",
-          "premium": "0.000270073",
-          "oraclePx": "137.0",
-          "markPx": "137.08",
-          "midPx": "137.065",
+          "dayNtlVlm": "40256014.6981000006",
+          "premium": "0.0006337052",
+          "oraclePx": "137.13",
+          "markPx": "137.15",
+          "midPx": "137.19",
           "impactPxs": [
-            "137.004",
-            "137.07"
+            "137.171",
+            "137.2628"
           ],
-          "dayBaseVlm": "279138.7599999998"
+          "dayBaseVlm": "279558.6999999998"
         },
         "provider_timestamp": null,
         "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-        "request_started_at_utc": "2026-11-05T08:21:00+00:00",
-        "request_finished_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_beijing": "2026-11-05T16:21:00+08:00",
+        "request_started_at_utc": "2026-11-05T08:32:51+00:00",
+        "request_finished_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_beijing": "2026-11-05T16:32:51+08:00",
         "observation_time_basis": "COLLECTION_FINISHED_TIME_AS_VISIBLE_STATE_BOUNDARY",
         "market_activity_status": "ACTIVE",
         "quality_status": "PASS"
@@ -7664,26 +7684,26 @@
           "deployerFeeScale": "1.0"
         },
         "context": {
-          "funding": "0.0000230017",
-          "openInterest": "5821.45",
-          "prevDayPx": "525.91",
-          "dayNtlVlm": "2343582.6610599998",
-          "premium": "0.000625948",
-          "oraclePx": "494.45",
-          "markPx": "494.76",
-          "midPx": "494.76",
+          "funding": "0.0000211648",
+          "openInterest": "5840.856",
+          "prevDayPx": "523.91",
+          "dayNtlVlm": "2356811.7794099986",
+          "premium": "0.0005131209",
+          "oraclePx": "495.01",
+          "markPx": "495.01",
+          "midPx": "495.265",
           "impactPxs": [
-            "494.288",
-            "495.231"
+            "494.892",
+            "495.636"
           ],
-          "dayBaseVlm": "4638.665"
+          "dayBaseVlm": "4666.385"
         },
         "provider_timestamp": null,
         "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-        "request_started_at_utc": "2026-11-05T08:21:00+00:00",
-        "request_finished_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_beijing": "2026-11-05T16:21:00+08:00",
+        "request_started_at_utc": "2026-11-05T08:32:51+00:00",
+        "request_finished_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_beijing": "2026-11-05T16:32:51+08:00",
         "observation_time_basis": "COLLECTION_FINISHED_TIME_AS_VISIBLE_STATE_BOUNDARY",
         "market_activity_status": "ACTIVE",
         "quality_status": "PASS"
@@ -7702,26 +7722,26 @@
           "deployerFeeScale": "1.0"
         },
         "context": {
-          "funding": "0.0000390592",
+          "funding": "0.0000410868",
           "openInterest": "25909.18",
           "prevDayPx": "41.309",
-          "dayNtlVlm": "1278045.4147100004",
-          "premium": "0.0018639435",
-          "oraclePx": "39.513",
-          "markPx": "39.607",
-          "midPx": "39.6095",
+          "dayNtlVlm": "1279472.5267100004",
+          "premium": "0.0043864309",
+          "oraclePx": "39.531",
+          "markPx": "39.651",
+          "midPx": "39.668",
           "impactPxs": [
-            "39.3587",
-            "39.8146"
+            "39.5862",
+            "39.8226"
           ],
-          "dayBaseVlm": "32231.4"
+          "dayBaseVlm": "32267.4"
         },
         "provider_timestamp": null,
         "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-        "request_started_at_utc": "2026-11-05T08:21:00+00:00",
-        "request_finished_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_beijing": "2026-11-05T16:21:00+08:00",
+        "request_started_at_utc": "2026-11-05T08:32:51+00:00",
+        "request_finished_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_beijing": "2026-11-05T16:32:51+08:00",
         "observation_time_basis": "COLLECTION_FINISHED_TIME_AS_VISIBLE_STATE_BOUNDARY",
         "market_activity_status": "ACTIVE",
         "quality_status": "PASS"
@@ -7740,26 +7760,26 @@
           "deployerFeeScale": "1.0"
         },
         "context": {
-          "funding": "0.0000974451",
-          "openInterest": "5569994.4000000004",
+          "funding": "0.0001270717",
+          "openInterest": "5569892.0",
           "prevDayPx": "6.5388",
-          "dayNtlVlm": "22533065.3636599891",
-          "premium": "0.0033486792",
-          "oraclePx": "6.3861",
-          "markPx": "6.4079",
-          "midPx": "6.4077",
+          "dayNtlVlm": "22568514.0496799871",
+          "premium": "0.0032532533",
+          "oraclePx": "6.3936",
+          "markPx": "6.4131",
+          "midPx": "6.41455",
           "impactPxs": [
-            "6.40508",
-            "6.40989"
+            "6.41206",
+            "6.41674"
           ],
-          "dayBaseVlm": "3491979.3000000003"
+          "dayBaseVlm": "3497516.1999999993"
         },
         "provider_timestamp": null,
         "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-        "request_started_at_utc": "2026-11-05T08:21:00+00:00",
-        "request_finished_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_beijing": "2026-11-05T16:21:00+08:00",
+        "request_started_at_utc": "2026-11-05T08:32:51+00:00",
+        "request_finished_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_beijing": "2026-11-05T16:32:51+08:00",
         "observation_time_basis": "COLLECTION_FINISHED_TIME_AS_VISIBLE_STATE_BOUNDARY",
         "market_activity_status": "ACTIVE",
         "quality_status": "PASS"
@@ -7778,26 +7798,26 @@
           "deployerFeeScale": "1.0"
         },
         "context": {
-          "funding": "0.0000409363",
-          "openInterest": "778451.1200000001",
+          "funding": "0.0000373536",
+          "openInterest": "778626.1800000003",
           "prevDayPx": "76.2",
-          "dayNtlVlm": "364835477.3165900111",
-          "premium": "0.0015300282",
-          "oraclePx": "62.025",
-          "markPx": "62.084",
-          "midPx": "62.1075",
+          "dayNtlVlm": "365835138.4859601855",
+          "premium": "0.0007794707",
+          "oraclePx": "62.35",
+          "markPx": "62.391",
+          "midPx": "62.397",
           "impactPxs": [
-            "62.1066",
-            "62.1332"
+            "62.396",
+            "62.4012"
           ],
-          "dayBaseVlm": "5364465.8699999982"
+          "dayBaseVlm": "5380588.419999999"
         },
         "provider_timestamp": null,
         "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-        "request_started_at_utc": "2026-11-05T08:21:00+00:00",
-        "request_finished_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_beijing": "2026-11-05T16:21:00+08:00",
+        "request_started_at_utc": "2026-11-05T08:32:51+00:00",
+        "request_finished_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_beijing": "2026-11-05T16:32:51+08:00",
         "observation_time_basis": "COLLECTION_FINISHED_TIME_AS_VISIBLE_STATE_BOUNDARY",
         "market_activity_status": "ACTIVE",
         "quality_status": "PASS"
@@ -7818,24 +7838,24 @@
         "context": {
           "funding": "0.00000625",
           "openInterest": "1755.48",
-          "prevDayPx": "155.61",
-          "dayNtlVlm": "20810.026",
-          "premium": "0.000500126",
-          "oraclePx": "158.76",
-          "markPx": "158.76",
-          "midPx": "158.88",
+          "prevDayPx": "155.52",
+          "dayNtlVlm": "19017.3988",
+          "premium": "0.0003413452",
+          "oraclePx": "158.93",
+          "markPx": "158.93",
+          "midPx": "158.985",
           "impactPxs": [
-            "158.5088",
-            "159.17"
+            "158.6685",
+            "159.3"
           ],
-          "dayBaseVlm": "132.24"
+          "dayBaseVlm": "120.72"
         },
         "provider_timestamp": null,
         "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-        "request_started_at_utc": "2026-11-05T08:21:00+00:00",
-        "request_finished_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_utc": "2026-11-05T08:21:00+00:00",
-        "collected_at_beijing": "2026-11-05T16:21:00+08:00",
+        "request_started_at_utc": "2026-11-05T08:32:51+00:00",
+        "request_finished_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_utc": "2026-11-05T08:32:51+00:00",
+        "collected_at_beijing": "2026-11-05T16:32:51+08:00",
         "observation_time_basis": "COLLECTION_FINISHED_TIME_AS_VISIBLE_STATE_BOUNDARY",
         "market_activity_status": "ACTIVE",
         "quality_status": "PASS"
@@ -7854,26 +7874,26 @@
           "deployerFeeScale": "1.0"
         },
         "context": {
-          "funding": "0.0000198244",
+          "funding": "0.0000075",
           "openInterest": "6601.28",
-          "prevDayPx": "213.66",
-          "dayNtlVlm": "798090.8383000001",
-          "premium": "0.0019876299",
-          "oraclePx": "202.1",
-          "markPx": "202.1",
-          "midPx": "202.5",
+          "prevDayPx": "213.43",
+          "dayNtlVlm": "797593.0105",
+          "premium": "-0.0008925575",
+          "oraclePx": "202.62",
+          "markPx": "202.5045",
+          "midPx": "202.44",
           "impactPxs": [
-            "202.0283",
-            "202.9751"
+            "202.0183",
+            "202.86"
           ],
-          "dayBaseVlm": "4018.87"
+          "dayBaseVlm": "4016.54"
         },
         "provider_timestamp": null,
         "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-        "request_started_at_utc": "2026-11-05T08:21:02+00:00",
-        "request_finished_at_utc": "2026-11-05T08:21:02+00:00",
-        "collected_at_utc": "2026-11-05T08:21:02+00:00",
-        "collected_at_beijing": "2026-11-05T16:21:02+08:00",
+        "request_started_at_utc": "2026-11-05T08:32:53+00:00",
+        "request_finished_at_utc": "2026-11-05T08:32:53+00:00",
+        "collected_at_utc": "2026-11-05T08:32:53+00:00",
+        "collected_at_beijing": "2026-11-05T16:32:53+08:00",
         "observation_time_basis": "COLLECTION_FINISHED_TIME_AS_VISIBLE_STATE_BOUNDARY",
         "market_activity_status": "ACTIVE",
         "quality_status": "PASS"
@@ -7892,26 +7912,26 @@
           "deployerFeeScale": "1.0"
         },
         "context": {
-          "funding": "0.000048052",
-          "openInterest": "5029.804",
+          "funding": "0.00005393",
+          "openInterest": "5065.0428",
           "prevDayPx": "1130.1",
-          "dayNtlVlm": "39323214.5012930036",
-          "premium": "0.0009065689",
-          "oraclePx": "1009.3",
-          "markPx": "1010.0",
-          "midPx": "1010.0",
+          "dayNtlVlm": "39386300.4873330072",
+          "premium": "0.0024940618",
+          "oraclePx": "1010.4",
+          "markPx": "1011.1",
+          "midPx": "1012.8",
           "impactPxs": [
-            "1009.9",
-            "1010.53"
+            "1012.67",
+            "1013.17"
           ],
-          "dayBaseVlm": "37094.6487"
+          "dayBaseVlm": "37157.0895999999"
         },
         "provider_timestamp": null,
         "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-        "request_started_at_utc": "2026-11-05T08:21:02+00:00",
-        "request_finished_at_utc": "2026-11-05T08:21:03+00:00",
-        "collected_at_utc": "2026-11-05T08:21:03+00:00",
-        "collected_at_beijing": "2026-11-05T16:21:03+08:00",
+        "request_started_at_utc": "2026-11-05T08:32:53+00:00",
+        "request_finished_at_utc": "2026-11-05T08:32:53+00:00",
+        "collected_at_utc": "2026-11-05T08:32:53+00:00",
+        "collected_at_beijing": "2026-11-05T16:32:53+08:00",
         "observation_time_basis": "COLLECTION_FINISHED_TIME_AS_VISIBLE_STATE_BOUNDARY",
         "market_activity_status": "ACTIVE",
         "quality_status": "PASS"
@@ -7930,26 +7950,26 @@
           "deployerFeeScale": "1.0"
         },
         "context": {
-          "funding": "0.0000392071",
-          "openInterest": "45551.5",
+          "funding": "0.0000339847",
+          "openInterest": "45528.04",
           "prevDayPx": "151.5",
-          "dayNtlVlm": "1710482.7519000007",
-          "premium": "0.0005617198",
-          "oraclePx": "136.99",
-          "markPx": "137.01",
-          "midPx": "137.07",
+          "dayNtlVlm": "1715183.8128000009",
+          "premium": "0.0015518751",
+          "oraclePx": "137.06",
+          "markPx": "137.11",
+          "midPx": "137.29",
           "impactPxs": [
-            "137.0121",
-            "137.1218"
+            "137.209",
+            "137.3364"
           ],
-          "dayBaseVlm": "11902.38"
+          "dayBaseVlm": "11936.76"
         },
         "provider_timestamp": null,
         "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-        "request_started_at_utc": "2026-11-05T08:21:02+00:00",
-        "request_finished_at_utc": "2026-11-05T08:21:03+00:00",
-        "collected_at_utc": "2026-11-05T08:21:03+00:00",
-        "collected_at_beijing": "2026-11-05T16:21:03+08:00",
+        "request_started_at_utc": "2026-11-05T08:32:53+00:00",
+        "request_finished_at_utc": "2026-11-05T08:32:53+00:00",
+        "collected_at_utc": "2026-11-05T08:32:53+00:00",
+        "collected_at_beijing": "2026-11-05T16:32:53+08:00",
         "observation_time_basis": "COLLECTION_FINISHED_TIME_AS_VISIBLE_STATE_BOUNDARY",
         "market_activity_status": "ACTIVE",
         "quality_status": "PASS"
@@ -7968,26 +7988,26 @@
           "deployerFeeScale": "1.0"
         },
         "context": {
-          "funding": "0.0000585607",
-          "openInterest": "2068.68",
-          "prevDayPx": "155.26",
-          "dayNtlVlm": "339479.5881999999",
-          "premium": "0.0014975583",
-          "oraclePx": "147.44",
-          "markPx": "147.52",
-          "midPx": "147.66",
+          "funding": "0.0000633085",
+          "openInterest": "2068.84",
+          "prevDayPx": "154.97",
+          "dayNtlVlm": "334187.7177999999",
+          "premium": "0.0014844969",
+          "oraclePx": "147.39",
+          "markPx": "147.47",
+          "midPx": "147.61",
           "impactPxs": [
-            "147.57",
-            "147.7516"
+            "147.5276",
+            "147.69"
           ],
-          "dayBaseVlm": "2207.15"
+          "dayBaseVlm": "2173.07"
         },
         "provider_timestamp": null,
         "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-        "request_started_at_utc": "2026-11-05T08:21:02+00:00",
-        "request_finished_at_utc": "2026-11-05T08:21:03+00:00",
-        "collected_at_utc": "2026-11-05T08:21:03+00:00",
-        "collected_at_beijing": "2026-11-05T16:21:03+08:00",
+        "request_started_at_utc": "2026-11-05T08:32:53+00:00",
+        "request_finished_at_utc": "2026-11-05T08:32:53+00:00",
+        "collected_at_utc": "2026-11-05T08:32:53+00:00",
+        "collected_at_beijing": "2026-11-05T16:32:53+08:00",
         "observation_time_basis": "COLLECTION_FINISHED_TIME_AS_VISIBLE_STATE_BOUNDARY",
         "market_activity_status": "ACTIVE",
         "quality_status": "PASS"
@@ -8006,26 +8026,26 @@
           "deployerFeeScale": "1.0"
         },
         "context": {
-          "funding": "0.0000068951",
-          "openInterest": "2890.49",
+          "funding": "0.00000625",
+          "openInterest": "2975.964",
           "prevDayPx": "207.72",
-          "dayNtlVlm": "2317293.824419999",
-          "premium": "0.0001005783",
-          "oraclePx": "198.85",
-          "markPx": "198.77",
-          "midPx": "198.835",
+          "dayNtlVlm": "2328446.1313999984",
+          "premium": "0.0007021415",
+          "oraclePx": "199.39",
+          "markPx": "199.38",
+          "midPx": "199.55",
           "impactPxs": [
-            "198.793",
-            "198.947"
+            "199.436",
+            "199.624"
           ],
-          "dayBaseVlm": "11391.843"
+          "dayBaseVlm": "11447.989"
         },
         "provider_timestamp": null,
         "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-        "request_started_at_utc": "2026-11-05T08:21:02+00:00",
-        "request_finished_at_utc": "2026-11-05T08:21:03+00:00",
-        "collected_at_utc": "2026-11-05T08:21:03+00:00",
-        "collected_at_beijing": "2026-11-05T16:21:03+08:00",
+        "request_started_at_utc": "2026-11-05T08:32:53+00:00",
+        "request_finished_at_utc": "2026-11-05T08:32:53+00:00",
+        "collected_at_utc": "2026-11-05T08:32:53+00:00",
+        "collected_at_beijing": "2026-11-05T16:32:53+08:00",
         "observation_time_basis": "COLLECTION_FINISHED_TIME_AS_VISIBLE_STATE_BOUNDARY",
         "market_activity_status": "ACTIVE",
         "quality_status": "PASS"
