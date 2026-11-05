@@ -420,8 +420,18 @@ def render_same_day_formal_decision_index(root: Path, account: dict) -> str:
         "|-|-|-|-|-|-|-|",
     ]
     trades = account.get("trades") or []
+    canonical_trade_events = []
+    for event_path in sorted((root / "events/trades").glob("*.json")):
+        try:
+            event = load_json(event_path)
+        except Exception:
+            continue
+        attribution = event.get("execution_attribution") or {}
+        if str(attribution.get("decision_id") or event.get("linked_decision_id") or ""):
+            canonical_trade_events.append(event)
     for item in records:
         linked = [trade for trade in trades if str(trade.get("decision_id") or trade.get("linked_decision_id") or "") == item["identity"]]
+        linked += [event for event in canonical_trade_events if str((event.get("execution_attribution") or {}).get("decision_id") or event.get("linked_decision_id") or "") == item["identity"] and str(event.get("execution_date") or event.get("confirmed_at_beijing") or "")[:10] == market_date]
         decision_text = f"{item['candidate']} {item['release']}"
         same_day_object = [
             trade for trade in trades
