@@ -1502,7 +1502,10 @@ def _write_formal_layer_projections(root: Path, current: dict, discovery: dict) 
         "decision_owner": "MASTER_FORMAL_DECISION",
         "not_zero_rule": "pending decision is not an opportunity count of zero",
         "source_discovery_status": status,
-        "source_discovery_generated_at_beijing": discovery.get("generated_at_beijing", ""),
+        # Bind the downstream projection to the Discovery projection written
+        # in this invocation, not to a stale generation timestamp carried by
+        # a reused Discovery object.
+        "source_discovery_generated_at_beijing": projection.get("generated_at_beijing", ""),
         "source_discovery_latest_snapshot": discovery.get("latest_snapshot", snapshot),
         "source_discovery_universe_identity": discovery.get("universe_identity"),
         "source_discovery_delta_identity": discovery.get("discovery_delta_identity"),
