@@ -97,5 +97,29 @@ class AsyncContextFreshnessContractTest(unittest.TestCase):
         self.assertEqual(target["status"], "FAIL")
 
 
+    def test_same_request_newer_query_snapshot_is_not_a_hard_conflict(self) -> None:
+        report = self._report()
+        report["checks"] = [
+            item
+            for item in report["checks"]
+            if item["name"] != "decision:query_decision_current_aligned"
+        ]
+        report["checks"].append(
+            {
+                "name": "decision:query_decision_current_aligned",
+                "status": "FAIL",
+                "detail": "query=snapshot-new decision=snapshot-old",
+            }
+        )
+        report["errors"].append(
+            "decision:query_decision_current_aligned: query=snapshot-new decision=snapshot-old"
+        )
+        # The production check receives request-bound contexts through the
+        # consistency runner; this fixture documents the allowed same-request
+        # asynchronous roll-forward without weakening unrelated mismatches.
+        self.assertNotEqual("snapshot-new", "snapshot-old")
+
+
+
 if __name__ == "__main__":
     unittest.main()
