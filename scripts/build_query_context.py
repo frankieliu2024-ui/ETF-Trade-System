@@ -525,6 +525,41 @@ def _latest_formal_decision_baseline(root: Path, request_time: str = "") -> dict
 
 
 
+def _build_hyperliquid_object_bindings(external: dict, positions: list[dict], observation_inputs: list[dict], discovery_inputs: list[dict]) -> list[dict]:
+    """Expose mapped Hyperliquid evidence to every eligible ETF object layer.
+
+    This is a read-only evidence map. It does not promote an object or grant
+    Trial/Confirm/amount/sell authority.
+    """
+    mapping = external.get("mapping") or []
+    observed = {(str(item.get("asset") or {}).get("name") if isinstance(item.get("asset"), dict) else str(item.get("asset") or "")): item for item in (external.get("observations") or []) if isinstance(item, dict)}
+    known = {}
+    for item in [*positions, *observation_inputs, *discovery_inputs]:
+        if isinstance(item, dict):
+            code = str(item.get("code") or item.get("symbol") or "").strip()
+            if code:
+                known[code] = item.get("name") or code
+    bindings = []
+    for item in mapping:
+        if not isinstance(item, dict):
+            continue
+        assets = [str(item.get("asset") or "")]
+        evidence = [observed[a] for a in assets if a in observed]
+        codes = [str(code).strip() for code in (item.get("etf_codes") or []) if str(code).strip()]
+        for code in codes:
+            bindings.append({
+                "code": code,
+                "name": known.get(code, ""),
+                "external_assets": assets,
+                "observation_count": len(evidence),
+                "quality_status": external.get("quality_status") or "MISSING",
+                "eligible_object_layers": ["DISCOVERY", "OBSERVATION", "OPPORTUNITY", "HOLDING", "EXECUTED_TRIAL"],
+                "evidence_role": "AUXILIARY_OBJECT_LEVEL_SUPPORT_OR_CONTRADICTION",
+                "decision_boundary": "辅助证据可影响对象级强弱、时机、持有管理和资本竞争；不得单独授予Trial、Confirm、金额、卖出份额或订单。",
+            })
+    return bindings
+
+
 def _decision_problem_graph(positions: list[dict], discovery_inputs: list[dict], account: dict, observation_inputs: list[dict] | None = None, observation_review_inputs: list[dict] | None = None) -> list[dict]:
     problems = [
         {"problem_id": "RISK_PERMISSION", "decision_object": "risk_permission", "required_business_judgment": "风险许可及新增风险边界"},
@@ -1316,8 +1351,9 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
             "mapping": external_driver.get("mapping") or [],
             "object_context": hyperliquid_object_context,
             "decision_evidence": hyperliquid_evidence,
+            "object_bindings": _build_hyperliquid_object_bindings(external_driver, positions, observation_inputs, discovery_inputs),
             "time_basis": external_driver.get("time_basis", ""),
-            "decision_boundary": "仅作为对象级辅助证据；不得独立生成Trial、Confirm、金额、卖出份额或订单。",
+            "decision_boundary": "可服务于Discovery、观察ETF、机会ETF、实际持仓和已执行Trial的对象级辅助证据；不得独立生成Trial、Confirm、金额、卖出份额或订单。",
         },
         "decision_context": {
             "generated_at_beijing": decision.get("generated_at_beijing") or decision.get("generated_at") or "",
