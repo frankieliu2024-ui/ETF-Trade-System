@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 
@@ -11,6 +11,13 @@ def _parse(value: str) -> datetime | None:
         return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
     except (TypeError, ValueError):
         return None
+
+
+def _beijing_iso(value: str) -> str:
+    parsed = _parse(value)
+    if not parsed:
+        return str(value or "")
+    return parsed.astimezone(timezone(timedelta(hours=8), name="Asia/Shanghai")).isoformat(timespec="seconds")
 
 
 def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, identity: str, occurred_at: str = "") -> dict:
@@ -37,8 +44,8 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
     record = {
         "kind": kind,
         "identity": str(identity or ""),
-        "formed_at_beijing": str(payload.get("generated_at_beijing") or payload.get("generated_at") or occurred_at),
-        "fact_time_beijing": str(payload.get("latest_valid_node") or payload.get("a_share_fact_as_of_beijing") or payload.get("latest_observation_collected_at_utc") or ""),
+        "formed_at_beijing": _beijing_iso(str(payload.get("generated_at_beijing") or payload.get("generated_at") or occurred_at)),
+        "fact_time_beijing": str(payload.get("latest_valid_node") or payload.get("a_share_fact_as_of_beijing") or _beijing_iso(str(payload.get("latest_observation_collected_at_utc") or ""))),
         "source_path": path,
         "status": str(payload.get("status") or payload.get("quality_status") or "UNKNOWN"),
         "coverage_status": str(payload.get("coverage_status") or ""),

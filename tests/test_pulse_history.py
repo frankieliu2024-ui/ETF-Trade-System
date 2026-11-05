@@ -52,4 +52,6 @@ def test_hyperliquid_pulse_history_uses_same_index_contract(tmp_path: Path):
     assert result["record_count"] == 1
     stored = json.loads((tmp_path / "data/state/hyperliquid_pulse_index.json").read_text())
     assert stored["latest"]["observation_count"] == 1
+    assert stored["latest"]["formed_at_beijing"].endswith("+08:00")
+    assert stored["latest"]["fact_time_beijing"].endswith("+08:00")
     assert stored["latest"]["source_path"].endswith("#hyperliquid")
