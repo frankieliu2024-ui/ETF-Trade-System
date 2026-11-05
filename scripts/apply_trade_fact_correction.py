@@ -252,7 +252,18 @@ def _apply_attribution_request(req: dict) -> int:
     if missing: raise RuntimeError("attribution correction missing required fields: " + ", ".join(missing))
     event_id, decision_id = str(req["trade_event_id"]).strip(), str(req["linked_decision_id"]).strip()
     event = read_json(ROOT / "events/trades" / f"{event_id}.json", {}) or {}
-    decision = read_json(ROOT / "events/decisions" / f"{decision_id}.json", {}) or {}
+    decision_path = ROOT / "events/decisions" / f"{decision_id}.json"
+    decision = read_json(decision_path, {}) or {}
+    if not decision:
+        # Formal Decision is canonically persisted as a formal review event
+        # when the direct Scheduled Review completion path is used. Reuse that
+        # frozen event for attribution; do not create a second decision object.
+        for candidate in (ROOT / "events/reviews").glob("formal_*.json"):
+            obj = read_json(candidate, {}) or {}
+            if str(obj.get("decision_id") or "") == decision_id:
+                decision = obj
+                decision_path = candidate
+                break
     if not event or not decision: raise RuntimeError("attribution correction source fact or Decision Fact is missing")
     from decision_trade_link import _effective_time, _time, _decision_mentions_trade
     dt, tt = _effective_time(decision), _time(event.get("confirmed_at_beijing") or event.get("executed_at_beijing"))
@@ -262,7 +273,8 @@ def _apply_attribution_request(req: dict) -> int:
     p = req["provenance"]
     if not isinstance(p, dict) or not all(str(p.get(k) or "").strip() for k in ("resolver","source_trade","source_decision","parent_request_id")):
         raise RuntimeError("attribution correction provenance is incomplete")
-    if p["source_trade"] != f"events/trades/{event_id}.json" or p["source_decision"] != f"events/decisions/{decision_id}.json":
+    expected_decision_source = str(decision_path.relative_to(ROOT)).replace("\\", "/")
+    if p["source_trade"] != f"events/trades/{event_id}.json" or p["source_decision"] != expected_decision_source:
         raise RuntimeError("attribution correction provenance source mismatch")
     rd = ROOT / "requests/trade_fact_correction"; rd.mkdir(parents=True, exist_ok=True)
     existing = [read_json(x, {}) or {} for x in rd.glob("*.json") if str((read_json(x, {}) or {}).get("correction_type") or "").upper() == "DECISION_ATTRIBUTION" and str((read_json(x, {}) or {}).get("trade_event_id") or "") == event_id]
