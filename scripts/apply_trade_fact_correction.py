@@ -281,20 +281,28 @@ def _apply_attribution_request(req: dict) -> int:
     ids = {str(x.get("linked_decision_id") or "") for x in existing}
     if ids - {decision_id}: raise RuntimeError("existing canonical attribution conflicts with requested Decision Fact")
     req = dict(req); req.update({"correction_type":"DECISION_ATTRIBUTION","status":"APPLIED","immutable_trade_source":True})
-    if existing:
-        # A pending ingress for the same trade and Decision Fact is the
-        # canonical idempotent case.  The processor adds execution metadata
-        # (correction_type/status/immutable_trade_source) before persistence,
-        # so comparing the raw ingress byte-for-byte would incorrectly turn
-        # a retry of the same attribution into a conflict.
-        if ids == {decision_id}:
-            print(json.dumps({"status":"RECONCILED","trade_event_id":event_id,"linked_decision_id":decision_id,"immutable_trade_source":True},ensure_ascii=False)); return 0
+    if existing and ids != {decision_id}:
         raise RuntimeError("trade already has a different canonical attribution correction")
     target=rd/f"{req['request_id']}.json"
-    if target.exists() and json.dumps(read_json(target,{}),ensure_ascii=False,sort_keys=True)!=json.dumps(req,ensure_ascii=False,sort_keys=True):
-        raise RuntimeError("attribution correction request identity conflict")
-    if not target.exists(): write_json(target, req)
-    print(json.dumps({"status":"APPLIED","trade_event_id":event_id,"linked_decision_id":decision_id,"immutable_trade_source":True},ensure_ascii=False)); return 0
+    if not existing:
+        if target.exists() and json.dumps(read_json(target,{}),ensure_ascii=False,sort_keys=True)!=json.dumps(req,ensure_ascii=False,sort_keys=True):
+            raise RuntimeError("attribution correction request identity conflict")
+        if not target.exists():
+            write_json(target, req)
+    # The request is idempotent, but the trade event is the projection that
+    # consumers actually read. Always repair that projection when the same
+    # canonical request is replayed; an existing request must not imply that
+    # the event already carries its attribution.
+    stamp = str(req.get("applied_at_beijing") or datetime.now(TZ).isoformat(timespec="seconds"))
+    event["linked_decision_id"] = decision_id
+    event["execution_attribution"] = {
+        "status": "READY",
+        "decision_id": decision_id,
+        "resolution": "EXPLICIT_PIT_VALID",
+    }
+    event["attribution_updated_at_beijing"] = stamp
+    write_json(ROOT / "events" / "trades" / f"{event_id}.json", event)
+    print(json.dumps({"status":"RECONCILED" if existing else "APPLIED","trade_event_id":event_id,"linked_decision_id":decision_id,"immutable_trade_source":True},ensure_ascii=False)); return 0
 
 
 def main() -> int:
