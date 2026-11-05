@@ -1388,6 +1388,7 @@ def _write_formal_layer_projections(root: Path, current: dict, discovery: dict) 
         "generated_at_beijing": generated,
         "status": status,
         "coverage_status": discovery.get("coverage_status"),
+        "empty_reason": discovery.get("empty_reason", ""),
         "candidate_count": len(candidates),
         "candidates": candidates,
         "universe_identity": discovery.get("universe_identity"),
