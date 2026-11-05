@@ -12,9 +12,6 @@ on:
     workflows:
       - "ETF market snapshot"
       - "ETF opening-auction CURRENT fallback"
-      - "Overseas pre-open pulse"
-      - "US extended-hours pulse"
-      - "ETF system consistency"
     types: [completed]
   push:
     branches: [main]
@@ -23,7 +20,6 @@ on:
       - "scripts/runtime_self_heal.py"
       - "scripts/production_health_guard.py"
       - "config/runtime_policy.json"
-      - "requests/live_snapshot/**"
       - ".github/workflows/self-healing-watchdog.yml"
       - ".github/workflows/us-extended-hours-pulse.yml"
       - ".github/workflows/overseas-preopen-pulse.yml"
