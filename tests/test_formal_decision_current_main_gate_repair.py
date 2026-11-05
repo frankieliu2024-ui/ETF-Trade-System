@@ -48,6 +48,16 @@ class FormalDecisionCurrentMainGateRepairTests(unittest.TestCase):
         )
         self.assertEqual(result["status"], "BLOCKED")
 
+    def test_missing_account_remains_execution_dependency_not_market_gate(self):
+        account = e2e.account_component(
+            {"status": "MISSING", "updated_at": None, "source": None},
+            {"market_date": "2026-11-05", "needs_account_update": True},
+        )
+        self.assertEqual(account["status"], "BLOCKED")
+        source = (ROOT / "scripts" / "build_e2e_status.py").read_text()
+        self.assertIn('"account_dependency"', source)
+        self.assertNotIn('formal_reply_gate["status"] = "BLOCKED"', source)
+
 
 if __name__ == "__main__":
     unittest.main()
