@@ -942,9 +942,11 @@ def record_formal_decision(request: dict) -> tuple[bool, str]:
         packet_request_id = str((packet.get("trigger") or {}).get("request_id") or "").strip()
         if packet_request_id not in {parent_request_id, request_id}:
             raise ValueError("manual formal completion query context is not bound to parent/completion request")
-        if action_readiness.get("ready") is not True or str(action_readiness.get("status") or "").upper() != "READY":
-            blockers = ",".join(str(x) for x in (action_readiness.get("blockers") or [])) or "UNKNOWN"
-            raise ValueError(f"manual formal completion action inputs are not READY: {blockers}")
+        # Action/amount readiness is not a prerequisite for persisting a
+        # formally analysed result.  Missing execution precision may limit
+        # Trial/Confirm, amount, or sell-share fields, but must not block the
+        # already formed Formal Decision completion or force a second run.
+        # The decision contract and PIT/source checks below remain mandatory.
     fingerprint_request_id = parent_request_id if is_manual_completion else request_id
     fingerprint = hashlib.sha256(json.dumps({"request_id": fingerprint_request_id, "market_date": market_date, "formal_decision": decision}, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
     decision_id = re.sub(r"[^A-Za-z0-9_.-]+", "_", str(decision.get("decision_id") or request_id or f"{market_date}_{fingerprint[:12]}"))
