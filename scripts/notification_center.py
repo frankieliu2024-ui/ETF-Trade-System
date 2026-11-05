@@ -988,8 +988,11 @@ def _discovery_pulse_event() -> dict | None:
     prior = _pulse_records(index)
     prior = [row for row in prior if row.get("identity") != latest.get("identity")]
     previous_count = int((prior[-1].get("candidate_count") or 0) if prior else 0)
-    if previous_count > 0:
+    if prior and previous_count == len(candidates):
         return None
+    previous_candidates = set()
+    if prior:
+        previous_candidates = set(str(row.get("candidate_signature") or "") for row in prior[-1].get("candidates") or [])
     names = []
     for candidate in candidates[:5]:
         if not isinstance(candidate, dict):
@@ -1004,15 +1007,17 @@ def _discovery_pulse_event() -> dict | None:
     if not identity:
         return None
     object_text = "、".join(names)
+    is_new_candidate = previous_count == 0
     return {
         "key": f"pulse-discovery:{identity}",
         "source_event_id": f"pulse-discovery:{identity}",
-        "type": "决策提醒", "event_type": "FORMAL_DECISION_PENDING",
+        "type": "决策提醒" if is_new_candidate else "市场异动",
+        "event_type": "FORMAL_DECISION_PENDING" if is_new_candidate else "PULSE_FACT_UPDATE",
         "title": "【决策提醒】建议运行【ETF正式决策】",
         "content": f"Discovery在最近合法脉冲中首次形成可消费候选：{object_text}。候选仍只属于Discovery层，未自动升级为观察ETF、机会ETF、Trial或Confirm。",
         "source": "discovery_pulse",
         "user_severity": "需要关注",
-        "user_action": "建议在合适节点运行【ETF正式决策】，重新评估候选及现有持仓。",
+        "user_action": "候选事实已更新；如需交易判断，等待或运行【ETF正式决策】。" if not is_new_candidate else "建议在合适节点运行【ETF正式决策】，重新评估候选及现有持仓。",
         "confirmation_context": {
             "trigger_reason": "Discovery候选发生实质变化",
             "trigger_type": "DISCOVERY_CANDIDATE_EMERGENCE",
@@ -1024,6 +1029,8 @@ def _discovery_pulse_event() -> dict | None:
             "market_snapshot": f"Discovery事实时点为{latest.get('fact_time_beijing') or '未提供'}，覆盖状态为{latest.get('coverage_status') or '未提供'}。",
             "overseas_snapshot": "本提醒不以Discovery替代海外或Hyperliquid事实。",
             "risk_snapshot": "候选变化只触发正式判断提醒，不改变风险许可，也不生成交易权限。",
+            "before_fact": f"上一Discovery脉冲候选数量：{previous_count}。",
+            "after_fact": f"当前Discovery脉冲候选数量：{len(candidates)}；当前候选：{object_text}。",
         },
     }
 
@@ -1079,7 +1086,7 @@ def _hyperliquid_pulse_event() -> dict | None:
     return {
         "key": f"pulse-hyperliquid:{identity}:{','.join(sorted(set(objects)))}",
         "source_event_id": f"pulse-hyperliquid:{identity}:{','.join(sorted(set(objects)))}",
-        "type": "决策提醒", "event_type": "FORMAL_DECISION_PENDING",
+        "type": "市场异动", "event_type": "PULSE_FACT_UPDATE",
         "title": "【决策提醒】建议运行【ETF正式决策】",
         "content": "Hyperliquid对既有ETF对象提供了可比的辅助变化：" + "；".join(details) + "。该信息不自行创建ETF候选，也不直接授予Trial或Confirm。",
         "source": "hyperliquid_pulse",
@@ -1096,6 +1103,8 @@ def _hyperliquid_pulse_event() -> dict | None:
             "market_snapshot": "Hyperliquid仅作为既有ETF对象的辅助证据，需结合最新合法A股/海外行情核对。",
             "overseas_snapshot": f"Hyperliquid可比事实形成于{latest.get('formed_at_beijing') or '未提供'}；provider原生时间戳缺失时不作精确时点推断。",
             "risk_snapshot": "辅助变化只触发正式判断提醒，不改变风险许可，也不生成交易权限。",
+            "before_fact": "上一可比Hyperliquid事实已记录。",
+            "after_fact": "；".join(details),
         },
     }
 
@@ -1651,6 +1660,7 @@ CANONICAL_TEMPLATE_FAMILIES = {
     "ACCOUNT_FACT_CONFIRMATION": "账户确认",
     "E2E_RECOVERED": "判断恢复",
     "FORMAL_DECISION_PENDING": "决策提醒",
+    "PULSE_FACT_UPDATE": "市场异动",
     "SYSTEM_EVENT": "系统阻塞",
     "CHANNEL_TEST": "测试",
     "收盘账户": "收盘账户",
@@ -1703,6 +1713,8 @@ def _canonical_boundary(family: str) -> str:
         return "系统只报告当前恢复/阻塞边界，不修改MASTER、账户事实或交易权限。"
     if family == "决策提醒":
         return "提醒只表示需要运行正式判断，不代表正式决策已经完成，也不生成交易许可。"
+    if family == "市场异动":
+        return "仅转发可比市场事实变化，不代表正式决策、Trial、Confirm或成交。"
     if family == "账户确认":
         return "仅核对账户事实，不把价格波动或通知发送当作成交。"
     if family == "收盘账户":
@@ -1782,6 +1794,17 @@ def render_canonical_notification(event: dict) -> dict | None:
             "### 你现在可以做什么\n建议立即运行【ETF正式决策】。如果暂不运行，系统将在下一自动正式决策节点重新读取最新合法事实并完成判断。\n\n"
             "### 当前边界\n本提醒不是正式决策正文，不代表已经形成新的买入、卖出、Trial、Confirm或持仓动作结论。系统不会自动下单或调仓。\n\n"
             f"> {_canonical_boundary(family)}\n\n### 触发事实时点（北京时间）\n{evidence_time}"
+        )
+    elif family == "市场异动":
+        title = "【市场异动】既有监测对象出现可比事实变化"
+        evidence_time = human_time(ctx.get("evidence_time_beijing")) if ctx.get("evidence_time_beijing") else "未单独记录"
+        body = (
+            f"### 发生了什么\n{event.get('content') or '既有监测对象出现可比事实变化。'}\n\n"
+            f"涉及对象：{ctx.get('applicable_object') or '相关监测对象'}\n\n"
+            f"### 变化前后\n{ctx.get('before_fact') or '变化前事实未提供。'}\n{ctx.get('after_fact') or '变化后事实未提供。'}\n\n"
+            f"### 你需要做什么\n{event.get('user_action') or '无需立即交易；在正式判断中重新核对。'}\n\n"
+            f"### 当前边界\n{_canonical_boundary(family)}\n\n"
+            f"### 事实时点（北京时间）\n{evidence_time}"
         )
     elif family == "风险许可":
         previous_risk = str(ctx.get("previous_risk_permission") or "未记录")
