@@ -42,6 +42,36 @@ SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
 FORMAL_FILES = ["ETF规则_MASTER.md", "ETF当前状态_DASHBOARD.md", "ETF交易复盘与经验库_2026.md", "ETF市场行情档案_2026.md"]
 CORE_RUNTIME_FILES = ["data/state/CURRENT.json", "data/state/runtime_health.json", "data/state/overseas_runtime_health.json", "data/state/account_fact.json", "data/state/us_extended_hours_context.json", "config/runtime_policy.json", "config/market/market_monitor_config.json", "config/market/provider_priority.json", "config/market/etf_monitor_universe.json", "config/market/a_share_trading_calendar_2026.json"]
 CRITICAL_TRACKED_FILES = FORMAL_FILES + [DATA_STANDARD, "ETF_SYSTEM_INDEX.md", "scripts/rules_version.py", "scripts/check_system_consistency.py", "scripts/check_system_consistency_core.py", "scripts/semantic_latest_main.py", "tests/test_semantic_latest_main.py", "scripts/runtime_session_gate.py", "scripts/cloud_runner_snapshot.py", "scripts/build_stock_context.py", "scripts/build_account_stock_market.py", "scripts/market_data_guard.py", "tests/test_market_data_guard.py", "scripts/build_overseas_context.py", "scripts/build_us_extended_hours_context.py", "scripts/build_low_cost_alpha_evidence.py", "scripts/build_query_context.py", "scripts/market_quote_router.py", "scripts/sync_formal_files.py", "scripts/formal_file_mutation_gateway.py", "tests/test_formal_file_mutation_gateway.py", "scripts/market_notification_common.py", "scripts/merge_notification_state.py", "scripts/notification_center.py", "tests/test_production_reliability.py", "scripts/query_market_object.py", "config/market/market_quote_router.json", "tests/test_market_quote_router.py", "scripts/build_post_market_review.py", "scripts/review_prerequisite_lifecycle.py", "scripts/historical_market_fact_recovery.py", ".github/workflows/market-snapshot.yml", ".github/workflows/on-demand-market-data.yml", ".github/workflows/overseas-preopen-pulse.yml", ".github/workflows/us-extended-hours-pulse.yml", ".github/workflows/decision-notification.yml", ".github/workflows/system-consistency.yml"] + CORE_RUNTIME_FILES
+def request_bound_snapshot_alignment(query_context: dict, decision_context: dict) -> tuple[bool, str]:
+    """Allow a newer query projection only when it remains bound to the same request."""
+    query_current = query_context.get("current") or {}
+    decision_current = decision_context.get("current") or {}
+    query_snapshot = str(query_current.get("latest_snapshot") or "")
+    decision_snapshot = str(decision_current.get("latest_snapshot") or "")
+    query_request_id = str(
+        ((query_context.get("decision_fact_pack") or {}).get("trigger") or {}).get("request_id")
+        or query_context.get("request_id")
+        or ""
+    ).strip()
+    decision_request_id = str(
+        decision_context.get("request_id")
+        or (decision_context.get("decision_trigger") or {}).get("request_id")
+        or ""
+    ).strip()
+    allowed = bool(
+        query_snapshot
+        and decision_snapshot
+        and query_snapshot != decision_snapshot
+        and query_request_id
+        and query_request_id == decision_request_id
+        and str(query_current.get("market_date") or "") == str(decision_current.get("market_date") or "")
+    )
+    detail = f"query={query_snapshot} decision={decision_snapshot}"
+    if allowed:
+        detail += " same_request_snapshot_rollforward=true"
+    return query_snapshot == decision_snapshot or allowed, detail
+
+
 EXPECTED_INDICES = {"000001.SH", "399006.SZ", "000688.SH", "NDX", "SOX", "N225", "KOSPI", "TWII", "HSTECH"}
 REQUIRED_PROVIDERS = {"hithink_finance", "yahoo_chart_api", "eastmoney_push2"}
 CORE_A_SHARE_INDEX_CODES = frozenset({"000001.SH", "399006.SZ", "000688.SH"})
@@ -714,36 +744,8 @@ def main() -> int:
     check("decision:quality_summary", all(key in quality for key in ("pass_count", "degraded_count", "failed_count", "failed_objects", "degraded_objects")), f"keys={sorted(quality)}")
     check("decision:core_stock_coverage_fields", all(key in coverage for key in ("core_market_pass", "core_market_failed", "account_stock_market_pass", "account_stock_market_failed")), f"coverage_keys={sorted(coverage)}", warning=True)
     check("decision:failed_objects_explicit", not quality.get("failed_count") or bool(quality.get("failed_objects")), f"failed_count={quality.get('failed_count')} failed_objects={quality.get('failed_objects')}", warning=True)
-    query_current = query_context.get("current") or {}
-    decision_current = decision_context.get("current") or {}
-    query_snapshot = str(query_current.get("latest_snapshot") or "")
-    decision_snapshot = str(decision_current.get("latest_snapshot") or "")
-    query_request_id = str(
-        ((query_context.get("decision_fact_pack") or {}).get("trigger") or {}).get("request_id")
-        or query_context.get("request_id")
-        or ""
-    ).strip()
-    decision_request_id = str(
-        decision_context.get("request_id")
-        or (decision_context.get("decision_trigger") or {}).get("request_id")
-        or ""
-    ).strip()
-    same_request_snapshot_rollforward = bool(
-        query_snapshot
-        and decision_snapshot
-        and query_snapshot != decision_snapshot
-        and query_request_id
-        and query_request_id == decision_request_id
-        and str(query_current.get("market_date") or "") == str(decision_current.get("market_date") or "")
-    )
-    check(
-        "decision:query_decision_current_aligned",
-        query_snapshot == decision_snapshot or same_request_snapshot_rollforward,
-        (
-            f"query={query_snapshot} decision={decision_snapshot}"
-            + (" same_request_snapshot_rollforward=true" if same_request_snapshot_rollforward else "")
-        ),
-    )
+    aligned, alignment_detail = request_bound_snapshot_alignment(query_context, decision_context)
+    check("decision:query_decision_current_aligned", aligned, alignment_detail)
     discovery_projection = read_json("data/state/formal_discovery_current.json")
     opportunity_projection = read_json("data/state/formal_opportunity_current.json")
     review_discovery = review_context.get("formal_discovery") or {}
