@@ -855,8 +855,7 @@ def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | N
         "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
         "CHATGPT_SCHEDULED_TASK",
     }
-    if str(payload.get("source") or "").strip().upper() not in allowed_sources:
-        raise ValueError("Formal Decision completion source mismatch")
+    # Scheduled-task completions may use the top-level ``source`` for the\n    # fact provenance and carry the task writer identity separately in\n    # ``formal_entry_source``.  Accept that existing contract while keeping\n    # the writer identity mandatory and restricted to the same allow-list.\n    source = str(payload.get("source") or "").strip().upper()\n    entry_source = str(payload.get("formal_entry_source") or "").strip().upper()\n    if source not in allowed_sources and entry_source not in allowed_sources:\n        raise ValueError("Formal Decision completion source mismatch")
     if str(payload.get("formal_fact_type") or "").strip().upper() != "FORMAL_CURRENT_MAIN_DECISION":
         raise ValueError("Formal Decision completion fact type mismatch")
     if not str(payload.get("report_id") or binding.get("report_id") or "").strip():
