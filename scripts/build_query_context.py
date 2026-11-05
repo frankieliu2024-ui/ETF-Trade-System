@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 34146)
+Total output lines: 2135
+
 from __future__ import annotations
 
 import argparse
@@ -216,6 +219,33 @@ def _reusable_formal_discovery(root: Path, current: dict, universe_identity: str
         "fixed_ttl": False,
     }
     return reused
+
+
+def _refresh_reused_discovery_external_evidence(discovery: dict, external: dict | None) -> dict:
+    """Refresh Hyperliquid evidence on a reused Discovery without rerunning Discovery."""
+    if not external:
+        return discovery
+    try:
+        from formal_etf_opportunity_discovery import _apply_external_driver_triggers
+    except ModuleNotFoundError:
+        from scripts.formal_etf_opportunity_discovery import _apply_external_driver_triggers
+
+    candidates = _apply_external_driver_triggers(list(discovery.get("candidates") or []), external)
+    refreshed = dict(discovery)
+    refreshed_candidates = []
+    for candidate in candidates:
+        item = dict(candidate)
+        evidence = list(item.get("_external_driver_triggers") or [])
+        if evidence:
+            item["external_driver_evidence"] = evidence
+            classes = list(item.get("information_classes") or [])
+            if "EXTERNAL_DRIVER_TRIGGER" not in classes:
+                classes.append("EXTERNAL_DRIVER_TRIGGER")
+            item["information_classes"] = classes
+        item.pop("_external_driver_triggers", None)
+        refreshed_candidates.append(item)
+    refreshed["candidates"] = refreshed_candidates
+    return refreshed
 
 
 def evaluate_freshness(current: dict, policy: dict) -> dict:
@@ -898,291 +928,7 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         "account_fact_ready": account_ready,
         "actual_position_market_coverage_complete": actual_position_market_coverage_complete,
         "missing_held_etfs": missing_held_etfs,
-        "missing_account_stocks": missing_account_stocks,
-        "rule": "Exact amount/share/action canonical completion remains fail-closed on request identity, action-qualified request-scoped PIT, valid account truth, and complete market-evidence coverage for every actual positive-quantity position. This gate must not be interpreted as a ban on independent legal analysis.",
-    }
-
-    formal_reasoning_readiness = {
-        "status": "READY" if formal_analysis_availability["available"] else "NOT_READY",
-        "ready": formal_analysis_availability["available"],
-        "blockers": ingress_blockers,
-        "limitations": analysis_limitations,
-        "request_bound": bool(request_id and requested_at),
-        "request_scoped_pit_resolved": post_request,
-        "account_fact_ready": account_ready,
-        "formal_discovery_status": discovery_status,
-        "formal_discovery_resolved": discovery_resolved,
-        "capital_efficiency_scope": "FULL_MARKET" if discovery_resolved else "DEGRADED_KNOWN_UNIVERSE",
-        "capital_efficiency_limitations": [] if discovery_resolved else ["FORMAL_DISCOVERY_NOT_RESOLVED"],
-        "compatibility_role": "ANALYSIS_AVAILABILITY_NOT_ACTION_QUALIFICATION",
-        "rule": "Formal reasoning continues under explicit local limitations. Exact executable/canonical action qualification is owned by formal_action_readiness.",
-    }
-
-    def _normalize_security_code(value: object) -> str:
-        return str(value or "").upper().replace(".SH", "").replace(".SZ", "").strip()
-
-    held_etf_codes = {
-        _normalize_security_code(item.get("code"))
-        for item in positions
-        if str(item.get("asset_type") or "").upper() == "ETF"
-        and _normalize_security_code(item.get("code"))
-    }
-    raw_observations = [
-        item for item in (universe.get("objects") or [])
-        if _normalize_security_code(item.get("code"))
-        and _normalize_security_code(item.get("code")) not in held_etf_codes
-    ]
-    observation_codes = {str(item.get("code") or "") for item in raw_observations}
-    observation_thesis = _latest_observation_thesis_state(root, observation_codes)
-    observation_inputs = []
-    for item in raw_observations:
-        code = str(item.get("code") or "")
-        observation_inputs.append({
-            "code": code,
-            "name": item.get("name") or code,
-            "thscode": item.get("thscode") or "",
-            "existing_thesis_state": observation_thesis.get(code) or {},
-        })
-    hyperliquid_object_context = {}
-    hyperliquid_by_asset = {str(x.get("asset") or ""): x for x in external_driver_observations}
-    for item in positions + observation_inputs + discovery_inputs:
-        if not isinstance(item, dict):
-            continue
-        code = str(item.get("code") or item.get("symbol") or "")
-        name = str(item.get("name") or "")
-        matches = []
-        for mapping in external_driver.get("mapping") or []:
-            if not isinstance(mapping, dict):
-                continue
-            asset_name = str(mapping.get("asset") or "")
-            by_code = code in {str(x) for x in (mapping.get("etf_codes") or [])}
-            by_marker = any(str(marker) and str(marker) in name for marker in (mapping.get("name_markers") or []))
-            observation = hyperliquid_by_asset.get(asset_name)
-            if observation and (by_code or by_marker):
-                matches.append({
-                    "asset": asset_name,
-                    "family": mapping.get("family"),
-                    "observation": observation,
-                })
-        if matches:
-            hyperliquid_object_context[code] = {
-                "code": code,
-                "name": name,
-                "evidence": matches,
-                "decision_boundary": "对象级辅助证据；不得独立生成Trial、Confirm、金额、卖出份额或订单。",
-            }
-
-    observation_review_inputs = []
-    existing_role_codes = held_etf_codes | observation_codes
-    quote_by_code = {
-        str(item.get("symbol") or item.get("code") or "").upper().replace(".SH", "").replace(".SZ", ""): item
-        for item in (market_quote.get("quotes") or []) if isinstance(item, dict)
-    }
-    seen_review_codes = set()
-    for item in request.get("observation_identity_review_targets") or []:
-        if not isinstance(item, dict):
-            continue
-        code = str(item.get("code") or "").upper().replace(".SH", "").replace(".SZ", "").strip()
-        if len(code) != 6 or not code.isdigit() or code in seen_review_codes or code in existing_role_codes:
-            continue
-        quote = quote_by_code.get(code) or {}
-        quote_status = "READY" if quote.get("latest_price") is not None or quote.get("close") is not None else "FAILED"
-        observation_review_inputs.append({
-            "code": code,
-            "name": item.get("name") or code,
-            "thscode": item.get("thscode") or "",
-            "formal_quote_status": quote_status,
-            "request_bound_explicit_review": True,
-        })
-        seen_review_codes.add(code)
-    # Historical base-stock screens remain research artifacts only. They do not
-    # create current Formal Decision objects. Actual account stocks already enter
-    # the problem graph through HOLDING:*; any future non-held stock opportunity
-    # must arrive through a separately qualified current-opportunity source.
-    problem_graph = _decision_problem_graph(
-        positions, discovery_inputs, account, observation_inputs, observation_review_inputs,
-    )
-    evidence_plan = _evidence_requirement_plan(problem_graph)
-
-    # Project already-produced monitoring facts into the request-bound packet.
-    # This is a read-only projection: it does not create facts, rank candidates,
-    # or grant trade authority.
-    market_regime_context = read_json(root / "data" / "state" / "market_regime_context.json", {})
-    market_structure_context = read_json(root / "data" / "state" / "market_structure_context.json", {})
-    overseas_context = read_json(root / CANONICAL_FILES["overseas_context"], {})
-    us_extended_hours_context = read_json(root / CANONICAL_FILES["us_extended_hours_context"], {})
-
-    # Fixed source-binding contract: each monitoring layer must expose the
-    # canonical source bundle it consumed. This is a projection contract only;
-    # it does not add providers or grant action authority.
-    three_layer_source_contract = {
-        "layer_1_external_cross_market": {
-            "required_sources": [
-                {"source_id": "OVERSEAS_CONTEXT", "path": CANONICAL_FILES["overseas_context"], "provider_field": "provider"},
-                {"source_id": "US_EXTENDED_HOURS", "path": CANONICAL_FILES["us_extended_hours_context"], "provider_field": "provider"},
-            ],
-            "required_domains": ["global_risk", "rates", "fx", "overseas_industry_theme", "macro_policy_supply_chain"],
-            "degrade_rule": "If a required domain is unavailable or stale, mark the domain DEGRADED; never substitute an overseas equity index list.",
-        },
-        "layer_2_a_share_internal": {
-            "required_sources": [
-                {"source_id": "A_SHARE_CURRENT", "path": CANONICAL_FILES["current"], "provider_field": "provider"},
-                {"source_id": "A_SHARE_MARKET_STRUCTURE", "path": "data/state/market_structure_context.json", "provider_field": "provider"},
-                {"source_id": "A_SHARE_MARKET_REGIME", "path": "data/state/market_regime_context.json", "provider_field": "provider"},
-            ],
-            "required_domains": ["index", "breadth", "style", "industry_theme", "liquidity_turnover", "capital_flow", "anomaly", "external_confirmation"],
-            "degrade_rule": "Index-only output is insufficient; missing internal domains remain explicit DEGRADED.",
-        },
-        "layer_3_etf_opportunity_capital": {
-            "required_sources": [
-                {"source_id": "BROKER_ACCOUNT_FACT", "path": CANONICAL_FILES["account_fact"], "provider_field": "source"},
-                {"source_id": "ETF_DISCOVERY_UNIVERSE", "path": CANONICAL_FILES["etf_monitor_universe"], "provider_field": "source"},
-                {"source_id": "STOCK_CONTEXT", "path": CANONICAL_FILES["stock_context"], "provider_field": "source"},
-            ],
-            "required_domains": ["holdings", "cash", "releasable_capital", "discovery", "observation", "account_stock", "conditional_industry_chain"],
-            "degrade_rule": "No account/industry fact may be invented; absence is explicit and localized.",
-        },
-    }
-    three_layer_monitoring = {
-        "source_contract": three_layer_source_contract,
-        "layer_1_external_cross_market": {
-            "base_evidence": {
-                "overseas_context": overseas_context,
-                "us_extended_hours_context": us_extended_hours_context,
-            },
-            "triggered_expansion": {
-                "status": "CONDITIONAL",
-                "rule": "Expand only when current exposure, candidate, anomaly, commodity/macro event, or transmission hypothesis can change risk, opportunity, sell/hold, or capital allocation.",
-            },
-            "decision_boundary": "External facts are evidence only; asynchronous overseas facts must not be described as synchronous A-share confirmation.",
-        },
-        "layer_2_a_share_internal": {
-            "market_regime_context": market_regime_context,
-            "market_structure_context": market_structure_context,
-            "fact_domains": {
-                "index": bool(market_regime_context.get("indices")),
-                "breadth": bool(market_regime_context.get("etf_breadth")),
-                "style": bool(market_regime_context.get("style_context")),
-                "industry_theme": bool((market_structure_context.get("items") or [])),
-                "liquidity_turnover": bool((market_structure_context.get("items") or [])),
-                "capital_flow": "OPTIONAL_OR_TRIGGERED",
-                "anomaly": "OPTIONAL_OR_TRIGGERED",
-                "external_confirmation_state": "ACTOR_DERIVED_FROM_QUALIFIED_LAYER_1_AND_LAYER_2_FACTS",
-            },
-            "decision_boundary": "A-share internal monitoring is not satisfied by fixed indices alone when qualified breadth/style/structure evidence already exists.",
-        },
-        "layer_3_etf_opportunity_capital": {
-            "formal_discovery_status": discovery.get("status") or "NOT_REQUESTED",
-            "discovery_candidates": discovery_inputs,
-            "actual_positions": positions,
-            "observation_inputs": observation_inputs,
-            "observation_identity_review_inputs": observation_review_inputs,
-            "deployable_cash": account.get("deployable_cash"),
-            "required_capital_states": [
-                "all_actual_positions_continue_or_release",
-                "held_etf_additional_capital",
-                "all_observation_etfs",
-                "temporary_discovery_candidates",
-                "cash",
-                "releasable_low_efficiency_capital",
-            ],
-            "decision_boundary": "Inputs only; MASTER and ChatGPT own sell/hold, candidate selection, amount, funding source, and next-unit capital use.",
-        },
-        "completeness_rule": "Three-layer monitoring means qualified evidence across the current request's relevant fact domains, not a fixed-index checklist. Missing optional/triggered evidence remains explicit and localized.",
-    }
-
-    work_package = _decision_work_package(
-        problem_graph,
-        evidence_plan,
-        quotes,
-        three_layer_monitoring=three_layer_monitoring,
-    )
-    marginal_stop = work_package.get("decision_marginal_stop") or {}
-    unresolved_required = list(marginal_stop.get("unresolved_required_requirements") or [])
-    capital_scope_prefixes = (
-        "HOLDING:", "HELD_ETF_ADD:", "BASE_STOCK_REPLACEMENT:",
-        "DISCOVERY:", "OBSERVATION:", "OBSERVATION_REVIEW:",
-    )
-    capital_scope_ids = {
-        "DEPLOYABLE_CASH", "RELEASABLE_CAPITAL", "TRIAL_CONFIRM_CAPACITY",
-        "NEXT_UNIT_CAPITAL_USE", "MAIN_CANDIDATE",
-    }
-    capital_unresolved = [
-        item for item in unresolved_required
-        if (
-            str(item).startswith(capital_scope_prefixes)
-            or str(item) in capital_scope_ids
-            or str(item).split(":", 1)[0] in capital_scope_ids
-        )
-    ]
-    # Keep analysis admission lightweight: unresolved capital evidence is
-    # observable here, while the action/amount/share decision remains subject
-    # to the single unified capital-comparison contract at BDS validation.
-    work_package["capital_competition_readiness"] = {
-        "status": "READY" if not capital_unresolved else "EVIDENCE_INCOMPLETE",
-        "ready": True,
-        "hard_gate": False,
-        "scope": "BUSINESS_ANALYSIS_AND_COMPLETION_VALIDATION",
-        "unresolved_required_requirements": capital_unresolved,
-        "rule": "资本竞争必须在正式业务判断中完成；证据不足是可披露的业务结论，不得阻断FINAL_CONTENT。完成记录仍须校验资本竞争字段完整性，字段缺失只能阻断后置投影。",
-    }
-    work_package["capital_competition_action_gate"] = {
-        "status": "ADVISORY" if capital_unresolved else "OPEN",
-        "blocks": [],
-        "source": "UNIFIED_CAPITAL_COMPARISON_CONTRACT",
-        "post_final_content_validation": True,
-        "rule": "该投影仅标记证据完整性，不是FINAL_CONTENT前置门；BDS字段校验仍由统一BUSINESS_DECISION_SOURCE owner执行。",
-    }
-
-    work_package["three_layer_monitoring_evidence"] = three_layer_monitoring
-    work_package["previous_formal_decision_baseline"] = _latest_formal_decision_baseline(root, _request_received_at_beijing(request))
-    work_package["response_contract"]["material_state_transition_attribution"] = {"required_when_changed": ["risk_permission", "main_candidate_or_opportunity_status", "holding_action"], "fields": ["material_evidence_delta", "evidence_requirement_ids"], "rule": "Material state changes versus the previous canonical Formal Decision require explicit attribution to qualified current-request evidence. Execution/market-phase or cash constraints must not mechanically rewrite orthogonal risk/opportunity states."}
-
-    return {
-        "schema_version": "1.5",
-        "role": "PREFERRED_MINIMUM_SUFFICIENT_FORMAL_REASONING_INPUT",
-        "trigger": {
-            "source": source_value,
-            "request_id": request.get("request_id") or "",
-            "requested_at_beijing": requested_at_value,
-            "entry_mode": entry_mode,
-            "task_id": task_id_value,
-            "task_run_id": task_run_value,
-            "occurrence_id": occurrence_value,
-            "market_date": requested_date,
-        },
-        "master": {
-            "version": decision.get("rules_version") or current.get("rules_version") or "",
-            "source": "ETF规则_MASTER.md",
-        },
-        "account_fact": {
-            "source": account.get("source") or "",
-            "as_of_beijing": account.get("updated_at") or "",
-            "status": account.get("status") or "",
-            "deployable_cash": account.get("deployable_cash"),
-            "reserved_cash_for_settlement": account.get("reserved_cash_for_settlement"),
-            "positions": positions,
-        },
-        "current": {
-            "market_date": current.get("market_date") or "",
-            "market_phase": current.get("market_phase") or "",
-            "latest_snapshot": current.get("latest_snapshot") or "",
-            "captured_at_beijing": current.get("captured_at") or (current.get("data_freshness") or {}).get("captured_at_beijing") or "",
-            "provider_as_of_beijing": (current.get("data_freshness") or {}).get("provider_as_of") or "",
-            "provider": (current.get("data_freshness") or {}).get("provider") or "",
-        },
-        "qualified_market_facts": quotes,
-        "hyperliquid_external_driver_context": {
-            "quality_status": external_driver.get("quality_status") or "NOT_REQUESTED",
-            "dex_count": external_driver.get("dex_count"),
-            "catalog_count": external_driver.get("catalog_count"),
-            "focused_count": external_driver.get("focused_count"),
-            "observations": external_driver_observations,
-            "mapping": external_driver.get("mapping") or [],
-            "object_context": hyperliquid_object_context,
-            "decision_evidence": hyperliquid_evidence,
-            "time_basis": external_driver.get("time_basis", ""),
-            "decision_boundary": "仅作为对象级辅助证据；不得独立生成Trial、Confirm、金额、卖出份额或订单。",
+        "missing_account_stocks": missing_account_stocks…4146 tokens truncated…助证据；不得独立生成Trial、Confirm、金额、卖出份额或订单。",
         },
         "decision_context": {
             "generated_at_beijing": decision.get("generated_at_beijing") or decision.get("generated_at") or "",
@@ -1873,6 +1619,9 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
         # Discovery reuse remains guarded by market node, universe identity,
         # decision-relevant delta and the existing terminal READY contract.
         formal_discovery = _reusable_formal_discovery(root, current, universe_identity, managed_etf_codes)
+        formal_discovery = _refresh_reused_discovery_external_evidence(
+            formal_discovery, overseas_context.get("hyperliquid")
+        ) if formal_discovery is not None else None
         if formal_discovery is None:
             formal_discovery = discover_formal_candidates(
                 root,
@@ -2102,3 +1851,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
