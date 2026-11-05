@@ -972,6 +972,11 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         })
     hyperliquid_object_context = {}
     hyperliquid_by_asset = {str(x.get("asset") or ""): x for x in external_driver_observations}
+    hyperliquid_decision_by_asset = {
+        str(x.get("asset") or ""): x
+        for x in (hyperliquid_evidence.get("items") or [])
+        if isinstance(x, dict)
+    }
     for item in positions + observation_inputs + discovery_inputs:
         if not isinstance(item, dict):
             continue
@@ -990,6 +995,7 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
                     "asset": asset_name,
                     "family": mapping.get("family"),
                     "observation": observation,
+                    "decision_evidence": hyperliquid_decision_by_asset.get(asset_name) or {},
                 })
         if matches:
             hyperliquid_object_context[code] = {
