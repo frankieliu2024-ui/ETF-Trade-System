@@ -3,6 +3,7 @@ from __future__ import annotations
 import unittest
 
 from scripts import check_system_consistency
+from scripts import check_system_consistency_core
 
 
 class AsyncContextFreshnessContractTest(unittest.TestCase):
@@ -97,28 +98,30 @@ class AsyncContextFreshnessContractTest(unittest.TestCase):
         self.assertEqual(target["status"], "FAIL")
 
 
-    def test_same_request_newer_query_snapshot_is_not_a_hard_conflict(self) -> None:
-        report = self._report()
-        report["checks"] = [
-            item
-            for item in report["checks"]
-            if item["name"] != "decision:query_decision_current_aligned"
-        ]
-        report["checks"].append(
-            {
-                "name": "decision:query_decision_current_aligned",
-                "status": "FAIL",
-                "detail": "query=snapshot-new decision=snapshot-old",
-            }
-        )
-        report["errors"].append(
-            "decision:query_decision_current_aligned: query=snapshot-new decision=snapshot-old"
-        )
-        # The production check receives request-bound contexts through the
-        # consistency runner; this fixture documents the allowed same-request
-        # asynchronous roll-forward without weakening unrelated mismatches.
-        self.assertNotEqual("snapshot-new", "snapshot-old")
+    def test_same_request_newer_query_snapshot_is_allowed(self) -> None:
+        query = {
+            "current": {"market_date": "2026-09-10", "latest_snapshot": "snapshot-new"},
+            "decision_fact_pack": {"trigger": {"request_id": "formal-1"}},
+        }
+        decision = {
+            "current": {"market_date": "2026-09-10", "latest_snapshot": "snapshot-old"},
+            "request_id": "formal-1",
+        }
+        allowed, detail = check_system_consistency_core.request_bound_snapshot_alignment(query, decision)
+        self.assertTrue(allowed)
+        self.assertIn("same_request_snapshot_rollforward=true", detail)
 
+    def test_different_request_snapshot_mismatch_remains_blocked(self) -> None:
+        query = {
+            "current": {"market_date": "2026-09-10", "latest_snapshot": "snapshot-new"},
+            "decision_fact_pack": {"trigger": {"request_id": "formal-new"}},
+        }
+        decision = {
+            "current": {"market_date": "2026-09-10", "latest_snapshot": "snapshot-old"},
+            "request_id": "formal-old",
+        }
+        allowed, _ = check_system_consistency_core.request_bound_snapshot_alignment(query, decision)
+        self.assertFalse(allowed)
 
 
 if __name__ == "__main__":
