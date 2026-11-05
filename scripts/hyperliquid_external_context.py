@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import urllib.request
 from datetime import datetime, timedelta, timezone
@@ -53,7 +54,7 @@ def build() -> dict:
                               "message": str(exc)[-300:]}],
             "catalog": [], "observations": [],
             "mapping": config["asset_mappings"],
-            "time_basis": "Hyperliquid endpoint lacks event timestamps; collected_at_beijing is the latest state visible to this run and must be aligned to the nearest legal A-share fact.",
+            "time_basis": "Hyperliquid endpoint lacks event timestamps; collected_at_beijing is the observation completion boundary, not an event timestamp. Formal consumers must preserve context_id, collection window, latest observation time and actual age.",
             "decision_boundary": config["boundary"]
         }
     for dex in dexes:
@@ -101,13 +102,28 @@ def build() -> dict:
             failures.append({"dex": dex_name, "error": type(exc).__name__, "message": str(exc)[-300:]})
     observed = {str(x["asset"].get("name")) for x in observations}
     missing = sorted(targets - observed)
+    collected = sorted(str(x.get("collected_at_utc") or "") for x in observations if x.get("collected_at_utc"))
+    latest_collected = collected[-1] if collected else ""
+    earliest_collected = collected[0] if collected else ""
     status = "PASS" if not failures and not missing and all(x.get("quality_status") == "PASS" for x in observations) else ("DEGRADED" if observations else "FAILED")
     finished = _now()
+    provenance_payload = {
+        "collection_started_at_utc": started,
+        "collection_finished_at_utc": finished,
+        "earliest_observation_collected_at_utc": earliest_collected,
+        "latest_observation_collected_at_utc": latest_collected,
+        "focused_assets": sorted(str(x.get("asset", {}).get("name") or "") for x in observations),
+    }
+    context_id = "hl-" + hashlib.sha256(json.dumps(provenance_payload, sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest()[:16]
     return {
         "schema_version": "1.0", "mode": "FORMAL_EXTERNAL_DRIVER_DISCOVERY_INPUT",
         "provider": "hyperliquid_info_api", "read_only": True,
         "collection_started_at_utc": started, "collection_finished_at_utc": finished,
         "started_at_utc": started, "finished_at_utc": finished,
+        "context_id": context_id,
+        "earliest_observation_collected_at_utc": earliest_collected,
+        "latest_observation_collected_at_utc": latest_collected,
+        "observation_count": len(observations),
         "quality_status": status, "dex_count": len(dexes),
         "catalog_count": len(catalog), "focused_count": len(observations),
         "missing_focused_assets": missing, "dex_failures": failures,
