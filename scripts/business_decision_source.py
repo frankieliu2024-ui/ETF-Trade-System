@@ -813,10 +813,24 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
         if str(item.get("problem_id") or "").startswith("继续持有ING:")
     }
     reviewed_holding_ids = {f"继续持有ING:{item.get('security_code')}" for item in position_reviews}
-    holding_review_complete = bool(expected_holding_ids) and reviewed_holding_ids == expected_holding_ids and all(
-        isinstance(item.get("capital_use"), dict)
-        and all(str(item.get("capital_use", {}).get("position_capital_states", {}).get(key) or "").strip() for key in ("继续持有", "减持", "全部退出"))
-        for item in position_reviews
+    # Account facts are an execution/portfolio-mapping layer.  When no
+    # current holding facts are available, the absence of holding review
+    # objects must not invalidate an otherwise complete market-level decision.
+    # If holdings are present in the request-bound graph, retain strict
+    # per-holding capital-state coverage.
+    holding_review_complete = (
+        not expected_holding_ids
+        or (
+            reviewed_holding_ids == expected_holding_ids
+            and all(
+                isinstance(item.get("capital_use"), dict)
+                and all(
+                    str(item.get("capital_use", {}).get("position_capital_states", {}).get(key) or "").strip()
+                    for key in ("继续持有", "减持", "全部退出")
+                )
+                for item in position_reviews
+            )
+        )
     )
     expected_add_ids = {
         str(item.get("problem_id") or "")
