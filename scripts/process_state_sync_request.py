@@ -4068,6 +4068,21 @@ def merge_account_fact(prior: dict, supplied: dict) -> dict:
     for key, value in (supplied or {}).items():
         if key != "settlement_obligations" and value is not None:
             merged[key] = json.loads(json.dumps(value))
+
+    # Account facts have one date authority only.  The broker-confirmed
+    # account date is stored as last_confirmed_market_date; legacy
+    # account-level market_date is deliberately removed so it cannot drift
+    # from the confirmed account fact and mislead downstream consumers.
+    confirmed_market_date = (
+        supplied.get("last_confirmed_market_date")
+        or supplied.get("account_fact_market_date")
+        or supplied.get("market_date")
+        or merged.get("last_confirmed_market_date")
+    )
+    if confirmed_market_date:
+        merged["last_confirmed_market_date"] = str(confirmed_market_date)
+    merged.pop("market_date", None)
+
     # An ordinary screenshot is a partial observation.  Empty history-shaped
     # defaults from an ingress adapter must not erase canonical trade,
     # decision, fee, lifecycle, or reconciliation facts.
