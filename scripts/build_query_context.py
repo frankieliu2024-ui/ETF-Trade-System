@@ -93,6 +93,65 @@ def _discovery_delta_identity(root: Path) -> str:
     return hashlib.sha256(json.dumps(semantic, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()[:16]
 
 
+def _hyperliquid_decision_evidence(external: dict, current: dict) -> dict:
+    """Classify continuous Hyperliquid state against the latest A-share fact."""
+    observations = [x for x in (external.get("observations") or []) if isinstance(x, dict)]
+    a_share_time = str(current.get("captured_at_beijing") or (current.get("data_freshness") or {}).get("captured_at_beijing") or current.get("captured_at") or "")
+
+    def parse(value: str) -> datetime | None:
+        try:
+            dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+            return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+        except (TypeError, ValueError):
+            return None
+
+    a_dt = parse(a_share_time)
+    def number(value: object) -> float | None:
+        try:
+            result = float(value)
+        except (TypeError, ValueError):
+            return None
+        return result if result == result and abs(result) != float("inf") else None
+
+    items: list[dict] = []
+    families: dict[str, dict] = {}
+    for item in observations:
+        ctx = item.get("context") or {}
+        mark = number(ctx.get("markPx")); prev = number(ctx.get("prevDayPx"))
+        funding = number(ctx.get("funding")); premium = number(ctx.get("premium"))
+        collected = str(item.get("collected_at_beijing") or "")
+        c_dt = parse(collected)
+        delta = abs((c_dt - a_dt).total_seconds()) if c_dt and a_dt else None
+        direction = "SUPPORTIVE" if mark is not None and prev not in (None, 0) and mark > prev else ("NEGATIVE" if mark is not None and prev not in (None, 0) and mark < prev else "NEUTRAL")
+        crowding = "ELEVATED" if abs(funding or 0) >= 0.0001 or abs(premium or 0) >= 0.002 else "NORMAL"
+        family = next((str(m.get("family") or "") for m in (external.get("mapping") or []) if str(m.get("asset") or "") == str((item.get("asset") or {}).get("name") or "")), "")
+        evidence = {
+            "asset": (item.get("asset") or {}).get("name", ""), "dex": item.get("dex"), "family": family,
+            "direction": direction, "crowding": crowding, "funding": funding, "premium": premium,
+            "mark": mark, "oracle": number(ctx.get("oraclePx")), "mid": number(ctx.get("midPx")),
+            "open_interest": number(ctx.get("openInterest")), "day_notional_volume": number(ctx.get("dayNtlVlm")),
+            "collected_at_beijing": collected, "a_share_fact_as_of_beijing": a_share_time,
+            "time_delta_seconds": round(delta, 3) if delta is not None else None,
+            "time_relation": "ALIGNED_WINDOW" if delta is not None and delta <= 900 else ("ASYNC_LEAD_OR_LAG" if delta is not None else "A_SHARE_TIME_UNAVAILABLE"),
+            "evidence_role": "CONTINUOUS_MARKET_STATE_BOUNDARY",
+            "decision_effect": "SUPPORT_AND_TIMING" if direction == "SUPPORTIVE" and crowding == "NORMAL" else "TIMING_FILTER" if direction == "SUPPORTIVE" else "CONTRADICTION_AND_CROWDING" if direction == "NEGATIVE" and crowding == "ELEVATED" else "CONTRADICTION" if direction == "NEGATIVE" else "NO_INCREMENTAL_VALUE",
+        }
+        items.append(evidence)
+        if family:
+            bucket = families.setdefault(family, {"assets": [], "supportive": 0, "negative": 0, "elevated_crowding": 0})
+            bucket["assets"].append(evidence["asset"])
+            bucket["supportive"] += int(direction == "SUPPORTIVE")
+            bucket["negative"] += int(direction == "NEGATIVE")
+            bucket["elevated_crowding"] += int(crowding == "ELEVATED")
+    return {
+        "status": "READY" if items and str(external.get("quality_status") or "").upper() in {"PASS", "DEGRADED"} else "MISSING",
+        "collection_time_is_pit_boundary": True, "a_share_fact_as_of_beijing": a_share_time,
+        "observation_count": len(items), "items": items, "family_summary": families,
+        "decision_use": ["direction", "entry_timing", "condition_filter", "crowding", "capital_competition"],
+        "decision_boundary": "Hyperliquid evidence can change object-level opportunity strength, timing, holding management and capital competition; it cannot independently grant Trial, Confirm, amount, sell quantity or order.",
+    }
+
+
 def _same_node_persisted_formal_discovery(root: Path, current: dict, universe_identity: str) -> dict | None:
     """Return an existing valid Discovery instead of treating a downstream rebuild as absence.
 
@@ -641,6 +700,7 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
     universe = read_json(root / CANONICAL_FILES["etf_monitor_universe"], {})
     discovery = formal_discovery or {}
     external_driver = external_driver_context or {}
+    hyperliquid_evidence = _hyperliquid_decision_evidence(external_driver, current)
     external_driver_observations = []
     for item in external_driver.get("observations") or []:
         if not isinstance(item, dict):
@@ -1120,6 +1180,8 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
             "observations": external_driver_observations,
             "mapping": external_driver.get("mapping") or [],
             "object_context": hyperliquid_object_context,
+            "decision_evidence": hyperliquid_evidence,
+            "time_basis": external_driver.get("time_basis", ""),
             "decision_boundary": "仅作为对象级辅助证据；不得独立生成Trial、Confirm、金额、卖出份额或订单。",
         },
         "decision_context": {
@@ -1817,6 +1879,7 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
                 market_date=str(current.get("market_date") or trading_day_status.get("market_date") or ""),
                 managed_codes=managed_etf_codes,
                 held_codes=held_etf_codes,
+                external_driver_context=overseas_context.get("hyperliquid"),
             )
             formal_discovery["universe_identity"] = universe_identity
             formal_discovery["discovery_delta_identity"] = _discovery_delta_identity(root)

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import urllib.request
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 API = "https://api.hyperliquid.xyz/info"
@@ -17,6 +17,16 @@ def _post(payload: dict) -> object:
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+
+def _collection_as_of_beijing(utc_text: str) -> str:
+    try:
+        value = datetime.fromisoformat(str(utc_text).replace("Z", "+00:00"))
+        if value.tzinfo is None:
+            value = value.replace(tzinfo=timezone.utc)
+        return value.astimezone(timezone(timedelta(hours=8), name="Asia/Shanghai")).isoformat(timespec="seconds")
+    except (TypeError, ValueError):
+        return ""
 
 
 def build() -> dict:
@@ -43,6 +53,7 @@ def build() -> dict:
                               "message": str(exc)[-300:]}],
             "catalog": [], "observations": [],
             "mapping": config["asset_mappings"],
+            "time_basis": "Hyperliquid endpoint lacks event timestamps; collected_at_beijing is the latest state visible to this run and must be aligned to the nearest legal A-share fact.",
             "decision_boundary": config["boundary"]
         }
     for dex in dexes:
@@ -81,6 +92,8 @@ def build() -> dict:
                         "request_started_at_utc": request_started,
                         "request_finished_at_utc": request_finished,
                         "collected_at_utc": request_finished,
+                        "collected_at_beijing": _collection_as_of_beijing(request_finished),
+                        "observation_time_basis": "COLLECTION_FINISHED_TIME_AS_VISIBLE_STATE_BOUNDARY",
                         "market_activity_status": "ACTIVE" if active else "INACTIVE_OR_NO_ACTIVITY",
                         "quality_status": "PASS" if active else "DEGRADED",
                     })
@@ -100,5 +113,6 @@ def build() -> dict:
         "missing_focused_assets": missing, "dex_failures": failures,
         "catalog": catalog, "observations": observations,
         "mapping": config["asset_mappings"],
+        "time_basis": "Hyperliquid endpoint lacks event timestamps; collected_at_beijing is the latest state visible to this run and must be aligned to the nearest legal A-share fact.",
         "decision_boundary": config["boundary"]
     }
