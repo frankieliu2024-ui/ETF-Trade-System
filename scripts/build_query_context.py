@@ -2000,6 +2000,8 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
     policy = read_json(root / CANONICAL_FILES["runtime_policy"], {})
     runtime_health = read_json(root / CANONICAL_FILES["runtime_health"], {})
     overseas_context = read_json(root / CANONICAL_FILES["overseas_context"], {})
+    discovery_pulse_index = read_json(root / "data" / "state" / "discovery_pulse_index.json", {})
+    hyperliquid_pulse_index = read_json(root / "data" / "state" / "hyperliquid_pulse_index.json", {})
     us_extended = read_json(root / CANONICAL_FILES["us_extended_hours_context"], {})
     stock_context = read_json(root / CANONICAL_FILES["stock_context"], {})
     stock_market_context = read_json(root / CANONICAL_FILES["stock_market_context"], {})
