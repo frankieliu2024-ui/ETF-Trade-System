@@ -431,6 +431,7 @@ def build_lifecycle_projection(root: Path, as_of_market_date: str | None = None)
                 and (
                     str(x.get("linked_decision_id") or "") == str(decision.get("decision_id") or "")
                     or (x.get("hypothesis_id") and x.get("hypothesis_id") == decision.get("hypothesis_id"))
+                    or (decision.get("_completion_trial") and str(x.get("event_id") or "") == str(decision.get("_linked_execution_id") or ""))
                 )
             )
         ]
