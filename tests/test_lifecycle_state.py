@@ -93,6 +93,38 @@ class LifecycleStateTests(unittest.TestCase):
         self.assertEqual(item["lifecycle_status"], "RESOLVED")
         self.assertFalse(item["decision_due"])
 
+    def test_overdue_trial_consumes_latest_explicit_same_security_decision(self):
+        self.add_trial(decision_date="2026-08-27", trade_date="2026-08-27", hypothesis="H-overdue")
+        write(self.root, "events/decisions/latest-management.json", {
+            "decision_id": "latest-management",
+            "decision_time_beijing": "2026-09-03T10:00:00+08:00",
+            "candidate_code": "515880",
+            "candidate_name": "通信ETF",
+            "formal_decision": {
+                "lifecycle": "通信ETF（515880）持有管理，不追加。",
+                "main_candidate": "通信ETF（515880）",
+            },
+        })
+        result = build_lifecycle_projection(self.root, "2026-09-05")
+        item = result["active_lifecycles"][0]
+        self.assertEqual(item["lifecycle_status"], "RESOLVED")
+        self.assertEqual(item["hypothesis_status"], "HOLDING_MANAGEMENT")
+        self.assertEqual(item["resolution"]["resolution_reason"], "LATEST_FORMAL_DECISION_COVERAGE")
+        self.assertEqual(item["resolution"]["decision_id"], "latest-management")
+        self.assertFalse(item["decision_due"])
+
+    def test_latest_security_mention_without_business_action_does_not_resolve_overdue_trial(self):
+        self.add_trial(decision_date="2026-08-27", trade_date="2026-08-27", hypothesis="H-no-action")
+        write(self.root, "events/decisions/mention-only.json", {
+            "decision_id": "mention-only",
+            "decision_time_beijing": "2026-09-03T10:00:00+08:00",
+            "candidate_code": "515880",
+            "formal_decision": {"lifecycle": "通信ETF（515880）"},
+        })
+        item = build_lifecycle_projection(self.root, "2026-09-05")["active_lifecycles"][0]
+        self.assertEqual(item["lifecycle_status"], "ACTIVE_TRIAL")
+        self.assertTrue(item["overdue"])
+
     def test_projection_survives_rebuild_and_exposes_sources(self):
         self.add_trial()
         result = build_lifecycle_projection(self.root, "2026-08-28")
@@ -326,3 +358,4 @@ class LifecycleStateTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
