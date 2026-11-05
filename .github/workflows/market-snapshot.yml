@@ -134,7 +134,27 @@ jobs:
           set -euo pipefail
           correction_files="$(git diff --name-only "$EVENT_BEFORE" "$GITHUB_SHA" -- 'requests/trade_fact_correction/*.json' || true)"
           if [ -z "$correction_files" ]; then
-            echo "No confirmed trade fact correction ingress in this push."
+            # A correction request is durable canonical ingress. A later
+            # maintenance/snapshot push must still replay any unprojected
+            # request; otherwise an already-published request is silently
+            # treated as consumed merely because it is outside EVENT_BEFORE.
+            correction_files="$(python - <<'PY'
+          import json
+          from pathlib import Path
+          pending = []
+          for path in sorted(Path("requests/trade_fact_correction").glob("*.json")):
+              try:
+                  obj = json.loads(path.read_text(encoding="utf-8"))
+              except (OSError, json.JSONDecodeError):
+                  continue
+              if str(obj.get("correction_type") or "").upper() == "DECISION_ATTRIBUTION":
+                  pending.append(str(path))
+          print("\n".join(pending))
+          PY
+            )"
+          fi
+          if [ -z "$correction_files" ]; then
+            echo "No pending trade fact correction ingress."
             exit 0
           fi
           while IFS= read -r correction_file; do
