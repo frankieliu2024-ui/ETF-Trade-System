@@ -166,6 +166,7 @@ jobs:
             echo "Correction already projected; no commit required."
             exit 0
           fi
+          echo "TRADE_CORRECTIONS_APPLIED=true" >> "$GITHUB_ENV"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/state/account_fact.json data/state/etf_strategy_equity.json data/state/trade_fact_correction_receipt.json events/trades ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md ETF当前状态_DASHBOARD.md
@@ -1681,6 +1682,11 @@ jobs:
           fi
           git add -f -- data/state/query_context.json
           git add -A -- data/market/snapshots data/market/discovery_history data/state post_market_review events config/market/etf_monitor_universe.json ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md
+              if [ "${TRADE_CORRECTIONS_APPLIED:-false}" = "true" ]; then
+                # The correction consumer has already published the canonical Dashboard.
+                # Do not let this run republish its pre-correction working copy.
+                git reset -- ETF当前状态_DASHBOARD.md
+              fi
               git reset -- data/state/system_consistency.json
               git reset -- data/state/notification_center.json
           if git diff --cached --quiet; then
