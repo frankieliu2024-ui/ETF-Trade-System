@@ -967,6 +967,144 @@ def decision_event() -> dict | None:
     }
 
 
+def _pulse_records(index: dict) -> list[dict]:
+    rows = []
+    for day_rows in (index.get("days") or {}).values():
+        if isinstance(day_rows, list):
+            rows.extend(row for row in day_rows if isinstance(row, dict))
+    rows.sort(key=lambda row: str(row.get("formed_at_beijing") or row.get("identity") or ""))
+    return rows
+
+
+def _discovery_pulse_event() -> dict | None:
+    index = read_json(STATE / "discovery_pulse_index.json", {})
+    latest = index.get("latest") or {}
+    current = read_json(STATE / "formal_discovery_current.json", {})
+    if str(latest.get("status") or "").upper() not in {"READY", "PASS"}:
+        return None
+    candidates = current.get("candidates") or []
+    if not isinstance(candidates, list) or not candidates:
+        return None
+    prior = _pulse_records(index)
+    prior = [row for row in prior if row.get("identity") != latest.get("identity")]
+    previous_count = int((prior[-1].get("candidate_count") or 0) if prior else 0)
+    if previous_count > 0:
+        return None
+    names = []
+    for candidate in candidates[:5]:
+        if not isinstance(candidate, dict):
+            continue
+        code = str(candidate.get("code") or candidate.get("security_code") or "").strip()
+        name = str(candidate.get("name") or candidate.get("display_name") or candidate.get("security_name") or "").strip()
+        if code or name:
+            names.append(f"{name}（{code}）" if name and code else (name or code))
+    if not names:
+        return None
+    identity = str(latest.get("identity") or current.get("generated_at_beijing") or "").strip()
+    if not identity:
+        return None
+    object_text = "、".join(names)
+    return {
+        "key": f"pulse-discovery:{identity}",
+        "source_event_id": f"pulse-discovery:{identity}",
+        "type": "决策提醒", "event_type": "FORMAL_DECISION_PENDING",
+        "title": "【决策提醒】建议运行【ETF正式决策】",
+        "content": f"Discovery在最近合法脉冲中首次形成可消费候选：{object_text}。候选仍只属于Discovery层，未自动升级为观察ETF、机会ETF、Trial或Confirm。",
+        "source": "discovery_pulse",
+        "user_severity": "需要关注",
+        "user_action": "建议在合适节点运行【ETF正式决策】，重新评估候选及现有持仓。",
+        "confirmation_context": {
+            "trigger_reason": "Discovery候选发生实质变化",
+            "trigger_type": "DISCOVERY_CANDIDATE_EMERGENCE",
+            "evidence_time_beijing": str(latest.get("formed_at_beijing") or current.get("generated_at_beijing") or ""),
+            "applicable_object": object_text,
+            "requires_formal_reassessment": True,
+            "pulse_source": "Discovery",
+            "pulse_identity": identity,
+            "market_snapshot": f"Discovery事实时点为{latest.get('fact_time_beijing') or '未提供'}，覆盖状态为{latest.get('coverage_status') or '未提供'}。",
+            "overseas_snapshot": "本提醒不以Discovery替代海外或Hyperliquid事实。",
+            "risk_snapshot": "候选变化只触发正式判断提醒，不改变风险许可，也不生成交易权限。",
+        },
+    }
+
+
+def _hyperliquid_pulse_event() -> dict | None:
+    index = read_json(STATE / "hyperliquid_pulse_index.json", {})
+    latest = index.get("latest") or {}
+    if str(latest.get("status") or "").upper() not in {"READY", "PASS"}:
+        return None
+    current_context = read_json(STATE / "overseas_context.json", {}).get("hyperliquid") or {}
+    previous_context = read_json(STATE / "overseas_context_previous.json", {}).get("hyperliquid") or {}
+    current_obs = current_context.get("observations") or []
+    previous_obs = previous_context.get("observations") or []
+    previous_by_asset = {str(row.get("dex")) + ":" + str((row.get("asset") or {}).get("name")): row for row in previous_obs if isinstance(row, dict)}
+    mapping = current_context.get("mapping") or []
+    mapped_codes = {}
+    for item in mapping:
+        if not isinstance(item, dict):
+            continue
+        asset = str(item.get("asset") or item.get("symbol") or "").strip()
+        codes = [str(code) for code in (item.get("etf_codes") or []) if str(code).strip()]
+        if asset and codes:
+            mapped_codes[asset] = codes
+    changed = []
+    for row in current_obs:
+        if not isinstance(row, dict):
+            continue
+        asset_name = str((row.get("asset") or {}).get("name") or "").strip()
+        codes = mapped_codes.get(asset_name) or []
+        old = previous_by_asset.get(str(row.get("dex")) + ":" + asset_name) or {}
+        if not codes or str(row.get("quality_status") or "").upper() != "PASS":
+            continue
+        now_px = (row.get("context") or {}).get("markPx")
+        old_px = (old.get("context") or {}).get("markPx")
+        try:
+            move = float(now_px) / float(old_px) - 1
+        except (TypeError, ValueError, ZeroDivisionError):
+            continue
+        if abs(move) < 0.015:
+            continue
+        changed.append((asset_name, codes, move, row))
+    if not changed:
+        return None
+    identity = str(latest.get("identity") or current_context.get("generated_at_beijing") or "").strip()
+    if not identity:
+        return None
+    details = []
+    objects = []
+    for asset_name, codes, move, _row in changed[:5]:
+        objects.extend(codes)
+        details.append(f"{asset_name}对应对象{','.join(codes)}，标记价格较前一可比事实{move:+.2%}")
+    object_text = "、".join(dict.fromkeys(objects))
+    return {
+        "key": f"pulse-hyperliquid:{identity}:{','.join(sorted(set(objects)))}",
+        "source_event_id": f"pulse-hyperliquid:{identity}:{','.join(sorted(set(objects)))}",
+        "type": "决策提醒", "event_type": "FORMAL_DECISION_PENDING",
+        "title": "【决策提醒】建议运行【ETF正式决策】",
+        "content": "Hyperliquid对既有ETF对象提供了可比的辅助变化：" + "；".join(details) + "。该信息不自行创建ETF候选，也不直接授予Trial或Confirm。",
+        "source": "hyperliquid_pulse",
+        "user_severity": "需要关注",
+        "user_action": "建议在合适节点运行【ETF正式决策】，核对对应ETF或持仓的本地市场反馈。",
+        "confirmation_context": {
+            "trigger_reason": "Hyperliquid辅助证据与既有ETF对象发生可比变化",
+            "trigger_type": "HYPERLIQUID_MAPPED_CHANGE",
+            "evidence_time_beijing": str(latest.get("formed_at_beijing") or current_context.get("generated_at_beijing") or ""),
+            "applicable_object": object_text,
+            "requires_formal_reassessment": True,
+            "pulse_source": "Hyperliquid",
+            "pulse_identity": identity,
+            "market_snapshot": "Hyperliquid仅作为既有ETF对象的辅助证据，需结合最新合法A股/海外行情核对。",
+            "overseas_snapshot": f"Hyperliquid可比事实形成于{latest.get('formed_at_beijing') or '未提供'}；provider原生时间戳缺失时不作精确时点推断。",
+            "risk_snapshot": "辅助变化只触发正式判断提醒，不改变风险许可，也不生成交易权限。",
+        },
+    }
+
+
+def pulse_formal_decision_pending_event() -> dict | None:
+    """Use the existing decision-reminder channel for material pulse changes."""
+    return _discovery_pulse_event() or _hyperliquid_pulse_event()
+
+
 def formal_decision_pending_event() -> dict | None:
     """Create one actionable reminder when a pulse requires Formal Decision.
 
@@ -1255,11 +1393,11 @@ def choose_event(mode: str) -> dict | None:
         return report_delivery_event()
     builders = (
         (report_delivery_event, execution_confirmation_event,
-         formal_decision_change_event, account_confirmation_event, system_event, decision_event, formal_decision_pending_event)
+         formal_decision_change_event, account_confirmation_event, system_event, decision_event, pulse_formal_decision_pending_event, formal_decision_pending_event)
         if (_report_handoff_path() is not None or _report_delivery_path() is not None)
         else
         (execution_confirmation_event, formal_decision_change_event,
-        account_confirmation_event, system_event, decision_event, formal_decision_pending_event, report_delivery_event)
+        account_confirmation_event, system_event, decision_event, pulse_formal_decision_pending_event, formal_decision_pending_event, report_delivery_event)
     )
     for builder in builders:
         event = builder()
