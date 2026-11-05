@@ -62,10 +62,10 @@
 
 |对象|生命周期|状态|形成日期|当前T+|下一节点|来源决策|
 |-|-|-|-:|-:|-|-|
-|港股通创新药ETF工银（159217）|Trial|有效|2026-11-05|T+0|TRADE_MANDATORY_LIFECYCLE_NODE:T+3|fd-20261105-142812|
-|全指器械（159056）|Trial|逾期|2026-10-26|T+8|TRADE_MANDATORY_LIFECYCLE_NODE:T+3|FORMAL_COMPLETION:fd_20261026_144323_scheduled_formal_review_b7e14c92|
+|港股通创新药ETF工银（159217）|Trial|有效|2026-11-05|T+0|8.20元（+0.17%）|fd-20261105-142812|
+|全指器械（159056）|Trial|逾期|2026-10-26|T+8|51.40元（+1.05%）|FORMAL_COMPLETION:fd_20261026_144323_scheduled_formal_review_b7e14c92|
 
-当前持仓的事实数量以上方“当前持仓事实”为准；未被生命周期投影单独列出的持仓，不得据此推断为Trial或Confirm。
+当前持仓的事实数量以上方‘当前持仓事实’为准；未被生命周期投影单独列出的持仓，不得据此推断为Trial或Confirm。
 <!-- AUTO_STATE_SYNC_END -->
 
 <!-- AUTO_TRADE_FACT_CORRECTIONS_START -->
