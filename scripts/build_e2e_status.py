@@ -546,19 +546,14 @@ def context_component(query: dict, decision: dict) -> dict:
         "parent_request_source": parent_request.get("source"),
         "parent_request_entry_mode": parent_request.get("entry_mode"),
     } if request_bound else None
-    # Account-changing broker evidence is a hard dependency of capital decisions.
-    # Reuse the existing account component rather than introducing parallel state.
+    # Account facts belong to portfolio mapping and execution confirmation.
+    # Preserve the dependency status for downstream reconciliation, but do not
+    # turn a missing or stale account fact into a market-level Formal Decision
+    # reply blocker.
     account_gate = account_component(read_json(FILES["account"]), read_json(FILES["current"]))
     if request_bound and formal_reply_gate and account_gate.get("status") == "BLOCKED":
-        blockers = list(formal_reply_gate.get("blockers") or [])
-        marker = str(account_gate.get("reason") or "ACCOUNT_FACT_NOT_READY")
-        if marker not in blockers:
-            blockers.append(marker)
         formal_reply_gate = {
             **formal_reply_gate,
-            "status": "BLOCKED",
-            "reply_freezable": False,
-            "blockers": blockers,
             "account_dependency": {
                 "status": account_gate.get("status"),
                 "reason": account_gate.get("reason"),
