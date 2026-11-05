@@ -467,7 +467,15 @@ def project_decision_response(source: dict[str, Any], response: dict[str, Any], 
         raise ValueError("decision response missing NEXT_UNIT_CAPITAL_USE.compared_capital_states_as_business_state_names")
     try:
         new_amount = _parse_yuan_amount(next_answer.get("new_amount_yuan"), "NEXT_UNIT_CAPITAL_USE.new_amount_yuan")
-        post_cash = _parse_yuan_amount(next_answer.get("post_action_deployable_cash"), "NEXT_UNIT_CAPITAL_USE.post_action_deployable_cash")
+        post_cash_raw = next_answer.get("post_action_deployable_cash")
+        # Post-action deployable cash is an execution-layer result.  When
+        # account facts are unavailable, preserve that uncertainty instead of
+        # converting it into a numeric zero or blocking the market decision.
+        post_cash = (
+            None
+            if post_cash_raw in (None, "", "未确认", "尚未确认")
+            else _parse_yuan_amount(post_cash_raw, "NEXT_UNIT_CAPITAL_USE.post_action_deployable_cash")
+        )
     except ValueError as exc:
         raise ValueError(str(exc))
     if new_amount < 0 or post_cash < 0:
