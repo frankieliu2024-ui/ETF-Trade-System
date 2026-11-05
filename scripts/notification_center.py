@@ -983,7 +983,7 @@ def _discovery_pulse_event() -> dict | None:
     if str(latest.get("status") or "").upper() not in {"READY", "PASS"}:
         return None
     candidates = current.get("candidates") or []
-    if not isinstance(candidates, list) or not candidates:
+    if not isinstance(candidates, list):
         return None
     prior = _pulse_records(index)
     prior = [row for row in prior if row.get("identity") != latest.get("identity")]
@@ -996,7 +996,8 @@ def _discovery_pulse_event() -> dict | None:
     if prior and current_candidates == previous_candidates:
         return None
     names = []
-    for candidate in candidates[:5]:
+    candidate_rows = candidates[:5] if candidates else (prior[-1].get("candidates") or [] if prior else [])
+    for candidate in candidate_rows:
         if not isinstance(candidate, dict):
             continue
         code = str(candidate.get("code") or candidate.get("security_code") or "").strip()
@@ -1009,20 +1010,21 @@ def _discovery_pulse_event() -> dict | None:
     if not identity:
         return None
     object_text = "、".join(names)
-    is_new_candidate = previous_count == 0
+    is_new_candidate = previous_count == 0 and bool(candidates)
+    change_label = "首次形成可消费候选" if is_new_candidate else ("候选消失或当前节点未再形成候选" if not candidates else "候选对象或资格状态发生变化")
     return {
         "key": f"pulse-discovery:{identity}",
         "source_event_id": f"pulse-discovery:{identity}",
         "type": "决策提醒" if is_new_candidate else "市场异动",
         "event_type": "FORMAL_DECISION_PENDING" if is_new_candidate else "PULSE_FACT_UPDATE",
         "title": "【决策提醒】建议运行【ETF正式决策】",
-        "content": f"Discovery在最近合法脉冲中首次形成可消费候选：{object_text}。候选仍只属于Discovery层，未自动升级为观察ETF、机会ETF、Trial或Confirm。",
+        "content": f"Discovery在最近合法脉冲中发生{change_label}：{object_text or '上一脉冲候选未在当前节点继续出现'}。该变化仍只属于Discovery层，未自动升级为观察ETF、机会ETF、Trial或Confirm。",
         "source": "discovery_pulse",
         "user_severity": "需要关注",
         "user_action": "候选事实已更新；如需交易判断，等待或运行【ETF正式决策】。" if not is_new_candidate else "建议在合适节点运行【ETF正式决策】，重新评估候选及现有持仓。",
         "confirmation_context": {
             "trigger_reason": "Discovery候选发生实质变化",
-            "trigger_type": "DISCOVERY_CANDIDATE_EMERGENCE",
+            "trigger_type": "DISCOVERY_OBJECT_CHANGE",
             "evidence_time_beijing": str(latest.get("formed_at_beijing") or current.get("generated_at_beijing") or ""),
             "applicable_object": object_text,
             "requires_formal_reassessment": True,
@@ -1067,6 +1069,11 @@ def _hyperliquid_pulse_event() -> dict | None:
         if asset and codes:
             mapped_codes[asset] = codes
     changed = []
+    def number(value):
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
     for row in current_obs:
         if not isinstance(row, dict):
             continue
@@ -1075,15 +1082,19 @@ def _hyperliquid_pulse_event() -> dict | None:
         old = previous_by_asset.get(str(row.get("dex")) + ":" + asset_name) or {}
         if not codes or str(row.get("quality_status") or "").upper() != "PASS":
             continue
-        now_px = (row.get("context") or {}).get("markPx")
-        old_px = (old.get("context") or {}).get("markPx")
-        try:
-            move = float(now_px) / float(old_px) - 1
-        except (TypeError, ValueError, ZeroDivisionError):
+        now_ctx, old_ctx = row.get("context") or {}, old.get("context") or {}
+        metrics = {}
+        for field, threshold in (("markPx", 0.015), ("funding", 0.00005), ("premium", 0.001), ("openInterest", 0.10), ("dayNtlVlm", 0.25)):
+            current_value, previous_value = number(now_ctx.get(field)), number(old_ctx.get(field))
+            if current_value is None or previous_value in (None, 0):
+                continue
+            delta = current_value / previous_value - 1
+            if abs(delta) >= threshold:
+                metrics[field] = delta
+        active_change = str(row.get("market_activity_status") or "") != str(old.get("market_activity_status") or "")
+        if not metrics and not active_change:
             continue
-        if abs(move) < 0.015:
-            continue
-        changed.append((asset_name, codes, move, row))
+        changed.append((asset_name, codes, metrics, active_change, row))
     if not changed:
         return None
     identity = str(latest.get("identity") or current_context.get("generated_at_beijing") or "").strip()
@@ -1091,9 +1102,12 @@ def _hyperliquid_pulse_event() -> dict | None:
         return None
     details = []
     objects = []
-    for asset_name, codes, move, _row in changed[:5]:
+    for asset_name, codes, metrics, active_change, _row in changed[:5]:
         objects.extend(codes)
-        details.append(f"{asset_name}对应对象{','.join(codes)}，标记价格较前一可比事实{move:+.2%}")
+        metric_text = "、".join(f"{field}变化{delta:+.2%}" for field, delta in metrics.items())
+        if active_change:
+            metric_text = (metric_text + "；" if metric_text else "") + "活跃状态发生变化"
+        details.append(f"{asset_name}对应对象{','.join(codes)}，{metric_text}")
     object_text = "、".join(dict.fromkeys(objects))
     return {
         "key": f"pulse-hyperliquid:{identity}:{','.join(sorted(set(objects)))}",
