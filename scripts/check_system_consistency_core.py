@@ -715,6 +715,25 @@ def main() -> int:
     check("decision:core_stock_coverage_fields", all(key in coverage for key in ("core_market_pass", "core_market_failed", "account_stock_market_pass", "account_stock_market_failed")), f"coverage_keys={sorted(coverage)}", warning=True)
     check("decision:failed_objects_explicit", not quality.get("failed_count") or bool(quality.get("failed_objects")), f"failed_count={quality.get('failed_count')} failed_objects={quality.get('failed_objects')}", warning=True)
     check("decision:query_decision_current_aligned", query_context.get("current", {}).get("latest_snapshot") == decision_context.get("current", {}).get("latest_snapshot"), f"query={query_context.get('current', {}).get('latest_snapshot')} decision={decision_context.get('current', {}).get('latest_snapshot')}")
+    discovery_projection = read_json("data/state/formal_discovery_current.json")
+    opportunity_projection = read_json("data/state/formal_opportunity_current.json")
+    review_discovery = review_context.get("formal_discovery") or {}
+    review_opportunity = review_context.get("formal_opportunity") or {}
+    discovery_generation = str(discovery_projection.get("generated_at_beijing") or "")
+    opportunity_source_generation = str(opportunity_projection.get("source_discovery_generated_at_beijing") or "")
+    check(
+        "formal_layers:opportunity_bound_to_current_discovery",
+        bool(discovery_generation) and opportunity_source_generation == discovery_generation,
+        f"discovery={discovery_generation} opportunity_source={opportunity_source_generation}",
+        warning=True,
+    )
+    check(
+        "formal_layers:review_context_aligned",
+        str(review_discovery.get("generated_at_beijing") or "") == discovery_generation
+        and str(review_opportunity.get("source_discovery_generated_at_beijing") or "") == opportunity_source_generation,
+        f"review_discovery={review_discovery.get('generated_at_beijing')} review_opportunity_source={review_opportunity.get('source_discovery_generated_at_beijing')}",
+        warning=True,
+    )
     pit = decision_context.get("point_in_time") or query_context.get("point_in_time") or {}
     check("point_in_time:context_not_before_market", _time_not_before(pit.get("context_generated_time"), pit.get("market_snapshot_time")), f"context={pit.get('context_generated_time')} market={pit.get('market_snapshot_time')}", warning=True)
     check("point_in_time:account_time_separate", "account_fact_time" in pit and "market_snapshot_time" in pit, f"fields={sorted(pit)}")

@@ -1412,8 +1412,29 @@ def _write_formal_layer_projections(root: Path, current: dict, discovery: dict) 
         "decision_owner": "MASTER_FORMAL_DECISION",
         "not_zero_rule": "pending decision is not an opportunity count of zero",
         "source_discovery_status": status,
+        "source_discovery_generated_at_beijing": discovery.get("generated_at_beijing", ""),
+        "source_discovery_latest_snapshot": discovery.get("latest_snapshot", snapshot),
+        "source_discovery_universe_identity": discovery.get("universe_identity"),
+        "source_discovery_delta_identity": discovery.get("discovery_delta_identity"),
     }
     atomic_json_write(root / "data/state/formal_opportunity_current.json", opportunity)
+
+    # review_context is a derived consumer of the same node-local projections.
+    # Keep its embedded copies synchronized when a later Discovery pulse
+    # refreshes the projections; never leave an older Opportunity snapshot
+    # silently attached to a newer Discovery result.
+    review_path = root / "data/state/review_context.json"
+    review = read_json(review_path, {})
+    if isinstance(review, dict) and str(review.get("market_date") or "") == market_date:
+        review["formal_discovery"] = projection
+        review["formal_opportunity"] = opportunity
+        review["formal_layer_projection_sync"] = {
+            "status": "ALIGNED",
+            "discovery_generated_at_beijing": projection.get("generated_at_beijing", ""),
+            "opportunity_source_discovery_generated_at_beijing": opportunity.get("source_discovery_generated_at_beijing", ""),
+            "synchronized_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds"),
+        }
+        atomic_json_write(review_path, review)
 def _minimum_legal_inputs_ready_at(root: Path, request: dict, current: dict, account: dict, market_quote: dict, observed_at: str) -> str:
     """Return the earliest repository-observed time when action-determinative inputs are present.
 

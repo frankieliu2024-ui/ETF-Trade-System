@@ -24,9 +24,9 @@ except ModuleNotFoundError:
     from scripts.scheduled_review_completion import write_completion_request
 
 try:
-    from task_runtime_identity import derive_runtime_identity
+    from task_runtime_identity import derive_request_identity, derive_runtime_identity
 except ModuleNotFoundError:
-    from scripts.task_runtime_identity import derive_runtime_identity
+    from scripts.task_runtime_identity import derive_request_identity, derive_runtime_identity
 
 
 def _persist_completion_to_main(completion_path: str) -> str:
@@ -352,9 +352,16 @@ def main() -> int:
     parser.add_argument("--request-id", default="")
     args = parser.parse_args()
 
+    # A Formal Decision is not a child of the latest account-sync request.
+    # When the platform omits request_id, derive a new identity from this
+    # invocation's confirmed task metadata; never reuse an unrelated request
+    # from decision_context or an account-fact update.
+    request_id = derive_request_identity(
+        "ETF正式决策", args.requested_at_beijing, args.entry_mode, args.request_id
+    )
     task_run_id, occurrence_id = derive_runtime_identity(
         "ETF正式决策",
-        args.request_id or args.task_run_id or args.occurrence_id or "formal-runtime",
+        request_id,
         args.requested_at_beijing,
         args.entry_mode,
         args.task_run_id,
