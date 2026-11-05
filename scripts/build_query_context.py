@@ -2226,6 +2226,13 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
         "market_quote_router": market_quote,
         "system_objects": system_objects, "user_requested_objects": [], "market_domain_projection": market_domain_projection,
         "formal_etf_discovery": formal_discovery,
+        "discovery_pulse_index": discovery_pulse_index if isinstance(discovery_pulse_index, dict) else {},
+        "hyperliquid_pulse_index": hyperliquid_pulse_index if isinstance(hyperliquid_pulse_index, dict) else {},
+        "continuous_pulse_consumption": {
+            "discovery_latest": (discovery_pulse_index or {}).get("latest") if isinstance(discovery_pulse_index, dict) else None,
+            "hyperliquid_latest": (hyperliquid_pulse_index or {}).get("latest") if isinstance(hyperliquid_pulse_index, dict) else None,
+            "rule": "决策上下文消费最新合法对象投影及其同链脉冲索引；脉冲索引仅提供可追溯事实序列，不自行产生交易许可。"
+        },
         "weekly_return_attribution": weekly_return_attribution,
         "canonical_files": CANONICAL_FILES, "data_status": {**(current.get("data_freshness") or {}), **freshness}, "freshness_at_context_build": freshness,
         "interactive_decision_freshness": market_quote.get("decision_freshness", {}),
