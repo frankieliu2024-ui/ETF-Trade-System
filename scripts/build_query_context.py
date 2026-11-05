@@ -185,9 +185,9 @@ def account_gate_status(current: dict, account: dict, policy: dict) -> dict:
     raw_valid = account.get("status") == "VALID"
     market_date = str(current.get("market_date") or "")
     account_fact_market_date = str(
-        account.get("market_date")
-        or account.get("last_confirmed_market_date")
+        account.get("last_confirmed_market_date")
         or account.get("account_fact_market_date")
+        or account.get("market_date")
         or ""
     )
     updated = parse_time(account.get("updated_at", ""))

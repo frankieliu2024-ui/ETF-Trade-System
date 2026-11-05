@@ -153,7 +153,8 @@ jobs:
           cur=json.loads(Path('data/state/account_fact.json').read_text(encoding='utf-8'))
           rt=parse((req.get('account_fact') or {}).get('updated_at') or req.get('account_updated_at'))
           ct=parse(cur.get('updated_at'))
-          print('true' if rt > ct else 'false')
+          legacy_market_date = "market_date" in cur
+          print('true' if rt > ct or legacy_market_date else 'false')
           PY
           )"
           [ "$needs_sync" = "true" ] || exit 0
