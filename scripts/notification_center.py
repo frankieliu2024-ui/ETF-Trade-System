@@ -967,6 +967,179 @@ def decision_event() -> dict | None:
     }
 
 
+def _pulse_records(index: dict) -> list[dict]:
+    rows = []
+    for day_rows in (index.get("days") or {}).values():
+        if isinstance(day_rows, list):
+            rows.extend(row for row in day_rows if isinstance(row, dict))
+    rows.sort(key=lambda row: str(row.get("formed_at_beijing") or row.get("identity") or ""))
+    return rows
+
+
+def _discovery_pulse_event() -> dict | None:
+    index = read_json(STATE / "discovery_pulse_index.json", {})
+    latest = index.get("latest") or {}
+    current = read_json(STATE / "formal_discovery_current.json", {})
+    if str(latest.get("status") or "").upper() not in {"READY", "PASS"}:
+        return None
+    candidates = current.get("candidates") or []
+    if not isinstance(candidates, list):
+        return None
+    prior = _pulse_records(index)
+    prior = [row for row in prior if row.get("identity") != latest.get("identity")]
+    previous_count = int((prior[-1].get("candidate_count") or 0) if prior else 0)
+    previous_candidates = {str(row.get("candidate_signature") or "") for row in (prior[-1].get("candidates") or [])} if prior else set()
+    current_candidates = {
+        ":".join(str(item.get(key) or "") for key in ("code", "formal_status", "category", "eligibility"))
+        for item in candidates if isinstance(item, dict)
+    }
+    if prior and current_candidates == previous_candidates:
+        return None
+    names = []
+    candidate_rows = candidates[:5] if candidates else (prior[-1].get("candidates") or [] if prior else [])
+    for candidate in candidate_rows:
+        if not isinstance(candidate, dict):
+            continue
+        code = str(candidate.get("code") or candidate.get("security_code") or "").strip()
+        name = str(candidate.get("name") or candidate.get("display_name") or candidate.get("security_name") or "").strip()
+        if code or name:
+            names.append(f"{name}（{code}）" if name and code else (name or code))
+    if not names:
+        return None
+    identity = str(latest.get("identity") or current.get("generated_at_beijing") or "").strip()
+    if not identity:
+        return None
+    object_text = "、".join(names)
+    is_new_candidate = previous_count == 0 and bool(candidates)
+    change_label = "首次形成可消费候选" if is_new_candidate else ("候选消失或当前节点未再形成候选" if not candidates else "候选对象或资格状态发生变化")
+    return {
+        "key": f"pulse-discovery:{identity}",
+        "source_event_id": f"pulse-discovery:{identity}",
+        "type": "决策提醒" if is_new_candidate else "市场异动",
+        "event_type": "FORMAL_DECISION_PENDING" if is_new_candidate else "PULSE_FACT_UPDATE",
+        "title": "【决策提醒】建议运行【ETF正式决策】",
+        "content": f"Discovery在最近合法脉冲中发生{change_label}：{object_text or '上一脉冲候选未在当前节点继续出现'}。该变化仍只属于Discovery层，未自动升级为观察ETF、机会ETF、Trial或Confirm。",
+        "source": "discovery_pulse",
+        "user_severity": "需要关注",
+        "user_action": "候选事实已更新；如需交易判断，等待或运行【ETF正式决策】。" if not is_new_candidate else "建议在合适节点运行【ETF正式决策】，重新评估候选及现有持仓。",
+        "confirmation_context": {
+            "trigger_reason": "Discovery候选发生实质变化",
+            "trigger_type": "DISCOVERY_OBJECT_CHANGE",
+            "evidence_time_beijing": str(latest.get("formed_at_beijing") or current.get("generated_at_beijing") or ""),
+            "applicable_object": object_text,
+            "requires_formal_reassessment": True,
+            "pulse_source": "Discovery",
+            "pulse_identity": identity,
+            "market_snapshot": f"Discovery事实时点为{latest.get('fact_time_beijing') or '未提供'}，覆盖状态为{latest.get('coverage_status') or '未提供'}。",
+            "overseas_snapshot": "本提醒不以Discovery替代海外或Hyperliquid事实。",
+            "risk_snapshot": "候选变化只触发正式判断提醒，不改变风险许可，也不生成交易权限。",
+            "before_fact": f"上一Discovery脉冲候选数量：{previous_count}。",
+            "after_fact": f"当前Discovery脉冲候选数量：{len(candidates)}；当前候选：{object_text}。",
+        },
+    }
+
+
+def _hyperliquid_pulse_event() -> dict | None:
+    index = read_json(STATE / "hyperliquid_pulse_index.json", {})
+    latest = index.get("latest") or {}
+    if str(latest.get("status") or "").upper() not in {"READY", "PASS"}:
+        return None
+    current_context = read_json(STATE / "overseas_context.json", {}).get("hyperliquid") or {}
+    previous_context = read_json(STATE / "overseas_context_previous.json", {}).get("hyperliquid") or {}
+    current_obs = current_context.get("observations") or []
+    previous_obs = previous_context.get("observations") or []
+    previous_by_asset = {str(row.get("dex")) + ":" + str((row.get("asset") or {}).get("name")): row for row in previous_obs if isinstance(row, dict)}
+    mapping = current_context.get("mapping") or []
+    mapped_codes = {}
+    universe = read_json(ROOT / "config" / "market" / "etf_monitor_universe.json", {})
+    universe_objects = [item for item in (universe.get("objects") or []) if isinstance(item, dict)]
+    account = read_json(STATE / "account_fact.json", {})
+    universe_objects += [item for item in (account.get("positions") or []) if isinstance(item, dict)]
+    for item in mapping:
+        if not isinstance(item, dict):
+            continue
+        asset = str(item.get("asset") or item.get("symbol") or "").strip()
+        codes = [str(code) for code in (item.get("etf_codes") or []) if str(code).strip()]
+        markers = [str(marker).lower() for marker in (item.get("name_markers") or []) if str(marker).strip()]
+        for obj in universe_objects:
+            name = str(obj.get("name") or obj.get("display_name") or "").lower()
+            code = str(obj.get("code") or obj.get("symbol") or "").strip()
+            if code and markers and any(marker in name for marker in markers) and code not in codes:
+                codes.append(code)
+        if asset and codes:
+            mapped_codes[asset] = codes
+    changed = []
+    def number(value):
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
+    for row in current_obs:
+        if not isinstance(row, dict):
+            continue
+        asset_name = str((row.get("asset") or {}).get("name") or "").strip()
+        codes = mapped_codes.get(asset_name) or []
+        old = previous_by_asset.get(str(row.get("dex")) + ":" + asset_name) or {}
+        if not codes or str(row.get("quality_status") or "").upper() != "PASS":
+            continue
+        now_ctx, old_ctx = row.get("context") or {}, old.get("context") or {}
+        metrics = {}
+        for field, threshold in (("markPx", 0.015), ("funding", 0.00005), ("premium", 0.001), ("openInterest", 0.10), ("dayNtlVlm", 0.25)):
+            current_value, previous_value = number(now_ctx.get(field)), number(old_ctx.get(field))
+            if current_value is None or previous_value in (None, 0):
+                continue
+            delta = current_value / previous_value - 1
+            if abs(delta) >= threshold:
+                metrics[field] = delta
+        active_change = str(row.get("market_activity_status") or "") != str(old.get("market_activity_status") or "")
+        if not metrics and not active_change:
+            continue
+        changed.append((asset_name, codes, metrics, active_change, row))
+    if not changed:
+        return None
+    identity = str(latest.get("identity") or current_context.get("generated_at_beijing") or "").strip()
+    if not identity:
+        return None
+    details = []
+    objects = []
+    for asset_name, codes, metrics, active_change, _row in changed[:5]:
+        objects.extend(codes)
+        metric_text = "、".join(f"{field}变化{delta:+.2%}" for field, delta in metrics.items())
+        if active_change:
+            metric_text = (metric_text + "；" if metric_text else "") + "活跃状态发生变化"
+        details.append(f"{asset_name}对应对象{','.join(codes)}，{metric_text}")
+    object_text = "、".join(dict.fromkeys(objects))
+    return {
+        "key": f"pulse-hyperliquid:{identity}:{','.join(sorted(set(objects)))}",
+        "source_event_id": f"pulse-hyperliquid:{identity}:{','.join(sorted(set(objects)))}",
+        "type": "市场异动", "event_type": "PULSE_FACT_UPDATE",
+        "title": "【决策提醒】建议运行【ETF正式决策】",
+        "content": "Hyperliquid对既有ETF对象提供了可比的辅助变化：" + "；".join(details) + "。该信息不自行创建ETF候选，也不直接授予Trial或Confirm。",
+        "source": "hyperliquid_pulse",
+        "user_severity": "需要关注",
+        "user_action": "建议在合适节点运行【ETF正式决策】，核对对应ETF或持仓的本地市场反馈。",
+        "confirmation_context": {
+            "trigger_reason": "Hyperliquid辅助证据与既有ETF对象发生可比变化",
+            "trigger_type": "HYPERLIQUID_MAPPED_CHANGE",
+            "evidence_time_beijing": str(latest.get("formed_at_beijing") or current_context.get("generated_at_beijing") or ""),
+            "applicable_object": object_text,
+            "requires_formal_reassessment": True,
+            "pulse_source": "Hyperliquid",
+            "pulse_identity": identity,
+            "market_snapshot": "Hyperliquid仅作为既有ETF对象的辅助证据，需结合最新合法A股/海外行情核对。",
+            "overseas_snapshot": f"Hyperliquid可比事实形成于{latest.get('formed_at_beijing') or '未提供'}；provider原生时间戳缺失时不作精确时点推断。",
+            "risk_snapshot": "辅助变化只触发正式判断提醒，不改变风险许可，也不生成交易权限。",
+            "before_fact": "上一可比Hyperliquid事实已记录。",
+            "after_fact": "；".join(details),
+        },
+    }
+
+
+def pulse_formal_decision_pending_event() -> dict | None:
+    """Use the existing decision-reminder channel for material pulse changes."""
+    return _discovery_pulse_event() or _hyperliquid_pulse_event()
+
+
 def formal_decision_pending_event() -> dict | None:
     """Create one actionable reminder when a pulse requires Formal Decision.
 
@@ -1255,11 +1428,11 @@ def choose_event(mode: str) -> dict | None:
         return report_delivery_event()
     builders = (
         (report_delivery_event, execution_confirmation_event,
-         formal_decision_change_event, account_confirmation_event, system_event, decision_event, formal_decision_pending_event)
+         formal_decision_change_event, account_confirmation_event, system_event, decision_event, pulse_formal_decision_pending_event, formal_decision_pending_event)
         if (_report_handoff_path() is not None or _report_delivery_path() is not None)
         else
         (execution_confirmation_event, formal_decision_change_event,
-        account_confirmation_event, system_event, decision_event, formal_decision_pending_event, report_delivery_event)
+        account_confirmation_event, system_event, decision_event, pulse_formal_decision_pending_event, formal_decision_pending_event, report_delivery_event)
     )
     for builder in builders:
         event = builder()
@@ -1513,6 +1686,7 @@ CANONICAL_TEMPLATE_FAMILIES = {
     "ACCOUNT_FACT_CONFIRMATION": "账户确认",
     "E2E_RECOVERED": "判断恢复",
     "FORMAL_DECISION_PENDING": "决策提醒",
+    "PULSE_FACT_UPDATE": "市场异动",
     "SYSTEM_EVENT": "系统阻塞",
     "CHANNEL_TEST": "测试",
     "收盘账户": "收盘账户",
@@ -1565,6 +1739,8 @@ def _canonical_boundary(family: str) -> str:
         return "系统只报告当前恢复/阻塞边界，不修改MASTER、账户事实或交易权限。"
     if family == "决策提醒":
         return "提醒只表示需要运行正式判断，不代表正式决策已经完成，也不生成交易许可。"
+    if family == "市场异动":
+        return "仅转发可比市场事实变化，不代表正式决策、Trial、Confirm或成交。"
     if family == "账户确认":
         return "仅核对账户事实，不把价格波动或通知发送当作成交。"
     if family == "收盘账户":
@@ -1644,6 +1820,17 @@ def render_canonical_notification(event: dict) -> dict | None:
             "### 你现在可以做什么\n建议立即运行【ETF正式决策】。如果暂不运行，系统将在下一自动正式决策节点重新读取最新合法事实并完成判断。\n\n"
             "### 当前边界\n本提醒不是正式决策正文，不代表已经形成新的买入、卖出、Trial、Confirm或持仓动作结论。系统不会自动下单或调仓。\n\n"
             f"> {_canonical_boundary(family)}\n\n### 触发事实时点（北京时间）\n{evidence_time}"
+        )
+    elif family == "市场异动":
+        title = "【市场异动】既有监测对象出现可比事实变化"
+        evidence_time = human_time(ctx.get("evidence_time_beijing")) if ctx.get("evidence_time_beijing") else "未单独记录"
+        body = (
+            f"### 发生了什么\n{event.get('content') or '既有监测对象出现可比事实变化。'}\n\n"
+            f"涉及对象：{ctx.get('applicable_object') or '相关监测对象'}\n\n"
+            f"### 变化前后\n{ctx.get('before_fact') or '变化前事实未提供。'}\n{ctx.get('after_fact') or '变化后事实未提供。'}\n\n"
+            f"### 你需要做什么\n{event.get('user_action') or '无需立即交易；在正式判断中重新核对。'}\n\n"
+            f"### 当前边界\n{_canonical_boundary(family)}\n\n"
+            f"### 事实时点（北京时间）\n{evidence_time}"
         )
     elif family == "风险许可":
         previous_risk = str(ctx.get("previous_risk_permission") or "未记录")

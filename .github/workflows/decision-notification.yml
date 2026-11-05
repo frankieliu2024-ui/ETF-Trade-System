@@ -62,6 +62,8 @@ on:
       - "data/state/CURRENT.json"
       - "data/state/overseas_context.json"
       - "data/state/us_extended_hours_context.json"
+      - "data/state/discovery_pulse_index.json"
+      - "data/state/hyperliquid_pulse_index.json"
   schedule:
     # Dedicated close-account reminder envelope: Beijing 15:20 Monday-Friday.
     # notification_center.py checks the formal A-share trading calendar;
@@ -251,6 +253,16 @@ jobs:
             echo "us_market=true" >> "$GITHUB_OUTPUT"
           else
             echo "us_market=false" >> "$GITHUB_OUTPUT"
+          fi
+          if grep -Fxq 'data/state/discovery_pulse_index.json' /tmp/changed_files.txt; then
+            echo "discovery_pulse=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "discovery_pulse=false" >> "$GITHUB_OUTPUT"
+          fi
+          if grep -Fxq 'data/state/hyperliquid_pulse_index.json' /tmp/changed_files.txt; then
+            echo "hyperliquid_pulse=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "hyperliquid_pulse=false" >> "$GITHUB_OUTPUT"
           fi
           mapfile -t handoff_paths < <(grep -E '^requests/report_handoff/[^/]+\.json$' /tmp/changed_files.txt || true)
           if [ "${#handoff_paths[@]}" -eq 1 ]; then
@@ -781,7 +793,7 @@ jobs:
       - name: Send material user-action notification
         id: event_notify
         # Delivery uses the already-bound current REPORT/review event. It must still run when a prior state persistence step fails; the sender remains fail-closed and never creates a second object.
-        if: ${{ always() && ((github.event_name == 'workflow_run' && (github.event.workflow_run.name != 'ETF market snapshot' || steps.workflow_review.outputs.review_completion == 'true')) || (github.event_name == 'push' && (steps.push_kind.outputs.decision == 'true' || steps.push_kind.outputs.trade == 'true' || steps.push_kind.outputs.account == 'true' || steps.push_kind.outputs.report == 'true' || steps.push_kind.outputs.report_handoff == 'true' || steps.push_kind.outputs.review_completion == 'true' || steps.scheduled_completion_event.outputs.review_event_path != '' || steps.formal_completion_event.outputs.review_event_path != '')) || (github.event_name == 'workflow_dispatch' && (steps.scheduled_completion_event.outputs.review_event_path != '' || steps.formal_completion_event.outputs.review_event_path != ''))) }}
+        if: ${{ always() && ((github.event_name == 'workflow_run' && (github.event.workflow_run.name != 'ETF market snapshot' || steps.workflow_review.outputs.review_completion == 'true')) || (github.event_name == 'push' && (steps.push_kind.outputs.decision == 'true' || steps.push_kind.outputs.trade == 'true' || steps.push_kind.outputs.account == 'true' || steps.push_kind.outputs.report == 'true' || steps.push_kind.outputs.report_handoff == 'true' || steps.push_kind.outputs.review_completion == 'true' || steps.push_kind.outputs.discovery_pulse == 'true' || steps.push_kind.outputs.hyperliquid_pulse == 'true' || steps.scheduled_completion_event.outputs.review_event_path != '' || steps.formal_completion_event.outputs.review_event_path != '')) || (github.event_name == 'workflow_dispatch' && (steps.scheduled_completion_event.outputs.review_event_path != '' || steps.formal_completion_event.outputs.review_event_path != ''))) }}
         env:
           REPORT_DELIVERY_PATH: ${{ steps.push_kind.outputs.report_path }}
           REPORT_HANDOFF_PATH: ${{ steps.push_kind.outputs.report_handoff_path }}
@@ -789,6 +801,7 @@ jobs:
           SCHEDULED_REVIEW_COMPLETION_PATH: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path || '' }}
           FORMAL_COMPLETION_EVENT: ${{ steps.formal_completion_event.outputs.review_event_path != '' && 'true' || 'false' }}
           FORCE_NOTIFICATION_RESEND: ${{ github.event_name == 'workflow_dispatch' && inputs.force_resend || (github.event_name == 'push' && steps.push_kind.outputs.formal_force_resend == 'true' && 'true' || 'false') }}
+          PULSE_WAKE: ${{ github.event_name == 'push' && (steps.push_kind.outputs.discovery_pulse == 'true' || steps.push_kind.outputs.hyperliquid_pulse == 'true') && 'true' || 'false' }}
         run: |
           set -euo pipefail
           # A manual dispatch must remain self-contained. If an earlier
@@ -813,7 +826,7 @@ jobs:
               *) echo "Manual Scheduled Review completion did not resolve to an exact review event." >&2; exit 1 ;;
             esac
           fi
-          if [ -n "$REPORT_DELIVERY_PATH" ] || [ -n "$REPORT_HANDOFF_PATH" ] || [ -n "$REVIEW_EVENT_PATH" ]; then
+          if [ -n "$REPORT_DELIVERY_PATH" ] || [ -n "$REPORT_HANDOFF_PATH" ] || [ -n "$REVIEW_EVENT_PATH" ] || [ "$PULSE_WAKE" = "true" ]; then
             export REVIEW_EVENT_PATH
             python scripts/run_guarded_notification.py center --mode event
           else

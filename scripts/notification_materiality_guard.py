@@ -253,6 +253,15 @@ def notification_evidence_error(event: dict | None) -> str:
         return _account_error(event)
     if event_type == "PENDING_EXECUTION_CONFIRMATION":
         return _execution_error(event)
+    if event_type == "PULSE_FACT_UPDATE":
+        ctx = event.get("confirmation_context") or {}
+        if not str(ctx.get("evidence_time_beijing") or ""):
+            return "pulse fact notification has no auditable evidence timestamp"
+        if not str(ctx.get("before_fact") or "") or not str(ctx.get("after_fact") or ""):
+            return "pulse fact notification lacks comparable before/after facts"
+        if source not in {"discovery_pulse", "hyperliquid_pulse"}:
+            return "pulse fact notification has unrecognized source"
+        return ""
     if source == "decision_trigger" or event_type == "交易判断":
         return _decision_trigger_error(event)
     if source in {"self_healing_status", "workflow_failure_diagnostic"} or event_type in {"系统异常", "SYSTEM_RUNTIME_BLOCKER"}:
