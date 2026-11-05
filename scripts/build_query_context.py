@@ -218,6 +218,33 @@ def _reusable_formal_discovery(root: Path, current: dict, universe_identity: str
     return reused
 
 
+def _refresh_reused_discovery_external_evidence(discovery: dict, external: dict | None) -> dict:
+    """Refresh Hyperliquid evidence on a reused Discovery without rerunning Discovery."""
+    if not external:
+        return discovery
+    try:
+        from formal_etf_opportunity_discovery import _apply_external_driver_triggers
+    except ModuleNotFoundError:
+        from scripts.formal_etf_opportunity_discovery import _apply_external_driver_triggers
+
+    candidates = _apply_external_driver_triggers(list(discovery.get("candidates") or []), external)
+    refreshed = dict(discovery)
+    refreshed_candidates = []
+    for candidate in candidates:
+        item = dict(candidate)
+        evidence = list(item.get("_external_driver_triggers") or [])
+        if evidence:
+            item["external_driver_evidence"] = evidence
+            classes = list(item.get("information_classes") or [])
+            if "EXTERNAL_DRIVER_TRIGGER" not in classes:
+                classes.append("EXTERNAL_DRIVER_TRIGGER")
+            item["information_classes"] = classes
+        item.pop("_external_driver_triggers", None)
+        refreshed_candidates.append(item)
+    refreshed["candidates"] = refreshed_candidates
+    return refreshed
+
+
 def evaluate_freshness(current: dict, policy: dict) -> dict:
     captured = parse_time(current.get("captured_at", ""))
     now = datetime.now(timezone.utc)
@@ -1873,6 +1900,9 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
         # Discovery reuse remains guarded by market node, universe identity,
         # decision-relevant delta and the existing terminal READY contract.
         formal_discovery = _reusable_formal_discovery(root, current, universe_identity, managed_etf_codes)
+        formal_discovery = _refresh_reused_discovery_external_evidence(
+            formal_discovery, overseas_context.get("hyperliquid")
+        ) if formal_discovery is not None else None
         if formal_discovery is None:
             formal_discovery = discover_formal_candidates(
                 root,
