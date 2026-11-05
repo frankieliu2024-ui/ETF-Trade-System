@@ -1151,7 +1151,7 @@ jobs:
         if: ${{ steps.account_projection_rebuild.outcome == 'success' && steps.state_sync.outputs.processed == 'true' && github.event.inputs.probe_only != 'true' }}
         run: python scripts/maintenance_guard.py
       - name: Record broker account sync maintenance receipt
-        if: ${{ always() && github.ref == 'refs/heads/main' && ((github.event_name == 'push' && env.TRIGGERING_REQUEST_ID != '' && env.TRIGGERING_REQUEST_FILE != '') || (github.event_name == 'workflow_dispatch' && github.event.inputs.replay_request != '')) }}
+        if: ${{ always() && github.ref == 'refs/heads/main' && ((github.event_name == 'push' && env.TRIGGERING_REQUEST_ID != '' && env.TRIGGERING_REQUEST_FILE != '') || (github.event_name == 'workflow_dispatch' && github.event.inputs.replay_request != '')) && env.SCHEDULED_REVIEW_COMPLETION != 'true' }}
         shell: bash
         env:
           ACCOUNT_SYNC_OUTCOME: ${{ steps.state_sync.outcome }}
