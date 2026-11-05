@@ -6,6 +6,7 @@ not a second event store and it never creates a permission, order, or trade.
 from __future__ import annotations
 
 import json
+import re
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -63,10 +64,32 @@ def trading_day_offset(start: date, end: date, calendar: dict[str, Any]) -> int 
 
 def _formal_decisions(root: Path) -> list[dict[str, Any]]:
     result = []
-    directory = root / "events" / "decisions"
-    for path in sorted(directory.glob("*.json")) if directory.exists() else []:
+    directories = [root / "events" / "decisions", root / "events" / "reviews"]
+    paths = []
+    for directory in directories:
+        if directory.exists():
+            paths.extend(sorted(directory.glob("*.json")))
+    for path in paths:
         event = _load(path, {})
         formal = event.get("formal_decision") or {}
+        if not isinstance(formal, dict):
+            formal = {}
+        event_type = str(event.get("event_type") or "").upper()
+        if event_type == "FORMAL_DECISION_REPORT" and not formal:
+            binding = event.get("presentation_binding") or {}
+            content = str(binding.get("full_content") or event.get("final_content") or "")
+            code_match = re.search(r"(?:候选|机会ETF)[^\n]*?(\d{6})", content)
+            trial_match = re.search(r"(\d{6})[^\n。；]*?(?:进入Trial|Trial评估|Trial上限)", content)
+            code = (trial_match or code_match).group(1) if (trial_match or code_match) else ""
+            if code and re.search(rf"{code}[^\n。；]*?(?:进入Trial|Trial评估|Trial上限)", content):
+                event = dict(event)
+                event["formal_decision"] = {
+                    "lifecycle": "允许Trial",
+                    "candidate_code": code,
+                    "candidate_name": "",
+                    "main_candidate": content,
+                }
+                formal = event["formal_decision"]
         lifecycle = str(formal.get("lifecycle") or event.get("lifecycle") or "")
         risk_permission = str(formal.get("risk_permission") or event.get("risk_permission") or "")
         # Some canonical Formal Decision events recorded the Trial grant in
@@ -74,7 +97,7 @@ def _formal_decisions(root: Path) -> list[dict[str, Any]]:
         # The linked executed BUY remains the required second fact; this
         # recovery must never infer a lifecycle from holdings or a symbol alone.
         trial_granted = "Trial" in lifecycle or "允许Trial" in risk_permission
-        if not isinstance(formal, dict) or not trial_granted:
+        if not trial_granted:
             continue
         # A few historical events carry a permissive risk_permission while the
         # candidate-specific decision is only observation/exit.  Do not let
@@ -94,7 +117,7 @@ def _formal_decisions(root: Path) -> list[dict[str, Any]]:
         amount_text = str(formal.get("amount_action") or event.get("amount_action") or "")
         candidate_trial = any(token in main_candidate_text for token in (
             "Trial机会成立", "Trial评估成立", "进入Trial并", "试探性部署成立",
-            "已执行Trial", "Trial已执行",
+            "已执行Trial", "Trial已执行", "Trial评估",
         ))
         candidate_observation_only = (
             any(token in main_candidate_text for token in ("观察", "观察机会"))
@@ -104,7 +127,7 @@ def _formal_decisions(root: Path) -> list[dict[str, Any]]:
         )
         if identity_present and candidate_observation_only:
             continue
-        if not event.get("hypothesis_id") and not ("允许Trial" in risk_permission and event.get("candidate_code")):
+        if not event.get("hypothesis_id") and not ("允许Trial" in risk_permission and event.get("candidate_code")) and not (event_type == "FORMAL_DECISION_REPORT" and candidate_trial and candidate_code):
             continue
         result.append(event)
     return result
@@ -418,6 +441,7 @@ def build_lifecycle_projection(root: Path, as_of_market_date: str | None = None)
         as_of = datetime.now(SHANGHAI).date()
     executions = _executions(root)
     trials = []
+    seen_opening_events: set[str] = set()
     for decision in _formal_decisions(root) + _completion_trial_decisions(root, executions):
         candidate_code = str(decision.get("candidate_code") or "").strip()
         # A Trial lifecycle starts from an executed BUY only.  A formal
@@ -441,6 +465,11 @@ def build_lifecycle_projection(root: Path, as_of_market_date: str | None = None)
             # A decision alone is not a real position lifecycle.
             continue
         execution = min(linked, key=lambda x: str(x.get("execution_date") or x.get("confirmed_at_beijing") or ""))
+        opening_event_id = str(execution.get("event_id") or "")
+        if opening_event_id and opening_event_id in seen_opening_events:
+            continue
+        if opening_event_id:
+            seen_opening_events.add(opening_event_id)
         start = str(execution.get("execution_date") or str(execution.get("confirmed_at_beijing") or "")[:10])
         try:
             start_date = date.fromisoformat(start)
