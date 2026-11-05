@@ -2152,6 +2152,18 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
         }
     latency["workflow_runtime_observation"] = workflow_runtime_observation
     latency["waterfall_rule"] = "Persist only directly observed repository/workflow boundaries and measured in-process durations; UNKNOWN remains explicit. Hidden model reasoning is never logged or inferred."
+    hyperliquid_source = overseas_context.get("hyperliquid") if isinstance(overseas_context.get("hyperliquid"), dict) else {}
+    hyperliquid_provenance = {
+        "context_id": hyperliquid_source.get("context_id") or "",
+        "collection_started_at_utc": hyperliquid_source.get("collection_started_at_utc") or "",
+        "collection_finished_at_utc": hyperliquid_source.get("collection_finished_at_utc") or "",
+        "earliest_observation_collected_at_utc": hyperliquid_source.get("earliest_observation_collected_at_utc") or "",
+        "latest_observation_collected_at_utc": hyperliquid_source.get("latest_observation_collected_at_utc") or "",
+        "observation_count": hyperliquid_source.get("observation_count", len(hyperliquid_source.get("observations") or [])),
+        "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT" if hyperliquid_source.get("observations") else "MISSING",
+        "time_basis": hyperliquid_source.get("time_basis") or "COLLECTION_FINISHED_TIME_AS_VISIBLE_STATE_BOUNDARY",
+        "decision_use": "AUXILIARY_ONLY; collection time is not event time",
+    }
     return {
         "generated_at": now_utc(), "generated_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds"),
         "market_date": current.get("market_date", ""), "latest_valid_node": current.get("latest_valid_node", ""),
