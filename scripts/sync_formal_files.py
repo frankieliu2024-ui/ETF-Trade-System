@@ -662,25 +662,11 @@ def build_dashboard_block(account: dict, equity: dict, existing: str, root: Path
         f"观察ETF：{'、'.join(observed) or '无'}。",
         "观察ETF说明：仅展示经正式决策准入/保留、当前无持仓且仍值得跨节点持续监测的ETF；本节点池外发现对象不会因被发现而自动进入本列表。",
     ]
-    decision = latest_canonical_formal_decision(root)
-    if decision:
-        decision_as_of = str(decision.get("data_as_of_beijing") or "")[:10]
-        risk_as_of = str(risk_cutoff or "")[:10]
-        if decision_as_of and risk_as_of and decision_as_of < risk_as_of:
-            freshness = "正式决策事实早于当前风险事实；本区块不得视为当前风险权限，需重新判断"
-        elif decision_as_of and risk_as_of and decision_as_of == risk_as_of:
-            freshness = "与当前ETF策略风险事实同日"
-        else:
-            freshness = "时点关系无法确认；本区块不得覆盖当前正式规则与最新事实"
-        lines += [
-            "",
-            render_decision_projection(decision),
-            f"- 决策与当前风险事实关系：{freshness}（决策事实 {decision_as_of or '未提供'}；风险事实 {risk_as_of or '未提供'}）",
-            "",
-            render_same_day_formal_decision_index(root, account),
-        ]
-    else:
-        lines += ["", "最近一次正式决策未随本次账户维护请求提供；脚本不自行推断。"]
+    # The same-day index is the sole Dashboard decision view.  It is rebuilt
+    # from canonical events for the account market date, so prior-day entries
+    # naturally roll off and no separate "latest decision" projection can
+    # conflict with the index.
+    lines += ["", render_same_day_formal_decision_index(root, account)]
     return "\n".join(lines)
 
 
