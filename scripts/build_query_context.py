@@ -1632,6 +1632,17 @@ def _write_formal_layer_projections(root: Path, current: dict, discovery: dict) 
         "freshness_rule": "same-node fixed-slot evidence; absence is not zero",
     }
     atomic_json_write(root / "data/state/formal_discovery_current.json", projection)
+    try:
+        from pulse_history import append_pulse_history
+    except ModuleNotFoundError:
+        from scripts.pulse_history import append_pulse_history
+    append_pulse_history(
+        root,
+        kind="DISCOVERY",
+        payload=projection,
+        path="data/state/formal_discovery_current.json",
+        identity="DISCOVERY:" + str(market_date) + ":" + str(node) + ":" + str(snapshot) + ":" + str(generated),
+    )
     opportunity = {
         "schema_version": "1.0",
         "layer": "OPPORTUNITY",
