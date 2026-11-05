@@ -728,6 +728,17 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
     discovery = formal_discovery or {}
     external_driver = external_driver_context or {}
     hyperliquid_evidence = _hyperliquid_decision_evidence(external_driver, current)
+    hyperliquid_provenance = {
+        "context_id": external_driver.get("context_id") or "",
+        "collection_started_at_utc": external_driver.get("collection_started_at_utc") or "",
+        "collection_finished_at_utc": external_driver.get("collection_finished_at_utc") or "",
+        "earliest_observation_collected_at_utc": external_driver.get("earliest_observation_collected_at_utc") or "",
+        "latest_observation_collected_at_utc": external_driver.get("latest_observation_collected_at_utc") or "",
+        "observation_count": external_driver.get("observation_count", len(external_driver.get("observations") or [])),
+        "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
+        "time_basis": external_driver.get("time_basis") or "COLLECTION_FINISHED_TIME_AS_VISIBLE_STATE_BOUNDARY",
+        "decision_use": "AUXILIARY_ONLY; collection time is not event time",
+    }
     external_driver_observations = []
     for item in external_driver.get("observations") or []:
         if not isinstance(item, dict):
@@ -742,6 +753,9 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
             "provider_timestamp": item.get("provider_timestamp"),
             "provider_timestamp_status": item.get("provider_timestamp_status"),
             "collected_at_utc": item.get("collected_at_utc"),
+            "collected_at_beijing": item.get("collected_at_beijing"),
+            "request_started_at_utc": item.get("request_started_at_utc"),
+            "request_finished_at_utc": item.get("request_finished_at_utc"),
         })
     positions = []
     for item in account.get("positions") or []:
@@ -981,7 +995,10 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         "rates_fx": {"status": "NOT_AVAILABLE_IN_CURRENT_FORMAL_FACTS", "effect_boundary": "仅影响需要汇率/利率传导的跨市场对象，不作全局阻断。"},
         "hyperliquid": {
             "status": external_quality,
-            "provider_timestamp_status": "OBJECT_LEVEL_ONLY" if external_driver.get("observations") else "MISSING",
+            "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT" if external_driver.get("observations") else "MISSING",
+            "context_id": hyperliquid_provenance["context_id"],
+            "latest_observation_collected_at_utc": hyperliquid_provenance["latest_observation_collected_at_utc"],
+            "earliest_observation_collected_at_utc": hyperliquid_provenance["earliest_observation_collected_at_utc"],
             "effect_boundary": "对象级方向、时机和拥挤过滤；不独立生成Trial、Confirm、金额或卖出份额。",
         },
         "discovery": {
@@ -2157,6 +2174,7 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
         "system_consistency_status": consistency.get("status", "MISSING"), "system_consistency_hard_errors": consistency.get("hard_error_count", None),
         "etf_universe_count": len(etf_universe.get("objects") or []), "etf_universe_identity": universe_identity, "formal_discovery_candidate_count": len(formal_discovery.get("candidates") or []), "overseas_context_status": overseas_context.get("quality_status", "MISSING"),
         "overseas_generated_at_beijing": overseas_context.get("generated_at_beijing", ""),
+        "hyperliquid_provenance": hyperliquid_provenance,
         "us_extended_hours_status": us_extended.get("quality_status", "MISSING"), "us_extended_hours_generated_at_beijing": us_extended.get("generated_at_beijing", ""),
         "stock_context_status": stock_context.get("account_fact_status", "MISSING"), "stock_market_context_status": stock_market_context.get("quality_status", "MISSING"),
         "stock_role_confirmation_needed": stock_context.get("needs_role_confirmation", False), "account_fact_status": account["status"], "account_gate": account_gate,
