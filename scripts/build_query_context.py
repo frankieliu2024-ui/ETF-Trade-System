@@ -532,7 +532,7 @@ def _build_hyperliquid_object_bindings(external: dict, positions: list[dict], ob
     Trial/Confirm/amount/sell authority.
     """
     mapping = external.get("mapping") or []
-    observed = {(str(item.get("asset") or {}).get("name") if isinstance(item.get("asset"), dict) else str(item.get("asset") or "")): item for item in (external.get("observations") or []) if isinstance(item, dict)}
+    observed = {((item.get("asset") or {}).get("name", "") if isinstance(item.get("asset"), dict) else str(item.get("asset") or "")): item for item in (external.get("observations") or []) if isinstance(item, dict)}
     known = {}
     for item in [*positions, *observation_inputs, *discovery_inputs]:
         if isinstance(item, dict):
