@@ -988,11 +988,13 @@ def _discovery_pulse_event() -> dict | None:
     prior = _pulse_records(index)
     prior = [row for row in prior if row.get("identity") != latest.get("identity")]
     previous_count = int((prior[-1].get("candidate_count") or 0) if prior else 0)
-    if prior and previous_count == len(candidates):
+    previous_candidates = {str(row.get("candidate_signature") or "") for row in (prior[-1].get("candidates") or [])} if prior else set()
+    current_candidates = {
+        ":".join(str(item.get(key) or "") for key in ("code", "formal_status", "category", "eligibility"))
+        for item in candidates if isinstance(item, dict)
+    }
+    if prior and current_candidates == previous_candidates:
         return None
-    previous_candidates = set()
-    if prior:
-        previous_candidates = set(str(row.get("candidate_signature") or "") for row in prior[-1].get("candidates") or [])
     names = []
     for candidate in candidates[:5]:
         if not isinstance(candidate, dict):
@@ -1047,11 +1049,21 @@ def _hyperliquid_pulse_event() -> dict | None:
     previous_by_asset = {str(row.get("dex")) + ":" + str((row.get("asset") or {}).get("name")): row for row in previous_obs if isinstance(row, dict)}
     mapping = current_context.get("mapping") or []
     mapped_codes = {}
+    universe = read_json(ROOT / "config" / "market" / "etf_monitor_universe.json", {})
+    universe_objects = [item for item in (universe.get("objects") or []) if isinstance(item, dict)]
+    account = read_json(STATE / "account_fact.json", {})
+    universe_objects += [item for item in (account.get("positions") or []) if isinstance(item, dict)]
     for item in mapping:
         if not isinstance(item, dict):
             continue
         asset = str(item.get("asset") or item.get("symbol") or "").strip()
         codes = [str(code) for code in (item.get("etf_codes") or []) if str(code).strip()]
+        markers = [str(marker).lower() for marker in (item.get("name_markers") or []) if str(marker).strip()]
+        for obj in universe_objects:
+            name = str(obj.get("name") or obj.get("display_name") or "").lower()
+            code = str(obj.get("code") or obj.get("symbol") or "").strip()
+            if code and markers and any(marker in name for marker in markers) and code not in codes:
+                codes.append(code)
         if asset and codes:
             mapped_codes[asset] = codes
     changed = []
