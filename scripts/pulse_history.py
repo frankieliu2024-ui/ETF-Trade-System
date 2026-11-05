@@ -53,6 +53,26 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
         "observation_count": payload.get("observation_count") if kind == "HYPERLIQUID" else None,
         "latest_snapshot": str(payload.get("latest_snapshot") or ""),
     }
+    if kind == "DISCOVERY":
+        record["candidates"] = [
+            {
+                "candidate_signature": ":".join(str(item.get(key) or "") for key in ("code", "formal_status", "category", "eligibility")),
+                "code": str(item.get("code") or ""),
+                "name": str(item.get("name") or ""),
+            }
+            for item in (payload.get("candidates") or [])
+            if isinstance(item, dict) and (item.get("code") or item.get("name"))
+        ]
+    else:
+        record["observations"] = [
+            {
+                "asset": str((item.get("asset") or {}).get("name") or ""),
+                "family": next((str(mapping.get("family") or "") for mapping in (payload.get("mapping") or []) if str(mapping.get("asset") or "") == str((item.get("asset") or {}).get("name") or "")), ""),
+                "quality_status": str(item.get("quality_status") or ""),
+            }
+            for item in (payload.get("observations") or [])
+            if isinstance(item, dict)
+        ]
     if not record["identity"]:
         record["identity"] = f"{kind}:{record['formed_at_beijing']}:{record['source_path']}"
     records = [item for item in records if str(item.get("identity") or "") != record["identity"]]
