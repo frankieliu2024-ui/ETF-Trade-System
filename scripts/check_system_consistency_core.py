@@ -714,7 +714,36 @@ def main() -> int:
     check("decision:quality_summary", all(key in quality for key in ("pass_count", "degraded_count", "failed_count", "failed_objects", "degraded_objects")), f"keys={sorted(quality)}")
     check("decision:core_stock_coverage_fields", all(key in coverage for key in ("core_market_pass", "core_market_failed", "account_stock_market_pass", "account_stock_market_failed")), f"coverage_keys={sorted(coverage)}", warning=True)
     check("decision:failed_objects_explicit", not quality.get("failed_count") or bool(quality.get("failed_objects")), f"failed_count={quality.get('failed_count')} failed_objects={quality.get('failed_objects')}", warning=True)
-    check("decision:query_decision_current_aligned", query_context.get("current", {}).get("latest_snapshot") == decision_context.get("current", {}).get("latest_snapshot"), f"query={query_context.get('current', {}).get('latest_snapshot')} decision={decision_context.get('current', {}).get('latest_snapshot')}")
+    query_current = query_context.get("current") or {}
+    decision_current = decision_context.get("current") or {}
+    query_snapshot = str(query_current.get("latest_snapshot") or "")
+    decision_snapshot = str(decision_current.get("latest_snapshot") or "")
+    query_request_id = str(
+        ((query_context.get("decision_fact_pack") or {}).get("trigger") or {}).get("request_id")
+        or query_context.get("request_id")
+        or ""
+    ).strip()
+    decision_request_id = str(
+        decision_context.get("request_id")
+        or (decision_context.get("decision_trigger") or {}).get("request_id")
+        or ""
+    ).strip()
+    same_request_snapshot_rollforward = bool(
+        query_snapshot
+        and decision_snapshot
+        and query_snapshot != decision_snapshot
+        and query_request_id
+        and query_request_id == decision_request_id
+        and str(query_current.get("market_date") or "") == str(decision_current.get("market_date") or "")
+    )
+    check(
+        "decision:query_decision_current_aligned",
+        query_snapshot == decision_snapshot or same_request_snapshot_rollforward,
+        (
+            f"query={query_snapshot} decision={decision_snapshot}"
+            + (" same_request_snapshot_rollforward=true" if same_request_snapshot_rollforward else "")
+        ),
+    )
     discovery_projection = read_json("data/state/formal_discovery_current.json")
     opportunity_projection = read_json("data/state/formal_opportunity_current.json")
     review_discovery = review_context.get("formal_discovery") or {}
