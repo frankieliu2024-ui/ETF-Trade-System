@@ -939,6 +939,21 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         "rule": "Formal Decision consumes already-published fixed-slot facts and does not require a new request-scoped PIT; request-bound refresh paths remain fail-closed on request identity, action-qualified PIT, valid account truth, and complete market-evidence coverage for every actual positive-quantity position. This gate must not be interpreted as a ban on independent legal analysis.",
     }
 
+    # Keep three decisions separate: whether reasoning may continue, whether
+    # Trial/Confirm qualification may be assessed, and whether exact amount or
+    # share execution fields are sufficiently supported.  The latter must not
+    # suppress the former two.
+    formal_action_readiness["analysis_ready"] = not ingress_blockers
+    formal_action_readiness["trial_confirm_review_allowed"] = not ingress_blockers
+    formal_action_readiness["exact_amount_share_ready"] = not action_blockers
+    formal_action_readiness["local_limitations"] = list(action_blockers)
+    formal_action_readiness["qualification_rule"] = (
+        "Missing account intraday changes, optional market breadth, partial "
+        "Discovery history, or provider-native timestamps may limit exact "
+        "amount/share execution fields, but do not by themselves suppress "
+        "object-level Trial/Confirm review or a management recommendation."
+    )
+
     regime_context = read_json(root / "data" / "state" / "market_regime_context.json", {})
     structure_context = read_json(root / "data" / "state" / "market_structure_context.json", {})
     external_quality = str(external_driver.get("quality_status") or "NOT_REQUESTED").upper()
@@ -1217,6 +1232,24 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         "source": "UNIFIED_CAPITAL_COMPARISON_CONTRACT",
         "post_final_content_validation": True,
         "rule": "该投影仅标记证据完整性，不是FINAL_CONTENT前置门；BDS字段校验仍由统一BUSINESS_DECISION_SOURCE owner执行。",
+    }
+
+    work_package["decision_priority_contract"] = {
+        "scope": "EXISTING_FACTS_ONLY",
+        "required_focus": [
+            "nearest_actionable_candidate",
+            "single_decisive_candidate_blocker",
+            "trial_over_zero_comparison",
+            "priority_holding_action",
+            "single_decisive_release_blocker",
+        ],
+        "allowed_actions": ["配置", "Trial", "观察", "否决", "继续持有", "追加", "部分释放", "退出评估"],
+        "rule": (
+            "This is a compact consumer contract, not a ranking engine or trade "
+            "authority. The actor must prioritize existing qualified evidence "
+            "before expanding caveats; local limitations stay attached to the "
+            "affected object or execution field."
+        ),
     }
 
     work_package["three_layer_monitoring_evidence"] = three_layer_monitoring
