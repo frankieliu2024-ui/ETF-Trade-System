@@ -1128,47 +1128,6 @@ jobs:
             fi
           done
           echo "processed=$processed" >> "$GITHUB_OUTPUT"
-      - name: Project Formal Decision completion through market snapshot owner
-        id: formal_completion_projection
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && env.FORMAL_COMPLETION == 'true' && env.TRIGGERING_REQUEST_FILE != '' }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          echo "Projecting Formal Decision completion through the canonical market-snapshot producer."
-          python scripts/process_state_sync_request.py "$TRIGGERING_REQUEST_FILE" | tee /tmp/formal-completion-result.json
-          python - /tmp/formal-completion-result.json <<'PY'
-          import json
-          import sys
-          from pathlib import Path
-          result = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-          if not result.get("ok") or not result.get("formal_decision_event"):
-              raise SystemExit("Formal Decision completion did not produce a canonical review event")
-          path = str(result.get("canonical_publication") or "")
-          if not path.startswith("events/reviews/formal_") or not path.endswith(".json"):
-              raise SystemExit("Formal Decision completion returned an invalid canonical publication path")
-          print(f"canonical publication: {path}")
-          PY
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add events/reviews requests/live_snapshot
-          if git diff --cached --quiet; then
-            echo "Formal Decision canonical event already present; no producer commit required."
-          else
-            git commit -m "chore: project formal decision completion"
-            for attempt in 1 2 3; do
-            git fetch origin main
-            if git rebase origin/main && git push origin HEAD:main; then
-              break
-            fi
-            git rebase --abort || true
-            if [ "$attempt" = "3" ]; then
-              echo "bounded main publication retry exhausted" >&2
-              exit 1
-            fi
-            sleep 2
-          done
-          fi
-
       - name: Rebuild ETF strategy projection after canonical account sync
         id: account_projection_rebuild
         if: ${{ steps.state_sync.outcome == 'success' && steps.state_sync.outputs.processed == 'true' && github.event.inputs.probe_only != 'true' }}
@@ -1787,4 +1746,5 @@ jobs:
             fi
             if [ "$attempt" = "3" ]; then exit 1; fi
           done
+
 

@@ -48,6 +48,27 @@ class FormalDecisionCurrentMainGateRepairTests(unittest.TestCase):
         )
         self.assertEqual(result["status"], "BLOCKED")
 
+    def test_missing_account_remains_execution_dependency_not_market_gate(self):
+        account = e2e.account_component(
+            {"status": "MISSING", "updated_at": None, "source": None},
+            {"market_date": "2026-11-05", "needs_account_update": True},
+        )
+        self.assertEqual(account["status"], "BLOCKED")
+        source = (ROOT / "scripts" / "build_e2e_status.py").read_text()
+        self.assertIn('"account_dependency"', source)
+        self.assertNotIn('formal_reply_gate["status"] = "BLOCKED"', source)
+
+    def test_live_completion_bypasses_bds_and_market_snapshot_projection(self):
+        sync_source = (ROOT / "scripts" / "process_state_sync_request.py").read_text()
+        workflow_source = (ROOT / ".github" / "workflows" / "market-snapshot.yml").read_text()
+        completion_branch = sync_source.split("if completion_dispatch:", 1)[1].split(
+            "# Explicit Business Decision Source dispatch.", 1
+        )[0]
+        self.assertIn('"bds_required": False', completion_branch)
+        self.assertNotIn("build_formal_completion_from_source", completion_branch)
+        self.assertNotIn("Project Formal Decision completion through market snapshot owner", workflow_source)
+
 
 if __name__ == "__main__":
     unittest.main()
+
