@@ -23,7 +23,8 @@ def _time(value: object) -> datetime | None:
 
 def _decision_mentions_trade(event: dict, trade: dict) -> bool:
     formal = event.get("formal_decision") or {}
-    text = json.dumps(formal, ensure_ascii=False)
+    binding = event.get("presentation_binding") or {}
+    text = json.dumps(formal, ensure_ascii=False) + " " + str(binding.get("full_content") or event.get("final_content") or "")
     code = str(trade.get("code") or "")
     name = str(trade.get("name") or "")
     if code and code not in text and name and name not in text:
@@ -38,7 +39,7 @@ def _decision_mentions_trade(event: dict, trade: dict) -> bool:
 
 def _effective_time(event: dict) -> datetime | None:
     """Return exact business-effective decision time when available."""
-    return _time(event.get("decision_effective_at_beijing") or event.get("issued_at_beijing") or event.get("decision_time_beijing"))
+    return _time(event.get("decision_effective_at_beijing") or event.get("issued_at_beijing") or event.get("decision_time_beijing") or event.get("reviewed_at_beijing") or event.get("recorded_at_beijing"))
 
 
 def _load_attribution_correction(root: Path, trade: dict) -> tuple[str, dict, str]:
