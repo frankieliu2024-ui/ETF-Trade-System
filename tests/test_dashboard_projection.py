@@ -176,7 +176,8 @@ class DashboardProjectionTests(unittest.TestCase):
             }, ensure_ascii=False), encoding="utf-8")
             account = {"positions": [], "total_asset": 1, "stock_market_value": 0}
             result = build_dashboard_block(account, {"risk_permission": "禁止新增"}, "", root)
-            self.assertIn("### 最近一次正式决策", result)
+        self.assertIn("### 当日正式决策索引", result)
+        self.assertNotIn("### 最近一次正式决策", result)
             self.assertNotIn("{'risk_permission'", result)
 
     def test_trade_correction_writer_has_no_dashboard_destination(self):
