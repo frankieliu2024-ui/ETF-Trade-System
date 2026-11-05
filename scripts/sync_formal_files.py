@@ -572,6 +572,18 @@ def normalize_dashboard_projection(text: str, root: Path = ROOT, account: dict |
         if not in_corrections:
             cleaned.append(line)
     lines = cleaned
+    # The same-day decision index is the sole decision view. Remove legacy
+    # latest-decision blocks that may have been persisted before the renderer
+    # was narrowed to the index; otherwise normalization would preserve them.
+    for legacy_heading in ("### 最近一次正式决策", "### 最近一次正式盘中决策", "### 最近一次正式收盘复盘"):
+        while legacy_heading in lines:
+            start = lines.index(legacy_heading)
+            end = len(lines)
+            for index in range(start + 1, len(lines)):
+                if lines[index].startswith("### ") or lines[index].startswith("## "):
+                    end = index
+                    break
+            del lines[start:end]
     for index, line in enumerate(lines):
         if "|ETF层当前结构|" in line:
             lines[index] = replacement
