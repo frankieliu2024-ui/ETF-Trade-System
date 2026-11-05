@@ -132,7 +132,8 @@ def _completion_trial_decisions(root: Path, executions: list[dict[str, Any]]) ->
         )
         if completion.get("request_id") != request_id or completion.get("report_type") != "ETF_FORMAL_DECISION":
             continue
-        binding = completion.get("presentation_binding") or {}\n        content = str(completion.get("final_content") or binding.get("full_content") or "")
+        binding = completion.get("presentation_binding") or {}
+        content = str(completion.get("final_content") or binding.get("full_content") or "")
         code = str(execution.get("code") or "")
         if "【机会ETF逐只评估】" not in content:
             continue
@@ -164,7 +165,8 @@ def _completion_trial_decisions(root: Path, executions: list[dict[str, Any]]) ->
             continue
         decision_id = str(completion.get("decision_id") or "").strip()
         decision_time = parse_time(completion.get("requested_at_beijing"))
-        content = str(completion.get("final_content") or "")
+        binding = completion.get("presentation_binding") or {}
+        content = str(completion.get("final_content") or binding.get("full_content") or "")
         if not decision_id or not decision_time or not content:
             continue
         for execution in executions:
