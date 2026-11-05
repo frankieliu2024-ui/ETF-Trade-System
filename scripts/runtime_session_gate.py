@@ -425,6 +425,15 @@ def main() -> int:
     # resulting snapshot is still useful and Formal Decision classifies it by
     # its actual provider timestamp. Never suppress capture merely because the
     # cron delivery was delayed or ambiguous.
+    # An explicit manual close is an operator-requested refresh, not a
+    # request for the latest existing close reference. It must enter the
+    # canonical market-data writer even outside the normal capture window;
+    # otherwise the UI selection is accepted but the producer records SKIPPED.
+    if manual_close_intent and now.weekday() < 5 and date_text not in set(calendar.get("closed_dates") or []):
+        should_capture = True
+        phase = "POST_CLOSE_RECOVERY" if minute > 15 * 60 else phase
+        reason = "manual_close_refresh"
+
     if scheduled_close_intent and should_capture is False and minute >= 15 * 60 and date_text not in set(calendar.get("closed_dates") or []):
         should_capture = True
         phase = "POST_CLOSE_RECOVERY"
