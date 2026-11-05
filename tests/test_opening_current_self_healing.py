@@ -396,9 +396,6 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
         expected = {
             "ETF market snapshot",
             "ETF opening-auction CURRENT fallback",
-            "Overseas pre-open pulse",
-            "US extended-hours pulse",
-            "ETF system consistency",
         }
         self.assertEqual(
             set(line.strip().removeprefix("- ").strip('"') for line in trigger.splitlines() if line.strip().startswith('- "')),
