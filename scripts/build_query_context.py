@@ -106,12 +106,19 @@ def _hyperliquid_decision_evidence(external: dict, current: dict) -> dict:
             return None
 
     a_dt = parse(a_share_time)
+    def number(value: object) -> float | None:
+        try:
+            result = float(value)
+        except (TypeError, ValueError):
+            return None
+        return result if result == result and abs(result) != float("inf") else None
+
     items: list[dict] = []
     families: dict[str, dict] = {}
     for item in observations:
         ctx = item.get("context") or {}
-        mark = _num(ctx.get("markPx")); prev = _num(ctx.get("prevDayPx"))
-        funding = _num(ctx.get("funding")); premium = _num(ctx.get("premium"))
+        mark = number(ctx.get("markPx")); prev = number(ctx.get("prevDayPx"))
+        funding = number(ctx.get("funding")); premium = number(ctx.get("premium"))
         collected = str(item.get("collected_at_beijing") or "")
         c_dt = parse(collected)
         delta = abs((c_dt - a_dt).total_seconds()) if c_dt and a_dt else None
@@ -121,8 +128,8 @@ def _hyperliquid_decision_evidence(external: dict, current: dict) -> dict:
         evidence = {
             "asset": (item.get("asset") or {}).get("name", ""), "dex": item.get("dex"), "family": family,
             "direction": direction, "crowding": crowding, "funding": funding, "premium": premium,
-            "mark": mark, "oracle": _num(ctx.get("oraclePx")), "mid": _num(ctx.get("midPx")),
-            "open_interest": _num(ctx.get("openInterest")), "day_notional_volume": _num(ctx.get("dayNtlVlm")),
+            "mark": mark, "oracle": number(ctx.get("oraclePx")), "mid": number(ctx.get("midPx")),
+            "open_interest": number(ctx.get("openInterest")), "day_notional_volume": number(ctx.get("dayNtlVlm")),
             "collected_at_beijing": collected, "a_share_fact_as_of_beijing": a_share_time,
             "time_delta_seconds": round(delta, 3) if delta is not None else None,
             "time_relation": "ALIGNED_WINDOW" if delta is not None and delta <= 900 else ("ASYNC_LEAD_OR_LAG" if delta is not None else "A_SHARE_TIME_UNAVAILABLE"),
