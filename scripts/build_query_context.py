@@ -895,8 +895,16 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
 
     formal_analysis_availability["reply_freeze"] = formal_reply_freeze
 
+    # Formal Decision consumes already-published fixed-slot facts. It does not
+    # create a live_snapshot request, so absent request-scoped PIT is not an
+    # action blocker for this consumer. Request-bound refresh paths remain strict.
+    formal_decision_run = (
+        str(request.get("task_id") or "").strip() == "ETF正式决策"
+        or request_source == "CHATGPT_SCHEDULED_FORMAL_ANALYSIS"
+    )
+    requires_request_scoped_action_pit = bool(is_manual_formal_request and not formal_decision_run)
     action_blockers = list(ingress_blockers)
-    if not post_request:
+    if requires_request_scoped_action_pit and not post_request:
         action_blockers.append("REQUEST_SCOPED_PIT_NOT_RESOLVED")
     if not account_ready:
         action_blockers.append("ACCOUNT_FACT_NOT_READY")
@@ -924,9 +932,53 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         "fallback_available": fallback_available,
         "account_fact_ready": account_ready,
         "actual_position_market_coverage_complete": actual_position_market_coverage_complete,
+        "formal_decision_fixed_slot_consumer": formal_decision_run,
+        "request_scoped_action_pit_required": requires_request_scoped_action_pit,
         "missing_held_etfs": missing_held_etfs,
         "missing_account_stocks": missing_account_stocks,
-        "rule": "Exact amount/share/action canonical completion remains fail-closed on request identity, action-qualified request-scoped PIT, valid account truth, and complete market-evidence coverage for every actual positive-quantity position. This gate must not be interpreted as a ban on independent legal analysis.",
+        "rule": "Formal Decision consumes already-published fixed-slot facts and does not require a new request-scoped PIT; request-bound refresh paths remain fail-closed on request identity, action-qualified PIT, valid account truth, and complete market-evidence coverage for every actual positive-quantity position. This gate must not be interpreted as a ban on independent legal analysis.",
+    }
+
+    regime_context = read_json(root / "data" / "state" / "market_regime_context.json", {})
+    structure_context = read_json(root / "data" / "state" / "market_structure_context.json", {})
+    external_quality = str(external_driver.get("quality_status") or "NOT_REQUESTED").upper()
+    decision_fact_availability = {
+        "account": {
+            "status": str(account.get("status") or "UNKNOWN").upper(),
+            "as_of_beijing": account.get("updated_at") or "",
+            "intraday_change_status": "CONFIRMED" if account.get("account_change_events_after_confirmed_at") else "NOT_OBSERVED",
+            "orders_status": "CONFIRMED_EMPTY" if isinstance(account.get("orders"), list) and not account.get("orders") else "AVAILABLE",
+            "trades_status": "AVAILABLE",
+            "effect_boundary": "可用于持仓管理和可用数量；未有当日券商事实时，不把未观察成交解释成当日绝对无成交。",
+        },
+        "market_breadth": {
+            "status": "READY" if regime_context.get("etf_breadth") else "MISSING",
+            "source": "data/state/market_regime_context.json",
+            "effect_boundary": "可用于市场内部反馈；不等同完整全市场资金流或盘口深度。",
+        },
+        "intraday_participation": {
+            "status": "READY" if structure_context.get("items") else "MISSING",
+            "source": "data/state/market_structure_context.json",
+            "effect_boundary": "可用于对象级成交承接和路径复核；不生成独立交易许可。",
+        },
+        "fund_flow": {"status": "NOT_AVAILABLE_IN_CURRENT_FORMAL_FACTS", "effect_boundary": "仅降低资金流判断强度，不阻断其他对象判断。"},
+        "order_book_depth": {"status": "NOT_AVAILABLE_IN_CURRENT_FORMAL_FACTS", "effect_boundary": "仅降低盘口冲击判断强度，不阻断其他对象判断。"},
+        "rates_fx": {"status": "NOT_AVAILABLE_IN_CURRENT_FORMAL_FACTS", "effect_boundary": "仅影响需要汇率/利率传导的跨市场对象，不作全局阻断。"},
+        "hyperliquid": {
+            "status": external_quality,
+            "provider_timestamp_status": "OBJECT_LEVEL_ONLY" if external_driver.get("observations") else "MISSING",
+            "effect_boundary": "对象级方向、时机和拥挤过滤；不独立生成Trial、Confirm、金额或卖出份额。",
+        },
+        "discovery": {
+            "status": discovery_status,
+            "coverage_status": discovery.get("coverage_status") or "UNKNOWN",
+            "candidate_count": len(discovery.get("candidates") or []),
+            "effect_boundary": "部分覆盖只限制缺失对象或历史证据，不把合法候选集合解释为全市场机会为零。",
+        },
+        "lifecycle_and_sell_chain": {
+            "status": "READY" if decision.get("lifecycle_projection") else "MISSING",
+            "effect_boundary": "逐持仓影响继续持有/释放和份额链；不自动否决新机会端的独立资格。",
+        },
     }
 
     formal_reasoning_readiness = {
@@ -1239,6 +1291,7 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         "formal_reply_freeze": formal_reply_freeze,
         "formal_action_readiness": formal_action_readiness,
         "formal_reasoning_readiness": formal_reasoning_readiness,
+        "decision_fact_availability": decision_fact_availability,
         "opportunity_inputs": {
             "formal_discovery_status": discovery.get("status") or "NOT_REQUESTED",
             "candidates": discovery_inputs,
