@@ -482,13 +482,45 @@ def build_dashboard_block(account: dict, decision: dict | None, request: dict) -
         lines += ["", "最近一次正式决策未随本次同步请求提供；脚本不自行推断，保留人工/ChatGPT正式决议。"]
     lines += ["", f"同步请求：`{request.get('request_id','')}`。"]
     lifecycle = build_lifecycle_projection(ROOT)
-    lines += ["", "### 当前交易生命周期", ""]
-    if lifecycle.get("active_lifecycles"):
-        for item in lifecycle["active_lifecycles"]:
-            due = "；今日必须形成T+3正式决议" if item.get("decision_due") else ""
-            lines.append(f"- {item.get('security_name') or item.get('security_code')}（{item.get('security_code')}）：{item.get('lifecycle_status')}，起始交易日{item.get('start_market_date')}，当前T+{item.get('current_t_plus')}，下一节点{item.get('next_lifecycle_node')}{due}。")
+    lines += ["", "### 当前有效生命周期", ""]
+    active_trials = [
+        item for item in (lifecycle.get("active_lifecycles") or [])
+        if item.get("lifecycle_status") == "ACTIVE_TRIAL"
+    ]
+    lines += ["#### 当前有效Trial"]
+    if active_trials:
+        for item in active_trials:
+            state = "已逾期，需由最近正式决策覆盖" if item.get("overdue") else (
+                "已到本节点，需形成正式决议" if item.get("decision_due") else "继续处理中"
+            )
+            lines.append(
+                f"- {item.get('security_name') or item.get('security_code')}（{item.get('security_code')}）："
+                f"{state}；形成于{item.get('start_market_date')}；当前T+{item.get('current_t_plus')}；"
+                f"下一复核节点为{item.get('next_lifecycle_node')}。"
+            )
     else:
-        lines.append("- 当前没有可由正式决策与真实成交事实恢复的未关闭Trial生命周期。")
+        lines.append("- 当前没有由正式决策与真实成交事实共同确认的有效Trial。")
+
+    decision_lifecycle = decision.get("lifecycle") if decision else None
+    lifecycle_items = []
+    if isinstance(decision_lifecycle, dict):
+        lifecycle_items = [
+            f"- {security}：{str(action).strip()}"
+            for security, action in decision_lifecycle.items()
+            if str(action or "").strip()
+            and any(token in str(action) for token in ("Trial", "Confirm", "确认部署", "试探性部署"))
+        ]
+    elif isinstance(decision_lifecycle, str) and any(
+        token in decision_lifecycle for token in ("Trial", "Confirm", "确认部署", "试探性部署")
+    ):
+        lifecycle_items = [f"- 最近正式决策：{decision_lifecycle.strip()}"]
+    lines += ["", "#### 当前Trial/Confirm判断"]
+    lines.extend(lifecycle_items or ["- 最近正式决策未形成明确的Trial或Confirm判断。"])
+
+    lines += ["", "#### 当前持仓生命周期"]
+    holding_lines = _managed_lifecycle_lines(decision.get("lifecycle"), account) if decision else []
+    lines.extend(holding_lines or ["- 当前没有可由最近正式决策确认的持仓管理生命周期；实际持仓仍以账户事实为准。"])
+    lines += ["", "说明：本区域是正式决策与真实账户/成交事实的只读投影，不产生交易权限，不代表实际成交。"]
     return "\n".join(lines)
 
 
