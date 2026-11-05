@@ -150,6 +150,49 @@ def _completion_trial_decisions(root: Path, executions: list[dict[str, Any]]) ->
             "_linked_execution_id": execution.get("event_id"),
             "_completion_trial": True,
         })
+    # Recovery path for confirmed executions whose ingress retained an old
+    # or missing decision attribution.  The completion is the canonical frozen
+    # Formal Decision record; it may identify the same security and Trial
+    # judgement even when the broker sync carried a stale linked_decision_id.
+    # This is projection-only: it never mutates the trade fact or creates a
+    # permission.  Ambiguous/multiple same-window Trial judgements fail closed.
+    completions = []
+    completion_dir = root / "requests" / "live_snapshot"
+    for path in sorted(completion_dir.glob("*__scheduled_review_completion.json")) if completion_dir.exists() else []:
+        completion = _load(path, {})
+        if completion.get("report_type") != "ETF_FORMAL_DECISION":
+            continue
+        decision_id = str(completion.get("decision_id") or "").strip()
+        decision_time = parse_time(completion.get("requested_at_beijing"))
+        content = str(completion.get("final_content") or "")
+        if not decision_id or not decision_time or not content:
+            continue
+        for execution in executions:
+            if str(execution.get("side") or "").upper() != "BUY":
+                continue
+            code = str(execution.get("code") or "").strip()
+            if not code or decision_time > (parse_time(execution.get("confirmed_at_beijing") or execution.get("executed_at_beijing")) or datetime.max.replace(tzinfo=SHANGHAI)):
+                continue
+            if code not in content:
+                continue
+            # Candidate-level Trial wording is required; generic risk or
+            # portfolio wording must not manufacture a lifecycle.
+            if not any(phrase in content for phrase in ("Trial通过审查", "进入Trial审查", "Trial评估成立", "达到Trial评估标准")):
+                continue
+            existing = [x for x in completions if x["decision_id"] == decision_id and x["candidate_code"] == code]
+            if existing:
+                continue
+            completions.append({
+                "decision_id": decision_id,
+                "candidate_code": code,
+                "candidate_name": execution.get("name"),
+                "hypothesis_id": None,
+                "decision_time_beijing": completion.get("requested_at_beijing"),
+                "_linked_execution_id": execution.get("event_id"),
+                "_completion_trial": True,
+                "_attribution_recovery": "FROZEN_FORMAL_COMPLETION_SECURITY_MATCH",
+            })
+    result.extend(completions)
     return result
 
 
