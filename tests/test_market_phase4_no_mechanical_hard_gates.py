@@ -153,7 +153,7 @@ class Phase4NoMechanicalHardGatesTest(unittest.TestCase):
             self.assertEqual(by_code[code]["category"], "ACCOUNT_STOCK")
         self.assertEqual(by_code["159992"]["category"], "OBSERVED_ETF")
         self.assertIsNone(ranking["top_candidate"])
-        self.assertEqual(ranking["candidate_selection_status"], "REQUIRES_MASTER_DECISION")
+        self.assertEqual(ranking["candidate_selection_status"], "ENUMERATED_FOR_MASTER_COMPARISON")
         self.assertFalse(any("score" in str(row).lower() for row in rows))
 
     def test_state_manager_uses_current_pnl_and_legacy_fallback(self) -> None:
