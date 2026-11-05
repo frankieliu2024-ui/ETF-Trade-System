@@ -164,7 +164,13 @@ def _executions(root: Path) -> list[dict[str, Any]]:
 
 
 def _resolution(root: Path, trial: dict[str, Any], as_of: date) -> dict[str, Any] | None:
-    """Resolve a Trial from a later, uniquely attributable complete exit."""
+    """Resolve a Trial from a later decision or uniquely attributable exit.
+
+    Historical/overdue Trials may be covered by the latest formal decision for
+    the same security even when the old event lacks a hypothesis link.  This
+    is a decision-coverage projection only; it never attributes a trade or
+    closes a specific lot.
+    """
     hypothesis = str(trial.get("hypothesis_id") or "")
     code = str(trial.get("candidate_code") or trial.get("candidate_code") or "").strip()
     decision_time = parse_time(trial.get("decision_time_beijing"))
@@ -190,6 +196,56 @@ def _resolution(root: Path, trial: dict[str, Any], as_of: date) -> dict[str, Any
     if candidates:
         _, status, event = max(candidates, key=lambda x: x[0])
         return {"status": status, "decision_id": event.get("decision_id"), "decision_time_beijing": event.get("decision_time_beijing", "")}
+
+    # Legacy/overdue Trial fallback: consume the latest explicit business
+    # judgment for this security after the mandatory node.  A mere holding
+    # list or code occurrence is insufficient; the decision text must contain
+    # the security identity and an action-bearing lifecycle statement.
+    mandatory = trial.get("mandatory_decision_market_date")
+    if mandatory:
+        try:
+            mandatory_date = date.fromisoformat(str(mandatory))
+        except ValueError:
+            mandatory_date = None
+    else:
+        mandatory_date = None
+    if mandatory_date and as_of >= mandatory_date:
+        explicit = []
+        name = str(trial.get("candidate_name") or "").strip()
+        for path in sorted(directory.glob("*.json")) if directory.exists() else []:
+            event = _load(path, {})
+            event_time = parse_time(event.get("decision_time_beijing"))
+            if not event_time or event_time.date() < mandatory_date:
+                continue
+            if event.get("decision_id") == trial.get("decision_id"):
+                continue
+            formal = event.get("formal_decision") or {}
+            text = " ".join(str(event.get(key) or "") for key in (
+                "candidate_code", "candidate_name", "lifecycle", "main_candidate",
+                "amount_action", "decisive_reason",
+            )) + " " + " ".join(str(formal.get(key) or "") for key in (
+                "candidate_code", "candidate_name", "lifecycle", "main_candidate",
+                "amount_action", "decisive_reason",
+            ))
+            if code not in text and (not name or name not in text):
+                continue
+            if not any(token in text for token in ("持有", "追加", "Trial", "Confirm", "退出", "减持", "卖出", "观察")):
+                continue
+            if "Confirm" in text or "确认部署" in text:
+                status = "CONFIRM_EVALUATION"
+            elif any(token in text for token in ("退出", "减持", "卖出", "失败")):
+                status = "FAILED_EXIT_EVALUATION"
+            else:
+                status = "HOLDING_MANAGEMENT"
+            explicit.append((event_time, status, event))
+        if explicit:
+            _, status, event = max(explicit, key=lambda x: x[0])
+            return {
+                "status": status,
+                "resolution_reason": "LATEST_FORMAL_DECISION_COVERAGE",
+                "decision_id": event.get("decision_id"),
+                "decision_time_beijing": event.get("decision_time_beijing", ""),
+            }
 
     executions = _executions(root)
     buys = [
@@ -346,9 +402,10 @@ def build_lifecycle_projection(root: Path, as_of_market_date: str | None = None)
             continue
         t_plus = trading_day_offset(start_date, as_of, calendar)
         mandatory = add_trading_days(start_date, 3, calendar)
+        decision_with_due = dict(decision, mandatory_decision_market_date=mandatory.isoformat())
         resolution = ((_completion_followup_resolution(root, decision)
                        or _completion_explicit_exit(root, decision, executions)) if decision.get("_completion_trial")
-                      else _resolution(root, decision, as_of))
+                      else _resolution(root, decision_with_due, as_of))
         resolved = resolution is not None
         trials.append({
             "source_decision_id": decision.get("decision_id"),
@@ -385,3 +442,4 @@ def build_lifecycle_projection(root: Path, as_of_market_date: str | None = None)
         "node_semantics": "TRADE_MANDATORY_LIFECYCLE_NODE与RESEARCH/REVIEW_OBSERVATION_NODE分离；T+3只表示必须形成正式决议，不生成订单。",
         "read_only": True,
     }
+
