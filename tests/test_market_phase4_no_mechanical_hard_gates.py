@@ -70,7 +70,7 @@ class Phase4NoMechanicalHardGatesTest(unittest.TestCase):
         self.assertEqual(ranking["risk_zone_semantics"], "REVIEW_CONTEXT_ONLY_NOT_TRADING_PERMISSION")
         self.assertTrue(ranking["enhanced_risk_review_required"])
         self.assertIsNone(ranking["top_candidate"])
-        self.assertEqual(ranking["candidate_selection_status"], "REQUIRES_MASTER_DECISION")
+        self.assertEqual(ranking["candidate_selection_status"], "ENUMERATED_FOR_MASTER_COMPARISON")
         self.assertEqual(ranking["excluded_candidates"], [])
         by_code = {row.get("code"): row for row in ranking["comparison_universe"]}
         self.assertIn("111111", by_code)
