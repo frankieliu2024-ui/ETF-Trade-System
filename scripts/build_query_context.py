@@ -1632,6 +1632,17 @@ def _write_formal_layer_projections(root: Path, current: dict, discovery: dict) 
         "freshness_rule": "same-node fixed-slot evidence; absence is not zero",
     }
     atomic_json_write(root / "data/state/formal_discovery_current.json", projection)
+    try:
+        from pulse_history import append_pulse_history
+    except ModuleNotFoundError:
+        from scripts.pulse_history import append_pulse_history
+    append_pulse_history(
+        root,
+        kind="DISCOVERY",
+        payload=projection,
+        path="data/state/formal_discovery_current.json",
+        identity="DISCOVERY:" + str(market_date) + ":" + str(node) + ":" + str(snapshot) + ":" + str(generated),
+    )
     opportunity = {
         "schema_version": "1.0",
         "layer": "OPPORTUNITY",
@@ -1989,6 +2000,8 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
     policy = read_json(root / CANONICAL_FILES["runtime_policy"], {})
     runtime_health = read_json(root / CANONICAL_FILES["runtime_health"], {})
     overseas_context = read_json(root / CANONICAL_FILES["overseas_context"], {})
+    discovery_pulse_index = read_json(root / "data" / "state" / "discovery_pulse_index.json", {})
+    hyperliquid_pulse_index = read_json(root / "data" / "state" / "hyperliquid_pulse_index.json", {})
     us_extended = read_json(root / CANONICAL_FILES["us_extended_hours_context"], {})
     stock_context = read_json(root / CANONICAL_FILES["stock_context"], {})
     stock_market_context = read_json(root / CANONICAL_FILES["stock_market_context"], {})
@@ -2215,6 +2228,13 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
         "market_quote_router": market_quote,
         "system_objects": system_objects, "user_requested_objects": [], "market_domain_projection": market_domain_projection,
         "formal_etf_discovery": formal_discovery,
+        "discovery_pulse_index": discovery_pulse_index if isinstance(discovery_pulse_index, dict) else {},
+        "hyperliquid_pulse_index": hyperliquid_pulse_index if isinstance(hyperliquid_pulse_index, dict) else {},
+        "continuous_pulse_consumption": {
+            "discovery_latest": (discovery_pulse_index or {}).get("latest") if isinstance(discovery_pulse_index, dict) else None,
+            "hyperliquid_latest": (hyperliquid_pulse_index or {}).get("latest") if isinstance(hyperliquid_pulse_index, dict) else None,
+            "rule": "决策上下文消费最新合法对象投影及其同链脉冲索引；脉冲索引仅提供可追溯事实序列，不自行产生交易许可。"
+        },
         "weekly_return_attribution": weekly_return_attribution,
         "canonical_files": CANONICAL_FILES, "data_status": {**(current.get("data_freshness") or {}), **freshness}, "freshness_at_context_build": freshness,
         "interactive_decision_freshness": market_quote.get("decision_freshness", {}),

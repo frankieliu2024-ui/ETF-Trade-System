@@ -145,6 +145,8 @@ def build(root: Path = ROOT) -> dict:
     discovery_projection = load_projection(root, "data/state/formal_discovery_current.json")
     opportunity_projection = load_projection(root, "data/state/formal_opportunity_current.json")
     intraday_formal_decision_index = load_intraday_formal_decision_index(root, str(current.get("market_date") or ""))
+    discovery_pulse_index = load_projection(root, "data/state/discovery_pulse_index.json")
+    hyperliquid_pulse_index = load_projection(root, "data/state/hyperliquid_pulse_index.json")
 
     # A verified explicit close node is authoritative even when the provider
     # observation/query timestamp is later than 15:00. For non-close nodes we
@@ -227,6 +229,15 @@ def build(root: Path = ROOT) -> dict:
         "formal_discovery": discovery_projection,
         "formal_opportunity": opportunity_projection,
         "intraday_formal_decision_index": intraday_formal_decision_index,
+        "discovery_pulse_index": discovery_pulse_index,
+        "hyperliquid_pulse_index": hyperliquid_pulse_index,
+        "continuous_pulse_consumption": {
+            "discovery_latest": discovery_pulse_index.get("latest"),
+            "hyperliquid_latest": hyperliquid_pulse_index.get("latest"),
+            "discovery_record_count": discovery_pulse_index.get("record_count", 0),
+            "hyperliquid_record_count": hyperliquid_pulse_index.get("record_count", 0),
+            "rule": "复盘消费当日及最近合法脉冲索引；当前投影仅是最新状态，不得覆盖已形成的历史脉冲。"
+        },
         "discovery_consumption_rule": "收盘Discovery与当日最近合法盘中Discovery并列消费；合法空集合不是当日Discovery不存在。",
         "hyperliquid_consumption_rule": "Hyperliquid辅助事实可服务于Discovery、观察ETF、机会ETF、实际持仓和已执行Trial；不能独立授予交易权限。",
         "same_day_review_idempotent": True,
