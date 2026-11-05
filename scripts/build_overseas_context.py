@@ -738,7 +738,7 @@ def main() -> None:
     append_pulse_history(
         ROOT,
         kind="HYPERLIQUID",
-        payload={**hyperliquid, "market_date": generated_beijing.date().isoformat()},
+        payload={**hyperliquid, "market_date": datetime.now(BEIJING).date().isoformat()},
         path="data/state/overseas_context.json#hyperliquid",
         identity=str(hyperliquid.get("context_id") or ""),
         occurred_at=hyperliquid.get("latest_observation_collected_at_utc") or context.get("generated_at_beijing") or "",
