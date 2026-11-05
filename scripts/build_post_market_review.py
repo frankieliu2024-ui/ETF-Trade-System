@@ -92,6 +92,48 @@ def build_close_data_contract(root: Path, current: dict) -> dict:
     }
 
 
+def load_intraday_formal_decision_index(root: Path, market_date: str) -> dict:
+    """Expose the day's latest formal decision evidence without replacing close projections.
+
+    A close Discovery may be a legal empty set.  Post-market review must retain the
+    latest intraday formal decision and its Discovery/Hyperliquid time statements
+    for attribution and lifecycle review.
+    """
+    directory = root / "events" / "reviews"
+    records = []
+    for path in sorted(directory.glob("formal_*.json")):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        binding = payload.get("presentation_binding") or {}
+        if binding.get("report_type") != "ETF_FORMAL_DECISION":
+            continue
+        reviewed_at = str(payload.get("reviewed_at_beijing") or "")
+        if not reviewed_at.startswith(str(market_date)):
+            continue
+        content = str(binding.get("full_content") or "")
+        statements = [line.strip() for line in content.splitlines() if line.strip() and ("Discovery" in line or "Hyperliquid" in line)]
+        records.append({
+            "decision_id": payload.get("decision_id", ""),
+            "report_id": binding.get("report_id", ""),
+            "request_id": binding.get("request_id", ""),
+            "reviewed_at_beijing": reviewed_at,
+            "source_event": str(path.relative_to(root)),
+            "source_completion_path": payload.get("source_completion_path", ""),
+            "discovery_hyperliquid_statements": statements,
+        })
+    records.sort(key=lambda item: item.get("reviewed_at_beijing", ""))
+    return {
+        "status": "READY" if records else "MISSING",
+        "market_date": str(market_date),
+        "count": len(records),
+        "latest": records[-1] if records else None,
+        "records": records,
+        "rule": "完整日复盘同时消费当日最近合法正式决策证据与收盘Discovery；收盘空集合不得覆盖盘中Discovery。",
+    }
+
+
 def build(root: Path = ROOT) -> dict:
     current = read_current(root)
     account = read_account_fact(root)
@@ -102,6 +144,7 @@ def build(root: Path = ROOT) -> dict:
     close_contract = build_close_data_contract(root, current)
     discovery_projection = load_projection(root, "data/state/formal_discovery_current.json")
     opportunity_projection = load_projection(root, "data/state/formal_opportunity_current.json")
+    intraday_formal_decision_index = load_intraday_formal_decision_index(root, str(current.get("market_date") or ""))
 
     # A verified explicit close node is authoritative even when the provider
     # observation/query timestamp is later than 15:00. For non-close nodes we
@@ -183,6 +226,9 @@ def build(root: Path = ROOT) -> dict:
         # and opportunity-layer status without becoming a Formal Decision.
         "formal_discovery": discovery_projection,
         "formal_opportunity": opportunity_projection,
+        "intraday_formal_decision_index": intraday_formal_decision_index,
+        "discovery_consumption_rule": "收盘Discovery与当日最近合法盘中Discovery并列消费；合法空集合不是当日Discovery不存在。",
+        "hyperliquid_consumption_rule": "Hyperliquid辅助事实可服务于Discovery、观察ETF、机会ETF、实际持仓和已执行Trial；不能独立授予交易权限。",
         "same_day_review_idempotent": True,
         "review_boundary": "15:00后当天首次最终账户截图默认触发正式收盘复盘。A股显式close节点必须把15:00价格有效时点与provider后续查询/观察时间分离；provider时间晚于15:00不等于发生了盘后成交。账户事实只能来自用户或券商确认；重复截图如无账户/成交变化只做差异更新，不重复制造CASE。",
     }
