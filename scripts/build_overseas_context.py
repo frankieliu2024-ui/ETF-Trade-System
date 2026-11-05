@@ -730,6 +730,19 @@ def build() -> dict:
 def main() -> None:
     context = build()
     atomic_json_write(ROOT / "data" / "state" / "overseas_context.json", context)
+    try:
+        from pulse_history import append_pulse_history
+    except ModuleNotFoundError:
+        from scripts.pulse_history import append_pulse_history
+    hyperliquid = context.get("hyperliquid") if isinstance(context.get("hyperliquid"), dict) else {}
+    append_pulse_history(
+        ROOT,
+        kind="HYPERLIQUID",
+        payload={**hyperliquid, "market_date": generated_beijing.date().isoformat()},
+        path="data/state/overseas_context.json#hyperliquid",
+        identity=str(hyperliquid.get("context_id") or ""),
+        occurred_at=hyperliquid.get("latest_observation_collected_at_utc") or context.get("generated_at_beijing") or "",
+    )
     print(json.dumps({"ok": True, "generated_at_beijing": context["generated_at_beijing"], "quality_status": context["quality_status"], "objects": {k: v["quality_status"] for k, v in context["objects"].items()}}, ensure_ascii=False))
 
 
