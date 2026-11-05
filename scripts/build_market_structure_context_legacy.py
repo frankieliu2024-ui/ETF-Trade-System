@@ -402,7 +402,8 @@ def build(root: Path = ROOT) -> dict:
         "read_only": True,
         "candidate_selection_contract": {
             "rule": "当日涨幅、横截面排名和相对指数强弱只能验证候选，禁止单独生成唯一主候选。",
-            "minimum_evidence_classes_for_main_candidate": 2,
+            "evidence_classes_are_advisory": true,
+            "evidence_use": "用于说明证据构成与缺口，不构成候选、Trial、Confirm、金额或卖出份额的最低数量门槛。",
             "evidence_classes": [
                 "独立假设或低相关收益来源",
                 "历史位置与趋势结构支持",
