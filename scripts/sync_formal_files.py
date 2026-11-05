@@ -42,6 +42,10 @@ try:
     from research_artifact_contract import archive_completed_research
 except ModuleNotFoundError:
     from scripts.research_artifact_contract import archive_completed_research
+try:
+    from lifecycle_state import build_lifecycle_projection
+except ModuleNotFoundError:
+    from scripts.lifecycle_state import build_lifecycle_projection
 
 
 SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
@@ -449,6 +453,32 @@ def render_same_day_formal_decision_index(root: Path, account: dict) -> str:
     return "\n".join(lines)
 
 
+def render_lifecycle_projection(root: Path, account: dict) -> str:
+    """Render the read-only lifecycle projection consumed by the Dashboard."""
+    projection = build_lifecycle_projection(root, str(account.get("updated_at") or "")[:10] or None)
+    items = projection.get("active_lifecycles") or []
+    active_trials = [item for item in items if item.get("lifecycle_status") == "ACTIVE_TRIAL"]
+    lines = ["### 当前有效生命周期", "", "仅展示由正式决策与真实成交事实共同确认的只读生命周期投影；不产生交易权限或订单。", ""]
+    lines += [
+        f"- 有效Trial：{len(active_trials)}个",
+        f"- 到期/逾期待正式决议：{sum(1 for item in active_trials if item.get('decision_due') or item.get('overdue'))}个",
+        "- 有效Confirm：当前投影未发现由正式决策与真实成交共同确认的有效Confirm。",
+    ]
+    lines += ["", "|对象|生命周期|状态|形成日期|当前T+|下一节点|来源决策|", "|-|-|-|-:|-:|-|-|"]
+    if active_trials:
+        for item in active_trials:
+            lines.append(
+                f"|{item.get('security_name') or item.get('security_code')}（{item.get('security_code')}）|Trial|"
+                f"{'逾期' if item.get('overdue') else ('待决议' if item.get('decision_due') else '有效')}|"
+                f"{item.get('start_market_date') or '未提供'}|T+{item.get('current_t_plus') or 0}|"
+                f"{item.get('next_lifecycle_node') or '未提供'}|{item.get('source_decision_id') or '未提供'}|"
+            )
+    else:
+        lines.append("|无|—|当前没有有效Trial|—|—|—|—|")
+    lines += ["", "当前持仓的事实数量以上方‘当前持仓事实’为准；未被生命周期投影单独列出的持仓，不得据此推断为Trial或Confirm。"]
+    return "\n".join(lines)
+
+
 def render_decision_projection(decision: dict) -> str:
     """Render current or historical decision without presenting stale facts as current."""
     applicability = str(decision.get("_current_applicability") or "CURRENT")
@@ -666,7 +696,7 @@ def build_dashboard_block(account: dict, equity: dict, existing: str, root: Path
     # from canonical events for the account market date, so prior-day entries
     # naturally roll off and no separate "latest decision" projection can
     # conflict with the index.
-    lines += ["", render_same_day_formal_decision_index(root, account)]
+    lines += ["", render_same_day_formal_decision_index(root, account), "", render_lifecycle_projection(root, account)]
     return "\n".join(lines)
 
 
