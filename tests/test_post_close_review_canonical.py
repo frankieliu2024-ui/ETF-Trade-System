@@ -69,6 +69,29 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
             "data/market/snapshots/2026-08-31_150110.json",
         )
 
+    def test_shared_scheduled_review_scenario_reaches_canonical_owner(self):
+        request = self.request()
+        request["interaction_scenario"] = "SCHEDULED_REVIEW"
+        request["formal_fact_type"] = "FORMAL_SCHEDULED_TRADE_REVIEW"
+        request["request_type"] = "SCHEDULED_REVIEW_COMPLETION"
+        request["source"] = "CHATGPT_DIRECT_GITHUB_CONTENTS_WRITER"
+        request["entry_mode"] = "AUTOMATIC_SCHEDULED_TASK"
+        final_content = "FROZEN SHARED SCHEDULED REVIEW"
+        request["presentation_binding"] = {
+            "report_type": "ETF_TRADE_REVIEW",
+            "task_id": "ETF交易复盘",
+            "task_run_id": "scheduled-review-occurrence-1",
+            "occurrence_id": "scheduled-review-occurrence-1",
+            "entry_mode": "AUTOMATIC_SCHEDULED_TASK",
+            "request_id": request["request_id"],
+            "report_id": "ETF_TRADE_REVIEW:scheduled-review-occurrence-1",
+            "full_content": final_content,
+            "content_hash": __import__("hashlib").sha256(final_content.encode()).hexdigest(),
+            "content_hash_source": "completion_builder",
+        }
+        account = {"status": "VALID", "updated_at": "2026-08-31T15:12:00+08:00"}
+        self.assertEqual(sync.record_post_close_review(account, request), (True, False))
+
     def test_trade_review_effective_close_boundary_maps_to_canonical_path(self):
         request = self.request()
         request["interaction_scenario"] = "SCHEDULED_TRADE_REVIEW"
