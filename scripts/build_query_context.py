@@ -183,14 +183,44 @@ def current_trading_day_status(calendar: dict) -> dict:
 
 def account_gate_status(current: dict, account: dict, policy: dict) -> dict:
     raw_valid = account.get("status") == "VALID"
-    market_date = current.get("market_date", "")
+    market_date = str(current.get("market_date") or "")
+    account_fact_market_date = str(
+        account.get("market_date")
+        or account.get("last_confirmed_market_date")
+        or account.get("account_fact_market_date")
+        or ""
+    )
     updated = parse_time(account.get("updated_at", ""))
-    updated_market_date = updated.astimezone(SHANGHAI).date().isoformat() if updated else ""
+    updated_calendar_date = updated.astimezone(SHANGHAI).date().isoformat() if updated else ""
     same_day_required = bool(policy.get("account_fact_same_market_date_required", False))
-    same_day = bool(market_date and updated_market_date == market_date)
-    usable = raw_valid and (same_day or not same_day_required)
-    reason = "OK" if usable else ("ACCOUNT_NOT_VALID" if not raw_valid else "ACCOUNT_FACT_NOT_CURRENT_MARKET_DATE")
-    return {"raw_status": account.get("status", "MISSING"), "updated_at": account.get("updated_at", ""), "updated_market_date": updated_market_date, "current_market_date": market_date, "same_market_date_required": same_day_required, "can_use_current_account_fact": usable, "requires_user_broker_screenshot": not usable, "reason": reason, "rule": "正式盘中/盘后决策使用的账户、持仓、现金和成交事实必须符合当前账户事实有效性机制；已确认账户变化后必须刷新，未确认变化时按EVENT_DRIVEN_CARRY_FORWARD处理。"}
+    same_fact_day = bool(market_date and account_fact_market_date and account_fact_market_date == market_date)
+    usable = raw_valid and (same_fact_day or not same_day_required)
+    if not raw_valid:
+        reason = "ACCOUNT_NOT_VALID"
+    elif same_day_required and not same_fact_day:
+        reason = "ACCOUNT_FACT_NOT_CURRENT_MARKET_DATE"
+    else:
+        reason = "OK"
+    if raw_valid and account_fact_market_date and market_date and account_fact_market_date != market_date:
+        account_age_status = "ACCOUNT_FACT_OLDER_THAN_MARKET_FACT"
+    elif raw_valid:
+        account_age_status = "CURRENT_OR_UNDATED_ACCOUNT_FACT"
+    else:
+        account_age_status = "ACCOUNT_FACT_UNAVAILABLE"
+    return {
+        "raw_status": account.get("status", "MISSING"),
+        "updated_at": account.get("updated_at", ""),
+        "updated_calendar_date": updated_calendar_date,
+        "account_fact_market_date": account_fact_market_date,
+        "current_market_date": market_date,
+        "same_market_date_required": same_day_required,
+        "same_market_date": same_fact_day,
+        "account_age_status": account_age_status,
+        "can_use_current_account_fact": usable,
+        "requires_user_broker_screenshot": not usable,
+        "reason": reason,
+        "rule": "账户事实日期、账户事实更新时间和行情事实日期必须分别保存；账户事实不会因行情自动刷新而自动推进。未取得新账户事实时，可按有效性规则使用最近已确认账户事实，并显式披露其日期和年龄。"
+    }
 
 
 def consistency_projection_status(root: Path = ROOT) -> dict:

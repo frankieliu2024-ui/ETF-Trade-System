@@ -600,7 +600,24 @@ def _apply_external_driver_triggers(rows: list[dict[str, Any]], context: dict[st
             "provider_timestamp": observation.get("provider_timestamp"),
             "provider_timestamp_status": observation.get("provider_timestamp_status"),
             "as_of_collection_utc": observation.get("collected_at_utc"),
-            "decision_boundary": "仅作为外部驱动发现和机会比较证据，不独立生成交易权限或动作"
+            "decision_effect": (
+                "SUPPORT"
+                if direction == "SUPPORTIVE" and crowding == "NORMAL"
+                else "TIMING_FILTER"
+                if direction == "SUPPORTIVE" and crowding == "ELEVATED"
+                else "CONTRADICTION_AND_CROWDING"
+                if direction == "NEGATIVE" and crowding == "ELEVATED"
+                else "CONTRADICTION"
+                if direction == "NEGATIVE"
+                else "NO_INCREMENTAL_VALUE"
+            ),
+            "decision_effect_scope": [
+                "opportunity_strength",
+                "entry_timing",
+                "holding_management",
+                "capital_competition",
+            ],
+            "decision_boundary": "对象级外部证据可以改变机会强弱、入场时机、持仓管理和资本竞争判断，但不得独立生成交易权限、Trial、Confirm、金额、卖出份额或订单"
         }
         for code in mapping.get("etf_codes") or []:
             by_code.setdefault(str(code), []).append(evidence)
