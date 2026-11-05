@@ -79,15 +79,20 @@ def build() -> dict:
                 if not name:
                     raise ValueError("asset without name")
                 catalog.append({"dex": dex_name, "asset": asset})
-                if name in targets:
-                    context = contexts[index]
-                    if not isinstance(context, dict):
-                        raise ValueError(f"invalid context for {name}")
-                    oi = context.get("openInterest")
-                    volume = context.get("dayNtlVlm")
-                    active = bool(oi not in (None, "", 0, "0") or volume not in (None, "", 0, "0"))
+                context = contexts[index]
+                if not isinstance(context, dict):
+                    raise ValueError(f"invalid context for {name}")
+                oi = context.get("openInterest")
+                volume = context.get("dayNtlVlm")
+                active = bool(oi not in (None, "", 0, "0") or volume not in (None, "", 0, "0"))
+                # The configured focus list is a priority list, not the
+                # collection boundary. Every active catalog asset becomes a
+                # current external observation; unmapped assets remain
+                # external facts and cannot create ETF candidates by themselves.
+                if name in targets or active:
                     observations.append({
                         "dex": dex_name, "asset": asset, "context": context,
+                        "observation_scope": "FOCUSED" if name in targets else "DYNAMIC_ACTIVE_CATALOG",
                         "provider_timestamp": None,
                         "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
                         "request_started_at_utc": request_started,
@@ -112,7 +117,7 @@ def build() -> dict:
         "collection_finished_at_utc": finished,
         "earliest_observation_collected_at_utc": earliest_collected,
         "latest_observation_collected_at_utc": latest_collected,
-        "focused_assets": sorted(str(x.get("asset", {}).get("name") or "") for x in observations),
+        "focused_assets": sorted(str(x.get("asset", {}).get("name") or "") for x in observations if x.get("observation_scope") == "FOCUSED"),
     }
     context_id = "hl-" + hashlib.sha256(json.dumps(provenance_payload, sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest()[:16]
     return {
@@ -125,7 +130,9 @@ def build() -> dict:
         "latest_observation_collected_at_utc": latest_collected,
         "observation_count": len(observations),
         "quality_status": status, "dex_count": len(dexes),
-        "catalog_count": len(catalog), "focused_count": len(observations),
+        "catalog_count": len(catalog),
+        "focused_count": sum(1 for x in observations if x.get("observation_scope") == "FOCUSED"),
+        "dynamic_active_count": sum(1 for x in observations if x.get("observation_scope") == "DYNAMIC_ACTIVE_CATALOG"),
         "missing_focused_assets": missing, "dex_failures": failures,
         "catalog": catalog, "observations": observations,
         "mapping": config["asset_mappings"],
