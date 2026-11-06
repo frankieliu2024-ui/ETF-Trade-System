@@ -382,6 +382,11 @@ def _formal_decision_index_records(root: Path, market_date: str) -> list[dict]:
             decision = event.get("formal_decision") or event.get("decision") or event.get("decision_response") or {}
             if not isinstance(decision, dict):
                 decision = {}
+            # Direct Scheduled Review completion events may intentionally carry
+            # only immutable full_content. Reuse the existing report parser for
+            # projection fields; do not create a second decision fact.
+            if not decision and content:
+                decision = _structured_decision_from_report(event)
             answers = decision.get("answers") if isinstance(decision.get("answers"), dict) else {}
             risk = decision.get("risk_permission") or (answers.get("RISK_PERMISSION") or {}).get("final_action")
             candidate = decision.get("main_candidate") or (answers.get("MAIN_CANDIDATE") or {}).get("candidate_name")
