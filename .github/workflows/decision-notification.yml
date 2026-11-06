@@ -816,13 +816,13 @@ jobs:
           # before persisting it. This updates the same-day Formal Decision
           # index and lifecycle view without creating a second fact or decision.
           python - <<'PY'
-from pathlib import Path
-from scripts.sync_formal_files import sync_dashboard_projection
-result = sync_dashboard_projection(Path("."))
-if result.get("status") not in {"PASS", "UNCHANGED"}:
-    raise SystemExit(f"Dashboard projection failed: {result}")
-print(result)
-PY
+          from pathlib import Path
+          from scripts.sync_formal_files import sync_dashboard_projection
+          result = sync_dashboard_projection(Path("."))
+          if result.get("status") not in {"PASS", "UNCHANGED"}:
+              raise SystemExit(f"Dashboard projection failed: {result}")
+          print(result)
+          PY
           git config user.name "ETF notification bot"
           git config user.email "etf-notification-bot@users.noreply.github.com"
           for attempt in 1 2 3; do
