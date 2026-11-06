@@ -145,3 +145,7 @@ Formal Decision沿三类任务统一的Scheduled Review completion格式，由�
 三类任务完成唯一FINAL_CONTENT和统一Scheduled Review completion写入、回读后，必须在同一handoff中显式调用既有 `decision-notification.yml` 的 `workflow_dispatch`，并传入 `scheduled_review_completion_path=<当前唯一completion路径>`。三类任务均不得依赖GitHub Contents push、`GITHUB_TOKEN`提交、market-snapshot或其他被动唤醒，因为这些方式不保证创建通知工作流运行。
 
 当前运行只有同时满足以下条件，才可声明后置交接完成：completion写入并回读；显式通知workflow运行已创建并回读；canonical review event、REPORT、notification状态和provider结果均与同一task_run_id、report_id、content_hash及FINAL_CONTENT一致。否则只能声明后置交接未闭环，并记录最后完成层级及具体未完成层级；不得以“无更新”、定时任务平台completed或历史通知替代本次结果。后置交接未闭环不得阻断、撤回、改写或重新生成已经冻结并输出的FINAL_CONTENT，也不得无限等待或创建第二链。
+
+## Hyperliquid对象级消费路由
+
+正式决策涉及Hyperliquid时，除读取数据与市场监测规范、MASTER和正式决策执行协议外，必须读取 `docs/Hyperliquid对象级消费与决策贡献协议_V1.0.md`。该协议只规定逐对象映射、证据消费、决策贡献分类、completion审计字段和正文表达；不新增交易权限、交易规则、通知链、workflow、state或任务入口。
