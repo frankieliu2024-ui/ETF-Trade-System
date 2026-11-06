@@ -736,6 +736,7 @@ jobs:
               mkdir -p data/state
               cp -- "$current_backup" data/state/CURRENT.json
             fi
+            cp -- "$dashboard_backup" ETF当前状态_DASHBOARD.md
             git add -- "$EVENT_PATH"
             [ -n "$closure_path" ] && [ -f "$closure_path" ] && git add -- "$closure_path" || true
             [ -n "$report_path" ] && [ -f "$report_path" ] && git add -- "$report_path" || true
@@ -810,6 +811,7 @@ jobs:
           test -f "$EVENT_PATH"
           event_backup="/tmp/formal-review-event.json"
           current_backup="/tmp/formal-review-current.json"
+          dashboard_backup="/tmp/formal-review-dashboard.md"
           cp -- "$EVENT_PATH" "$event_backup"
           [ -f data/state/CURRENT.json ] && cp -- data/state/CURRENT.json "$current_backup" || true
           # Rebuild the read-only Dashboard projection from the canonical event
@@ -823,6 +825,7 @@ jobs:
               raise SystemExit(f"Dashboard projection failed: {result}")
           print(result)
           PY
+          cp -- ETF当前状态_DASHBOARD.md "$dashboard_backup"
           git config user.name "ETF notification bot"
           git config user.email "etf-notification-bot@users.noreply.github.com"
           for attempt in 1 2 3; do
