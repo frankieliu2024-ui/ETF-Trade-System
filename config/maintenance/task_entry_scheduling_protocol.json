@@ -75,7 +75,9 @@
         "same_run_required": true,
         "completion_readback_must_continue_to_notification_dispatch": true,
         "report_identity": "ETF_SYSTEM_REVIEW",
-        "completion_push_required_in_same_run": true,
+        "completion_push_required_in_same_run": false,
+        "explicit_dispatch_required_in_same_run": true,
+        "explicit_dispatch_role": "SAME_RUN_PRIMARY",
         "completion_owner_is_primary": true,
         "production_entry": "TASK_DIRECT_GITHUB_CONTENTS_WRITER"
       }
@@ -129,11 +131,12 @@
       "handoff_execution": {
         "owner": "TASK_DIRECT_GITHUB_CONTENTS_WRITER",
         "primary_mode": "DIRECT_GITHUB_CONTENTS_COMPLETION_WRITE_AND_READBACK",
-        "notification_wake": "CANONICAL_COMPLETION_PUSH_PRIMARY_EXPLICIT_DISPATCH_RECOVERY",
+        "notification_wake": "EXPLICIT_DISPATCH_WITH_EXACT_COMPLETION_PATH",
         "adapter_unavailable_must_not_block_completion": true,
         "same_run_required": true,
-        "completion_push_required_in_same_run": true,
-        "explicit_dispatch_role": "SAME_RUN_RECOVERY_ONLY",
+        "completion_push_required_in_same_run": false,
+        "explicit_dispatch_required_in_same_run": true,
+        "explicit_dispatch_role": "SAME_RUN_PRIMARY",
         "completion_owner_is_primary": true,
         "production_entry": "TASK_DIRECT_GITHUB_CONTENTS_WRITER"
       }
@@ -204,8 +207,9 @@
           "market_layers_independent": true,
           "all_market_layers_non_blocking": true
         },
-        "completion_push_required_in_same_run": true,
-        "explicit_dispatch_role": "SAME_RUN_RECOVERY_ONLY",
+        "completion_push_required_in_same_run": false,
+        "explicit_dispatch_required_in_same_run": true,
+        "explicit_dispatch_role": "SAME_RUN_PRIMARY",
         "automatic_task_pause_forbidden": true,
         "partial_fact_judgment_required": true,
         "production_entry": "DIRECT_GITHUB_CONTENTS_WRITER"
