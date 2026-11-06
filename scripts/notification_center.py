@@ -1822,7 +1822,7 @@ def render_canonical_notification(event: dict) -> dict | None:
             f"> {_canonical_boundary(family)}\n\n### 触发事实时点（北京时间）\n{evidence_time}"
         )
     elif family == "市场异动":
-        title = "【市场异动】既有监测对象出现可比事实变化"
+        title = str(event.get("title") or "【市场异动】既有监测对象出现可比事实变化")
         evidence_time = human_time(ctx.get("evidence_time_beijing")) if ctx.get("evidence_time_beijing") else "未单独记录"
         body = (
             f"### 发生了什么\n{event.get('content') or '既有监测对象出现可比事实变化。'}\n\n"
