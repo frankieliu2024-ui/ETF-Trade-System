@@ -115,6 +115,22 @@ jobs:
           done <<< "$legacy_files"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # A Scheduled Review completion is already the canonical business handoff.
+          # It is not a market-snapshot request and therefore has no request-bound
+          # query_context to publish. Do not let the downstream snapshot publisher
+          # turn a valid completion into a failed producer wake.
+          if [ -n "${TRIGGERING_REQUEST_FILE:-}" ] && [ -f "$TRIGGERING_REQUEST_FILE" ]; then
+            if python - "$TRIGGERING_REQUEST_FILE" <<'PY'
+import json, sys
+from pathlib import Path
+obj = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+raise SystemExit(0 if str(obj.get("request_type") or "").upper() == "SCHEDULED_REVIEW_COMPLETION" else 1)
+PY
+            then
+              echo "Scheduled Review completion handoff: skip market-snapshot downstream publish."
+              exit 0
+            fi
+          fi
           git add requests/live_snapshot data/requests
           git commit -m "fix: canonicalize legacy formal request ingress"
           for attempt in 1 2 3; do

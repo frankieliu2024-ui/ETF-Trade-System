@@ -382,7 +382,7 @@ jobs:
       # notification center can reach PushPlus.
       - name: Bind canonical review event from producer completion
         id: workflow_review
-        if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == 'ETF market snapshot' && github.event.workflow_run.conclusion == 'success' }}
+        if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == 'ETF market snapshot' }}
         shell: bash
         env:
           PRODUCER_RUN_ID: ${{ github.event.workflow_run.id }}
@@ -394,6 +394,55 @@ jobs:
             git fetch --no-tags --unshallow origin main
           else
             git fetch --no-tags origin main
+          fi
+          # A completion commit may be the producer run's head commit itself.
+          # Consume that exact durable handoff even when the market-snapshot
+          # producer did not create a downstream data commit.
+          mapfile -t producer_completion_paths < <(
+            git diff-tree --no-commit-id --name-only -r "$PRODUCER_SHA" -- 'requests/live_snapshot/*.json' | while IFS= read -r candidate; do
+              [ -z "$candidate" ] && continue
+              python - "$candidate" <<'PY' 2>/dev/null && echo "$candidate"
+import json, sys
+from pathlib import Path
+obj = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+if (
+    str(obj.get("request_type") or "").upper() == "SCHEDULED_REVIEW_COMPLETION"
+    and str(obj.get("task_id") or "").strip() in {"ETF正式决策", "ETF交易复盘", "ETF系统复核"}
+):
+    raise SystemExit(0)
+raise SystemExit(1)
+PY
+            done
+          )
+          if [ "${#producer_completion_paths[@]}" -eq 1 ]; then
+            completion_path="${producer_completion_paths[0]}"
+            completion_kind=$(python - "$completion_path" <<'PY'
+import json, sys
+from pathlib import Path
+obj = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+binding = obj.get("presentation_binding") or {}
+report_type = str(obj.get("report_type") or binding.get("report_type") or "").strip().upper()
+task_id = str(obj.get("task_id") or binding.get("task_id") or "").strip()
+print("FORMAL" if report_type == "ETF_FORMAL_DECISION" and task_id == "ETF正式决策" else "SCHEDULED")
+PY
+            )
+            echo "review_completion=true" >> "$GITHUB_OUTPUT"
+            echo "review_completion_path=$completion_path" >> "$GITHUB_OUTPUT"
+            if [ "$completion_kind" = "FORMAL" ]; then
+              echo "formal_completion=true" >> "$GITHUB_OUTPUT"
+              echo "formal_review_source_path=$completion_path" >> "$GITHUB_OUTPUT"
+            else
+              echo "formal_completion=false" >> "$GITHUB_OUTPUT"
+              echo "formal_review_source_path=" >> "$GITHUB_OUTPUT"
+            fi
+            echo "decision_completion=false" >> "$GITHUB_OUTPUT"
+            echo "decision_event_path=" >> "$GITHUB_OUTPUT"
+            echo "Bound completion directly from producer commit: $completion_path"
+            exit 0
+          elif [ "${#producer_completion_paths[@]}" -gt 1 ]; then
+            echo "Ambiguous producer completion commit: expected exactly one, found ${#producer_completion_paths[@]}" >&2
+            printf '%s\n' "${producer_completion_paths[@]}" >&2
+            exit 1
           fi
           mapfile -t downstream_commits < <(
             git log origin/main --format='%H%x09%s' --grep="[producer-run:${PRODUCER_RUN_ID}]" --fixed-strings
@@ -440,10 +489,10 @@ jobs:
 
       - name: Project Scheduled Review completion to canonical review event
         id: scheduled_completion_event
-        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path != '' && steps.dispatch_completion_kind.outputs.scheduled == 'true') || (github.event_name == 'push' && steps.push_kind.outputs.scheduled_review_completion == 'true') }}
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path != '' && steps.dispatch_completion_kind.outputs.scheduled == 'true') || (github.event_name == 'push' && steps.push_kind.outputs.scheduled_review_completion == 'true') || (github.event_name == 'workflow_run' && steps.workflow_review.outputs.review_completion == 'true' && steps.workflow_review.outputs.formal_completion != 'true') }}
         shell: bash
         env:
-          COMPLETION_PATH: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path || steps.push_kind.outputs.scheduled_review_completion_path }}
+          COMPLETION_PATH: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path || steps.push_kind.outputs.scheduled_review_completion_path || steps.workflow_review.outputs.review_completion_path }}
         run: |
           set -euo pipefail
           # Normalize canonical paths and legacy basenames before reading.
@@ -624,7 +673,7 @@ jobs:
           echo "review_event_path=$event_path" >> "$GITHUB_OUTPUT"
 
       - name: Persist Scheduled Review canonical review event
-        if: ${{ ((github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path != '') || (github.event_name == 'push' && steps.push_kind.outputs.scheduled_review_completion == 'true')) && steps.scheduled_completion_event.outputs.review_event_path != '' }}
+        if: ${{ ((github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path != '') || (github.event_name == 'push' && steps.push_kind.outputs.scheduled_review_completion == 'true') || (github.event_name == 'workflow_run' && steps.workflow_review.outputs.review_completion == 'true')) && steps.scheduled_completion_event.outputs.review_event_path != '' }}
         shell: bash
         env:
           EVENT_PATH: ${{ steps.scheduled_completion_event.outputs.review_event_path }}
@@ -710,7 +759,7 @@ jobs:
         if: ${{ (github.event_name == 'push' && steps.push_kind.outputs.formal_completion == 'true') || (github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path != '' && steps.dispatch_completion_kind.outputs.formal == 'true') }}
         shell: bash
         env:
-          COMPLETION_PATH: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path || steps.push_kind.outputs.formal_review_source_path }}
+          COMPLETION_PATH: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path || steps.push_kind.outputs.formal_review_source_path || steps.workflow_review.outputs.formal_review_source_path }}
         run: |
           set -euo pipefail
           test -f "$COMPLETION_PATH"
@@ -747,7 +796,7 @@ jobs:
           echo "review_event_path=$event_path" >> "$GITHUB_OUTPUT"
 
       - name: Persist Formal Decision canonical review event
-        if: ${{ (github.event_name == 'push' && steps.formal_completion_event.outputs.review_event_path != '') || (github.event_name == 'workflow_dispatch' && steps.formal_completion_event.outputs.review_event_path != '') }}
+        if: ${{ (github.event_name == 'push' && steps.formal_completion_event.outputs.review_event_path != '') || (github.event_name == 'workflow_run' && steps.formal_completion_event.outputs.review_event_path != '') || (github.event_name == 'workflow_dispatch' && steps.formal_completion_event.outputs.review_event_path != '') }}
         shell: bash
         env:
           EVENT_PATH: ${{ steps.formal_completion_event.outputs.review_event_path }}
@@ -793,7 +842,7 @@ jobs:
       - name: Send material user-action notification
         id: event_notify
         # Delivery uses the already-bound current REPORT/review event. It must still run when a prior state persistence step fails; the sender remains fail-closed and never creates a second object.
-        if: ${{ always() && ((github.event_name == 'workflow_run' && (github.event.workflow_run.name != 'ETF market snapshot' || steps.workflow_review.outputs.review_completion == 'true')) || (github.event_name == 'push' && (steps.push_kind.outputs.decision == 'true' || steps.push_kind.outputs.trade == 'true' || steps.push_kind.outputs.account == 'true' || steps.push_kind.outputs.report == 'true' || steps.push_kind.outputs.report_handoff == 'true' || steps.push_kind.outputs.review_completion == 'true' || steps.push_kind.outputs.discovery_pulse == 'true' || steps.push_kind.outputs.hyperliquid_pulse == 'true' || steps.scheduled_completion_event.outputs.review_event_path != '' || steps.formal_completion_event.outputs.review_event_path != '')) || (github.event_name == 'workflow_dispatch' && (steps.scheduled_completion_event.outputs.review_event_path != '' || steps.formal_completion_event.outputs.review_event_path != ''))) }}
+        if: ${{ always() && ((github.event_name == 'workflow_run' && (github.event.workflow_run.name != 'ETF market snapshot' || steps.workflow_review.outputs.review_completion == 'true' || steps.workflow_review.outputs.formal_completion == 'true')) || (github.event_name == 'push' && (steps.push_kind.outputs.decision == 'true' || steps.push_kind.outputs.trade == 'true' || steps.push_kind.outputs.account == 'true' || steps.push_kind.outputs.report == 'true' || steps.push_kind.outputs.report_handoff == 'true' || steps.push_kind.outputs.review_completion == 'true' || steps.push_kind.outputs.discovery_pulse == 'true' || steps.push_kind.outputs.hyperliquid_pulse == 'true' || steps.scheduled_completion_event.outputs.review_event_path != '' || steps.formal_completion_event.outputs.review_event_path != '')) || (github.event_name == 'workflow_dispatch' && (steps.scheduled_completion_event.outputs.review_event_path != '' || steps.formal_completion_event.outputs.review_event_path != ''))) }}
         env:
           REPORT_DELIVERY_PATH: ${{ steps.push_kind.outputs.report_path }}
           REPORT_HANDOFF_PATH: ${{ steps.push_kind.outputs.report_handoff_path }}
