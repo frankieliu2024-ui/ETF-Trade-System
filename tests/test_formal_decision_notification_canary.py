@@ -66,15 +66,15 @@ class FormalDecisionNotificationCanaryTests(unittest.TestCase):
     def test_candidate_switch_builds_material_guarded_notification(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
-            prior = self._event(
-                "d1",
-                "2026-09-04T11:20:00+08:00",
-                "518880",
-                "黄金ETF",
-                "观察机会",
-                "允许Trial",
-            )
-            latest = self._event(
-                "d2",
-                "2026-09-04T11:30:00+08:00",
-                "159326",
+            prior = self._event("d1", "2026-09-04T11:20:00+08:00", "518880", "黄金ETF", "观察机会", "允许Trial")
+            latest = self._event("d2", "2026-09-04T11:30:00+08:00", "159326", "电网设备ETF", "观察机会", "允许Trial")
+            self._write_events(root, prior, latest)
+            with patch.object(center, "ROOT", root), patch.object(center, "STATE", root / "data" / "state"):
+                result = center.build_decision_materiality_event(latest)
+            self.assertIsNotNone(result)
+            self.assertEqual(result["event_type"], "FORMAL_DECISION")
+            self.assertEqual(result["decision_id"], "d2")
+
+
+if __name__ == "__main__":
+    unittest.main()
