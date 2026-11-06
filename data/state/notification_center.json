@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-11-06T08:32:59+08:00",
+  "updated_at": "2026-11-06T08:36:11+08:00",
   "last_status": "SENT",
-  "last_type": "REPORT_DELIVERY_REQUEST",
-  "last_title": "【ETF系统复核】",
+  "last_type": "MARKET_VALUE_ALERT",
+  "last_title": "【市场异动】半导体ETF代理（SOXX）出现极端波动 +3.09%",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -47931,63 +47931,159 @@
       },
       "last_attempted_at": "2026-11-06T08:32:59+08:00",
       "pushplus_template": "markdown"
+    },
+    {
+      "notification_id": "notification_80f07694de0361d83538",
+      "event_type": "APAC_OPEN_SIGNAL",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "apac-open-signal:2026-11-06:KOSPI:DOWN",
+      "request_id": "",
+      "parent_request_id": "",
+      "report_id": "",
+      "content_hash": "",
+      "related_decision_id": "",
+      "security_code": "KOSPI",
+      "security_name": "韩国综合指数",
+      "user_severity": "需要关注",
+      "user_action": "纳入最近A股节点，检查本地传导和直接相关ETF自身反馈，不机械交易",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-11-06T08:36:08+08:00",
+      "sent_at": "2026-11-06T08:36:09+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-11-08T08:36:08+08:00",
+      "title": "【市场异动】韩国综合指数（KOSPI）实际开盘出现异常跳空",
+      "content": "### 核心结论\n- **节点**：亚太错位开盘异常\n- **触发对象**：韩国综合指数（KOSPI）\n- **实际开盘较前收**：-2.24%\n- **当前较前收**：-5.88%\n- **区域结构**：区域普遍偏弱\n- **数据质量**：覆盖2/4；触发判断使用PASS对象2/4；当前未发现需单列的数据质量降级。\n\n### 关键路径\n- **触发对象**：低开-2.24%后当前-5.88%，低开后继续走弱，开盘冲击扩大。\n- **区域对照**：其他市场对照：日经225指数（N225）-5.52%。\n\n### 对ETF系统的影响\n外部结构：韩国综合指数（KOSPI）的实际开盘异常仍需结合当前-5.88%和区域判断“区域普遍偏弱”继续验证是否延续。\n\n本地传导：A股同步反馈为A股当日同步数据不可用；外部信号只有被A股自身价格结构接受，才可能改变当前ETF判断。\n\nETF自身反馈：当前没有需要机械绑定的直接监测ETF，区域指数变化只进入跨市场证据层。\n\n机会判断：本通知不生成Trial/Confirm或卖出动作；只有外部结构、本地传导和ETF自身反馈共同改变正式判断时，才进入交易链。\n\n### 当前动作\n**把该事件纳入最近A股正式节点复核；不因单一海外/区域指数跳空机械买卖，重点看A股是否接受以及直接相关ETF自身反馈。**\n\n### 数据与边界\n- **触发对象行情时点（北京时间）**：2026-11-06 08:35:33\n- **亚太对象最新有效时点上限**：2026-11-06 08:35:33\n- **A股同步参考时点**：未提供\n- **通知生成**：2026-11-06 08:36:08\n- **边界**：约0.8%的门槛只检查实际开盘价相对前收；开盘后的累计涨跌不回填成开盘异常。覆盖数量与数据质量分开表达，DEGRADED/延迟对象不得被包装成全部实时FRESH。",
+      "source": "overseas_context+CURRENT",
+      "confirmation_context": {
+        "market": "ASIA",
+        "market_date": "2026-11-06",
+        "direction": "DOWN",
+        "event_category": "APAC_OPEN_SIGNAL",
+        "fact_family": "APAC_OBJECT_DIRECTIONAL_SESSION",
+        "object_codes": [
+          "N225",
+          "KOSPI"
+        ],
+        "source_fact_ids": [
+          "2026-11-06:N225:2026-11-06T08:35:04+08:00",
+          "2026-11-06:KOSPI:2026-11-06T08:35:33+08:00"
+        ],
+        "session_node": "OPEN_SIGNAL",
+        "lead_code": "KOSPI",
+        "lead_open_gap_pct": -2.2389390393402375,
+        "lead_change_pct": -5.883762398306036,
+        "tone": "区域普遍偏弱",
+        "market_as_of_beijing": "2026-11-06T08:35:33+08:00",
+        "a_share_as_of_beijing": "",
+        "event_family_id": "ASIA:2026-11-06:OPEN_SIGNAL:KOSPI:APAC_OPEN_SIGNAL:DOWN:"
+      },
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "last_attempted_at": "2026-11-06T08:36:09+08:00"
+    },
+    {
+      "notification_id": "notification_1bf72037d2cdc2c051a7",
+      "event_type": "MARKET_VALUE_ALERT",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "market-value:asia:2026-11-06:KOSPI:DOWN:EXTREME:2026-11-06T08:35:33+08:00",
+      "request_id": "",
+      "parent_request_id": "",
+      "report_id": "",
+      "content_hash": "",
+      "related_decision_id": "",
+      "security_code": "KOSPI",
+      "security_name": "韩国综合指数",
+      "user_severity": "需要关注",
+      "user_action": "纳入最近A股决策节点重新验证，不机械交易",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-11-06T08:36:08+08:00",
+      "sent_at": "2026-11-06T08:36:10+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-11-08T08:36:08+08:00",
+      "title": "【市场异动】韩国综合指数（KOSPI）出现极端波动 -5.88%",
+      "content": "### 核心结论\n- **事件类型**：极端波动\n- **对象/结构**：韩国综合指数（KOSPI）\n- **较前收**：-5.88%\n\n**判断**：当前幅度已进入通知层的非常规区间，可能实质改变风险偏好、风险收益或资本比较。\n\n### 对ETF系统的影响\n韩国综合指数（KOSPI）属于海外/区域结构证据。先看A股本地价格是否接受、减弱或背离，再复核相关持仓/观察ETF的自身反馈、当前主候选和边际资本效率；若海外与A股背离，以A股自身反馈为主。\n\n### 当前动作\n**把该信号纳入最近A股正式节点复核，不因单一海外/区域对象机械调整A股仓位。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-11-06 08:35:33\n- **边界**：市场归属只用于数据时点和传导解释，不决定通知资格。门槛已适度放宽；同一事实依靠去重和升级识别控制重复。",
+      "source": "data/state/overseas_context.json",
+      "confirmation_context": {
+        "market": "ASIA",
+        "market_date": "2026-11-06",
+        "direction": "DOWN",
+        "event_category": "EXTREME",
+        "fact_family": "",
+        "object_codes": [
+          "KOSPI"
+        ],
+        "phase_metric_change_pct": -5.883762398306036,
+        "sudden_change_pct": null,
+        "event_magnitude_pct": 5.883762398306036,
+        "market_as_of_beijing": "2026-11-06T08:35:33+08:00",
+        "source_fact_id": "2026-11-06:KOSPI:EXTREME:DOWN:2026-11-06T08:35:33+08:00",
+        "session": "SESSION",
+        "event_family_id": "ASIA:2026-11-06:SESSION:KOSPI:EXTREME:DOWN:"
+      },
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "last_attempted_at": "2026-11-06T08:36:10+08:00"
+    },
+    {
+      "notification_id": "notification_320c2e39e8a1a470bfc2",
+      "event_type": "MARKET_VALUE_ALERT",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "market-value:us:2026-11-05:SOXX:UP:EXTREME:2026-11-06T08:35:37+08:00",
+      "request_id": "",
+      "parent_request_id": "",
+      "report_id": "",
+      "content_hash": "",
+      "related_decision_id": "",
+      "security_code": "SOXX",
+      "security_name": "半导体ETF代理",
+      "user_severity": "需要关注",
+      "user_action": "纳入最近A股决策节点重新验证，不机械交易",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-11-06T08:36:10+08:00",
+      "sent_at": "2026-11-06T08:36:11+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-11-08T08:36:10+08:00",
+      "title": "【市场异动】半导体ETF代理（SOXX）出现极端波动 +3.09%",
+      "content": "### 核心结论\n- **事件类型**：极端波动\n- **对象/结构**：半导体ETF代理（SOXX）\n- **扩展时段较最近现金盘收盘**：+3.09%\n\n**判断**：当前幅度已进入通知层的非常规区间，可能实质改变风险偏好、风险收益或资本比较。\n\n### 对ETF系统的影响\n半导体ETF代理（SOXX）属于海外/区域结构证据。先看A股本地价格是否接受、减弱或背离，再复核纳指ETF（159941）及A股科技风险篮子的自身反馈、当前主候选和边际资本效率；若海外与A股背离，以A股自身反馈为主。\n\n### 当前动作\n**把该信号纳入最近A股正式节点复核，不因单一海外/区域对象机械调整A股仓位。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-11-06 08:35:37\n- **边界**：市场归属只用于数据时点和传导解释，不决定通知资格。门槛已适度放宽；同一事实依靠去重和升级识别控制重复。",
+      "source": "data/state/us_extended_hours_context.json",
+      "confirmation_context": {
+        "market": "US",
+        "market_date": "2026-11-05",
+        "direction": "UP",
+        "event_category": "EXTREME",
+        "fact_family": "",
+        "object_codes": [
+          "SOXX"
+        ],
+        "phase_metric_change_pct": 3.0904,
+        "sudden_change_pct": null,
+        "event_magnitude_pct": 3.0904,
+        "market_as_of_beijing": "2026-11-06T08:35:37+08:00",
+        "source_fact_id": "2026-11-05:SOXX:EXTREME:UP:2026-11-06T08:35:37+08:00",
+        "session": "POST_MARKET",
+        "event_family_id": "US:2026-11-05:POST_MARKET:SOXX:EXTREME:UP:"
+      },
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "last_attempted_at": "2026-11-06T08:36:11+08:00"
     }
   ],
   "recent": [
-    {
-      "key": "report-completion:ETF_FORMAL_DECISION:fd-20261029-095835-auto-3d9a1b",
-      "type": "REPORT_DELIVERY_REQUEST",
-      "title": "【ETF正式决策】",
-      "content": "【ETF正式决策】2026-10-29 09:58 正式判断\n\n【判断时点与事实边界】\n\n本次为系统自动运行，判断时间为2026-10-29 09:58（北京时间），当前为A股盘中。市场日期为2026-10-29。使用本次运行开始前已形成并发布的实时快照：行情实际时间约09:57:15，采集时间09:57:19，质量校验通过，CURRENT已指向有效，快照年龄约1分钟，属于正式判断。PIT（时点一致性边界）截止本次运行开始前，运行后事实未纳入。账户事实更新时间为2026-10-28 18:02，仍为最近有效账户事实，非盘中即时截图。\n\n【当前正式判断】\n\n市场从上一收盘的成长修复转为盘中结构性偏弱：上证指数约-0.54%，创业板指约-3.07%，科创50约-3.38%；15只监测ETF约5涨、9跌、1平，中位数约-0.49%，大盘/低波相对成长占优。建议继续管理既有仓位，暂停新增部署和追涨。Discovery（全市场发现候选）本节点形成7只，但均仅有观察评估输入资格；机会ETF仍待正式决策，不能写成0只。Trial（试探性部署资格）不授予具体标的，Confirm（确认部署资格）不授予。建议新增部署0元，实际新增部署0元，实际释放0份。\n\n【风险与市场状态】\n\n当前是成长资产显著承压、结构性分化状态。盘中创业板和科创50跌幅明显大于上证，说明前一日修复未得到即时确认。策略风险率约-12.65%，现金缓冲仍应优先。分钟级路径为离散快照回退，不能把早盘反弹或下探解释为已确认趋势。\n\n【市场监测】\n\n第一层：海外与跨市场。美股科技使用上一美股交易时段收盘参考；日经和韩国使用本次运行前最近盘中事实，海外仅作风险背景。各市场时点不同，不能用盘中海外事实倒推A股即时走势。\n\n第二层：A股内部反馈。上证相对抗跌，但成长风格明显弱于大盘；市场宽度偏弱。完整资金流、盘口承接和行业成交分布不足，不能用指数跌幅替代。\n\n第三层：ETF与资本状态。现金115,294.47元，证券市值56,641.60元，风险暴露约33%。当前没有正式机会ETF支持新增资金，现金保留优于追加或切换；盘中成长下跌也不构成自动减持既有仓位的充分条件。\n\n【全市场发现】\n\n本节点Discovery共7只，均为全市场发现候选和观察评估输入，不自动成为观察ETF、机会ETF、Trial或Confirm：\n\n恒生生物科技ETF易方达（159105）：涨约0.70%，60日收益约-0.12%，趋势优势不足。\n\n标普生物科技ETF嘉实（159502）：涨约2.52%，60日收益约8.26%、年初至今约24.22%，相对强，但当前仍只是候选。\n\n标普消费ETF景顺（159529）：涨约0.80%，60日收益约9.88%，趋势相对稳定，但未完成正式机会评估。\n\n港股红利ETF工银（159691）：涨约0.98%，60日收益约-6.58%，年初至今约-10.98%，不支持升级。\n\n银行ETF富国（159887）：涨约1.40%，60日收益约8.45%，防御属性较强，但尚无正式机会资格。\n\n纳指生物科技ETF汇添富（513290）：涨约3.02%，60日收益约16.45%、年初至今约23.18%，强势但存在海外科技与主题重复暴露。\n\n港股通央企红利ETF华夏（513910）：涨约1.24%，60日收益约-1.39%，尚不足以形成独立趋势优势。\n\n【观察ETF】\n\n观察ETF共11只：科创50ETF（588000）、科创创业ETF（159781）、恒生科技ETF（513180）、德国ETF（159561）、日经ETF（513520）、黄金ETF（518880）、通信ETF（515880）、电网设备ETF（159326）、煤炭ETF（515220）、标普油气ETF（513350）、中证红利ETF招商（515080）。本节点不新增观察身份，也不把Discovery候选直接替代观察ETF。\n\n【机会ETF】\n\n机会ETF状态仍为待正式决策，数量尚未形成，不能写成0只。本节点没有对象取得机会ETF、Trial或Confirm资格。\n\n【全市场机会与资本竞争】\n\n防御型候选相对占优，但尚未完成正式机会层确认；生物科技和纳指生物科技候选与现有成长、海外科技暴露存在重复风险。现金保留的机会成本低于在盘中成长下跌时追加或追逐强势候选的回撤风险。\n\n【现金管理】\n\n可部署现金115,294.47元，无已确认待结算锁定资金。建议继续保留现金，新增部署0元，实际释放0份，现金和持仓结构维持不变。\n\n【全部实际持仓】\n\n纳指ETF（159941）：继续持有，不追加、不减持。市值20,837.60元，浮盈1,001.00元（约5.05%）。盘中成长和海外科技相关资产走弱，追加缺乏依据；但尚无明确持仓级破坏证据，持有优于立即退出。不存在追加理由，暂未确认可释放资本；若连续弱于市场或回撤扩大，再评估减持。本次无成交、无委托变化。\n\n能源化工（159981）：继续持有，暂不追加。市值16,422.00元，浮盈1,601.40元（约10.80%）。相对成长方向具一定防御价值，但没有新的追加证据；相较切换，继续持有更稳健。不存在追加理由，暂未确认可释放资本；若连续弱于市场或出现明确破位，再评估减持。本次无成交、无委托变化。\n\n创新药（159992）：继续持有管理，不追加、不主动退出。市值13,588.00元，浮亏1,338.80元（约-8.97%）。当前成长风格明显走弱，追加风险更高；但单个盘中快照不足以支持立即退出。不存在追加理由，暂未确认可释放资本；若继续弱于市场或出现更高质量替代对象，再提高减持优先级。本次无成交、无委托变化。\n\n全指器械（159056）：继续持有观察，不追加、不减持。市值4,794.00元，浮亏108.40元（约-2.21%）。成长承压使追加缺乏依据，但尚无持仓级破位证据；不存在追加理由，暂未确认可释放资本。若医疗器械继续弱于市场或出现明确风险事件，再评估减持或退出。本次无成交、无委托变化。\n\n华纬转债（127118）：按账户其他证券管理，不纳入ETF机会、Trial或Confirm。市值1,000元，账面持平；不存在追加理由，是否可释放资本本次无法确认。本次无成交、无委托变化。\n\n【最终管理动作】\n\n继续持有四只ETF，华纬转债按其他证券管理；Discovery不升级，观察ETF不扩容，机会ETF不授予；Trial不授予，Confirm不授予；建议新增部署0元，实际新增部署0元，实际释放0份；本次无成交、无委托变化。\n\n【关键风险与改变判断的条件】\n\n下一节点需验证：创业板和科创50跌势是否收敛；成长相对大盘能否修复；市场宽度和成交承接是否改善；防御候选是否形成持续优势；Discovery候选是否进入正式观察或机会评估；账户是否出现新成交、委托、费用或资金变化。\n\n【信息不足在哪里】\n\n账户不是2026-10-29盘中即时截图，无法确认18:02之后的账户变化。资金流、盘口承接和完整行业成交分布不足，分钟路径部分为离散回退。机会ETF仍待正式决策，不能写成0只；Discovery虽已形成7只，但尚未完成正式升级，因此Trial、Confirm和资本动作受限。\n\n【执行边界】\n\n本次仅形成管理建议，不自动下单、不自动调仓、不改变交易权限，所有证券交易由用户人工确认和执行。\n\n【置信度】\n\n整体中等；盘中市场状态判断中等偏高；账户、机会ETF、Trial、Confirm及资本释放判断中等偏低。\n\n【最可能出错的地方】\n\n最可能错误是把早盘下跌误判为全天趋势，或把强势Discovery候选误判为已具备机会ETF和Trial资格；其次是遗漏账户在18:02之后的未回读变化。\n\n【后置交接状态】\n\n本次已形成唯一FINAL_CONTENT并完整输出。completion对象已建立、写入并回读核验一致；通知流程、事件、报告、服务商投递和用户收件状态尚未确认。",
-      "source": "canonical-review-completion:formal_fd-20261029-095835-auto-3d9a1b.json",
-      "user_severity": "正式报告",
-      "user_action": "阅读已完成的正式ETF报告；无需交易操作",
-      "status": "SENT",
-      "attempted_at": "2026-10-29T09:59:44+08:00",
-      "response": {
-        "http_status": 200,
-        "pushplus_code": 200,
-        "pushplus_message": "执行成功"
-      },
-      "notification_id": "notification_08a7e156bf249c092105",
-      "lifecycle_status": "SENT"
-    },
-    {
-      "key": "market-value:a-share:2026-10-29:A_SHARE_ETF_DIVERGENCE:DIVERGED:DIVERGENCE:2026-10-29T09:57:19+08:00",
-      "type": "MARKET_VALUE_ALERT",
-      "title": "【市场异动】A股监测ETF横截面出现显著分化",
-      "content": "### 核心结论\n- **事件类型**：显著分化\n- **对象/结构**：A股监测ETF横截面\n- **关键结构**：横截面两端：标普油气ETF（513350）+1.53%，通信ETF（515880）-5.77%，涨跌幅相差7.30个百分点\n\n**判断**：相关对象之间的相对差已经扩大到值得单独关注的程度，不能再用单一市场方向概括全部机会和风险。\n\n### 对ETF系统的影响\nA股监测ETF横截面（A股监测ETF横截面）代表A股本地风险偏好或风格结构变化。先看变化是否扩散到当前持仓/观察ETF，再判断候选和资本效率是否真正改变。\n\n### 当前动作\n**先验证ETF层是否接受该指数信号；不因指数单一波动机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-10-29 09:57:19\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。",
-      "source": "market_delta+CURRENT+stock_market_context",
-      "user_severity": "需要关注",
-      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
-      "status": "SENT",
-      "attempted_at": "2026-10-29T09:59:49+08:00",
-      "response": {
-        "http_status": 200,
-        "pushplus_code": 200,
-        "pushplus_message": "执行成功"
-      },
-      "notification_id": "notification_12295777f0cc4913463e",
-      "lifecycle_status": "SENT"
-    },
-    {
-      "key": "market-value:asia:2026-10-29:TWII:DOWN:EXTREME:2026-10-29T10:20:00+08:00",
-      "type": "MARKET_VALUE_ALERT",
-      "title": "【市场异动】台湾加权指数（TWII）出现极端波动 -1.59%",
-      "content": "### 核心结论\n- **事件类型**：极端波动\n- **对象/结构**：台湾加权指数（TWII）\n- **较前收**：-1.59%\n\n**判断**：当前幅度已进入通知层的非常规区间，可能实质改变风险偏好、风险收益或资本比较。\n\n### 对ETF系统的影响\n台湾加权指数（TWII）属于海外/区域结构证据。先看A股本地价格是否接受、减弱或背离，再复核相关持仓/观察ETF的自身反馈、当前主候选和边际资本效率；若海外与A股背离，以A股自身反馈为主。\n\n### 当前动作\n**把该信号纳入最近A股正式节点复核，不因单一海外/区域对象机械调整A股仓位。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-10-29 10:20:00\n- **边界**：市场归属只用于数据时点和传导解释，不决定通知资格。门槛已适度放宽；同一事实依靠去重和升级识别控制重复。",
-      "source": "data/state/overseas_context.json",
-      "user_severity": "需要关注",
-      "user_action": "纳入最近A股决策节点重新验证，不机械交易",
-      "status": "SENT",
-      "attempted_at": "2026-10-29T10:21:45+08:00",
-      "response": {
-        "http_status": 200,
-        "pushplus_code": 200,
-        "pushplus_message": "执行成功"
-      },
-      "notification_id": "notification_3bd721610cc42856f161",
-      "lifecycle_status": "SENT"
-    },
     {
       "key": "market-value:a-share:2026-10-29:159781:DOWN:EXTREME:2026-10-29T10:21:09+08:00",
       "type": "MARKET_VALUE_ALERT",
@@ -51533,6 +51629,60 @@
       },
       "notification_id": "notification_eb8bc153d6c3af46c59f",
       "lifecycle_status": "SENT"
+    },
+    {
+      "key": "apac-open-signal:2026-11-06:KOSPI:DOWN",
+      "type": "APAC_OPEN_SIGNAL",
+      "title": "【市场异动】韩国综合指数（KOSPI）实际开盘出现异常跳空",
+      "content": "### 核心结论\n- **节点**：亚太错位开盘异常\n- **触发对象**：韩国综合指数（KOSPI）\n- **实际开盘较前收**：-2.24%\n- **当前较前收**：-5.88%\n- **区域结构**：区域普遍偏弱\n- **数据质量**：覆盖2/4；触发判断使用PASS对象2/4；当前未发现需单列的数据质量降级。\n\n### 关键路径\n- **触发对象**：低开-2.24%后当前-5.88%，低开后继续走弱，开盘冲击扩大。\n- **区域对照**：其他市场对照：日经225指数（N225）-5.52%。\n\n### 对ETF系统的影响\n外部结构：韩国综合指数（KOSPI）的实际开盘异常仍需结合当前-5.88%和区域判断“区域普遍偏弱”继续验证是否延续。\n\n本地传导：A股同步反馈为A股当日同步数据不可用；外部信号只有被A股自身价格结构接受，才可能改变当前ETF判断。\n\nETF自身反馈：当前没有需要机械绑定的直接监测ETF，区域指数变化只进入跨市场证据层。\n\n机会判断：本通知不生成Trial/Confirm或卖出动作；只有外部结构、本地传导和ETF自身反馈共同改变正式判断时，才进入交易链。\n\n### 当前动作\n**把该事件纳入最近A股正式节点复核；不因单一海外/区域指数跳空机械买卖，重点看A股是否接受以及直接相关ETF自身反馈。**\n\n### 数据与边界\n- **触发对象行情时点（北京时间）**：2026-11-06 08:35:33\n- **亚太对象最新有效时点上限**：2026-11-06 08:35:33\n- **A股同步参考时点**：未提供\n- **通知生成**：2026-11-06 08:36:08\n- **边界**：约0.8%的门槛只检查实际开盘价相对前收；开盘后的累计涨跌不回填成开盘异常。覆盖数量与数据质量分开表达，DEGRADED/延迟对象不得被包装成全部实时FRESH。",
+      "source": "overseas_context+CURRENT",
+      "user_severity": "需要关注",
+      "user_action": "纳入最近A股节点，检查本地传导和直接相关ETF自身反馈，不机械交易",
+      "status": "SENT",
+      "attempted_at": "2026-11-06T08:36:09+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_80f07694de0361d83538",
+      "lifecycle_status": "SENT"
+    },
+    {
+      "key": "market-value:asia:2026-11-06:KOSPI:DOWN:EXTREME:2026-11-06T08:35:33+08:00",
+      "type": "MARKET_VALUE_ALERT",
+      "title": "【市场异动】韩国综合指数（KOSPI）出现极端波动 -5.88%",
+      "content": "### 核心结论\n- **事件类型**：极端波动\n- **对象/结构**：韩国综合指数（KOSPI）\n- **较前收**：-5.88%\n\n**判断**：当前幅度已进入通知层的非常规区间，可能实质改变风险偏好、风险收益或资本比较。\n\n### 对ETF系统的影响\n韩国综合指数（KOSPI）属于海外/区域结构证据。先看A股本地价格是否接受、减弱或背离，再复核相关持仓/观察ETF的自身反馈、当前主候选和边际资本效率；若海外与A股背离，以A股自身反馈为主。\n\n### 当前动作\n**把该信号纳入最近A股正式节点复核，不因单一海外/区域对象机械调整A股仓位。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-11-06 08:35:33\n- **边界**：市场归属只用于数据时点和传导解释，不决定通知资格。门槛已适度放宽；同一事实依靠去重和升级识别控制重复。",
+      "source": "data/state/overseas_context.json",
+      "user_severity": "需要关注",
+      "user_action": "纳入最近A股决策节点重新验证，不机械交易",
+      "status": "SENT",
+      "attempted_at": "2026-11-06T08:36:10+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_1bf72037d2cdc2c051a7",
+      "lifecycle_status": "SENT"
+    },
+    {
+      "key": "market-value:us:2026-11-05:SOXX:UP:EXTREME:2026-11-06T08:35:37+08:00",
+      "type": "MARKET_VALUE_ALERT",
+      "title": "【市场异动】半导体ETF代理（SOXX）出现极端波动 +3.09%",
+      "content": "### 核心结论\n- **事件类型**：极端波动\n- **对象/结构**：半导体ETF代理（SOXX）\n- **扩展时段较最近现金盘收盘**：+3.09%\n\n**判断**：当前幅度已进入通知层的非常规区间，可能实质改变风险偏好、风险收益或资本比较。\n\n### 对ETF系统的影响\n半导体ETF代理（SOXX）属于海外/区域结构证据。先看A股本地价格是否接受、减弱或背离，再复核纳指ETF（159941）及A股科技风险篮子的自身反馈、当前主候选和边际资本效率；若海外与A股背离，以A股自身反馈为主。\n\n### 当前动作\n**把该信号纳入最近A股正式节点复核，不因单一海外/区域对象机械调整A股仓位。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-11-06 08:35:37\n- **边界**：市场归属只用于数据时点和传导解释，不决定通知资格。门槛已适度放宽；同一事实依靠去重和升级识别控制重复。",
+      "source": "data/state/us_extended_hours_context.json",
+      "user_severity": "需要关注",
+      "user_action": "纳入最近A股决策节点重新验证，不机械交易",
+      "status": "SENT",
+      "attempted_at": "2026-11-06T08:36:11+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_320c2e39e8a1a470bfc2",
+      "lifecycle_status": "SENT"
     }
   ],
   "pending_questions": [
@@ -51542,6 +51692,6 @@
     "notification_d5f3ea1194565824a934",
     "notification_fd7763215037ab96f889"
   ],
-  "policy": "只推送会改变用户关注、风险许可、机会状态、持仓动作、执行确认或系统可靠性的实质事件；总资产/市值/浮动盈亏等纯盯市变化不作为账户异常；同一实质账户事件和同一正式decision_id不得重复推送；收盘账户提醒仅在A股交易日触发。",
-  "safety_boundary": "通知中心只转发已有正式判断，不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"
+  "policy": "canonical bounded market notification batch",
+  "safety_boundary": "通知只总结已取得的行情、账户、研究或系统事实；不生成自动交易，不修改MASTER、风险许可、金额或卖出份额。"
 }
