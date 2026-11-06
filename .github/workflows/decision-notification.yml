@@ -718,6 +718,8 @@ jobs:
           closure_backup="/tmp/scheduled-review-closure.json"
           report_backup="/tmp/scheduled-review-report.json"
           current_backup="/tmp/scheduled-review-current.json"
+          dashboard_backup="/tmp/scheduled-review-dashboard.md"
+          [ -f ETF当前状态_DASHBOARD.md ] && cp -- ETF当前状态_DASHBOARD.md "$dashboard_backup" || true
           [ -n "$closure_path" ] && [ -f "$closure_path" ] && cp -- "$closure_path" "$closure_backup" || true
           [ -n "$report_path" ] && [ -f "$report_path" ] && cp -- "$report_path" "$report_backup" || true
           [ -f data/state/CURRENT.json ] && cp -- data/state/CURRENT.json "$current_backup" || true
