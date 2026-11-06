@@ -261,8 +261,9 @@ class DecisionFirstQueryRefreshTests(unittest.TestCase):
                  patch.object(query_context, "build_decision_context", return_value={"rules_version": "V2.2.31"}):
                 result = query_context.build(root, request_file="formal.json")
 
-        self.assertEqual(events, ["discovery"])
-        self.assertEqual(result["formal_etf_discovery"]["status"], "PASS")
+        self.assertEqual(events, [])
+        self.assertEqual(result["formal_etf_discovery"]["status"], "NOT_RESOLVED")
+        self.assertTrue(result["formal_etf_discovery"]["producer_required"])
 
     def test_structured_formal_intent_runs_discovery(self):
         events = []
@@ -300,10 +301,10 @@ class DecisionFirstQueryRefreshTests(unittest.TestCase):
                  patch.object(query_context, "build_decision_context", return_value={"rules_version": "V2.2.33"}):
                 result = query_context.build(root, request_file="formal.json")
 
-        self.assertEqual(events, ["discovery"])
-        self.assertEqual(result["formal_etf_discovery"]["status"], "PASS")
-        self.assertEqual(result["decision_fact_pack"]["formal_reply_freeze"]["status"], "READY")
-        self.assertTrue(result["decision_fact_pack"]["formal_reply_freeze"]["reply_freezable"])
+        self.assertEqual(events, [])
+        self.assertEqual(result["formal_etf_discovery"]["status"], "NOT_RESOLVED")
+        self.assertTrue(result["formal_etf_discovery"]["producer_required"])
+        self.assertEqual(result["decision_fact_pack"]["formal_reply_freeze"]["status"], "NOT_APPLICABLE")
 
     def test_structured_formal_intent_fact_pack_is_request_scoped(self):
         request = {

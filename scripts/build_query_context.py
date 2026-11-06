@@ -14,13 +14,13 @@ try:
     from state_manager import atomic_json_write, build_decision_context, now_utc, read_account_fact, read_current, read_json
     from build_stock_context import active_account_asset_codes
     from market_quote_router import build_market_quote_context
-    from formal_etf_opportunity_discovery import attach_formal_quotes, discover_formal_candidates
+    from formal_etf_opportunity_discovery import attach_formal_quotes
     from trading_time_semantics import user_visible_trading_time_anchor
 except ModuleNotFoundError:
     from scripts.state_manager import atomic_json_write, build_decision_context, now_utc, read_account_fact, read_current, read_json
     from scripts.build_stock_context import active_account_asset_codes
     from scripts.market_quote_router import build_market_quote_context
-    from scripts.formal_etf_opportunity_discovery import attach_formal_quotes, discover_formal_candidates
+    from scripts.formal_etf_opportunity_discovery import attach_formal_quotes
     from scripts.trading_time_semantics import user_visible_trading_time_anchor
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
@@ -2148,15 +2148,20 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
             formal_discovery, overseas_context.get("hyperliquid")
         ) if formal_discovery is not None else None
         if formal_discovery is None:
-            formal_discovery = discover_formal_candidates(
-                root,
-                market_date=str(current.get("market_date") or trading_day_status.get("market_date") or ""),
-                managed_codes=managed_etf_codes,
-                held_codes=held_etf_codes,
-                external_driver_context=overseas_context.get("hyperliquid"),
-            )
-            formal_discovery["universe_identity"] = universe_identity
-            formal_discovery["discovery_delta_identity"] = _discovery_delta_identity(root)
+            # Discovery has one producer: build_weekly_discovery.py, which
+            # consumes a verified A-share node.  Query-context construction is
+            # a consumer only; it must not create a second provider-backed
+            # result that can overwrite the canonical node result with an
+            # unrelated empty projection.
+            formal_discovery = {
+                "status": "NOT_RESOLVED",
+                "candidates": [],
+                "candidate_count": None,
+                "coverage_status": "NOT_AVAILABLE",
+                "empty_reason": "DISCOVERY_PRODUCER_RESULT_NOT_AVAILABLE",
+                "producer_required": True,
+                "consumption_boundary": "QUERY_CONTEXT_CONSUMER_ONLY",
+            }
         discovered_codes = [str(x.get("code") or "") for x in (formal_discovery.get("candidates") or []) if x.get("code")]
         existing_quote_symbols = {
             str(x.get("symbol") or x.get("code") or "").upper().replace(".SH", "").replace(".SZ", "")
