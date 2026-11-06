@@ -968,6 +968,16 @@ def build_formal_evidence_consumption_audit(fact_summary: dict | None, final_con
     if object_audit and not all(item["attested_in_content"] for item in object_audit):
         missing = [item["object_code"] for item in object_audit if not item["attested_in_content"]]
         raise ValueError("Formal Decision must explicitly consume mapped Hyperliquid objects: " + ", ".join(missing))
+    discovery_candidates = discovery.get("candidates") if isinstance(discovery, dict) else []
+    discovery_codes = [
+        str(item.get("code") or "").strip()
+        for item in discovery_candidates or []
+        if isinstance(item, dict) and str(item.get("code") or "").strip()
+    ]
+    if discovery_codes:
+        missing_discovery = [code for code in discovery_codes if code not in content or "Discovery" not in content]
+        if missing_discovery:
+            raise ValueError("Formal Decision must explicitly consume current Discovery objects: " + ", ".join(missing_discovery))
     return {
         "schema_version": "1.0",
         "discovery": {
