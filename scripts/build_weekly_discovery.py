@@ -70,12 +70,25 @@ def build() -> dict:
         for item in (account.get("positions") or [])
         if str(item.get("asset_type") or "").upper() == "ETF" and int(item.get("quantity") or 0) > 0
     }
+    verified_spot_rows = [
+        {
+            "code": str(row.get("symbol") or ""),
+            "name": str(row.get("provider_name") or row.get("symbol") or ""),
+            "close": row.get("close"), "change_pct": row.get("change_pct"),
+            "amount": row.get("amount"), "volume": row.get("volume"),
+            "high": row.get("high"), "low": row.get("low"),
+            "open": row.get("open"), "prev_close": row.get("prev_close"),
+        }
+        for row in (snapshot.get("rows") or [])
+        if str(row.get("asset_class") or "") == "ETF" and str(row.get("symbol") or "")
+    ]
     discovery = discover_formal_candidates(
         ROOT,
         market_date=market_date,
         required_history_end_date=required_history_end_date,
         managed_codes=managed_codes,
         held_codes=held_codes,
+        verified_spot_rows=verified_spot_rows,
     )
     generated = datetime.now(ZoneInfo("Asia/Shanghai")).isoformat(timespec="seconds")
     artifact = {

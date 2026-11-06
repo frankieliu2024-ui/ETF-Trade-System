@@ -987,16 +987,31 @@ def _discovery_pulse_event() -> dict | None:
         return None
     prior = _pulse_records(index)
     prior = [row for row in prior if row.get("identity") != latest.get("identity")]
-    previous_count = int((prior[-1].get("candidate_count") or 0) if prior else 0)
-    previous_candidates = {str(row.get("candidate_signature") or "") for row in (prior[-1].get("candidates") or [])} if prior else set()
     current_candidates = {
         ":".join(str(item.get(key) or "") for key in ("code", "formal_status", "category", "eligibility"))
         for item in candidates if isinstance(item, dict)
     }
-    if prior and current_candidates == previous_candidates:
+    latest_prior_candidates = {
+        str(row.get("candidate_signature") or "")
+        for row in (prior[-1].get("candidates") or [])
+    } if prior else set()
+    # Repeated pulses for the same node/snapshot may legitimately produce the
+    # same state (including repeated empty close projections). Suppress those
+    # repeats, but compare a new state with the most recent *different* state,
+    # not merely with the immediately preceding duplicate. This preserves a
+    # meaningful transition such as intraday candidates -> close empty.
+    if prior and current_candidates == latest_prior_candidates:
         return None
+    baseline = next(
+        (row for row in reversed(prior) if {
+            str(item.get("candidate_signature") or "")
+            for item in (row.get("candidates") or [])
+        } != current_candidates),
+        None,
+    )
+    previous_count = int((baseline or {}).get("candidate_count") or 0)
     names = []
-    candidate_rows = candidates[:5] if candidates else (prior[-1].get("candidates") or [] if prior else [])
+    candidate_rows = candidates[:5] if candidates else ((baseline or {}).get("candidates") or [])
     for candidate in candidate_rows:
         if not isinstance(candidate, dict):
             continue

@@ -931,6 +931,7 @@ def discover_formal_candidates(
     spot_rows: list[dict[str, Any]] | None = None,
     history_by_code: dict[str, list[dict[str, Any]]] | None = None,
     external_driver_context: dict[str, Any] | None = None,
+    verified_spot_rows: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     generated_dt = datetime.now(BEIJING)
     generated = generated_dt.isoformat(timespec="seconds")
@@ -951,6 +952,34 @@ def discover_formal_candidates(
             "decision_boundary": "广域发现失败不删除持仓/观察ETF，也不阻塞其现有正式MASTER链。",
         }
     broad_elapsed = round(time.monotonic() - broad_started, 3)
+    # Keep the broad universe from the discovery provider, but overwrite any
+    # overlapping objects with the verified A-share pulse facts.  The verified
+    # snapshot is the node-local source of truth for price/change/amount; using
+    # a fresh after-hours provider response here can otherwise make the same
+    # close node reclassify intraday objects as if they disappeared.
+    if verified_spot_rows:
+        verified_by_code = {
+            str(row.get("code") or row.get("symbol") or ""): row
+            for row in verified_spot_rows
+            if str(row.get("code") or row.get("symbol") or "")
+        }
+        merged = []
+        for row in broad:
+            code = str(row.get("code") or "")
+            verified = verified_by_code.get(code)
+            if not verified:
+                merged.append(row)
+                continue
+            merged_row = dict(row)
+            for source_key, target_key in (("close", "price"), ("change_pct", "change_pct"), ("amount", "amount"), ("volume", "volume"), ("high", "high"), ("low", "low"), ("open", "open"), ("prev_close", "prev_close")):
+                if _num(verified.get(source_key)) is not None:
+                    merged_row[target_key] = _num(verified.get(source_key))
+            if verified.get("provider_name"):
+                merged_row["name"] = str(verified["provider_name"])
+            merged_row["verified_spot_source"] = "A_SHARE_VERIFIED_SNAPSHOT"
+            merged.append(merged_row)
+        broad = merged
+        broad_source_meta["verified_spot_overlay_count"] = sum(1 for row in broad if row.get("verified_spot_source"))
     # Hyperliquid is a parallel continuous-market fact domain. It can widen
     # the evidence-acquisition queue for economically mapped ETFs, but it does
     # not create or promote Discovery candidates or grant trade authority.
@@ -1071,7 +1100,7 @@ def discover_formal_candidates(
         "schema_version": "1.0", "status": "READY" if broad and prefiltered and not failures and not broad_source_meta.get("fallback_used") else "DEGRADED",
         "generated_at_beijing": generated, "market_date": market_date,
         "required_history_end_date": required_history_end_date,
-        "source": "EASTMONEY_PRIMARY_HITHINK_SECONDARY_UNIVERSE_PLUS_BOUNDED_HISTORY_REPAIR",
+        "source": "EASTMONEY_PRIMARY_HITHINK_SECONDARY_UNIVERSE_PLUS_VERIFIED_NODE_OVERLAY_AND_BOUNDED_HISTORY_REPAIR",
         "broad_source_reconciliation": broad_source_meta,
         "source_role": "DISCOVERY_ONLY; formal trade decision remains MASTER-owned",
         "broad_universe_count": len(broad),
