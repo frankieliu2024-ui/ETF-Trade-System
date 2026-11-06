@@ -1,0 +1,143 @@
+{
+  "schema_version": "1.0",
+  "layer": "WEEKLY_RETURN_ATTRIBUTION",
+  "status": "PARTIAL",
+  "market_date": "2026-11-06",
+  "week_start": "2026-11-02",
+  "week_end": "2026-11-06",
+  "latest_valid_node": "close",
+  "starting_total_asset": 171134.27,
+  "ending_total_asset": 171138.16,
+  "observed_total_asset_change": 3.89,
+  "daily_total_asset_deltas": [
+    {
+      "event_time": "2026-11-02T15:00:00+08:00",
+      "amount_delta": 262.0,
+      "reconciliation_status": "UNRECONCILED_ACCOUNT_CHANGE",
+      "source": "BROKER_HOLDINGS_SCREENSHOT_20261102_1617_USER_PROVIDED"
+    },
+    {
+      "event_time": "2026-11-03T15:37:00+08:00",
+      "amount_delta": -364.91,
+      "reconciliation_status": "UNRECONCILED_ACCOUNT_CHANGE",
+      "source": "BROKER_HOLDINGS_SCREENSHOT_20261103_153700_USER_PROVIDED"
+    },
+    {
+      "event_time": "2026-11-04T15:00:00+08:00",
+      "amount_delta": 653.71,
+      "reconciliation_status": "UNRECONCILED_ACCOUNT_CHANGE",
+      "source": "BROKER_HOLDINGS_AND_TRADE_SCREENSHOTS_20261104_1745_USER_CONFIRMED_CLOSE"
+    },
+    {
+      "event_time": "2026-11-05T16:10:00+08:00",
+      "amount_delta": -546.91,
+      "reconciliation_status": "RECONCILED_BY_CONFIRMED_TRADE",
+      "source": "BROKER_HOLDINGS_AND_TRADE_SCREENSHOTS_20261105_1610_USER_CONFIRMED_CLOSE"
+    }
+  ],
+  "confirmed_trade_count": 1,
+  "confirmed_trades": [
+    {
+      "trade_event_id": "broker-close-20261105-1610-chatgpt",
+      "code": "159217",
+      "name": "港股通创新药ETF工银",
+      "side": "BUY",
+      "quantity": 4400.0,
+      "price": 1.118,
+      "execution_date": "2026-11-05",
+      "gross_amount": 4919.2,
+      "fee_amount": null,
+      "cash_flow_amount": null,
+      "linked_decision_id": "fd-20261105-142812",
+      "execution_attribution": {
+        "status": "READY",
+        "decision_id": "fd-20261105-142812",
+        "resolution": "EXPLICIT_PIT_VALID"
+      }
+    }
+  ],
+  "confirmed_trade_cash_flow": 0,
+  "confirmed_trade_fees": 0,
+  "unreconciled_cash_deltas": [],
+  "known_components": {
+    "account_total_asset_change": 3.89,
+    "confirmed_trade_cash_flow": 0,
+    "confirmed_trade_fees": 0,
+    "daily_account_delta_sum": 3.89
+  },
+  "execution_reconciliation": {
+    "statement_scope_status": "COMPLETE_EXECUTED_TRANSACTION_SCOPE",
+    "executed_transaction_scope_status": "COMPLETE",
+    "capital_release_status": "NO_CAPITAL_RELEASE_IDENTIFIED_IN_COMPLETE_STATEMENT_SCOPE",
+    "round_trip_status": "NO_EXECUTED_ROUND_TRIP_OR_NET_ZERO_TRADE_IDENTIFIED",
+    "complete_statement_boundary": "用户确认该截图为2026-10-01至2026-11-01完整券商对账单；对账单逐笔列示区间内已发生交易和资金变动。因此可收口区间内已执行成交、资本释放及已执行往返交易；未成交委托或撤单属于未执行订单生命周期，不影响本项成交对账结论，也不被表述为已核验。"
+  },
+  "strict_decomposition": {
+    "status": "NOT_COMPLETE",
+    "method": "DATE_ALIGNED_ENDPOINT_MARK_TO_MARKET_PLUS_EXECUTED_BUY_LOTS_PLUS_FEES",
+    "price_change_effect": -894.5,
+    "realized_pnl": 0.0,
+    "unrealized_pnl": -894.5,
+    "fee_effect": 0,
+    "other_asset_effect": -1000.0,
+    "residual": 1898.39,
+    "reason": "STRICT_BRIDGE_RESIDUAL_NONZERO",
+    "security_components": [
+      {
+        "code": "159056",
+        "name": "全指器械",
+        "quantity": 4700.0,
+        "start_price": 1.042,
+        "end_price": 1.054,
+        "effect": 56.4,
+        "classification": "UNREALIZED_PNL"
+      },
+      {
+        "code": "159217",
+        "name": "港股通创新药ETF工银",
+        "quantity": 4400.0,
+        "purchase_price": 1.118,
+        "end_price": 1.121,
+        "effect": 13.2,
+        "classification": "UNREALIZED_PNL"
+      },
+      {
+        "code": "159941",
+        "name": "纳指ETF",
+        "quantity": 12200.0,
+        "start_price": 1.661,
+        "end_price": 1.635,
+        "effect": -317.2,
+        "classification": "UNREALIZED_PNL"
+      },
+      {
+        "code": "159981",
+        "name": "能源化工",
+        "quantity": 8500.0,
+        "start_price": 1.908,
+        "end_price": 1.755,
+        "effect": -1300.5,
+        "classification": "UNREALIZED_PNL"
+      },
+      {
+        "code": "159992",
+        "name": "创新药",
+        "quantity": 17200.0,
+        "start_price": 0.813,
+        "end_price": 0.851,
+        "effect": 653.6,
+        "classification": "UNREALIZED_PNL"
+      }
+    ]
+  },
+  "unresolved_components": {
+    "price_change_effect": "NOT_SEPARATELY_RECONCILED",
+    "realized_pnl": "NOT_SEPARATELY_RECONCILED",
+    "unrealized_pnl": "NOT_SEPARATELY_RECONCILED",
+    "complete_order_and_cancellation_flow": "OUT_OF_SCOPE_FOR_EXECUTED_TRANSACTION_RECONCILIATION",
+    "same_day_round_trip_or_net_zero_trades": "NO_EXECUTED_ROUND_TRIP_OR_NET_ZERO_TRADE_IDENTIFIED"
+  },
+  "strict_decomposition_status": "NOT_COMPLETE",
+  "boundary": "具备日期对齐的周初/周末持仓、完整成交对账和可核对费用时，按端点持仓市值变动、成交后新增批次市值变动、已实现盈亏和费用严格闭合；缺失卖出成本基础、端点持仓或完整成交范围时自动保持未完成，不猜测拆分。",
+  "read_only": true
+}
