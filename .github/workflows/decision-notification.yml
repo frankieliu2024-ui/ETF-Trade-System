@@ -385,6 +385,8 @@ jobs:
         id: pulse_test_notify
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.pulse_test == 'true' }}
         continue-on-error: true
+        env:
+          PULSE_TEST_RUN_ID: ${{ github.run_id }}
         run: python scripts/run_guarded_notification.py batch --market pulse-test
 
       # Discovery and Hyperliquid pulses use the same bounded notification

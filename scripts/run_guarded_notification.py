@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import time
 
@@ -149,7 +150,14 @@ def _pulse_candidates() -> list[dict]:
 
 
 def _pulse_test_candidates() -> list[dict]:
-    """Build synthetic pulses without reading or writing production pulse indexes."""
+    """Build synthetic pulses without reading or writing production pulse indexes.
+
+    Each manual workflow run gets a unique synthetic identity so the test entry
+    can exercise the same send path repeatedly without weakening production
+    idempotency for real pulse facts.
+    """
+    run_id = str(os.environ.get("PULSE_TEST_RUN_ID") or "manual").strip()
+    suffix = f"_{run_id}"
     base = {
         "status": "READY",
         "coverage_status": "COMPLETE",
@@ -159,19 +167,19 @@ def _pulse_test_candidates() -> list[dict]:
     }
     return _pulse_candidates_from_payloads({
         "discovery_pulse": {
-            "latest": {**base, "identity": "PULSE_TEST_DISCOVERY_AFTER", "formed_at_beijing": "2026-11-06T15:20:00+08:00",
+            "latest": {**base, "identity": f"PULSE_TEST_DISCOVERY_AFTER{suffix}", "formed_at_beijing": "2026-11-06T15:20:00+08:00",
                        "candidate_count": 3, "candidates": [{"candidate_signature": "513630::OBSERVATION_FULL_EVALUATION"},
                                                             {"candidate_signature": "159567::OBSERVATION_FULL_EVALUATION"},
                                                             {"candidate_signature": "520550::OBSERVATION_FULL_EVALUATION"}]},
-            "days": {"test": [{**base, "identity": "PULSE_TEST_DISCOVERY_BEFORE", "formed_at_beijing": "2026-11-06T15:19:00+08:00",
+            "days": {"test": [{**base, "identity": f"PULSE_TEST_DISCOVERY_BEFORE{suffix}", "formed_at_beijing": "2026-11-06T15:19:00+08:00",
                                "candidates": [{"candidate_signature": "513630::OBSERVATION_FULL_EVALUATION"},
                                               {"candidate_signature": "159567::OBSERVATION_FULL_EVALUATION"}]}]},
         },
         "hyperliquid_pulse": {
-            "latest": {**base, "identity": "PULSE_TEST_HYPERLIQUID_AFTER", "formed_at_beijing": "2026-11-06T15:20:30+08:00",
+            "latest": {**base, "identity": f"PULSE_TEST_HYPERLIQUID_AFTER{suffix}", "formed_at_beijing": "2026-11-06T15:20:30+08:00",
                        "candidate_count": 2, "observations": [{"asset": "BABA", "direction": "negative"},
                                                               {"asset": "XBI", "direction": "positive"}]},
-            "days": {"test": [{**base, "identity": "PULSE_TEST_HYPERLIQUID_BEFORE", "formed_at_beijing": "2026-11-06T15:19:30+08:00",
+            "days": {"test": [{**base, "identity": f"PULSE_TEST_HYPERLIQUID_BEFORE{suffix}", "formed_at_beijing": "2026-11-06T15:19:30+08:00",
                                "observations": [{"asset": "BABA", "direction": "negative"}]}]},
         },
     })
