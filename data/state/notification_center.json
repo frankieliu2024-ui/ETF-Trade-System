@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-11-06T13:31:44+08:00",
+  "updated_at": "2026-11-06T14:20:49+08:00",
   "last_status": "SENT",
-  "last_type": "REPORT_DELIVERY_REQUEST",
-  "last_title": "【ETF正式决策】",
+  "last_type": "PULSE_FACT_UPDATE",
+  "last_title": "【市场异动】Hyperliquid证据发生可比变化",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -48945,45 +48945,85 @@
       },
       "last_attempted_at": "2026-11-06T13:31:44+08:00",
       "pushplus_template": "markdown"
+    },
+    {
+      "notification_id": "notification_64343f40f6e8db714ec6",
+      "event_type": "PULSE_FACT_UPDATE",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "pulse:discovery_pulse:PULSE_TEST_DISCOVERY_AFTER",
+      "request_id": "",
+      "parent_request_id": "",
+      "report_id": "",
+      "content_hash": "",
+      "related_decision_id": "",
+      "security_code": "",
+      "security_name": "",
+      "user_severity": "",
+      "user_action": "无需自动交易；下一正式判断必须逐对象核对上述变化，确认方向、时机、风险和资本影响后再决定是否改变管理结论。",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-11-06T14:20:46+08:00",
+      "sent_at": "2026-11-06T14:20:48+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-11-08T14:20:46+08:00",
+      "title": "【市场异动】Discovery证据发生可比变化",
+      "content": "Discovery证据发生可比变化。\\n证据时间：2026-11-06 15:20:00\\n前一脉冲：状态=READY，覆盖=COMPLETE，候选数=2，对象=159567::OBSERVATION_FULL_EVALUATION, 513630::OBSERVATION_FULL_EVALUATION\\n当前脉冲：状态=READY，覆盖=COMPLETE，候选数=3，对象=159567::OBSERVATION_FULL_EVALUATION, 513630::OBSERVATION_FULL_EVALUATION, 520550::OBSERVATION_FULL_EVALUATION\\n直接价值：请在下一正式判断中核对新增、消失或状态变化对象，并判断其对持仓、观察、Discovery和现金竞争的影响。",
+      "source": "discovery_pulse",
+      "confirmation_context": {
+        "evidence_time_beijing": "2026-11-06T15:20:00+08:00",
+        "before_fact": "{\"candidate_count\": 2, \"coverage_status\": \"COMPLETE\", \"fact_time_beijing\": \"2026-11-06T15:20:00+08:00\", \"identity\": \"PULSE_TEST_DISCOVERY_BEFORE\", \"objects\": [\"159567::OBSERVATION_FULL_EVALUATION\", \"513630::OBSERVATION_FULL_EVALUATION\"], \"observation_count\": 1, \"status\": \"READY\"}",
+        "after_fact": "{\"candidate_count\": 3, \"coverage_status\": \"COMPLETE\", \"fact_time_beijing\": \"2026-11-06T15:20:00+08:00\", \"identity\": \"PULSE_TEST_DISCOVERY_AFTER\", \"objects\": [\"159567::OBSERVATION_FULL_EVALUATION\", \"513630::OBSERVATION_FULL_EVALUATION\", \"520550::OBSERVATION_FULL_EVALUATION\"], \"observation_count\": 1, \"status\": \"READY\"}",
+        "applicable_object": "Discovery",
+        "event_family_id": "::::::"
+      },
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "last_attempted_at": "2026-11-06T14:20:48+08:00"
+    },
+    {
+      "notification_id": "notification_99e48fc7629564c566dd",
+      "event_type": "PULSE_FACT_UPDATE",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "pulse:hyperliquid_pulse:PULSE_TEST_HYPERLIQUID_AFTER",
+      "request_id": "",
+      "parent_request_id": "",
+      "report_id": "",
+      "content_hash": "",
+      "related_decision_id": "",
+      "security_code": "",
+      "security_name": "",
+      "user_severity": "",
+      "user_action": "无需自动交易；下一正式判断必须逐对象核对上述变化，确认方向、时机、风险和资本影响后再决定是否改变管理结论。",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-11-06T14:20:46+08:00",
+      "sent_at": "2026-11-06T14:20:49+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-11-08T14:20:46+08:00",
+      "title": "【市场异动】Hyperliquid证据发生可比变化",
+      "content": "Hyperliquid证据发生可比变化。\\n证据时间：2026-11-06 15:20:30\\n前一脉冲：状态=READY，覆盖=COMPLETE，候选数=2，对象=BABA\\n当前脉冲：状态=READY，覆盖=COMPLETE，候选数=2，对象=BABA, XBI\\n直接价值：请在下一正式判断中核对新增、消失或状态变化对象，并判断其对持仓、观察、Discovery和现金竞争的影响。",
+      "source": "hyperliquid_pulse",
+      "confirmation_context": {
+        "evidence_time_beijing": "2026-11-06T15:20:30+08:00",
+        "before_fact": "{\"candidate_count\": 2, \"coverage_status\": \"COMPLETE\", \"fact_time_beijing\": \"2026-11-06T15:20:00+08:00\", \"identity\": \"PULSE_TEST_HYPERLIQUID_BEFORE\", \"objects\": [\"BABA\"], \"observation_count\": 1, \"status\": \"READY\"}",
+        "after_fact": "{\"candidate_count\": 2, \"coverage_status\": \"COMPLETE\", \"fact_time_beijing\": \"2026-11-06T15:20:00+08:00\", \"identity\": \"PULSE_TEST_HYPERLIQUID_AFTER\", \"objects\": [\"BABA\", \"XBI\"], \"observation_count\": 1, \"status\": \"READY\"}",
+        "applicable_object": "Hyperliquid",
+        "event_family_id": "::::::"
+      },
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "last_attempted_at": "2026-11-06T14:20:49+08:00"
     }
   ],
   "recent": [
-    {
-      "key": "market-value:us:2026-10-29:US_TECH_DIVERGENCE:DIVERGED:DIVERGENCE:2026-10-30T04:48:37+08:00",
-      "type": "MARKET_VALUE_ALERT",
-      "title": "【市场异动】美股科技分化进一步扩大至2.27个百分点",
-      "content": "### 核心结论\n- **较上一同类通知**：1.45 → 2.27个百分点，进一步扩大0.82个百分点。\n- **事件类型**：显著分化\n- **对象/结构**：美股科技内部结构\n- **关键结构**：横截面两端：纳指100ETF代理（QQQ）-1.16%，半导体ETF代理（SOXX）-3.43%，涨跌幅相差2.27个百分点\n\n**判断**：相关对象之间的相对差已经扩大到值得单独关注的程度，不能再用单一市场方向概括全部机会和风险。\n\n### 对ETF系统的影响\n美股科技内部结构属于海外/区域结构证据。先看A股本地价格是否接受、减弱或背离，再复核相关持仓/观察ETF的自身反馈、当前主候选和边际资本效率；若海外与A股背离，以A股自身反馈为主。\n\n### 当前动作\n**把该信号纳入最近A股正式节点复核，不因单一海外/区域对象机械调整A股仓位。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-10-30 04:48:37\n- **边界**：市场归属只用于数据时点和传导解释，不决定通知资格。门槛已适度放宽；同一事实依靠去重和升级识别控制重复。",
-      "source": "data/state/us_extended_hours_context.json",
-      "user_severity": "需要关注",
-      "user_action": "纳入最近A股决策节点重新验证，不机械交易",
-      "status": "SENT",
-      "attempted_at": "2026-10-30T04:49:00+08:00",
-      "response": {
-        "http_status": 200,
-        "pushplus_code": 200,
-        "pushplus_message": "执行成功"
-      },
-      "notification_id": "notification_47691460040dd43a7ae0",
-      "lifecycle_status": "SENT"
-    },
-    {
-      "key": "market-value:us:2026-10-29:QQQ:DOWN:EXTREME:2026-10-30T06:33:22+08:00",
-      "type": "MARKET_VALUE_ALERT",
-      "title": "【市场异动】纳指100ETF代理（QQQ）出现极端波动 -1.60%",
-      "content": "### 核心结论\n- **事件类型**：极端波动\n- **对象/结构**：纳指100ETF代理（QQQ）\n- **扩展时段较最近现金盘收盘**：-1.60%\n\n**判断**：当前幅度已进入通知层的非常规区间，可能实质改变风险偏好、风险收益或资本比较。\n\n### 对ETF系统的影响\n纳指100ETF代理（QQQ）属于海外/区域结构证据。先看A股本地价格是否接受、减弱或背离，再复核纳指ETF（159941）及A股科技风险篮子的自身反馈、当前主候选和边际资本效率；若海外与A股背离，以A股自身反馈为主。\n\n### 当前动作\n**把该信号纳入最近A股正式节点复核，不因单一海外/区域对象机械调整A股仓位。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-10-30 06:33:22\n- **边界**：市场归属只用于数据时点和传导解释，不决定通知资格。门槛已适度放宽；同一事实依靠去重和升级识别控制重复。",
-      "source": "data/state/us_extended_hours_context.json",
-      "user_severity": "需要关注",
-      "user_action": "纳入最近A股决策节点重新验证，不机械交易",
-      "status": "SENT",
-      "attempted_at": "2026-10-30T06:33:57+08:00",
-      "response": {
-        "http_status": 200,
-        "pushplus_code": 200,
-        "pushplus_message": "执行成功"
-      },
-      "notification_id": "notification_bc4d84224b65aaee845c",
-      "lifecycle_status": "SENT"
-    },
     {
       "key": "apac-open-signal:2026-10-30:KOSPI:DOWN",
       "type": "APAC_OPEN_SIGNAL",
@@ -52547,6 +52587,42 @@
       },
       "notification_id": "notification_47aed50d53efbb3a6e85",
       "lifecycle_status": "SENT"
+    },
+    {
+      "key": "pulse:discovery_pulse:PULSE_TEST_DISCOVERY_AFTER",
+      "type": "PULSE_FACT_UPDATE",
+      "title": "【市场异动】Discovery证据发生可比变化",
+      "content": "Discovery证据发生可比变化。\\n证据时间：2026-11-06 15:20:00\\n前一脉冲：状态=READY，覆盖=COMPLETE，候选数=2，对象=159567::OBSERVATION_FULL_EVALUATION, 513630::OBSERVATION_FULL_EVALUATION\\n当前脉冲：状态=READY，覆盖=COMPLETE，候选数=3，对象=159567::OBSERVATION_FULL_EVALUATION, 513630::OBSERVATION_FULL_EVALUATION, 520550::OBSERVATION_FULL_EVALUATION\\n直接价值：请在下一正式判断中核对新增、消失或状态变化对象，并判断其对持仓、观察、Discovery和现金竞争的影响。",
+      "source": "discovery_pulse",
+      "user_severity": "",
+      "user_action": "无需自动交易；下一正式判断必须逐对象核对上述变化，确认方向、时机、风险和资本影响后再决定是否改变管理结论。",
+      "status": "SENT",
+      "attempted_at": "2026-11-06T14:20:48+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_64343f40f6e8db714ec6",
+      "lifecycle_status": "SENT"
+    },
+    {
+      "key": "pulse:hyperliquid_pulse:PULSE_TEST_HYPERLIQUID_AFTER",
+      "type": "PULSE_FACT_UPDATE",
+      "title": "【市场异动】Hyperliquid证据发生可比变化",
+      "content": "Hyperliquid证据发生可比变化。\\n证据时间：2026-11-06 15:20:30\\n前一脉冲：状态=READY，覆盖=COMPLETE，候选数=2，对象=BABA\\n当前脉冲：状态=READY，覆盖=COMPLETE，候选数=2，对象=BABA, XBI\\n直接价值：请在下一正式判断中核对新增、消失或状态变化对象，并判断其对持仓、观察、Discovery和现金竞争的影响。",
+      "source": "hyperliquid_pulse",
+      "user_severity": "",
+      "user_action": "无需自动交易；下一正式判断必须逐对象核对上述变化，确认方向、时机、风险和资本影响后再决定是否改变管理结论。",
+      "status": "SENT",
+      "attempted_at": "2026-11-06T14:20:49+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_99e48fc7629564c566dd",
+      "lifecycle_status": "SENT"
     }
   ],
   "pending_questions": [
@@ -52556,6 +52632,6 @@
     "notification_d5f3ea1194565824a934",
     "notification_fd7763215037ab96f889"
   ],
-  "policy": "只推送会改变用户关注、风险许可、机会状态、持仓动作、执行确认或系统可靠性的实质事件；总资产/市值/浮动盈亏等纯盯市变化不作为账户异常；同一实质账户事件和同一正式decision_id不得重复推送；收盘账户提醒仅在A股交易日触发。",
-  "safety_boundary": "通知中心只转发已有正式判断，不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"
+  "policy": "canonical bounded market notification batch",
+  "safety_boundary": "通知只总结已取得的行情、账户、研究或系统事实；不生成自动交易，不修改MASTER、风险许可、金额或卖出份额。"
 }
