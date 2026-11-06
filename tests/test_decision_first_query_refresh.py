@@ -9,6 +9,33 @@ import scripts.build_query_context as query_context
 
 
 class DecisionFirstQueryRefreshTests(unittest.TestCase):
+    def test_exact_verified_snapshot_reuses_completed_close_discovery(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "data/state").mkdir(parents=True)
+            universe = {"version": "u1", "objects": [{"code": "159326"}]}
+            identity = query_context._discovery_universe_identity(universe)
+            discovery = {
+                "status": "READY",
+                "market_date": "2026-11-06",
+                "latest_valid_node": "close",
+                "latest_snapshot": "snap-close.json",
+                "universe_identity": "stale-or-missing",
+                "discovery_delta_identity": "stale-or-missing",
+                "candidate_count": 12,
+                "candidates": [{"code": "159326"}],
+                "formation_rule": "EVERY_VERIFIED_A_SHARE_PULSE",
+            }
+            (root / "data/state/formal_discovery_current.json").write_text(json.dumps(discovery), encoding="utf-8")
+            reused = query_context._reusable_formal_discovery(
+                root,
+                {"market_date": "2026-11-06", "latest_valid_node": "close", "latest_snapshot": "snap-close.json"},
+                identity,
+                {"159326"},
+            )
+            self.assertIsNotNone(reused)
+            self.assertEqual(reused["candidate_count"], 12)
+
     def test_terminal_discovery_reuses_same_market_node_and_universe(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

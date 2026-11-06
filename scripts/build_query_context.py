@@ -182,6 +182,22 @@ def _same_node_persisted_formal_discovery(root: Path, current: dict, universe_id
         discovery_snapshot = str(discovery.get("latest_snapshot") or "")
         if discovery_snapshot and current_snapshot and discovery_snapshot != current_snapshot:
             continue
+        # The market-snapshot producer has already completed the canonical
+        # Discovery pipeline for this exact verified node.  A downstream
+        # query-context rebuild must consume that result as-is; requiring a
+        # second delta/universe projection here can make the same close pulse
+        # fall through to a fresh provider run and overwrite valid candidates
+        # with an unrelated empty result.
+        if (
+            discovery_snapshot
+            and current_snapshot
+            and discovery_snapshot == current_snapshot
+            and (
+                str(discovery.get("formation_rule") or "") == "EVERY_VERIFIED_A_SHARE_PULSE"
+                or "VERIFIED_NODE_OVERLAY" in str(discovery.get("source") or "")
+            )
+        ):
+            return dict(discovery)
         discovery_universe = str(discovery.get("universe_identity") or "")
         if universe_identity and discovery_universe and discovery_universe != universe_identity:
             continue
