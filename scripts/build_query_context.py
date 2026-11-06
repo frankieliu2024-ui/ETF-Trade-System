@@ -540,13 +540,31 @@ def _build_hyperliquid_object_bindings(external: dict, positions: list[dict], ob
             if code:
                 known[code] = item.get("name") or code
     bindings = []
+    seen: set[tuple[str, str]] = set()
     for item in mapping:
         if not isinstance(item, dict):
             continue
         assets = [str(item.get("asset") or "")]
         evidence = [observed[a] for a in assets if a in observed]
         codes = [str(code).strip() for code in (item.get("etf_codes") or []) if str(code).strip()]
+        markers = [str(marker).strip() for marker in (item.get("name_markers") or []) if str(marker).strip()]
+        # Explicit ETF-code mappings remain authoritative. For mapped economic
+        # families without an explicit code list, expose the same auxiliary
+        # evidence to known holding, observation and Discovery objects using
+        # the configured name markers. This is evidence attachment only: it
+        # does not create candidates or grant Trial/Confirm authority.
+        for obj in [*positions, *observation_inputs, *discovery_inputs]:
+            if not isinstance(obj, dict):
+                continue
+            code = str(obj.get("code") or obj.get("symbol") or "").strip()
+            name = str(obj.get("name") or "")
+            if code and name and markers and any(marker in name for marker in markers):
+                codes.append(code)
         for code in codes:
+            key = (code, ",".join(assets))
+            if key in seen:
+                continue
+            seen.add(key)
             bindings.append({
                 "code": code,
                 "name": known.get(code, ""),
@@ -2313,3 +2331,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
