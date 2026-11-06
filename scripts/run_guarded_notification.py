@@ -82,18 +82,18 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
     if not change_lines:
         change_lines.append("对象集合未变，但状态、覆盖或数量发生变化。")
     content = (
-        f"【核心结论】{label}证据发生可比变化。\\n\\n"
-        f"【证据变化】\\n"
-        f"证据时间：{evidence_time}\\n"
+        f"【核心结论】{label}证据发生可比变化。\n\n"
+        f"【证据变化】\n"
+        f"证据时间：{evidence_time}\n"
         f"前一脉冲：状态={before_fact['status']}；覆盖={before_fact['coverage_status']}；"
-        f"对象数={before_fact['candidate_count'] or before_fact['observation_count'] or 0}\\n"
+        f"对象数={before_fact['candidate_count'] or before_fact['observation_count'] or 0}\n"
         f"当前脉冲：状态={after_fact['status']}；覆盖={after_fact['coverage_status']}；"
-        f"对象数={after_fact['candidate_count'] or after_fact['observation_count'] or 0}\\n"
-        + "\\n".join(change_lines)
-        + "\\n\\n"
+        f"对象数={after_fact['candidate_count'] or after_fact['observation_count'] or 0}\n"
+        + "\n".join(change_lines)
+        + "\n\n"
         f"【对ETF系统的影响】该变化用于下一正式判断逐对象核对方向、时机、风险和资本影响；"
-        f"不能单独授予Trial、Confirm、买入、卖出或调仓权限。\\n\\n"
-        f"【当前动作】无需自动交易；下一正式判断必须核对上述对象与持仓、观察ETF、Discovery和现金的竞争关系。\\n\\n"
+        f"不能单独授予Trial、Confirm、买入、卖出或调仓权限。\n\n"
+        f"【当前动作】无需自动交易；下一正式判断必须核对上述对象与持仓、观察ETF、Discovery和现金的竞争关系。\n\n"
         f"【数据与边界】本通知仅说明脉冲事实发生可比变化，不等同于交易结论或实际成交。"
     )
     return {
