@@ -30,6 +30,8 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
+      - name: Validate all GitHub workflow registries
+        run: python scripts/validate_workflow_registry.py
       - name: Compile affected Python modules
         run: |
           python -m py_compile \
@@ -51,6 +53,7 @@ jobs:
             tests.test_post_close_review_canonical \
             tests.test_market_risk_metric_guard \
             tests.test_workflow_sha_snapshot \
+            tests.test_workflow_registry_guard \
             tests.test_dashboard_projection \
             tests.test_account_sync_maintenance_readback \
             tests.test_broker_account_fact_ingress_contract \
