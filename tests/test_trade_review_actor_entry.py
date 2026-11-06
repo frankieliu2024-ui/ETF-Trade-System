@@ -40,7 +40,7 @@ class TradeReviewCompletionOwnerTests(unittest.TestCase):
 
     def test_recovery_reuses_same_completion_once_after_explicit_failure(self):
         with patch.object(owner, "dispatch_notification", side_effect=[
-            {"submitted": False, "reason": "primary unavailable"},
+            {"submitted": False, "explicit_failure": True, "reason": "primary unavailable"},
             {"submitted": True, "completion_path": "same.json"},
         ]) as dispatch:
             result = owner.dispatch_notification_with_one_recovery("same.json")
@@ -49,9 +49,18 @@ class TradeReviewCompletionOwnerTests(unittest.TestCase):
         self.assertEqual(result["recovery_limit"], 1)
         self.assertEqual(dispatch.call_count, 2)
 
-    def test_recovery_runs_when_primary_raises(self):
+    def test_recovery_does_not_retry_ambiguous_transport_failure(self):
         with patch.object(owner, "dispatch_notification", side_effect=[
             RuntimeError("primary transport unavailable"),
+        ]) as dispatch:
+            result = owner.dispatch_notification_with_one_recovery("same.json")
+        self.assertFalse(result["recovery_attempted"])
+        self.assertFalse(result["primary"]["explicit_failure"])
+        self.assertEqual(dispatch.call_count, 1)
+
+    def test_recovery_runs_after_explicit_dispatch_rejection(self):
+        with patch.object(owner, "dispatch_notification", side_effect=[
+            {"submitted": False, "explicit_failure": True, "status": 403},
             {"submitted": True, "completion_path": "same.json"},
         ]) as dispatch:
             result = owner.dispatch_notification_with_one_recovery("same.json")
