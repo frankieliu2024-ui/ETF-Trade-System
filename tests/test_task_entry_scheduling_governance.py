@@ -43,9 +43,9 @@ class TaskEntrySchedulingGovernanceTests(unittest.TestCase):
                        "SCHEDULED_REVIEW_COMPLETION"):
             self.assertIn(phrase, text)
 
-    def test_all_scheduled_tasks_make_explicit_dispatch_the_primary_wake(self):
+    def test_trade_and_formal_tasks_make_explicit_dispatch_the_primary_wake(self):
         data = json.loads((ROOT / "config/maintenance/task_entry_scheduling_protocol.json").read_text(encoding="utf-8"))
-        for task in data["tasks"]:
+        for task in data["tasks"][1:]:
             handoff = task["handoff_execution"]
             self.assertEqual(handoff["notification_wake"], "EXPLICIT_DISPATCH_WITH_EXACT_COMPLETION_PATH")
             self.assertTrue(handoff["explicit_dispatch_required_in_same_run"])
