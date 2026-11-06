@@ -2036,71 +2036,75 @@
     "read_only": true,
     "market_date": "2026-11-06",
     "latest_valid_node": "live",
-    "latest_snapshot": "data/market/snapshots/2026-11-06_131410.json",
-    "generated_at_beijing": "2026-11-06T13:14:42+08:00",
-    "status": "READY",
-    "coverage_status": "COMPLETE",
+    "latest_snapshot": "data/market/snapshots/2026-11-06_131547.json",
+    "generated_at_beijing": "2026-11-06T13:16:38+08:00",
+    "status": "DEGRADED",
+    "coverage_status": "PARTIAL",
     "empty_reason": "",
-    "candidate_count": 10,
+    "candidate_count": 11,
     "candidates": [
       {
-        "historical_context": {
-          "status": "READY",
-          "as_of": "2026-11-05",
-          "sample_count": 90,
-          "avg_amount_20": 48895427.1
-        },
-        "code": "159030",
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "discovery_spot": {
-          "price": 0.8,
-          "change_pct": 1.01,
-          "amount": 32966284.9,
-          "amplitude_pct": 3.79,
-          "turnover_pct": 9.62,
-          "volume_ratio": 1.33,
-          "high": 0.807,
-          "low": 0.777,
-          "open": 0.789,
-          "prev_close": 0.792,
-          "return_60d_pct": -4.08,
-          "return_ytd_pct": -19.68,
-          "provider_timestamp": 1793942052
-        },
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "external_driver_evidence": [],
-        "name": "粮食ETF华夏",
         "category": "OBSERVATION_EVALUATION_INPUT",
+        "external_driver_evidence": [
+          {
+            "asset": "xyz:BABA",
+            "dex": "xyz",
+            "family": "CHINA_TECH_RISK",
+            "direction": "NEGATIVE",
+            "crowding": "NORMAL",
+            "mark": 106.57,
+            "oracle": 106.5,
+            "premium": 0.0014835681,
+            "funding": 3.55935e-05,
+            "open_interest": 120424.638,
+            "day_notional_volume": 12712509.578740006,
+            "provider_timestamp": null,
+            "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
+            "as_of_collection_utc": "2026-11-06T05:15:16+00:00",
+            "decision_effect": "CONTRADICTION",
+            "decision_effect_scope": [
+              "opportunity_strength",
+              "entry_timing",
+              "holding_management",
+              "capital_competition"
+            ],
+            "decision_boundary": "对象级外部证据可以改变机会强弱、入场时机、持仓管理和资本竞争判断，但不得独立生成交易权限、Trial、Confirm、金额、卖出份额或订单"
+          }
+        ],
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
         "information_classes": [
           "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE"
-        ]
-      },
-      {
+          "STRUCTURAL_CHANGE",
+          "SHORT_HISTORY_CURRENT_CHANGE",
+          "EXTERNAL_DRIVER_TRIGGER"
+        ],
+        "name": "港股通消费ETF汇添富",
+        "discovery_spot": {
+          "price": 0.774,
+          "change_pct": 0.5194805194805197,
+          "amount": 94680000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
+          "high": 0.783,
+          "low": 0.766,
+          "open": 0.766,
+          "prev_close": 0.77,
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1793942169000
+        },
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-05",
           "sample_count": 90,
-          "avg_amount_20": 368531935.45
+          "avg_amount_20": 27035030.57
         },
-        "code": "159366",
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "discovery_spot": {
-          "price": 1.398,
-          "change_pct": -2.98,
-          "amount": 281330545.5,
-          "amplitude_pct": 3.26,
-          "turnover_pct": 28.93,
-          "volume_ratio": 1.14,
-          "high": 1.427,
-          "low": 1.38,
-          "open": 1.38,
-          "prev_close": 1.441,
-          "return_60d_pct": 5.35,
-          "return_ytd_pct": 2.95,
-          "provider_timestamp": 1793942052
-        },
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "code": "159268"
+      },
+      {
+        "category": "OBSERVATION_EVALUATION_INPUT",
         "external_driver_evidence": [
           {
             "asset": "xyz:XBI",
@@ -2108,15 +2112,15 @@
             "family": "BIOTECH",
             "direction": "NEGATIVE",
             "crowding": "NORMAL",
-            "mark": 148.74,
-            "oracle": 148.74,
-            "premium": -0.0006881135,
-            "funding": -2.15159e-05,
-            "open_interest": 956.28,
-            "day_notional_volume": 146584.6629,
+            "mark": 148.5,
+            "oracle": 148.5,
+            "premium": 0.0001252525,
+            "funding": -4.8549e-06,
+            "open_interest": 956.1,
+            "day_notional_volume": 146598.0648,
             "provider_timestamp": null,
             "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-            "as_of_collection_utc": "2026-11-06T04:59:33+00:00",
+            "as_of_collection_utc": "2026-11-06T05:15:16+00:00",
             "decision_effect": "CONTRADICTION",
             "decision_effect_scope": [
               "opportunity_strength",
@@ -2132,15 +2136,15 @@
             "family": "CHINA_TECH_RISK",
             "direction": "NEGATIVE",
             "crowding": "NORMAL",
-            "mark": 107.4,
-            "oracle": 107.29,
-            "premium": 0.0009180725,
-            "funding": 5.57897e-05,
-            "open_interest": 119449.876,
-            "day_notional_volume": 12728901.887630006,
+            "mark": 106.57,
+            "oracle": 106.5,
+            "premium": 0.0014835681,
+            "funding": 3.55935e-05,
+            "open_interest": 120424.638,
+            "day_notional_volume": 12712509.578740006,
             "provider_timestamp": null,
             "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-            "as_of_collection_utc": "2026-11-06T04:59:33+00:00",
+            "as_of_collection_utc": "2026-11-06T05:15:16+00:00",
             "decision_effect": "CONTRADICTION",
             "decision_effect_scope": [
               "opportunity_strength",
@@ -2151,78 +2155,154 @@
             "decision_boundary": "对象级外部证据可以改变机会强弱、入场时机、持仓管理和资本竞争判断，但不得独立生成交易权限、Trial、Confirm、金额、卖出份额或订单"
           }
         ],
-        "name": "港股医疗ETF永赢",
-        "category": "OBSERVATION_EVALUATION_INPUT",
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
         "information_classes": [
-          "PERSISTENT_STRUCTURE",
           "EXTERNAL_DRIVER_TRIGGER"
-        ]
-      },
-      {
+        ],
+        "name": "港股创新药ETF银华",
+        "discovery_spot": {
+          "price": 0.661,
+          "change_pct": -1.0479041916167664,
+          "amount": 993720000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
+          "high": 0.675,
+          "low": 0.649,
+          "open": 0.652,
+          "prev_close": 0.668,
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1793942169000
+        },
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-05",
           "sample_count": 90,
           "avg_amount_20": 914122754.0
         },
-        "code": "159567",
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "discovery_spot": {
-          "price": 0.662,
-          "change_pct": -0.9,
-          "amount": 987362273.4,
-          "amplitude_pct": 3.89,
-          "turnover_pct": 14.61,
-          "volume_ratio": 1.59,
-          "high": 0.675,
-          "low": 0.649,
-          "open": 0.652,
-          "prev_close": 0.668,
-          "return_60d_pct": -1.34,
-          "return_ytd_pct": -11.5,
-          "provider_timestamp": 1793942052
-        },
+        "code": "159567"
+      },
+      {
+        "category": "OBSERVATION_EVALUATION_INPUT",
+        "external_driver_evidence": [],
         "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "information_classes": [
+          "NEW_RELATIVE_DIVERGENCE",
+          "SHORT_HISTORY_CURRENT_CHANGE"
+        ],
+        "name": "金融ETF国泰",
+        "discovery_spot": {
+          "price": 1.349,
+          "change_pct": 0.0,
+          "amount": 74320000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
+          "high": 1.355,
+          "low": 1.345,
+          "open": 1.351,
+          "prev_close": 1.349,
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1793942171000
+        },
+        "historical_context": {
+          "status": "READY",
+          "as_of": "2026-11-05",
+          "sample_count": 90,
+          "avg_amount_20": 113032196.8
+        },
+        "code": "510230"
+      },
+      {
+        "category": "OBSERVATION_EVALUATION_INPUT",
+        "external_driver_evidence": [],
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "information_classes": [
+          "NEW_RELATIVE_DIVERGENCE",
+          "STRUCTURAL_CHANGE",
+          "SHORT_HISTORY_CURRENT_CHANGE"
+        ],
+        "name": "国债ETF国泰",
+        "discovery_spot": {
+          "price": 141.405,
+          "change_pct": 0.03749504782386559,
+          "amount": 464210000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
+          "high": 141.424,
+          "low": 141.355,
+          "open": 141.379,
+          "prev_close": 141.352,
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1793942171000
+        },
+        "historical_context": {
+          "status": "READY",
+          "as_of": "2026-11-05",
+          "sample_count": 90,
+          "avg_amount_20": 4346485087.0
+        },
+        "code": "511010"
+      },
+      {
+        "category": "OBSERVATION_EVALUATION_INPUT",
+        "external_driver_evidence": [],
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "information_classes": [
+          "NEW_RELATIVE_DIVERGENCE",
+          "STRUCTURAL_CHANGE",
+          "SHORT_HISTORY_CURRENT_CHANGE"
+        ],
+        "name": "城投债ETF海富通",
+        "discovery_spot": {
+          "price": 10.447,
+          "change_pct": 0.05746575998466508,
+          "amount": 666750000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
+          "high": 10.449,
+          "low": 10.44,
+          "open": 10.443,
+          "prev_close": 10.441,
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1793942171000
+        },
+        "historical_context": {
+          "status": "READY",
+          "as_of": "2026-11-05",
+          "sample_count": 90,
+          "avg_amount_20": 2652791038.5
+        },
+        "code": "511220"
+      },
+      {
+        "category": "OBSERVATION_EVALUATION_INPUT",
         "external_driver_evidence": [
-          {
-            "asset": "xyz:XBI",
-            "dex": "xyz",
-            "family": "BIOTECH",
-            "direction": "NEGATIVE",
-            "crowding": "NORMAL",
-            "mark": 148.74,
-            "oracle": 148.74,
-            "premium": -0.0006881135,
-            "funding": -2.15159e-05,
-            "open_interest": 956.28,
-            "day_notional_volume": 146584.6629,
-            "provider_timestamp": null,
-            "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-            "as_of_collection_utc": "2026-11-06T04:59:33+00:00",
-            "decision_effect": "CONTRADICTION",
-            "decision_effect_scope": [
-              "opportunity_strength",
-              "entry_timing",
-              "holding_management",
-              "capital_competition"
-            ],
-            "decision_boundary": "对象级外部证据可以改变机会强弱、入场时机、持仓管理和资本竞争判断，但不得独立生成交易权限、Trial、Confirm、金额、卖出份额或订单"
-          },
           {
             "asset": "xyz:BABA",
             "dex": "xyz",
             "family": "CHINA_TECH_RISK",
             "direction": "NEGATIVE",
             "crowding": "NORMAL",
-            "mark": 107.4,
-            "oracle": 107.29,
-            "premium": 0.0009180725,
-            "funding": 5.57897e-05,
-            "open_interest": 119449.876,
-            "day_notional_volume": 12728901.887630006,
+            "mark": 106.57,
+            "oracle": 106.5,
+            "premium": 0.0014835681,
+            "funding": 3.55935e-05,
+            "open_interest": 120424.638,
+            "day_notional_volume": 12712509.578740006,
             "provider_timestamp": null,
             "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-            "as_of_collection_utc": "2026-11-06T04:59:33+00:00",
+            "as_of_collection_utc": "2026-11-06T05:15:16+00:00",
             "decision_effect": "CONTRADICTION",
             "decision_effect_scope": [
               "opportunity_strength",
@@ -2233,165 +2313,40 @@
             "decision_boundary": "对象级外部证据可以改变机会强弱、入场时机、持仓管理和资本竞争判断，但不得独立生成交易权限、Trial、Confirm、金额、卖出份额或订单"
           }
         ],
-        "name": "港股创新药ETF银华",
-        "category": "OBSERVATION_EVALUATION_INPUT",
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
         "information_classes": [
+          "NEW_RELATIVE_DIVERGENCE",
+          "STRUCTURAL_CHANGE",
+          "SHORT_HISTORY_CURRENT_CHANGE",
           "EXTERNAL_DRIVER_TRIGGER"
-        ]
-      },
-      {
-        "historical_context": {
-          "status": "READY",
-          "as_of": "2026-11-05",
-          "sample_count": 90,
-          "avg_amount_20": 33583851.9
-        },
-        "code": "159581",
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        ],
+        "name": "港股低波红利ETF摩根",
         "discovery_spot": {
-          "price": 1.055,
-          "change_pct": 0.29,
-          "amount": 12219650.5,
-          "amplitude_pct": 1.14,
-          "turnover_pct": 0.94,
-          "volume_ratio": 0.62,
-          "high": 1.056,
-          "low": 1.044,
-          "open": 1.05,
-          "prev_close": 1.052,
-          "return_60d_pct": 0.76,
-          "return_ytd_pct": 3.74,
-          "provider_timestamp": 1793942052
+          "price": 1.612,
+          "change_pct": 0.5614472863381126,
+          "amount": 170380000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
+          "high": 1.619,
+          "low": 1.593,
+          "open": 1.598,
+          "prev_close": 1.603,
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1793942172000
         },
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "external_driver_evidence": [],
-        "name": "红利ETF万家",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "information_classes": [
-          "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE",
-          "PERSISTENT_STRUCTURE"
-        ]
-      },
-      {
-        "historical_context": {
-          "status": "READY",
-          "as_of": "2026-11-05",
-          "sample_count": 90,
-          "avg_amount_20": 162747744.6
-        },
-        "code": "159865",
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "discovery_spot": {
-          "price": 0.545,
-          "change_pct": 0.55,
-          "amount": 134503192.382,
-          "amplitude_pct": 2.58,
-          "turnover_pct": 1.96,
-          "volume_ratio": 1.39,
-          "high": 0.549,
-          "low": 0.535,
-          "open": 0.537,
-          "prev_close": 0.542,
-          "return_60d_pct": 2.44,
-          "return_ytd_pct": -13.63,
-          "provider_timestamp": 1793942052
-        },
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "external_driver_evidence": [],
-        "name": "养殖ETF国泰",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "information_classes": [
-          "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE",
-          "PERSISTENT_STRUCTURE"
-        ]
-      },
-      {
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-05",
           "sample_count": 90,
           "avg_amount_20": 260012900.1
         },
-        "code": "513630",
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "discovery_spot": {
-          "price": 1.611,
-          "change_pct": 0.5,
-          "amount": 169006943.0,
-          "amplitude_pct": 1.62,
-          "turnover_pct": 1.6,
-          "volume_ratio": 0.82,
-          "high": 1.619,
-          "low": 1.593,
-          "open": 1.598,
-          "prev_close": 1.603,
-          "return_60d_pct": 2.87,
-          "return_ytd_pct": 1.64,
-          "provider_timestamp": 1793942055
-        },
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "external_driver_evidence": [
-          {
-            "asset": "xyz:BABA",
-            "dex": "xyz",
-            "family": "CHINA_TECH_RISK",
-            "direction": "NEGATIVE",
-            "crowding": "NORMAL",
-            "mark": 107.4,
-            "oracle": 107.29,
-            "premium": 0.0009180725,
-            "funding": 5.57897e-05,
-            "open_interest": 119449.876,
-            "day_notional_volume": 12728901.887630006,
-            "provider_timestamp": null,
-            "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-            "as_of_collection_utc": "2026-11-06T04:59:33+00:00",
-            "decision_effect": "CONTRADICTION",
-            "decision_effect_scope": [
-              "opportunity_strength",
-              "entry_timing",
-              "holding_management",
-              "capital_competition"
-            ],
-            "decision_boundary": "对象级外部证据可以改变机会强弱、入场时机、持仓管理和资本竞争判断，但不得独立生成交易权限、Trial、Confirm、金额、卖出份额或订单"
-          }
-        ],
-        "name": "港股低波红利ETF摩根",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "information_classes": [
-          "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE",
-          "PERSISTENT_STRUCTURE",
-          "EXTERNAL_DRIVER_TRIGGER"
-        ]
+        "code": "513630"
       },
       {
-        "historical_context": {
-          "status": "READY",
-          "as_of": "2026-11-05",
-          "sample_count": 90,
-          "avg_amount_20": 83857697.1
-        },
-        "code": "513800",
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "discovery_spot": {
-          "price": 1.706,
-          "change_pct": -5.85,
-          "amount": 226271691.0,
-          "amplitude_pct": 1.55,
-          "turnover_pct": 12.13,
-          "volume_ratio": 3.92,
-          "high": 1.728,
-          "low": 1.7,
-          "open": 1.719,
-          "prev_close": 1.812,
-          "return_60d_pct": -9.16,
-          "return_ytd_pct": 4.34,
-          "provider_timestamp": 1793942055
-        },
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "category": "OBSERVATION_EVALUATION_INPUT",
         "external_driver_evidence": [
           {
             "asset": "xyz:EWJ",
@@ -2399,15 +2354,15 @@
             "family": "JAPAN_EQUITY",
             "direction": "NEGATIVE",
             "crowding": "NORMAL",
-            "mark": 87.143,
-            "oracle": 87.095,
-            "premium": 0.0009816867,
-            "funding": -1.63293e-05,
+            "mark": 87.02,
+            "oracle": 86.895,
+            "premium": 0.0009666839,
+            "funding": 1.26829e-05,
             "open_interest": 13230.592,
-            "day_notional_volume": 836402.9686710001,
+            "day_notional_volume": 841407.1070970001,
             "provider_timestamp": null,
             "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-            "as_of_collection_utc": "2026-11-06T04:59:33+00:00",
+            "as_of_collection_utc": "2026-11-06T05:15:16+00:00",
             "decision_effect": "CONTRADICTION",
             "decision_effect_scope": [
               "opportunity_strength",
@@ -2418,37 +2373,37 @@
             "decision_boundary": "对象级外部证据可以改变机会强弱、入场时机、持仓管理和资本竞争判断，但不得独立生成交易权限、Trial、Confirm、金额、卖出份额或订单"
           }
         ],
-        "name": "日本东证指数ETF南方",
-        "category": "OBSERVATION_EVALUATION_INPUT",
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
         "information_classes": [
           "EXTERNAL_DRIVER_TRIGGER"
-        ]
-      },
-      {
+        ],
+        "name": "日本东证指数ETF南方",
+        "discovery_spot": {
+          "price": 1.704,
+          "change_pct": -5.96026490066226,
+          "amount": 229580000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
+          "high": 1.728,
+          "low": 1.7,
+          "open": 1.719,
+          "prev_close": 1.812,
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1793942169000
+        },
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-05",
           "sample_count": 90,
-          "avg_amount_20": 10184674.92
+          "avg_amount_20": 83857697.1
         },
-        "code": "515950",
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "discovery_spot": {
-          "price": 0.983,
-          "change_pct": -1.11,
-          "amount": 13086244.0,
-          "amplitude_pct": 2.62,
-          "turnover_pct": 2.6,
-          "volume_ratio": 1.81,
-          "high": 0.999,
-          "low": 0.973,
-          "open": 0.981,
-          "prev_close": 0.994,
-          "return_60d_pct": 3.91,
-          "return_ytd_pct": 6.39,
-          "provider_timestamp": 1793942056
-        },
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "code": "513800"
+      },
+      {
+        "category": "OBSERVATION_EVALUATION_INPUT",
         "external_driver_evidence": [
           {
             "asset": "xyz:XBI",
@@ -2456,15 +2411,15 @@
             "family": "BIOTECH",
             "direction": "NEGATIVE",
             "crowding": "NORMAL",
-            "mark": 148.74,
-            "oracle": 148.74,
-            "premium": -0.0006881135,
-            "funding": -2.15159e-05,
-            "open_interest": 956.28,
-            "day_notional_volume": 146584.6629,
+            "mark": 148.5,
+            "oracle": 148.5,
+            "premium": 0.0001252525,
+            "funding": -4.8549e-06,
+            "open_interest": 956.1,
+            "day_notional_volume": 146598.0648,
             "provider_timestamp": null,
             "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-            "as_of_collection_utc": "2026-11-06T04:59:33+00:00",
+            "as_of_collection_utc": "2026-11-06T05:15:16+00:00",
             "decision_effect": "CONTRADICTION",
             "decision_effect_scope": [
               "opportunity_strength",
@@ -2475,38 +2430,96 @@
             "decision_boundary": "对象级外部证据可以改变机会强弱、入场时机、持仓管理和资本竞争判断，但不得独立生成交易权限、Trial、Confirm、金额、卖出份额或订单"
           }
         ],
-        "name": "医药50ETF富国",
-        "category": "OBSERVATION_EVALUATION_INPUT",
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
         "information_classes": [
-          "PERSISTENT_STRUCTURE",
           "EXTERNAL_DRIVER_TRIGGER"
-        ]
+        ],
+        "name": "医药50ETF富国",
+        "discovery_spot": {
+          "price": 0.981,
+          "change_pct": -1.3078470824949728,
+          "amount": 14640000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
+          "high": 0.999,
+          "low": 0.973,
+          "open": 0.981,
+          "prev_close": 0.994,
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1793942167000
+        },
+        "historical_context": {
+          "status": "READY",
+          "as_of": "2026-11-05",
+          "sample_count": 90,
+          "avg_amount_20": 10184674.92
+        },
+        "code": "515950"
       },
       {
+        "category": "OBSERVATION_EVALUATION_INPUT",
+        "external_driver_evidence": [
+          {
+            "asset": "xyz:BABA",
+            "dex": "xyz",
+            "family": "CHINA_TECH_RISK",
+            "direction": "NEGATIVE",
+            "crowding": "NORMAL",
+            "mark": 106.57,
+            "oracle": 106.5,
+            "premium": 0.0014835681,
+            "funding": 3.55935e-05,
+            "open_interest": 120424.638,
+            "day_notional_volume": 12712509.578740006,
+            "provider_timestamp": null,
+            "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
+            "as_of_collection_utc": "2026-11-06T05:15:16+00:00",
+            "decision_effect": "CONTRADICTION",
+            "decision_effect_scope": [
+              "opportunity_strength",
+              "entry_timing",
+              "holding_management",
+              "capital_competition"
+            ],
+            "decision_boundary": "对象级外部证据可以改变机会强弱、入场时机、持仓管理和资本竞争判断，但不得独立生成交易权限、Trial、Confirm、金额、卖出份额或订单"
+          }
+        ],
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "information_classes": [
+          "NEW_RELATIVE_DIVERGENCE",
+          "SHORT_HISTORY_CURRENT_CHANGE",
+          "EXTERNAL_DRIVER_TRIGGER"
+        ],
+        "name": "港股红利低波ETF招商",
+        "discovery_spot": {
+          "price": 1.075,
+          "change_pct": 0.0,
+          "amount": 32460000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
+          "high": 1.08,
+          "low": 1.068,
+          "open": 1.072,
+          "prev_close": 1.075,
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1793942171000
+        },
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-05",
           "sample_count": 90,
           "avg_amount_20": 51697025.9
         },
-        "code": "520550",
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "discovery_spot": {
-          "price": 1.076,
-          "change_pct": 0.09,
-          "amount": 31741490.0,
-          "amplitude_pct": 1.12,
-          "turnover_pct": 2.33,
-          "volume_ratio": 0.94,
-          "high": 1.08,
-          "low": 1.068,
-          "open": 1.072,
-          "prev_close": 1.075,
-          "return_60d_pct": 0.28,
-          "return_ytd_pct": -5.7,
-          "provider_timestamp": 1793942054
-        },
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "code": "520550"
+      },
+      {
+        "category": "OBSERVATION_EVALUATION_INPUT",
         "external_driver_evidence": [
           {
             "asset": "xyz:BABA",
@@ -2514,15 +2527,15 @@
             "family": "CHINA_TECH_RISK",
             "direction": "NEGATIVE",
             "crowding": "NORMAL",
-            "mark": 107.4,
-            "oracle": 107.29,
-            "premium": 0.0009180725,
-            "funding": 5.57897e-05,
-            "open_interest": 119449.876,
-            "day_notional_volume": 12728901.887630006,
+            "mark": 106.57,
+            "oracle": 106.5,
+            "premium": 0.0014835681,
+            "funding": 3.55935e-05,
+            "open_interest": 120424.638,
+            "day_notional_volume": 12712509.578740006,
             "provider_timestamp": null,
             "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-            "as_of_collection_utc": "2026-11-06T04:59:33+00:00",
+            "as_of_collection_utc": "2026-11-06T05:15:16+00:00",
             "decision_effect": "CONTRADICTION",
             "decision_effect_scope": [
               "opportunity_strength",
@@ -2533,78 +2546,74 @@
             "decision_boundary": "对象级外部证据可以改变机会强弱、入场时机、持仓管理和资本竞争判断，但不得独立生成交易权限、Trial、Confirm、金额、卖出份额或订单"
           }
         ],
-        "name": "港股红利低波ETF招商",
-        "category": "OBSERVATION_EVALUATION_INPUT",
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
         "information_classes": [
           "NEW_RELATIVE_DIVERGENCE",
           "STRUCTURAL_CHANGE",
-          "PERSISTENT_STRUCTURE",
+          "SHORT_HISTORY_CURRENT_CHANGE",
           "EXTERNAL_DRIVER_TRIGGER"
-        ]
-      },
-      {
+        ],
+        "name": "港股央企红利ETF景顺",
+        "discovery_spot": {
+          "price": 0.984,
+          "change_pct": 0.3058103975535076,
+          "amount": 127420000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
+          "high": 0.989,
+          "low": 0.971,
+          "open": 0.982,
+          "prev_close": 0.981,
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1793942171000
+        },
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-05",
           "sample_count": 90,
           "avg_amount_20": 92538731.6
         },
-        "code": "520990",
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "discovery_spot": {
-          "price": 0.984,
-          "change_pct": 0.31,
-          "amount": 126752174.0,
-          "amplitude_pct": 1.83,
-          "turnover_pct": 4.26,
-          "volume_ratio": 1.49,
-          "high": 0.989,
-          "low": 0.971,
-          "open": 0.982,
-          "prev_close": 0.981,
-          "return_60d_pct": 3.36,
-          "return_ytd_pct": -0.4,
-          "provider_timestamp": 1793942057
-        },
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "external_driver_evidence": [
-          {
-            "asset": "xyz:BABA",
-            "dex": "xyz",
-            "family": "CHINA_TECH_RISK",
-            "direction": "NEGATIVE",
-            "crowding": "NORMAL",
-            "mark": 107.4,
-            "oracle": 107.29,
-            "premium": 0.0009180725,
-            "funding": 5.57897e-05,
-            "open_interest": 119449.876,
-            "day_notional_volume": 12728901.887630006,
-            "provider_timestamp": null,
-            "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
-            "as_of_collection_utc": "2026-11-06T04:59:33+00:00",
-            "decision_effect": "CONTRADICTION",
-            "decision_effect_scope": [
-              "opportunity_strength",
-              "entry_timing",
-              "holding_management",
-              "capital_competition"
-            ],
-            "decision_boundary": "对象级外部证据可以改变机会强弱、入场时机、持仓管理和资本竞争判断，但不得独立生成交易权限、Trial、Confirm、金额、卖出份额或订单"
-          }
-        ],
-        "name": "港股央企红利ETF景顺",
+        "code": "520990"
+      },
+      {
         "category": "OBSERVATION_EVALUATION_INPUT",
+        "external_driver_evidence": [],
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
         "information_classes": [
           "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE",
-          "PERSISTENT_STRUCTURE",
-          "EXTERNAL_DRIVER_TRIGGER"
-        ]
+          "SHORT_HISTORY_CURRENT_CHANGE"
+        ],
+        "name": "300自由现金流ETF摩根",
+        "discovery_spot": {
+          "price": 1.161,
+          "change_pct": -0.08605851979345269,
+          "amount": 16250000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
+          "high": 1.165,
+          "low": 1.155,
+          "open": 1.16,
+          "prev_close": 1.162,
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1793942168000
+        },
+        "historical_context": {
+          "status": "READY",
+          "as_of": "2026-11-05",
+          "sample_count": 90,
+          "avg_amount_20": 24886474.15
+        },
+        "code": "563900"
       }
     ],
     "universe_identity": "5b8dbe38de78895f",
-    "discovery_delta_identity": "61e3ea6940e63644",
+    "discovery_delta_identity": "4b4f8a4a7c917b5f",
     "source": "EASTMONEY_PRIMARY_HITHINK_SECONDARY_UNIVERSE_PLUS_BOUNDED_HISTORY_REPAIR",
     "pit_boundary": "2026-11-05",
     "freshness_rule": "same-node fixed-slot evidence; absence is not zero"
@@ -2616,18 +2625,18 @@
     "read_only": true,
     "market_date": "2026-11-06",
     "latest_valid_node": "live",
-    "latest_snapshot": "data/market/snapshots/2026-11-06_131410.json",
-    "generated_at_beijing": "2026-11-06T13:14:42+08:00",
+    "latest_snapshot": "data/market/snapshots/2026-11-06_131547.json",
+    "generated_at_beijing": "2026-11-06T13:16:38+08:00",
     "status": "PENDING_MASTER_DECISION",
     "opportunity_count": null,
     "opportunities": [],
     "decision_owner": "MASTER_FORMAL_DECISION",
     "not_zero_rule": "pending decision is not an opportunity count of zero",
-    "source_discovery_status": "READY",
-    "source_discovery_generated_at_beijing": "2026-11-06T13:14:42+08:00",
-    "source_discovery_latest_snapshot": "data/market/snapshots/2026-11-06_131410.json",
+    "source_discovery_status": "DEGRADED",
+    "source_discovery_generated_at_beijing": "2026-11-06T13:16:38+08:00",
+    "source_discovery_latest_snapshot": "data/market/snapshots/2026-11-06_131547.json",
     "source_discovery_universe_identity": "5b8dbe38de78895f",
-    "source_discovery_delta_identity": "61e3ea6940e63644"
+    "source_discovery_delta_identity": "4b4f8a4a7c917b5f"
   },
   "intraday_formal_decision_index": {
     "status": "READY",
@@ -63221,8 +63230,8 @@
   "review_boundary": "15:00后当天首次最终账户截图默认触发正式收盘复盘。A股显式close节点必须把15:00价格有效时点与provider后续查询/观察时间分离；provider时间晚于15:00不等于发生了盘后成交。账户事实只能来自用户或券商确认；重复截图如无账户/成交变化只做差异更新，不重复制造CASE。",
   "formal_layer_projection_sync": {
     "status": "ALIGNED",
-    "discovery_generated_at_beijing": "2026-11-06T13:14:42+08:00",
-    "opportunity_source_discovery_generated_at_beijing": "2026-11-06T13:14:42+08:00",
-    "synchronized_at_beijing": "2026-11-06T13:14:42+08:00"
+    "discovery_generated_at_beijing": "2026-11-06T13:16:38+08:00",
+    "opportunity_source_discovery_generated_at_beijing": "2026-11-06T13:16:38+08:00",
+    "synchronized_at_beijing": "2026-11-06T13:16:38+08:00"
   }
 }
