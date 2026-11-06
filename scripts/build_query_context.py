@@ -1372,6 +1372,14 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
             "object_bindings": _build_hyperliquid_object_bindings(external_driver, positions, observation_inputs, discovery_inputs),
             "time_basis": external_driver.get("time_basis", ""),
             "decision_boundary": "可服务于Discovery、观察ETF、机会ETF、实际持仓和已执行Trial的对象级辅助证据；不得独立生成Trial、Confirm、金额、卖出份额或订单。",
+            "formal_consumption_contract": {
+                "required": True,
+                "scope": ["DISCOVERY", "OBSERVATION", "OPPORTUNITY", "HOLDING", "EXECUTED_TRIAL"],
+                "per_object_fields": ["object_code", "mapped_assets", "evidence_status", "direction", "crowding", "time_relation", "decision_effect", "business_impact"],
+                "business_impact_values": ["SUPPORT", "CONTRADICTION", "TIMING_FILTER", "NO_INCREMENTAL_VALUE", "LOCAL_LIMITATION"],
+                "rule": "正式决策必须逐对象说明Hyperliquid对当前对象是支持、矛盾、仅时机过滤、无增量价值或局部限制；没有映射或没有可消费观察时标记LOCAL_LIMITATION，不得写成全局无机会或全局禁止交易。",
+                "authority_boundary": "该契约只证明证据被读取和解释，不授予Trial、Confirm、金额、卖出份额或订单权限。",
+            },
         },
         "decision_context": {
             "generated_at_beijing": decision.get("generated_at_beijing") or decision.get("generated_at") or "",
