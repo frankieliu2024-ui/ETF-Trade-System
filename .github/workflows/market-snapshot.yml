@@ -1768,8 +1768,17 @@ jobs:
             git add -f -- data/state/query_context.json
             git add -A -- data/market/snapshots data/market/discovery_history data/state post_market_review events config/market/etf_monitor_universe.json ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md
             git reset -- data/state/system_consistency.json
+            triggering_request_kind=""
+            if [ -n "${TRIGGERING_REQUEST_FILE:-}" ] && [ -f "$TRIGGERING_REQUEST_FILE" ]; then
+              triggering_request_kind=$(python - "$TRIGGERING_REQUEST_FILE" <<'PY'
+          import json, sys
+          payload = json.load(open(sys.argv[1], encoding="utf-8"))
+          print(str(payload.get("request_type") or "").strip().upper())
+          PY
+              )
+            fi
             if [ -n "$FORMAL_PARENT_ID" ] || \
-               { [ -n "$TRIGGERING_REQUEST_FILE" ] && [ "${SCHEDULED_REVIEW_COMPLETION:-false}" != "true" ]; } || \
+               { [ -n "$TRIGGERING_REQUEST_FILE" ] && [ "$triggering_request_kind" = "MARKET_QUOTE_REFRESH" ] && [ "${SCHEDULED_REVIEW_COMPLETION:-false}" != "true" ]; } || \
                [ -n "${FORMAL_CONTEXT_RECOVERY_REQUEST:-}" ]; then
               python - <<'PY'
           import json, os
