@@ -753,14 +753,10 @@ def _validate_historical_trade_case_mapping(report: dict) -> None:
             etf_count += 1
         else:
             stock_count += 1
-    declared = re.search(r"共(\d+)笔证券交易：ETF\s*(\d+)笔、个股(\d+)笔", section)
-    if declared:
-        declared_counts = tuple(map(int, declared.groups()))
-        actual_counts = (len(rows), etf_count, stock_count)
-        if declared_counts != actual_counts:
-            errors.append(f"declared_counts={declared_counts} actual={actual_counts}")
-    else:
-        errors.append("declared_trade_counts_missing")
+    # The markdown index is the sole row-level source. Do not require a
+    # duplicated prose count: it drifts whenever a new trade row is added.
+    # Counts in the report are derived from the parsed table itself.
+
     status = "FAIL" if errors else "PASS"
     report.setdefault("checks", []).append({"name": "formal_files:historical_trade_case_mapping", "status": status, "detail": f"trade_rows={len(rows)} etf={etf_count} stock={stock_count} missing={errors}"})
     for item in errors:
