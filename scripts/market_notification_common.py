@@ -684,6 +684,13 @@ def aggregate_candidate_events(events: list[dict]) -> list[dict]:
 def persist_and_send(event: dict, *, policy: str) -> dict:
     event = _normalize_user_visible_event(event)
     event = _normalize_user_title(event)
+    # Pulse facts use the existing fixed market-event presentation template.
+    # Identity, evidence comparison, deduplication, and PushPlus delivery remain unchanged.
+    if str(event.get("event_type") or "") == "PULSE_FACT_UPDATE":
+        from notification_center import render_canonical_notification
+        rendered = render_canonical_notification(event)
+        if rendered is not None:
+            event = rendered
     event["confirmation_context"] = dict(_market_context(event))
     event["confirmation_context"]["event_family_id"] = _event_family_id(event)
     materiality_error = _late_apac_update_error(event)
