@@ -187,6 +187,8 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
                 "request_id": request["request_id"],
                 "report_id": "ETF_TRADE_REVIEW:delivery-only-1",
                 "full_content": "FROZEN DELIVERY-ONLY REVIEW",
+                "content_hash": __import__("hashlib").sha256(b"FROZEN DELIVERY-ONLY REVIEW").hexdigest(),
+                "content_hash_source": "completion_builder",
             },
         })
         request["formal_review"].pop("lifecycle", None)
