@@ -123,11 +123,19 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
         f"【下一步核对】{action}\n\n"
         f"【当前边界】这是一条提前提示，不是正式决策，不授予Trial、Confirm、买入、卖出或调仓权限，也不代表已经发生实际成交。"
     )
+    if source == "discovery_pulse":
+        title = f"【市场异动】新候选出现：{added[0]}" if added else "【市场异动】候选池发生变化"
+    else:
+        headline_objects = added or changed
+        title = (
+            f"【市场异动】外部信号变化：{'、'.join(headline_objects[:3])}"
+            if headline_objects else "【市场异动】外部信号发生变化"
+        )
     return {
         "key": f"pulse:{source}:{after.get('identity')}",
         "event_type": "PULSE_FACT_UPDATE",
         "source": source,
-        "title": f"【市场异动】{label}证据发生可比变化",
+        "title": title,
         "content": content,
         "user_action": "无需自动交易；下一正式判断逐对象核对变化及其对持仓、观察、Discovery和现金竞争的影响。",
         "confirmation_context": {
