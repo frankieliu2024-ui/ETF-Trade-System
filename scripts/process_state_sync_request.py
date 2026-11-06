@@ -44,7 +44,13 @@ def _persist_formal_opportunity_projection(root: Path, source: dict) -> None:
                 if item.get(key) not in (None, "")
             })
     binding = source.get("request_bound_fact_binding") or {}
-    atomic_json_write(root / "data/state/formal_opportunity_current.json", {
+    discovery_path = root / "data/state/formal_discovery_current.json"
+    current_discovery = load_json(discovery_path) if discovery_path.exists() else {}
+    discovery_generated_at = str(current_discovery.get("generated_at_beijing") or "").strip()
+    discovery_snapshot = str(current_discovery.get("latest_snapshot") or "").strip()
+    discovery_universe = current_discovery.get("universe_identity")
+    discovery_delta = current_discovery.get("discovery_delta_identity")
+    opportunity = {
         "schema_version": "1.0",
         "layer": "OPPORTUNITY",
         "producer": "process_state_sync_request.py",
@@ -60,7 +66,28 @@ def _persist_formal_opportunity_projection(root: Path, source: dict) -> None:
         "not_zero_rule": "DECIDED zero is explicit only when the persisted decision has no qualified opportunity",
         "source_request_id": source.get("request_id") or "",
         "source_fingerprint": source.get("fingerprint") or "",
-    })
+        "source_discovery_generated_at_beijing": discovery_generated_at,
+        "source_discovery_latest_snapshot": discovery_snapshot,
+        "source_discovery_universe_identity": discovery_universe,
+        "source_discovery_delta_identity": discovery_delta,
+    }
+    atomic_json_write(root / "data/state/formal_opportunity_current.json", opportunity)
+    # The review context is a derived consumer of the same formal-layer
+    # projections. Keep it bound to the exact Discovery used by the current
+    # opportunity projection; never leave an older Discovery copy attached.
+    review_path = root / "data/state/review_context.json"
+    if review_path.exists():
+        review = load_json(review_path)
+        if isinstance(review, dict) and str(review.get("market_date") or "") == str(opportunity.get("market_date") or ""):
+            review["formal_discovery"] = current_discovery
+            review["formal_opportunity"] = opportunity
+            review["formal_layer_projection_sync"] = {
+                "status": "ALIGNED",
+                "discovery_generated_at_beijing": discovery_generated_at,
+                "opportunity_source_discovery_generated_at_beijing": discovery_generated_at,
+                "synchronized_at_beijing": datetime.now(timezone(timedelta(hours=8))).isoformat(timespec="seconds"),
+            }
+            atomic_json_write(review_path, review)
 try:
     from business_decision_source import (
         BUSINESS_DECISION_SOURCE,
