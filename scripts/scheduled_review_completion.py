@@ -1027,7 +1027,10 @@ def build_formal_runtime_completion_request(
     validate_formal_decision_presentation_timestamp(content, requested_at)
     frozen_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
     decision_id = f"ETF_FORMAL_DECISION:{task_run_id}"
-    evidence_audit = build_formal_evidence_consumption_audit(fact_summary, content)\n    if isinstance(fact_summary, dict) and fact_summary and evidence_audit.get("audit_status") not in {"PASS", "PASS_EMPTY"}:\n        raise ValueError("formal decision evidence consumption audit is incomplete; object-level ledger is required")\n    payload = {
+    evidence_audit = build_formal_evidence_consumption_audit(fact_summary, content)
+    if isinstance(fact_summary, dict) and fact_summary and evidence_audit.get("audit_status") not in {"PASS", "PASS_EMPTY"}:
+        raise ValueError("formal decision evidence consumption audit is incomplete; object-level ledger is required")
+    payload = {
         "request_id": task_run_id,
         "request_type": "SCHEDULED_REVIEW_COMPLETION",
         "formal_fact_type": "FORMAL_CURRENT_MAIN_DECISION",
