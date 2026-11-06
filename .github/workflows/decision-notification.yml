@@ -810,9 +810,19 @@ jobs:
           esac
           test -f "$EVENT_PATH"
           event_backup="/tmp/formal-review-event.json"
+          report_path=$(python - "$EVENT_PATH" <<'PY'
+          import json, sys
+          event = json.load(open(sys.argv[1], encoding="utf-8"))
+          binding = event.get("presentation_binding") or {}
+          report_id = str(event.get("report_id") or binding.get("report_id") or "").strip()
+          print(f"requests/report_delivery/{report_id.replace(':', '__')}.json" if report_id else "")
+          PY
+          )
+          report_backup="/tmp/formal-review-report.json"
           current_backup="/tmp/formal-review-current.json"
           dashboard_backup="/tmp/formal-review-dashboard.md"
           cp -- "$EVENT_PATH" "$event_backup"
+          [ -n "$report_path" ] && [ -f "$report_path" ] && cp -- "$report_path" "$report_backup" || true
           [ -f data/state/CURRENT.json ] && cp -- data/state/CURRENT.json "$current_backup" || true
           # Rebuild the read-only Dashboard projection from the canonical event
           # before persisting it. This updates the same-day Formal Decision
@@ -833,11 +843,16 @@ jobs:
             git reset --hard origin/main
             mkdir -p "$(dirname "$EVENT_PATH")"
             cp -- "$event_backup" "$EVENT_PATH"
+            if [ -n "$report_path" ] && [ -f "$report_backup" ]; then
+              mkdir -p "$(dirname "$report_path")"
+              cp -- "$report_backup" "$report_path"
+            fi
             if [ -f "$current_backup" ]; then
               mkdir -p data/state
               cp -- "$current_backup" data/state/CURRENT.json
             fi
             git add -- "$EVENT_PATH"
+            [ -n "$report_path" ] && [ -f "$report_path" ] && git add -- "$report_path" || true
             git add -- ETF当前状态_DASHBOARD.md
             [ -f "$current_backup" ] && git add -- data/state/CURRENT.json || true
             if git diff --cached --quiet; then
