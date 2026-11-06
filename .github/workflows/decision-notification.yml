@@ -395,7 +395,14 @@ jobs:
       # two identities and lets the existing center dedupe/send.
       - name: Send Discovery or Hyperliquid pulse value event when due
         id: pulse_notify
-        if: ${{ github.event_name == 'push' && (steps.push_kind.outputs.discovery_pulse == 'true' || steps.push_kind.outputs.hyperliquid_pulse == 'true') }}
+        if: >-
+          ${{
+            (github.event_name == 'push' &&
+              (steps.push_kind.outputs.discovery_pulse == 'true' || steps.push_kind.outputs.hyperliquid_pulse == 'true')) ||
+            (github.event_name == 'workflow_run' &&
+              contains(fromJSON('["ETF market snapshot", "Overseas pre-open pulse", "US extended-hours pulse"]'), github.event.workflow_run.name) &&
+              github.event.workflow_run.conclusion == 'success')
+          }}
         continue-on-error: true
         run: python scripts/run_guarded_notification.py batch --market pulse
 
