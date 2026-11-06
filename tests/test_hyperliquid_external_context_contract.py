@@ -44,7 +44,7 @@ class HyperliquidExternalContextContractTests(unittest.TestCase):
             self.assertEqual(result["earliest_observation_collected_at_utc"], by_name["xyz:DRAM"]["collected_at_utc"])
             self.assertEqual(result["latest_observation_collected_at_utc"], by_name["io:SNDK"]["collected_at_utc"])
             self.assertEqual(result["observation_count"], 2)
-            self.assertIn("observation completion boundary", result["time_basis"])
+            self.assertIn("latest state visible to this run", result["time_basis"])
 
     def test_universe_context_length_mismatch_is_a_dex_failure(self):
         with tempfile.TemporaryDirectory() as tmp:
