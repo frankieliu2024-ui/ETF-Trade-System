@@ -39,7 +39,7 @@ def validate_workflow(path: Path) -> list[str]:
             delimiter = match.group(2)
             run_indent = None
             for previous in reversed(lines[: number - 1]):
-                if re.match(r"^\\s*run\\s*:\\s*\\|", previous):
+                if re.match(r"^\s*run\s*:\s*\|", previous):
                     run_indent = leading_spaces(previous)
                     break
             expected_indent = (run_indent + 2) if run_indent is not None else leading_spaces(line)
@@ -62,7 +62,7 @@ def validate_workflow(path: Path) -> list[str]:
                 f"(line {start_line})"
             )
     if active is not None:
-        delimiter, _, start_line = active
+        delimiter, _, start_line, _ = active
         errors.append(f"{path}:{start_line}: unterminated heredoc {delimiter!r}")
     return errors
 
