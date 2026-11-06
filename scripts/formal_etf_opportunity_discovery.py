@@ -520,8 +520,8 @@ def classify_states(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     if len(closes) < MIN_HISTORY:
         return []
     states: list[dict[str, Any]] = []
-    returns = {w: _ret(closes, w) for w in (20, 40, 60)}
-    positives = [w for w, value in returns.items() if value is not None and value > 0]
+    returns = {w: _ret(closes, w) for w in (5, 20, 40, 60)}
+    positives = [w for w in (20, 40, 60) if returns.get(w) is not None and returns[w] > 0]
     drawdown = _max_drawdown(closes[-61:])
     if len(positives) >= 2 and drawdown <= 0.12:
         states.append({"state": "PERSISTENT_TREND", "evidence": {
@@ -536,6 +536,17 @@ def classify_states(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
             states.append({"state": "TREND_CHANGE", "evidence": {
                 "direction": "STRENGTHENING", "return_10": round(short_ret, 6),
                 "return_40": round(long_ret, 6), "short_vs_long_normalized_gap": round(gap, 6),
+            }})
+
+    five_ret, twenty_ret = returns.get(5), returns.get(20)
+    if five_ret is not None and twenty_ret is not None:
+        short_term_gap = five_ret - twenty_ret * 5 / 20
+        if short_term_gap >= 0.05:
+            states.append({"state": "SHORT_TERM_CHANGE", "evidence": {
+                "direction": "SHORT_TERM_STRENGTHENING",
+                "return_5": round(five_ret, 6),
+                "return_20": round(twenty_ret, 6),
+                "short_vs_medium_normalized_gap": round(short_term_gap, 6),
             }})
 
     window = closes[-41:]
@@ -715,8 +726,9 @@ def _bounded_prefilter(rows: list[dict[str, Any]], held_codes: set[str] | None =
     buckets: dict[str, dict[str, dict[str, Any]]] = {x: {} for x in class_priority}
     for row in rows:
         code = str(row.get("code") or "")
-        if code in held_codes:
-            continue
+        # Managed identities remain in Discovery. Holdings, Observation ETFs
+        # and Opportunity ETFs must be re-evaluated alongside new candidates;
+        # formal decision compares their roles later.
         if not _opportunity_eligible(row):
             continue
         exposure = _exposure_key(row)
