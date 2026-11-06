@@ -48,6 +48,10 @@ class FormalDecisionCanonicalHashOwnerTests(unittest.TestCase):
         expected = hashlib.sha256(body.encode("utf-8")).hexdigest()
         self.assertEqual(event["presentation_binding"]["content_hash"], expected)
         self.assertEqual(event["presentation_binding"]["content_hash_source"], "canonical_owner")
+        report = json.loads((self.root / "requests/report_delivery/ETF_FORMAL_DECISION__run-1.json").read_text(encoding="utf-8"))
+        self.assertEqual(report["report_id"], "ETF_FORMAL_DECISION:run-1")
+        self.assertEqual(report["content_hash"], expected)
+        self.assertEqual(report["full_content"], body)
 
     def test_owner_accepts_mismatching_supplied_hash_as_audit_metadata(self):
         bds = self.bds("frozen formal decision")

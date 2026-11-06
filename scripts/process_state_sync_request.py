@@ -2886,6 +2886,42 @@ def record_formal_decision_report_event(request: dict, bds: dict | None = None) 
     }
     payload["fingerprint"] = hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
     event_path = ROOT / "events" / "reviews" / f"formal_{occurrence}.json"
+    # The Formal Decision canonical owner must project the same frozen
+    # completion to the shared REPORT contract in the same transaction
+    # boundary as the event. This keeps audit/replay durable after delivery.
+    report_id = str(binding.get("report_id") or f"ETF_FORMAL_DECISION:{task_run_id}").strip()
+    report_path = ROOT / "requests" / "report_delivery" / f"{report_id.replace(':', '__')}.json"
+    effective_market_date = str(
+        source.get("market_date")
+        or str(source.get("requested_at_beijing") or request.get("requested_at_beijing") or "")[:10]
+        or ""
+    ).strip()
+    report = {
+        "schema_version": "1.0",
+        "event_type": "REPORT_DELIVERY_REQUEST",
+        "channel": "REPORT",
+        "report_type": "ETF_FORMAL_DECISION",
+        "report_id": report_id,
+        "request_id": identity["request_id"],
+        "task_id": str(binding.get("task_id") or "ETF正式决策"),
+        "task_run_id": task_run_id,
+        "generated_at": str(source.get("requested_at_beijing") or request.get("requested_at_beijing") or ""),
+        "effective_market_date": effective_market_date,
+        "source_actor": str(source.get("source") or "CHATGPT_SCHEDULED_FORMAL_ANALYSIS_ACTOR"),
+        "source_reference": f"canonical-review-completion:events/reviews/formal_{occurrence}.json",
+        "title": "【ETF正式决策】",
+        "summary": "Canonical Formal Decision completion; deliver the frozen report unchanged.",
+        "full_content": full_content,
+        "content_hash": content_hash,
+        "idempotency_key": "ETF_FORMAL_DECISION:" + task_run_id,
+        "delivery_mode": "FULL_REPORT",
+        "no_trade_authority": True,
+    }
+    if report_path.exists() and load_json(report_path) != report:
+        raise RuntimeError("current Formal Decision REPORT_DELIVERY_REQUEST identity/content mismatch")
+    if not report_path.exists():
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        atomic_json_write(report_path, report)
     prior = load_json(event_path) if event_path.exists() else {}
     if prior and prior.get("fingerprint") != payload["fingerprint"]:
         raise ValueError("Formal Decision occurrence is immutable")
