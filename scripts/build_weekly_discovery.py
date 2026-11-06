@@ -12,10 +12,10 @@ from zoneinfo import ZoneInfo
 from pathlib import Path
 
 try:
-    from formal_etf_opportunity_discovery import discover_formal_candidates
+    from formal_etf_opportunity_discovery import discover_formal_candidates, required_completed_history_date
     from state_manager import atomic_json_write
 except ModuleNotFoundError:
-    from scripts.formal_etf_opportunity_discovery import discover_formal_candidates
+    from scripts.formal_etf_opportunity_discovery import discover_formal_candidates, required_completed_history_date
     from scripts.state_manager import atomic_json_write
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
@@ -36,8 +36,15 @@ def build() -> dict:
     node = str(current.get("latest_valid_node") or "").strip().lower()
     node_status = str(current.get("node_status") or "").strip().upper()
     snapshot = load_json(ROOT / str(current.get("latest_snapshot") or ""), {})
-    if not market_date or node not in {"open", "midday", "close"} or node_status not in {"READY", "DEGRADED"}:
+    if not market_date or node not in {"auction", "open", "midday", "close"} or node_status not in {"READY", "DEGRADED"}:
         return {"status": "SKIPPED", "reason": "verified_a_share_node_not_current", "market_date": market_date, "latest_valid_node": node}
+    # Discovery always uses the latest completed session as its historical PIT
+    # boundary. The current verified snapshot remains the node-local spot input:
+    # auction/open uses the prior close, while close uses today's close quote
+    # without requiring every history provider to have published today's daily bar.
+    required_history_end_date = required_completed_history_date(
+        ROOT, market_date, include_execution_date=False
+    )
     if str(snapshot.get("market_date") or "") != market_date:
         return {"status": "SKIPPED", "reason": "snapshot_market_date_mismatch", "market_date": market_date, "latest_valid_node": node}
     if str(snapshot.get("quality_status") or "").upper() not in {"PASS", "DEGRADED"}:
@@ -63,7 +70,7 @@ def build() -> dict:
     discovery = discover_formal_candidates(
         ROOT,
         market_date=market_date,
-        required_history_end_date=market_date,
+        required_history_end_date=required_history_end_date,
         managed_codes=managed_codes,
         held_codes=held_codes,
     )
@@ -80,6 +87,8 @@ def build() -> dict:
         "source": discovery.get("source"),
         "coverage_status": discovery.get("coverage_status"),
         "candidate_count": discovery.get("candidate_count", 0),
+        "required_history_end_date": required_history_end_date,
+        "empty_reason": discovery.get("empty_reason") or "",
         "universe_identity": discovery.get("universe_identity"),
         "discovery_delta_identity": discovery.get("discovery_delta_identity"),
         "discovery": discovery,
@@ -93,6 +102,8 @@ def build() -> dict:
         "status": artifact["status"],
         "market_date": market_date,
         "latest_valid_node": node,
+        "required_history_end_date": required_history_end_date,
+        "empty_reason": artifact["empty_reason"],
         "candidate_count": artifact["candidate_count"],
         "coverage_status": artifact["coverage_status"],
         "output": str(CURRENT_OUTPUT.relative_to(ROOT)),
