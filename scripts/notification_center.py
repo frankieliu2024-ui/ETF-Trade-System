@@ -1136,8 +1136,52 @@ def _hyperliquid_pulse_event() -> dict | None:
 
 
 def pulse_formal_decision_pending_event() -> dict | None:
-    """Use the existing decision-reminder channel for material pulse changes."""
-    return _discovery_pulse_event() or _hyperliquid_pulse_event()
+    """Project independent Discovery/Hyperliquid changes as one dual-engine INTERRUPT.
+
+    The two engines remain separate facts and keep their own evidence/context.
+    When both change in the same notification pass, combine them only at the
+    user-facing attention layer so Discovery is not hidden by Hyperliquid (or
+    vice versa). This is not a REPORT and never creates a trading permission.
+    """
+    discovery = _discovery_pulse_event()
+    hyperliquid = _hyperliquid_pulse_event()
+    events = [event for event in (discovery, hyperliquid) if event]
+    if not events:
+        return None
+    if len(events) == 1:
+        return events[0]
+
+    contexts = [event.get("confirmation_context") or {} for event in events]
+    sources = [str(event.get("source") or "") for event in events]
+    evidence_time = "、".join(str(context.get("evidence_time_beijing") or "未提供") for context in contexts)
+    details = "\n\n".join(str(event.get("content") or "") for event in events)
+    objects = "、".join(dict.fromkeys(str(context.get("applicable_object") or "") for context in contexts if str(context.get("applicable_object") or "")))
+    source_id = "|".join(str(event.get("source_event_id") or event.get("key") or "") for event in events)
+    return {
+        "key": "pulse-dual:" + hashlib.sha256(source_id.encode("utf-8")).hexdigest()[:24],
+        "source_event_id": "pulse-dual:" + source_id,
+        "type": "市场异动", "event_type": "PULSE_FACT_UPDATE",
+        "title": "【市场异动】Discovery与Hyperliquid同时出现需要复核的变化",
+        "content": "两个独立引擎在同一通知窗口发现了需要关注的变化。\n\n" + details + "\n\n这不是正式交易判断；下一正式判断应把两类证据与ETF自身走势、持仓和现金竞争一起核对。",
+        "source": "dual_engine_pulse",
+        "user_severity": "需要关注",
+        "user_action": "下一正式判断同时核对Discovery候选变化与Hyperliquid外部证据；通知本身不授予Trial、Confirm或交易权限。",
+        "confirmation_context": {
+            "trigger_reason": "Discovery与Hyperliquid分别形成可比变化",
+            "trigger_type": "DUAL_ENGINE_MAPPED_CHANGE",
+            "evidence_time_beijing": evidence_time,
+            "applicable_object": objects,
+            "requires_formal_reassessment": True,
+            "pulse_source": "Discovery+Hyperliquid",
+            "pulse_sources": sources,
+            "pulse_identities": [str(context.get("pulse_identity") or "") for context in contexts],
+            "discovery_context": contexts[0] if discovery else {},
+            "hyperliquid_context": contexts[-1] if hyperliquid else {},
+            "before_fact": "；".join(str(context.get("before_fact") or "") for context in contexts),
+            "after_fact": "；".join(str(context.get("after_fact") or "") for context in contexts),
+            "risk_snapshot": "两类外部/发现证据只改变注意力排序和下一节点复核重点，不改变风险许可或交易权限。",
+        },
+    }
 
 
 def formal_decision_pending_event() -> dict | None:
