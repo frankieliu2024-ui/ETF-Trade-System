@@ -170,6 +170,32 @@ class PostCloseReviewCanonicalTests(unittest.TestCase):
         self.assertEqual(report["content_hash"], binding["content_hash"])
         self.assertEqual(report["full_content"], final_content)
 
+    def test_delivery_only_trade_review_does_not_revalidate_managed_positions(self):
+        request = self.request()
+        request.update({
+            "request_type": "SCHEDULED_REVIEW_COMPLETION",
+            "formal_fact_type": "FORMAL_SCHEDULED_TRADE_REVIEW",
+            "interaction_scenario": "SCHEDULED_TRADE_REVIEW",
+            "source": "CHATGPT_DIRECT_GITHUB_CONTENTS_WRITER",
+            "entry_mode": "AUTOMATIC_SCHEDULED_TASK",
+            "presentation_binding": {
+                "report_type": "ETF_TRADE_REVIEW",
+                "task_id": "ETF交易复盘",
+                "task_run_id": "delivery-only-1",
+                "occurrence_id": "delivery-only-1",
+                "entry_mode": "AUTOMATIC_SCHEDULED_TASK",
+                "request_id": request["request_id"],
+                "report_id": "ETF_TRADE_REVIEW:delivery-only-1",
+                "full_content": "FROZEN DELIVERY-ONLY REVIEW",
+                "content_hash": __import__("hashlib").sha256(b"FROZEN DELIVERY-ONLY REVIEW").hexdigest(),
+                "content_hash_source": "completion_builder",
+            },
+        })
+        request["formal_review"].pop("lifecycle", None)
+        request["formal_review"].pop("holding_actions", None)
+        account = {"status": "VALID", "updated_at": "2026-08-31T15:12:00+08:00"}
+        self.assertEqual(sync.record_post_close_review(account, request, delivery_only=True), (True, False))
+
     def test_future_dated_current_closure_is_not_a_valid_completion(self):
         current = {
             "market_date": "2026-10-16",

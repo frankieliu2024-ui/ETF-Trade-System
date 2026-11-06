@@ -2297,7 +2297,7 @@ def _is_effective_close_timestamp(
     )
 
 
-def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
+def record_post_close_review(account: dict, request: dict, *, delivery_only: bool = False) -> tuple[bool, bool]:
     review = request.get("formal_review")
     legacy_full_day_compat = False
     interaction_scenario = str(request.get("interaction_scenario") or "").strip().upper()
@@ -2470,7 +2470,7 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
         if raw_presentation_binding is not None
         else {}
     )
-    if is_trade_review_production:
+    if is_trade_review_production and not delivery_only:
         validate_trade_review_presentation_semantics(
             ROOT,
             review,
@@ -2545,9 +2545,10 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
             data_time.pop("close_snapshot", None)
         review = dict(review)
         review["data_time"] = data_time
-    lifecycle_error = validate_current_lifecycle_contract(review.get("lifecycle"), account)
-    if lifecycle_error:
-        raise ValueError(f"invalid formal review lifecycle contract: {lifecycle_error}")
+    if not delivery_only:
+        lifecycle_error = validate_current_lifecycle_contract(review.get("lifecycle"), account)
+        if lifecycle_error:
+            raise ValueError(f"invalid formal review lifecycle contract: {lifecycle_error}")
     review_lifecycle = review.get("holding_actions") or review.get("lifecycle")
     if not review_lifecycle and isinstance(review.get("holdings"), list):
         review_lifecycle = {
@@ -2569,9 +2570,10 @@ def record_post_close_review(account: dict, request: dict) -> tuple[bool, bool]:
         }
         review = dict(review)
         review["managed_positions"] = review_lifecycle
-    managed_error = validate_managed_position_lifecycle(review_lifecycle, account, "formal_review.managed_positions")
-    if managed_error:
-        raise ValueError(f"invalid formal review managed-position contract: {managed_error}")
+    if not delivery_only:
+        managed_error = validate_managed_position_lifecycle(review_lifecycle, account, "formal_review.managed_positions")
+        if managed_error:
+            raise ValueError(f"invalid formal review managed-position contract: {managed_error}")
     managed_projection = build_managed_position_projection(ROOT, account)
     review = _normalize_executed_trade_case_mapping(review, market_date)
     payload = {"market_date": market_date, "account_updated_at": account.get("updated_at"), "formal_review": review, "presentation_binding": presentation_binding}
