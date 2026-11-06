@@ -25,23 +25,71 @@ def _guarded_persist(original):
     return guarded
 
 
-def _pulse_candidates() -> list[dict]:
-    """Build comparable Discovery/Hyperliquid pulse events."""
-    from notification_center import ROOT, read_json
+def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | None:
+    before_fact = {
+        "identity": before.get("identity"),
+        "fact_time_beijing": before.get("fact_time_beijing"),
+        "status": before.get("status"),
+        "coverage_status": before.get("coverage_status"),
+        "candidate_count": before.get("candidate_count"),
+        "observation_count": before.get("observation_count"),
+    }
+    after_fact = {
+        "identity": after.get("identity"),
+        "fact_time_beijing": after.get("fact_time_beijing"),
+        "status": after.get("status"),
+        "coverage_status": after.get("coverage_status"),
+        "candidate_count": after.get("candidate_count"),
+        "observation_count": after.get("observation_count"),
+    }
+    before_fact["objects"] = sorted(
+        str(x.get("candidate_signature") or x.get("asset") or "")
+        for x in (before.get("candidates") or before.get("observations") or [])
+        if isinstance(x, dict)
+    )
+    after_fact["objects"] = sorted(
+        str(x.get("candidate_signature") or x.get("asset") or "")
+        for x in (after.get("candidates") or after.get("observations") or [])
+        if isinstance(x, dict)
+    )
+    if before_fact == after_fact:
+        return None
+    evidence_time = str(after.get("formed_at_beijing") or after.get("fact_time_beijing") or "")
+    return {
+        "key": f"pulse:{source}:{after.get('identity')}",
+        "event_type": "PULSE_FACT_UPDATE",
+        "source": source,
+        "title": f"【市场异动】{label}证据发生可比变化",
+        "content": (
+            f"{label}证据发生可比变化。\\n"
+            f"证据时间：{evidence_time}\\n"
+            f"前一脉冲：状态={before_fact['status']}，覆盖={before_fact['coverage_status']}，"
+            f"候选数={before_fact['candidate_count']}，对象={', '.join(before_fact['objects']) or '无'}\\n"
+            f"当前脉冲：状态={after_fact['status']}，覆盖={after_fact['coverage_status']}，"
+            f"候选数={after_fact['candidate_count']}，对象={', '.join(after_fact['objects']) or '无'}\\n"
+            f"直接价值：请在下一正式判断中核对新增、消失或状态变化对象，并判断其对持仓、观察、Discovery和现金竞争的影响。"
+        ),
+        "user_action": "无需自动交易；下一正式判断必须逐对象核对上述变化，确认方向、时机、风险和资本影响后再决定是否改变管理结论。",
+        "confirmation_context": {
+            "evidence_time_beijing": evidence_time,
+            "before_fact": json.dumps(before_fact, ensure_ascii=False, sort_keys=True),
+            "after_fact": json.dumps(after_fact, ensure_ascii=False, sort_keys=True),
+            "applicable_object": label,
+        },
+    }
 
+
+def _pulse_candidates_from_payloads(payloads: dict[str, dict]) -> list[dict]:
     candidates = []
-    for source, filename, label in (
-        ("discovery_pulse", "discovery_pulse_index.json", "Discovery"),
-        ("hyperliquid_pulse", "hyperliquid_pulse_index.json", "Hyperliquid"),
-    ):
-        payload = read_json(ROOT / "data" / "state" / filename, {})
-        latest = payload.get("latest") if isinstance(payload, dict) else None
-        days = payload.get("days") if isinstance(payload, dict) else None
+    for source, label in (("discovery_pulse", "Discovery"), ("hyperliquid_pulse", "Hyperliquid")):
+        payload = payloads.get(source) or {}
         history = []
+        days = payload.get("days") if isinstance(payload, dict) else None
         if isinstance(days, dict):
             for entries in days.values():
                 if isinstance(entries, list):
                     history.extend(x for x in entries if isinstance(x, dict))
+        latest = payload.get("latest") if isinstance(payload, dict) else None
         if isinstance(latest, dict) and latest.get("identity"):
             history.append(latest)
         unique = {}
@@ -50,62 +98,59 @@ def _pulse_candidates() -> list[dict]:
             if identity:
                 unique[identity] = item
         ordered = sorted(unique.values(), key=lambda x: str(x.get("formed_at_beijing") or ""))
-        if len(ordered) < 2:
-            continue
-        before, after = ordered[-2], ordered[-1]
-        before_fact = {
-            "identity": before.get("identity"),
-            "fact_time_beijing": before.get("fact_time_beijing"),
-            "status": before.get("status"),
-            "coverage_status": before.get("coverage_status"),
-            "candidate_count": before.get("candidate_count"),
-            "observation_count": before.get("observation_count"),
-        }
-        after_fact = {
-            "identity": after.get("identity"),
-            "fact_time_beijing": after.get("fact_time_beijing"),
-            "status": after.get("status"),
-            "coverage_status": after.get("coverage_status"),
-            "candidate_count": after.get("candidate_count"),
-            "observation_count": after.get("observation_count"),
-        }
-        before_fact["objects"] = sorted(str(x.get("candidate_signature") or x.get("asset") or "")
-                                        for x in (before.get("candidates") or before.get("observations") or [])
-                                        if isinstance(x, dict))
-        after_fact["objects"] = sorted(str(x.get("candidate_signature") or x.get("asset") or "")
-                                       for x in (after.get("candidates") or after.get("observations") or [])
-                                       if isinstance(x, dict))
-        if before_fact == after_fact:
-            continue
-        evidence_time = str(after.get("formed_at_beijing") or after.get("fact_time_beijing") or "")
-        candidates.append({
-            "key": f"pulse:{source}:{after.get('identity')}",
-            "event_type": "PULSE_FACT_UPDATE",
-            "source": source,
-            "title": f"【市场异动】{label}证据发生可比变化",
-            "content": (
-                f"{label}证据发生可比变化。\\n"
-                f"证据时间：{evidence_time}\\n"
-                f"前一脉冲：状态={before_fact['status']}，覆盖={before_fact['coverage_status']}，"
-                f"候选数={before_fact['candidate_count']}，对象={', '.join(before_fact['objects']) or '无'}\\n"
-                f"当前脉冲：状态={after_fact['status']}，覆盖={after_fact['coverage_status']}，"
-                f"候选数={after_fact['candidate_count']}，对象={', '.join(after_fact['objects']) or '无'}\\n"
-                f"直接价值：请在下一正式判断中核对新增、消失或状态变化对象，并判断其对持仓、观察、Discovery和现金竞争的影响。"
-            ),
-            "user_action": "无需自动交易；下一正式判断必须逐对象核对上述变化，确认方向、时机、风险和资本影响后再决定是否改变管理结论。",
-            "confirmation_context": {
-                "evidence_time_beijing": evidence_time,
-                "before_fact": json.dumps(before_fact, ensure_ascii=False, sort_keys=True),
-                "after_fact": json.dumps(after_fact, ensure_ascii=False, sort_keys=True),
-                "applicable_object": label,
-            },
-        })
+        if len(ordered) >= 2:
+            event = _pulse_event(source, label, ordered[-2], ordered[-1])
+            if event:
+                candidates.append(event)
     return candidates
+
+
+def _pulse_candidates() -> list[dict]:
+    """Build comparable Discovery/Hyperliquid pulse events from canonical indexes."""
+    from notification_center import ROOT, read_json
+
+    return _pulse_candidates_from_payloads({
+        "discovery_pulse": read_json(ROOT / "data" / "state" / "discovery_pulse_index.json", {}),
+        "hyperliquid_pulse": read_json(ROOT / "data" / "state" / "hyperliquid_pulse_index.json", {}),
+    })
+
+
+def _pulse_test_candidates() -> list[dict]:
+    """Build synthetic pulses without reading or writing production pulse indexes."""
+    base = {
+        "status": "READY",
+        "coverage_status": "COMPLETE",
+        "candidate_count": 2,
+        "observation_count": 1,
+        "fact_time_beijing": "2026-11-06T15:20:00+08:00",
+    }
+    return _pulse_candidates_from_payloads({
+        "discovery_pulse": {
+            "latest": {**base, "identity": "PULSE_TEST_DISCOVERY_AFTER", "formed_at_beijing": "2026-11-06T15:20:00+08:00",
+                       "candidate_count": 3, "candidates": [{"candidate_signature": "513630::OBSERVATION_FULL_EVALUATION"},
+                                                            {"candidate_signature": "159567::OBSERVATION_FULL_EVALUATION"},
+                                                            {"candidate_signature": "520550::OBSERVATION_FULL_EVALUATION"}]},
+            "days": {"test": [{**base, "identity": "PULSE_TEST_DISCOVERY_BEFORE", "formed_at_beijing": "2026-11-06T15:19:00+08:00",
+                               "candidates": [{"candidate_signature": "513630::OBSERVATION_FULL_EVALUATION"},
+                                              {"candidate_signature": "159567::OBSERVATION_FULL_EVALUATION"}]}]},
+        },
+        "hyperliquid_pulse": {
+            "latest": {**base, "identity": "PULSE_TEST_HYPERLIQUID_AFTER", "formed_at_beijing": "2026-11-06T15:20:30+08:00",
+                       "candidate_count": 2, "observations": [{"asset": "BABA", "direction": "negative"},
+                                                              {"asset": "XBI", "direction": "positive"}]},
+            "days": {"test": [{**base, "identity": "PULSE_TEST_HYPERLIQUID_BEFORE", "formed_at_beijing": "2026-11-06T15:19:30+08:00",
+                               "observations": [{"asset": "BABA", "direction": "negative"}]}]},
+        },
+    })
+
+
 
 
 def _collect_candidates(market: str) -> list[dict]:
     if market == "pulse":
         return _pulse_candidates()
+    if market == "pulse-test":
+        return _pulse_test_candidates()
     if market in {"a-share", "apac"}:
         import send_regional_session_summary as regional
         import send_market_shock_notification as shock
@@ -247,7 +292,7 @@ def main() -> int:
     if args.family == "center":
         return _run_center(args.mode, args.formal_content_file)
     if args.family == "batch":
-        if args.market not in {"a-share", "apac", "us", "pulse"}:
+        if args.market not in {"a-share", "apac", "us", "pulse", "pulse-test"}:
             parser.error("batch requires --market a-share|apac|us|pulse")
         return _run_batch(args.market)
     if args.family == "regional":
