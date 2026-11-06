@@ -52,6 +52,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   # Keep the canonical snapshot writer in the shared main-state writer lane.
@@ -952,7 +953,8 @@ jobs:
           PY
             )
           fi
-          echo "formal_post_close_review=$formal_post_close_review" >> "$GITHUB_OUTPUT"          scheduled_review_completion=false
+          echo "formal_post_close_review=$formal_post_close_review" >> "$GITHUB_OUTPUT"
+          scheduled_review_completion=false
           if [ -n "$triggering_request_file" ] && [ -f "$triggering_request_file" ]; then
             scheduled_review_completion=$(python - "$triggering_request_file" <<'PY'
           import json, sys
@@ -962,6 +964,22 @@ jobs:
             )
           fi
           echo "SCHEDULED_REVIEW_COMPLETION=$scheduled_review_completion" >> "$GITHUB_ENV"
+          # A completion push is the canonical handoff. Dispatch the existing
+          # notification workflow once with the exact completion path so the
+          # event/REPORT/notification projection and Dashboard reconciliation
+          # do not depend on a recursive GITHUB_TOKEN push wake.
+          if [ "$scheduled_review_completion" = "true" ] && [ -n "$triggering_request_file" ]; then
+            gh api --method POST \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "/repos/${GITHUB_REPOSITORY}/actions/workflows/decision-notification.yml/dispatches" \
+              -f ref=main \
+              -f "inputs[test_notification]=false" \
+              -f "inputs[recovery_market]=" \
+              -f "inputs[recovery_source_run_id]=" \
+              -f "inputs[scheduled_review_completion_path]=$triggering_request_file" \
+              -f "inputs[force_resend]=false"
+          fi
           # Scheduled Review completion is a notification handoff, not a market
           # snapshot/state-sync request. Optional broker/dashboard maintenance
           # must not fail or delay canonical review projection.
