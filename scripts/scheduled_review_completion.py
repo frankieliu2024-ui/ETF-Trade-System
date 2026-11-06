@@ -943,62 +943,57 @@ def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | N
 
 
 def build_formal_evidence_consumption_audit(fact_summary: dict | None, final_content: str = "") -> dict:
-    """Audit and enforce object-level external-evidence consumption."""
+    """Build the request-bound, object-level evidence consumption ledger."""
     facts = fact_summary if isinstance(fact_summary, dict) else {}
-    discovery = facts.get("formal_discovery") or facts.get("discovery")
-    hyperliquid = facts.get("hyperliquid_external_driver_context") or facts.get("hyperliquid")
-    decision_pack = facts.get("decision_fact_pack") or {}
-    content = str(final_content or "")
-    object_context = hyperliquid.get("object_context") if isinstance(hyperliquid, dict) else {}
-    bindings = hyperliquid.get("object_bindings") if isinstance(hyperliquid, dict) else []
-    objects = {}
-    if isinstance(object_context, dict):
-        objects.update({str(code): value for code, value in object_context.items() if str(code).strip()})
+    discovery = facts.get("formal_discovery") or facts.get("discovery") or {}
+    pack = facts.get("decision_fact_pack") or {}
+    hyper = facts.get("hyperliquid_external_driver_context") or facts.get("hyperliquid") or {}
+    bindings = hyper.get("object_bindings") if isinstance(hyper, dict) else []
+    binding_by_code = {}
     for item in bindings or []:
-        if isinstance(item, dict) and str(item.get("code") or "").strip():
-            objects.setdefault(str(item["code"]).strip(), item)
+        if isinstance(item, dict):
+            code = str(item.get("code") or item.get("object_code") or "").strip()
+            if code:
+                binding_by_code.setdefault(code, []).append(item)
+    objects = {}
+    def add(items, layer):
+        for item in items or []:
+            if not isinstance(item, dict):
+                continue
+            code = str(item.get("code") or item.get("symbol") or item.get("object_code") or "").strip()
+            if not code:
+                continue
+            obj = objects.setdefault(code, {"object_code": code, "object_name": str(item.get("name") or item.get("object_name") or code), "object_layers": [], "source_refs": []})
+            if layer not in obj["object_layers"]:
+                obj["object_layers"].append(layer)
+            for key in ("source_path", "identity", "discovery_identity", "fact_ref"):
+                value = str(item.get(key) or "").strip()
+                if value and value not in obj["source_refs"]:
+                    obj["source_refs"].append(value)
+    add(discovery.get("candidates") if isinstance(discovery, dict) else [], "DISCOVERY")
+    add(pack.get("discovery_inputs"), "DISCOVERY")
+    add(pack.get("observation_inputs"), "OBSERVATION")
+    add(pack.get("observation_review_inputs"), "OBSERVATION")
+    add(pack.get("positions"), "HOLDING")
+    add(pack.get("opportunity_inputs"), "OPPORTUNITY")
     object_audit = []
-    for code, item in objects.items():
-        object_audit.append({
-            "object_code": code,
-            "mapped_assets": item.get("external_assets") or [x.get("asset") for x in (item.get("evidence") or []) if isinstance(x, dict)],
-            "evidence_status": "PROVIDED",
-            "attested_in_content": code in content and "Hyperliquid" in content,
-        })
-    if object_audit and not all(item["attested_in_content"] for item in object_audit):
-        missing = [item["object_code"] for item in object_audit if not item["attested_in_content"]]
-        raise ValueError("Formal Decision must explicitly consume mapped Hyperliquid objects: " + ", ".join(missing))
-    discovery_candidates = discovery.get("candidates") if isinstance(discovery, dict) else []
-    discovery_codes = [
-        str(item.get("code") or "").strip()
-        for item in discovery_candidates or []
-        if isinstance(item, dict) and str(item.get("code") or "").strip()
-    ]
-    if discovery_codes:
-        missing_discovery = [code for code in discovery_codes if code not in content or "Discovery" not in content]
-        if missing_discovery:
-            raise ValueError("Formal Decision must explicitly consume current Discovery objects: " + ", ".join(missing_discovery))
+    for code, obj in objects.items():
+        matched = binding_by_code.get(code) or []
+        assets = sorted({str(x).strip() for b in matched for x in (b.get("external_assets") or []) if str(x).strip()})
+        evidence_status = "AVAILABLE" if any(int(b.get("observation_count") or 0) > 0 for b in matched) else "NO_MATCH"
+        if str(hyper.get("quality_status") or "").upper() in {"MISSING", "NOT_REQUESTED", "UNAVAILABLE"}:
+            evidence_status = "UNAVAILABLE"
+        effect = str((matched[0].get("decision_effect") if matched else "") or obj.get("decision_effect") or "NOT_RECORDED").strip().upper()
+        object_audit.append({**obj, "mapped_assets": assets, "evidence_status": evidence_status, "consumption_status": "CONSUMED" if matched and evidence_status == "AVAILABLE" else evidence_status, "decision_effect": effect, "business_impact": effect, "mapping_reason": "CONFIGURED_OBJECT_BINDING" if matched else "NO_CONFIGURED_MAPPING"})
+    audit_status = "PASS_EMPTY" if not object_audit else ("PASS" if all(item["decision_effect"] for item in object_audit) else "PARTIAL")
     return {
-        "schema_version": "1.0",
-        "discovery": {
-            "status": "PROVIDED" if isinstance(discovery, dict) else "NOT_PROVIDED",
-            "generated_at_beijing": discovery.get("generated_at_beijing", "") if isinstance(discovery, dict) else "",
-            "latest_snapshot": discovery.get("latest_snapshot", "") if isinstance(discovery, dict) else "",
-            "candidate_count": discovery.get("candidate_count") if isinstance(discovery, dict) else None,
-            "coverage_status": discovery.get("coverage_status", "") if isinstance(discovery, dict) else "",
-        },
-        "hyperliquid": {
-            "status": "PROVIDED" if isinstance(hyperliquid, dict) else "NOT_PROVIDED",
-            "context_id": hyperliquid.get("context_id", "") if isinstance(hyperliquid, dict) else "",
-            "latest_observation_collected_at_utc": hyperliquid.get("latest_observation_collected_at_utc", "") if isinstance(hyperliquid, dict) else "",
-            "observation_count": hyperliquid.get("observation_count") if isinstance(hyperliquid, dict) else None,
-            "object_binding_count": len(objects),
-            "object_audit": object_audit,
-        },
-        "decision_fact_pack_status": "PROVIDED" if isinstance(decision_pack, dict) and decision_pack else "NOT_PROVIDED",
-        "interpretation": "AUDIT_ONLY; PROVIDED means carried in the request-bound completion packet, not that it independently generated a trade action",
+        "schema_version": "2.0",
+        "audit_status": audit_status,
+        "discovery": {"status": "PROVIDED" if discovery else "NOT_PROVIDED", "identity": str(discovery.get("identity") or "").strip() if isinstance(discovery, dict) else "", "generated_at_beijing": discovery.get("generated_at_beijing", "") if isinstance(discovery, dict) else "", "latest_snapshot": discovery.get("latest_snapshot", "") if isinstance(discovery, dict) else "", "candidate_count": discovery.get("candidate_count") if isinstance(discovery, dict) else None, "coverage_status": discovery.get("coverage_status", "") if isinstance(discovery, dict) else ""},
+        "hyperliquid": {"status": "PROVIDED" if hyper else "NOT_PROVIDED", "context_id": hyper.get("context_id", "") if isinstance(hyper, dict) else "", "observation_count": hyper.get("observation_count") if isinstance(hyper, dict) else None, "object_binding_count": len(bindings or [])},
+        "object_audit": object_audit,
+        "enforcement": "AUDIT_ONLY; incomplete evidence is reported locally and never converted into a trade block",
     }
-
 
 def build_formal_runtime_completion_request(
     *,
@@ -1032,7 +1027,7 @@ def build_formal_runtime_completion_request(
     validate_formal_decision_presentation_timestamp(content, requested_at)
     frozen_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
     decision_id = f"ETF_FORMAL_DECISION:{task_run_id}"
-    payload = {
+    evidence_audit = build_formal_evidence_consumption_audit(fact_summary, content)\n    if isinstance(fact_summary, dict) and fact_summary and evidence_audit.get("audit_status") not in {"PASS", "PASS_EMPTY"}:\n        raise ValueError("formal decision evidence consumption audit is incomplete; object-level ledger is required")\n    payload = {
         "request_id": task_run_id,
         "request_type": "SCHEDULED_REVIEW_COMPLETION",
         "formal_fact_type": "FORMAL_CURRENT_MAIN_DECISION",
@@ -1047,7 +1042,7 @@ def build_formal_runtime_completion_request(
         "decision_path": path,
         "fact_source": "CURRENT_MAIN_LATEST_VALID_FIXED_PERIOD_FACTS",
         "fact_summary": fact_summary if isinstance(fact_summary, dict) else {},
-        "evidence_consumption_audit": build_formal_evidence_consumption_audit(fact_summary, content),
+        "evidence_consumption_audit": evidence_audit,
         "fact_binding": (
             fact_summary.get("fact_binding")
             if isinstance(fact_summary, dict) and isinstance(fact_summary.get("fact_binding"), dict)
