@@ -25,7 +25,29 @@ def _guarded_persist(original):
     return guarded
 
 
+def _pulse_object_label(item: dict) -> str:
+    asset = str(item.get("asset") or "").strip()
+    code = str(item.get("code") or "").strip()
+    name = str(item.get("name") or "").strip()
+    direction = str(item.get("direction") or "").strip()
+    if asset:
+        return f"{asset}（方向：{direction}）" if direction else asset
+    if code and name:
+        return f"{code} {name}"
+    return code or name or str(item.get("candidate_signature") or "").strip()
+
+
 def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | None:
+    before_objects = sorted(
+        _pulse_object_label(x)
+        for x in (before.get("candidates") or before.get("observations") or [])
+        if isinstance(x, dict)
+    )
+    after_objects = sorted(
+        _pulse_object_label(x)
+        for x in (after.get("candidates") or after.get("observations") or [])
+        if isinstance(x, dict)
+    )
     before_fact = {
         "identity": before.get("identity"),
         "fact_time_beijing": before.get("fact_time_beijing"),
@@ -33,6 +55,7 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
         "coverage_status": before.get("coverage_status"),
         "candidate_count": before.get("candidate_count"),
         "observation_count": before.get("observation_count"),
+        "objects": before_objects,
     }
     after_fact = {
         "identity": after.get("identity"),
@@ -41,35 +64,45 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
         "coverage_status": after.get("coverage_status"),
         "candidate_count": after.get("candidate_count"),
         "observation_count": after.get("observation_count"),
+        "objects": after_objects,
     }
-    before_fact["objects"] = sorted(
-        str(x.get("candidate_signature") or x.get("asset") or "")
-        for x in (before.get("candidates") or before.get("observations") or [])
-        if isinstance(x, dict)
-    )
-    after_fact["objects"] = sorted(
-        str(x.get("candidate_signature") or x.get("asset") or "")
-        for x in (after.get("candidates") or after.get("observations") or [])
-        if isinstance(x, dict)
-    )
     if before_fact == after_fact:
         return None
+    added = sorted(set(after_objects) - set(before_objects))
+    removed = sorted(set(before_objects) - set(after_objects))
+    changed = sorted(set(before_objects) & set(after_objects))
     evidence_time = str(after.get("formed_at_beijing") or after.get("fact_time_beijing") or "")
+    change_lines = []
+    if added:
+        change_lines.append("新增对象：" + "、".join(added))
+    if removed:
+        change_lines.append("消失对象：" + "、".join(removed))
+    if changed:
+        change_lines.append("延续对象：" + "、".join(changed))
+    if not change_lines:
+        change_lines.append("对象集合未变，但状态、覆盖或数量发生变化。")
+    content = (
+        f"【核心结论】{label}证据发生可比变化。\n\n"
+        f"【证据变化】\n"
+        f"证据时间：{evidence_time}\n"
+        f"前一脉冲：状态={before_fact['status']}；覆盖={before_fact['coverage_status']}；"
+        f"对象数={before_fact['candidate_count'] or before_fact['observation_count'] or 0}\n"
+        f"当前脉冲：状态={after_fact['status']}；覆盖={after_fact['coverage_status']}；"
+        f"对象数={after_fact['candidate_count'] or after_fact['observation_count'] or 0}\n"
+        + "\n".join(change_lines)
+        + "\n\n"
+        f"【对ETF系统的影响】该变化用于下一正式判断逐对象核对方向、时机、风险和资本影响；"
+        f"不能单独授予Trial、Confirm、买入、卖出或调仓权限。\n\n"
+        f"【当前动作】无需自动交易；下一正式判断必须核对上述对象与持仓、观察ETF、Discovery和现金的竞争关系。\n\n"
+        f"【数据与边界】本通知仅说明脉冲事实发生可比变化，不等同于交易结论或实际成交。"
+    )
     return {
         "key": f"pulse:{source}:{after.get('identity')}",
         "event_type": "PULSE_FACT_UPDATE",
         "source": source,
         "title": f"【市场异动】{label}证据发生可比变化",
-        "content": (
-            f"{label}证据发生可比变化。\\n"
-            f"证据时间：{evidence_time}\\n"
-            f"前一脉冲：状态={before_fact['status']}，覆盖={before_fact['coverage_status']}，"
-            f"候选数={before_fact['candidate_count']}，对象={', '.join(before_fact['objects']) or '无'}\\n"
-            f"当前脉冲：状态={after_fact['status']}，覆盖={after_fact['coverage_status']}，"
-            f"候选数={after_fact['candidate_count']}，对象={', '.join(after_fact['objects']) or '无'}\\n"
-            f"直接价值：请在下一正式判断中核对新增、消失或状态变化对象，并判断其对持仓、观察、Discovery和现金竞争的影响。"
-        ),
-        "user_action": "无需自动交易；下一正式判断必须逐对象核对上述变化，确认方向、时机、风险和资本影响后再决定是否改变管理结论。",
+        "content": content,
+        "user_action": "无需自动交易；下一正式判断逐对象核对变化及其对持仓、观察、Discovery和现金竞争的影响。",
         "confirmation_context": {
             "evidence_time_beijing": evidence_time,
             "before_fact": json.dumps(before_fact, ensure_ascii=False, sort_keys=True),
