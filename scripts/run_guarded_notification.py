@@ -32,20 +32,31 @@ def _pulse_object_label(item: dict) -> str:
     name = str(item.get("name") or "").strip()
     direction = str(item.get("direction") or "").strip()
     if asset:
-        return f"{asset}（方向：{direction}）" if direction else asset
+        direction_text = {"negative": "偏弱", "positive": "偏强", "mixed": "分化"}.get(direction, direction)
+        return f"{asset}（{direction_text}）" if direction_text else asset
+    signature = str(item.get("candidate_signature") or "").strip()
+    if not code and signature:
+        code = signature.split("::", 1)[0]
+    if code and not name:
+        try:
+            from notification_center import ROOT, read_json
+            config = read_json(ROOT / "config" / "market" / "etf_monitor_universe.json", {})
+            name = next(
+                (str(row.get("name") or "").strip() for row in (config.get("objects") or [])
+                 if str(row.get("code") or "") == code),
+                "",
+            )
+        except Exception:
+            name = ""
     if code and name:
-        return f"{code} {name}"
-    return code or name or str(item.get("candidate_signature") or "").strip()
+        return f"{name}（{code}）"
+    return code or name or signature
 
 
 def _pulse_fact_display(fact: dict) -> str:
-    objects = "、".join(str(x) for x in (fact.get("objects") or []) if str(x)) or "未列明"
+    objects = "、".join(str(x) for x in (fact.get("objects") or []) if str(x)) or "暂未列明"
     count = fact.get("candidate_count") or fact.get("observation_count") or 0
-    return (
-        f"状态：{fact.get('status') or '未提供'}；"
-        f"覆盖：{fact.get('coverage_status') or '未提供'}；"
-        f"对象数：{count}；对象：{objects}。"
-    )
+    return f"识别对象数：{count}；对象：{objects}。"
 
 
 def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | None:
@@ -92,20 +103,25 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
         change_lines.append("延续对象：" + "、".join(changed))
     if not change_lines:
         change_lines.append("对象集合未变，但状态、覆盖或数量发生变化。")
+    if source == "discovery_pulse":
+        core = "全市场候选出现新增或变化，值得提前纳入下一次正式判断。"
+        value = "它的价值是把原本容易错过的全市场候选变化提前提示出来，帮助正式决策比较现金、持仓、观察ETF和新候选；但候选出现不等于买入机会。"
+        action = "下一次正式判断重点核对候选自身强弱、持续性、外部方向和与现金/持仓的竞争关系。"
+    else:
+        core = "跨市场外部资产出现可比变化，可能影响相关A股ETF的方向判断和时机判断。"
+        value = "它的价值是提供A股交易时段之外的风险偏好、方向一致性和拥挤度线索，帮助正式决策识别同步、背离和风险扩散；不能单独触发交易。"
+        action = "下一次正式判断重点核对相关A股ETF自身反馈，并判断外部信号是同步确认、暂时背离还是仅供风险过滤。"
     content = (
-        f"【核心结论】{label}证据发生可比变化。\n\n"
+        f"【核心结论】{core}\n\n"
         f"【证据变化】\n"
         f"证据时间：{evidence_time}\n"
-        f"前一脉冲：状态={before_fact['status']}；覆盖={before_fact['coverage_status']}；"
-        f"对象数={before_fact['candidate_count'] or before_fact['observation_count'] or 0}\n"
-        f"当前脉冲：状态={after_fact['status']}；覆盖={after_fact['coverage_status']}；"
-        f"对象数={after_fact['candidate_count'] or after_fact['observation_count'] or 0}\n"
+        f"前一时点：{_pulse_fact_display(before_fact)}\n"
+        f"当前时点：{_pulse_fact_display(after_fact)}\n"
         + "\n".join(change_lines)
         + "\n\n"
-        f"【对ETF系统的影响】该变化用于下一正式判断逐对象核对方向、时机、风险和资本影响；"
-        f"不能单独授予Trial、Confirm、买入、卖出或调仓权限。\n\n"
-        f"【当前动作】无需自动交易；下一正式判断必须核对上述对象与持仓、观察ETF、Discovery和现金的竞争关系。\n\n"
-        f"【数据与边界】本通知仅说明脉冲事实发生可比变化，不等同于交易结论或实际成交。"
+        f"【为什么值得注意】{value}\n\n"
+        f"【下一步核对】{action}\n\n"
+        f"【当前边界】这是一条提前提示，不是正式决策，不授予Trial、Confirm、买入、卖出或调仓权限，也不代表已经发生实际成交。"
     )
     return {
         "key": f"pulse:{source}:{after.get('identity')}",
