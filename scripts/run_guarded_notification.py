@@ -38,6 +38,16 @@ def _pulse_object_label(item: dict) -> str:
     return code or name or str(item.get("candidate_signature") or "").strip()
 
 
+def _pulse_fact_display(fact: dict) -> str:
+    objects = "、".join(str(x) for x in (fact.get("objects") or []) if str(x)) or "未列明"
+    count = fact.get("candidate_count") or fact.get("observation_count") or 0
+    return (
+        f"状态：{fact.get('status') or '未提供'}；"
+        f"覆盖：{fact.get('coverage_status') or '未提供'}；"
+        f"对象数：{count}；对象：{objects}。"
+    )
+
+
 def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | None:
     before_objects = sorted(
         _pulse_object_label(x)
@@ -106,8 +116,10 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
         "user_action": "无需自动交易；下一正式判断逐对象核对变化及其对持仓、观察、Discovery和现金竞争的影响。",
         "confirmation_context": {
             "evidence_time_beijing": evidence_time,
-            "before_fact": json.dumps(before_fact, ensure_ascii=False, sort_keys=True),
-            "after_fact": json.dumps(after_fact, ensure_ascii=False, sort_keys=True),
+            "before_fact": _pulse_fact_display(before_fact),
+            "after_fact": _pulse_fact_display(after_fact),
+            "before_fact_machine": json.dumps(before_fact, ensure_ascii=False, sort_keys=True),
+            "after_fact_machine": json.dumps(after_fact, ensure_ascii=False, sort_keys=True),
             "applicable_object": label,
         },
     }
