@@ -1041,7 +1041,7 @@ jobs:
 
 
       - name: Surface notification delivery failure without blocking trading system
-        if: ${{ steps.test_notify.outcome == 'failure' || steps.event_notify.outcome == 'failure' || steps.close_notify.outcome == 'failure' || steps.a_share_summary_notify.outcome == 'failure' || steps.a_share_shock_notify.outcome == 'failure' || steps.apac_summary_notify.outcome == 'failure' || steps.apac_shock_notify.outcome == 'failure' || steps.us_summary_notify.outcome == 'failure' || steps.us_shock_notify.outcome == 'failure' }}
+        if: ${{ steps.test_notify.outcome == 'failure' || steps.pulse_test_notify.outcome == 'failure' || steps.event_notify.outcome == 'failure' || steps.close_notify.outcome == 'failure' || steps.a_share_summary_notify.outcome == 'failure' || steps.a_share_shock_notify.outcome == 'failure' || steps.apac_summary_notify.outcome == 'failure' || steps.apac_shock_notify.outcome == 'failure' || steps.us_summary_notify.outcome == 'failure' || steps.us_shock_notify.outcome == 'failure' }}
         run: |
           echo "User notification delivery failed; ETF market/data/trading-decision workflows remain unaffected."
           exit 1
