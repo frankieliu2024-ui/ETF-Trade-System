@@ -25,7 +25,79 @@ def _guarded_persist(original):
     return guarded
 
 
+def _pulse_candidates() -> list[dict]:
+    """Build comparable Discovery/Hyperliquid pulse events."""
+    from notification_center import ROOT, read_json
+
+    candidates = []
+    for source, filename, label in (
+        ("discovery_pulse", "discovery_pulse_index.json", "Discovery"),
+        ("hyperliquid_pulse", "hyperliquid_pulse_index.json", "Hyperliquid"),
+    ):
+        payload = read_json(ROOT / "data" / "state" / filename, {})
+        latest = payload.get("latest") if isinstance(payload, dict) else None
+        days = payload.get("days") if isinstance(payload, dict) else None
+        history = []
+        if isinstance(days, dict):
+            for entries in days.values():
+                if isinstance(entries, list):
+                    history.extend(x for x in entries if isinstance(x, dict))
+        if isinstance(latest, dict) and latest.get("identity"):
+            history.append(latest)
+        unique = {}
+        for item in history:
+            identity = str(item.get("identity") or "").strip()
+            if identity:
+                unique[identity] = item
+        ordered = sorted(unique.values(), key=lambda x: str(x.get("formed_at_beijing") or ""))
+        if len(ordered) < 2:
+            continue
+        before, after = ordered[-2], ordered[-1]
+        before_fact = {
+            "identity": before.get("identity"),
+            "fact_time_beijing": before.get("fact_time_beijing"),
+            "status": before.get("status"),
+            "coverage_status": before.get("coverage_status"),
+            "candidate_count": before.get("candidate_count"),
+            "observation_count": before.get("observation_count"),
+        }
+        after_fact = {
+            "identity": after.get("identity"),
+            "fact_time_beijing": after.get("fact_time_beijing"),
+            "status": after.get("status"),
+            "coverage_status": after.get("coverage_status"),
+            "candidate_count": after.get("candidate_count"),
+            "observation_count": after.get("observation_count"),
+        }
+        before_fact["objects"] = sorted(str(x.get("candidate_signature") or x.get("asset") or "")
+                                        for x in (before.get("candidates") or before.get("observations") or [])
+                                        if isinstance(x, dict))
+        after_fact["objects"] = sorted(str(x.get("candidate_signature") or x.get("asset") or "")
+                                       for x in (after.get("candidates") or after.get("observations") or [])
+                                       if isinstance(x, dict))
+        if before_fact == after_fact:
+            continue
+        evidence_time = str(after.get("formed_at_beijing") or after.get("fact_time_beijing") or "")
+        candidates.append({
+            "key": f"pulse:{source}:{after.get('identity')}",
+            "event_type": "PULSE_FACT_UPDATE",
+            "source": source,
+            "title": f"【市场异动】{label}证据发生可比变化",
+            "content": f"{label}最新脉冲相对上一可比脉冲发生变化，需在正式判断中核对对象影响。",
+            "user_action": "无需自动交易；在下一正式判断中核对Discovery、持仓和风险影响。",
+            "confirmation_context": {
+                "evidence_time_beijing": evidence_time,
+                "before_fact": json.dumps(before_fact, ensure_ascii=False, sort_keys=True),
+                "after_fact": json.dumps(after_fact, ensure_ascii=False, sort_keys=True),
+                "applicable_object": label,
+            },
+        })
+    return candidates
+
+
 def _collect_candidates(market: str) -> list[dict]:
+    if market == "pulse":
+        return _pulse_candidates()
     if market in {"a-share", "apac"}:
         import send_regional_session_summary as regional
         import send_market_shock_notification as shock
@@ -167,8 +239,8 @@ def main() -> int:
     if args.family == "center":
         return _run_center(args.mode, args.formal_content_file)
     if args.family == "batch":
-        if args.market not in {"a-share", "apac", "us"}:
-            parser.error("batch requires --market a-share|apac|us")
+        if args.market not in {"a-share", "apac", "us", "pulse"}:
+            parser.error("batch requires --market a-share|apac|us|pulse")
         return _run_batch(args.market)
     if args.family == "regional":
         if args.market not in {"a-share", "apac"}:
