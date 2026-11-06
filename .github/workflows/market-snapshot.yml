@@ -1769,7 +1769,11 @@ jobs:
           request_file = (
               os.environ.get("FORMAL_REPLAY_REQUEST", "")
               or os.environ.get("FORMAL_CONTEXT_RECOVERY_REQUEST", "")
-              or os.environ.get("TRIGGERING_REQUEST_FILE", "")
+              or (
+                  os.environ.get("TRIGGERING_REQUEST_FILE", "")
+                  if os.environ.get("SCHEDULED_REVIEW_COMPLETION", "false") != "true"
+                  else ""
+              )
           )
           expected = ""
           if request_file and Path(request_file).is_file():
