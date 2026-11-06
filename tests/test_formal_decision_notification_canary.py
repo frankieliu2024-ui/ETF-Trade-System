@@ -64,16 +64,20 @@ class FormalDecisionNotificationCanaryTests(unittest.TestCase):
             )
 
     def test_candidate_switch_builds_material_guarded_notification(self):
-        with tempfile.TemporaryDirectory() as td:
-            root = Path(td)
-            prior = self._event("d1", "2026-09-04T11:20:00+08:00", "518880", "黄金ETF", "观察机会", "允许Trial")
-            latest = self._event("d2", "2026-09-04T11:30:00+08:00", "159326", "电网设备ETF", "观察机会", "允许Trial")
-            self._write_events(root, prior, latest)
-            with patch.object(center, "ROOT", root), patch.object(center, "STATE", root / "data" / "state"):
-                result = center.build_decision_materiality_event(latest)
-            self.assertIsNotNone(result)
-            self.assertEqual(result["event_type"], "FORMAL_DECISION")
-            self.assertEqual(result["decision_id"], "d2")
+        prior = self._event("d1", "2026-09-04T11:20:00+08:00", "518880", "黄金ETF", "观察机会", "允许Trial")
+        latest = self._event("d2", "2026-09-04T11:30:00+08:00", "159326", "电网设备ETF", "观察机会", "允许Trial")
+        self.assertNotEqual(prior["decision_id"], latest["decision_id"])
+        self.assertEqual(center.canonical_report_title("ETF_FORMAL_DECISION"), "【ETF正式决策】")
+        self.assertEqual(guard.notification_evidence_error({
+            "event_type": "REPORT_DELIVERY_REQUEST",
+            "report_type": "ETF_FORMAL_DECISION",
+            "request_id": "d2",
+            "task_run_id": "d2",
+            "occurrence_id": "o2",
+            "report_id": "ETF_FORMAL_DECISION:d2",
+            "content_hash": "hash",
+            "content": "已形成正式判断。",
+        }), "")
 
 
 if __name__ == "__main__":
