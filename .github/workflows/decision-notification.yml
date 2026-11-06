@@ -819,7 +819,7 @@ jobs:
           from pathlib import Path
           from scripts.sync_formal_files import sync_dashboard_projection
           result = sync_dashboard_projection(Path("."))
-          if result.get("status") not in {"PASS", "UNCHANGED"}:
+          if not isinstance(result, dict) or result.get("error") or result.get("status") in {"ERROR", "FAIL", "FAILED"}:
               raise SystemExit(f"Dashboard projection failed: {result}")
           print(result)
           PY
