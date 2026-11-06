@@ -180,8 +180,17 @@ def _same_node_persisted_formal_discovery(root: Path, current: dict, universe_id
         if str(discovery.get("latest_valid_node") or "") != current_node:
             continue
         discovery_snapshot = str(discovery.get("latest_snapshot") or "")
+        canonical_node_producer = (
+            str(discovery.get("formation_rule") or "") == "EVERY_VERIFIED_A_SHARE_PULSE"
+            or "VERIFIED_NODE_OVERLAY" in str(discovery.get("source") or "")
+        )
         if discovery_snapshot and current_snapshot and discovery_snapshot != current_snapshot:
-            continue
+            # The close producer intentionally does not rewrite CURRENT.  Its
+            # verified same-day close artifact is therefore authoritative for
+            # this legal node even when CURRENT still points at an older
+            # snapshot from the same market date.
+            if not (canonical_node_producer and current_node == "close"):
+                continue
         # The market-snapshot producer has already completed the canonical
         # Discovery pipeline for this exact verified node.  A downstream
         # query-context rebuild must consume that result as-is; requiring a
@@ -192,10 +201,7 @@ def _same_node_persisted_formal_discovery(root: Path, current: dict, universe_id
             discovery_snapshot
             and current_snapshot
             and discovery_snapshot == current_snapshot
-            and (
-                str(discovery.get("formation_rule") or "") == "EVERY_VERIFIED_A_SHARE_PULSE"
-                or "VERIFIED_NODE_OVERLAY" in str(discovery.get("source") or "")
-            )
+            and canonical_node_producer
         ):
             return dict(discovery)
         discovery_universe = str(discovery.get("universe_identity") or "")
