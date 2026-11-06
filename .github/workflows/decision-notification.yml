@@ -756,7 +756,7 @@ PY
 
       - name: Project Formal Decision completion to canonical review event
         id: formal_completion_event
-        if: ${{ (github.event_name == 'push' && steps.push_kind.outputs.formal_completion == 'true') || (github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path != '' && steps.dispatch_completion_kind.outputs.formal == 'true') }}
+        if: ${{ (github.event_name == 'push' && steps.push_kind.outputs.formal_completion == 'true') || (github.event_name == 'workflow_run' && steps.workflow_review.outputs.formal_completion == 'true') || (github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path != '' && steps.dispatch_completion_kind.outputs.formal == 'true') }}
         shell: bash
         env:
           COMPLETION_PATH: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path || steps.push_kind.outputs.formal_review_source_path || steps.workflow_review.outputs.formal_review_source_path }}
@@ -812,6 +812,17 @@ PY
           current_backup="/tmp/formal-review-current.json"
           cp -- "$EVENT_PATH" "$event_backup"
           [ -f data/state/CURRENT.json ] && cp -- data/state/CURRENT.json "$current_backup" || true
+          # Rebuild the read-only Dashboard projection from the canonical event
+          # before persisting it. This updates the same-day Formal Decision
+          # index and lifecycle view without creating a second fact or decision.
+          python - <<'PY'
+from pathlib import Path
+from scripts.sync_formal_files import sync_dashboard_projection
+result = sync_dashboard_projection(Path("."))
+if result.get("status") not in {"PASS", "UNCHANGED"}:
+    raise SystemExit(f"Dashboard projection failed: {result}")
+print(result)
+PY
           git config user.name "ETF notification bot"
           git config user.email "etf-notification-bot@users.noreply.github.com"
           for attempt in 1 2 3; do
@@ -824,6 +835,7 @@ PY
               cp -- "$current_backup" data/state/CURRENT.json
             fi
             git add -- "$EVENT_PATH"
+            git add -- ETF当前状态_DASHBOARD.md
             [ -f "$current_backup" ] && git add -- data/state/CURRENT.json || true
             if git diff --cached --quiet; then
               echo "Formal Decision canonical review event already present in current main."
