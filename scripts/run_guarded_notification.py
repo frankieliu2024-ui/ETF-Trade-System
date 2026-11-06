@@ -83,8 +83,16 @@ def _pulse_candidates() -> list[dict]:
             "event_type": "PULSE_FACT_UPDATE",
             "source": source,
             "title": f"【市场异动】{label}证据发生可比变化",
-            "content": f"{label}最新脉冲相对上一可比脉冲发生变化，需在正式判断中核对对象影响。",
-            "user_action": "无需自动交易；在下一正式判断中核对Discovery、持仓和风险影响。",
+            "content": (
+                f"{label}证据发生可比变化。\\n"
+                f"证据时间：{evidence_time}\\n"
+                f"前一脉冲：状态={before_fact['status']}，覆盖={before_fact['coverage_status']}，"
+                f"候选数={before_fact['candidate_count']}，对象={', '.join(before_fact['objects']) or '无'}\\n"
+                f"当前脉冲：状态={after_fact['status']}，覆盖={after_fact['coverage_status']}，"
+                f"候选数={after_fact['candidate_count']}，对象={', '.join(after_fact['objects']) or '无'}\\n"
+                f"直接价值：请在下一正式判断中核对新增、消失或状态变化对象，并判断其对持仓、观察、Discovery和现金竞争的影响。"
+            ),
+            "user_action": "无需自动交易；下一正式判断必须逐对象核对上述变化，确认方向、时机、风险和资本影响后再决定是否改变管理结论。",
             "confirmation_context": {
                 "evidence_time_beijing": evidence_time,
                 "before_fact": json.dumps(before_fact, ensure_ascii=False, sort_keys=True),
