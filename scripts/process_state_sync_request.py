@@ -2875,6 +2875,12 @@ def record_formal_decision_report_event(request: dict, bds: dict | None = None) 
         "reviewed_at_beijing": str(source.get("requested_at_beijing") or request.get("requested_at_beijing") or ""),
         "presentation_binding": binding,
         "formal_decision": source.get("decision_response") or source.get("formal_decision") or {},
+        # Preserve the request-bound evidence packet as audit metadata.  The
+        # canonical event must show whether Discovery/Hyperliquid were actually
+        # carried into this completion; absence is reported, never converted
+        # into a business zero or a trade prohibition.
+        "fact_summary": source.get("fact_summary") if isinstance(source.get("fact_summary"), dict) else {},
+        "evidence_consumption_audit": source.get("evidence_consumption_audit") if isinstance(source.get("evidence_consumption_audit"), dict) else {},
         "source_completion_path": str(source.get("_ingress_path") or "") if direct_completion else "",
         "source_bds_path": "" if direct_completion else str(source.get("target_path") or ""),
     }

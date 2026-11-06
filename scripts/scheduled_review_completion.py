@@ -942,6 +942,37 @@ def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | N
     }
 
 
+def build_formal_evidence_consumption_audit(fact_summary: dict | None) -> dict:
+    """Record what the completion actually carried for Discovery/HL consumption.
+
+    This is an audit projection only. It never infers a signal, opportunity,
+    Trial, Confirm, amount, or sell action from prose or from a missing packet.
+    """
+    facts = fact_summary if isinstance(fact_summary, dict) else {}
+    discovery = facts.get("formal_discovery") or facts.get("discovery")
+    hyperliquid = facts.get("hyperliquid_external_driver_context") or facts.get("hyperliquid")
+    decision_pack = facts.get("decision_fact_pack") or {}
+    return {
+        "schema_version": "1.0",
+        "discovery": {
+            "status": "PROVIDED" if isinstance(discovery, dict) else "NOT_PROVIDED",
+            "generated_at_beijing": discovery.get("generated_at_beijing", "") if isinstance(discovery, dict) else "",
+            "latest_snapshot": discovery.get("latest_snapshot", "") if isinstance(discovery, dict) else "",
+            "candidate_count": discovery.get("candidate_count") if isinstance(discovery, dict) else None,
+            "coverage_status": discovery.get("coverage_status", "") if isinstance(discovery, dict) else "",
+        },
+        "hyperliquid": {
+            "status": "PROVIDED" if isinstance(hyperliquid, dict) else "NOT_PROVIDED",
+            "context_id": hyperliquid.get("context_id", "") if isinstance(hyperliquid, dict) else "",
+            "latest_observation_collected_at_utc": hyperliquid.get("latest_observation_collected_at_utc", "") if isinstance(hyperliquid, dict) else "",
+            "observation_count": hyperliquid.get("observation_count") if isinstance(hyperliquid, dict) else None,
+            "object_binding_count": len(hyperliquid.get("object_bindings") or []) if isinstance(hyperliquid, dict) else 0,
+        },
+        "decision_fact_pack_status": "PROVIDED" if isinstance(decision_pack, dict) and decision_pack else "NOT_PROVIDED",
+        "interpretation": "AUDIT_ONLY; PROVIDED means carried in the request-bound completion packet, not that it independently generated a trade action",
+    }
+
+
 def build_formal_runtime_completion_request(
     *,
     run_identity: dict,
@@ -989,6 +1020,7 @@ def build_formal_runtime_completion_request(
         "decision_path": path,
         "fact_source": "CURRENT_MAIN_LATEST_VALID_FIXED_PERIOD_FACTS",
         "fact_summary": fact_summary if isinstance(fact_summary, dict) else {},
+        "evidence_consumption_audit": build_formal_evidence_consumption_audit(fact_summary),
         "fact_binding": (
             fact_summary.get("fact_binding")
             if isinstance(fact_summary, dict) and isinstance(fact_summary.get("fact_binding"), dict)
