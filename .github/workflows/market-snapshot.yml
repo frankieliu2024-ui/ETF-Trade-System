@@ -121,11 +121,11 @@ jobs:
           # turn a valid completion into a failed producer wake.
           if [ -n "${TRIGGERING_REQUEST_FILE:-}" ] && [ -f "$TRIGGERING_REQUEST_FILE" ]; then
             if python - "$TRIGGERING_REQUEST_FILE" <<'PY'
-import json, sys
-from pathlib import Path
-obj = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-raise SystemExit(0 if str(obj.get("request_type") or "").upper() == "SCHEDULED_REVIEW_COMPLETION" else 1)
-PY
+          import json, sys
+          from pathlib import Path
+          obj = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          raise SystemExit(0 if str(obj.get("request_type") or "").upper() == "SCHEDULED_REVIEW_COMPLETION" else 1)
+          PY
             then
               echo "Scheduled Review completion handoff: skip market-snapshot downstream publish."
               exit 0
