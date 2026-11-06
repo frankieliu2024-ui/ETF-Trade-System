@@ -402,16 +402,16 @@ jobs:
             git diff-tree --no-commit-id --name-only -r "$PRODUCER_SHA" -- 'requests/live_snapshot/*.json' | while IFS= read -r candidate; do
               [ -z "$candidate" ] && continue
               python - "$candidate" <<'PY' 2>/dev/null && echo "$candidate"
-import json, sys
-from pathlib import Path
-obj = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-if (
-    str(obj.get("request_type") or "").upper() == "SCHEDULED_REVIEW_COMPLETION"
-    and str(obj.get("task_id") or "").strip() in {"ETF正式决策", "ETF交易复盘", "ETF系统复核"}
-):
-    raise SystemExit(0)
-raise SystemExit(1)
-PY
+          import json, sys
+          from pathlib import Path
+          obj = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          if (
+              str(obj.get("request_type") or "").upper() == "SCHEDULED_REVIEW_COMPLETION"
+              and str(obj.get("task_id") or "").strip() in {"ETF正式决策", "ETF交易复盘", "ETF系统复核"}
+          ):
+              raise SystemExit(0)
+          raise SystemExit(1)
+          PY
             done
           )
           if [ "${#producer_completion_paths[@]}" -eq 1 ]; then
