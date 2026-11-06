@@ -59,6 +59,46 @@ def _pulse_fact_display(fact: dict) -> str:
     return f"识别对象数：{count}；对象：{objects}。"
 
 
+def _hyperliquid_asset_explanation(asset: str) -> str:
+    asset = str(asset or "").strip()
+    if not asset:
+        return ""
+    family_labels = {
+        "CHINA_TECH_RISK": "中国互联网与平台经济方向",
+        "BIOTECH": "美国生物科技与创新药方向",
+        "SEMICONDUCTOR": "半导体方向",
+        "SEMICONDUCTOR_HIGH_BETA": "高波动半导体方向",
+        "MEMORY": "存储与内存产业链方向",
+        "CHINA_MEMORY_CHAIN": "中国存储产业链方向",
+        "AI_COMPUTE": "人工智能与算力方向",
+        "AI_NETWORKING": "人工智能网络与通信方向",
+        "ENERGY": "能源、油气与化工方向",
+        "GOLD": "黄金与资源方向",
+        "INDUSTRIAL_METALS": "工业金属与资源方向",
+        "KOREA_EQUITY": "韩国及亚洲股票方向",
+        "JAPAN_EQUITY": "日本股票方向",
+        "TAIWAN_EQUITY": "台湾及亚洲科技方向",
+        "GLOBAL_RISK_APPETITE": "全球风险偏好与成长资产方向",
+    }
+    try:
+        from notification_center import ROOT, read_json
+        config = read_json(ROOT / "config" / "market" / "hyperliquid_etf_exposure_map.json", {})
+        rows = config.get("asset_mappings") or []
+        match = next(
+            (row for row in rows
+             if str(row.get("asset") or "").split(":", 1)[-1] == asset.split(":", 1)[-1]),
+            None,
+        )
+        if match:
+            family = str(match.get("family") or "")
+            description = family_labels.get(family)
+            if description:
+                return f"{asset}：代表{description}"
+    except Exception:
+        pass
+    return f"{asset}：当前仅确认其为外部参照资产，具体经济暴露尚未完成确认"
+
+
 def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | None:
     before_objects = sorted(
         _pulse_object_label(x)
@@ -109,13 +149,11 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
         action = "下一次正式判断重点核对候选自身强弱、持续性、外部方向和与现金/持仓的竞争关系。"
     else:
         core = "跨市场外部资产出现可比变化，可能影响相关A股ETF的方向判断和时机判断。"
-        external_explanations = []
-        for item in after.get("observations") or []:
-            asset = str(item.get("asset") or "").strip()
-            if asset == "BABA":
-                external_explanations.append("BABA：阿里巴巴相关美元资产，主要代表中国互联网和平台经济方向")
-            elif asset == "XBI":
-                external_explanations.append("XBI：美国生物科技ETF，主要代表生物科技和创新药方向")
+        external_explanations = [
+            _hyperliquid_asset_explanation(str(item.get("asset") or "").strip())
+            for item in (after.get("observations") or [])
+            if str(item.get("asset") or "").strip()
+        ]
         external_text = "；".join(external_explanations)
         if external_text:
             core += f" 本次外部参照为：{external_text}。"
