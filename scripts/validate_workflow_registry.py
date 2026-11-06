@@ -32,25 +32,31 @@ def validate_workflow(path: Path) -> list[str]:
     if not any(re.match(r"^jobs\s*:", line) for line in lines):
         errors.append(f"{path}: missing top-level jobs")
 
-    active: tuple[str, int, int] | None = None
+    active: tuple[str, int, int, int] | None = None
     for number, line in enumerate(lines, 1):
         match = HEREDOC_START.search(line) if active is None else None
         if match:
             delimiter = match.group(2)
-            active = (delimiter, leading_spaces(line), number)
+            run_indent = None
+            for previous in reversed(lines[: number - 1]):
+                if re.match(r"^\\s*run\\s*:\\s*\\|", previous):
+                    run_indent = leading_spaces(previous)
+                    break
+            expected_indent = (run_indent + 2) if run_indent is not None else leading_spaces(line)
+            active = (delimiter, expected_indent, number, leading_spaces(line))
             continue
         if active is None:
             continue
-        delimiter, command_indent, start_line = active
+        delimiter, expected_indent, start_line, _command_indent = active
         if line.strip() == delimiter:
-            if leading_spaces(line) < command_indent:
+            if leading_spaces(line) < expected_indent:
                 errors.append(
                     f"{path}:{number}: heredoc terminator {delimiter!r} is less indented "
-                    f"than its command (line {start_line})"
+                    f"than its YAML run block (heredoc line {start_line})"
                 )
             active = None
             continue
-        if line.strip() and leading_spaces(line) < command_indent:
+        if line.strip() and leading_spaces(line) < expected_indent:
             errors.append(
                 f"{path}:{number}: heredoc body is less indented than its command "
                 f"(line {start_line})"
