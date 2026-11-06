@@ -23,6 +23,10 @@ on:
         description: "Send one safe PushPlus test notification"
         required: true
         default: "false"
+      pulse_test:
+        description: "Send synthetic Discovery and Hyperliquid pulse notifications through the canonical PushPlus path"
+        required: true
+        default: "false"
       recovery_market:
         description: "Bounded canonical recovery market (empty for ordinary dispatch)"
         required: false
@@ -376,6 +380,12 @@ jobs:
         if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.test_notification == 'true') || (github.event_name == 'push' && steps.push_kind.outputs.test == 'true') }}
         continue-on-error: true
         run: python scripts/run_guarded_notification.py center --mode channel-test
+
+      - name: Send synthetic Discovery and Hyperliquid pulse test
+        id: pulse_test_notify
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.pulse_test == 'true' }}
+        continue-on-error: true
+        run: python scripts/run_guarded_notification.py batch --market pulse-test
 
       # Discovery and Hyperliquid pulses use the same bounded notification
       # batch and materiality guard as all other market evidence. Their index
