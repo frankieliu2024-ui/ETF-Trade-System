@@ -109,8 +109,18 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
         action = "下一次正式判断重点核对候选自身强弱、持续性、外部方向和与现金/持仓的竞争关系。"
     else:
         core = "跨市场外部资产出现可比变化，可能影响相关A股ETF的方向判断和时机判断。"
+        external_explanations = []
+        for item in after.get("observations") or []:
+            asset = str(item.get("asset") or "").strip()
+            if asset == "BABA":
+                external_explanations.append("BABA：阿里巴巴相关美元资产，主要代表中国互联网和平台经济方向")
+            elif asset == "XBI":
+                external_explanations.append("XBI：美国生物科技ETF，主要代表生物科技和创新药方向")
+        external_text = "；".join(external_explanations)
+        if external_text:
+            core += f" 本次外部参照为：{external_text}。"
         value = "它的价值是提供A股交易时段之外的风险偏好、方向一致性和拥挤度线索，帮助正式决策识别同步、背离和风险扩散；不能单独触发交易。"
-        action = "下一次正式判断重点核对相关A股ETF自身反馈，并判断外部信号是同步确认、暂时背离还是仅供风险过滤。"
+        action = "下一次正式判断重点核对相关A股ETF自身反馈，并判断外部信号是同步确认、暂时背离还是仅供风险过滤。上述外部资产不是A股ETF，不能与A股对象直接等同。"
     content = (
         f"【核心结论】{core}\n\n"
         f"【证据变化】\n"
