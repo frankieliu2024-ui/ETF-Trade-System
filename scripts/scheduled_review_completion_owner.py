@@ -14,6 +14,7 @@ import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib import request as urllib_request
+from urllib.error import HTTPError
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 
@@ -105,9 +106,27 @@ def dispatch_notification(completion_path: str, *, force_resend: bool = False) -
     }
     payload = json.dumps({"ref": "main", "inputs": inputs}).encode("utf-8")
     headers = {"Accept": "application/vnd.github+json", "Authorization": f"Bearer {token}", "Content-Type": "application/json", "X-GitHub-Api-Version": "2022-11-28"}
-    with urllib_request.urlopen(urllib_request.Request(endpoint, data=payload, method="POST", headers=headers), timeout=30) as response:
-        if response.status != 204:
-            raise RuntimeError(f"notification dispatch returned HTTP {response.status}")
+    try:
+        with urllib_request.urlopen(urllib_request.Request(endpoint, data=payload, method="POST", headers=headers), timeout=30) as response:
+            if response.status != 204:
+                return {
+                    "submitted": False,
+                    "accepted": False,
+                    "explicit_failure": True,
+                    "status": response.status,
+                    "completion_path": completion_path,
+                }
+    except HTTPError as exc:
+        # An HTTP rejection is explicit: GitHub confirmed that this dispatch
+        # was not accepted, so the bounded same-completion recovery is safe.
+        return {
+            "submitted": False,
+            "accepted": False,
+            "explicit_failure": True,
+            "status": exc.code,
+            "reason": str(exc),
+            "completion_path": completion_path,
+        }
     return {"submitted": True, "completion_path": completion_path, "read_back": False}
 
 
@@ -123,11 +142,13 @@ def dispatch_notification_with_one_recovery(completion_path: str) -> dict[str, o
         primary = dispatch_notification(completion_path)
     except Exception as exc:
         # A timeout/connection error does not prove GitHub rejected the
-        # dispatch.  Retrying would create a second notification chain.
-        primary = {"submitted": False, "accepted": False, "reason": str(exc), "exception": True}
+        # dispatch. Retrying would create a second notification chain.
+        primary = {"submitted": False, "accepted": False, "explicit_failure": False, "reason": str(exc), "exception": True}
         return {"primary": primary, "recovery": None, "recovery_attempted": False, "same_completion_path": True}
     if primary.get("submitted") or primary.get("accepted"):
         return {"primary": primary, "recovery": None, "recovery_attempted": False}
+    if not primary.get("explicit_failure"):
+        return {"primary": primary, "recovery": None, "recovery_attempted": False, "same_completion_path": True}
     try:
         recovery = dispatch_notification(completion_path, force_resend=True)
     except Exception as exc:
