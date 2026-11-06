@@ -578,6 +578,41 @@ def _build_hyperliquid_object_bindings(external: dict, positions: list[dict], ob
     return bindings
 
 
+
+def _cross_engine_validation(binding: dict, object_inputs: list[dict], decision_evidence: dict[str, dict] | None = None) -> dict:
+    """Relate Hyperliquid evidence to the same A-share Discovery object.
+
+    This is a bidirectional validation record only; it never changes object
+    identity, candidate admission, or trading authority.
+    """
+    code = str(binding.get("code") or "")
+    discovery = next((x for x in object_inputs if str(x.get("code") or x.get("symbol") or "") == code), {})
+    asset_name = str((binding.get("external_assets") or [""])[0])
+    evidence = (decision_evidence or {}).get(asset_name) or {}
+    direction = str(evidence.get("direction") or binding.get("direction") or "").upper()
+    effect = str(evidence.get("decision_effect") or binding.get("decision_effect") or "").upper()
+    classes = list(discovery.get("information_classes") or discovery.get("_discovery_information_classes") or [])
+    if effect in {"CONTRADICTION", "CONTRADICTION_AND_CROWDING"}:
+        relation = "CROSS_MARKET_DIVERGENCE"
+    elif direction == "SUPPORTIVE" and classes:
+        relation = "EXTERNAL_CONFIRMED_A_SHARE"
+    elif direction == "SUPPORTIVE":
+        relation = "EXTERNAL_NOT_TRANSMITTED"
+    elif classes:
+        relation = "A_SHARE_NOT_CONFIRMED_EXTERNALLY"
+    else:
+        relation = "INSUFFICIENT_COMPARISON"
+    return {
+        "relation": relation,
+        "discovery_object_present": bool(discovery),
+        "discovery_information_classes": classes,
+        "hyperliquid_decision_effect": effect or "INSUFFICIENT",
+        "business_effect": "外部信号与A股对象同步，可增强方向判断" if relation == "EXTERNAL_CONFIRMED_A_SHARE" else "外部信号已出现，但A股对象尚未同步，暂不升级" if relation == "EXTERNAL_NOT_TRANSMITTED" else "A股对象与外部信号背离，降低结论强度或限制时机" if relation == "CROSS_MARKET_DIVERGENCE" else "A股对象已有变化，但外部证据尚未确认" if relation == "A_SHARE_NOT_CONFIRMED_EXTERNALLY" else "当前时点或映射不足，不能形成双向验证",
+        "next_validation": "下一节点复核A股对象是否继续承接，以及外部方向、资金行为和拥挤状态是否延续或收敛",
+        "authority_boundary": "仅记录Discovery与Hyperliquid的相互验证，不改变候选、持仓、观察身份或交易权限",
+    }
+
+
 def _decision_problem_graph(positions: list[dict], discovery_inputs: list[dict], account: dict, observation_inputs: list[dict] | None = None, observation_review_inputs: list[dict] | None = None) -> list[dict]:
     problems = [
         {"problem_id": "RISK_PERMISSION", "decision_object": "risk_permission", "required_business_judgment": "风险许可及新增风险边界"},
@@ -1369,7 +1404,7 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
             "mapping": external_driver.get("mapping") or [],
             "object_context": hyperliquid_object_context,
             "decision_evidence": hyperliquid_evidence,
-            "object_bindings": _build_hyperliquid_object_bindings(external_driver, positions, observation_inputs, discovery_inputs),
+            "object_bindings": [dict(item, cross_engine_validation=_cross_engine_validation(item, [*positions, *observation_inputs, *discovery_inputs], {str(x.get("asset") or ""): x for x in hyperliquid_evidence.get("items") or []})) for item in _build_hyperliquid_object_bindings(external_driver, positions, observation_inputs, discovery_inputs)],
             "time_basis": external_driver.get("time_basis", ""),
             "decision_boundary": "可服务于Discovery、观察ETF、机会ETF、实际持仓和已执行Trial的对象级辅助证据；不得独立生成Trial、Confirm、金额、卖出份额或订单。",
             "formal_consumption_contract": {

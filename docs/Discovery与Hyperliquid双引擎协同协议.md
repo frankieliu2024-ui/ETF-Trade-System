@@ -1,4 +1,4 @@
-# Discovery 与 Hyperliquid 双引擎协同协议 V1.0
+# Discovery 与 Hyperliquid 双引擎协同协议
 
 ## 1. 目的与边界
 
