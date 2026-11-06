@@ -377,6 +377,16 @@ jobs:
         continue-on-error: true
         run: python scripts/run_guarded_notification.py center --mode channel-test
 
+      # Discovery and Hyperliquid pulses use the same bounded notification
+      # batch and materiality guard as all other market evidence. Their index
+      # changes are not themselves notifications; the batch compares the latest
+      # two identities and lets the existing center dedupe/send.
+      - name: Send Discovery or Hyperliquid pulse value event when due
+        id: pulse_notify
+        if: ${{ github.event_name == 'push' && (steps.push_kind.outputs.discovery_pulse == 'true' || steps.push_kind.outputs.hyperliquid_pulse == 'true') }}
+        continue-on-error: true
+        run: python scripts/run_guarded_notification.py batch --market pulse
+
       # Event-driven notifications have no A-share-session or night-time gate.
       # The shared evidence guard rejects label/coverage-only changes before the
       # notification center can reach PushPlus.
