@@ -579,14 +579,14 @@ def _build_hyperliquid_object_bindings(external: dict, positions: list[dict], ob
 
 
 
-def _cross_engine_validation(binding: dict, discovery_inputs: list[dict], decision_evidence: dict[str, dict] | None = None) -> dict:
+def _cross_engine_validation(binding: dict, object_inputs: list[dict], decision_evidence: dict[str, dict] | None = None) -> dict:
     """Relate Hyperliquid evidence to the same A-share Discovery object.
 
     This is a bidirectional validation record only; it never changes object
     identity, candidate admission, or trading authority.
     """
     code = str(binding.get("code") or "")
-    discovery = next((x for x in discovery_inputs if str(x.get("code") or x.get("symbol") or "") == code), {})
+    discovery = next((x for x in object_inputs if str(x.get("code") or x.get("symbol") or "") == code), {})
     asset_name = str((binding.get("external_assets") or [""])[0])
     evidence = (decision_evidence or {}).get(asset_name) or {}
     direction = str(evidence.get("direction") or binding.get("direction") or "").upper()
@@ -1404,7 +1404,7 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
             "mapping": external_driver.get("mapping") or [],
             "object_context": hyperliquid_object_context,
             "decision_evidence": hyperliquid_evidence,
-            "object_bindings": [dict(item, cross_engine_validation=_cross_engine_validation(item, discovery_inputs, {str(x.get("asset") or ""): x for x in hyperliquid_evidence.get("items") or []})) for item in _build_hyperliquid_object_bindings(external_driver, positions, observation_inputs, discovery_inputs)],
+            "object_bindings": [dict(item, cross_engine_validation=_cross_engine_validation(item, [*positions, *observation_inputs, *discovery_inputs], {str(x.get("asset") or ""): x for x in hyperliquid_evidence.get("items") or []})) for item in _build_hyperliquid_object_bindings(external_driver, positions, observation_inputs, discovery_inputs)],
             "time_basis": external_driver.get("time_basis", ""),
             "decision_boundary": "可服务于Discovery、观察ETF、机会ETF、实际持仓和已执行Trial的对象级辅助证据；不得独立生成Trial、Confirm、金额、卖出份额或订单。",
             "formal_consumption_contract": {
