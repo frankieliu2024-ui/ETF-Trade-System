@@ -40,12 +40,34 @@ def _pulse_object_label(item: dict) -> str:
     if code and not name:
         try:
             from notification_center import ROOT, read_json
-            config = read_json(ROOT / "config" / "market" / "etf_monitor_universe.json", {})
+            discovery = read_json(ROOT / "data" / "state" / "discovery_pulse_index.json", {})
+            rows = []
+            latest = discovery.get("latest") if isinstance(discovery, dict) else None
+            if isinstance(latest, dict):
+                rows.extend(latest.get("candidates") or [])
+            days = discovery.get("days") if isinstance(discovery, dict) else None
+            if isinstance(days, dict):
+                for entries in days.values():
+                    if isinstance(entries, list):
+                        rows.extend(entries)
             name = next(
-                (str(row.get("name") or "").strip() for row in (config.get("objects") or [])
+                (str(row.get("name") or "").strip() for row in rows
                  if str(row.get("code") or "") == code),
                 "",
             )
+            if not name:
+                name = next(
+                    (str(row.get("name") or "").strip() for row in rows
+                     if str(row.get("candidate_signature") or "").split("::", 1)[0] == code),
+                    "",
+                )
+            if not name:
+                config = read_json(ROOT / "config" / "market" / "etf_monitor_universe.json", {})
+                name = next(
+                    (str(row.get("name") or "").strip() for row in (config.get("objects") or [])
+                     if str(row.get("code") or "") == code),
+                    "",
+                )
         except Exception:
             name = ""
     if code and name:
@@ -174,7 +196,7 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
     if source == "discovery_pulse":
         title = f"【市场异动】新候选出现：{added[0]}" if added else "【市场异动】候选池发生变化"
     else:
-        headline_objects = added or changed
+        headline_objects = list(dict.fromkeys(added + changed))
         title = (
             f"【市场异动】外部信号变化：{'、'.join(headline_objects[:3])}"
             if headline_objects else "【市场异动】外部信号发生变化"
@@ -252,12 +274,12 @@ def _pulse_test_candidates() -> list[dict]:
     return _pulse_candidates_from_payloads({
         "discovery_pulse": {
             "latest": {**base, "identity": f"PULSE_TEST_DISCOVERY_AFTER{suffix}", "formed_at_beijing": "2026-11-06T15:20:00+08:00",
-                       "candidate_count": 3, "candidates": [{"candidate_signature": "513630::OBSERVATION_FULL_EVALUATION"},
-                                                            {"candidate_signature": "159567::OBSERVATION_FULL_EVALUATION"},
-                                                            {"candidate_signature": "520550::OBSERVATION_FULL_EVALUATION"}]},
+                       "candidate_count": 3, "candidates": [{"code": "513630", "name": "港股低波红利ETF摩根", "candidate_signature": "513630::OBSERVATION_FULL_EVALUATION"},
+                                                            {"code": "159567", "name": "港股创新药ETF银华", "candidate_signature": "159567::OBSERVATION_FULL_EVALUATION"},
+                                                            {"code": "520550", "name": "港股红利低波ETF招商", "candidate_signature": "520550::OBSERVATION_FULL_EVALUATION"}]},
             "days": {"test": [{**base, "identity": f"PULSE_TEST_DISCOVERY_BEFORE{suffix}", "formed_at_beijing": "2026-11-06T15:19:00+08:00",
-                               "candidates": [{"candidate_signature": "513630::OBSERVATION_FULL_EVALUATION"},
-                                              {"candidate_signature": "159567::OBSERVATION_FULL_EVALUATION"}]}]},
+                               "candidates": [{"code": "513630", "name": "港股低波红利ETF摩根", "candidate_signature": "513630::OBSERVATION_FULL_EVALUATION"},
+                                              {"code": "159567", "name": "港股创新药ETF银华", "candidate_signature": "159567::OBSERVATION_FULL_EVALUATION"}]}]},
         },
         "hyperliquid_pulse": {
             "latest": {**base, "identity": f"PULSE_TEST_HYPERLIQUID_AFTER{suffix}", "formed_at_beijing": "2026-11-06T15:20:30+08:00",
