@@ -366,7 +366,11 @@ def _formal_decision_index_records(root: Path, market_date: str) -> list[dict]:
                 parsed = parsed.astimezone(SHANGHAI)
             except (TypeError, ValueError):
                 continue
-            event_date = str(event.get("market_date") or event.get("market_date_beijing") or parsed.date())
+            # The index is a decision-day view.  A Formal Decision may
+            # consume the prior legal market-date fact (for example a 09:02
+            # pre-open decision consuming the prior close), so event market_date
+            # must not replace the Beijing decision date for same-day indexing.
+            event_date = parsed.date().isoformat()
             if event_date != market_date:
                 continue
             identity = str(event.get("decision_id") or event.get("report_id") or event.get("task_run_id") or event.get("source_completion_path") or event.get("content_hash") or path)
@@ -378,6 +382,11 @@ def _formal_decision_index_records(root: Path, market_date: str) -> list[dict]:
             decision = event.get("formal_decision") or event.get("decision") or event.get("decision_response") or {}
             if not isinstance(decision, dict):
                 decision = {}
+            # Direct Scheduled Review completion events may intentionally carry
+            # only immutable full_content. Reuse the existing report parser for
+            # projection fields; do not create a second decision fact.
+            if not decision and content:
+                decision = _structured_decision_from_report(event)
             answers = decision.get("answers") if isinstance(decision.get("answers"), dict) else {}
             risk = decision.get("risk_permission") or (answers.get("RISK_PERMISSION") or {}).get("final_action")
             candidate = decision.get("main_candidate") or (answers.get("MAIN_CANDIDATE") or {}).get("candidate_name")
@@ -412,7 +421,16 @@ def _formal_decision_index_records(root: Path, market_date: str) -> list[dict]:
 def render_same_day_formal_decision_index(root: Path, account: dict) -> str:
     current_path = root / "data/state/CURRENT.json"
     current = load_json(current_path) if current_path.exists() else {}
-    market_date = str(account.get("updated_at") or current.get("market_date") or "")[:10]
+    # Use the current projection's decision calendar date first.  Account
+    # facts can legitimately remain at the prior close while a new intraday or
+    # pre-open Formal Decision is already complete.
+    market_date = str(
+        current.get("generated_at_beijing")
+        or current.get("generated_at")
+        or current.get("market_date")
+        or account.get("updated_at")
+        or ""
+    )[:10]
     records = _formal_decision_index_records(root, market_date) if market_date else []
     lines = ["### 当日正式决策索引", ""]
     if not records:
