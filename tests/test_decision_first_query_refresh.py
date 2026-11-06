@@ -36,6 +36,29 @@ class DecisionFirstQueryRefreshTests(unittest.TestCase):
             self.assertIsNotNone(reused)
             self.assertEqual(reused["candidate_count"], 12)
 
+    def test_verified_close_reuses_when_current_pointer_is_stale(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "data/state").mkdir(parents=True)
+            discovery = {
+                "status": "READY",
+                "market_date": "2026-11-06",
+                "latest_valid_node": "close",
+                "latest_snapshot": "snap-close.json",
+                "source": "VERIFIED_NODE_OVERLAY",
+                "candidate_count": 12,
+                "candidates": [{"code": "159326"}],
+            }
+            (root / "data/state/formal_discovery_current.json").write_text(json.dumps(discovery), encoding="utf-8")
+            reused = query_context._reusable_formal_discovery(
+                root,
+                {"market_date": "2026-11-06", "latest_valid_node": "close", "latest_snapshot": "older-snapshot.json"},
+                "different-universe",
+                set(),
+            )
+            self.assertIsNotNone(reused)
+            self.assertEqual(reused["candidate_count"], 12)
+
     def test_terminal_discovery_reuses_same_market_node_and_universe(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
