@@ -844,6 +844,8 @@ def _validate_weekly_projection_contract(report: dict) -> None:
             cursor -= timedelta(days=1)
         return ""
 
+    weekly_reference_date = latest_completed_week_end(market_date)
+
     attribution_path = ROOT / "data/state/weekly_return_attribution.json"
     attribution = _read_json("data/state/weekly_return_attribution.json") if attribution_path.exists() else {}
     if not attribution:
