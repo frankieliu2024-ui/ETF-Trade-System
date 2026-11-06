@@ -22,6 +22,11 @@ ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1
 CURRENT_OUTPUT = ROOT / "data/state/formal_discovery_current.json"
 
 
+def resolve_discovery_history_end_date(root: Path, market_date: str, node: str) -> str:
+    """Use the latest completed session as Discovery's historical PIT boundary."""
+    return required_completed_history_date(root, market_date, include_execution_date=False)
+
+
 def load_json(path: Path, default):
     try:
         return json.loads(path.read_text(encoding="utf-8"))
@@ -42,9 +47,7 @@ def build() -> dict:
     # boundary. The current verified snapshot remains the node-local spot input:
     # auction/open uses the prior close, while close uses today's close quote
     # without requiring every history provider to have published today's daily bar.
-    required_history_end_date = required_completed_history_date(
-        ROOT, market_date, include_execution_date=False
-    )
+    required_history_end_date = resolve_discovery_history_end_date(ROOT, market_date, node)
     if str(snapshot.get("market_date") or "") != market_date:
         return {"status": "SKIPPED", "reason": "snapshot_market_date_mismatch", "market_date": market_date, "latest_valid_node": node}
     if str(snapshot.get("quality_status") or "").upper() not in {"PASS", "DEGRADED"}:
