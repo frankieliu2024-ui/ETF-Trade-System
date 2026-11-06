@@ -788,7 +788,27 @@ def _bounded_prefilter(rows: list[dict[str, Any]], held_codes: set[str] | None =
             append_item(item)
     return queue
 
-def _candidate(row: dict[str, Any], history: list[dict[str, Any]], required_history_end_date: str) -> dict[str, Any] | None:
+def _management_review_contract(code: str, managed_codes: set[str], held_codes: set[str]) -> dict[str, Any]:
+    if code in held_codes:
+        role = "HOLDING"
+        required = ["CONTINUE_HOLDING", "REDUCE_REVIEW", "EXIT_REVIEW"]
+    elif code in managed_codes:
+        role = "MANAGED_MONITORING"
+        required = ["RETAIN_OBSERVATION", "REMOVE_OBSERVATION", "OPPORTUNITY_REVIEW"]
+    else:
+        role = "NEW_DISCOVERY"
+        required = ["RETAIN_DISCOVERY", "REJECT_NEW_DEPLOYMENT", "TRIAL_ELIGIBILITY_REVIEW"]
+    return {
+        "object_role": role,
+        "direct_conclusion_required": True,
+        "conclusion_status": "PENDING_MASTER_DECISION",
+        "allowed_conclusions": required,
+        "decision_owner": "MASTER_FORMAL_DECISION",
+        "decision_boundary": "Discovery supplies object-level evidence and the required conclusion set; only MASTER Formal Decision confirms the final hold, reduce, exit, observation or Trial/Confirm action.",
+    }
+
+
+def _candidate(row: dict[str, Any], history: list[dict[str, Any]], required_history_end_date: str, management_review: dict[str, Any] | None = None) -> dict[str, Any] | None:
     completed = [x for x in history if str(x.get("date") or "") <= required_history_end_date]
     info_classes = list(row.get("_discovery_information_classes") or [])
     if len(completed) < MIN_HISTORY:
@@ -816,6 +836,7 @@ def _candidate(row: dict[str, Any], history: list[dict[str, Any]], required_hist
             },
             "comparison_basis": ["当前相对结构", "有限历史", "成交与可执行性", "风险收益", "资本效率"],
             "decision_boundary": "短历史仅授予本节点Observation资格完整评估；不得替代正式行情、Observation ADMIT或MASTER，不产生Trial/Confirm、金额或交易动作。",
+            "management_review": management_review or {},
         }
     current_states = classify_states(completed)
     previous_states = _state_names(completed[:-1]) if len(completed) > MIN_HISTORY else set()
@@ -843,6 +864,7 @@ def _candidate(row: dict[str, Any], history: list[dict[str, Any]], required_hist
         },
         "comparison_basis": ["历史趋势/状态变化", "当前相对结构", "成交与可执行性", "风险收益", "资本效率"],
         "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "management_review": management_review or {},
     }
 
 
@@ -1016,7 +1038,7 @@ def discover_formal_candidates(
                 node_history[code] = history
                 snapshot_dirty = True
             history_succeeded += 1
-            item = _candidate(row, history, required_history_end_date)
+            item = _candidate(row, history, required_history_end_date, _management_review_contract(code, managed_codes, held_codes))
             if item:
                 item["history_source"] = history_source
                 item_code = str(item.get("code") or "")
