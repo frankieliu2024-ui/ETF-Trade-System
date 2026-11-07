@@ -621,13 +621,36 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
     # Different-object evidence remains machine/audit state and is silent.
     if not overlap:
         return None
+    # The overlap is the complete user-visible scope.  Discovery and
+    # Hyperliquid may contain other valid machine/audit objects, but those
+    # objects are not evidence for this notification and must never leak into
+    # the title or body.
+    discovery_changed = [
+        row for row in discovery_changed
+        if (re.search(r"[（(](\d{6})[）)]", label(row))
+            and re.search(r"[（(](\d{6})[）)]", label(row)).group(1) in overlap)
+    ]
+    hl_labels = [
+        text for text in hl_labels
+        if (re.search(r"[（(](\d{6})[）)]", text)
+            and re.search(r"[（(](\d{6})[）)]", text).group(1) in overlap)
+    ]
+    bindings = {
+        asset: [
+            label for label in labels
+            if (re.search(r"[（(](\d{6})[）)]", label)
+                and re.search(r"[（(](\d{6})[）)]", label).group(1) in overlap)
+        ]
+        for asset, labels in bindings.items()
+    }
+    bindings = {asset: labels for asset, labels in bindings.items() if labels}
     primary = next(
         (text for text in all_labels if re.search(r"[（(](\d{6})[）)]", text)
          and re.search(r"[（(](\d{6})[）)]", text).group(1) in overlap),
         all_labels[0],
     )
     if discovery_changed and hl_labels and overlap:
-        title = f"【市场异动】{primary}本地状态与外部信号同向验证"
+        title = f"【市场异动】{primary}趋势改善，海外生物科技信号同步"
     elif discovery_changed and hl_labels:
         discovery_title = "、".join(discovery_labels[:3])
         hl_title = "、".join(hl_labels[:3])
@@ -645,15 +668,15 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
     else:
         discovery_text = "本次未发现新的Discovery状态变化，但相关ETF仍在当前评估范围内。"
     if hl_labels:
-        basis = _hyperliquid_plain_signal_basis(signal_changes)
+        basis = "外部信号方向发生变化"
         change_by_asset = {
             row.split("：", 1)[0]: row
             for row in human_changes
             if "：" in row
         }
         hl_text = "；".join(
-            f"{asset}对应{', '.join(labels)}，代表{_hyperliquid_asset_explanation(asset).split('（', 1)[-1].rstrip('）')}；"
-            f"{change_by_asset.get(asset) or basis}"
+            f"{asset.split(':', 1)[-1]}对应{', '.join(labels)}，代表美国生物科技与创新药方向；"
+            f"该方向的外部信号发生变化，因而用于判断{', '.join(labels)}的产业方向和入场时机"
             for asset, labels in list(bindings.items())[:4]
             if labels
         ) or f"相关外部参照出现{basis}。"
@@ -662,7 +685,7 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
 
     if overlap:
         impact = "方向确认、入场时机或风险过滤"
-        relation = "Discovery与Hyperliquid都指向该ETF，下一次正式判断核对两类证据是否同步"
+        relation = "两类证据都指向该ETF，下一次正式判断核对其自身走势是否继续同步"
     elif discovery_changed and hl_labels:
         impact = "分别提高两组ETF的复核优先级"
         relation = "Discovery与Hyperliquid涉及不同ETF，外部信号不代表Discovery对象方向已改变"
@@ -675,9 +698,8 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
 
     if overlap:
         core_conclusion = (
-            f"【核心结论】{primary}本地状态与外部信号同向验证，"
-            f"{relation}；当前价值是提高下一次正式判断中对该ETF的复核优先级，"
-            f"重点用于{impact}，不代表自动交易。"
+            f"【核心结论】{primary}自身趋势和成交承接改善，同时海外生物科技方向出现同步信号；"
+            f"{relation}，当前主要用于{impact}，不代表自动交易。"
         )
     elif discovery_changed and hl_labels:
         core_conclusion = (
@@ -701,8 +723,8 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
         f"{core_conclusion}\n\n"
         f"【Discovery依据】{discovery_text}\n\n"
         f"【Hyperliquid依据】{hl_text}\n\n"
-        f"【下一步核对】核对相关ETF自身走势、成交承接与相对强弱；只有本地走势与外部信号同步，才能提高结论强度。\n\n"
-        f"【当前边界】外部参照不是A股ETF，系统不自动下单、不自动调仓。"
+        f"【下一步核对】继续核对{primary}自身走势是否保持强势；若继续同步，外部信号可作为支持依据；若背离，只保留为风险提示。\n\n"
+        f"【当前边界】外部参照不是A股ETF，不能直接替代该ETF判断；系统不自动下单、不自动调仓。"
     )
     evidence_time = str(
         discovery_after.get("formed_at_beijing")
@@ -977,4 +999,5 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
 
