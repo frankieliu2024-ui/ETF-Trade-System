@@ -42,7 +42,10 @@ class HyperliquidPulseNotificationPayloadTests(unittest.TestCase):
         self.assertIn("资金费率0.1→0.2", event["content"])
         self.assertIn("间接风格或共同风险因子关系", event["content"])
         self.assertIn("信号含义：多空持仓成本发生变化", event["content"])
-        self.assertIn("当前价值：提高该ETF下一节点", event["content"])
+        for machine_label in ("资金费率", "未平仓量", "溢价"):
+            assert machine_label not in event["content"]
+        assert "外部参照" in event["content"]
+        assert "下一步核对" in event["content"]
         self.assertIn("B → 港股通创新药ETF工银（159217）", event["content"])
         self.assertIn("对该ETF的当前影响", event["content"])
         self.assertIn("时机与风险过滤", event["content"])
