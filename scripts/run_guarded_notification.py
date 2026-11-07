@@ -168,7 +168,7 @@ def _canonicalize_etf_labels(labels: list[str]) -> list[str]:
         text = str(label or "").strip()
         if not text:
             continue
-        match = re.search(r"[（(](\\d{6})[）)]", text)
+        match = re.search(r"[（(](\d{6})[）)]", text)
         code = match.group(1) if match else text
         if code not in chosen:
             chosen[code] = text
@@ -254,9 +254,9 @@ def _hyperliquid_relevant_asset_objects() -> dict[str, list[str]]:
             result[asset] = list(dict.fromkeys(labels))[:4]
     all_labels = [label for labels in result.values() for label in labels]
     canonical = _canonicalize_etf_labels(all_labels)
-    by_code = {re.search(r"[（(](\\d{6})[）)]", label).group(1): label for label in canonical if re.search(r"[（(](\\d{6})[）)]", label)}
+    by_code = {re.search(r"[（(](\d{6})[）)]", label).group(1): label for label in canonical if re.search(r"[（(](\d{6})[）)]", label)}
     result = {
-        asset: [by_code.get(re.search(r"[（(](\\d{6})[）)]", label).group(1), label) if re.search(r"[（(](\\d{6})[）)]", label) else label for label in labels]
+        asset: [by_code.get(re.search(r"[（(](\d{6})[）)]", label).group(1), label) if re.search(r"[（(](\d{6})[）)]", label) else label for label in labels]
         for asset, labels in result.items()
     }
     return result
@@ -647,7 +647,7 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
         grouped = {}
         for asset in sorted(changed_assets):
             for label in _canonicalize_etf_labels(relevant_objects.get(asset) or []):
-                match = re.search(r"[（(](\\d{6})[）)]", label)
+                match = re.search(r"[（(](\d{6})[）)]", label)
                 code = match.group(1) if match else label
                 entry = grouped.setdefault(code, {"label": label, "assets": [], "relations": set()})
                 if asset not in entry["assets"]:
