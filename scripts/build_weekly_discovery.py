@@ -34,7 +34,6 @@ def load_json(path: Path, default):
         return default
 
 
-
 def build() -> dict:
     current = load_json(ROOT / "data/state/CURRENT.json", {})
     market_date = str(current.get("market_date") or "").strip()
@@ -43,10 +42,6 @@ def build() -> dict:
     snapshot = load_json(ROOT / str(current.get("latest_snapshot") or ""), {})
     if not market_date or node not in {"auction", "open", "midday", "close"} or node_status not in {"READY", "DEGRADED"}:
         return {"status": "SKIPPED", "reason": "verified_a_share_node_not_current", "market_date": market_date, "latest_valid_node": node}
-    # Discovery always uses the latest completed session as its historical PIT
-    # boundary. The current verified snapshot remains the node-local spot input:
-    # auction/open uses the prior close, while close uses today's close quote
-    # without requiring every history provider to have published today's daily bar.
     required_history_end_date = resolve_discovery_history_end_date(ROOT, market_date, node)
     if str(snapshot.get("market_date") or "") != market_date:
         return {"status": "SKIPPED", "reason": "snapshot_market_date_mismatch", "market_date": market_date, "latest_valid_node": node}
@@ -114,6 +109,10 @@ def build() -> dict:
         "identity_boundary": "This current-pulse artifact is a discovery input only; it does not establish Observation, opportunity, Trial, Confirm, amount, sell quantity or order.",
     }
     atomic_json_write(CURRENT_OUTPUT, artifact)
+    try:
+        output = str(CURRENT_OUTPUT.relative_to(ROOT))
+    except ValueError:
+        output = str(CURRENT_OUTPUT)
     return {
         "status": artifact["status"],
         "market_date": market_date,
@@ -122,9 +121,8 @@ def build() -> dict:
         "empty_reason": artifact["empty_reason"],
         "candidate_count": artifact["candidate_count"],
         "coverage_status": artifact["coverage_status"],
-        "output": str(CURRENT_OUTPUT.relative_to(ROOT)),
+        "output": output,
     }
-
 
 
 if __name__ == "__main__":
