@@ -55,3 +55,28 @@ def test_hyperliquid_pulse_history_uses_same_index_contract(tmp_path: Path):
     assert stored["latest"]["formed_at_beijing"].endswith("+08:00")
     assert stored["latest"]["fact_time_beijing"].endswith("+08:00")
     assert stored["latest"]["source_path"].endswith("#hyperliquid")
+
+
+def test_discovery_history_preserves_reason_evidence(tmp_path):
+    payload = {
+        "market_date": "2026-11-07",
+        "generated_at_beijing": "2026-11-07T17:00:00+08:00",
+        "status": "READY",
+        "coverage_status": "COMPLETE",
+        "candidate_count": 1,
+        "candidates": [{
+            "code": "520550",
+            "name": "港股红利低波ETF招商",
+            "surfaced_states": [{"state": "PERSISTENT_TREND", "evidence": {"return_5": 0.03}}],
+            "discovery_spot": {"change_pct": 1.2},
+        }],
+    }
+    result = append_pulse_history(
+        tmp_path, kind="DISCOVERY", payload=payload, path="formal_discovery_current.json",
+        identity="test-discovery-evidence",
+    )
+    assert result["status"] == "UPDATED"
+    stored = json.loads((tmp_path / "data/state/discovery_pulse_index.json").read_text())
+    candidate = stored["latest"]["candidates"][0]
+    assert candidate["surfaced_states"][0]["evidence"]["return_5"] == 0.03
+    assert candidate["discovery_spot"]["change_pct"] == 1.2

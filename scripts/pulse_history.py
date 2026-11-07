@@ -59,6 +59,11 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
                 "candidate_signature": ":".join(str(item.get(key) or "") for key in ("code", "formal_status", "category", "eligibility")),
                 "code": str(item.get("code") or ""),
                 "name": str(item.get("name") or ""),
+                "display_name": str(item.get("display_name") or ""),
+                "surfaced_states": item.get("surfaced_states") or [],
+                "discovery_spot": item.get("discovery_spot") or {},
+                "information_classes": item.get("information_classes") or [],
+                "comparison_basis": item.get("comparison_basis") or [],
             }
             for item in (payload.get("candidates") or [])
             if isinstance(item, dict) and (item.get("code") or item.get("name"))
