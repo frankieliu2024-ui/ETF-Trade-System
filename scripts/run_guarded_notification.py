@@ -393,11 +393,16 @@ def _hyperliquid_user_scope(
         if mapped:
             for label in mapped:
                 _, relation = _hyperliquid_mapping_metadata(asset, label)
+                if relation == "直接/产业链关系":
+                    impact = "直接影响该ETF对应产业方向的强弱判断"
+                elif relation == "间接市场/风险偏好关系":
+                    impact = "间接影响该ETF的市场风险偏好和时机判断"
+                else:
+                    impact = "间接影响该ETF的风格、拥挤风险和时机判断"
                 bindings.append(
-                    f"{display_asset} → {label}（{relation}）：{signal_text}；"
-                    f"信号含义：{_hyperliquid_signal_value(row)}；"
-                    "当前价值：提高该ETF下一节点对方向、时机和拥挤风险的复核优先级，"
-                    "但在A股自身走势、成交承接和相对强弱核验前，不单独构成支持、反向或交易动作。"
+                    f"{display_asset}（外部参照）→ {label}（{relation}）："
+                    f"{impact}；当前价值是提高该ETF下一节点的复核优先级，"
+                    "但尚不能单独证明A股方向已经改变，也不构成交易动作。"
                 )
     deduped = []
     seen_codes = set()
@@ -631,9 +636,11 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
         related_text = "、".join(related_labels[:3]) or "相关ETF"
         binding_text = "\n".join(object_bindings[:6]) or "当前外部资产与具体ETF的对象级映射尚未完整确认。"
         content = (
-            f"【核心结论】{related_text}对应的外部风险信号发生变化，需逐对象复核其对ETF方向、时机和风险收益的影响。\n\n"
+            f"【核心结论】{related_text}的外部参照出现足以进入下一节点复核的变化，"
+            "当前主要影响相关ETF的方向确认、入场时机或风险过滤，不代表A股方向已经改变。\n\n"
             f"【发生了什么】\n{binding_text}\n\n"
-            "【对当前判断的作用】上述关系只表示外部证据与具体ETF的待核对映射；下一次正式判断必须逐只核对ETF自身走势、成交承接、相对强弱及与外部信号的同步或背离，再归类为支持、反向、时机过滤或风险提示。\n\n"
+            "【下一步核对】逐只核对相关ETF自身走势、成交承接和相对强弱；若A股反馈同步，"
+            "外部信号可作为支持或时机依据；若A股反馈背离，则只保留为风险提示。\n\n"
             "【当前边界】外部资产不是A股ETF，不能直接等同或据此买卖；不自动交易。"
         )
         title = f"【市场异动】{related_text}外部风险信号变化"
