@@ -527,7 +527,26 @@ def _hyperliquid_signal_materially_changed(before: dict, after: dict) -> bool:
             return True
     return False
 
+def _pulse_user_window(source: str, after: dict) -> bool:
+    """Only interrupt during the common A-share decision window.
+    
+    Discovery and Hyperliquid facts may be collected continuously, but user
+    notifications share the A-share preparation/intraday window. Overnight
+    Hyperliquid changes remain machine evidence for the next formal review.
+    """
+    if source == "discovery_pulse":
+        return True
+    stamp = str(after.get("formed_at_beijing") or after.get("fact_time_beijing") or "").strip()
+    match = re.search(r"T(\d{2}):\d{2}", stamp)
+    if not match:
+        return False
+    hour = int(match.group(1))
+    return 8 <= hour < 16
+
+
 def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | None:
+    if not _pulse_user_window(source, after):
+        return None
     # A first Hyperliquid snapshot establishes the comparison baseline. With
     # no prior observations, every asset would otherwise look "new" and the
     # full venue catalogue would leak into a user notification.
@@ -646,50 +665,34 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
         reason_text = "；".join(reasons) if reasons else "候选集合发生变化，但具体入选理由尚未完整确认"
         headline = "、".join((added + removed)[:3]) or "候选池"
         content = (
-            f"【核心结论】新增候选：{headline}；候选依据：{reason_text}。"
-            "当前只提升下一次正式判断的比较优先级，不代表A股方向改变，也不是买入信号。\n\n"
-            f"【发生了什么】Discovery候选池新增{headline}；候选依据是{reason_text}。\n\n"
-            "【下一步核对】核对趋势能否持续、成交是否有承接，并与现金、现有持仓和其他观察对象比较。\n\n"
+            f"【核心结论】{headline}进入Discovery候选池，"
+            f"因为{reason_text}；这只提升下一次正式判断的比较优先级，不代表A股方向改变，也不是买入信号。\n\n"
+            "【下一步核对】核对趋势和成交承接能否持续，再与现金、现有持仓和其他候选比较。\n\n"
             "【当前边界】不授予Trial、Confirm、买入、卖出或调仓权限，不代表已经发生实际成交。"
         )
-        title = f"【市场异动】{headline}进入候选池"
+        title = f"【市场异动】新增候选：{headline}"
     else:
         canonical_labels = _canonicalize_etf_labels(related_labels)
-        short_names = "、".join(label.split("（", 1)[0] for label in canonical_labels[:3]) or "相关ETF"
-        grouped = {}
-        for asset in sorted(changed_assets):
-            for label in _canonicalize_etf_labels(relevant_objects.get(asset) or []):
-                match = re.search(r"[（(](\d{6})[）)]", label)
-                code = match.group(1) if match else label
-                entry = grouped.setdefault(code, {"label": label, "assets": [], "relations": set()})
-                if asset not in entry["assets"]:
-                    entry["assets"].append(asset)
-                _, relation = _hyperliquid_mapping_metadata(asset, label)
-                entry["relations"].add(relation)
-        impact_lines = []
-        for entry in list(grouped.values())[:4]:
-            label = entry["label"]
-            sources = "、".join(_hyperliquid_asset_explanation(asset) for asset in entry["assets"][:2])
-            relations = entry["relations"]
-            if "直接/产业链关系" in relations:
-                impact = "直接影响该ETF对应产业方向的强弱判断"
-            elif "间接市场/风险偏好关系" in relations:
-                impact = "间接影响该ETF的风险偏好和入场时机判断"
-            else:
-                impact = "间接影响该ETF的风格、拥挤风险和入场时机判断"
-            impact_lines.append(f"{sources}变化，{label}{impact}")
-        impact_text = "；".join(impact_lines) or "本次外部信号没有形成可解释的ETF映射"
-        signal_basis = _hyperliquid_plain_signal_basis(signal_changes)
-        title_subject = short_names if len(canonical_labels) <= 1 else f"{canonical_labels[0].split('（', 1)[0]}等{len(canonical_labels)}只ETF"
+        primary_label = canonical_labels[0] if canonical_labels else "相关ETF"
         title_asset = next(iter(sorted(changed_assets)), "")
         title_external = title_asset.split(":", 1)[-1] or "外部方向"
-        title = f"【市场异动】{title_external}方向变化，{title_subject}出现外部映射"
+        family_text = _hyperliquid_asset_explanation(title_asset)
+        _, relation = _hyperliquid_mapping_metadata(title_asset, primary_label)
+        if "直接/产业链关系" in relation:
+            impact_text = f"{family_text}与{primary_label}属于直接产业链关系，外部变化用于核对该ETF对应产业方向是否同步。"
+            role_text = "方向确认"
+        elif "间接市场/风险偏好关系" in relation:
+            impact_text = f"{family_text}与{primary_label}属于间接市场关系，外部变化用于辅助判断该ETF的风险偏好和时机。"
+            role_text = "时机判断"
+        else:
+            impact_text = f"{family_text}与{primary_label}属于间接风格关系，外部变化主要用于该ETF的风险过滤。"
+            role_text = "风险过滤"
+        title = f"【市场异动】{primary_label}的{title_external}外部信号出现变化"
         content = (
-            f"【核心结论】{short_names}出现外部方向映射，"
-            "下一节点应核对ETF自身是否同步；这不是A股方向已经改变，也不是交易信号。\n\n"
-            f"【发生了什么】影响依据：{signal_basis}；{impact_text}。\n\n"
-            "【下一步核对】逐只核对ETF自身走势、成交承接和相对强弱；同步时用于方向确认或时机判断，"
-            "背离时仅用于风险过滤。\n\n"
+            f"【核心结论】{primary_label}的{title_external}外部信号出现变化，"
+            f"当前作用是{role_text}；不能单独说明A股方向已经改变，也不是交易信号。\n\n"
+            f"【发生了什么】影响依据：{impact_text}\n\n"
+            f"【下一步核对】核对{primary_label}自身走势、成交承接和相对强弱；只有同步时，才提高方向或时机判断的可信度。\n\n"
             "【当前边界】外部资产不是A股ETF，不能直接等同或据此买卖；不自动交易。"
         )
     return {
