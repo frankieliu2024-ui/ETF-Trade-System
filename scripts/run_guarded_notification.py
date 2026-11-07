@@ -359,11 +359,11 @@ def _human_signal(asset: str, before: dict, after: dict) -> str:
     if old_oi is not None and new_oi is not None and abs(old_oi) > 0:
         ratio = (new_oi - old_oi) / abs(old_oi)
         if ratio >= 0.05:
-            parts.append("杠杆参与明显增加，潜在波动风险上升")
+            parts.append("潜在波动风险上升")
         elif ratio <= -0.05:
-            parts.append("杠杆参与明显减少，潜在波动压力缓和")
+            parts.append("潜在波动压力缓和")
     elif old.get("open_interest") != new.get("open_interest"):
-        parts.append("杠杆参与程度发生变化")
+        parts.append("潜在波动风险发生变化")
 
     old_premium, new_premium = _number(old.get("premium")), _number(new.get("premium"))
     if old_premium is not None and new_premium is not None:
