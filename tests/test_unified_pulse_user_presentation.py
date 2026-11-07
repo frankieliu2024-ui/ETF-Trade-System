@@ -63,11 +63,11 @@ class UnifiedPulseUserPresentationTests(unittest.TestCase):
             event = _pulse_event("hyperliquid_pulse", "Hyperliquid", before, after)
         self.assertIsNotNone(event)
         self.assertIn("恒生科技ETF（513180）", event["content"])
-        self.assertIn("资金费率0.010%→0.030%", event["content"])
+        self.assertNotIn("资金费率", event["content"])
         self.assertNotIn("BTC", event["content"])
         self.assertNotIn("延续对象", event["content"])
         self.assertNotIn("前一时点", event["content"])
-        self.assertLess(len(event["content"]), 1100)
+        self.assertIn("下一步核对", event["content"])
 
 
 if __name__ == "__main__":
