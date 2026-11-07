@@ -625,25 +625,40 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
         reason_text = "；".join(reasons) if reasons else "候选集合发生变化，但具体入选理由尚未完整确认"
         headline = "、".join((added + removed)[:3]) or "候选池"
         content = (
-            f"【核心结论】新增候选：{headline}。\n\n"
-            f"【入选依据】{reason_text}。\n\n"
-            "【对当前判断的作用】它进入下一次正式判断的比较范围，需要与现金、现有持仓和其他观察对象比较；这不是买入信号。\n\n"
-            "【下一步核对】核对趋势是否持续、成交是否有承接，以及风险收益是否真正优于现金和现有持仓。\n\n"
+            f"【核心结论】新增候选：{headline}；入选依据是{reason_text}。"
+            "当前只提升下一次正式判断的比较优先级，不代表A股方向改变，也不是买入信号。\n\n"
+            f"【发生了什么】Discovery候选池新增{headline}，其趋势、节点表现或成交证据达到入选条件。\n\n"
+            "【下一步核对】核对趋势能否持续、成交是否有承接，并与现金、现有持仓和其他观察对象比较。\n\n"
             "【当前边界】不授予Trial、Confirm、买入、卖出或调仓权限，不代表已经发生实际成交。"
         )
-        title = f"【市场异动】新候选：{headline}"
+        title = f"【市场异动】新候选需复核：{headline}"
     else:
-        related_text = "、".join(related_labels[:3]) or "相关ETF"
-        binding_text = "\n".join(object_bindings[:6]) or "当前外部资产与具体ETF的对象级映射尚未完整确认。"
+        short_names = "、".join(label.split("（", 1)[0] for label in related_labels[:3]) or "相关ETF"
+        impact_lines = []
+        seen_labels = set()
+        for asset in sorted(changed_assets):
+            for label in (relevant_objects.get(asset) or []):
+                if label in seen_labels:
+                    continue
+                seen_labels.add(label)
+                _, relation = _hyperliquid_mapping_metadata(asset, label)
+                if relation == "直接/产业链关系":
+                    impact = "直接影响对应产业方向强弱判断"
+                elif relation == "间接市场/风险偏好关系":
+                    impact = "影响市场风险偏好和入场时机判断"
+                else:
+                    impact = "影响风格、拥挤风险和入场时机判断"
+                impact_lines.append(f"{label}：外部参照变化，{impact}")
+        impact_text = "；".join(impact_lines[:4]) or "相关ETF对象映射尚未完整确认"
         content = (
-            f"【核心结论】{related_text}的外部参照出现足以进入下一节点复核的变化，"
-            "当前主要影响相关ETF的方向确认、入场时机或风险过滤，不代表A股方向已经改变。\n\n"
-            f"【发生了什么】\n{binding_text}\n\n"
-            "【下一步核对】逐只核对相关ETF自身走势、成交承接和相对强弱；若A股反馈同步，"
-            "外部信号可作为支持或时机依据；若A股反馈背离，则只保留为风险提示。\n\n"
+            f"【核心结论】{short_names}需要提高下一节点复核优先级，"
+            "外部信号只影响方向确认、时机或风险过滤，不代表A股方向已经改变。\n\n"
+            f"【发生了什么】{impact_text}。\n\n"
+            "【下一步核对】逐只核对ETF自身走势、成交承接和相对强弱；只有A股反馈同步时，"
+            "外部信号才可作为支持或时机依据，若背离则仅保留为风险提示。\n\n"
             "【当前边界】外部资产不是A股ETF，不能直接等同或据此买卖；不自动交易。"
         )
-        title = f"【市场异动】{related_text}外部风险信号变化"
+        title = f"【市场异动】需复核：{short_names}"
     return {
         "key": f"pulse:{source}:{after.get('identity')}",
         "event_type": "PULSE_FACT_UPDATE",
