@@ -185,7 +185,7 @@ def _hyperliquid_relevant_asset_objects() -> dict[str, list[str]]:
     result = {}
     preferred = {
         "CHINA_TECH_RISK": ("科技", "互联网", "平台", "恒生", "港股宽基"),
-        "BIOTECH": ("创新药", "医药", "医疗", "生物", "器械"),
+        "BIOTECH": ("创新药", "医药", "生物"),
         "SEMICONDUCTOR": ("半导体", "芯片", "科创", "通信", "电子", "设备"),
         "SEMICONDUCTOR_HIGH_BETA": ("半导体", "芯片", "科创", "通信", "电子", "设备"),
         "MEMORY": ("半导体", "芯片", "存储", "科创", "通信", "电子", "设备"),
@@ -201,7 +201,7 @@ def _hyperliquid_relevant_asset_objects() -> dict[str, list[str]]:
     }
     excluded = {
         "CHINA_TECH_RISK": ("创新药", "医药", "医疗", "器械", "红利", "低波", "央企"),
-        "BIOTECH": ("红利", "低波", "央企", "煤炭", "能源", "科技"),
+        "BIOTECH": ("红利", "低波", "央企", "煤炭", "能源", "科技", "器械"),
     }
     for row in (mapping.get("asset_mappings") or []):
         if not isinstance(row, dict):
