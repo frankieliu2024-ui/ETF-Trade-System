@@ -125,5 +125,25 @@ def build() -> dict:
     }
 
 
+def main() -> None:
+    result = build()
+    if result.get("status") in {"READY", "PASS"}:
+        try:
+            from pulse_history import append_pulse_history
+        except ModuleNotFoundError:
+            from scripts.pulse_history import append_pulse_history
+        artifact = load_json(CURRENT_OUTPUT, {})
+        discovery = artifact.get("discovery") if isinstance(artifact.get("discovery"), dict) else {}
+        append_pulse_history(
+            ROOT,
+            kind="DISCOVERY",
+            payload={**artifact, **discovery},
+            path="data/state/formal_discovery_current.json",
+            identity=f"DISCOVERY:{result.get('market_date')}:{result.get('latest_valid_node')}:{result.get('output')}",
+            occurred_at=artifact.get("generated_at_beijing") or "",
+        )
+    print(json.dumps(result, ensure_ascii=False))
+
+
 if __name__ == "__main__":
-    print(json.dumps(build(), ensure_ascii=False))
+    main()
