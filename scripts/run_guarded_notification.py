@@ -326,19 +326,26 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
         if not _hyperliquid_decision_signal_changed(before, after):
             return None
         signal_changes = _hyperliquid_signal_changes(before, after)
-        if signal_changes:
-            change_lines.append("可比信号变化：" + "；".join(signal_changes[:12]))
         # The machine comparison may cover hundreds of assets, but the
-        # user-facing pulse must contain only a bounded representative set.
+        # user-facing pulse must contain only assets whose decision-bearing
+        # change maps to a currently managed ETF object.
         changed_assets = {item.split("：", 1)[0] for item in signal_changes}
         relevant_objects = _hyperliquid_relevant_asset_objects()
         changed_assets &= set(relevant_objects)
         if not changed_assets:
             return None
-        before_objects = [item for item in before_objects if item.split("（", 1)[0] in changed_assets]
-        after_objects = [item for item in after_objects if item.split("（", 1)[0] in changed_assets]
-        if not changed_assets:
-            return None
+        signal_changes = [
+            item for item in signal_changes
+            if item.split("：", 1)[0] in changed_assets
+        ]
+        before_objects = [
+            item for item in before_objects
+            if item.split("（", 1)[0] in changed_assets
+        ]
+        after_objects = [
+            item for item in after_objects
+            if item.split("（", 1)[0] in changed_assets
+        ]
         before_objects = before_objects[:12]
         after_objects = after_objects[:12]
         before_fact["objects"] = before_objects
@@ -348,6 +355,20 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
         added = sorted(set(after_objects) - set(before_objects))
         removed = sorted(set(before_objects) - set(after_objects))
         changed = sorted(set(before_objects) & set(after_objects))
+        # Rebuild all user-visible change lines after filtering. The previous
+        # implementation appended the full venue comparison before filtering,
+        # which leaked unrelated assets into the notification body.
+        change_lines = []
+        if added:
+            change_lines.append("新增对象：" + "、".join(added))
+        if removed:
+            change_lines.append("消失对象：" + "、".join(removed))
+        if changed:
+            change_lines.append("延续对象：" + "、".join(changed))
+        if signal_changes:
+            change_lines.append("可比信号变化：" + "；".join(signal_changes[:12]))
+        if not change_lines:
+            change_lines.append("对象集合未变，但相关信号发生变化。")
     if source == "discovery_pulse":
         core = "全市场候选出现新增或变化，值得提前纳入下一次正式判断。"
         value = _pulse_object_impact(source, "、".join((added + removed)[:6]), added, removed)
