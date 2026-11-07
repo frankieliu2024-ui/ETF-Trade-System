@@ -666,9 +666,32 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
         impact = "方向确认、入场时机或风险过滤"
         relation = "当前只有外部证据，仍需结合ETF自身走势确认"
 
+    if overlap:
+        core_conclusion = (
+            f"【核心结论】{primary}本地状态与外部信号同向验证，"
+            f"{relation}；当前价值是提高下一次正式判断中对该ETF的复核优先级，"
+            f"重点用于{impact}，不代表自动交易。"
+        )
+    elif discovery_changed and hl_labels:
+        core_conclusion = (
+            f"【核心结论】Discovery发现{discovery_title}进入复核，"
+            f"Hyperliquid显示{hl_title}受外部信号影响；{relation}，"
+            f"当前价值是分别提高两组ETF的复核优先级，不能把外部信号归因于Discovery对象，"
+            f"也不代表自动交易。"
+        )
+    elif discovery_changed:
+        core_conclusion = (
+            f"【核心结论】{primary}进入Discovery复核范围，{relation}；"
+            f"当前价值是提高下一次正式判断中的比较优先级，不代表自动交易。"
+        )
+    else:
+        core_conclusion = (
+            f"【核心结论】{primary}受外部信号影响，{relation}；"
+            f"当前价值是提高下一次正式判断中的复核优先级，不代表自动交易。"
+        )
+
     content = (
-        f"【核心结论】{primary}出现本地与外部信号变化，{relation}；"
-        f"当前价值是提高下一次正式判断中对该ETF的复核优先级，重点用于{impact}，不代表自动交易。\n\n"
+        f"{core_conclusion}\n\n"
         f"【Discovery依据】{discovery_text}\n\n"
         f"【Hyperliquid依据】{hl_text}\n\n"
         f"【下一步核对】核对相关ETF自身走势、成交承接与相对强弱；只有本地走势与外部信号同步，才能提高结论强度。\n\n"
