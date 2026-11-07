@@ -1,0 +1,47 @@
+name: ETF independent engine shadow pulse
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "5,35 0-23 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: etf-independent-engine-shadow
+  cancel-in-progress: false
+
+jobs:
+  shadow:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      ETF_SYSTEM_ROOT: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Run independent read-only engine shadow
+        run: python scripts/run_engine_shadow.py > engine-shadow-result.json
+      - name: Verify shadow boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          payload = json.loads(Path("engine-shadow-result.json").read_text(encoding="utf-8"))
+          assert payload["mode"] == "INDEPENDENT_ENGINE_SHADOW"
+          assert payload["read_only"] is True
+          assert payload["notification_emitted"] is False
+          assert payload["canonical_state_published"] is False
+          assert "discovery" in payload and "hyperliquid" in payload
+          print(json.dumps(payload, ensure_ascii=False))
+          PY
+      - name: Upload shadow result
+        uses: actions/upload-artifact@v4
+        with:
+          name: independent-engine-shadow-${{ github.run_id }}
+          path: engine-shadow-result.json
