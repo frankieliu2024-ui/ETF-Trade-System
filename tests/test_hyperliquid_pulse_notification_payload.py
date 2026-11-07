@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 
 sys.path.insert(0, "scripts")
-from run_guarded_notification import _pulse_event
+from run_guarded_notification import _pulse_event, _pulse_test_candidates
 
 
 class HyperliquidPulseNotificationPayloadTests(unittest.TestCase):
@@ -69,6 +69,20 @@ class HyperliquidPulseNotificationPayloadTests(unittest.TestCase):
         self.assertIn("科创50ETF（588000）", event["content"])
         self.assertNotIn("BTC", event["content"])
 
+    def test_synthetic_pulse_exercises_discovery_and_hyperliquid_together(self):
+        events = _pulse_test_candidates()
+        self.assertEqual({event["source"] for event in events}, {"discovery_pulse", "hyperliquid_pulse"})
+        hyperliquid = next(event for event in events if event["source"] == "hyperliquid_pulse")
+        self.assertIn("恒生科技ETF（513180）", hyperliquid["content"])
+        self.assertIn("创新药ETF（159992）", hyperliquid["content"])
+        self.assertIn("资金费率", hyperliquid["content"])
+        self.assertIn("未平仓量", hyperliquid["content"])
+        self.assertIn("溢价", hyperliquid["content"])
+        self.assertLess(len(hyperliquid["content"].encode("utf-8")), 8_000)
+        self.assertNotIn("xyz:BABA", hyperliquid["content"])
+        self.assertNotIn("xyz:XBI", hyperliquid["content"])
+
 
 if __name__ == "__main__":
     unittest.main()
+
