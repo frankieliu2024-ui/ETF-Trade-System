@@ -343,23 +343,38 @@ def _number(value: object) -> float | None:
 
 
 def _human_signal(asset: str, before: dict, after: dict) -> str:
-    """Render one decision-bearing HL change as a short Chinese sentence."""
+    """Translate HL field changes into direct decision-bearing language without metrics."""
     old = {str(k): v for k, v in (before or {}).items()}
     new = {str(k): v for k, v in (after or {}).items()}
     display = asset.split(":", 1)[-1]
     parts = []
-    labels = {
-        "funding": ("资金费率", "反映多空持仓成本；转正通常代表做多一方付费，转负通常代表做空一方付费"),
-        "open_interest": ("未平仓量", "反映尚未平仓的合约规模；上升意味着杠杆参与和潜在波动增加"),
-        "premium": ("溢价", "反映合约价格相对参考价格的偏离；扩大说明情绪或流动性偏离加大"),
-    }
-    for key, (label, meaning) in labels.items():
-        if old.get(key) == new.get(key) or (old.get(key) in (None, "") and new.get(key) in (None, "")):
-            continue
-        before_text = str(old.get(key) or "缺失")
-        after_text = str(new.get(key) or "缺失")
-        parts.append(f"{label}{before_text}→{after_text}（{meaning}）")
-    return f"{display}：" + "；".join(parts) if parts else ""
+
+    old_funding, new_funding = _number(old.get("funding")), _number(new.get("funding"))
+    if old_funding is not None and new_funding is not None and old_funding * new_funding < 0:
+        parts.append("多空拥挤方向发生反转")
+    elif old.get("funding") != new.get("funding") and new_funding is not None:
+        parts.append("多空拥挤程度发生变化")
+
+    old_oi, new_oi = _number(old.get("open_interest")), _number(new.get("open_interest"))
+    if old_oi is not None and new_oi is not None and abs(old_oi) > 0:
+        ratio = (new_oi - old_oi) / abs(old_oi)
+        if ratio >= 0.05:
+            parts.append("杠杆参与明显增加，潜在波动风险上升")
+        elif ratio <= -0.05:
+            parts.append("杠杆参与明显减少，潜在波动压力缓和")
+    elif old.get("open_interest") != new.get("open_interest"):
+        parts.append("杠杆参与程度发生变化")
+
+    old_premium, new_premium = _number(old.get("premium")), _number(new.get("premium"))
+    if old_premium is not None and new_premium is not None:
+        if abs(new_premium) > abs(old_premium) and abs(new_premium - old_premium) >= 0.001:
+            parts.append("合约偏离参考价格加大，市场情绪更容易出现过热或过冷")
+        elif abs(new_premium) < abs(old_premium) and abs(new_premium - old_premium) >= 0.001:
+            parts.append("合约偏离参考价格收窄，市场情绪趋于稳定")
+    elif old.get("premium") != new.get("premium"):
+        parts.append("合约相对参考价格的偏离发生变化")
+
+    return f"{display}：" + "；".join(dict.fromkeys(parts)) if parts else ""
 
 
 def _hyperliquid_mapping_metadata(asset: str, label: str) -> tuple[str, str]:
@@ -406,16 +421,8 @@ def _hyperliquid_signal_value(signal_row: str) -> str:
 
 
 def _hyperliquid_plain_signal_basis(signal_changes: list[str]) -> str:
-    """Summarize changed HL evidence without exposing machine fields or values."""
-    joined = "、".join(signal_changes)
-    parts = []
-    if "资金费率" in joined:
-        parts.append("多空持仓成本变化")
-    if "未平仓量" in joined:
-        parts.append("杠杆参与规模变化")
-    if "溢价" in joined:
-        parts.append("价格偏离与市场情绪变化")
-    return "、".join(dict.fromkeys(parts)) or "外部方向变化"
+    """Return a user-facing value statement, never a list of raw metric categories."""
+    return "外部资金与价格行为出现足以改变该ETF复核优先级的变化"
 
 def _hyperliquid_user_scope(
     before: dict,
@@ -649,8 +656,14 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
         discovery_text = "本次未发现新的Discovery状态变化，但相关ETF仍在当前评估范围内。"
     if hl_labels:
         basis = _hyperliquid_plain_signal_basis(signal_changes)
+        change_by_asset = {
+            row.split("：", 1)[0]: row
+            for row in human_changes
+            if "：" in row
+        }
         hl_text = "；".join(
-            f"{asset}对应{', '.join(labels)}，代表{_hyperliquid_asset_explanation(asset).split('（', 1)[-1].rstrip('）')}；{basis}"
+            f"{asset}对应{', '.join(labels)}，代表{_hyperliquid_asset_explanation(asset).split('（', 1)[-1].rstrip('）')}；"
+            f"{change_by_asset.get(asset) or basis}"
             for asset, labels in list(bindings.items())[:4]
             if labels
         ) or f"相关外部参照出现{basis}。"
