@@ -735,7 +735,7 @@ def main() -> None:
     except ModuleNotFoundError:
         from scripts.pulse_history import append_pulse_history
     hyperliquid = context.get("hyperliquid") if isinstance(context.get("hyperliquid"), dict) else {}
-    append_pulse_history(
+    pulse_result = append_pulse_history(
         ROOT,
         kind="HYPERLIQUID",
         payload={**hyperliquid, "market_date": datetime.now(BEIJING).date().isoformat()},
@@ -743,6 +743,15 @@ def main() -> None:
         identity=str(hyperliquid.get("context_id") or ""),
         occurred_at=hyperliquid.get("latest_observation_collected_at_utc") or context.get("generated_at_beijing") or "",
     )
+    if str(pulse_result.get("status") or "") != "UPDATED":
+        raise RuntimeError(f"Hyperliquid pulse history was not updated: {pulse_result}")
+    pulse_index = ROOT / "data" / "state" / "hyperliquid_pulse_index.json"
+    try:
+        persisted = json.loads(pulse_index.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise RuntimeError("Hyperliquid pulse history is not valid JSON after update") from exc
+    if not isinstance(persisted.get("latest"), dict) or not persisted["latest"].get("identity"):
+        raise RuntimeError("Hyperliquid pulse history has no latest identity after update")
     print(json.dumps({"ok": True, "generated_at_beijing": context["generated_at_beijing"], "quality_status": context["quality_status"], "objects": {k: v["quality_status"] for k, v in context["objects"].items()}}, ensure_ascii=False))
 
 
