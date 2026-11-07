@@ -694,6 +694,7 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
             "bindings": bindings,
             "discovery_identity": discovery_after.get("identity"),
             "hyperliquid_identity": hyper_after.get("identity"),
+            "evidence_time_beijing": evidence_time,
         },
         "delivery_mode": "COMPACT",
     }
