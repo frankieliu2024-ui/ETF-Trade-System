@@ -32,15 +32,18 @@ def _expand_cron_field(field: str, minimum: int, maximum: int) -> list[int]:
     return sorted(value for value in values if minimum <= value <= maximum)
 
 
-def resolve_scheduled_pulse(scheduled_cron: str, now: datetime, cadence_seconds: int = 600) -> dict:
+def resolve_scheduled_pulse(
+    scheduled_cron: str,
+    now: datetime,
+    cadence_seconds: int = 600,
+    occurrence_id: str = "",
+) -> dict:
     """Classify a scheduled delivery without inventing its occurrence identity.
 
-    GitHub's schedule event exposes the cron expression but not a unique
-    occurrence id or the intended scheduled timestamp. The latest calculable
-    slot is diagnostic candidate evidence only, never a natural-pulse identity.
-    Current facts may still refresh through the existing producer, but the event
-    cannot claim natural-pulse fulfillment unless a future formal occurrence
-    proof is added by an existing canonical owner.
+    GitHub's schedule event exposes the cron expression but not the intended
+    scheduled timestamp. The workflow run id, when supplied by the canonical
+    workflow owner, is the unique occurrence identity for that run; the latest
+    calculable slot remains bounded timing evidence only.
     """
     schedule = str(scheduled_cron or "").strip()
     result = {
@@ -58,6 +61,7 @@ def resolve_scheduled_pulse(scheduled_cron: str, now: datetime, cadence_seconds:
         "refresh_eligible": True if not schedule else False,
         "eligible": True if not schedule else False,
     }
+    occurrence = str(occurrence_id or "").strip()
     if not schedule:
         return result
     try:
@@ -85,15 +89,31 @@ def resolve_scheduled_pulse(scheduled_cron: str, now: datetime, cadence_seconds:
         delay = max(0, int((utc_now - slot).total_seconds()))
         slot_local = slot.astimezone(BEIJING)
         candidate_class = "SEVERELY_DELAYED" if delay >= int(cadence_seconds) else "BOUNDED_DELAY"
+        if occurrence:
+            result.update(
+                {
+                    "natural_pulse_identity": f"schedule:{occurrence}:{slot_local.isoformat(timespec='seconds')}",
+                    "natural_pulse_identity_status": "VERIFIED",
+                    "occurrence_identity_source": "github.workflow_run_id",
+                    "natural_pulse_eligible": True,
+                }
+            )
+        else:
+            result.update(
+                {
+                    "natural_pulse_identity_status": "AMBIGUOUS",
+                    "occurrence_identity_source": "github.schedule_without_occurrence_id",
+                }
+            )
         result.update(
             {
                 "latest_candidate_slot_at": slot_local.isoformat(timespec="seconds"),
                 "candidate_delay_seconds": delay,
                 "candidate_delay_class": candidate_class,
                 "schedule_delay_class": "AMBIGUOUS",
-                "natural_pulse_identity_status": "AMBIGUOUS",
-                "occurrence_identity_source": "github.schedule_without_occurrence_id",
-                "natural_pulse_eligible": False,
+                "natural_pulse_identity_status": result["natural_pulse_identity_status"],
+                "occurrence_identity_source": result["occurrence_identity_source"],
+                "natural_pulse_eligible": result["natural_pulse_eligible"],
                 "refresh_eligible": True,
                 "eligible": True,
             }
