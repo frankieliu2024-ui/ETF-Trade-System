@@ -34,7 +34,12 @@ def main() -> int:
     us_context = load(ROOT / "data" / "state" / "us_extended_hours_context.json")
     now_bj = started.astimezone(BEIJING)
     policy = load(ROOT / "config" / "runtime_policy.json")
-    pulse = resolve_scheduled_pulse(os.environ.get("SCHEDULED_CRON", ""), now_bj, cadence_seconds=int(policy.get("target_cadence_seconds", 600)))
+    pulse = resolve_scheduled_pulse(
+        os.environ.get("SCHEDULED_CRON", ""),
+        now_bj,
+        cadence_seconds=int(policy.get("target_cadence_seconds", 600)),
+        occurrence_id=os.environ.get("GITHUB_RUN_ID", ""),
+    )
     schedule_blocked = os.environ.get("GITHUB_EVENT_NAME") == "schedule" and not pulse["refresh_eligible"]
     objects = context.get("objects") or {}
     hard_errors = []
