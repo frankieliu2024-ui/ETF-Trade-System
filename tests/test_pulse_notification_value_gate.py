@@ -58,3 +58,20 @@ def test_final_pulse_user_content_gate_rejects_machine_fields():
         },
     }
     assert "machine signal fields" in notification_evidence_error(event)
+
+
+def test_final_pulse_user_content_gate_accepts_comparison_priority_value():
+    import sys
+    sys.path.insert(0, "scripts")
+    from notification_materiality_guard import notification_evidence_error
+    event = {
+        "event_type": "PULSE_FACT_UPDATE",
+        "source": "discovery_pulse",
+        "content": "【核心结论】新增候选；当前只提升下一次正式判断的比较优先级。\\n\\n【发生了什么】候选池新增，趋势证据达到入选条件。\\n\\n【下一步核对】核对趋势和成交承接。",
+        "confirmation_context": {
+            "evidence_time_beijing": "2026-11-07T18:00:00+08:00",
+            "before_fact": "before",
+            "after_fact": "after",
+        },
+    }
+    assert notification_evidence_error(event) == ""

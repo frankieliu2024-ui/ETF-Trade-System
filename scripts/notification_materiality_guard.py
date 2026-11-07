@@ -237,7 +237,7 @@ def _pulse_user_content_error(event: dict) -> str:
     missing = [heading for heading in required if heading not in content]
     if missing:
         return "pulse user content missing:" + ",".join(missing)
-    if not any(term in content for term in ("影响", "当前价值", "复核优先级", "判断重点")):
+    if not any(term in content for term in ("影响", "当前价值", "复核优先级", "比较优先级", "判断重点")):
         return "pulse user content has no decision value statement"
     return ""
 
