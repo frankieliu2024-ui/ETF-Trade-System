@@ -41,6 +41,8 @@ class HyperliquidPulseNotificationPayloadTests(unittest.TestCase):
         self.assertIn("恒生科技ETF（513180）", event["content"])
         self.assertIn("资金费率0.1→0.2", event["content"])
         self.assertIn("B → 港股通创新药ETF工银（159217）", event["content"])
+        self.assertIn("对该ETF的当前影响", event["content"])
+        self.assertIn("时机与风险过滤", event["content"])
         self.assertNotIn("C →", event["content"])
         self.assertIn("多空持仓成本", event["content"])
         self.assertNotIn("BTC", event["content"])
