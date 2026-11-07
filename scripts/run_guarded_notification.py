@@ -312,21 +312,36 @@ def _human_signal(asset: str, before: dict, after: dict) -> str:
     return f"{display}：" + "；".join(parts) if parts else ""
 
 
-def _hyperliquid_user_scope(before: dict, after: dict, changed_assets: set[str], relevant_objects: dict[str, list[str]]) -> tuple[list[str], list[str], list[str]]:
-    """Return only user-relevant ETF labels and explained signal rows."""
-    old_by_asset = {str(x.get("asset") or "").strip(): x for x in (before.get("observations") or []) if isinstance(x, dict)}
-    new_by_asset = {str(x.get("asset") or "").strip(): x for x in (after.get("observations") or []) if isinstance(x, dict)}
+def _hyperliquid_user_scope(
+    before: dict,
+    after: dict,
+    changed_assets: set[str],
+    relevant_objects: dict[str, list[str]],
+) -> tuple[list[str], list[str], list[str], list[str]]:
+    """Build a user scope while preserving external-asset-to-ETF bindings."""
+    old_by_asset = {
+        str(x.get("asset") or "").strip(): x
+        for x in (before.get("observations") or [])
+        if isinstance(x, dict)
+    }
+    new_by_asset = {
+        str(x.get("asset") or "").strip(): x
+        for x in (after.get("observations") or [])
+        if isinstance(x, dict)
+    }
     labels = []
     rows = []
+    bindings = []
     for asset in sorted(changed_assets):
-        # Keep the notification focused: each external asset contributes at
-        # most two directly related ETF objects, rather than the whole mapped
-        # universe.  Deduplication is by ETF code, not by display name, since
-        # a holding and a discovery row can describe the same ETF differently.
-        labels.extend((relevant_objects.get(asset) or [])[:2])
+        mapped = (relevant_objects.get(asset) or [])[:2]
+        labels.extend(mapped)
         row = _human_signal(asset, old_by_asset.get(asset, {}), new_by_asset.get(asset, {}))
-        if row:
-            rows.append(row)
+        if not row:
+            continue
+        rows.append(row)
+        display_asset = asset.split(":", 1)[-1]
+        if mapped:
+            bindings.append(f"{display_asset} → " + "、".join(mapped) + f"：{row.split('：', 1)[-1]}")
     deduped = []
     seen_codes = set()
     for label in labels:
@@ -335,9 +350,7 @@ def _hyperliquid_user_scope(before: dict, after: dict, changed_assets: set[str],
             continue
         seen_codes.add(code)
         deduped.append(label)
-    labels = deduped[:4]
-    rows = rows[:6]
-    return labels, rows, sorted(changed_assets)
+    return deduped[:4], rows[:6], sorted(changed_assets), bindings[:6]
 
 
 def _pulse_object_impact(source: str, related_text: str, added: list[str], removed: list[str]) -> str:
@@ -468,7 +481,7 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
         if not changed_assets:
             return None
         signal_changes = [item for item in signal_changes if item.split("：", 1)[0] in changed_assets]
-        related_labels, human_signal_changes, _ = _hyperliquid_user_scope(
+        related_labels, human_signal_changes, _, object_bindings = _hyperliquid_user_scope(
             before, after, changed_assets, relevant_objects
         )
         # The notification is an ETF decision aid, not a venue catalogue.
@@ -519,12 +532,11 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
         title = f"【市场异动】新候选：{headline}"
     else:
         related_text = "、".join(related_labels[:3]) or "相关ETF"
-        signal_text = "；".join(human_signal_changes[:3]) or "相关决策信号发生变化"
-        external_text = "、".join(_hyperliquid_asset_explanation(asset) for asset in sorted(changed_assets)[:3])
+        binding_text = "\n".join(object_bindings[:6]) or "当前外部资产与具体ETF的对象级映射尚未完整确认。"
         content = (
-            f"【核心结论】{related_text}的外部风险信号发生变化。\n\n"
-            f"【发生了什么】{external_text}；{signal_text}。\n\n"
-            "【对当前判断的作用】这是时机与风险过滤信号，不直接改变持仓或授予新增权限；下一次正式判断先核对相关ETF自身走势、成交承接和相对强弱。\n\n"
+            f"【核心结论】{related_text}对应的外部风险信号发生变化，需逐对象复核其对ETF方向、时机和风险收益的影响。\n\n"
+            f"【发生了什么】\n{binding_text}\n\n"
+            "【对当前判断的作用】上述关系只表示外部证据与具体ETF的待核对映射；下一次正式判断必须逐只核对ETF自身走势、成交承接、相对强弱及与外部信号的同步或背离，再归类为支持、反向、时机过滤或风险提示。\n\n"
             "【当前边界】外部资产不是A股ETF，不能直接等同或据此买卖；不自动交易。"
         )
         title = f"【市场异动】{related_text}外部风险信号变化"
