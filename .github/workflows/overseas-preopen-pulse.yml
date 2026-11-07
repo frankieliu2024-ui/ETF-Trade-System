@@ -54,7 +54,12 @@ jobs:
           import os
           from datetime import datetime, timezone
           from scripts.scheduled_pulse_slot import resolve_scheduled_pulse
-          pulse = resolve_scheduled_pulse(os.environ.get("SCHEDULED_CRON", ""), datetime.now(timezone.utc), cadence_seconds=600)
+          pulse = resolve_scheduled_pulse(
+              os.environ.get("SCHEDULED_CRON", ""),
+              datetime.now(timezone.utc),
+              cadence_seconds=600,
+              occurrence_id=os.environ.get("GITHUB_RUN_ID", ""),
+          )
           eligible = os.environ.get("GITHUB_EVENT_NAME") != "schedule" or pulse["eligible"]
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as handle:
               handle.write(f"eligible={'true' if eligible else 'false'}\n")
