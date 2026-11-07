@@ -243,7 +243,10 @@ def _pulse_user_content_error(event: dict) -> str:
         return "pulse user content missing:" + ",".join(missing)
     if not any(term in content for term in ("候选依据", "影响依据", "Discovery依据", "Hyperliquid依据", "影响", "外部信号")):
         return "pulse user content has no evidence basis statement"
-    if not any(term in content for term in ("影响", "当前价值", "复核优先级", "比较优先级", "判断重点")):
+    # The user-visible contract now states value directly (for example,
+    # which ETF direction or entry timing the evidence helps judge).  Do not
+    # require the retired internal wording about review priority.
+    if not any(term in content for term in ("用于判断", "主要用于", "影响", "下一步核对")):
         return "pulse user content has no decision value statement"
     return ""
 
@@ -294,3 +297,4 @@ def notification_evidence_error(event: dict | None) -> str:
     if source in {"self_healing_status", "workflow_failure_diagnostic"} or event_type in {"系统异常", "SYSTEM_RUNTIME_BLOCKER"}:
         return _system_error(event)
     return ""
+
