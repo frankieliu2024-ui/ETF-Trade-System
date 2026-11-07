@@ -348,6 +348,48 @@ def _pulse_object_impact(source: str, related_text: str, added: list[str], remov
     return f"对ETF系统的具体价值是：为{objects}提供A股交易时段之外的方向、时机或拥挤风险线索；下一次正式判断要先核对这些ETF自身是否同步，再决定维持观察、继续持有或调整机会排序，不把外部资产直接当成A股ETF。"
 
 
+
+def _discovery_reason(item: dict) -> str:
+    """Return only evidence carried by the Discovery candidate itself."""
+    states = [str(x.get("state") or "") for x in (item.get("surfaced_states") or []) if isinstance(x, dict)]
+    evidence = []
+    for state in (item.get("surfaced_states") or []):
+        if not isinstance(state, dict):
+            continue
+        detail = state.get("evidence") or {}
+        if not isinstance(detail, dict):
+            continue
+        direction = str(detail.get("direction") or "").strip()
+        returns = []
+        for key in ("return_5", "return_10", "return_20", "return_40", "return_60"):
+            value = detail.get(key)
+            if value is not None:
+                try:
+                    returns.append(f"{key.replace('return_', '')}日{float(value) * 100:+.1f}%")
+                except (TypeError, ValueError):
+                    pass
+        if direction or returns:
+            evidence.append("、".join(([direction] if direction else []) + returns))
+    spot = item.get("discovery_spot") or {}
+    if isinstance(spot, dict):
+        try:
+            change = float(spot.get("change_pct"))
+            evidence.append(f"节点涨跌{change:+.2f}%")
+        except (TypeError, ValueError):
+            pass
+        try:
+            turnover = float(spot.get("turnover_pct"))
+            if turnover > 0:
+                evidence.append(f"换手率{turnover:.1f}%")
+        except (TypeError, ValueError):
+            pass
+    parts = list(dict.fromkeys(x for x in evidence if x))
+    if parts:
+        return "；".join(parts[:2])
+    if states:
+        return "出现" + "、".join(dict.fromkeys(states)) + "信号"
+    return "本次进入候选池；入选的具体强弱依据尚未完整确认"
+
 def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | None:
     # A first Hyperliquid snapshot establishes the comparison baseline. With
     # no prior observations, every asset would otherwise look "new" and the
@@ -450,46 +492,36 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
         if not change_lines:
             change_lines.append("对象集合未变，但相关信号发生变化。")
     if source == "discovery_pulse":
-        core = "全市场候选出现新增或变化，值得提前纳入下一次正式判断。"
-        value = _pulse_object_impact(source, "、".join((added + removed)[:6]), added, removed)
-        action = "下一次正式判断重点核对候选自身强弱、持续性、外部方向和与现金/持仓的竞争关系。"
-    else:
-        core = "跨市场外部资产出现可比变化，可能影响相关A股ETF的方向判断和时机判断。"
-        external_explanations = [
-            _hyperliquid_asset_explanation(asset)
-            for asset in sorted(changed_assets)
+        before_ids = {_pulse_candidate_identity(x) for x in (before.get("candidates") or []) if isinstance(x, dict)}
+        added_items = [
+            item for item in (after.get("candidates") or [])
+            if isinstance(item, dict) and _pulse_candidate_identity(item) not in before_ids
         ]
-        external_text = "；".join(external_explanations)
-        if external_text:
-            core += f" 本次外部参照为：{external_text}。"
-        related_text = "、".join(related_labels[:4])
-        if related_text:
-            core += f" 对应当前ETF对象：{related_text}。"
-        signal_explanation = _pulse_signal_explanation(signal_changes)
-        value = _pulse_object_impact(source, related_text, added, removed)
-        if signal_explanation:
-            value += "具体来说，" + signal_explanation + "。"
-        action = "下一次正式判断重点核对相关A股ETF自身反馈，并判断外部信号是同步确认、暂时背离还是仅供风险过滤。上述外部资产不是A股ETF，不能与A股对象直接等同。"
-    content = (
-        f"【核心结论】{core}\n\n"
-        f"【证据变化】\n"
-        f"证据时间：{evidence_time}\n"
-        f"前一时点：{_pulse_fact_display(before_fact)}\n"
-        f"当前时点：{_pulse_fact_display(after_fact)}\n"
-        + "\n".join(change_lines)
-        + "\n\n"
-        f"【为什么值得注意】{value}\n\n"
-        f"【下一步核对】{action}\n\n"
-        f"【当前边界】这是一条提前提示，不是正式决策，不授予Trial、Confirm、买入、卖出或调仓权限，也不代表已经发生实际成交。"
-    )
-    if source == "discovery_pulse":
-        title = f"【市场异动】新候选出现：{added[0]}" if added else "【市场异动】候选池发生变化"
-    else:
-        headline_objects = list(dict.fromkeys(related_labels))
-        title = (
-            f"【市场异动】相关ETF外部风险信号变化：{'、'.join(headline_objects[:2])}"
-            if headline_objects else "【市场异动】外部信号发生变化"
+        reasons = []
+        for item in added_items[:2]:
+            name = str(item.get("name") or item.get("display_name") or _pulse_candidate_identity(item))
+            reasons.append(f"{name}：{_discovery_reason(item)}")
+        reason_text = "；".join(reasons) if reasons else "候选集合发生变化，但具体入选理由尚未完整确认"
+        headline = "、".join((added + removed)[:3]) or "候选池"
+        content = (
+            f"【核心结论】新增候选：{headline}。\n\n"
+            f"【入选依据】{reason_text}。\n\n"
+            "【对当前判断的作用】它进入下一次正式判断的比较范围，需要与现金、现有持仓和其他观察对象比较；这不是买入信号。\n\n"
+            "【下一步核对】核对趋势是否持续、成交是否有承接，以及风险收益是否真正优于现金和现有持仓。\n\n"
+            "【当前边界】不授予Trial、Confirm、买入、卖出或调仓权限，不代表已经发生实际成交。"
         )
+        title = f"【市场异动】新候选：{headline}"
+    else:
+        related_text = "、".join(related_labels[:3]) or "相关ETF"
+        signal_text = "；".join(human_signal_changes[:3]) or "相关决策信号发生变化"
+        external_text = "、".join(_hyperliquid_asset_explanation(asset) for asset in sorted(changed_assets)[:3])
+        content = (
+            f"【核心结论】{related_text}的外部风险信号发生变化。\n\n"
+            f"【发生了什么】{external_text}；{signal_text}。\n\n"
+            "【对当前判断的作用】这是时机与风险过滤信号，不直接改变持仓或授予新增权限；下一次正式判断先核对相关ETF自身走势、成交承接和相对强弱。\n\n"
+            "【当前边界】外部资产不是A股ETF，不能直接等同或据此买卖；不自动交易。"
+        )
+        title = f"【市场异动】{related_text}外部风险信号变化"
     return {
         "key": f"pulse:{source}:{after.get('identity')}",
         "event_type": "PULSE_FACT_UPDATE",
