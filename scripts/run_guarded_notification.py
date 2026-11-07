@@ -664,7 +664,7 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
 
     content = (
         f"【核心结论】{primary}出现本地与外部信号变化，{relation}；"
-        f"它改变的是{impact}，不代表自动交易。\n\n"
+        f"当前价值是提高下一次正式判断中对该ETF的复核优先级，重点用于{impact}，不代表自动交易。\n\n"
         f"【Discovery依据】{discovery_text}\n\n"
         f"【Hyperliquid依据】{hl_text}\n\n"
         f"【下一步核对】核对相关ETF自身走势、成交承接与相对强弱；只有本地走势与外部信号同步，才能提高结论强度。\n\n"
