@@ -1668,105 +1668,16 @@ def _request_received_at_beijing(request: dict) -> str:
 
 
 def _write_formal_layer_projections(root: Path, current: dict, discovery: dict) -> None:
-    """Persist small, node-bound read contracts for downstream ChatGPT consumers.
+    """Consume the producer-owned Discovery projection without rewriting it.
 
-    query_context remains the full canonical context.  These projections prevent
-    connector truncation/partial reads from being interpreted as missing
-    Discovery, and make the pre-decision Opportunity state explicit without
-    inventing an opportunity or promoting a Discovery candidate.
+    Discovery publication and pulse-history append are owned exclusively by
+    build_weekly_discovery.py. Query-context construction is downstream
+    read/consume work; it must not publish a second projection or turn a
+    missing producer result into an empty candidate set.
     """
-    market_date = str(current.get("market_date") or "")
-    node = str(current.get("latest_valid_node") or "")
-    snapshot = str((current.get("latest_snapshot") or ""))
-    generated = datetime.now(SHANGHAI).isoformat(timespec="seconds")
-    candidates = []
-    for item in discovery.get("candidates") or []:
-        if not isinstance(item, dict):
-            continue
-        # Keep the decision-relevant identity, eligibility, provenance and
-        # attached quote fields; omit provider dumps and raw history payloads.
-        keep = {
-            "code", "name", "category", "eligibility", "formal_status",
-            "discovery_spot", "historical_context", "quotes", "quote",
-            "decision_boundary", "source", "provenance", "data_quality",
-            "market_date", "required_history_end_date", "identity_status",
-            "information_classes", "external_driver_evidence",
-        }
-        candidates.append({k: item[k] for k in keep if k in item})
-    status = str(discovery.get("status") or "NOT_REQUESTED").upper()
-    projection = {
-        "schema_version": "1.0",
-        "layer": "DISCOVERY",
-        "producer": "build_query_context.py",
-        "read_only": True,
-        "market_date": market_date,
-        "latest_valid_node": node,
-        "latest_snapshot": snapshot,
-        "generated_at_beijing": generated,
-        "status": status,
-        "coverage_status": discovery.get("coverage_status"),
-        "empty_reason": discovery.get("empty_reason", ""),
-        "candidate_count": len(candidates),
-        "candidates": candidates,
-        "universe_identity": discovery.get("universe_identity"),
-        "discovery_delta_identity": discovery.get("discovery_delta_identity"),
-        "source": discovery.get("source"),
-        "pit_boundary": discovery.get("required_history_end_date") or market_date,
-        "freshness_rule": "same-node fixed-slot evidence; absence is not zero",
-    }
-    atomic_json_write(root / "data/state/formal_discovery_current.json", projection)
-    try:
-        from pulse_history import append_pulse_history
-    except ModuleNotFoundError:
-        from scripts.pulse_history import append_pulse_history
-    append_pulse_history(
-        root,
-        kind="DISCOVERY",
-        payload=projection,
-        path="data/state/formal_discovery_current.json",
-        identity="DISCOVERY:" + str(market_date) + ":" + str(node) + ":" + str(snapshot) + ":" + str(generated),
-    )
-    opportunity = {
-        "schema_version": "1.0",
-        "layer": "OPPORTUNITY",
-        "producer": "build_query_context.py",
-        "read_only": True,
-        "market_date": market_date,
-        "latest_valid_node": node,
-        "latest_snapshot": snapshot,
-        "generated_at_beijing": generated,
-        "status": "PENDING_MASTER_DECISION",
-        "opportunity_count": None,
-        "opportunities": [],
-        "decision_owner": "MASTER_FORMAL_DECISION",
-        "not_zero_rule": "pending decision is not an opportunity count of zero",
-        "source_discovery_status": status,
-        # Bind the downstream projection to the Discovery projection written
-        # in this invocation, not to a stale generation timestamp carried by
-        # a reused Discovery object.
-        "source_discovery_generated_at_beijing": projection.get("generated_at_beijing", ""),
-        "source_discovery_latest_snapshot": discovery.get("latest_snapshot", snapshot),
-        "source_discovery_universe_identity": discovery.get("universe_identity"),
-        "source_discovery_delta_identity": discovery.get("discovery_delta_identity"),
-    }
-    atomic_json_write(root / "data/state/formal_opportunity_current.json", opportunity)
+    return
 
-    # review_context is a derived consumer of the same node-local projections.
-    # Keep its embedded copies synchronized when a later Discovery pulse
-    # refreshes the projections; never leave an older Opportunity snapshot
-    # silently attached to a newer Discovery result.
-    review_path = root / "data/state/review_context.json"
-    review = read_json(review_path, {})
-    if isinstance(review, dict) and str(review.get("market_date") or "") == market_date:
-        review["formal_discovery"] = projection
-        review["formal_opportunity"] = opportunity
-        review["formal_layer_projection_sync"] = {
-            "status": "ALIGNED",
-            "discovery_generated_at_beijing": projection.get("generated_at_beijing", ""),
-            "opportunity_source_discovery_generated_at_beijing": opportunity.get("source_discovery_generated_at_beijing", ""),
-            "synchronized_at_beijing": datetime.now(SHANGHAI).isoformat(timespec="seconds"),
-        }
-        atomic_json_write(review_path, review)
+
 def _minimum_legal_inputs_ready_at(root: Path, request: dict, current: dict, account: dict, market_quote: dict, observed_at: str) -> str:
     """Return the earliest repository-observed time when action-determinative inputs are present.
 
