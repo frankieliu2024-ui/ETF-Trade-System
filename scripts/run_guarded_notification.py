@@ -341,7 +341,12 @@ def _hyperliquid_user_scope(
         rows.append(row)
         display_asset = asset.split(":", 1)[-1]
         if mapped:
-            bindings.append(f"{display_asset} → " + "、".join(mapped) + f"：{row.split('：', 1)[-1]}")
+            bindings.append(
+                f"{display_asset} → " + "、".join(mapped)
+                + f"：{row.split('：', 1)[-1]}"
+                + "；对该ETF的当前影响：尚未完成与A股自身走势、成交承接和相对强弱的同步核验，"
+                "目前只能作为该ETF下一节点的时机与风险过滤，不足以单独判定支持、反向或交易动作。"
+            )
     deduped = []
     seen_codes = set()
     for label in labels:
