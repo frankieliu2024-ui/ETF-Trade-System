@@ -69,6 +69,12 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
                 "asset": str((item.get("asset") or {}).get("name") or ""),
                 "family": next((str(mapping.get("family") or "") for mapping in (payload.get("mapping") or []) if str(mapping.get("asset") or "") == str((item.get("asset") or {}).get("name") or "")), ""),
                 "quality_status": str(item.get("quality_status") or ""),
+                "funding": str((item.get("context") or {}).get("funding") or ""),
+                "open_interest": str((item.get("context") or {}).get("openInterest") or ""),
+                "premium": str((item.get("context") or {}).get("premium") or ""),
+                "mark_px": str((item.get("context") or {}).get("markPx") or ""),
+                "mid_px": str((item.get("context") or {}).get("midPx") or ""),
+                "prev_day_px": str((item.get("context") or {}).get("prevDayPx") or ""),
             }
             for item in (payload.get("observations") or [])
             if isinstance(item, dict)
