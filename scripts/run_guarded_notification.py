@@ -361,8 +361,14 @@ def _discovery_reason(item: dict) -> str:
             continue
         direction = str(detail.get("direction") or "").strip()
         returns = []
+        # Accept both canonical return_5/return_20 fields and the
+        # window_returns shape used by Discovery snapshots and fixtures.
+        window_returns = detail.get("window_returns") or {}
         for key in ("return_5", "return_10", "return_20", "return_40", "return_60"):
             value = detail.get(key)
+            if value is None:
+                window = key.replace("return_", "")
+                value = window_returns.get(window)
             if value is not None:
                 try:
                     returns.append(f"{key.replace('return_', '')}日{float(value) * 100:+.1f}%")
