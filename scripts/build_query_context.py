@@ -1668,6 +1668,17 @@ def _request_received_at_beijing(request: dict) -> str:
 
 
 def _write_formal_layer_projections(root: Path, current: dict, discovery: dict) -> None:
+    """Consume the producer-owned Discovery projection without rewriting it.
+
+    Discovery publication and pulse-history append are owned exclusively by
+    build_weekly_discovery.py. Query-context construction is downstream
+    read/consume work; it must not publish a second projection or turn a
+    missing producer result into an empty candidate set.
+    """
+    return
+
+
+def _legacy_write_formal_layer_projections(root: Path, current: dict, discovery: dict) -> None:
     """Persist small, node-bound read contracts for downstream ChatGPT consumers.
 
     query_context remains the full canonical context.  These projections prevent
