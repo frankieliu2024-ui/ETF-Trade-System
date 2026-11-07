@@ -63,11 +63,10 @@ class FormalDiscoverySelectionTests(unittest.TestCase):
             with self.subTest(bad=bad):
                 self.assertIsNone(select_latest_qualified_formal_discovery(bad, **self.kwargs))
 
-    def test_producer_to_consumer_current_projection(self):
+    def test_query_consumer_never_rewrites_producer_projection(self):
         import json
         import tempfile
         from pathlib import Path
-        from datetime import datetime, timedelta
         from scripts.build_query_context import _write_formal_layer_projections
 
         with tempfile.TemporaryDirectory() as folder:
@@ -77,23 +76,29 @@ class FormalDiscoverySelectionTests(unittest.TestCase):
                 "latest_valid_node": "live",
                 "latest_snapshot": self.projection["latest_snapshot"],
             }
-            _write_formal_layer_projections(root, current, {
+            producer_projection = {
+                "schema_version": "1.0",
+                "layer": "DISCOVERY",
+                "producer": "build_weekly_discovery.py",
+                "market_date": current["market_date"],
+                "latest_valid_node": current["latest_valid_node"],
+                "latest_snapshot": current["latest_snapshot"],
                 "status": "READY",
                 "coverage_status": "COMPLETE",
+                "generated_at_beijing": "2026-11-04T13:30:33+08:00",
                 "candidates": self.projection["candidates"],
+            }
+            target = root / "data/state/formal_discovery_current.json"
+            target.parent.mkdir(parents=True)
+            target.write_text(json.dumps(producer_projection), encoding="utf-8")
+            before = target.read_text(encoding="utf-8")
+            _write_formal_layer_projections(root, current, {
+                "status": "NOT_REQUESTED", "candidates": []
             })
-            actual = json.loads((root / "data/state/formal_discovery_current.json").read_text())
-            cutoff = (datetime.fromisoformat(actual["generated_at_beijing"]) +
-                      timedelta(seconds=1)).isoformat()
-            selected = select_latest_qualified_formal_discovery(
-                actual, requested_at_beijing=cutoff, market_date="2026-11-04"
-            )
-            self.assertEqual(selected["candidate_count"], 8)
-            self.assertEqual(selected["latest_snapshot"], current["latest_snapshot"])
-            self.assertIsNone(select_latest_qualified_formal_discovery(
-                dict(actual, market_date="2026-10-30"),
-                requested_at_beijing=cutoff, market_date="2026-11-04",
-            ))
+            actual = json.loads(target.read_text(encoding="utf-8"))
+            self.assertEqual(target.read_text(encoding="utf-8"), before)
+            self.assertEqual(actual["producer"], "build_weekly_discovery.py")
+            self.assertEqual(len(actual["candidates"]), 8)
 
     def test_fault_injection_rejects_time_and_identity_corruption(self):
         """Offline fault matrix: no fallback, no mutation, no duplicate output."""
