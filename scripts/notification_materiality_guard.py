@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from pathlib import Path
 from typing import Any
 
@@ -221,6 +222,26 @@ def _system_error(event: dict) -> str:
     return ""
 
 
+def _pulse_user_content_error(event: dict) -> str:
+    """Fail closed if a pulse body leaks machine evidence or lacks value."""
+    content = str(event.get("content") or "")
+    if not content.strip():
+        return "pulse user content is empty"
+    forbidden = ("资金费率", "未平仓量", "溢价", "funding", "openInterest", "premium", "markPx")
+    leaked = [term for term in forbidden if term in content]
+    if leaked:
+        return "pulse user content leaks machine signal fields:" + ",".join(leaked)
+    if re.search(r"[-+]?\d+(?:\.\d+)?%?\s*[→\-]\s*[-+]?\d+(?:\.\d+)?%?", content):
+        return "pulse user content leaks raw before/after numeric changes"
+    required = ("【核心结论】", "【发生了什么】", "【下一步核对】")
+    missing = [heading for heading in required if heading not in content]
+    if missing:
+        return "pulse user content missing:" + ",".join(missing)
+    if not any(term in content for term in ("影响", "当前价值", "复核优先级", "判断重点")):
+        return "pulse user content has no decision value statement"
+    return ""
+
+
 def notification_evidence_error(event: dict | None) -> str:
     """Return a rejection reason when a user-visible change lacks comparable facts.
 
@@ -259,9 +280,9 @@ def notification_evidence_error(event: dict | None) -> str:
             return "pulse fact notification has no auditable evidence timestamp"
         if not str(ctx.get("before_fact") or "") or not str(ctx.get("after_fact") or ""):
             return "pulse fact notification lacks comparable before/after facts"
-        if source not in {"discovery_pulse", "hyperliquid_pulse"}:
+        if source not in {"discovery_pulse", "hyperliquid_pulse", "dual_engine_pulse"}:
             return "pulse fact notification has unrecognized source"
-        return ""
+        return _pulse_user_content_error(event)
     if source == "decision_trigger" or event_type == "交易判断":
         return _decision_trigger_error(event)
     if source in {"self_healing_status", "workflow_failure_diagnostic"} or event_type in {"系统异常", "SYSTEM_RUNTIME_BLOCKER"}:
