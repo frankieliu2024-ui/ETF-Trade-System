@@ -3,10 +3,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_notification_center_does_not_produce_legacy_pulse_events():
+def test_legacy_pulse_builders_are_deleted_and_guarded_path_is_canonical():
     text = (ROOT / "scripts/notification_center.py").read_text(encoding="utf-8")
-    builder_area = text.split("def choose_event", 1)[1].split("LIFECYCLE_STATUSES", 1)[0]
-    assert "pulse_formal_decision_pending_event" not in builder_area
+    assert "def _discovery_pulse_event" not in text
+    assert "def _hyperliquid_pulse_event" not in text
+    assert "def pulse_formal_decision_pending_event" not in text
+    guarded = (ROOT / "scripts/run_guarded_notification.py").read_text(encoding="utf-8")
+    assert "def _pulse_candidates" in guarded
+    assert "def _pulse_event" in guarded
 
 
 def test_us_scheduled_pulse_binds_workflow_run_identity():
