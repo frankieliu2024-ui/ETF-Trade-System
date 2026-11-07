@@ -274,20 +274,36 @@ def _pulse_candidate_identity(item: dict) -> str:
     ).strip()
 
 
-def _discovery_candidates_changed(before: dict, after: dict) -> bool:
-    """Ignore pulse metadata changes when the evaluated candidate set is unchanged."""
-    before_ids = {
-        _pulse_candidate_identity(item)
-        for item in (before.get("candidates") or [])
-        if isinstance(item, dict) and _pulse_candidate_identity(item)
-    }
-    after_ids = {
-        _pulse_candidate_identity(item)
-        for item in (after.get("candidates") or [])
-        if isinstance(item, dict) and _pulse_candidate_identity(item)
-    }
-    return before_ids != after_ids
+def _discovery_candidate_fingerprint(item: dict) -> tuple:
+    """Compare business state, not only candidate membership."""
+    states = tuple(sorted(
+        str(x.get("state") or "").strip().upper()
+        for x in (item.get("surfaced_states") or [])
+        if isinstance(x, dict)
+    ))
+    spot = item.get("discovery_spot") or {}
+    spot_classes = tuple(sorted(
+        key for key in ("change_pct", "turnover_pct")
+        if isinstance(spot, dict) and spot.get(key) not in (None, "")
+    ))
+    return (
+        _pulse_candidate_identity(item),
+        str(item.get("object_role") or item.get("role") or "").strip().upper(),
+        str(item.get("state") or item.get("status") or item.get("lifecycle") or "").strip().upper(),
+        states,
+        spot_classes,
+    )
 
+
+def _discovery_candidates_changed(before: dict, after: dict) -> bool:
+    """Detect additions, removals and meaningful state changes for all ETF roles."""
+    def index(payload: dict) -> dict:
+        return {
+            _pulse_candidate_identity(item): _discovery_candidate_fingerprint(item)
+            for item in (payload.get("candidates") or [])
+            if isinstance(item, dict) and _pulse_candidate_identity(item)
+        }
+    return index(before) != index(after)
 
 def _hyperliquid_decision_signal_changed(before: dict, after: dict) -> bool:
     """Only decision-bearing HL fields can qualify for a user pulse.
@@ -465,7 +481,7 @@ def _pulse_object_impact(source: str, related_text: str, added: list[str], remov
 
 
 def _discovery_reason(item: dict) -> str:
-    """Translate candidate evidence into a plain-language reason; raw values stay machine-only."""
+    """Translate Discovery evidence into a concise user-facing reason."""
     states = {
         str(x.get("state") or "").strip().upper()
         for x in (item.get("surfaced_states") or [])
@@ -476,27 +492,35 @@ def _discovery_reason(item: dict) -> str:
     has_node = isinstance(spot, dict) and any(
         spot.get(key) not in (None, "") for key in ("change_pct", "turnover_pct")
     )
+    role = str(item.get("object_role") or item.get("role") or "").strip()
+    state = str(item.get("state") or item.get("status") or item.get("lifecycle") or "").strip()
     if has_trend and has_node:
-        return "中短期趋势与节点成交承接共同改善，值得进入下一次比较"
+        return "中短期趋势与节点成交承接共同改善"
     if has_trend:
-        return "中短期趋势出现持续性变化，值得进入下一次比较"
+        return "中短期趋势出现持续性变化"
     if has_node:
-        return "节点表现与成交承接出现同步变化，值得进入下一次比较"
-    return ""
+        return "节点表现与成交承接出现同步变化"
+    if role or state:
+        return "ETF在Discovery中的评估角色或状态发生变化"
+    return "ETF进入了新的Discovery评估范围"
+
 
 def _discovery_candidate_has_user_value(item: dict) -> bool:
-    """Interrupt only when at least two independent candidate evidence classes agree."""
+    """Allow valuable changes for new, observed, opportunity and held ETFs."""
     states = {
         str(x.get("state") or "").strip().upper()
         for x in (item.get("surfaced_states") or [])
         if isinstance(x, dict)
     }
     spot = item.get("discovery_spot") or {}
-    has_trend = bool(states & {"PERSISTENT_TREND", "TREND", "MOMENTUM"})
-    has_node = isinstance(spot, dict) and any(
-        spot.get(key) not in (None, "") for key in ("change_pct", "turnover_pct")
+    role = str(item.get("object_role") or item.get("role") or "").strip().upper()
+    lifecycle = str(item.get("state") or item.get("status") or item.get("lifecycle") or "").strip().upper()
+    return bool(
+        states
+        or (isinstance(spot, dict) and any(spot.get(key) not in (None, "") for key in ("change_pct", "turnover_pct")))
+        or role in {"HELD", "HOLDING", "OBSERVED", "OBSERVATION", "OPPORTUNITY", "NEW", "CANDIDATE"}
+        or lifecycle
     )
-    return has_trend and has_node
 
 def _number_value(value: object) -> float | None:
     try:
@@ -528,20 +552,14 @@ def _hyperliquid_signal_materially_changed(before: dict, after: dict) -> bool:
     return False
 
 def _pulse_user_window(source: str, after: dict) -> bool:
-    """Only interrupt during the common A-share decision window.
-    
-    Discovery and Hyperliquid facts may be collected continuously, but user
-    notifications share the A-share preparation/intraday window. Overnight
-    Hyperliquid changes remain machine evidence for the next formal review.
-    """
-    if source == "discovery_pulse":
-        return True
+    """Discovery and Hyperliquid share one user-interruption window."""
+    if source not in {"discovery_pulse", "hyperliquid_pulse", "dual_engine_pulse"}:
+        return False
     stamp = str(after.get("formed_at_beijing") or after.get("fact_time_beijing") or "").strip()
     match = re.search(r"T(\d{2}):\d{2}", stamp)
     if not match:
         return False
-    hour = int(match.group(1))
-    return 8 <= hour < 16
+    return 8 <= int(match.group(1)) < 16
 
 
 def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | None:
@@ -713,10 +731,150 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
     }
 
 
+def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
+                            hyper_before: dict, hyper_after: dict) -> dict | None:
+    """Aggregate both engines into one ETF-level user event for one pulse window."""
+    if not _pulse_user_window("discovery_pulse", discovery_after):
+        return None
+
+    before_rows = {
+        _pulse_candidate_identity(x): x
+        for x in (discovery_before.get("candidates") or [])
+        if isinstance(x, dict) and _pulse_candidate_identity(x)
+    }
+    after_rows = {
+        _pulse_candidate_identity(x): x
+        for x in (discovery_after.get("candidates") or [])
+        if isinstance(x, dict) and _pulse_candidate_identity(x)
+    }
+    discovery_changed = []
+    for identity in sorted(set(before_rows) | set(after_rows)):
+        old = before_rows.get(identity) or {}
+        new = after_rows.get(identity) or {}
+        if _discovery_candidate_fingerprint(old) == _discovery_candidate_fingerprint(new):
+            continue
+        row = new or old
+        if _discovery_candidate_has_user_value(row):
+            discovery_changed.append(row)
+
+    signal_changes = _hyperliquid_signal_changes(hyper_before, hyper_after)
+    changed_assets = {
+        item.split("：", 1)[0] for item in signal_changes
+        if item.split("：", 1)[0]
+    }
+    hl_changed = bool(
+        hyper_before.get("observations")
+        and _hyperliquid_decision_signal_changed(hyper_before, hyper_after)
+        and _hyperliquid_signal_materially_changed(hyper_before, hyper_after)
+    )
+    relevant_objects = _hyperliquid_relevant_asset_objects() if hl_changed else {}
+    changed_assets &= set(relevant_objects)
+    hl_labels, human_changes, _, bindings = _hyperliquid_user_scope(
+        hyper_before, hyper_after, changed_assets, relevant_objects
+    ) if changed_assets else ([], [], [], {})
+    if not discovery_changed and not hl_labels:
+        return None
+
+    def label(row: dict) -> str:
+        return _pulse_object_label(row)
+
+    discovery_labels = [label(row) for row in discovery_changed]
+    all_labels = _canonicalize_etf_labels(discovery_labels + hl_labels)
+    if not all_labels:
+        return None
+    discovery_codes = {
+        re.search(r"[（(](\d{6})[）)]", text).group(1)
+        for text in discovery_labels
+        if re.search(r"[（(](\d{6})[）)]", text)
+    }
+    hl_codes = {
+        re.search(r"[（(](\d{6})[）)]", text).group(1)
+        for text in hl_labels
+        if re.search(r"[（(](\d{6})[）)]", text)
+    }
+    overlap = discovery_codes & hl_codes
+    primary = next(
+        (text for text in all_labels if re.search(r"[（(](\d{6})[）)]", text)
+         and re.search(r"[（(](\d{6})[）)]", text).group(1) in overlap),
+        all_labels[0],
+    )
+    if discovery_changed and hl_labels:
+        title = f"【市场异动】{primary}出现本地与外部信号变化"
+    elif discovery_changed:
+        title = f"【市场异动】{primary}的ETF评估状态发生变化"
+    else:
+        title = f"【市场异动】{primary}出现外部信号变化"
+
+    if discovery_changed:
+        discovery_text = "；".join(
+            f"{label(row)}：{_discovery_reason(row)}"
+            for row in discovery_changed[:4]
+        )
+    else:
+        discovery_text = "本次未发现新的Discovery状态变化，但相关ETF仍在当前评估范围内。"
+    if hl_labels:
+        basis = _hyperliquid_plain_signal_basis(signal_changes)
+        hl_text = "；".join(
+            f"{asset}对应{', '.join(labels)}，代表{_hyperliquid_asset_explanation(asset).split('（', 1)[-1].rstrip('）')}；{basis}"
+            for asset, labels in list(bindings.items())[:4]
+            if labels
+        ) or f"相关外部参照出现{basis}。"
+    else:
+        hl_text = "本次未形成可比的Hyperliquid确认，不能单独扩大结论。"
+
+    if overlap:
+        impact = "方向确认、入场时机或风险过滤"
+        relation = "两类证据指向同一只ETF，需要在下一次正式判断中合并核对"
+    elif discovery_changed and hl_labels:
+        impact = "相关性和时机判断"
+        relation = "两类证据涉及的ETF未完全重合，暂不能把外部变化直接等同于ETF方向变化"
+    elif discovery_changed:
+        impact = "下一次正式判断的比较优先级"
+        relation = "当前只有Discovery证据，Hyperliquid未形成可比确认"
+    else:
+        impact = "方向确认、入场时机或风险过滤"
+        relation = "当前只有外部证据，仍需结合ETF自身走势确认"
+
+    content = (
+        f"【核心结论】{primary}出现本地与外部信号变化，{relation}；"
+        f"它改变的是{impact}，不代表自动交易。\n\n"
+        f"【Discovery依据】{discovery_text}\n\n"
+        f"【Hyperliquid依据】{hl_text}\n\n"
+        f"【下一步核对】核对相关ETF自身走势、成交承接与相对强弱；只有本地走势与外部信号同步，才能提高结论强度。\n\n"
+        f"【当前边界】外部参照不是A股ETF，系统不自动下单、不自动调仓。"
+    )
+    evidence_time = str(
+        discovery_after.get("formed_at_beijing")
+        or hyper_after.get("formed_at_beijing")
+        or discovery_after.get("fact_time_beijing")
+        or hyper_after.get("fact_time_beijing")
+        or ""
+    )
+    return {
+        "event_type": "PULSE_FACT_UPDATE",
+        "source": "dual_engine_pulse",
+        "key": f"pulse:dual_engine:{discovery_after.get('identity')}:{hyper_after.get('identity')}",
+        "title": title,
+        "content": content,
+        "market": "A_SHARE_ETF",
+        "evidence_time_beijing": evidence_time,
+        "before_fact": "Discovery与Hyperliquid已有可比前序事实",
+        "after_fact": "Discovery与Hyperliquid本次窗口事实已完成ETF级合并",
+        "confirmation_context": {
+            "discovery_changed": discovery_labels,
+            "hyperliquid_changed_assets": sorted(changed_assets),
+            "affected_etfs": all_labels,
+            "bindings": bindings,
+            "discovery_identity": discovery_after.get("identity"),
+            "hyperliquid_identity": hyper_after.get("identity"),
+        },
+        "delivery_mode": "COMPACT",
+    }
+
+
 def _pulse_candidates_from_payloads(payloads: dict[str, dict]) -> list[dict]:
-    candidates = []
-    for source, label in (("discovery_pulse", "Discovery"), ("hyperliquid_pulse", "Hyperliquid")):
-        payload = payloads.get(source) or {}
+    """Return at most one integrated user event for the shared pulse window."""
+    def latest_pair(payload: dict) -> tuple[dict, dict]:
         history = []
         days = payload.get("days") if isinstance(payload, dict) else None
         if isinstance(days, dict):
@@ -732,12 +890,13 @@ def _pulse_candidates_from_payloads(payloads: dict[str, dict]) -> list[dict]:
             if identity:
                 unique[identity] = item
         ordered = sorted(unique.values(), key=lambda x: str(x.get("formed_at_beijing") or ""))
-        if len(ordered) >= 2:
-            event = _pulse_event(source, label, ordered[-2], ordered[-1])
-            if event:
-                candidates.append(event)
-    return candidates
-
+        return (ordered[-2], ordered[-1]) if len(ordered) >= 2 else ({}, {})
+    discovery_before, discovery_after = latest_pair(payloads.get("discovery_pulse") or {})
+    hyper_before, hyper_after = latest_pair(payloads.get("hyperliquid_pulse") or {})
+    event = _integrated_pulse_event(
+        discovery_before, discovery_after, hyper_before, hyper_after
+    )
+    return [event] if event else []
 
 def _pulse_candidates() -> list[dict]:
     """Build comparable Discovery/Hyperliquid pulse events from canonical indexes."""
