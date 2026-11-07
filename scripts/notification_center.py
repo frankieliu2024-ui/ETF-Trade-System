@@ -1033,7 +1033,13 @@ def _discovery_pulse_event() -> dict | None:
         "type": "决策提醒" if is_new_candidate else "市场异动",
         "event_type": "FORMAL_DECISION_PENDING" if is_new_candidate else "PULSE_FACT_UPDATE",
         "title": "【决策提醒】建议运行【ETF正式决策】",
-        "content": f"Discovery在最近合法脉冲中发生{change_label}：{object_text or '上一脉冲候选未在当前节点继续出现'}。该变化仍只属于Discovery层，未自动升级为观察ETF、机会ETF、Trial或Confirm。",
+        "content": (
+            f"【核心结论】Discovery候选发生变化，相关对象是{object_text or '当前候选池'}；"
+            "这会改变下一次正式判断的候选比较重点，但不等于已经形成交易机会。\\n\\n"
+            f"【发生了什么】{change_label}，当前需要关注{object_text or '候选池变化'}。\\n\\n"
+            "【下一步核对】核对候选自身趋势、成交承接以及相对现金和现有持仓的收益风险；"
+            "若证据不足，继续保留在Discovery层。"
+        ),
         "source": "discovery_pulse",
         "user_severity": "需要关注",
         "user_action": "候选事实已更新；如需交易判断，等待或运行【ETF正式决策】。" if not is_new_candidate else "建议在合适节点运行【ETF正式决策】，重新评估候选及现有持仓。",
@@ -1129,7 +1135,14 @@ def _hyperliquid_pulse_event() -> dict | None:
         "source_event_id": f"pulse-hyperliquid:{identity}:{','.join(sorted(set(objects)))}",
         "type": "市场异动", "event_type": "PULSE_FACT_UPDATE",
         "title": "【决策提醒】建议运行【ETF正式决策】",
-        "content": "Hyperliquid对既有ETF对象提供了可比的辅助变化：" + "；".join(details) + "。该信息不自行创建ETF候选，也不直接授予Trial或Confirm。",
+        "content": (
+            f"【核心结论】Hyperliquid外部参照对{object_text or '相关ETF'}形成了需要复核的变化，"
+            "主要影响相关ETF的方向确认、入场时机或风险过滤，不代表A股方向已经改变。\\n\\n"
+            f"【发生了什么】外部参照与{object_text or '相关ETF'}存在可比关系，"
+            "但当前只能确认其进入下一节点的复核范围，不能把外部变化直接等同于ETF走势。\\n\\n"
+            "【下一步核对】逐只核对相关ETF自身走势、成交承接和相对强弱；"
+            "A股同步时才可增加方向支持，A股背离时只保留为风险提示。"
+        ),
         "source": "hyperliquid_pulse",
         "user_severity": "需要关注",
         "user_action": "建议在合适节点运行【ETF正式决策】，核对对应ETF或持仓的本地市场反馈。",
@@ -1177,7 +1190,14 @@ def pulse_formal_decision_pending_event() -> dict | None:
         "source_event_id": "pulse-dual:" + source_id,
         "type": "市场异动", "event_type": "PULSE_FACT_UPDATE",
         "title": "【市场异动】Discovery与Hyperliquid同时出现需要复核的变化",
-        "content": "两个独立引擎在同一通知窗口发现了需要关注的变化。\n\n" + details + "\n\n这不是正式交易判断；下一正式判断应把两类证据与ETF自身走势、持仓和现金竞争一起核对。",
+        "content": (
+            f"【核心结论】Discovery与Hyperliquid同时改变了{objects or '相关ETF'}的下一节点复核重点，"
+            "但尚未形成独立交易结论。\\n\\n"
+            "【发生了什么】一类证据改变候选比较范围，另一类证据提供外部方向、时机或风险过滤；"
+            "两者都必须与ETF自身事实交叉核对。\\n\\n"
+            "【下一步核对】逐只核对相关ETF走势、成交承接、相对强弱、现金竞争和候选资格；"
+            "只有A股自身事实同步改善，才提高方向判断权重。"
+        ),
         "source": "dual_engine_pulse",
         "user_severity": "需要关注",
         "user_action": "下一正式判断同时核对Discovery候选变化与Hyperliquid外部证据；通知本身不授予Trial、Confirm或交易权限。",
