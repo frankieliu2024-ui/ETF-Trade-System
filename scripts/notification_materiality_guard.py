@@ -233,10 +233,16 @@ def _pulse_user_content_error(event: dict) -> str:
         return "pulse user content leaks machine signal fields:" + ",".join(leaked)
     if re.search(r"[-+]?\d+(?:\.\d+)?%?\s*[→\-]\s*[-+]?\d+(?:\.\d+)?%?", content):
         return "pulse user content leaks raw before/after numeric changes"
-    required = ("【核心结论】", "【发生了什么】", "【下一步核对】")
+    # The converged pulse contract uses one core conclusion and one next-step
+    # section. The evidence may be embedded in the core conclusion (Discovery)
+    # or appear as a dedicated impact-basis section (Hyperliquid); requiring the
+    # legacy “发生了什么” heading would reject the new concise contract.
+    required = ("【核心结论】", "【下一步核对】")
     missing = [heading for heading in required if heading not in content]
     if missing:
         return "pulse user content missing:" + ",".join(missing)
+    if not any(term in content for term in ("候选依据", "影响依据", "影响", "外部信号")):
+        return "pulse user content has no evidence basis statement"
     if not any(term in content for term in ("影响", "当前价值", "复核优先级", "比较优先级", "判断重点")):
         return "pulse user content has no decision value statement"
     return ""
