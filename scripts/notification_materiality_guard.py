@@ -227,7 +227,7 @@ def _pulse_user_content_error(event: dict) -> str:
     content = str(event.get("content") or "")
     if not content.strip():
         return "pulse user content is empty"
-    forbidden = ("资金费率", "未平仓量", "溢价", "funding", "openInterest", "premium", "markPx")
+    forbidden = ("资金费率", "未平仓量", "溢价", "funding", "openInterest", "premium", "markPx", "外部参照变化", "尚未完整确认")
     leaked = [term for term in forbidden if term in content]
     if leaked:
         return "pulse user content leaks machine signal fields:" + ",".join(leaked)

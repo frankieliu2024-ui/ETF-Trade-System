@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 import time
 
@@ -159,6 +160,26 @@ def _hyperliquid_asset_explanation(asset: str) -> str:
     return f"{display_asset}（当前仅确认其为外部参照资产，具体经济暴露尚未完成确认）"
 
 
+def _canonicalize_etf_labels(labels: list[str]) -> list[str]:
+    """Keep one canonical user label per ETF code across all external assets."""
+    chosen = {}
+    order = []
+    for label in labels:
+        text = str(label or "").strip()
+        if not text:
+            continue
+        match = re.search(r"[（(](\\d{6})[）)]", text)
+        code = match.group(1) if match else text
+        if code not in chosen:
+            chosen[code] = text
+            order.append(code)
+        else:
+            current = chosen[code]
+            # Prefer the fuller ETF display name over a shortened alias.
+            if ("ETF" in text and "ETF" not in current) or len(text) > len(current):
+                chosen[code] = text
+    return [chosen[code] for code in order]
+
 def _hyperliquid_relevant_asset_objects() -> dict[str, list[str]]:
     """Return mapped Hyperliquid assets with current ETF decision objects."""
     try:
@@ -231,6 +252,13 @@ def _hyperliquid_relevant_asset_objects() -> dict[str, list[str]]:
             labels = [label for label in labels if not any(marker in label.lower() for marker in excluded_markers)]
         if labels:
             result[asset] = list(dict.fromkeys(labels))[:4]
+    all_labels = [label for labels in result.values() for label in labels]
+    canonical = _canonicalize_etf_labels(all_labels)
+    by_code = {re.search(r"[（(](\\d{6})[）)]", label).group(1): label for label in canonical if re.search(r"[（(](\\d{6})[）)]", label)}
+    result = {
+        asset: [by_code.get(re.search(r"[（(](\\d{6})[）)]", label).group(1), label) if re.search(r"[（(](\\d{6})[）)]", label) else label for label in labels]
+        for asset, labels in result.items()
+    }
     return result
 
 
@@ -425,57 +453,38 @@ def _pulse_object_impact(source: str, related_text: str, added: list[str], remov
 
 
 def _discovery_reason(item: dict) -> str:
-    """Return only evidence carried by the Discovery candidate itself."""
-    states = [str(x.get("state") or "") for x in (item.get("surfaced_states") or []) if isinstance(x, dict)]
-    evidence = []
-    for state in (item.get("surfaced_states") or []):
-        if not isinstance(state, dict):
-            continue
-        detail = state.get("evidence") or {}
-        if not isinstance(detail, dict):
-            continue
-        direction = str(detail.get("direction") or "").strip()
-        returns = []
-        # Accept both canonical return_5/return_20 fields and the
-        # window_returns shape used by Discovery snapshots and fixtures.
-        window_returns = detail.get("window_returns") or {}
-        for key in ("return_5", "return_10", "return_20", "return_40", "return_60"):
-            value = detail.get(key)
-            if value is None:
-                window = key.replace("return_", "")
-                value = window_returns.get(window)
-            if value is not None:
-                try:
-                    returns.append(f"{key.replace('return_', '')}日{float(value) * 100:+.1f}%")
-                except (TypeError, ValueError):
-                    pass
-        if direction or returns:
-            evidence.append("、".join(([direction] if direction else []) + returns))
+    """Translate candidate evidence into a plain-language reason; raw values stay machine-only."""
+    states = {
+        str(x.get("state") or "").strip().upper()
+        for x in (item.get("surfaced_states") or [])
+        if isinstance(x, dict)
+    }
     spot = item.get("discovery_spot") or {}
-    if isinstance(spot, dict):
-        try:
-            change = float(spot.get("change_pct"))
-            evidence.append(f"节点涨跌{change:+.2f}%")
-        except (TypeError, ValueError):
-            pass
-        try:
-            turnover = float(spot.get("turnover_pct"))
-            if turnover > 0:
-                evidence.append(f"换手率{turnover:.1f}%")
-        except (TypeError, ValueError):
-            pass
-    parts = list(dict.fromkeys(x for x in evidence if x))
-    if parts:
-        return "；".join(parts[:2])
-    if states:
-        return "出现" + "、".join(dict.fromkeys(states)) + "信号"
-    return "本次进入候选池；入选的具体强弱依据尚未完整确认"
+    has_trend = bool(states & {"PERSISTENT_TREND", "TREND", "MOMENTUM"})
+    has_node = isinstance(spot, dict) and any(
+        spot.get(key) not in (None, "") for key in ("change_pct", "turnover_pct")
+    )
+    if has_trend and has_node:
+        return "中短期趋势与节点成交承接共同改善，值得进入下一次比较"
+    if has_trend:
+        return "中短期趋势出现持续性变化，值得进入下一次比较"
+    if has_node:
+        return "节点表现与成交承接出现同步变化，值得进入下一次比较"
+    return ""
 
 def _discovery_candidate_has_user_value(item: dict) -> bool:
-    """Require quantitative, candidate-specific evidence before interrupting."""
-    reason = _discovery_reason(item)
-    return "尚未完整确认" not in reason and bool(reason.strip())
-
+    """Interrupt only when at least two independent candidate evidence classes agree."""
+    states = {
+        str(x.get("state") or "").strip().upper()
+        for x in (item.get("surfaced_states") or [])
+        if isinstance(x, dict)
+    }
+    spot = item.get("discovery_spot") or {}
+    has_trend = bool(states & {"PERSISTENT_TREND", "TREND", "MOMENTUM"})
+    has_node = isinstance(spot, dict) and any(
+        spot.get(key) not in (None, "") for key in ("change_pct", "turnover_pct")
+    )
+    return has_trend and has_node
 
 def _number_value(value: object) -> float | None:
     try:
@@ -633,32 +642,40 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
         )
         title = f"【市场异动】新候选需复核：{headline}"
     else:
-        short_names = "、".join(label.split("（", 1)[0] for label in related_labels[:3]) or "相关ETF"
-        impact_lines = []
-        seen_labels = set()
+        canonical_labels = _canonicalize_etf_labels(related_labels)
+        short_names = "、".join(label.split("（", 1)[0] for label in canonical_labels[:3]) or "相关ETF"
+        grouped = {}
         for asset in sorted(changed_assets):
-            for label in (relevant_objects.get(asset) or []):
-                if label in seen_labels:
-                    continue
-                seen_labels.add(label)
+            for label in _canonicalize_etf_labels(relevant_objects.get(asset) or []):
+                match = re.search(r"[（(](\\d{6})[）)]", label)
+                code = match.group(1) if match else label
+                entry = grouped.setdefault(code, {"label": label, "assets": [], "relations": set()})
+                if asset not in entry["assets"]:
+                    entry["assets"].append(asset)
                 _, relation = _hyperliquid_mapping_metadata(asset, label)
-                if relation == "直接/产业链关系":
-                    impact = "直接影响对应产业方向强弱判断"
-                elif relation == "间接市场/风险偏好关系":
-                    impact = "影响市场风险偏好和入场时机判断"
-                else:
-                    impact = "影响风格、拥挤风险和入场时机判断"
-                impact_lines.append(f"{label}：外部参照变化，{impact}")
-        impact_text = "；".join(impact_lines[:4]) or "相关ETF对象映射尚未完整确认"
+                entry["relations"].add(relation)
+        impact_lines = []
+        for entry in list(grouped.values())[:4]:
+            label = entry["label"]
+            sources = "、".join(_hyperliquid_asset_explanation(asset) for asset in entry["assets"][:2])
+            relations = entry["relations"]
+            if "直接/产业链关系" in relations:
+                impact = "直接影响该ETF对应产业方向的强弱判断"
+            elif "间接市场/风险偏好关系" in relations:
+                impact = "间接影响该ETF的风险偏好和入场时机判断"
+            else:
+                impact = "间接影响该ETF的风格、拥挤风险和入场时机判断"
+            impact_lines.append(f"{sources}变化，{label}{impact}")
+        impact_text = "；".join(impact_lines) or "本次外部信号没有形成可解释的ETF映射"
         content = (
-            f"【核心结论】{short_names}需要提高下一节点复核优先级，"
-            "外部信号只影响方向确认、时机或风险过滤，不代表A股方向已经改变。\n\n"
+            f"【核心结论】{short_names}受到外部方向变化影响，"
+            "下一节点应优先核对这些ETF自身是否同步；这不是A股方向已改变或交易信号。\n\n"
             f"【发生了什么】{impact_text}。\n\n"
-            "【下一步核对】逐只核对ETF自身走势、成交承接和相对强弱；只有A股反馈同步时，"
-            "外部信号才可作为支持或时机依据，若背离则仅保留为风险提示。\n\n"
+            "【下一步核对】逐只核对ETF自身走势、成交承接和相对强弱；同步时可提高方向确认或时机判断优先级，"
+            "背离时只保留为风险提示。\n\n"
             "【当前边界】外部资产不是A股ETF，不能直接等同或据此买卖；不自动交易。"
         )
-        title = f"【市场异动】需复核：{short_names}"
+        title = f"【市场异动】外部信号影响：{short_names}"
     return {
         "key": f"pulse:{source}:{after.get('identity')}",
         "event_type": "PULSE_FACT_UPDATE",
