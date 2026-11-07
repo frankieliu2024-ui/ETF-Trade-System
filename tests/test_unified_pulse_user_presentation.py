@@ -37,7 +37,8 @@ class UnifiedPulseUserPresentationTests(unittest.TestCase):
         self.assertIsNotNone(event)
         self.assertIn("港股红利低波ETF招商", event["content"])
         self.assertIn("5日+3.0%", event["content"])
-        self.assertIn("【对当前判断的作用】", event["content"])
+        self.assertIn("【发生了什么】", event["content"])
+        self.assertIn("当前只提升下一次正式判断的比较优先级", event["content"])
         self.assertLess(len(event["content"]), 900)
         self.assertNotIn("前一时点", event["content"])
         self.assertNotIn("延续对象", event["content"])
@@ -68,6 +69,7 @@ class UnifiedPulseUserPresentationTests(unittest.TestCase):
         self.assertNotIn("延续对象", event["content"])
         self.assertNotIn("前一时点", event["content"])
         self.assertIn("下一步核对", event["content"])
+        self.assertIn("需复核", event["title"])
 
 
 if __name__ == "__main__":
