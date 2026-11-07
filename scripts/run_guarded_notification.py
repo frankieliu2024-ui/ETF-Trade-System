@@ -81,6 +81,43 @@ def _pulse_fact_display(fact: dict) -> str:
     return f"识别对象数：{count}；对象：{objects}。"
 
 
+def _hyperliquid_signal_fingerprint(fact: dict) -> dict:
+    """Keep comparable signal fields without exposing the full HL catalog."""
+    result = {}
+    for item in (fact.get("observations") or []):
+        asset = str(item.get("asset") or "").strip()
+        if not asset:
+            continue
+        result[asset] = {
+            key: str(item.get(key) or "")
+            for key in ("funding", "open_interest", "premium", "mark_px", "mid_px", "prev_day_px")
+        }
+    return result
+
+
+def _hyperliquid_signal_changes(before: dict, after: dict) -> list[str]:
+    old = _hyperliquid_signal_fingerprint(before)
+    new = _hyperliquid_signal_fingerprint(after)
+    changes = []
+    for asset in sorted(set(old) | set(new)):
+        if old.get(asset) == new.get(asset):
+            continue
+        fields = [
+            label for key, label in (
+                ("funding", "资金费率"),
+                ("open_interest", "未平仓量"),
+                ("premium", "溢价"),
+                ("mark_px", "标记价格"),
+                ("mid_px", "中间价格"),
+                ("prev_day_px", "前日价格"),
+            )
+            if old.get(asset, {}).get(key) != new.get(asset, {}).get(key)
+        ]
+        if fields:
+            changes.append(f"{asset}：" + "、".join(fields) + "发生变化")
+    return changes
+
+
 def _hyperliquid_asset_explanation(asset: str) -> str:
     asset = str(asset or "").strip()
     if not asset:
@@ -150,6 +187,9 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
         "observation_count": after.get("observation_count"),
         "objects": after_objects,
     }
+    if source == "hyperliquid_pulse":
+        before_fact["signal_fingerprint"] = _hyperliquid_signal_fingerprint(before)
+        after_fact["signal_fingerprint"] = _hyperliquid_signal_fingerprint(after)
     # Identity and timestamp change on every pulse; they are audit metadata,
     # not user-visible market change. Suppress no-op pulses such as 0 -> 0.
     comparable_before = {key: value for key, value in before_fact.items() if key not in {"identity", "fact_time_beijing"}}
@@ -169,6 +209,10 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
         change_lines.append("延续对象：" + "、".join(changed))
     if not change_lines:
         change_lines.append("对象集合未变，但状态、覆盖或数量发生变化。")
+    if source == "hyperliquid_pulse":
+        signal_changes = _hyperliquid_signal_changes(before, after)
+        if signal_changes:
+            change_lines.append("可比信号变化：" + "；".join(signal_changes[:12]))
     if source == "discovery_pulse":
         core = "全市场候选出现新增或变化，值得提前纳入下一次正式判断。"
         value = "它的价值是把原本容易错过的全市场候选变化提前提示出来，帮助正式决策比较现金、持仓、观察ETF和新候选；但候选出现不等于买入机会。"
