@@ -591,6 +591,42 @@ def _hyperliquid_user_change(asset: str, before: dict, after: dict) -> str:
     return "；".join(dict.fromkeys(parts)) or "外部方向和参与程度发生了足以影响判断的变化"
 
 
+def _hyperliquid_evidence_text(asset: str, labels: list[str], before: dict, after: dict) -> str:
+    """Render complete HL evidence for one asset/ETF binding without raw values."""
+    _, relation = _hyperliquid_mapping_metadata(asset, labels[0] if labels else "")
+    family_text = {
+        "BIOTECH": "美国生物科技与创新药方向",
+        "CHINA_TECH_RISK": "中国互联网与平台经济方向",
+        "SEMICONDUCTOR": "半导体方向",
+        "SEMICONDUCTOR_HIGH_BETA": "高波动半导体方向",
+        "MEMORY": "存储与内存产业链方向",
+        "AI_COMPUTE": "人工智能与算力方向",
+        "AI_NETWORKING": "人工智能网络与通信方向",
+        "ENERGY": "能源与化工方向",
+        "GLOBAL_RISK_APPETITE": "全球风险偏好方向",
+    }
+    family, _ = _hyperliquid_mapping_metadata(asset, labels[0] if labels else "")
+    direction = str(after.get("direction") or "").lower()
+    direction_text = {"positive": "外部方向偏强", "negative": "外部方向偏弱", "mixed": "外部方向分化"}.get(direction, "外部方向发生变化")
+    change = _hyperliquid_user_change(asset, before, after)
+    risk_words = ("拥挤加深", "风险上升", "偏离扩大", "压力")
+    if direction == "negative" or any(word in change for word in risk_words):
+        effect = "对上述ETF属于压制或风险过滤，不支持直接提高看多判断"
+        use = "当前只用于风险过滤"
+    elif direction == "positive":
+        effect = "对上述ETF属于方向支持，但仍需结合ETF自身走势确认"
+        use = "当前用于方向确认和时机判断"
+    else:
+        effect = "对上述ETF暂不能归类为支持或压制，只能作为观察线索"
+        use = "当前只用于观察"
+    return (
+        f"{asset.split(':', 1)[-1]}对应{', '.join(labels)}，属于{relation}；"
+        f"代表{family_text.get(family, '相关外部市场方向')}；"
+        f"本次变化：{direction_text}，{change}；"
+        f"具体影响：{effect}；{use}"
+    )
+
+
 def _discovery_candidate_has_user_value(item: dict) -> bool:
     """Allow valuable changes for new, observed, opportunity and held ETFs."""
     states = {
@@ -778,10 +814,9 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
             if "：" in row
         }
         hl_text = "；".join(
-            f"{asset.split(':', 1)[-1]}对应{', '.join(labels)}，代表美国生物科技与创新药方向；"
-            f"{_hyperliquid_user_change(asset, before_by_asset.get(asset, {}), after_by_asset.get(asset, {}))}；"
-            f"对{', '.join(labels)}的具体含义是：外部环境风险上升，不能作为该ETF上涨依据，"
-            f"只有该ETF自身继续走强时，才可视为外部风险未形成压制"
+            _hyperliquid_evidence_text(
+                asset, labels, before_by_asset.get(asset, {}), after_by_asset.get(asset, {})
+            )
             for asset, labels in list(bindings.items())[:4]
             if labels
         ) or f"相关外部参照出现{basis}。"
