@@ -474,46 +474,82 @@ def _pulse_object_impact(source: str, related_text: str, added: list[str], remov
 
 
 def _discovery_reason(item: dict) -> str:
-    """Translate Discovery evidence into a concise user-facing reason."""
+    """Translate all populated, decision-relevant Discovery evidence."""
     states = {
         str(x.get("state") or "").strip().upper()
         for x in (item.get("surfaced_states") or [])
         if isinstance(x, dict)
     }
     spot = item.get("discovery_spot") or {}
-    has_trend = bool(states & {"PERSISTENT_TREND", "TREND", "MOMENTUM"})
-    has_node = isinstance(spot, dict) and any(
-        spot.get(key) not in (None, "") for key in ("change_pct", "turnover_pct")
-    )
-    role = str(item.get("object_role") or item.get("role") or "").strip()
-    state = str(item.get("state") or item.get("status") or item.get("lifecycle") or "").strip()
-    returns = ((spot.get("window_returns") if isinstance(spot, dict) else None) or
-               ((item.get("surfaced_states") or [{}])[0].get("evidence") or {}).get("window_returns") or {})
+    class_names = {
+        "PERSISTENT_STRUCTURE": "中短期趋势持续",
+        "PERSISTENT_TREND": "中短期趋势持续",
+        "TREND_CHANGE": "趋势正在转强",
+        "SHORT_TERM_CHANGE": "短期走势明显改善",
+        "NEW_RELATIVE_DIVERGENCE": "相对同类或基准出现分化",
+        "STRUCTURAL_CHANGE": "走势结构发生变化",
+        "SHORT_HISTORY_CURRENT_CHANGE": "上市时间较短但近期出现明显变化",
+        "EXTERNAL_DRIVER_TRIGGER": "出现外部驱动线索",
+    }
+    info_classes = [class_names.get(str(x).upper(), str(x)) for x in (item.get("information_classes") or [])]
+    state_names = {
+        "PERSISTENT_TREND": "中短期趋势持续",
+        "TREND_CHANGE": "趋势转强",
+        "SHORT_TERM_CHANGE": "短期变化",
+        "RECOVERY_BREAKOUT": "修复并接近前高",
+    }
+    states_text = [state_names.get(x, x) for x in sorted(states)]
+    evidence_parts = []
+    if info_classes:
+        evidence_parts.append("发现类型：" + "、".join(dict.fromkeys(info_classes)))
+    if states_text:
+        evidence_parts.append("状态证据：" + "、".join(dict.fromkeys(states_text)))
+
+    returns = {}
+    for state_item in (item.get("surfaced_states") or []):
+        if isinstance(state_item, dict):
+            returns.update((state_item.get("evidence") or {}).get("window_returns") or {})
+    returns.update((spot.get("window_returns") if isinstance(spot, dict) else None) or {})
     def pct_text(value):
         try:
             return f"{float(value) * 100:+.1f}%"
         except (TypeError, ValueError):
             return "数据缺失"
-    trend_detail = []
-    if returns.get("5") is not None:
-        trend_detail.append(f"5日{pct_text(returns.get('5'))}")
-    if returns.get("20") is not None:
-        trend_detail.append(f"20日{pct_text(returns.get('20'))}")
-    node_detail = []
-    if isinstance(spot, dict) and spot.get("change_pct") not in (None, ""):
-        node_detail.append(f"节点涨跌{float(spot['change_pct']):+.1f}%")
-    if isinstance(spot, dict) and spot.get("turnover_pct") not in (None, ""):
-        node_detail.append(f"成交承接{float(spot['turnover_pct']):+.1f}%")
-    if has_trend and has_node:
-        return ("、".join(trend_detail + node_detail)
-                + "；5日和20日均为正，说明不是单日波动，且本节点上涨得到成交承接配合")
-    if has_trend:
-        return "、".join(trend_detail) + "，中短期趋势出现持续性变化"
-    if has_node:
-        return "、".join(node_detail) + "，节点表现与成交承接出现同步变化"
-    if role or state:
-        return "ETF在Discovery中的评估角色或状态发生变化"
-    return "ETF进入了新的Discovery评估范围"
+    trend_detail = [f"{w}日{pct_text(returns[w])}" for w in ("5", "10", "20", "40", "60") if returns.get(w) is not None]
+    if trend_detail:
+        evidence_parts.append("区间表现：" + "、".join(trend_detail))
+    if isinstance(spot, dict):
+        node = []
+        labels = (("change_pct", "本节点涨跌", True), ("amplitude_pct", "日内振幅", True),
+                  ("turnover_pct", "换手承接", True), ("volume_ratio", "量比", False),
+                  ("return_60d_pct", "60日", True), ("return_ytd_pct", "年初至今", True))
+        for key, label, percent in labels:
+            value = spot.get(key)
+            if value not in (None, ""):
+                try:
+                    number = float(value)
+                    node.append(f"{label}{number:+.1f}{'%' if percent else '倍'}")
+                except (TypeError, ValueError):
+                    pass
+        if spot.get("amount") not in (None, ""):
+            try:
+                node.append(f"成交额{float(spot['amount']) / 100000000:.2f}亿元")
+            except (TypeError, ValueError):
+                pass
+        if node:
+            evidence_parts.append("本节点：" + "、".join(node))
+        path = [spot.get(k) for k in ("open", "high", "low", "price")]
+        if all(v not in (None, "") for v in path):
+            evidence_parts.append("价格路径：开盘→最高→最低→现价 " + "→".join(f"{float(v):.3f}" for v in path))
+    history = item.get("historical_context") or {}
+    if history.get("sample_count") not in (None, ""):
+        evidence_parts.append(f"历史样本：已完成{history['sample_count']}个交易日")
+    if history.get("status") == "SHORT_HISTORY_LIMITED":
+        evidence_parts.append("历史限制：样本不足，不能据此推导完整长期趋势")
+    drivers = item.get("external_driver_evidence") or []
+    if drivers:
+        evidence_parts.append("外部线索：" + "；".join(str(x) for x in drivers[:3]))
+    return "；".join(evidence_parts) or "Discovery发现该ETF出现了需要正式判断核对的变化"
 
 
 def _hyperliquid_user_change(asset: str, before: dict, after: dict) -> str:
@@ -872,8 +908,10 @@ def _pulse_test_candidates() -> list[dict]:
                        "candidate_count": 4, "candidates": [{"code": "513630", "name": "港股低波红利ETF摩根", "candidate_signature": "513630::OBSERVATION_FULL_EVALUATION"},
                                                             {"code": "159567", "name": "港股创新药ETF银华", "candidate_signature": "159567::OBSERVATION_FULL_EVALUATION"},
                                                             {"code": "159992", "name": "创新药ETF银华", "candidate_signature": "159992::OBSERVATION_FULL_EVALUATION",
+                                                             "information_classes": ["PERSISTENT_TREND", "TREND_CHANGE", "NEW_RELATIVE_DIVERGENCE", "STRUCTURAL_CHANGE"],
                                                              "surfaced_states": [{"state": "PERSISTENT_TREND", "evidence": {"window_returns": {"5": 0.025, "20": 0.035}}}],
-                                                             "discovery_spot": {"change_pct": 1.1, "turnover_pct": 7.4}},
+                                                             "discovery_spot": {"change_pct": 1.1, "amplitude_pct": 2.2, "turnover_pct": 7.4, "volume_ratio": 1.6, "amount": 45000000, "return_60d_pct": 8.4, "return_ytd_pct": 12.6, "open": 0.780, "high": 0.792, "low": 0.776, "price": 0.790},
+                                                             "historical_context": {"status": "READY", "sample_count": 90}},
                                                             {"code": "520550", "name": "港股红利低波ETF招商", "candidate_signature": "520550::OBSERVATION_FULL_EVALUATION",
                                                              "surfaced_states": [{"state": "PERSISTENT_TREND", "evidence": {"window_returns": {"5": 0.03, "20": 0.04}}}],
                                                              "discovery_spot": {"change_pct": 1.2, "turnover_pct": 8.1}}]},
