@@ -122,6 +122,7 @@ def _hyperliquid_asset_explanation(asset: str) -> str:
     asset = str(asset or "").strip()
     if not asset:
         return ""
+    display_asset = asset.split(":", 1)[-1]
     family_labels = {
         "CHINA_TECH_RISK": "中国互联网与平台经济方向",
         "BIOTECH": "美国生物科技与创新药方向",
@@ -152,10 +153,10 @@ def _hyperliquid_asset_explanation(asset: str) -> str:
             family = str(match.get("family") or "")
             description = family_labels.get(family)
             if description:
-                return f"{asset}：代表{description}"
+                return f"{display_asset}（{description}）"
     except Exception:
         pass
-    return f"{asset}：当前仅确认其为外部参照资产，具体经济暴露尚未完成确认"
+    return f"{display_asset}（当前仅确认其为外部参照资产，具体经济暴露尚未完成确认）"
 
 
 def _hyperliquid_relevant_asset_objects() -> dict[str, list[str]]:
@@ -255,6 +256,49 @@ def _pulse_signal_explanation(signal_changes: list[str]) -> str:
     return "；".join(explanations)
 
 
+def _number(value: object) -> float | None:
+    try:
+        return float(str(value).replace("%", "").replace(",", "").strip())
+    except (TypeError, ValueError):
+        return None
+
+
+def _human_signal(asset: str, before: dict, after: dict) -> str:
+    """Render one decision-bearing HL change as a short Chinese sentence."""
+    old = {str(k): v for k, v in (before or {}).items()}
+    new = {str(k): v for k, v in (after or {}).items()}
+    display = asset.split(":", 1)[-1]
+    parts = []
+    labels = {
+        "funding": ("资金费率", "反映多空持仓成本；转正通常代表做多一方付费，转负通常代表做空一方付费"),
+        "open_interest": ("未平仓量", "反映尚未平仓的合约规模；上升意味着杠杆参与和潜在波动增加"),
+        "premium": ("溢价", "反映合约价格相对参考价格的偏离；扩大说明情绪或流动性偏离加大"),
+    }
+    for key, (label, meaning) in labels.items():
+        if old.get(key) == new.get(key) or (old.get(key) in (None, "") and new.get(key) in (None, "")):
+            continue
+        before_text = str(old.get(key) or "缺失")
+        after_text = str(new.get(key) or "缺失")
+        parts.append(f"{label}{before_text}→{after_text}（{meaning}）")
+    return f"{display}：" + "；".join(parts) if parts else ""
+
+
+def _hyperliquid_user_scope(before: dict, after: dict, changed_assets: set[str], relevant_objects: dict[str, list[str]]) -> tuple[list[str], list[str], list[str]]:
+    """Return only user-relevant ETF labels and explained signal rows."""
+    old_by_asset = {str(x.get("asset") or "").strip(): x for x in (before.get("observations") or []) if isinstance(x, dict)}
+    new_by_asset = {str(x.get("asset") or "").strip(): x for x in (after.get("observations") or []) if isinstance(x, dict)}
+    labels = []
+    rows = []
+    for asset in sorted(changed_assets):
+        labels.extend(relevant_objects.get(asset) or [])
+        row = _human_signal(asset, old_by_asset.get(asset, {}), new_by_asset.get(asset, {}))
+        if row:
+            rows.append(row)
+    labels = list(dict.fromkeys(labels))[:8]
+    rows = rows[:6]
+    return labels, rows, sorted(changed_assets)
+
+
 def _pulse_object_impact(source: str, related_text: str, added: list[str], removed: list[str]) -> str:
     objects = related_text or "相关ETF对象"
     if source == "discovery_pulse":
@@ -334,24 +378,19 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
         changed_assets &= set(relevant_objects)
         if not changed_assets:
             return None
-        signal_changes = [
-            item for item in signal_changes
-            if item.split("：", 1)[0] in changed_assets
-        ]
-        before_objects = [
-            item for item in before_objects
-            if item.split("（", 1)[0] in changed_assets
-        ]
-        after_objects = [
-            item for item in after_objects
-            if item.split("（", 1)[0] in changed_assets
-        ]
-        before_objects = before_objects[:12]
-        after_objects = after_objects[:12]
+        signal_changes = [item for item in signal_changes if item.split("：", 1)[0] in changed_assets]
+        related_labels, human_signal_changes, _ = _hyperliquid_user_scope(
+            before, after, changed_assets, relevant_objects
+        )
+        # The notification is an ETF decision aid, not a venue catalogue.
+        # Replace raw external-asset object lists with the concrete ETF objects
+        # that can actually be checked at the next decision node.
+        before_objects = related_labels
+        after_objects = related_labels
         before_fact["objects"] = before_objects
         after_fact["objects"] = after_objects
-        before_fact["observation_count"] = len(before_objects)
-        after_fact["observation_count"] = len(after_objects)
+        before_fact["observation_count"] = len(related_labels)
+        after_fact["observation_count"] = len(related_labels)
         added = sorted(set(after_objects) - set(before_objects))
         removed = sorted(set(before_objects) - set(after_objects))
         changed = sorted(set(before_objects) & set(after_objects))
@@ -365,8 +404,8 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
             change_lines.append("消失对象：" + "、".join(removed))
         if changed:
             change_lines.append("延续对象：" + "、".join(changed))
-        if signal_changes:
-            change_lines.append("可比信号变化：" + "；".join(signal_changes[:12]))
+        if human_signal_changes:
+            change_lines.append("具体信号：" + "\n".join(human_signal_changes))
         if not change_lines:
             change_lines.append("对象集合未变，但相关信号发生变化。")
     if source == "discovery_pulse":
@@ -376,10 +415,8 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
     else:
         core = "跨市场外部资产出现可比变化，可能影响相关A股ETF的方向判断和时机判断。"
         external_explanations = [
-            _hyperliquid_asset_explanation(str(item.get("asset") or "").strip())
-            for item in (after.get("observations") or [])
-            if str(item.get("asset") or "").strip()
-            and (source != "hyperliquid_pulse" or str(item.get("asset") or "").strip() in changed_assets)
+            _hyperliquid_asset_explanation(asset)
+            for asset in sorted(changed_assets)
         ]
         external_text = "；".join(external_explanations)
         if external_text:
@@ -387,7 +424,7 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
         related_labels = []
         for asset in sorted(changed_assets):
             related_labels.extend(relevant_objects.get(asset) or [])
-        related_text = "、".join(list(dict.fromkeys(related_labels))[:12])
+        related_text = "、".join(list(dict.fromkeys(related_labels))[:8])
         if related_text:
             core += f" 对应当前ETF对象：{related_text}。"
         signal_explanation = _pulse_signal_explanation(signal_changes)
@@ -410,9 +447,9 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
     if source == "discovery_pulse":
         title = f"【市场异动】新候选出现：{added[0]}" if added else "【市场异动】候选池发生变化"
     else:
-        headline_objects = list(dict.fromkeys(added + changed))
+        headline_objects = list(dict.fromkeys(related_labels))
         title = (
-            f"【市场异动】外部信号变化：{'、'.join(headline_objects[:3])}"
+            f"【市场异动】相关ETF外部风险信号变化：{'、'.join(headline_objects[:2])}"
             if headline_objects else "【市场异动】外部信号发生变化"
         )
     return {
