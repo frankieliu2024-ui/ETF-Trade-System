@@ -183,6 +183,26 @@ def _hyperliquid_relevant_asset_objects() -> dict[str, list[str]]:
         if name or code:
             normalized.append((code, name))
     result = {}
+    preferred = {
+        "CHINA_TECH_RISK": ("科技", "互联网", "平台", "恒生", "港股宽基"),
+        "BIOTECH": ("创新药", "医药", "医疗", "生物", "器械"),
+        "SEMICONDUCTOR": ("半导体", "芯片", "科创", "通信", "电子", "设备"),
+        "SEMICONDUCTOR_HIGH_BETA": ("半导体", "芯片", "科创", "通信", "电子", "设备"),
+        "MEMORY": ("半导体", "芯片", "存储", "科创", "通信", "电子", "设备"),
+        "AI_COMPUTE": ("人工智能", "算力", "半导体", "芯片", "通信", "电子", "科创", "纳指"),
+        "AI_NETWORKING": ("人工智能", "算力", "半导体", "芯片", "通信", "电子"),
+        "ENERGY": ("能源", "油气", "煤炭", "化工", "石化"),
+        "GOLD": ("黄金", "有色", "资源"),
+        "INDUSTRIAL_METALS": ("有色", "工业金属", "资源", "电网", "新能源"),
+        "KOREA_EQUITY": ("韩国", "亚洲", "恒生", "科技"),
+        "JAPAN_EQUITY": ("日本", "日经", "亚洲"),
+        "TAIWAN_EQUITY": ("台湾", "亚洲", "半导体", "科技"),
+        "GLOBAL_RISK_APPETITE": ("宽基", "成长", "科创", "创业", "标普", "纳指"),
+    }
+    excluded = {
+        "CHINA_TECH_RISK": ("创新药", "医药", "医疗", "器械", "红利", "低波", "央企"),
+        "BIOTECH": ("红利", "低波", "央企", "煤炭", "能源", "科技"),
+    }
     for row in (mapping.get("asset_mappings") or []):
         if not isinstance(row, dict):
             continue
@@ -194,8 +214,17 @@ def _hyperliquid_relevant_asset_objects() -> dict[str, list[str]]:
         for code, name in normalized:
             if any(marker in name.lower() for marker in markers):
                 labels.append(f"{name}（{code}）" if name and code else (name or code))
+        family = str(row.get("family") or "")
+        preferred_markers = preferred.get(family) or ()
+        excluded_markers = excluded.get(family) or ()
+        if preferred_markers:
+            focused = [label for label in labels if any(marker in label.lower() for marker in preferred_markers)]
+            if focused:
+                labels = focused
+        if excluded_markers:
+            labels = [label for label in labels if not any(marker in label.lower() for marker in excluded_markers)]
         if labels:
-            result[asset] = list(dict.fromkeys(labels))
+            result[asset] = list(dict.fromkeys(labels))[:4]
     return result
 
 
@@ -290,11 +319,23 @@ def _hyperliquid_user_scope(before: dict, after: dict, changed_assets: set[str],
     labels = []
     rows = []
     for asset in sorted(changed_assets):
-        labels.extend(relevant_objects.get(asset) or [])
+        # Keep the notification focused: each external asset contributes at
+        # most two directly related ETF objects, rather than the whole mapped
+        # universe.  Deduplication is by ETF code, not by display name, since
+        # a holding and a discovery row can describe the same ETF differently.
+        labels.extend((relevant_objects.get(asset) or [])[:2])
         row = _human_signal(asset, old_by_asset.get(asset, {}), new_by_asset.get(asset, {}))
         if row:
             rows.append(row)
-    labels = list(dict.fromkeys(labels))[:8]
+    deduped = []
+    seen_codes = set()
+    for label in labels:
+        code = label.rsplit("（", 1)[-1].rstrip("）") if "（" in label else label
+        if code in seen_codes:
+            continue
+        seen_codes.add(code)
+        deduped.append(label)
+    labels = deduped[:4]
     rows = rows[:6]
     return labels, rows, sorted(changed_assets)
 
@@ -421,10 +462,7 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
         external_text = "；".join(external_explanations)
         if external_text:
             core += f" 本次外部参照为：{external_text}。"
-        related_labels = []
-        for asset in sorted(changed_assets):
-            related_labels.extend(relevant_objects.get(asset) or [])
-        related_text = "、".join(list(dict.fromkeys(related_labels))[:8])
+        related_text = "、".join(related_labels[:4])
         if related_text:
             core += f" 对应当前ETF对象：{related_text}。"
         signal_explanation = _pulse_signal_explanation(signal_changes)
@@ -534,10 +572,10 @@ def _pulse_test_candidates() -> list[dict]:
         },
         "hyperliquid_pulse": {
             "latest": {**base, "identity": f"PULSE_TEST_HYPERLIQUID_AFTER{suffix}", "formed_at_beijing": "2026-11-06T15:20:30+08:00",
-                       "candidate_count": 2, "observations": [{"asset": "BABA", "direction": "negative"},
-                                                              {"asset": "XBI", "direction": "positive"}]},
+                       "candidate_count": 2, "observations": [{"asset": "xyz:BABA", "direction": "negative", "funding": "0.030%", "open_interest": "120", "premium": "0.40%"},
+                                                              {"asset": "xyz:XBI", "direction": "positive", "funding": "-0.020%", "open_interest": "80", "premium": "-0.15%"}]},
             "days": {"test": [{**base, "identity": f"PULSE_TEST_HYPERLIQUID_BEFORE{suffix}", "formed_at_beijing": "2026-11-06T15:19:30+08:00",
-                               "observations": [{"asset": "BABA", "direction": "negative"}]}]},
+                               "observations": [{"asset": "xyz:BABA", "direction": "negative", "funding": "0.010%", "open_interest": "100", "premium": "0.10%"}]}]},
         },
     })
 
@@ -706,3 +744,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
