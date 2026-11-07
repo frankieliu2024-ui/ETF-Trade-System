@@ -1487,11 +1487,11 @@ def choose_event(mode: str) -> dict | None:
         return report_delivery_event()
     builders = (
         (report_delivery_event, execution_confirmation_event,
-         formal_decision_change_event, account_confirmation_event, system_event, decision_event, pulse_formal_decision_pending_event, formal_decision_pending_event)
+         formal_decision_change_event, account_confirmation_event, system_event, decision_event, formal_decision_pending_event)
         if (_report_handoff_path() is not None or _report_delivery_path() is not None)
         else
         (execution_confirmation_event, formal_decision_change_event,
-        account_confirmation_event, system_event, decision_event, pulse_formal_decision_pending_event, formal_decision_pending_event, report_delivery_event)
+        account_confirmation_event, system_event, decision_event, formal_decision_pending_event, report_delivery_event)
     )
     for builder in builders:
         event = builder()
