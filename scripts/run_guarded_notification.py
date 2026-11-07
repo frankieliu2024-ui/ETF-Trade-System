@@ -408,16 +408,6 @@ def _hyperliquid_mapping_metadata(asset: str, label: str) -> tuple[str, str]:
     return family, relation
 
 
-def _hyperliquid_signal_value(signal_row: str) -> str:
-    """Translate changed fields into decision-relevant plain language."""
-    meanings = []
-    if "资金费率" in signal_row:
-        meanings.append("多空持仓成本发生变化，提示杠杆拥挤方向需要复核")
-    if "未平仓量" in signal_row:
-        meanings.append("未平仓规模发生变化，提示杠杆参与和潜在波动风险需要复核")
-    if "溢价" in signal_row:
-        meanings.append("相对参考价格的偏离发生变化，提示情绪或流动性偏离需要复核")
-    return "；".join(meanings) or "外部决策信号发生变化"
 
 
 def _hyperliquid_plain_signal_basis(signal_changes: list[str]) -> str:
