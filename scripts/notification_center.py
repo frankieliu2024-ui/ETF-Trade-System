@@ -1810,6 +1810,16 @@ def render_canonical_notification(event: dict) -> dict | None:
     # interrupt renderer must not rewrite its title, body, or envelope.
     if str(event.get("event_type") or "") == "REPORT_DELIVERY_REQUEST":
         return event
+    # Pulse producers already provide the final compact user body. Do not
+    # wrap it again with the legacy interrupt template, which would append
+    # machine audit fields such as before/after snapshots to PushPlus.
+    if (
+        str(event.get("event_type") or "") == "PULSE_FACT_UPDATE"
+        and str(event.get("presentation_contract") or "") == "PULSE_COMPACT_V1"
+    ):
+        rendered = dict(event)
+        rendered["template_family"] = "市场异动"
+        return rendered
     family = canonical_template_family(event)
     if family is None:
         return None
