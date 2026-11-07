@@ -198,6 +198,50 @@ def _hyperliquid_relevant_asset_objects() -> dict[str, list[str]]:
     return result
 
 
+def _pulse_candidate_identity(item: dict) -> str:
+    """Return the stable business identity used for Discovery comparison."""
+    return str(
+        item.get("candidate_signature")
+        or item.get("code")
+        or item.get("security_code")
+        or item.get("symbol")
+        or item.get("name")
+        or ""
+    ).strip()
+
+
+def _discovery_candidates_changed(before: dict, after: dict) -> bool:
+    """Ignore pulse metadata changes when the evaluated candidate set is unchanged."""
+    before_ids = {
+        _pulse_candidate_identity(item)
+        for item in (before.get("candidates") or [])
+        if isinstance(item, dict) and _pulse_candidate_identity(item)
+    }
+    after_ids = {
+        _pulse_candidate_identity(item)
+        for item in (after.get("candidates") or [])
+        if isinstance(item, dict) and _pulse_candidate_identity(item)
+    }
+    return before_ids != after_ids
+
+
+def _hyperliquid_decision_signal_changed(before: dict, after: dict) -> bool:
+    """Only decision-bearing HL fields can qualify for a user pulse.
+
+    Price snapshots remain machine evidence; funding, open interest and premium
+    are the fields that can explain timing, crowding or liquidity implications.
+    """
+    old = _hyperliquid_signal_fingerprint(before)
+    new = _hyperliquid_signal_fingerprint(after)
+    for asset in set(old) | set(new):
+        before_item = old.get(asset, {})
+        after_item = new.get(asset, {})
+        if any(before_item.get(key) != after_item.get(key)
+               for key in ("funding", "open_interest", "premium")):
+            return True
+    return False
+
+
 def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | None:
     # A first Hyperliquid snapshot establishes the comparison baseline. With
     # no prior observations, every asset would otherwise look "new" and the
@@ -241,6 +285,8 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
     comparable_after = {key: value for key, value in after_fact.items() if key not in {"identity", "fact_time_beijing"}}
     if comparable_before == comparable_after:
         return None
+    if source == "discovery_pulse" and not _discovery_candidates_changed(before, after):
+        return None
     added = sorted(set(after_objects) - set(before_objects))
     removed = sorted(set(before_objects) - set(after_objects))
     changed = sorted(set(before_objects) & set(after_objects))
@@ -256,6 +302,8 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
         change_lines.append("对象集合未变，但状态、覆盖或数量发生变化。")
     signal_changes = []
     if source == "hyperliquid_pulse":
+        if not _hyperliquid_decision_signal_changed(before, after):
+            return None
         signal_changes = _hyperliquid_signal_changes(before, after)
         if signal_changes:
             change_lines.append("可比信号变化：" + "；".join(signal_changes[:12]))
