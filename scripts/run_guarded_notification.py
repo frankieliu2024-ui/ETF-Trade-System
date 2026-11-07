@@ -505,7 +505,8 @@ def _discovery_reason(item: dict) -> str:
     if isinstance(spot, dict) and spot.get("turnover_pct") not in (None, ""):
         node_detail.append(f"成交承接{float(spot['turnover_pct']):+.1f}%")
     if has_trend and has_node:
-        return "、".join(trend_detail + node_detail) + "，趋势与节点承接同步改善"
+        return ("、".join(trend_detail + node_detail)
+                + "；5日和20日均为正，说明不是单日波动，且本节点上涨得到成交承接配合")
     if has_trend:
         return "、".join(trend_detail) + "，中短期趋势出现持续性变化"
     if has_node:
@@ -693,7 +694,7 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
         all_labels[0],
     )
     if discovery_changed and hl_labels and overlap:
-        title = f"【市场异动】{primary}趋势改善，海外生物科技信号同步"
+        title = f"【市场异动】{primary}趋势改善，但海外生物科技风险上升"
     elif discovery_changed and hl_labels:
         discovery_title = "、".join(discovery_labels[:3])
         hl_title = "、".join(hl_labels[:3])
@@ -729,8 +730,9 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
         }
         hl_text = "；".join(
             f"{asset.split(':', 1)[-1]}对应{', '.join(labels)}，代表美国生物科技与创新药方向；"
-            f"{_hyperliquid_user_change(asset, before_by_asset.get(asset, {}), after_by_asset.get(asset, {}))}，"
-            f"因而用于判断{', '.join(labels)}的产业方向和入场时机"
+            f"{_hyperliquid_user_change(asset, before_by_asset.get(asset, {}), after_by_asset.get(asset, {}))}；"
+            f"对{', '.join(labels)}的具体含义是：外部环境风险上升，不能作为该ETF上涨依据，"
+            f"只有该ETF自身继续走强时，才可视为外部风险未形成压制"
             for asset, labels in list(bindings.items())[:4]
             if labels
         ) or f"相关外部参照出现{basis}。"
@@ -752,8 +754,8 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
 
     if overlap:
         core_conclusion = (
-            f"【核心结论】{primary}自身趋势和成交承接改善，同时海外生物科技方向出现同步信号；"
-            f"{relation}，当前主要用于{impact}，不代表自动交易。"
+            f"【核心结论】{primary}自身趋势和成交承接改善，但海外生物科技方向风险上升；"
+            f"当前不能据此提高交易判断。"
         )
     elif discovery_changed and hl_labels:
         core_conclusion = (
@@ -777,8 +779,8 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
         f"{core_conclusion}\n\n"
         f"【Discovery依据】{discovery_text}\n\n"
         f"【Hyperliquid依据】{hl_text}\n\n"
-        f"【下一步核对】继续核对{primary}自身走势是否保持强势；若继续同步，外部信号可作为支持依据；若背离，只保留为风险提示。\n\n"
-        f"【当前边界】外部参照不是A股ETF，不能直接替代该ETF判断；系统不自动下单、不自动调仓。"
+        f"【下一步核对】只核对{primary}自身走势是否继续走强并保持成交承接；若不能同步，外部信号按风险提示处理。\n\n"
+        f"【当前边界】不自动下单、不自动调仓。"
     )
     evidence_time = str(
         discovery_after.get("formed_at_beijing")
