@@ -159,6 +159,11 @@ def _hyperliquid_asset_explanation(asset: str) -> str:
 
 
 def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | None:
+    # A first Hyperliquid snapshot establishes the comparison baseline. With
+    # no prior observations, every asset would otherwise look "new" and the
+    # full venue catalogue would leak into a user notification.
+    if source == "hyperliquid_pulse" and not (before.get("observations") or []):
+        return None
     before_objects = sorted(
         _pulse_object_label(x)
         for x in (before.get("candidates") or before.get("observations") or [])
@@ -209,10 +214,27 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
         change_lines.append("延续对象：" + "、".join(changed))
     if not change_lines:
         change_lines.append("对象集合未变，但状态、覆盖或数量发生变化。")
+    signal_changes = []
     if source == "hyperliquid_pulse":
         signal_changes = _hyperliquid_signal_changes(before, after)
         if signal_changes:
             change_lines.append("可比信号变化：" + "；".join(signal_changes[:12]))
+        # The machine comparison may cover hundreds of assets, but the
+        # user-facing pulse must contain only a bounded representative set.
+        changed_assets = {item.split("：", 1)[0] for item in signal_changes}
+        before_objects = [item for item in before_objects if item.split("（", 1)[0] in changed_assets]
+        after_objects = [item for item in after_objects if item.split("（", 1)[0] in changed_assets]
+        if not changed_assets:
+            return None
+        before_objects = before_objects[:12]
+        after_objects = after_objects[:12]
+        before_fact["objects"] = before_objects
+        after_fact["objects"] = after_objects
+        before_fact["observation_count"] = len(before_objects)
+        after_fact["observation_count"] = len(after_objects)
+        added = sorted(set(after_objects) - set(before_objects))
+        removed = sorted(set(before_objects) - set(after_objects))
+        changed = sorted(set(before_objects) & set(after_objects))
     if source == "discovery_pulse":
         core = "全市场候选出现新增或变化，值得提前纳入下一次正式判断。"
         value = "它的价值是把原本容易错过的全市场候选变化提前提示出来，帮助正式决策比较现金、持仓、观察ETF和新候选；但候选出现不等于买入机会。"
@@ -223,6 +245,7 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
             _hyperliquid_asset_explanation(str(item.get("asset") or "").strip())
             for item in (after.get("observations") or [])
             if str(item.get("asset") or "").strip()
+            and (source != "hyperliquid_pulse" or str(item.get("asset") or "").strip() in changed_assets)
         ]
         external_text = "；".join(external_explanations)
         if external_text:
