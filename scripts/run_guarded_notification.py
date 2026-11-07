@@ -436,7 +436,7 @@ def _hyperliquid_user_scope(
     }
     labels = []
     rows = []
-    bindings = []
+    bindings = {}
     for asset in sorted(changed_assets):
         mapped = (relevant_objects.get(asset) or [])[:2]
         labels.extend(mapped)
@@ -455,11 +455,7 @@ def _hyperliquid_user_scope(
                     impact = "间接影响该ETF的市场风险偏好和时机判断"
                 else:
                     impact = "间接影响该ETF的风格、拥挤风险和时机判断"
-                bindings.append(
-                    f"{display_asset}（外部参照）→ {label}（{relation}）："
-                    f"{impact}；当前价值是提高该ETF下一节点的复核优先级，"
-                    "但尚不能单独证明A股方向已经改变，也不构成交易动作。"
-                )
+                bindings.setdefault(asset, []).append(label)
     deduped = []
     seen_codes = set()
     for label in labels:
@@ -468,7 +464,7 @@ def _hyperliquid_user_scope(
             continue
         seen_codes.add(code)
         deduped.append(label)
-    return deduped[:4], rows[:6], sorted(changed_assets), bindings[:8]
+    return deduped[:4], rows[:6], sorted(changed_assets), bindings
 
 
 def _pulse_object_impact(source: str, related_text: str, added: list[str], removed: list[str]) -> str:
