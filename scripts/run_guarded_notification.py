@@ -652,7 +652,7 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
             "【下一步核对】核对趋势能否持续、成交是否有承接，并与现金、现有持仓和其他观察对象比较。\n\n"
             "【当前边界】不授予Trial、Confirm、买入、卖出或调仓权限，不代表已经发生实际成交。"
         )
-        title = f"【市场异动】新增候选：{headline}"
+        title = f"【市场异动】{headline}进入候选池"
     else:
         canonical_labels = _canonicalize_etf_labels(related_labels)
         short_names = "、".join(label.split("（", 1)[0] for label in canonical_labels[:3]) or "相关ETF"
@@ -681,15 +681,17 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
         impact_text = "；".join(impact_lines) or "本次外部信号没有形成可解释的ETF映射"
         signal_basis = _hyperliquid_plain_signal_basis(signal_changes)
         title_subject = short_names if len(canonical_labels) <= 1 else f"{canonical_labels[0].split('（', 1)[0]}等{len(canonical_labels)}只ETF"
+        title_asset = next(iter(sorted(changed_assets)), "")
+        title_external = title_asset.split(":", 1)[-1] or "外部方向"
+        title = f"【市场异动】{title_external}方向变化，{title_subject}出现外部映射"
         content = (
-            f"【核心结论】{short_names}受到{signal_basis}影响，"
-            "下一节点应优先核对这些ETF自身是否同步；这不是A股方向已改变或交易信号。\n\n"
+            f"【核心结论】{short_names}出现外部方向映射，"
+            "下一节点应核对ETF自身是否同步；这不是A股方向已经改变，也不是交易信号。\n\n"
             f"【发生了什么】影响依据：{signal_basis}；{impact_text}。\n\n"
-            "【下一步核对】逐只核对ETF自身走势、成交承接和相对强弱；同步时可提高方向确认或时机判断优先级，"
-            "背离时只保留为风险提示。\n\n"
+            "【下一步核对】逐只核对ETF自身走势、成交承接和相对强弱；同步时用于方向确认或时机判断，"
+            "背离时仅用于风险过滤。\n\n"
             "【当前边界】外部资产不是A股ETF，不能直接等同或据此买卖；不自动交易。"
         )
-        title = f"【市场异动】{title_subject}受{signal_basis}影响"
     return {
         "key": f"pulse:{source}:{after.get('identity')}",
         "event_type": "PULSE_FACT_UPDATE",
