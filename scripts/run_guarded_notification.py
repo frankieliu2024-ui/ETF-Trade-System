@@ -695,6 +695,8 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
             "discovery_identity": discovery_after.get("identity"),
             "hyperliquid_identity": hyper_after.get("identity"),
             "evidence_time_beijing": evidence_time,
+            "before_fact": "Discovery与Hyperliquid已有可比前序事实",
+            "after_fact": "Discovery与Hyperliquid本次窗口事实已完成ETF级合并",
         },
         "delivery_mode": "COMPACT",
     }
