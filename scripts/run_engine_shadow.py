@@ -35,13 +35,18 @@ def run(root: Path) -> dict:
 
         hyperliquid_result = build_hyperliquid()
 
+    try:
+        discovery_output = str(Path(discovery_result["output"]).relative_to(root))
+    except (KeyError, ValueError):
+        discovery_output = str(discovery_result.get("output", ""))
+
     return {
         "schema_version": "1.0",
         "mode": "INDEPENDENT_ENGINE_SHADOW",
         "read_only": True,
         "notification_emitted": False,
         "canonical_state_published": False,
-        "discovery": discovery_result,
+        "discovery": {**discovery_result, "output": discovery_output},
         "hyperliquid": {
             "status": hyperliquid_result.get("quality_status", "MISSING"),
             "context_id": hyperliquid_result.get("context_id", ""),
