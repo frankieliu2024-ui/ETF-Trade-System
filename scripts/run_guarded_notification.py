@@ -150,7 +150,11 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
         "observation_count": after.get("observation_count"),
         "objects": after_objects,
     }
-    if before_fact == after_fact:
+    # Identity and timestamp change on every pulse; they are audit metadata,
+    # not user-visible market change. Suppress no-op pulses such as 0 -> 0.
+    comparable_before = {key: value for key, value in before_fact.items() if key not in {"identity", "fact_time_beijing"}}
+    comparable_after = {key: value for key, value in after_fact.items() if key not in {"identity", "fact_time_beijing"}}
+    if comparable_before == comparable_after:
         return None
     added = sorted(set(after_objects) - set(before_objects))
     removed = sorted(set(before_objects) - set(after_objects))
