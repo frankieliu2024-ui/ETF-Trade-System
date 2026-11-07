@@ -487,15 +487,58 @@ def _discovery_reason(item: dict) -> str:
     )
     role = str(item.get("object_role") or item.get("role") or "").strip()
     state = str(item.get("state") or item.get("status") or item.get("lifecycle") or "").strip()
+    returns = ((spot.get("window_returns") if isinstance(spot, dict) else None) or
+               ((item.get("surfaced_states") or [{}])[0].get("evidence") or {}).get("window_returns") or {})
+    def pct_text(value):
+        try:
+            return f"{float(value) * 100:+.1f}%"
+        except (TypeError, ValueError):
+            return "数据缺失"
+    trend_detail = []
+    if returns.get("5") is not None:
+        trend_detail.append(f"5日{pct_text(returns.get('5'))}")
+    if returns.get("20") is not None:
+        trend_detail.append(f"20日{pct_text(returns.get('20'))}")
+    node_detail = []
+    if isinstance(spot, dict) and spot.get("change_pct") not in (None, ""):
+        node_detail.append(f"节点涨跌{float(spot['change_pct']):+.1f}%")
+    if isinstance(spot, dict) and spot.get("turnover_pct") not in (None, ""):
+        node_detail.append(f"成交承接{float(spot['turnover_pct']):+.1f}%")
     if has_trend and has_node:
-        return "中短期趋势与节点成交承接共同改善"
+        return "、".join(trend_detail + node_detail) + "，趋势与节点承接同步改善"
     if has_trend:
-        return "中短期趋势出现持续性变化"
+        return "、".join(trend_detail) + "，中短期趋势出现持续性变化"
     if has_node:
-        return "节点表现与成交承接出现同步变化"
+        return "、".join(node_detail) + "，节点表现与成交承接出现同步变化"
     if role or state:
         return "ETF在Discovery中的评估角色或状态发生变化"
     return "ETF进入了新的Discovery评估范围"
+
+
+def _hyperliquid_user_change(asset: str, before: dict, after: dict) -> str:
+    """State the economic direction of a HL change without raw metric labels."""
+    parts = []
+    old_funding, new_funding = _number(before.get("funding")), _number(after.get("funding"))
+    if old_funding is not None and new_funding is not None:
+        if new_funding < old_funding and new_funding < 0:
+            parts.append("看空一侧拥挤加深")
+        elif new_funding > old_funding and new_funding > 0:
+            parts.append("看多一侧拥挤加深")
+        elif old_funding * new_funding < 0:
+            parts.append("多空拥挤方向发生反转")
+        else:
+            parts.append("多空拥挤程度发生变化")
+    old_oi, new_oi = _number(before.get("open_interest")), _number(after.get("open_interest"))
+    if old_oi and new_oi and (new_oi - old_oi) / abs(old_oi) >= 0.05:
+        parts.append("参与资金增加，潜在波动风险上升")
+    elif old_oi and new_oi and (new_oi - old_oi) / abs(old_oi) <= -0.05:
+        parts.append("参与资金减少，潜在波动压力缓和")
+    old_premium, new_premium = _number(before.get("premium")), _number(after.get("premium"))
+    if old_premium is not None and new_premium is not None and abs(new_premium) > abs(old_premium):
+        parts.append("价格偏离扩大，情绪风险上升")
+    elif old_premium is not None and new_premium is not None and abs(new_premium) < abs(old_premium):
+        parts.append("价格偏离收窄，情绪趋于稳定")
+    return "；".join(dict.fromkeys(parts)) or "外部方向和参与程度发生了足以影响判断的变化"
 
 
 def _discovery_candidate_has_user_value(item: dict) -> bool:
@@ -669,6 +712,16 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
         discovery_text = "本次未发现新的Discovery状态变化，但相关ETF仍在当前评估范围内。"
     if hl_labels:
         basis = "外部信号方向发生变化"
+        before_by_asset = {
+            str(item.get("asset") or "").strip(): item
+            for item in (hyper_before.get("observations") or [])
+            if isinstance(item, dict)
+        }
+        after_by_asset = {
+            str(item.get("asset") or "").strip(): item
+            for item in (hyper_after.get("observations") or [])
+            if isinstance(item, dict)
+        }
         change_by_asset = {
             row.split("：", 1)[0]: row
             for row in human_changes
@@ -676,7 +729,8 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
         }
         hl_text = "；".join(
             f"{asset.split(':', 1)[-1]}对应{', '.join(labels)}，代表美国生物科技与创新药方向；"
-            f"该方向的外部信号发生变化，因而用于判断{', '.join(labels)}的产业方向和入场时机"
+            f"{_hyperliquid_user_change(asset, before_by_asset.get(asset, {}), after_by_asset.get(asset, {}))}，"
+            f"因而用于判断{', '.join(labels)}的产业方向和入场时机"
             for asset, labels in list(bindings.items())[:4]
             if labels
         ) or f"相关外部参照出现{basis}。"
@@ -830,7 +884,8 @@ def _pulse_test_candidates() -> list[dict]:
                        "candidate_count": 2, "observations": [{"asset": "xyz:BABA", "direction": "negative", "funding": "0.030%", "open_interest": "120", "premium": "0.40%"},
                                                               {"asset": "xyz:XBI", "direction": "positive", "funding": "-0.020%", "open_interest": "80", "premium": "-0.15%"}]},
             "days": {"test": [{**base, "identity": f"PULSE_TEST_HYPERLIQUID_BEFORE{suffix}", "formed_at_beijing": "2026-11-06T15:19:30+08:00",
-                               "observations": [{"asset": "xyz:BABA", "direction": "negative", "funding": "0.010%", "open_interest": "100", "premium": "0.10%"}]}]},
+                               "observations": [{"asset": "xyz:BABA", "direction": "negative", "funding": "0.010%", "open_interest": "100", "premium": "0.10%"},
+                                                  {"asset": "xyz:XBI", "direction": "positive", "funding": "-0.010%", "open_interest": "70", "premium": "-0.10%"}]}]},
         },
     })
 
