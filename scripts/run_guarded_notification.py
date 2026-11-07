@@ -620,6 +620,10 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
         if re.search(r"[（(](\d{6})[）)]", text)
     }
     overlap = discovery_codes & hl_codes
+    # User-visible pulses require both engines to identify the same ETF.
+    # Different-object evidence remains machine/audit state and is silent.
+    if not overlap:
+        return None
     primary = next(
         (text for text in all_labels if re.search(r"[（(](\d{6})[）)]", text)
          and re.search(r"[（(](\d{6})[）)]", text).group(1) in overlap),
