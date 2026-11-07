@@ -81,6 +81,7 @@ class HyperliquidPulseNotificationPayloadTests(unittest.TestCase):
         self.assertLess(len(hyperliquid["content"].encode("utf-8")), 8_000)
         self.assertNotIn("xyz:BABA", hyperliquid["content"])
         self.assertNotIn("xyz:XBI", hyperliquid["content"])
+        self.assertNotIn("159056", hyperliquid["content"])
 
 
 if __name__ == "__main__":
