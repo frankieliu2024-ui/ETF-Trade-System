@@ -10,7 +10,9 @@ def test_legacy_pulse_builders_are_deleted_and_guarded_path_is_canonical():
     assert "def pulse_formal_decision_pending_event" not in text
     guarded = (ROOT / "scripts/run_guarded_notification.py").read_text(encoding="utf-8")
     assert "def _pulse_candidates" in guarded
-    assert "def _pulse_event" in guarded
+    assert "def _integrated_pulse_event" in guarded
+    assert "def _pulse_candidates_from_payloads" in guarded
+    assert "def _pulse_event" not in guarded
 
 
 def test_us_scheduled_pulse_binds_workflow_run_identity():

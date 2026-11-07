@@ -732,8 +732,7 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
         return _pulse_object_label(row)
 
     discovery_labels = [label(row) for row in discovery_changed]
-    all_labels = _canonicalize_etf_labels(discovery_labels + hl_labels)
-    if not all_labels:
+    if not discovery_labels and not hl_labels:
         return None
     discovery_codes = {
         re.search(r"[（(](\d{6})[）)]", text).group(1)
@@ -773,6 +772,10 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
         for asset, labels in bindings.items()
     }
     bindings = {asset: labels for asset, labels in bindings.items() if labels}
+    discovery_labels = [label(row) for row in discovery_changed]
+    all_labels = _canonicalize_etf_labels(discovery_labels + hl_labels)
+    if not all_labels:
+        return None
     primary = next(
         (text for text in all_labels if re.search(r"[（(](\d{6})[）)]", text)
          and re.search(r"[（(](\d{6})[）)]", text).group(1) in overlap),
