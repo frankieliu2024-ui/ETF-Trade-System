@@ -505,19 +505,32 @@ def _discovery_reason(item: dict) -> str:
     if states_text:
         evidence_parts.append("状态证据：" + "、".join(dict.fromkeys(states_text)))
 
-    returns = {}
-    for state_item in (item.get("surfaced_states") or []):
-        if isinstance(state_item, dict):
-            returns.update((state_item.get("evidence") or {}).get("window_returns") or {})
-    returns.update((spot.get("window_returns") if isinstance(spot, dict) else None) or {})
     def pct_text(value):
         try:
             return f"{float(value) * 100:+.1f}%"
         except (TypeError, ValueError):
             return "数据缺失"
+    returns = {}
+    state_detail = []
+    for state_item in (item.get("surfaced_states") or []):
+        if isinstance(state_item, dict):
+            evidence = state_item.get("evidence") or {}
+            returns.update(evidence.get("window_returns") or {})
+            for key, label in (("return_10", "10日"), ("return_40", "40日")):
+                if evidence.get(key) is not None:
+                    state_detail.append(f"{label}{pct_text(evidence[key])}")
+            if evidence.get("max_drawdown_60") is not None:
+                state_detail.append(f"60日最大回撤{float(evidence['max_drawdown_60']) * 100:.1f}%")
+            if evidence.get("short_vs_long_normalized_gap") is not None:
+                state_detail.append(f"短长趋势差{pct_text(evidence['short_vs_long_normalized_gap'])}")
+            if evidence.get("short_vs_medium_normalized_gap") is not None:
+                state_detail.append(f"短中趋势差{pct_text(evidence['short_vs_medium_normalized_gap'])}")
+    returns.update((spot.get("window_returns") if isinstance(spot, dict) else None) or {})
     trend_detail = [f"{w}日{pct_text(returns[w])}" for w in ("5", "10", "20", "40", "60") if returns.get(w) is not None]
     if trend_detail:
         evidence_parts.append("区间表现：" + "、".join(trend_detail))
+    if state_detail:
+        evidence_parts.append("状态细节：" + "、".join(dict.fromkeys(state_detail)))
     if isinstance(spot, dict):
         node = []
         labels = (("change_pct", "本节点涨跌", True), ("amplitude_pct", "日内振幅", True),
