@@ -242,6 +242,27 @@ def _hyperliquid_decision_signal_changed(before: dict, after: dict) -> bool:
     return False
 
 
+def _pulse_signal_explanation(signal_changes: list[str]) -> str:
+    """Translate machine signal names into concise user-facing meaning."""
+    explanations = []
+    joined = "、".join(signal_changes)
+    if "资金费率" in joined:
+        explanations.append("资金费率反映多空持仓的周期性资金成本，变化说明做多或做空的一方正在变得更拥挤")
+    if "未平仓量" in joined:
+        explanations.append("未平仓量反映市场中尚未平仓的合约规模，变化说明参与资金和风险暴露正在增加或减少")
+    if "溢价" in joined:
+        explanations.append("溢价反映合约价格相对参考现货的偏离，扩大通常意味着情绪或流动性出现变化")
+    return "；".join(explanations)
+
+
+def _pulse_object_impact(source: str, related_text: str, added: list[str], removed: list[str]) -> str:
+    objects = related_text or "相关ETF对象"
+    if source == "discovery_pulse":
+        changed = "、".join((added + removed)[:6]) or objects
+        return f"对ETF系统的具体价值是：把{changed}这类候选变化提前交给正式决策，与现金、现有持仓和观察ETF比较；它改变的是下一节点的核对重点，不等于已经出现买入机会。"
+    return f"对ETF系统的具体价值是：为{objects}提供A股交易时段之外的方向、时机或拥挤风险线索；下一次正式判断要先核对这些ETF自身是否同步，再决定维持观察、继续持有或调整机会排序，不把外部资产直接当成A股ETF。"
+
+
 def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | None:
     # A first Hyperliquid snapshot establishes the comparison baseline. With
     # no prior observations, every asset would otherwise look "new" and the
@@ -329,7 +350,7 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
         changed = sorted(set(before_objects) & set(after_objects))
     if source == "discovery_pulse":
         core = "全市场候选出现新增或变化，值得提前纳入下一次正式判断。"
-        value = "它的价值是把原本容易错过的全市场候选变化提前提示出来，帮助正式决策比较现金、持仓、观察ETF和新候选；但候选出现不等于买入机会。"
+        value = _pulse_object_impact(source, "、".join((added + removed)[:6]), added, removed)
         action = "下一次正式判断重点核对候选自身强弱、持续性、外部方向和与现金/持仓的竞争关系。"
     else:
         core = "跨市场外部资产出现可比变化，可能影响相关A股ETF的方向判断和时机判断。"
@@ -348,7 +369,10 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
         related_text = "、".join(list(dict.fromkeys(related_labels))[:12])
         if related_text:
             core += f" 对应当前ETF对象：{related_text}。"
-        value = "它的价值是提供A股交易时段之外的风险偏好、方向一致性和拥挤度线索，帮助正式决策识别同步、背离和风险扩散；不能单独触发交易。"
+        signal_explanation = _pulse_signal_explanation(signal_changes)
+        value = _pulse_object_impact(source, related_text, added, removed)
+        if signal_explanation:
+            value += "具体来说，" + signal_explanation + "。"
         action = "下一次正式判断重点核对相关A股ETF自身反馈，并判断外部信号是同步确认、暂时背离还是仅供风险过滤。上述外部资产不是A股ETF，不能与A股对象直接等同。"
     content = (
         f"【核心结论】{core}\n\n"
