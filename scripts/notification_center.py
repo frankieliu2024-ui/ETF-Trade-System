@@ -967,6 +967,59 @@ def decision_event() -> dict | None:
     }
 
 
+def _meaningful_unreconciled_account_changes(account: dict) -> list[dict]:
+    """Return only account changes that still require user confirmation.
+
+    Reconciled IPO registrations and other explicitly settled events are
+    canonical facts, not unexplained account changes.  Keep this helper as the
+    single account-confirmation predicate used by the notification center and
+    its reliability contract tests.
+    """
+    meaningful = []
+    for event in account.get("account_change_events_after_confirmed_at") or []:
+        if not isinstance(event, dict):
+            continue
+        status = str(event.get("reconciliation_status") or "").upper()
+        if status in {
+            "RECONCILED_BY_KNOWN_IPO_REGISTRATION",
+            "RECONCILED",
+            "CONFIRMED",
+            "SETTLED",
+        }:
+            continue
+        if status in {"UNRECONCILED_ACCOUNT_CHANGE", "UNKNOWN", ""}:
+            meaningful.append(event)
+    return meaningful
+
+
+def account_confirmation_event() -> dict | None:
+    """Build the canonical account-confirmation event from current account facts."""
+    account = read_json(STATE / "account_fact.json", {})
+    changes = _meaningful_unreconciled_account_changes(account)
+    if not changes:
+        return None
+    details = []
+    for event in changes:
+        label = str(event.get("object") or event.get("code") or "未识别对象")
+        delta = event.get("quantity_delta")
+        suffix = f"，数量变化 {delta}" if delta not in (None, "") else ""
+        details.append(f"{label}{suffix}")
+    return {
+        "key": "account-confirmation:" + ",".join(str(x.get("event_id") or "") for x in changes),
+        "type": "账户确认",
+        "event_type": "ACCOUNT_FACT_CONFIRMATION",
+        "title": "【账户确认】发现未解释的持仓/资金变化",
+        "content": "；".join(details),
+        "source": "account_fact",
+        "user_severity": "需要确认",
+        "user_action": "请确认是否存在实际成交或资金划转。",
+        "confirmation_context": {
+            "account_event_ids": [str(x.get("event_id") or "") for x in changes],
+            "security_code": str(changes[0].get("code") or ""),
+        },
+    }
+
+
 def _pulse_records(index: dict) -> list[dict]:
     rows = []
     for day_rows in (index.get("days") or {}).values():
