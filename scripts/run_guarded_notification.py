@@ -433,7 +433,7 @@ def main() -> int:
     parser.add_argument("family", choices=["center", "regional", "shock", "us", "batch"])
     parser.add_argument("--mode", choices=["event", "close", "close-test", "channel-test"], default="event")
     parser.add_argument("--formal-content-file")
-    parser.add_argument("--market", choices=["a-share", "apac", "asia", "us", "pulse-test"])
+    parser.add_argument("--market", choices=["a-share", "apac", "asia", "us", "pulse", "pulse-test"])
     args = parser.parse_args()
 
     if args.family == "center":
