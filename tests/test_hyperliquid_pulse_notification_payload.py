@@ -50,7 +50,7 @@ class HyperliquidPulseNotificationPayloadTests(unittest.TestCase):
         self.assertIn("对该ETF的当前影响", event["content"])
         self.assertIn("时机与风险过滤", event["content"])
         self.assertNotIn("C →", event["content"])
-        self.assertIn("多空持仓成本", event["content"])
+        self.assertIn("方向确认", event["content"])
         self.assertNotIn("BTC", event["content"])
 
     def test_user_payload_does_not_leak_unmapped_venue_assets(self):
