@@ -225,6 +225,16 @@ class AShareProductionChainTests(unittest.TestCase):
                 self.assertIsNone(result["scheduled_slot_at"])
                 self.assertIsNotNone(result["latest_candidate_slot_at"])
 
+    def test_apac_schedule_run_id_verifies_one_natural_pulse_occurrence(self):
+        result = resolve_scheduled_pulse(
+            "5,15,25,35,45,55 0-7 * * 1-5",
+            datetime.fromisoformat("2026-09-08T14:05:00+08:00"),
+            occurrence_id="42315314045",
+        )
+        self.assertTrue(result["natural_pulse_eligible"])
+        self.assertEqual(result["natural_pulse_identity_status"], "VERIFIED")
+        self.assertEqual(result["occurrence_identity_source"], "github.workflow_run_id")
+        self.assertTrue(result["natural_pulse_identity"].startswith("schedule:42315314045:"))
 
 
 class ManualRequestSessionAnchorTests(unittest.TestCase):
