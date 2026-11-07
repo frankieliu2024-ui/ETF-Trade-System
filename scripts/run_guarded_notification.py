@@ -208,12 +208,18 @@ def _hyperliquid_relevant_asset_objects() -> dict[str, list[str]]:
             continue
         asset = str(row.get("asset") or "").strip()
         markers = [str(marker).strip().lower() for marker in (row.get("name_markers") or []) if str(marker).strip()]
+        excluded_row_markers = [str(marker).strip().lower() for marker in (row.get("exclude_name_markers") or []) if str(marker).strip()]
         if not asset or not markers:
             continue
         labels = []
         for code, name in normalized:
             if any(marker in name.lower() for marker in markers):
                 labels.append(f"{name}（{code}）" if name and code else (name or code))
+        if excluded_row_markers:
+            labels = [
+                label for label in labels
+                if not any(marker in label.lower() for marker in excluded_row_markers)
+            ]
         family = str(row.get("family") or "")
         preferred_markers = preferred.get(family) or ()
         excluded_markers = excluded.get(family) or ()
@@ -312,13 +318,56 @@ def _human_signal(asset: str, before: dict, after: dict) -> str:
     return f"{display}：" + "；".join(parts) if parts else ""
 
 
+def _hyperliquid_mapping_metadata(asset: str, label: str) -> tuple[str, str]:
+    """Classify the mapping and translate its decision value for users."""
+    family = ""
+    try:
+        from notification_center import ROOT, read_json
+        mapping = read_json(ROOT / "config" / "market" / "hyperliquid_etf_exposure_map.json", {})
+        for row in (mapping.get("asset_mappings") or []):
+            if str(row.get("asset") or "").strip() == str(asset).strip():
+                family = str(row.get("family") or "")
+                break
+    except Exception:
+        pass
+    label_name = label.split("（", 1)[0]
+    direct_markers = {
+        "BIOTECH": ("创新药", "医药", "医疗", "生物"),
+        "SEMICONDUCTOR": ("半导体", "芯片"),
+        "SEMICONDUCTOR_HIGH_BETA": ("半导体", "芯片"),
+        "MEMORY": ("存储", "内存", "半导体", "芯片"),
+        "AI_COMPUTE": ("人工智能", "算力", "半导体", "芯片"),
+        "AI_NETWORKING": ("人工智能", "算力", "通信"),
+        "ENERGY": ("能源", "油气", "煤炭", "化工", "石化"),
+    }
+    if any(marker in label_name for marker in (direct_markers.get(family) or ())):
+        relation = "直接/产业链关系"
+    elif family in {"KOREA_EQUITY", "JAPAN_EQUITY", "TAIWAN_EQUITY", "GLOBAL_RISK_APPETITE"}:
+        relation = "间接市场/风险偏好关系"
+    else:
+        relation = "间接风格或共同风险因子关系"
+    return family, relation
+
+
+def _hyperliquid_signal_value(signal_row: str) -> str:
+    """Translate changed fields into decision-relevant plain language."""
+    meanings = []
+    if "资金费率" in signal_row:
+        meanings.append("多空持仓成本发生变化，提示杠杆拥挤方向需要复核")
+    if "未平仓量" in signal_row:
+        meanings.append("未平仓规模发生变化，提示杠杆参与和潜在波动风险需要复核")
+    if "溢价" in signal_row:
+        meanings.append("相对参考价格的偏离发生变化，提示情绪或流动性偏离需要复核")
+    return "；".join(meanings) or "外部决策信号发生变化"
+
+
 def _hyperliquid_user_scope(
     before: dict,
     after: dict,
     changed_assets: set[str],
     relevant_objects: dict[str, list[str]],
 ) -> tuple[list[str], list[str], list[str], list[str]]:
-    """Build a user scope while preserving external-asset-to-ETF bindings."""
+    """Build a user scope while preserving classified asset-to-ETF bindings."""
     old_by_asset = {
         str(x.get("asset") or "").strip(): x
         for x in (before.get("observations") or [])
@@ -340,13 +389,16 @@ def _hyperliquid_user_scope(
             continue
         rows.append(row)
         display_asset = asset.split(":", 1)[-1]
+        signal_text = row.split("：", 1)[-1]
         if mapped:
-            bindings.append(
-                f"{display_asset} → " + "、".join(mapped)
-                + f"：{row.split('：', 1)[-1]}"
-                + "；对该ETF的当前影响：尚未完成与A股自身走势、成交承接和相对强弱的同步核验，"
-                "目前只能作为该ETF下一节点的时机与风险过滤，不足以单独判定支持、反向或交易动作。"
-            )
+            for label in mapped:
+                _, relation = _hyperliquid_mapping_metadata(asset, label)
+                bindings.append(
+                    f"{display_asset} → {label}（{relation}）：{signal_text}；"
+                    f"信号含义：{_hyperliquid_signal_value(row)}；"
+                    "当前价值：提高该ETF下一节点对方向、时机和拥挤风险的复核优先级，"
+                    "但在A股自身走势、成交承接和相对强弱核验前，不单独构成支持、反向或交易动作。"
+                )
     deduped = []
     seen_codes = set()
     for label in labels:
@@ -355,7 +407,7 @@ def _hyperliquid_user_scope(
             continue
         seen_codes.add(code)
         deduped.append(label)
-    return deduped[:4], rows[:6], sorted(changed_assets), bindings[:6]
+    return deduped[:4], rows[:6], sorted(changed_assets), bindings[:8]
 
 
 def _pulse_object_impact(source: str, related_text: str, added: list[str], removed: list[str]) -> str:
