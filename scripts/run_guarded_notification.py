@@ -466,6 +466,41 @@ def _discovery_reason(item: dict) -> str:
         return "出现" + "、".join(dict.fromkeys(states)) + "信号"
     return "本次进入候选池；入选的具体强弱依据尚未完整确认"
 
+def _discovery_candidate_has_user_value(item: dict) -> bool:
+    """Require quantitative, candidate-specific evidence before interrupting."""
+    reason = _discovery_reason(item)
+    return "尚未完整确认" not in reason and bool(reason.strip())
+
+
+def _number_value(value: object) -> float | None:
+    try:
+        return float(str(value).replace("%", "").replace(",", "").strip())
+    except (TypeError, ValueError):
+        return None
+
+
+def _hyperliquid_signal_materially_changed(before: dict, after: dict) -> bool:
+    """Require a meaningful decision-bearing change, not machine jitter."""
+    old = _hyperliquid_signal_fingerprint(before)
+    new = _hyperliquid_signal_fingerprint(after)
+    for asset in set(old) | set(new):
+        before_item, after_item = old.get(asset, {}), new.get(asset, {})
+        funding_old = _number_value(before_item.get("funding"))
+        funding_new = _number_value(after_item.get("funding"))
+        if funding_old is not None and funding_new is not None and abs(funding_new - funding_old) >= 0.00005:
+            return True
+        oi_old = _number_value(before_item.get("open_interest"))
+        oi_new = _number_value(after_item.get("open_interest"))
+        if oi_old is not None and oi_new is not None:
+            base = max(abs(oi_old), 1.0)
+            if abs(oi_new - oi_old) / base >= 0.05:
+                return True
+        premium_old = _number_value(before_item.get("premium"))
+        premium_new = _number_value(after_item.get("premium"))
+        if premium_old is not None and premium_new is not None and abs(premium_new - premium_old) >= 0.001:
+            return True
+    return False
+
 def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | None:
     # A first Hyperliquid snapshot establishes the comparison baseline. With
     # no prior observations, every asset would otherwise look "new" and the
@@ -528,6 +563,8 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
     if source == "hyperliquid_pulse":
         if not _hyperliquid_decision_signal_changed(before, after):
             return None
+        if not _hyperliquid_signal_materially_changed(before, after):
+            return None
         signal_changes = _hyperliquid_signal_changes(before, after)
         # The machine comparison may cover hundreds of assets, but the
         # user-facing pulse must contain only assets whose decision-bearing
@@ -573,6 +610,9 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
             item for item in (after.get("candidates") or [])
             if isinstance(item, dict) and _pulse_candidate_identity(item) not in before_ids
         ]
+        added_items = [item for item in added_items if _discovery_candidate_has_user_value(item)]
+        if not added_items:
+            return None
         reasons = []
         for item in added_items[:2]:
             name = str(item.get("name") or item.get("display_name") or _pulse_candidate_identity(item))
@@ -672,7 +712,9 @@ def _pulse_test_candidates() -> list[dict]:
             "latest": {**base, "identity": f"PULSE_TEST_DISCOVERY_AFTER{suffix}", "formed_at_beijing": "2026-11-06T15:20:00+08:00",
                        "candidate_count": 3, "candidates": [{"code": "513630", "name": "港股低波红利ETF摩根", "candidate_signature": "513630::OBSERVATION_FULL_EVALUATION"},
                                                             {"code": "159567", "name": "港股创新药ETF银华", "candidate_signature": "159567::OBSERVATION_FULL_EVALUATION"},
-                                                            {"code": "520550", "name": "港股红利低波ETF招商", "candidate_signature": "520550::OBSERVATION_FULL_EVALUATION"}]},
+                                                            {"code": "520550", "name": "港股红利低波ETF招商", "candidate_signature": "520550::OBSERVATION_FULL_EVALUATION",
+                                                             "surfaced_states": [{"state": "PERSISTENT_TREND", "evidence": {"window_returns": {"5": 0.03, "20": 0.04}}}],
+                                                             "discovery_spot": {"change_pct": 1.2, "turnover_pct": 8.1}}]},
             "days": {"test": [{**base, "identity": f"PULSE_TEST_DISCOVERY_BEFORE{suffix}", "formed_at_beijing": "2026-11-06T15:19:00+08:00",
                                "candidates": [{"code": "513630", "name": "港股低波红利ETF摩根", "candidate_signature": "513630::OBSERVATION_FULL_EVALUATION"},
                                               {"code": "159567", "name": "港股创新药ETF银华", "candidate_signature": "159567::OBSERVATION_FULL_EVALUATION"}]}]},
