@@ -158,6 +158,46 @@ def _hyperliquid_asset_explanation(asset: str) -> str:
     return f"{asset}：当前仅确认其为外部参照资产，具体经济暴露尚未完成确认"
 
 
+def _hyperliquid_relevant_asset_objects() -> dict[str, list[str]]:
+    """Return mapped Hyperliquid assets with current ETF decision objects."""
+    try:
+        from notification_center import ROOT, read_json
+        mapping = read_json(ROOT / "config/market/hyperliquid_etf_exposure_map.json", {})
+        universe = read_json(ROOT / "config/market/etf_monitor_universe.json", {})
+        account = read_json(ROOT / "data/state/account_fact.json", {})
+        opportunity = read_json(ROOT / "data/state/formal_opportunity_current.json", {})
+        discovery = read_json(ROOT / "data/state/formal_discovery_current.json", {})
+    except Exception:
+        return {}
+    objects = []
+    objects.extend(item for item in (universe.get("objects") or []) if isinstance(item, dict))
+    objects.extend(item for item in (account.get("positions") or []) if isinstance(item, dict))
+    objects.extend(item for item in (opportunity.get("opportunities") or []) if isinstance(item, dict))
+    discovery_rows = discovery.get("candidates") or (discovery.get("discovery") or {}).get("candidates") or []
+    objects.extend(item for item in discovery_rows if isinstance(item, dict))
+    normalized = []
+    for item in objects:
+        code = str(item.get("code") or item.get("security_code") or item.get("symbol") or "").strip()
+        name = str(item.get("name") or item.get("security_name") or item.get("display_name") or "").strip()
+        if name or code:
+            normalized.append((code, name))
+    result = {}
+    for row in (mapping.get("asset_mappings") or []):
+        if not isinstance(row, dict):
+            continue
+        asset = str(row.get("asset") or "").strip()
+        markers = [str(marker).strip().lower() for marker in (row.get("name_markers") or []) if str(marker).strip()]
+        if not asset or not markers:
+            continue
+        labels = []
+        for code, name in normalized:
+            if any(marker in name.lower() for marker in markers):
+                labels.append(f"{name}（{code}）" if name and code else (name or code))
+        if labels:
+            result[asset] = list(dict.fromkeys(labels))
+    return result
+
+
 def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | None:
     # A first Hyperliquid snapshot establishes the comparison baseline. With
     # no prior observations, every asset would otherwise look "new" and the
@@ -222,6 +262,10 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
         # The machine comparison may cover hundreds of assets, but the
         # user-facing pulse must contain only a bounded representative set.
         changed_assets = {item.split("：", 1)[0] for item in signal_changes}
+        relevant_objects = _hyperliquid_relevant_asset_objects()
+        changed_assets &= set(relevant_objects)
+        if not changed_assets:
+            return None
         before_objects = [item for item in before_objects if item.split("（", 1)[0] in changed_assets]
         after_objects = [item for item in after_objects if item.split("（", 1)[0] in changed_assets]
         if not changed_assets:
@@ -250,6 +294,12 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
         external_text = "；".join(external_explanations)
         if external_text:
             core += f" 本次外部参照为：{external_text}。"
+        related_labels = []
+        for asset in sorted(changed_assets):
+            related_labels.extend(relevant_objects.get(asset) or [])
+        related_text = "、".join(list(dict.fromkeys(related_labels))[:12])
+        if related_text:
+            core += f" 对应当前ETF对象：{related_text}。"
         value = "它的价值是提供A股交易时段之外的风险偏好、方向一致性和拥挤度线索，帮助正式决策识别同步、背离和风险扩散；不能单独触发交易。"
         action = "下一次正式判断重点核对相关A股ETF自身反馈，并判断外部信号是同步确认、暂时背离还是仅供风险过滤。上述外部资产不是A股ETF，不能与A股对象直接等同。"
     content = (
