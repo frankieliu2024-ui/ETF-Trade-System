@@ -39,9 +39,9 @@ class HyperliquidPulseNotificationPayloadTests(unittest.TestCase):
         self.assertLess(len(event["content"].encode("utf-8")), 10_000)
         self.assertIn("港股通创新药ETF工银（159217）", event["content"])
         self.assertIn("恒生科技ETF（513180）", event["content"])
-        self.assertIn("资金费率0.1→0.2", event["content"])
+        self.assertNotIn("资金费率", event["content"])
         self.assertIn("间接风格或共同风险因子关系", event["content"])
-        self.assertIn("信号含义：多空持仓成本发生变化", event["content"])
+        self.assertIn("当前价值是提高该ETF下一节点", event["content"])
         for machine_label in ("资金费率", "未平仓量", "溢价"):
             assert machine_label not in event["content"]
         assert "外部参照" in event["content"]
@@ -85,9 +85,9 @@ class HyperliquidPulseNotificationPayloadTests(unittest.TestCase):
         hyperliquid = next(event for event in events if event["source"] == "hyperliquid_pulse")
         self.assertIn("恒生科技ETF（513180）", hyperliquid["content"])
         self.assertIn("创新药ETF（159992）", hyperliquid["content"])
-        self.assertIn("资金费率", hyperliquid["content"])
-        self.assertIn("未平仓量", hyperliquid["content"])
-        self.assertIn("溢价", hyperliquid["content"])
+        self.assertNotIn("资金费率", hyperliquid["content"])
+        self.assertNotIn("未平仓量", hyperliquid["content"])
+        self.assertNotIn("溢价", hyperliquid["content"])
         self.assertLess(len(hyperliquid["content"].encode("utf-8")), 8_000)
         self.assertNotIn("xyz:BABA", hyperliquid["content"])
         self.assertNotIn("xyz:XBI", hyperliquid["content"])
