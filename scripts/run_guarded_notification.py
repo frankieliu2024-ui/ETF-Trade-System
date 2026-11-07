@@ -791,8 +791,11 @@ def _pulse_test_candidates() -> list[dict]:
     return _pulse_candidates_from_payloads({
         "discovery_pulse": {
             "latest": {**base, "identity": f"PULSE_TEST_DISCOVERY_AFTER{suffix}", "formed_at_beijing": "2026-11-06T15:20:00+08:00",
-                       "candidate_count": 3, "candidates": [{"code": "513630", "name": "港股低波红利ETF摩根", "candidate_signature": "513630::OBSERVATION_FULL_EVALUATION"},
+                       "candidate_count": 4, "candidates": [{"code": "513630", "name": "港股低波红利ETF摩根", "candidate_signature": "513630::OBSERVATION_FULL_EVALUATION"},
                                                             {"code": "159567", "name": "港股创新药ETF银华", "candidate_signature": "159567::OBSERVATION_FULL_EVALUATION"},
+                                                            {"code": "159992", "name": "创新药ETF银华", "candidate_signature": "159992::OBSERVATION_FULL_EVALUATION",
+                                                             "surfaced_states": [{"state": "PERSISTENT_TREND", "evidence": {"window_returns": {"5": 0.025, "20": 0.035}}}],
+                                                             "discovery_spot": {"change_pct": 1.1, "turnover_pct": 7.4}},
                                                             {"code": "520550", "name": "港股红利低波ETF招商", "candidate_signature": "520550::OBSERVATION_FULL_EVALUATION",
                                                              "surfaced_states": [{"state": "PERSISTENT_TREND", "evidence": {"window_returns": {"5": 0.03, "20": 0.04}}}],
                                                              "discovery_spot": {"change_pct": 1.2, "turnover_pct": 8.1}}]},
