@@ -625,12 +625,16 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
          and re.search(r"[（(](\d{6})[）)]", text).group(1) in overlap),
         all_labels[0],
     )
-    if discovery_changed and hl_labels:
-        title = f"【市场异动】{primary}出现本地与外部信号变化"
+    if discovery_changed and hl_labels and overlap:
+        title = f"【市场异动】{primary}本地状态与外部信号同向验证"
+    elif discovery_changed and hl_labels:
+        discovery_title = "、".join(discovery_labels[:3])
+        hl_title = "、".join(hl_labels[:3])
+        title = f"【市场异动】{discovery_title}进入复核；{hl_title}受外部信号影响"
     elif discovery_changed:
-        title = f"【市场异动】{primary}的ETF评估状态发生变化"
+        title = f"【市场异动】{primary}进入Discovery复核范围"
     else:
-        title = f"【市场异动】{primary}出现外部信号变化"
+        title = f"【市场异动】{primary}受外部信号影响"
 
     if discovery_changed:
         discovery_text = "；".join(
@@ -651,10 +655,10 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
 
     if overlap:
         impact = "方向确认、入场时机或风险过滤"
-        relation = "两类证据指向同一只ETF，需要在下一次正式判断中合并核对"
+        relation = "Discovery与Hyperliquid都指向该ETF，下一次正式判断核对两类证据是否同步"
     elif discovery_changed and hl_labels:
-        impact = "相关性和时机判断"
-        relation = "两类证据涉及的ETF未完全重合，暂不能把外部变化直接等同于ETF方向变化"
+        impact = "分别提高两组ETF的复核优先级"
+        relation = "Discovery与Hyperliquid涉及不同ETF，外部信号不代表Discovery对象方向已改变"
     elif discovery_changed:
         impact = "下一次正式判断的比较优先级"
         relation = "当前只有Discovery证据，Hyperliquid未形成可比确认"
