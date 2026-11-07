@@ -665,8 +665,8 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
         reason_text = "；".join(reasons) if reasons else "候选集合发生变化，但具体入选理由尚未完整确认"
         headline = "、".join((added + removed)[:3]) or "候选池"
         content = (
-            f"【核心结论】{headline}进入Discovery候选池，"
-            f"因为{reason_text}；这只提升下一次正式判断的比较优先级，不代表A股方向改变，也不是买入信号。\n\n"
+            f"【核心结论】{headline}进入Discovery候选池；"
+            f"候选依据：{reason_text}；这只提升下一次正式判断的比较优先级，不代表A股方向改变，也不是买入信号。\n\n"
             "【下一步核对】核对趋势和成交承接能否持续，再与现金、现有持仓和其他候选比较。\n\n"
             "【当前边界】不授予Trial、Confirm、买入、卖出或调仓权限，不代表已经发生实际成交。"
         )
