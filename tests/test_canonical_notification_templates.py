@@ -162,6 +162,16 @@ class CanonicalNotificationTemplateTests(unittest.TestCase):
     def test_raw_risk_trigger_is_not_a_parallel_notification(self):
         self.assertIsNone(center.decision_event())
 
+    def test_pulse_fact_update_preserves_producer_owned_short_body(self):
+        event = self.event(
+            "PULSE_FACT_UPDATE",
+            title="【市场异动】新候选：520550",
+            content="【核心结论】新增候选：520550。\\n\\n【入选依据】5日+3.0%。",
+        )
+        rendered = center.render_canonical_notification(event)
+        self.assertIs(rendered, event)
+        self.assertNotIn("### 变化前后", rendered["content"])
+
     def test_unknown_event_fails_closed(self):
         self.assertIsNone(center.render_canonical_notification(self.event("UNKNOWN_FREE_FORM")))
 

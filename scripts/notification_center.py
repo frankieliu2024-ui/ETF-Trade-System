@@ -1810,6 +1810,11 @@ def render_canonical_notification(event: dict) -> dict | None:
     # interrupt renderer must not rewrite its title, body, or envelope.
     if str(event.get("event_type") or "") == "REPORT_DELIVERY_REQUEST":
         return event
+    # PULSE_FACT_UPDATE already carries the producer-owned short user body.
+    # Keep it out of the legacy market-event renderer so old audit sections
+    # cannot be appended after the final body.
+    if str(event.get("event_type") or "") == "PULSE_FACT_UPDATE":
+        return event
     family = canonical_template_family(event)
     if family is None:
         return None
