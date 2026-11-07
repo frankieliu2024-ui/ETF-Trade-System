@@ -389,6 +389,18 @@ def _hyperliquid_signal_value(signal_row: str) -> str:
     return "；".join(meanings) or "外部决策信号发生变化"
 
 
+def _hyperliquid_plain_signal_basis(signal_changes: list[str]) -> str:
+    """Summarize changed HL evidence without exposing machine fields or values."""
+    joined = "、".join(signal_changes)
+    parts = []
+    if "资金费率" in joined:
+        parts.append("多空持仓成本变化")
+    if "未平仓量" in joined:
+        parts.append("杠杆参与规模变化")
+    if "溢价" in joined:
+        parts.append("价格偏离与市场情绪变化")
+    return "、".join(dict.fromkeys(parts)) or "外部方向变化"
+
 def _hyperliquid_user_scope(
     before: dict,
     after: dict,
@@ -634,13 +646,13 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
         reason_text = "；".join(reasons) if reasons else "候选集合发生变化，但具体入选理由尚未完整确认"
         headline = "、".join((added + removed)[:3]) or "候选池"
         content = (
-            f"【核心结论】新增候选：{headline}；入选依据是{reason_text}。"
+            f"【核心结论】新增候选：{headline}；候选依据：{reason_text}。"
             "当前只提升下一次正式判断的比较优先级，不代表A股方向改变，也不是买入信号。\n\n"
-            f"【发生了什么】Discovery候选池新增{headline}，其趋势、节点表现或成交证据达到入选条件。\n\n"
+            f"【发生了什么】Discovery候选池新增{headline}；候选依据是{reason_text}。\n\n"
             "【下一步核对】核对趋势能否持续、成交是否有承接，并与现金、现有持仓和其他观察对象比较。\n\n"
             "【当前边界】不授予Trial、Confirm、买入、卖出或调仓权限，不代表已经发生实际成交。"
         )
-        title = f"【市场异动】新候选需复核：{headline}"
+        title = f"【市场异动】新增候选：{headline}"
     else:
         canonical_labels = _canonicalize_etf_labels(related_labels)
         short_names = "、".join(label.split("（", 1)[0] for label in canonical_labels[:3]) or "相关ETF"
@@ -667,15 +679,17 @@ def _pulse_event(source: str, label: str, before: dict, after: dict) -> dict | N
                 impact = "间接影响该ETF的风格、拥挤风险和入场时机判断"
             impact_lines.append(f"{sources}变化，{label}{impact}")
         impact_text = "；".join(impact_lines) or "本次外部信号没有形成可解释的ETF映射"
+        signal_basis = _hyperliquid_plain_signal_basis(signal_changes)
+        title_subject = short_names if len(canonical_labels) <= 1 else f"{canonical_labels[0].split('（', 1)[0]}等{len(canonical_labels)}只ETF"
         content = (
-            f"【核心结论】{short_names}受到外部方向变化影响，"
+            f"【核心结论】{short_names}受到{signal_basis}影响，"
             "下一节点应优先核对这些ETF自身是否同步；这不是A股方向已改变或交易信号。\n\n"
-            f"【发生了什么】{impact_text}。\n\n"
+            f"【发生了什么】影响依据：{signal_basis}；{impact_text}。\n\n"
             "【下一步核对】逐只核对ETF自身走势、成交承接和相对强弱；同步时可提高方向确认或时机判断优先级，"
             "背离时只保留为风险提示。\n\n"
             "【当前边界】外部资产不是A股ETF，不能直接等同或据此买卖；不自动交易。"
         )
-        title = f"【市场异动】外部信号影响：{short_names}"
+        title = f"【市场异动】{title_subject}受{signal_basis}影响"
     return {
         "key": f"pulse:{source}:{after.get('identity')}",
         "event_type": "PULSE_FACT_UPDATE",
