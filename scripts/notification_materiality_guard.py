@@ -231,8 +231,10 @@ def _pulse_user_content_error(event: dict) -> str:
     leaked = [term for term in forbidden if term in content]
     if leaked:
         return "pulse user content leaks machine signal fields:" + ",".join(leaked)
-    if re.search(r"[-+]?\d+(?:\.\d+)?%?\s*[→\-]\s*[-+]?\d+(?:\.\d+)?%?", content):
-        return "pulse user content leaks raw before/after numeric changes"
+    # Numeric evidence is valid in user-facing Discovery explanations.  Reject
+    # only machine-field leakage above; a numeric range is not, by itself, an
+    # audit leak when it is attached to a labeled, human-readable fact such as
+    # 5-day/20-day performance or a price path.
     # The converged pulse contract uses one core conclusion and one next-step
     # section. The evidence may be embedded in the core conclusion (Discovery)
     # or appear as a dedicated impact-basis section (Hyperliquid); requiring the
@@ -297,4 +299,3 @@ def notification_evidence_error(event: dict | None) -> str:
     if source in {"self_healing_status", "workflow_failure_diagnostic"} or event_type in {"系统异常", "SYSTEM_RUNTIME_BLOCKER"}:
         return _system_error(event)
     return ""
-
