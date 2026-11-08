@@ -620,6 +620,17 @@ jobs:
                       "market_snapshot": "FROZEN_MORNING_REVIEW_CONTENT",
                   },
               }
+          # Weekly Trade Review completions are valid delivery-only reviews.
+          # They may intentionally omit the nested formal_review scope because
+          # the frozen weekly body is already the authoritative report.
+          if not scope and ("周复盘" in review_title or "周度复盘" in review_title):
+              scope = "FULL_DAY"
+              review = {
+                  "review_scope": scope,
+                  "market_date": str(payload.get("market_date") or "").strip(),
+                  "reviewed_at_beijing": str(payload.get("requested_at_beijing") or "").strip(),
+                  "data_time": {},
+              }
           if scope not in {"FULL_DAY", "FULL_TRADING_DAY"}:
               if scope != "MORNING_SESSION_STAGE_ONLY":
                   raise SystemExit("Trade Review completion has an unsupported review scope")
