@@ -30,6 +30,26 @@ def _collection_as_of_beijing(utc_text: str) -> str:
         return ""
 
 
+def _session_metadata(collected_at_utc: str) -> dict:
+    """Describe bounded ETF consumption without creating a task chain."""
+    try:
+        value = datetime.fromisoformat(str(collected_at_utc).replace("Z", "+00:00"))
+        beijing = value.astimezone(timezone(timedelta(hours=8), name="Asia/Shanghai"))
+        minute = beijing.hour * 60 + beijing.minute
+        phase = ("A_SHARE_ACTIVE_WINDOW" if 8 * 60 <= minute < 16 * 60 else
+                 "PREOPEN_OVERNIGHT_AGGREGATION" if minute < 8 * 60 else
+                 "OUTSIDE_CONTINUOUS_PULSE_WINDOW")
+        return {"policy": "OVERNIGHT_AGGREGATION_PLUS_DAYTIME_PULSE",
+                "continuous_pulse_window_beijing": "08:00-16:00",
+                "overnight_aggregation_boundary_beijing": "08:00",
+                "observed_at_beijing": beijing.isoformat(timespec="seconds"),
+                "consumption_phase": phase,
+                "task_consumption": {"SYSTEM_REVIEW": ["08:30", "19:30"], "FORMAL_DECISION": ["09:00", "10:00", "11:00", "13:30", "14:30"], "TRADE_REVIEW": ["12:30", "20:30"]},
+                "decision_role": "READ_ONLY_EXTERNAL_EVIDENCE; never independently grants permission or order"}
+    except (TypeError, ValueError):
+        return {"policy": "OVERNIGHT_AGGREGATION_PLUS_DAYTIME_PULSE", "continuous_pulse_window_beijing": "08:00-16:00", "overnight_aggregation_boundary_beijing": "08:00", "observed_at_beijing": "", "consumption_phase": "UNKNOWN_TIME_BOUNDARY", "task_consumption": {}, "decision_role": "READ_ONLY_EXTERNAL_EVIDENCE; never independently grants permission or order"}
+
+
 def build() -> dict:
     started = _now()
     config = json.loads(CONFIG.read_text(encoding="utf-8"))
@@ -55,7 +75,8 @@ def build() -> dict:
             "catalog": [], "observations": [],
             "mapping": config["asset_mappings"],
             "time_basis": "Hyperliquid endpoint lacks event timestamps; collected_at_beijing is the observation completion boundary, not an event timestamp. Formal consumers must preserve context_id, collection window, latest observation time and actual age.",
-            "decision_boundary": config["boundary"]
+            "decision_boundary": config["boundary"],
+            "session_policy": _session_metadata(finished)
         }
     for dex in dexes:
         dex_name = (dex or {}).get("name") or "default"
@@ -137,5 +158,6 @@ def build() -> dict:
         "catalog": catalog, "observations": observations,
         "mapping": config["asset_mappings"],
         "time_basis": "Hyperliquid endpoint lacks event timestamps; collected_at_beijing is the latest state visible to this run and must be aligned to the nearest legal A-share fact.",
-        "decision_boundary": config["boundary"]
+        "decision_boundary": config["boundary"],
+        "session_policy": _session_metadata(latest_collected or finished)
     }
