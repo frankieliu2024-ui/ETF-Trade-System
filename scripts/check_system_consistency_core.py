@@ -659,7 +659,7 @@ def main() -> int:
     check("query_time_refresh_entry_exists", (ROOT / "scripts/query_time_market_refresh.py").exists() and "refresh_market_quotes" in refresh_module, "query-time refresh facade exists")
     check("query_time_refresh_can_bypass_stale_cache", "force_refresh" in query and "QUERY_TIME_IMMEDIATE_REFRESH" in router_module and "_query_refresh_needed" in router_module, "stale cache can trigger provider refresh")
     legacy_market_pulse = '5,15,25,35,45,55'
-    apac_hyperliquid_pulse = '0,10,20,30,40,50'
+    apac_hyperliquid_pulse = '5,15,25,35,45,55'
     check(
         "scheduled_target_cadence_600s",
         runtime.get("target_cadence_seconds") == 600
@@ -668,7 +668,7 @@ def main() -> int:
             for path in (".github/workflows/market-snapshot.yml", ".github/workflows/us-extended-hours-pulse.yml")
         )
         and apac_hyperliquid_pulse in read_text(".github/workflows/overseas-preopen-pulse.yml"),
-        "all scheduled market workflows use ten-minute cadence; APAC Hyperliquid window uses :00/:10/:20/:30/:40/:50 UTC",
+        "all scheduled market workflows use ten-minute cadence; APAC and Hyperliquid window uses :05/:15/:25/:35/:45/:55 UTC",
     )
 
     overseas_builder = read_text("scripts/build_overseas_context.py")
@@ -710,7 +710,7 @@ def main() -> int:
     overseas_workflow = read_text(".github/workflows/overseas-preopen-pulse.yml")
     check("workflow:overseas_preopen_exists", "build_overseas_context.py" in overseas_workflow, "standalone overseas pre-open pulse wired")
     check("workflow:us_extended_wired", "build_us_extended_hours_context.py" in overseas_workflow and "us_extended_hours_context.json" in overseas_workflow, "US extended-hours context wired into A-share pre-open workflow")
-    check("workflow:overseas_unified_fixed_pulse", '0,10,20,30,40,50' in overseas_workflow, "APAC Hyperliquid workflow uses 08:00-16:00 Beijing pulse cadence")
+    check("workflow:overseas_unified_fixed_pulse", '5,15,25,35,45,55 0-7 * * 1-5' in overseas_workflow, "APAC and Hyperliquid workflow uses 08:05-15:55 Beijing pulse cadence")
     check("workflow:overseas_runtime_health", "build_overseas_runtime_health.py" in overseas_workflow and "overseas_runtime_health.json" in overseas_workflow, "overseas runtime health is generated and committed")
     check("workflow:overseas_hithink_runtime", "HITHINK_FINANCE_API_KEY" in overseas_workflow and "@hithink-tech/hithink-finance-cli" in overseas_workflow, "overseas runner installs Hithink CLI and receives secret")
 
