@@ -105,10 +105,20 @@ def _recent_same_family_level(event: dict) -> float | None:
 def _build_context_event(*args, **kwargs):
     """Keep the legacy detector, but make user-visible upgrade semantics explicit."""
     event = _annotate_structure_episode(_original_build_context_event(*args, **kwargs))
+    from continuous_pulse_state import transition
     ctx = event.get("confirmation_context") or {}
     category = str(ctx.get("event_category") or "")
     current = _comparison_level(ctx, category)
     previous = _recent_same_family_level(event)
+    ctx = dict(event.get("confirmation_context") or {})
+    if previous is None:
+        ctx["continuous_state_transition"] = "INITIAL"
+    elif current is not None:
+        old = {"day_change_pct": previous, "direction": ctx.get("direction")}
+        new = {"day_change_pct": current, "direction": ctx.get("direction")}
+        ctx["continuous_state_transition"] = transition(old, new)
+    ctx["continuous_state_contract"] = "OBJECT_LEVEL_PREVIOUS_CURRENT_TRANSITION"
+    event["confirmation_context"] = ctx
     if previous is None or current is None:
         return event
 

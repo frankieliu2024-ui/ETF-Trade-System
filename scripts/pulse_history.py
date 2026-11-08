@@ -101,4 +101,10 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
     }
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(index, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    return {"status": "UPDATED", "path": str(target), "market_date": market_date, "identity": record["identity"]}
+    return {
+        "status": "UPDATED",
+        "path": str(target),
+        "market_date": market_date,
+        "identity": record["identity"],
+        "record_count": len(records),
+    }

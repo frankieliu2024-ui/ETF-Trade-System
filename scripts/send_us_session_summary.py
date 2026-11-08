@@ -207,6 +207,24 @@ def build_event() -> dict | None:
         as_of_lines=as_of_lines,
         boundary=boundary,
     )
+    from continuous_pulse_state import transition
+    prior_state = read_json(STATE / "notification_center.json", {})
+    prior = next(
+        (item for item in reversed(prior_state.get("notifications") or [])
+         if str(item.get("event_type") or "") == ("US_SESSION_SUMMARY" if node == "CLOSE" else "US_OPEN_VALUE_ALERT")
+         and str((item.get("confirmation_context") or {}).get("market_date") or "") == tech_date),
+        None,
+    )
+    if prior:
+        prior_ctx = prior.get("confirmation_context") or {}
+        prior_value = max(abs(number(prior_ctx.get("tech_change_pct")) or 0.0), abs(number(prior_ctx.get("semi_change_pct")) or 0.0))
+        current_value = max(abs(tech_change), abs(semi_change))
+        pulse_transition = transition(
+            {"direction": prior_ctx.get("direction"), "day_change_pct": prior_value},
+            {"direction": "UP" if min(tech_change, semi_change) >= 0 else ("DOWN" if max(tech_change, semi_change) <= 0 else "MIXED"), "day_change_pct": current_value},
+        )
+    else:
+        pulse_transition = "INITIAL"
     return {
         "key": f"us-session-summary:{tech_date}:{node}",
         "type": "美股市场总结" if node == "CLOSE" else "市场有价值事件",
@@ -235,6 +253,8 @@ def build_event() -> dict | None:
             "market_as_of_beijing": as_of,
             "cash_close_as_of_beijing": _regular_cash_close_beijing(tech_date) if node == "CLOSE" else "",
             "generated_at_beijing": now().strftime("%Y-%m-%d %H:%M:%S"),
+            "continuous_state_transition": pulse_transition,
+            "continuous_state_contract": "OBJECT_LEVEL_PREVIOUS_CURRENT_TRANSITION",
         },
     }
 
