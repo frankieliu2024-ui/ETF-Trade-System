@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "owner": "Hyperliquid ETF contribution contract",
+  "read_only": true,
+  "continuous_pulse_window_beijing": "08:00-16:00",
+  "overnight_aggregation_boundary_beijing": "08:00",
+  "task_nodes": {
+    "ETF系统复核": [
+      "08:30",
+      "19:30"
+    ],
+    "ETF正式决策": [
+      "09:00",
+      "10:00",
+      "11:00",
+      "13:30",
+      "14:30"
+    ],
+    "ETF交易复盘": [
+      "12:30",
+      "20:30"
+    ]
+  },
+  "consumption_roles": {
+    "preopen": "隔夜变化形成次日开盘预期与风险过滤",
+    "intraday": "验证、强化、背离和反转",
+    "post_close": "归因并形成下一交易日隔夜研究输入"
+  },
+  "notification_boundary": "沿用现有主动通知资格、可比事实、去重和三类任务独立通知链",
+  "trade_boundary": "Hyperliquid不得独立授予Trial、Confirm、金额、卖出份额或下单权限"
+}
