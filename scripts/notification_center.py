@@ -1612,4 +1612,14 @@ def main() -> int:
     # Formal Decision is contractually plain text. Keep the established Markdown
     # path for system review, trade review, and other existing notification families.
     pushplus_template = "txt" if item["event_type"] == "FORMAL_DECISION" else "markdown"
+    item["pushplus_template"] = pushplus_template
+    ok, response = send(token, item["title"], item["content"], template=pushplus_template); stamp = now().isoformat(timespec="seconds"); item["last_attempted_at"] = stamp; item["response"] = response
+    item["lifecycle_status"] = "WAITING_CONFIRMATION" if ok and item["event_type"] in {"PENDING_EXECUTION_CONFIRMATION", "成交确认", "账户确认", "ACCOUNT_FACT_CONFIRMATION", "收盘账户"} else ("SENT" if ok else "FAILED"); item["sent_at"] = stamp if ok else item.get("sent_at")
+    if existing: notifications = [x for x in notifications if x.get("notification_id") != item["notification_id"]]
+    notifications.append(item)
+    state = {"schema_version": "2.2", "updated_at": stamp, "last_status": item["lifecycle_status"], "last_type": item["event_type"], "last_title": item["title"], "notifications": notifications[-HISTORY_LIMIT:], "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"], "policy": "只推送会改变用户关注、风险许可、机会状态、持仓动作、执行确认或系统可靠性的实质事件；总资产/市值/浮动盈亏等纯盯市变化不作为账户异常；同一实质账户事件和同一正式decision_id不得重复推送；收盘账户提醒仅在A股交易日触发。", "safety_boundary": "通知中心只转发已有正式判断，不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"}
+    write_json(state_path, state); print(json.dumps(item, ensure_ascii=False)); return 0 if ok else 1
 
+
+if __name__ == "__main__":
+    raise SystemExit(main())
