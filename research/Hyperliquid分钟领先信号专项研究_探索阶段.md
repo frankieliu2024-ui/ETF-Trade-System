@@ -8,14 +8,14 @@
 
 研究顺序固定为：先确认Hyperliquid对象的真实经济含义，再确认A股可交易代表，最后才进行统计。映射不等于信号有效性，不能因两个对象同属“科技”“能源”或“医药”就认定可直接配对。
 
-映射分为四类：
+仓库已有的 `config/market/hyperliquid_etf_exposure_map.json` 是本专项唯一映射基线；本PR只扩展研究消费字段，不复制或重定义对象关系。研究映射分为四类：
 
 - DIRECT_REFERENCE：Hyperliquid合约明确参照单一A股标的。当前已确认xyz:CXMT对应长鑫科技688825.SH；此前使用的688249.SH不作为有效代码。
 - AUDITABLE_BASKET：Hyperliquid对象对应一个可审计的A股ETF或个股篮子。篮子必须提前固定具体代码、选择理由和经济暴露，统计时对成员分别检验，不能把篮子平均值直接冒充单一标的。
 - INDUSTRY_MAPPING：Hyperliquid对象对应A股一个行业或产业链，而非单一证券。此时研究对象是A股行业截面、行业指数或行业ETF篮子，必须固定行业边界、成分口径、权重口径和生效日期；结论表达为“行业层领先/不领先”，不得下沉为任意个股结论。
 - RISK_APPETITE_ONLY：只能反映全球风险偏好或海外市场状态，无法建立稳定A股行业或目标篮子。此类对象只作为背景变量，不输出单一A股或行业领先信号。
 
-对象映射登记见同目录的《Hyperliquid隔夜对象映射登记_v1.json》。其中的候选映射不是有效性结论；未完成具体代码、时间边界和经济理由核验的对象不得进入有效性统计。
+对象映射直接读取上述正式配置及其 `family`、`name_markers`、`exclude_name_markers`、`etf_codes` 字段。专项研究只新增 transmission_level、result_variable、mapping_confidence、failure_condition 等研究字段；未完成时间边界和经济理由核验的对象不得进入有效性统计。
 
 ## 2. 研究对象
 
