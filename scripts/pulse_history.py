@@ -44,6 +44,7 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
     record = {
         "kind": kind,
         "identity": str(identity or ""),
+        "context_id": str(payload.get("context_id") or ""),
         "formed_at_beijing": _beijing_iso(str(payload.get("generated_at_beijing") or payload.get("generated_at") or occurred_at)),
         "fact_time_beijing": str(payload.get("latest_valid_node") or payload.get("a_share_fact_as_of_beijing") or _beijing_iso(str(payload.get("latest_observation_collected_at_utc") or ""))),
         "source_path": path,
@@ -52,6 +53,9 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
         "candidate_count": payload.get("candidate_count") if kind == "DISCOVERY" else None,
         "observation_count": payload.get("observation_count") if kind == "HYPERLIQUID" else None,
         "latest_snapshot": str(payload.get("latest_snapshot") or ""),
+        "observation_time_basis": str(payload.get("observation_time_basis") or payload.get("time_basis") or ""),
+        "mapping": payload.get("mapping") if kind == "HYPERLIQUID" else None,
+        "etf_bindings": payload.get("etf_bindings") if kind == "HYPERLIQUID" else None,
     }
     if kind == "DISCOVERY":
         record["candidates"] = [
@@ -98,6 +102,14 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
         "latest": records[-1] if records else None,
         "days": dict(sorted(days.items())[-31:]),
         "retention_rule": "Keep up to 288 pulses per day and 31 market days; this index does not create decisions or permissions.",
+        "continuity": {
+            "status": "READY" if isinstance(index.get("latest"), dict) and str(index["latest"].get("identity") or "") and (index["latest"].get("observations") or index["latest"].get("candidates") or []) else "MISSING",
+            "latest_identity": str((index.get("latest") or {}).get("identity") or ""),
+            "latest_formed_at_beijing": str((index.get("latest") or {}).get("formed_at_beijing") or ""),
+            "latest_observation_count": len((index.get("latest") or {}).get("observations") or []),
+            "latest_candidate_count": len((index.get("latest") or {}).get("candidates") or []),
+            "rule": "正式判断只消费具有identity且含实际对象证据的最新脉冲；缺失时明确降级，不用历史正文或旧状态补齐。",
+        },
     }
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(index, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
