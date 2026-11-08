@@ -1030,10 +1030,13 @@ jobs:
           if not isinstance(items, list) or not items:
               raise SystemExit("bound notification did not produce a durable notification record")
           expected_report_id = "etf_system_review:scheduled_system_review_20261108t193537p0800_7c4e9a2b"
+          expected_run_id = "scheduled_system_review_20261108t193537p0800_7c4e9a2b"
           def record_identity_values(item):
               binding = item.get("presentation_binding") if isinstance(item.get("presentation_binding"), dict) else {}
-              return [str(item.get(k) or "").strip().lower() for k in ("report_id", "related_decision_id", "source_event_id", "event_id")] + [str(binding.get("report_id") or "").strip().lower()]
-          bound = [x for x in items if expected_report_id in record_identity_values(x) or any(expected_report_id in value for value in record_identity_values(x))]
+              values = [str(item.get(k) or "").strip().lower() for k in ("report_id", "related_decision_id", "source_event_id", "event_id", "request_id", "parent_request_id", "task_run_id", "idempotency_key")]
+              values += [str(binding.get(k) or "").strip().lower() for k in ("report_id", "request_id", "task_run_id", "occurrence_id")]
+              return values
+          bound = [x for x in items if (expected_report_id in record_identity_values(x) or expected_run_id in record_identity_values(x))]
           if not bound:
               print(json.dumps({"candidate_identities": [record_identity_values(x) for x in items[-10:]]}, ensure_ascii=False))
           if not bound:
