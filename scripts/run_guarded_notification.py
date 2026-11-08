@@ -783,7 +783,17 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
         all_labels[0],
     )
     if discovery_changed and hl_labels and overlap:
-        title = f"【市场异动】{primary}趋势改善，但海外生物科技风险上升"
+        mapped_assets = list(bindings)
+        asset = mapped_assets[0] if mapped_assets else "外部方向"
+        after_item = next(
+            (item for item in (hyper_after.get("observations") or [])
+             if str(item.get("asset") or "").strip() == asset),
+            {},
+        )
+        direction = {"positive": "偏强", "negative": "偏弱", "mixed": "分化"}.get(
+            str(after_item.get("direction") or "").lower(), "发生变化"
+        )
+        title = f"【市场异动】{primary}本地趋势变化，{asset.split(':', 1)[-1]}外部方向{direction}"
     elif discovery_changed and hl_labels:
         discovery_title = "、".join(discovery_labels[:3])
         hl_title = "、".join(hl_labels[:3])
@@ -841,10 +851,13 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
         relation = "当前只有外部证据，仍需结合ETF自身走势确认"
 
     if overlap:
-        core_conclusion = (
-            f"【核心结论】{primary}自身趋势和成交承接改善，但海外生物科技方向风险上升；"
-            f"当前不能据此提高交易判断。"
-        )
+        if "风险过滤" in hl_text or "压制" in hl_text:
+            effect_text = "外部信号当前用于风险过滤，不能提高看多判断"
+        elif "方向支持" in hl_text:
+            effect_text = "外部信号当前可用于方向确认，但仍需继续观察本地走势是否同步"
+        else:
+            effect_text = "外部信号当前只能作为观察线索，尚不能提高结论强度"
+        core_conclusion = f"【核心结论】{primary}的本地状态已发生变化；{effect_text}。"
     elif discovery_changed and hl_labels:
         core_conclusion = (
             f"【核心结论】Discovery发现{discovery_title}进入复核，"
