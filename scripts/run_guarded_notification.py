@@ -287,12 +287,27 @@ def _discovery_candidate_fingerprint(item: dict) -> tuple:
         key for key in ("change_pct", "turnover_pct")
         if isinstance(spot, dict) and spot.get(key) not in (None, "")
     ))
+    evidence = []
+    for state_item in (item.get("surfaced_states") or []):
+        if not isinstance(state_item, dict):
+            continue
+        ev = state_item.get("evidence") or {}
+        evidence.append((str(state_item.get("state") or "").upper(), tuple(
+            (key, str(ev.get(key))) for key in sorted(ev) if ev.get(key) not in (None, "")
+        )))
+    spot_values = tuple(
+        (key, str(spot.get(key))) for key in sorted(spot)
+        if spot.get(key) not in (None, "")
+    ) if isinstance(spot, dict) else ()
     return (
         _pulse_candidate_identity(item),
         str(item.get("object_role") or item.get("role") or "").strip().upper(),
         str(item.get("state") or item.get("status") or item.get("lifecycle") or "").strip().upper(),
         states,
         spot_classes,
+        tuple(evidence),
+        spot_values,
+        tuple(sorted((str(k), str(v)) for k, v in (item.get("historical_context") or {}).items() if v not in (None, ""))),
     )
 
 
@@ -701,7 +716,10 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
         for x in (discovery_after.get("candidates") or [])
         if isinstance(x, dict) and _pulse_candidate_identity(x)
     }
+    from continuous_pulse_state import transition
+
     discovery_changed = []
+    discovery_transitions = {}
     for identity in sorted(set(before_rows) | set(after_rows)):
         old = before_rows.get(identity) or {}
         new = after_rows.get(identity) or {}
@@ -710,6 +728,7 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
         row = new or old
         if _discovery_candidate_has_user_value(row):
             discovery_changed.append(row)
+            discovery_transitions[_pulse_candidate_identity(row)] = transition(old, new)
 
     signal_changes = _hyperliquid_signal_changes(hyper_before, hyper_after)
     changed_assets = {
@@ -774,6 +793,14 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
     }
     bindings = {asset: labels for asset, labels in bindings.items() if labels}
     discovery_labels = [label(row) for row in discovery_changed]
+    transition_text = {
+        "INITIAL": "首次形成",
+        "STRENGTHENING": "较上一脉冲继续强化",
+        "WEAKENING": "较上一脉冲出现衰减",
+        "REVERSING": "较上一脉冲出现方向反转",
+        "PERSISTING": "较上一脉冲延续",
+        "CHANGED": "较上一脉冲发生变化",
+    }
     all_labels = _canonicalize_etf_labels(discovery_labels + hl_labels)
     if not all_labels:
         return None
@@ -805,7 +832,7 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
 
     if discovery_changed:
         discovery_text = "；".join(
-            f"{label(row)}：{_discovery_reason(row)}"
+            f"{label(row)}：{transition_text.get(discovery_transitions.get(_pulse_candidate_identity(row), 'CHANGED'), '发生变化')}；{_discovery_reason(row)}"
             for row in discovery_changed[:4]
         )
     else:
@@ -910,6 +937,11 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
             "evidence_time_beijing": evidence_time,
             "before_fact": "Discovery与Hyperliquid已有可比前序事实",
             "after_fact": "Discovery与Hyperliquid本次窗口事实已完成ETF级合并",
+            "discovery_state_transitions": {
+                _pulse_candidate_identity(row): discovery_transitions.get(_pulse_candidate_identity(row), "CHANGED")
+                for row in discovery_changed
+            },
+            "continuous_state_contract": "OBJECT_LEVEL_PREVIOUS_CURRENT_TRANSITION",
         },
         "delivery_mode": "COMPACT",
     }
@@ -980,6 +1012,71 @@ def _pulse_candidates() -> list[dict]:
     })
 
 
+def _annotate_market_continuous_state(event: dict) -> dict:
+    """Apply the shared previous/current transition at the candidate boundary."""
+    if not event:
+        return event
+    from continuous_pulse_state import transition
+    from notification_center import ROOT, read_json
+
+    event = dict(event)
+    context = dict(event.get("confirmation_context") or {})
+    event_type = str(event.get("event_type") or event.get("type") or "")
+    market_date = str(context.get("market_date") or context.get("us_market_date") or event.get("market_date") or "")
+    session = str(context.get("session_node") or context.get("session") or context.get("market_phase") or "")
+    object_codes = set(str(x) for x in (context.get("object_codes") or []) if str(x))
+    code = str(event.get("security_code") or context.get("security_code") or "")
+    if code:
+        object_codes.add(code)
+    state = read_json(ROOT / "data" / "state" / "notification_center.json", {})
+    prior = None
+    for item in reversed(state.get("notifications") or []):
+        if str(item.get("event_type") or "") != event_type:
+            continue
+        old = item.get("confirmation_context") or {}
+        old_date = str(old.get("market_date") or old.get("us_market_date") or "")
+        old_session = str(old.get("session_node") or old.get("session") or old.get("market_phase") or "")
+        old_codes = set(str(x) for x in (old.get("object_codes") or []) if str(x))
+        old_code = str(item.get("security_code") or old.get("security_code") or "")
+        if old_code:
+            old_codes.add(old_code)
+        if market_date and old_date != market_date:
+            continue
+        if session and old_session and old_session != session:
+            continue
+        if object_codes and old_codes and not (object_codes & old_codes):
+            continue
+        if item.get("lifecycle_status") in {"SENT", "WAITING_CONFIRMATION", "CONFIRMED", "ARCHIVED"}:
+            prior = item
+            break
+
+    magnitude_keys = ("lead_change_pct", "day_change_pct", "phase_metric_change_pct", "hstech_change_pct", "tech_change_pct", "semi_change_pct")
+    def magnitude(ctx: dict) -> float | None:
+        values = []
+        for key in magnitude_keys:
+            try:
+                value = float(ctx.get(key))
+            except (TypeError, ValueError):
+                continue
+            values.append(abs(value))
+        return max(values) if values else None
+
+    if prior is None:
+        state_name = "INITIAL"
+    else:
+        old_ctx = prior.get("confirmation_context") or {}
+        state_name = transition(
+            {"direction": old_ctx.get("direction"), "day_change_pct": magnitude(old_ctx)},
+            {"direction": context.get("direction"), "day_change_pct": magnitude(context)},
+        )
+    context["continuous_state_transition"] = state_name
+    context["continuous_state_contract"] = "OBJECT_LEVEL_PREVIOUS_CURRENT_TRANSITION"
+    if prior is not None:
+        context["previous_notification_id"] = prior.get("notification_id")
+    event["confirmation_context"] = context
+    return event
+
+
 def _pulse_test_candidates() -> list[dict]:
     """Build synthetic pulses without reading or writing production pulse indexes.
 
@@ -1034,13 +1131,13 @@ def _collect_candidates(market: str) -> list[dict]:
     if market in {"a-share", "apac"}:
         import send_regional_session_summary as regional
         import send_market_shock_notification as shock
-        return [event for event in (
+        return [_annotate_market_continuous_state(event) for event in (
             regional._a_share_event() if market == "a-share" else regional._apac_event(),
             shock._legacy._a_share_candidate() if market == "a-share" else shock._legacy._context_candidate("asia"),
         ) if event]
     import send_us_session_summary as summary
     import send_market_shock_notification as shock
-    return [event for event in (summary.build_event(), shock._legacy._context_candidate("us")) if event]
+    return [_annotate_market_continuous_state(event) for event in (summary.build_event(), shock._legacy._context_candidate("us")) if event]
 
 
 def _run_batch(market: str) -> int:
