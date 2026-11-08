@@ -980,12 +980,43 @@ def build_formal_evidence_consumption_audit(fact_summary: dict | None, final_con
     for code, obj in objects.items():
         matched = binding_by_code.get(code) or []
         assets = sorted({str(x).strip() for b in matched for x in (b.get("external_assets") or []) if str(x).strip()})
-        evidence_status = "AVAILABLE" if any(int(b.get("observation_count") or 0) > 0 for b in matched) else "NO_MATCH"
-        if str(hyper.get("quality_status") or "").upper() in {"MISSING", "NOT_REQUESTED", "UNAVAILABLE"}:
-            evidence_status = "UNAVAILABLE"
-        effect = str((matched[0].get("decision_effect") if matched else "") or obj.get("decision_effect") or "NOT_RECORDED").strip().upper()
-        object_audit.append({**obj, "mapped_assets": assets, "evidence_status": evidence_status, "consumption_status": "CONSUMED" if matched and evidence_status == "AVAILABLE" else evidence_status, "decision_effect": effect, "business_impact": effect, "mapping_reason": "CONFIGURED_OBJECT_BINDING" if matched else "NO_CONFIGURED_MAPPING"})
-    audit_status = "PASS_EMPTY" if not object_audit else ("PASS" if all(item["decision_effect"] for item in object_audit) else "PARTIAL")
+        raw_evidence_status = "READY" if any(int(b.get("observation_count") or 0) > 0 for b in matched) else "DEGRADED"
+        if str(hyper.get("quality_status") or "").upper() in {"MISSING", "NOT_REQUESTED", "UNAVAILABLE", "FAILED"}:
+            raw_evidence_status = "FAILED"
+        effect = str((matched[0].get("decision_effect") if matched else "") or obj.get("decision_effect") or "INSUFFICIENT").strip().upper()
+        mapping_reason = "CONFIGURED_OBJECT_BINDING" if matched else "NO_DIRECT_MAPPING"
+        observation_as_of = str(
+            (matched[0].get("observation_as_of") if matched else "")
+            or hyper.get("as_of_beijing")
+            or hyper.get("latest_observation_collected_at_beijing")
+            or ""
+        )
+        evidence_summary = {
+            "mapped_assets": assets,
+            "observation_count": sum(int(b.get("observation_count") or 0) for b in matched),
+            "hyperliquid_status": str(hyper.get("quality_status") or ""),
+        }
+        object_audit.append({
+            **obj,
+            "object_type": "A_SHARE_ETF_OBJECT",
+            "mapped_assets": assets,
+            "mapping_reason": mapping_reason,
+            "observation_as_of": observation_as_of,
+            "evidence_status": raw_evidence_status,
+            "consumption_status": "CONSUMED" if matched and raw_evidence_status == "READY" else "CONSUMED_AS_LIMITATION",
+            "decision_effect": effect,
+            "evidence_summary": evidence_summary,
+            "decision_use": str((matched[0].get("decision_use") if matched else "") or "Hyperliquid证据用于外部方向、时机或风险限制判断；不独立授予交易权限"),
+            "business_impact": effect,
+        })
+    audit_status = "PASS_EMPTY" if not object_audit else ("PASS" if all(
+        item.get("decision_effect")
+        and item.get("evidence_status") in {"READY", "DEGRADED", "FAILED", "NOT_APPLICABLE"}
+        and item.get("consumption_status") in {"CONSUMED", "CONSUMED_AS_LIMITATION", "NOT_CONSUMED"}
+        and "decision_use" in item
+        and "evidence_summary" in item
+        for item in object_audit
+    ) else "PARTIAL")
     return {
         "schema_version": "2.0",
         "audit_status": audit_status,
