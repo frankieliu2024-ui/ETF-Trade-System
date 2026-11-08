@@ -38,9 +38,12 @@ def test_pulse_history_is_idempotent_and_keeps_latest(tmp_path: Path):
 def test_hyperliquid_pulse_history_uses_same_index_contract(tmp_path: Path):
     payload = {
         "status": "READY",
+        "context_id": "hl-context-1",
         "generated_at_beijing": "2026-11-06T14:00:00+08:00",
         "latest_observation_collected_at_utc": "2026-11-06T06:00:00+00:00",
         "observations": [{"symbol": "BTC"}],
+        "mapping": [{"asset": "xyz:XBI", "family": "BIOTECH", "etf_codes": ["159992"]}],
+        "time_basis": "collection finished time",
     }
     result = append_pulse_history(
         tmp_path,
@@ -55,6 +58,10 @@ def test_hyperliquid_pulse_history_uses_same_index_contract(tmp_path: Path):
     assert stored["latest"]["formed_at_beijing"].endswith("+08:00")
     assert stored["latest"]["fact_time_beijing"].endswith("+08:00")
     assert stored["latest"]["source_path"].endswith("#hyperliquid")
+    assert stored["latest"]["context_id"] == "hl-context-1"
+    assert stored["latest"]["mapping"][0]["etf_codes"] == ["159992"]
+    assert stored["continuity"]["status"] == "READY"
+    assert stored["continuity"]["latest_observation_count"] == 1
 
 
 def test_discovery_history_preserves_reason_evidence(tmp_path):
