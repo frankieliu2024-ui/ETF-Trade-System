@@ -657,7 +657,7 @@ jobs:
           # The frozen completion remains unchanged; only the reconstructed
           # morning-scope input is consumed by the existing projection path.
           projection_payload = dict(payload)
-          if inferred_morning_scope:
+          if inferred_morning_scope or not isinstance(projection_payload.get("formal_review"), dict) or not projection_payload.get("formal_review"):
               projection_payload["formal_review"] = review
               # Older completions carry entry_mode at the top level only.
               # Copy it into the replay binding without mutating the frozen file.
