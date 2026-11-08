@@ -1589,7 +1589,18 @@ def main() -> int:
         # The current request-bound event has passed identity,正文 and hash
         # validation above, so create a fresh notification for this event.
         existing = None
-    item = normalize_notification(event, existing); item["lifecycle_status"] = "CREATED"; item["created_at"] = item.get("created_at") or now().isoformat(timespec="seconds")
+    item = normalize_notification(event, existing)
+    # Preserve the complete identity of a Scheduled Review REPORT in the
+    # durable notification record. The verifier binds delivery to this exact
+    # report/run/request; losing these fields makes a successful provider call
+    # look like an unrelated pulse notification.
+    if str(event.get("event_type") or "") == "REPORT_DELIVERY_REQUEST":
+        for key in ("report_type", "report_id", "request_id", "parent_request_id", "task_id", "task_run_id", "occurrence_id", "idempotency_key", "content_hash"):
+            if event.get(key) not in (None, ""):
+                item[key] = event.get(key)
+        if isinstance(event.get("presentation_binding"), dict):
+            item["presentation_binding"] = dict(event["presentation_binding"])
+    item["lifecycle_status"] = "CREATED"; item["created_at"] = item.get("created_at") or now().isoformat(timespec="seconds")
     if not token:
         stamp = now().isoformat(timespec="seconds")
         item["last_attempted_at"] = stamp
@@ -1601,3 +1612,4 @@ def main() -> int:
     # Formal Decision is contractually plain text. Keep the established Markdown
     # path for system review, trade review, and other existing notification families.
     pushplus_template = "txt" if item["event_type"] == "FORMAL_DECISION" else "markdown"
+
