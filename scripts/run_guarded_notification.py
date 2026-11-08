@@ -916,18 +916,31 @@ def _pulse_candidates_from_payloads(payloads: dict[str, dict]) -> list[dict]:
         history = []
         days = payload.get("days") if isinstance(payload, dict) else None
         if isinstance(days, dict):
-            for entries in days.values():
+            for market_date, entries in days.items():
                 if isinstance(entries, list):
-                    history.extend(x for x in entries if isinstance(x, dict))
+                    history.extend(
+                        ({**x, "_pulse_market_date": str(market_date)} for x in entries if isinstance(x, dict))
+                    )
         latest = payload.get("latest") if isinstance(payload, dict) else None
         if isinstance(latest, dict) and latest.get("identity"):
-            history.append(latest)
+            latest_day = str(payload.get("latest_market_date") or "").strip()
+            history.append({**latest, "_pulse_market_date": latest_day})
         unique = {}
         for item in history:
             identity = str(item.get("identity") or "").strip()
             if identity:
                 unique[identity] = item
-        ordered = sorted(unique.values(), key=lambda x: str(x.get("formed_at_beijing") or ""))
+        ordered_all = sorted(unique.values(), key=lambda x: str(x.get("formed_at_beijing") or ""))
+        if not ordered_all:
+            return ({}, {})
+        # Continuous pulses are comparable within one market date only.  If
+        # today's index has just one record, do not pair it with yesterday's
+        # final pulse and manufacture a cross-session change.
+        latest_day = str(ordered_all[-1].get("_pulse_market_date") or "").strip()
+        ordered = [
+            item for item in ordered_all
+            if str(item.get("_pulse_market_date") or "").strip() == latest_day
+        ] if latest_day else ordered_all
         return (ordered[-2], ordered[-1]) if len(ordered) >= 2 else ({}, {})
     discovery_before, discovery_after = latest_pair(payloads.get("discovery_pulse") or {})
     hyper_before, hyper_after = latest_pair(payloads.get("hyperliquid_pulse") or {})
