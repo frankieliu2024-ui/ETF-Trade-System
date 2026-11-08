@@ -24,6 +24,28 @@ _original_build_context_event = _legacy._build_context_event
 _original_recent_duplicate = _legacy._recent_duplicate
 
 
+def _covered_by_recent_us_open(event: dict) -> bool:
+    """Suppress only an identical US-open fact in the immediate pulse window."""
+    ctx = event.get("confirmation_context") or {}
+    if str(ctx.get("market") or "").upper() != "US":
+        return False
+    market_date = str(ctx.get("market_date") or "")
+    if not market_date:
+        return False
+    state = _legacy.read_json(_legacy.STATE / "notification_center.json", {})
+    for item in reversed(state.get("notifications") or []):
+        if str(item.get("event_type") or "") != "US_OPEN_VALUE_ALERT":
+            continue
+        prior = item.get("confirmation_context") or {}
+        if str(prior.get("us_market_date") or prior.get("market_date") or "") != market_date:
+            continue
+        stamp = _legacy.parse_notification_time(item.get("sent_at") or item.get("created_at"))
+        if stamp and timedelta(0) <= _legacy.now() - stamp <= timedelta(minutes=2):
+            return True
+        return False
+    return False
+
+
 def _build_a_share_event(*args, **kwargs):
     event = _annotate_structure_episode(_original_build_a_share_event(*args, **kwargs))
     code = str(event.get("security_code") or "")
@@ -207,3 +229,4 @@ main = _legacy.main
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
