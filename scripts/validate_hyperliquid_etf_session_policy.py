@@ -47,8 +47,12 @@ def main() -> int:
         raise SystemExit("invalid policy window")
     if set(policy["task_nodes"]["ETF正式决策"]) != NODES["ETF正式决策"]:
         raise SystemExit("formal decision node contract mismatch")
-    for stamp in ("2026-11-08T07:55:00+00:00", "2026-11-08T00:00:00+00:00", "2026-11-08T08:00:00+00:00"):
-        if _phase(stamp) not in {"PREOPEN_OVERNIGHT_AGGREGATION", "A_SHARE_ACTIVE_WINDOW"}:
+    for stamp in ("2026-11-07T23:55:00+00:00", "2026-11-08T00:00:00+00:00", "2026-11-08T07:55:00+00:00", "2026-11-08T08:00:00+00:00"):
+        if stamp.endswith("23:55:00+00:00") and _phase(stamp) != "PREOPEN_OVERNIGHT_AGGREGATION":
+            raise SystemExit(f"unexpected preopen phase for {stamp}")
+        if not stamp.endswith("23:55:00+00:00") and stamp.endswith("08:00:00+00:00") and _phase(stamp) != "OUTSIDE_CONTINUOUS_PULSE_WINDOW":
+            raise SystemExit(f"unexpected outside-window phase for {stamp}")
+        if not stamp.endswith("23:55:00+00:00") and not stamp.endswith("08:00:00+00:00") and _phase(stamp) != "A_SHARE_ACTIVE_WINDOW":
             raise SystemExit(f"unexpected phase for {stamp}")
     print(json.dumps({"ok": True, "policy": policy["continuous_pulse_window_beijing"], "nodes": NODES}, ensure_ascii=False))
     return 0
