@@ -752,17 +752,30 @@ def main() -> int:
     review_opportunity = review_context.get("formal_opportunity") or {}
     discovery_generation = str(discovery_projection.get("generated_at_beijing") or "")
     opportunity_source_generation = str(opportunity_projection.get("source_discovery_generated_at_beijing") or "")
+    # Discovery is a continuously refreshed pulse layer.  Formal Opportunity
+    # and Review are point-in-time projections and may legitimately refer to
+    # an earlier pulse.  Bind them by the underlying verified snapshot/node,
+    # not by the later projection generation timestamp.
+    discovery_snapshot = str(discovery_projection.get("latest_snapshot") or "")
+    opportunity_snapshot = str(opportunity_projection.get("source_discovery_latest_snapshot") or "")
+    discovery_market_date = str(discovery_projection.get("market_date") or "")
+    opportunity_market_date = str(opportunity_projection.get("market_date") or "")
+    discovery_node = str(discovery_projection.get("latest_valid_node") or "")
+    opportunity_node = str(opportunity_projection.get("latest_valid_node") or "")
     check(
         "formal_layers:opportunity_bound_to_current_discovery",
-        bool(discovery_generation) and opportunity_source_generation == discovery_generation,
-        f"discovery={discovery_generation} opportunity_source={opportunity_source_generation}",
+        bool(discovery_snapshot) and discovery_snapshot == opportunity_snapshot
+        and discovery_market_date == opportunity_market_date
+        and discovery_node == opportunity_node,
+        f"discovery_generation={discovery_generation} opportunity_source_generation={opportunity_source_generation} snapshot={discovery_snapshot} source_snapshot={opportunity_snapshot}",
         warning=True,
     )
     check(
         "formal_layers:review_context_aligned",
-        str(review_discovery.get("generated_at_beijing") or "") == discovery_generation
-        and str(review_opportunity.get("source_discovery_generated_at_beijing") or "") == opportunity_source_generation,
-        f"review_discovery={review_discovery.get('generated_at_beijing')} review_opportunity_source={review_opportunity.get('source_discovery_generated_at_beijing')}",
+        str(review_discovery.get("latest_snapshot") or discovery_snapshot) == discovery_snapshot
+        and str(review_opportunity.get("source_discovery_latest_snapshot") or opportunity_snapshot) == opportunity_snapshot
+        and str(review_discovery.get("market_date") or discovery_projection.get("market_date") or "") == discovery_market_date,
+        f"review_discovery_generation={review_discovery.get('generated_at_beijing')} review_opportunity_source_generation={review_opportunity.get('source_discovery_generated_at_beijing')} snapshot={review_discovery.get('latest_snapshot') or discovery_snapshot}",
         warning=True,
     )
     pit = decision_context.get("point_in_time") or query_context.get("point_in_time") or {}
