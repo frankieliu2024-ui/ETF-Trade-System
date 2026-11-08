@@ -29,7 +29,7 @@ class NotificationMaterialityGuardTests(unittest.TestCase):
         }
         self.assertIn("excursion", guard.notification_evidence_error(event))
 
-    def test_standalone_market_reversal_with_numeric_path_is_not_enough_to_interrupt(self):
+    def test_standalone_market_reversal_with_numeric_path_is_user_visible(self):
         event = {
             "event_type": "MARKET_VALUE_ALERT",
             "security_code": "515880",
@@ -41,7 +41,7 @@ class NotificationMaterialityGuardTests(unittest.TestCase):
             },
         }
         with patch("notification_semantics.object_role", return_value=("INDEX", "正式指数")):
-            self.assertIn("no user interruption qualification", guard.notification_evidence_error(event))
+            self.assertEqual("", guard.notification_evidence_error(event))
 
     def test_managed_object_reversal_retains_interrupt_value(self):
         event = {
