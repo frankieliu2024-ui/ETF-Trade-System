@@ -9,6 +9,7 @@ import time
 from datetime import datetime, timezone
 
 from notification_materiality_guard import notification_evidence_error
+from hyperliquid_contribution import build_contribution
 
 
 REPORT_RETRY_DELAYS_SECONDS = (2.0, 8.0)
@@ -987,6 +988,7 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
         or hyper_after.get("fact_time_beijing")
         or ""
     )
+    hyperliquid_contribution = build_contribution(context={"latest": hyper_after, "observations": hyper_after.get("observations") or []}, task="PULSE_NOTIFICATION")
     return {
         "event_type": "PULSE_FACT_UPDATE",
         "source": "dual_engine_pulse",
@@ -1012,7 +1014,9 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
                 for row in discovery_changed
             },
             "continuous_state_contract": "OBJECT_LEVEL_PREVIOUS_CURRENT_TRANSITION",
+            "hyperliquid_contribution": hyperliquid_contribution,
         },
+        "hyperliquid_contribution": hyperliquid_contribution,
         "delivery_mode": "COMPACT",
     }
 

@@ -10,12 +10,14 @@ try:
     from market_quote_router import build_market_quote_context
     from lifecycle_state import build_lifecycle_projection
     from pulse_history import read_pulse_projection
+    from hyperliquid_contribution import build_contribution
 except ModuleNotFoundError:
     from scripts.state_manager import atomic_json_write, build_decision_context, now_utc, read_account_fact, read_current
     from scripts.rules_version import current_rule_version
     from scripts.market_quote_router import build_market_quote_context
     from scripts.lifecycle_state import build_lifecycle_projection
     from scripts.pulse_history import read_pulse_projection
+    from scripts.hyperliquid_contribution import build_contribution
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 CLOSE_NODES = {"1500", "close"}
@@ -149,6 +151,7 @@ def build(root: Path = ROOT) -> dict:
     intraday_formal_decision_index = load_intraday_formal_decision_index(root, str(current.get("market_date") or ""))
     discovery_pulse_index = read_pulse_projection(root, "DISCOVERY")
     hyperliquid_pulse_index = read_pulse_projection(root, "HYPERLIQUID")
+    hyperliquid_contribution = build_contribution(context=hyperliquid_pulse_index, node=str(node), task="TRADE_REVIEW")
 
     # A verified explicit close node is authoritative even when the provider
     # observation/query timestamp is later than 15:00. For non-close nodes we
@@ -233,6 +236,7 @@ def build(root: Path = ROOT) -> dict:
         "intraday_formal_decision_index": intraday_formal_decision_index,
         "discovery_pulse_index": discovery_pulse_index,
         "hyperliquid_pulse_index": hyperliquid_pulse_index,
+        "hyperliquid_contribution": hyperliquid_contribution,
         "continuous_pulse_consumption": {
             "discovery_latest": discovery_pulse_index.get("latest"),
             "hyperliquid_latest": hyperliquid_pulse_index.get("latest"),

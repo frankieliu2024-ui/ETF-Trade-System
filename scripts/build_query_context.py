@@ -17,6 +17,7 @@ try:
     from formal_etf_opportunity_discovery import attach_formal_quotes
     from trading_time_semantics import user_visible_trading_time_anchor
     from pulse_history import read_pulse_projection
+    from hyperliquid_contribution import build_contribution
 except ModuleNotFoundError:
     from scripts.state_manager import atomic_json_write, build_decision_context, now_utc, read_account_fact, read_current, read_json
     from scripts.build_stock_context import active_account_asset_codes
@@ -24,6 +25,7 @@ except ModuleNotFoundError:
     from scripts.formal_etf_opportunity_discovery import attach_formal_quotes
     from scripts.trading_time_semantics import user_visible_trading_time_anchor
     from scripts.pulse_history import read_pulse_projection
+    from scripts.hyperliquid_contribution import build_contribution
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
@@ -840,6 +842,7 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
     discovery = formal_discovery or {}
     external_driver = external_driver_context or {}
     hyperliquid_evidence = _hyperliquid_decision_evidence(external_driver, current)
+    hyperliquid_contribution = build_contribution(context={"latest": read_pulse_projection(ROOT, "HYPERLIQUID").get("latest"), "observations": external_driver.get("observations") or [], "generated_at_beijing": external_driver.get("collection_finished_at_utc")}, task="FORMAL_DECISION")
     hyperliquid_provenance = {
         "context_id": external_driver.get("context_id") or "",
         "collection_started_at_utc": external_driver.get("collection_started_at_utc") or "",
@@ -1419,6 +1422,7 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
             "provider": (current.get("data_freshness") or {}).get("provider") or "",
         },
         "qualified_market_facts": quotes,
+        "hyperliquid_contribution": hyperliquid_contribution,
         "hyperliquid_external_driver_context": {
             "quality_status": external_driver.get("quality_status") or "NOT_REQUESTED",
             "pulse_continuity": read_pulse_projection(root, "HYPERLIQUID").get("continuity") or {
