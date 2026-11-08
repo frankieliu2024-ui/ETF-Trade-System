@@ -348,7 +348,6 @@ def _pulse_signal_explanation(signal_changes: list[str]) -> str:
         explanations.append("未平仓量反映市场中尚未平仓的合约规模，变化说明参与资金和风险暴露正在增加或减少")
     if "溢价" in joined:
         explanations.append("溢价反映合约价格相对参考现货的偏离，扩大通常意味着情绪或流动性出现变化")
-
     return "；".join(explanations)
 
 
@@ -699,7 +698,6 @@ def _discovery_candidate_has_user_value(item: dict) -> bool:
         or (isinstance(spot, dict) and any(spot.get(key) not in (None, "") for key in ("change_pct", "turnover_pct")))
         or role in {"HELD", "HOLDING", "OBSERVED", "OBSERVATION", "OPPORTUNITY", "NEW", "CANDIDATE"}
         or lifecycle
-
     )
 
 def _number_value(value: object) -> float | None:
@@ -1022,7 +1020,7 @@ def _pulse_candidates_from_payloads(payloads: dict[str, dict]) -> list[dict]:
             return None
         return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
 
-    def latest_pair(payload: dict) -> tuple[dict, dict]:
+    def latest_window(payload: dict) -> tuple[dict, dict]:
         history = []
         days = payload.get("days") if isinstance(payload, dict) else None
         if isinstance(days, dict):
@@ -1050,11 +1048,17 @@ def _pulse_candidates_from_payloads(payloads: dict[str, dict]) -> list[dict]:
         ordered = [
             item for item in ordered_all
             if str(item.get("_pulse_market_date") or "").strip() == latest_day
-
         ] if latest_day else ordered_all
-        return (ordered[-2], ordered[-1]) if len(ordered) >= 2 else ({}, {})
-    discovery_before, discovery_after = latest_pair(payloads.get("discovery_pulse") or {})
-    hyper_before, hyper_after = latest_pair(payloads.get("hyperliquid_pulse") or {})
+        if len(ordered) < 2:
+            return ({}, {})
+        # Compare the latest pulse with a bounded rolling baseline instead of
+        # only the immediately preceding pulse.  This captures persistent
+        # strengthening/weakening and reversal after a noisy intermediate tick.
+        baseline = ordered[max(0, len(ordered) - 4)]
+        latest = ordered[-1]
+        return (baseline, latest)
+    discovery_before, discovery_after = latest_window(payloads.get("discovery_pulse") or {})
+    hyper_before, hyper_after = latest_window(payloads.get("hyperliquid_pulse") or {})
     # A dual-engine event must consume the same pulse window.  Independent
     # producers may finish a few minutes apart, but evidence from separate
     # windows must not be combined merely because both indexes have a latest
