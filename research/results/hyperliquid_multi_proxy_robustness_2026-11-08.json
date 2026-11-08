@@ -1,0 +1,108 @@
+{
+  "schema_version": "research-hl-multi_proxy_robustness-v1",
+  "mode": "RESEARCH_ONLY_EXPLORATORY",
+  "read_only": true,
+  "period": {
+    "start": "2026-08-11",
+    "end": "2026-11-06"
+  },
+  "methodology": "同一Hyperliquid对象分别与多个现有A股ETF代理的次日开盘缺口配对；代理不是最终行业成分篮子。",
+  "proxies": [
+    {
+      "code": "588000.SH",
+      "name": "科创50ETF",
+      "role": "科技/科创代理"
+    },
+    {
+      "code": "515880.SH",
+      "name": "通信ETF",
+      "role": "通信/科技产业链代理"
+    },
+    {
+      "code": "159326.SZ",
+      "name": "电网设备ETF",
+      "role": "设备/成长产业链代理"
+    },
+    {
+      "code": "159992.SZ",
+      "name": "创新药ETF",
+      "role": "非半导体成长对照代理"
+    }
+  ],
+  "results": {
+    "xyz:DRAM": {
+      "588000.SH": {
+        "n": 58,
+        "corr": 0.8745922622,
+        "hit": 0.7368421053
+      },
+      "515880.SH": {
+        "n": 58,
+        "corr": 0.8524298831,
+        "hit": 0.8113207547
+      },
+      "159326.SZ": {
+        "n": 58,
+        "corr": 0.772335571,
+        "hit": 0.7547169811
+      },
+      "159992.SZ": {
+        "n": 58,
+        "corr": 0.3860560977,
+        "hit": 0.5660377358
+      }
+    },
+    "xyz:SMH": {
+      "588000.SH": {
+        "n": 58,
+        "corr": 0.8696045101,
+        "hit": 0.8070175439
+      },
+      "515880.SH": {
+        "n": 58,
+        "corr": 0.8247573569,
+        "hit": 0.8113207547
+      },
+      "159326.SZ": {
+        "n": 58,
+        "corr": 0.7442862821,
+        "hit": 0.7735849057
+      },
+      "159992.SZ": {
+        "n": 58,
+        "corr": 0.4114277756,
+        "hit": 0.6037735849
+      }
+    },
+    "xyz:SOXL": {
+      "588000.SH": {
+        "n": 58,
+        "corr": 0.8540431435,
+        "hit": 0.8245614035
+      },
+      "515880.SH": {
+        "n": 58,
+        "corr": 0.8161143329,
+        "hit": 0.8301886792
+      },
+      "159326.SZ": {
+        "n": 58,
+        "corr": 0.7459018218,
+        "hit": 0.7924528302
+      },
+      "159992.SZ": {
+        "n": 58,
+        "corr": 0.3967227947,
+        "hit": 0.6226415094
+      }
+    }
+  },
+  "interpretation": [
+    "三类半导体/科技对象对多个科技或成长代理仍保持较强开盘缺口关系，首轮关系不完全依赖588000单一代理。",
+    "对159992.SZ创新药ETF对照代理的相关性明显下降，说明关系可能具有科技/成长族群差异，而非所有A股ETF的普遍同步。",
+    "由于588000、515880、159326之间存在共同市场暴露，当前结果仍不能替代固定行业成分篮子和控制变量检验。",
+    "当前状态统一为MULTI_PROXY_SCREEN_ONLY，不升级为VALID_OPEN_GAP_EVIDENCE。"
+  ],
+  "conclusion_status": "MULTI_PROXY_SCREEN_ONLY",
+  "decision_boundary": "No production state, formal decision, trading permission, amount or order is generated."
+}
