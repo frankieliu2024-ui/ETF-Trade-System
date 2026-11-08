@@ -743,7 +743,8 @@ jobs:
                     report_path=$(python - "$EVENT_PATH" <<'PY'
           import json, sys
           event = json.load(open(sys.argv[1], encoding="utf-8"))
-          binding = event.get("presentation_binding") or {}\n          report_id = str(binding.get("report_id") or event.get("report_id") or "").strip()
+          binding = event.get("presentation_binding") or {}
+          report_id = str(binding.get("report_id") or event.get("report_id") or "").strip()
           print(f"requests/report_delivery/{report_id.replace(':', '__')}.json" if report_id else "")
           PY
           )
