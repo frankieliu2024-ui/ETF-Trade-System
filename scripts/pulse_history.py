@@ -103,11 +103,11 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
         "days": dict(sorted(days.items())[-31:]),
         "retention_rule": "Keep up to 288 pulses per day and 31 market days; this index does not create decisions or permissions.",
         "continuity": {
-            "status": "READY" if isinstance(index.get("latest"), dict) and str(index["latest"].get("identity") or "") and (index["latest"].get("observations") or index["latest"].get("candidates") or []) else "MISSING",
-            "latest_identity": str((index.get("latest") or {}).get("identity") or ""),
-            "latest_formed_at_beijing": str((index.get("latest") or {}).get("formed_at_beijing") or ""),
-            "latest_observation_count": len((index.get("latest") or {}).get("observations") or []),
-            "latest_candidate_count": len((index.get("latest") or {}).get("candidates") or []),
+            "status": "READY" if isinstance(records[-1] if records else None, dict) and str((records[-1] if records else {}).get("identity") or "") and ((records[-1] if records else {}).get("observations") or (records[-1] if records else {}).get("candidates") or []) else "MISSING",
+            "latest_identity": str((records[-1] if records else {}).get("identity") or ""),
+            "latest_formed_at_beijing": str((records[-1] if records else {}).get("formed_at_beijing") or ""),
+            "latest_observation_count": len((records[-1] if records else {}).get("observations") or []),
+            "latest_candidate_count": len((records[-1] if records else {}).get("candidates") or []),
             "rule": "正式判断只消费具有identity且含实际对象证据的最新脉冲；缺失时明确降级，不用历史正文或旧状态补齐。",
         },
     }
