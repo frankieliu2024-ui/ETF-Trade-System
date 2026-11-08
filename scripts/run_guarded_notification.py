@@ -348,6 +348,7 @@ def _pulse_signal_explanation(signal_changes: list[str]) -> str:
         explanations.append("未平仓量反映市场中尚未平仓的合约规模，变化说明参与资金和风险暴露正在增加或减少")
     if "溢价" in joined:
         explanations.append("溢价反映合约价格相对参考现货的偏离，扩大通常意味着情绪或流动性出现变化")
+
     return "；".join(explanations)
 
 
@@ -700,6 +701,7 @@ def _pulse_user_window(source: str, after: dict) -> bool:
     return 8 <= int(match.group(1)) < 16
 
 
+
 def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
                             hyper_before: dict, hyper_after: dict) -> dict | None:
     """Aggregate both engines into one ETF-level user event for one pulse window."""
@@ -878,13 +880,28 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
         relation = "当前只有外部证据，仍需结合ETF自身走势确认"
 
     if overlap:
-        if "风险过滤" in hl_text or "压制" in hl_text:
-            effect_text = "外部信号当前用于风险过滤，不能提高看多判断"
-        elif "方向支持" in hl_text:
-            effect_text = "外部信号当前可用于方向确认，但仍需继续观察本地走势是否同步"
+        transition_states = set(discovery_transitions.values())
+        if "STRENGTHENING" in transition_states:
+            local_state = "本地趋势较上一脉冲继续强化"
+        elif "WEAKENING" in transition_states:
+            local_state = "本地趋势较上一脉冲出现衰减"
+        elif "REVERSING" in transition_states:
+            local_state = "本地趋势较上一脉冲出现反转"
+        elif "INITIAL" in transition_states:
+            local_state = "本地趋势首次形成有效变化"
         else:
-            effect_text = "外部信号当前只能作为观察线索，尚不能提高结论强度"
-        core_conclusion = f"【核心结论】{primary}的本地状态已发生变化；{effect_text}。"
+            local_state = "本地趋势较上一脉冲延续"
+        hl_has_support = "外部方向偏强" in hl_text
+        hl_has_risk = any(word in hl_text for word in ("风险上升", "风险过滤", "压制", "拥挤加深", "偏离扩大"))
+        if hl_has_support and hl_has_risk:
+            effect_text = f"{local_state}，但外部方向偏强与拥挤风险同时存在，当前属于方向支持与风险过滤并存"
+        elif hl_has_risk:
+            effect_text = f"{local_state}，但外部信号主要用于风险过滤，不能提高看多判断"
+        elif hl_has_support:
+            effect_text = f"{local_state}，外部信号可用于方向确认，但仍需本地走势继续同步"
+        else:
+            effect_text = f"{local_state}，外部信号暂只能作为观察线索，尚不能提高结论强度"
+        core_conclusion = f"【核心结论】{primary}{effect_text}。"
     elif discovery_changed and hl_labels:
         core_conclusion = (
             f"【核心结论】Discovery发现{discovery_title}进入复核，"
@@ -903,11 +920,19 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
             f"当前价值是提高下一次正式判断中的复核优先级，不代表自动交易。"
         )
 
+    if overlap and "WEAKENING" in set(discovery_transitions.values()):
+        next_check = f"重点核对{primary}自身走弱是否延续，以及成交承接是否同步减弱；若本地继续走弱，外部强势不能替代ETF自身确认。"
+    elif overlap and "REVERSING" in set(discovery_transitions.values()):
+        next_check = f"重点核对{primary}是否确认方向反转；在反转未被自身走势和成交承接确认前，不提高结论强度。"
+    elif overlap:
+        next_check = f"重点核对{primary}自身强势能否延续，以及成交承接是否保持；若本地不再同步，外部信号只保留为风险过滤。"
+    else:
+        next_check = f"重点核对{primary}自身走势和成交承接，再决定外部证据用于方向确认、时机判断还是风险过滤。"
     content = (
         f"{core_conclusion}\n\n"
         f"【Discovery依据】{discovery_text}\n\n"
         f"【Hyperliquid依据】{hl_text}\n\n"
-        f"【下一步核对】只核对{primary}自身走势是否继续走强并保持成交承接；若不能同步，外部信号按风险提示处理。\n\n"
+        f"【下一步核对】{next_check}\n\n"
         f"【当前边界】不自动下单、不自动调仓。"
     )
     evidence_time = str(
@@ -1025,6 +1050,7 @@ def _annotate_market_continuous_state(event: dict) -> dict:
     market_date = str(context.get("market_date") or context.get("us_market_date") or event.get("market_date") or "")
     session = str(context.get("session_node") or context.get("session") or context.get("market_phase") or "")
     object_codes = set(str(x) for x in (context.get("object_codes") or []) if str(x))
+
     code = str(event.get("security_code") or context.get("security_code") or "")
     if code:
         object_codes.add(code)
