@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
-"""Research-only batch collector for Hyperliquid overnight lead studies."""
+"""Research-only batch collector using the canonical Hyperliquid exposure map."""
 from __future__ import annotations
 import argparse, json
 from datetime import datetime, timezone
+from pathlib import Path
 from urllib.request import Request, urlopen
 
 HL_URL = "https://api.hyperliquid.xyz/info"
+ROOT = Path(__file__).resolve().parents[1]
+MAPPING_PATH = ROOT / "config" / "market" / "hyperliquid_etf_exposure_map.json"
 DEFAULT_OBJECTS = [
-    "xyz:CXMT","SMH","SOXL","DRAM","NVDA","AMD","SNDK","XYZ100","SP500",
-    "EWY","EWJ","EWT","GOLD","COPPER","BRENTOIL","XLE","XBI","BABA",
-    "AVGO","NBIS","COHR","GIGADEV",
+    "xyz:CXMT","xyz:SMH","xyz:SOXL","xyz:DRAM","xyz:NVDA","xyz:AMD","xyz:SNDK",
+    "xyz:XYZ100","xyz:SP500","xyz:EWY","xyz:EWJ","xyz:EWT","xyz:GOLD",
+    "xyz:COPPER","xyz:BRENTOIL","xyz:XLE","xyz:XBI","xyz:BABA","xyz:AVGO",
+    "xyz:NBIS","para:COHR","xyz:GIGADEV",
 ]
 
 def post(payload: dict):
@@ -17,6 +21,15 @@ def post(payload: dict):
                   headers={"Content-Type": "application/json"})
     with urlopen(req, timeout=30) as response:
         return json.load(response)
+
+def load_mapping() -> dict[str, list[dict]]:
+    payload = json.loads(MAPPING_PATH.read_text(encoding="utf-8"))
+    result: dict[str, list[dict]] = {}
+    for row in payload.get("asset_mappings", []):
+        asset = str(row.get("asset") or "").strip()
+        if asset:
+            result.setdefault(asset, []).append(row)
+    return result
 
 def candles(coin: str, start_ms: int, end_ms: int) -> dict:
     payload = {"type": "candleSnapshot", "req": {
@@ -31,24 +44,32 @@ def candles(coin: str, start_ms: int, end_ms: int) -> dict:
                 "error": f"{type(exc).__name__}: {exc}"}
 
 def run(coins: list[str], start_ms: int, end_ms: int) -> dict:
-    started = datetime.now(timezone.utc).isoformat()
-    results = [candles(coin, start_ms, end_ms) for coin in coins]
+    mapping = load_mapping()
+    results = []
+    for coin in coins:
+        observed = candles(coin, start_ms, end_ms)
+        rows = mapping.get(coin, [])
+        results.append({
+            **observed,
+            "canonical_mapping": rows,
+            "mapping_status": "CONFIGURED" if rows else "UNMAPPED",
+        })
     return {
-        "schema_version": "research-hl-overnight-v2",
+        "schema_version": "research-hl-overnight-v3",
         "mode": "RESEARCH_ONLY_EXPLORATORY",
         "read_only": True,
-        "started_at_utc": started,
+        "canonical_mapping_source": str(MAPPING_PATH.relative_to(ROOT)),
+        "started_at_utc": datetime.now(timezone.utc).isoformat(),
         "finished_at_utc": datetime.now(timezone.utc).isoformat(),
         "pit_window": {"start_ms": start_ms, "end_ms": end_ms},
         "objects": results,
-        "mapping_status": "NOT_INFERRED",
         "research_status": "READY_FOR_A_SHARE_ALIGNMENT",
         "decision_boundary": "No production state, formal decision, trading permission, amount or order is generated.",
         "required_followups": [
-            "align each object independently to a documented A-share target",
+            "use canonical family/name_markers/etf_codes without creating a second mapping source",
+            "add transmission level and result variable only in research output",
             "calculate overnight-to-open gap and post-open outcomes",
             "control A-share prior-day return and run holdout/rolling checks",
-            "audit timestamps, missingness, costs and executable prices",
         ],
     }
 
@@ -62,6 +83,5 @@ if __name__ == "__main__":
     result = json.dumps(run(args.coins, args.start_ms, args.end_ms),
                         ensure_ascii=False, indent=2)
     if args.output:
-        with open(args.output, "w", encoding="utf-8") as handle:
-            handle.write(result + "\n")
+        Path(args.output).write_text(result + "\n", encoding="utf-8")
     print(result)
