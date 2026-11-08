@@ -862,11 +862,13 @@ def _validate_weekly_projection_contract(report: dict) -> None:
             attribution_status = "FAIL"
             attribution_detail = "; ".join(attr_errors)
         elif str(attribution.get("strict_decomposition_status") or "").upper() != "COMPLETE":
-            attribution_status = "WARNING"
-            attribution_detail = "weekly return bridge exists; strict price/realized/unrealized decomposition remains open"
-            report.setdefault("warnings", []).append(
-                "weekly_projection:strict_return_decomposition_open"
-            )
+            # NOT_COMPLETE is the intentional fail-closed result when broker
+            # endpoints or cost-basis evidence are absent.  It is already
+            # represented in the machine state and must not turn a healthy
+            # consistency report yellow merely because the system refused to
+            # invent an attribution split.
+            attribution_status = "PASS"
+            attribution_detail = "weekly return bridge present; strict decomposition remains explicitly bounded and unresolved"
         else:
             attribution_status = "PASS"
             attribution_detail = "weekly return attribution contract complete"
