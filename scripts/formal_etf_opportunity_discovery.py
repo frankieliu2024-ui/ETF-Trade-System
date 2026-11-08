@@ -984,6 +984,7 @@ def discover_formal_candidates(
     # the evidence-acquisition queue for economically mapped ETFs, but it does
     # not create or promote Discovery candidates or grant trade authority.
     broad = _apply_external_driver_triggers(broad, external_driver_context)
+    hyperliquid_contribution = build_contribution(context=external_driver_context or {}, task="DISCOVERY")
     prefilter_started = time.monotonic()
     held_codes = {str(x) for x in (held_codes or set())}
     prefiltered = _bounded_prefilter(broad, held_codes, market_date)
@@ -1130,4 +1131,5 @@ def discover_formal_candidates(
             "final_ingress": "history budget counts successful evidence acquisition, with a bounded attempt cap; provider failure is explicit, does not consume a successful-evidence seat, and does not convert successful peers into legal capital competitors",
         },
         "decision_boundary": "发现对象是本节点临时正式评估输入，不是第三种ETF身份；不得自动写观察池、生成Trial/Confirm或交易动作。只有在广域获取、预筛选和所需历史验证均完成时，candidate_count=0才表示合法空集合；empty_reason存在或coverage_status不是COMPLETE时，必须按发现未完成/降级处理。",
+        "hyperliquid_contribution": hyperliquid_contribution,
     }
