@@ -359,36 +359,49 @@ def _number(value: object) -> float | None:
 
 
 def _human_signal(asset: str, before: dict, after: dict) -> str:
-    """Translate HL field changes into direct decision-bearing language without metrics."""
+    """Translate HL changes into direct user value, not metric narration."""
     old = {str(k): v for k, v in (before or {}).items()}
     new = {str(k): v for k, v in (after or {}).items()}
     display = asset.split(":", 1)[-1]
     parts = []
+    old_direction = str(old.get("direction") or "").lower()
+    new_direction = str(new.get("direction") or "").lower()
+    direction_names = {"positive": "偏强", "negative": "偏弱", "mixed": "分化"}
+    if new_direction and new_direction != old_direction:
+        if old_direction:
+            parts.append(f"外部方向由{direction_names.get(old_direction, '此前状态')}转为{direction_names.get(new_direction, '新状态')}")
+        else:
+            parts.append(f"外部方向转为{direction_names.get(new_direction, '新状态')}")
 
     old_funding, new_funding = _number(old.get("funding")), _number(new.get("funding"))
     if old_funding is not None and new_funding is not None and old_funding * new_funding < 0:
-        parts.append("多空拥挤方向发生反转")
+        parts.append("做多与做空的拥挤方向发生反转")
     elif old.get("funding") != new.get("funding") and new_funding is not None:
-        parts.append("多空拥挤程度发生变化")
+        if new_funding > 0:
+            parts.append("做多一侧拥挤加深，继续上涨的波动风险上升")
+        elif new_funding < 0:
+            parts.append("做空一侧拥挤加深，继续下跌或反弹挤压的风险上升")
+        else:
+            parts.append("多空拥挤方向趋于中性")
 
     old_oi, new_oi = _number(old.get("open_interest")), _number(new.get("open_interest"))
     if old_oi is not None and new_oi is not None and abs(old_oi) > 0:
         ratio = (new_oi - old_oi) / abs(old_oi)
         if ratio >= 0.05:
-            parts.append("潜在波动风险上升")
+            parts.append("新增仓位增加，短线波动风险上升")
         elif ratio <= -0.05:
-            parts.append("潜在波动压力缓和")
+            parts.append("部分仓位退出，短线波动压力缓和")
     elif old.get("open_interest") != new.get("open_interest"):
-        parts.append("潜在波动风险发生变化")
+        parts.append("市场参与度变化，短线波动风险随之变化")
 
     old_premium, new_premium = _number(old.get("premium")), _number(new.get("premium"))
     if old_premium is not None and new_premium is not None:
         if abs(new_premium) > abs(old_premium) and abs(new_premium - old_premium) >= 0.001:
-            parts.append("合约偏离参考价格加大，市场情绪更容易出现过热或过冷")
+            parts.append("价格偏离扩大，市场情绪波动加大")
         elif abs(new_premium) < abs(old_premium) and abs(new_premium - old_premium) >= 0.001:
-            parts.append("合约偏离参考价格收窄，市场情绪趋于稳定")
+            parts.append("价格偏离收窄，市场情绪趋于稳定")
     elif old.get("premium") != new.get("premium"):
-        parts.append("合约相对参考价格的偏离发生变化")
+        parts.append("价格偏离发生变化，短线情绪需要重新确认")
 
     return f"{display}：" + "；".join(dict.fromkeys(parts)) if parts else ""
 
@@ -614,29 +627,8 @@ def _discovery_reason(item: dict) -> str:
 
 
 def _hyperliquid_user_change(asset: str, before: dict, after: dict) -> str:
-    """State the economic direction of a HL change without raw metric labels."""
-    parts = []
-    old_funding, new_funding = _number(before.get("funding")), _number(after.get("funding"))
-    if old_funding is not None and new_funding is not None:
-        if new_funding < old_funding and new_funding < 0:
-            parts.append("看空一侧拥挤加深")
-        elif new_funding > old_funding and new_funding > 0:
-            parts.append("看多一侧拥挤加深")
-        elif old_funding * new_funding < 0:
-            parts.append("多空拥挤方向发生反转")
-        else:
-            parts.append("多空拥挤程度发生变化")
-    old_oi, new_oi = _number(before.get("open_interest")), _number(after.get("open_interest"))
-    if old_oi and new_oi and (new_oi - old_oi) / abs(old_oi) >= 0.05:
-        parts.append("参与资金增加，潜在波动风险上升")
-    elif old_oi and new_oi and (new_oi - old_oi) / abs(old_oi) <= -0.05:
-        parts.append("参与资金减少，潜在波动压力缓和")
-    old_premium, new_premium = _number(before.get("premium")), _number(after.get("premium"))
-    if old_premium is not None and new_premium is not None and abs(new_premium) > abs(old_premium):
-        parts.append("价格偏离扩大，情绪风险上升")
-    elif old_premium is not None and new_premium is not None and abs(new_premium) < abs(old_premium):
-        parts.append("价格偏离收窄，情绪趋于稳定")
-    return "；".join(dict.fromkeys(parts)) or "外部方向和参与程度发生了足以影响判断的变化"
+    """Backward-compatible wrapper for the single user-value translator."""
+    return _human_signal(asset, before, after).split("：", 1)[-1]
 
 
 def _hyperliquid_evidence_text(asset: str, labels: list[str], before: dict, after: dict) -> str:
@@ -708,36 +700,50 @@ def _number_value(value: object) -> float | None:
 
 
 def _hyperliquid_signal_materially_changed(before: dict, after: dict) -> bool:
-    """Require a meaningful decision-bearing change, not machine jitter."""
+    """Accept any auditable decision-bearing change; metrics raise priority.
+
+    The old implementation required one of three narrow numeric deltas.  That
+    made direction changes, new/removed observations and qualitative state
+    changes disappear even when the mapped ETF impact was clear.
+    """
+    if _hyperliquid_decision_signal_changed(before, after):
+        return True
     old = _hyperliquid_signal_fingerprint(before)
     new = _hyperliquid_signal_fingerprint(after)
     for asset in set(old) | set(new):
         before_item, after_item = old.get(asset, {}), new.get(asset, {})
         funding_old = _number_value(before_item.get("funding"))
         funding_new = _number_value(after_item.get("funding"))
-        if funding_old is not None and funding_new is not None and abs(funding_new - funding_old) >= 0.00005:
+        if funding_old is not None and funding_new is not None and funding_new != funding_old:
             return True
         oi_old = _number_value(before_item.get("open_interest"))
         oi_new = _number_value(after_item.get("open_interest"))
         if oi_old is not None and oi_new is not None:
             base = max(abs(oi_old), 1.0)
-            if abs(oi_new - oi_old) / base >= 0.05:
+            if oi_new != oi_old:
                 return True
         premium_old = _number_value(before_item.get("premium"))
         premium_new = _number_value(after_item.get("premium"))
-        if premium_old is not None and premium_new is not None and abs(premium_new - premium_old) >= 0.001:
+        if premium_old is not None and premium_new is not None and premium_new != premium_old:
             return True
     return False
 
 def _pulse_user_window(source: str, after: dict) -> bool:
-    """Discovery and Hyperliquid share one user-interruption window."""
+    """Validate a timestamp without dropping valid overnight evidence.
+
+    Discovery and Hyperliquid use the same pulse cadence.  The user-visible
+    window is no longer a hard 08:00-16:00 filter; outside A-share hours the
+    fact remains eligible and is still subject to same-ETF mapping, evidence,
+    deduplication and content validation.
+    """
     if source not in {"discovery_pulse", "hyperliquid_pulse", "dual_engine_pulse"}:
         return False
     stamp = str(after.get("formed_at_beijing") or after.get("fact_time_beijing") or "").strip()
     match = re.search(r"T(\d{2}):\d{2}", stamp)
     if not match:
         return False
-    return 8 <= int(match.group(1)) < 16
+    hour = int(match.group(1))
+    return 0 <= hour <= 23
 
 
 def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
@@ -1059,13 +1065,12 @@ def _pulse_candidates_from_payloads(payloads: dict[str, dict]) -> list[dict]:
         return (baseline, latest)
     discovery_before, discovery_after = latest_window(payloads.get("discovery_pulse") or {})
     hyper_before, hyper_after = latest_window(payloads.get("hyperliquid_pulse") or {})
-    # A dual-engine event must consume the same pulse window.  Independent
-    # producers may finish a few minutes apart, but evidence from separate
-    # windows must not be combined merely because both indexes have a latest
-    # pair.  The 12-minute bound covers the 10-minute cadence plus runner lag.
+    # Use the latest comparable same-day fact from each engine. A runner delay
+    # or one missed pulse must not erase a valid same-ETF combination. Exact
+    # ETF overlap remains enforced below.
     discovery_time = pulse_time(discovery_after)
     hyper_time = pulse_time(hyper_after)
-    if not discovery_time or not hyper_time or abs((discovery_time - hyper_time).total_seconds()) > 12 * 60:
+    if not discovery_time or not hyper_time or discovery_time.date() != hyper_time.date():
         return []
     event = _integrated_pulse_event(
         discovery_before, discovery_after, hyper_before, hyper_after

@@ -110,7 +110,10 @@ def _market_value_error(event: dict) -> str:
         return "REVERSAL notification has no current comparable level"
     if category == "DIVERGENCE" and magnitude is None:
         return "DIVERGENCE notification has no numeric spread magnitude"
-    return _market_interruption_error(event)
+    # Numeric, PIT price/path evidence is sufficient for a user-visible market
+    # alert.  Role/structure/decision relevance may raise priority, but must
+    # not be a second hard gate: otherwise valid market facts silently vanish.
+    return ""
 
 
 def _late_apac_error(event: dict) -> str:
