@@ -331,13 +331,11 @@ jobs:
       - name: Send A-share opening value signal or close summary when due
         id: a_share_summary_notify
         if: ${{ (github.event_name == 'workflow_run' && github.event.workflow_run.name == 'ETF market snapshot') || (github.event_name == 'push' && steps.push_kind.outputs.a_share_market == 'true') }}
-        continue-on-error: true
         run: python scripts/run_guarded_notification.py batch --market a-share
 
       - name: Send APAC opening value signal or close summary when due
         id: apac_summary_notify
         if: ${{ (github.event_name == 'workflow_run' && github.event.workflow_run.name == 'Overseas pre-open pulse') || (github.event_name == 'push' && steps.push_kind.outputs.apac_market == 'true') }}
-        continue-on-error: true
         env:
           PREVIOUS_CONTEXT_PATH: data/state/overseas_context_previous.json
         run: python scripts/run_guarded_notification.py batch --market apac
@@ -345,7 +343,6 @@ jobs:
       - name: Send APAC monitored-object value event when due
         id: apac_shock_notify
         if: ${{ false }}
-        continue-on-error: true
         env:
           PREVIOUS_CONTEXT_PATH: data/state/overseas_context_previous.json
         run: echo "included in canonical batch"
@@ -378,13 +375,11 @@ jobs:
       - name: Send safe notification-channel test
         id: test_notify
         if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.test_notification == 'true') || (github.event_name == 'push' && steps.push_kind.outputs.test == 'true') }}
-        continue-on-error: true
         run: python scripts/run_guarded_notification.py center --mode channel-test
 
       - name: Send synthetic Discovery and Hyperliquid pulse test
         id: pulse_test_notify
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.pulse_test == 'true' }}
-        continue-on-error: true
         env:
           PULSE_TEST_RUN_ID: ${{ github.run_id }}
         run: python scripts/run_guarded_notification.py batch --market pulse-test
@@ -403,7 +398,6 @@ jobs:
               contains(fromJSON('["ETF market snapshot", "Overseas pre-open pulse", "US extended-hours pulse"]'), github.event.workflow_run.name) &&
               github.event.workflow_run.conclusion == 'success')
           }}
-        continue-on-error: true
         run: python scripts/run_guarded_notification.py batch --market pulse
 
       # Event-driven notifications have no A-share-session or night-time gate.
@@ -1054,3 +1048,4 @@ jobs:
         run: |
           echo "User notification delivery failed; ETF market/data/trading-decision workflows remain unaffected."
           exit 1
+

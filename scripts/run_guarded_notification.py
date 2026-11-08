@@ -1229,7 +1229,19 @@ def _run_batch(market: str) -> int:
             continue
         results.append(common.persist_and_send(event, policy="canonical bounded market notification batch"))
     print(json.dumps({"status": "BATCHED", "results": results}, ensure_ascii=False))
-    return 1 if any(result.get("status") == "CREATED" for result in results) else 0
+    # A batch is a delivery boundary, not merely an event-construction step.
+    # Never report success when any candidate reached the sender but failed to
+    # persist or deliver.  Previously the workflow could finish green while
+    # PushPlus was unavailable because nested FAILED results were only printed.
+    failed_statuses = {
+        "FAILED",
+        "SEND_FAILED",
+        "PERSIST_FAILED",
+        "DELIVERY_FAILED",
+    }
+    if any(str(result.get("status") or "").upper() in failed_statuses for result in results):
+        return 1
+    return 0
 
 
 def _latest_failed_report_response(center, event: dict) -> dict:
@@ -1360,4 +1372,6 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+
 
