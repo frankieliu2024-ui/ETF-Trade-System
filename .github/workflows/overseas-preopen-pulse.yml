@@ -14,10 +14,10 @@ on:
       # producer.  The overseas workflow remains the sole APAC owner.
       - "requests/live_snapshot/**global*.json"
   schedule:
-    # Unified fixed pulse rule: every 10 minutes at :05/:15/:25/:35/:45/:55 UTC.
-    # The same cadence maps to Beijing 07:55-16:35 for APAC coverage;
+    # Unified fixed pulse rule: every 10 minutes at :00/:10/:20/:30/:40/:50 UTC.
+    # The same cadence maps to Beijing 08:00-16:00 for APAC coverage;
     # market calendars and phases decide applicable objects.
-    - cron: "5,15,25,35,45,55 0-7 * * 1-5"
+    - cron: "0,10,20,30,40,50 0-8 * * 1-5"
 
 permissions:
   contents: write
