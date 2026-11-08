@@ -38,7 +38,7 @@ Hyperliquid对象级消费账本与用户主动通知是两个层级。对象有
 
 ## 4. completion结构化交接
 
-Formal Decision completion在已有字段之外，必须尽可能写入本次运行的只读消费账本 hyperliquid_consumption_audit。每条记录至少绑定：
+Formal Decision completion在已有字段之外，必须写入统一的只读证据消费账本 evidence_consumption_audit；其中的 hyperliquid 子账本承载本次 Hyperliquid 对象级消费结果。不得另建第二套 completion 账本。每条 Hyperliquid 记录至少绑定：
 
 - task_run_id、occurrence_id、market_date；
 - object_type、object_id、object_name；
@@ -65,7 +65,7 @@ Formal Decision completion在已有字段之外，必须尽可能写入本次运
 
 下一次合并后正式决策必须逐项检查：
 
-- completion存在非空 hyperliquid_consumption_audit；
+- completion存在非空 evidence_consumption_audit，且其中 Hyperliquid 子账本覆盖实际评估对象；
 - 覆盖实际持仓、观察ETF、Discovery候选和机会层中本次实际评估对象；
 - 每条记录有对象身份、映射资产、证据状态、消费状态、决策作用和映射理由；
 - 正文不再对已产生确认、反向、时机或风险作用的对象统一写“无明确增量价值”；
