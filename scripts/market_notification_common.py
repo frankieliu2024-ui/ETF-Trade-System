@@ -611,6 +611,11 @@ def _find_aggregate_target(items: list[dict], event: dict) -> dict | None:
 
 
 def _absorb_or_aggregate(notifications: list[dict], event: dict) -> tuple[str, dict] | None:
+    # Scheduled-review REPORTs are separately auditable delivery objects.
+    # Do not merge them into pulse/market notifications before report identity
+    # is persisted, or delivery can succeed while handoff verification loses it.
+    if str(event.get("event_type") or "") == "REPORT_DELIVERY_REQUEST":
+        return None
     summary = _find_recent_summary_absorption(notifications, event)
     if summary:
         return "ABSORBED_BY_SUMMARY", summary
@@ -760,4 +765,5 @@ def persist_and_send(event: dict, *, policy: str) -> dict:
     })
     write_json(NOTIFICATION_STATE, state)
     return {"status": item["lifecycle_status"], "notification_id": item["notification_id"], "title": item["title"], "response": response}
+
 
