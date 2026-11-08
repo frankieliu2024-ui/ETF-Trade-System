@@ -2,17 +2,20 @@
   "schema_version": "research-hl-object-mapping-v1",
   "mode": "RESEARCH_ONLY_EXPLORATORY",
   "read_only": true,
-  "status_note": "候选映射不是信号有效性结论；未完成唯一经济映射的对象不得进入有效性统计。",
+  "status_note": "候选映射不是信号有效性结论；未完成唯一经济映射的对象不得进入有效性统计。CXMT代码已按上交所上市公告纠正为688825.SH。",
   "objects": [
     {
       "object_id": "xyz:CXMT",
       "hyperliquid_asset": "xyz:CXMT",
       "a_share_target": [
-        "688249.SH"
+        "688825.SH"
       ],
       "mapping_type": "DIRECT_REFERENCE",
       "mapping_confidence": "HIGH",
-      "mapping_reason": "Hyperliquid合约以长鑫科技A股价格为参照；已有53个交易日隔夜开盘缺口研究。"
+      "mapping_reason": "Hyperliquid合约以长鑫科技A股价格为参照；上海证券交易所上市公告确认证券代码为688825；已有53个交易日隔夜开盘缺口研究需按该代码重算。",
+      "source_urls": [
+        "https://www.sse.com.cn/disclosure/announcement/listing/ipo/c/c_20260724_10826610.shtml"
+      ]
     },
     {
       "object_id": "GIGADEV",
@@ -225,6 +228,7 @@
     }
   ],
   "next_gate": [
+    "先纠正并重新核验CXMT历史样本的证券代码与价格序列",
     "先固定每个候选集合的具体A股代码和选择理由",
     "仅对映射可审计且目标集合稳定的对象进行逐对象统计",
     "无法固定唯一目标的对象保留为主题研究，不输出单一A股有效性结论"
