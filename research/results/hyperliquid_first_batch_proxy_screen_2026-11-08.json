@@ -1,0 +1,66 @@
+{
+  "schema_version": "research-hl-first_batch_screen-v1",
+  "mode": "RESEARCH_ONLY_EXPLORATORY",
+  "read_only": true,
+  "period": {
+    "start": "2026-08-11",
+    "end": "2026-11-06"
+  },
+  "window_definition": {
+    "timezone": "Asia/Shanghai",
+    "start": "D-1 15:00",
+    "end": "D 09:00",
+    "hyperliquid_interval": "1h"
+  },
+  "proxy_warning": "DRAM、SMH、SOXL首轮均使用588000.SH作为A股代理，结果不是半导体行业截面结论；需后续替换为固定行业成分/ETF篮子并分别验证。",
+  "results": [
+    {
+      "object_id": "xyz:DRAM",
+      "family": "MEMORY",
+      "a_share_proxy": "588000.SH",
+      "matched_days": 58,
+      "gap_correlation": 0.8745922622,
+      "direction_hit_rate": 0.7368421053,
+      "open_to_close_correlation": -0.1921004009,
+      "status": "PROXY_SCREEN_ONLY"
+    },
+    {
+      "object_id": "xyz:SMH",
+      "family": "SEMICONDUCTOR",
+      "a_share_proxy": "588000.SH",
+      "matched_days": 58,
+      "gap_correlation": 0.8696045101,
+      "direction_hit_rate": 0.8070175439,
+      "open_to_close_correlation": -0.162135193,
+      "status": "PROXY_SCREEN_ONLY"
+    },
+    {
+      "object_id": "xyz:SOXL",
+      "family": "SEMICONDUCTOR_HIGH_BETA",
+      "a_share_proxy": "588000.SH",
+      "matched_days": 58,
+      "gap_correlation": 0.8540431435,
+      "direction_hit_rate": 0.8245614035,
+      "open_to_close_correlation": -0.1522520092,
+      "status": "PROXY_SCREEN_ONLY"
+    },
+    {
+      "object_id": "xyz:GOLD",
+      "family": "GOLD",
+      "a_share_proxy": "518880.SH",
+      "matched_days": 58,
+      "gap_correlation": 0.8308982692,
+      "direction_hit_rate": 0.8965517241,
+      "open_to_close_correlation": -0.0372494995,
+      "status": "PROXY_SCREEN_ONLY"
+    }
+  ],
+  "interpretation": [
+    "四个对象在当前代理筛查中均表现出较强的样本内开盘缺口相关性，但不能排除共同市场日期、代理选择和窗口口径造成的高估。",
+    "开盘至收盘相关性均弱于开盘缺口关系，暂不支持全天方向外推。",
+    "在固定行业成分、A股前一日收益控制、滚动/留出检验完成前，不得给出VALID或主动收益候选结论。",
+    "当前结论统一为PROXY_SCREEN_ONLY或INSUFFICIENT_EVIDENCE。"
+  ],
+  "conclusion_status": "PROXY_SCREEN_ONLY",
+  "decision_boundary": "No production state, formal decision, trading permission, amount or order is generated."
+}

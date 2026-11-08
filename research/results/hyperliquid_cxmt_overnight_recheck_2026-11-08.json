@@ -1,0 +1,46 @@
+{
+  "schema_version": "research-hl-cxmt-recheck-v1",
+  "mode": "RESEARCH_ONLY_EXPLORATORY",
+  "read_only": true,
+  "object_id": "xyz:CXMT",
+  "hyperliquid_asset": "xyz:CXMT",
+  "a_share_target": "688825.SH",
+  "period": {
+    "start": "2026-08-11",
+    "end": "2026-11-06"
+  },
+  "sample": {
+    "matched_trading_days": 58,
+    "nonzero_direction_pairs": 56,
+    "missing_or_unmatched_rows": 0
+  },
+  "window_definition": {
+    "timezone": "Asia/Shanghai",
+    "start": "D-1 15:00",
+    "end": "D 09:00",
+    "hyperliquid_interval": "1h",
+    "endpoint_timestamp_basis": "candle open timestamp",
+    "note": "使用窗口内第一根与最后一根1小时K线收盘价计算窗口变化；该口径需在后续研究中固定并做敏感性检验。"
+  },
+  "metrics": {
+    "overnight_change_vs_next_open_gap_correlation": 0.7980166295,
+    "direction_hit_rate": 0.75,
+    "direction_nonzero_count": 56,
+    "overnight_change_vs_open_to_close_correlation": -0.0920523917
+  },
+  "interpretation": [
+    "当前重算支持隔夜信号与次日开盘缺口存在较强样本内同向关系。",
+    "当前重算不支持把该信号直接外推为开盘后全天方向。",
+    "结果与此前53日研究不可直接逐项比较，原因包括证券代码纠正、样本窗口和隔夜窗口定义不同。",
+    "未计入滑点、价差、资金费率、美元/CNH调整和可成交价格，不能推出净收益结论。"
+  ],
+  "provenance": {
+    "hyperliquid_endpoint": "https://api.hyperliquid.xyz/info",
+    "hyperliquid_interval": "1h",
+    "ashare_endpoint": "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get",
+    "ashare_symbol": "sh688825",
+    "a_share_security_code_verified": "688825.SH"
+  },
+  "conclusion_status": "PRELIMINARY_OPEN_GAP_ONLY",
+  "decision_boundary": "No production state, formal decision, trading permission, amount or order is generated."
+}
