@@ -717,6 +717,15 @@ def persist_and_send(event: dict, *, policy: str) -> dict:
     if existing and existing.get("lifecycle_status") in {"SENT", "WAITING_CONFIRMATION", "CONFIRMED", "ARCHIVED"}:
         return {"status": "ALREADY_MANAGED", "notification_id": existing.get("notification_id")}
     item = normalize_notification(event, existing)
+    # Preserve the exact REPORT identity through the shared state writer. The
+    # sender may deliver successfully, but persistence must remain bound to the
+    # same report/run/request before the workflow can declare handoff complete.
+    if str(event.get("event_type") or "") == "REPORT_DELIVERY_REQUEST":
+        for key in ("report_type", "report_id", "request_id", "parent_request_id", "task_id", "task_run_id", "occurrence_id", "idempotency_key", "content_hash"):
+            if event.get(key) not in (None, ""):
+                item[key] = event.get(key)
+        if isinstance(event.get("presentation_binding"), dict):
+            item["presentation_binding"] = dict(event["presentation_binding"])
     token = os.environ.get("PUSHPLUS_TOKEN", "").strip()
     if not token:
         stamp = now().isoformat(timespec="seconds")
