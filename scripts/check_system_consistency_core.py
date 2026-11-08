@@ -660,6 +660,7 @@ def main() -> int:
     check("query_time_refresh_can_bypass_stale_cache", "force_refresh" in query and "QUERY_TIME_IMMEDIATE_REFRESH" in router_module and "_query_refresh_needed" in router_module, "stale cache can trigger provider refresh")
     legacy_market_pulse = '5,15,25,35,45,55'
     apac_hyperliquid_pulse = '5,15,25,35,45,55'
+    boundary_pulses = ('55 23 * * 0-4', '5 8 * * 1-5')
     check(
         "scheduled_target_cadence_600s",
         runtime.get("target_cadence_seconds") == 600
@@ -667,8 +668,10 @@ def main() -> int:
             legacy_market_pulse in read_text(path)
             for path in (".github/workflows/market-snapshot.yml", ".github/workflows/us-extended-hours-pulse.yml")
         )
-        and apac_hyperliquid_pulse in read_text(".github/workflows/overseas-preopen-pulse.yml"),
-        "all scheduled market workflows use ten-minute cadence; APAC and Hyperliquid window uses :05/:15/:25/:35/:45/:55 UTC",
+        and apac_hyperliquid_pulse in read_text(".github/workflows/overseas-preopen-pulse.yml")
+        and all(x in read_text(".github/workflows/overseas-preopen-pulse.yml") for x in boundary_pulses)
+        and all(x in read_text(".github/workflows/market-snapshot.yml") for x in boundary_pulses),
+        "all scheduled market workflows use ten-minute cadence; APAC and Hyperliquid window includes Beijing 07:55-16:05 boundary pulses",
     )
 
     overseas_builder = read_text("scripts/build_overseas_context.py")
