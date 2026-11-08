@@ -1029,7 +1029,7 @@ jobs:
           items = payload.get("notifications")
           if not isinstance(items, list) or not items:
               raise SystemExit("bound notification did not produce a durable notification record")
-          bound = [x for x in items if str(x.get("report_id") or "") == "etf_system_review:scheduled_system_review_20261108T193537p0800_7c4e9a2b"]
+          bound = [x for x in items if str(x.get("report_id") or (x.get("presentation_binding") or {}).get("report_id") or "") == "etf_system_review:scheduled_system_review_20261108T193537p0800_7c4e9a2b"]
           if not bound:
               raise SystemExit("bound notification record is missing the scheduled review report identity")
           item = bound[-1]
