@@ -878,13 +878,28 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
         relation = "当前只有外部证据，仍需结合ETF自身走势确认"
 
     if overlap:
-        if "风险过滤" in hl_text or "压制" in hl_text:
-            effect_text = "外部信号当前用于风险过滤，不能提高看多判断"
-        elif "方向支持" in hl_text:
-            effect_text = "外部信号当前可用于方向确认，但仍需继续观察本地走势是否同步"
+        transition_states = set(discovery_transitions.values())
+        if "STRENGTHENING" in transition_states:
+            local_state = "本地趋势较上一脉冲继续强化"
+        elif "WEAKENING" in transition_states:
+            local_state = "本地趋势较上一脉冲出现衰减"
+        elif "REVERSING" in transition_states:
+            local_state = "本地趋势较上一脉冲出现反转"
+        elif "INITIAL" in transition_states:
+            local_state = "本地趋势首次形成有效变化"
         else:
-            effect_text = "外部信号当前只能作为观察线索，尚不能提高结论强度"
-        core_conclusion = f"【核心结论】{primary}的本地状态已发生变化；{effect_text}。"
+            local_state = "本地趋势较上一脉冲延续"
+        hl_has_support = "外部方向偏强" in hl_text
+        hl_has_risk = any(word in hl_text for word in ("风险上升", "风险过滤", "压制", "拥挤加深", "偏离扩大"))
+        if hl_has_support and hl_has_risk:
+            effect_text = f"{local_state}，但外部方向偏强与拥挤风险同时存在，当前属于方向支持与风险过滤并存"
+        elif hl_has_risk:
+            effect_text = f"{local_state}，但外部信号主要用于风险过滤，不能提高看多判断"
+        elif hl_has_support:
+            effect_text = f"{local_state}，外部信号可用于方向确认，但仍需本地走势继续同步"
+        else:
+            effect_text = f"{local_state}，外部信号暂只能作为观察线索，尚不能提高结论强度"
+        core_conclusion = f"【核心结论】{primary}{effect_text}。"
     elif discovery_changed and hl_labels:
         core_conclusion = (
             f"【核心结论】Discovery发现{discovery_title}进入复核，"
@@ -903,11 +918,19 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
             f"当前价值是提高下一次正式判断中的复核优先级，不代表自动交易。"
         )
 
+    if overlap and "WEAKENING" in set(discovery_transitions.values()):
+        next_check = f"重点核对{primary}自身走弱是否延续，以及成交承接是否同步减弱；若本地继续走弱，外部强势不能替代ETF自身确认。"
+    elif overlap and "REVERSING" in set(discovery_transitions.values()):
+        next_check = f"重点核对{primary}是否确认方向反转；在反转未被自身走势和成交承接确认前，不提高结论强度。"
+    elif overlap:
+        next_check = f"重点核对{primary}自身强势能否延续，以及成交承接是否保持；若本地不再同步，外部信号只保留为风险过滤。"
+    else:
+        next_check = f"重点核对{primary}自身走势和成交承接，再决定外部证据用于方向确认、时机判断还是风险过滤。"
     content = (
         f"{core_conclusion}\n\n"
         f"【Discovery依据】{discovery_text}\n\n"
         f"【Hyperliquid依据】{hl_text}\n\n"
-        f"【下一步核对】只核对{primary}自身走势是否继续走强并保持成交承接；若不能同步，外部信号按风险提示处理。\n\n"
+        f"【下一步核对】{next_check}\n\n"
         f"【当前边界】不自动下单、不自动调仓。"
     )
     evidence_time = str(
@@ -1175,114 +1198,3 @@ def _latest_failed_report_response(center, event: dict) -> dict:
 
 
 def _report_retryable_transport_failure(center, event: dict) -> bool:
-    response = _latest_failed_report_response(center, event)
-    error = str(response.get("error") or "")
-    message = str(response.get("message") or "")
-    lowered = message.lower()
-    if error == "URLError" and "handshake operation timed out" in lowered:
-        return True
-    if error == "HTTPError" and any(f"http error {status}:" in lowered for status in (502, 503, 504)):
-        return True
-    return False
-
-
-def _run_center(mode: str, formal_content_file: str | None = None) -> int:
-    import notification_center as center
-
-    if formal_content_file:
-        print(json.dumps({
-            "status": "FAILED",
-            "error": "Formal Decision direct content projection is disabled; use canonical completion event",
-        }, ensure_ascii=False))
-        return 1
-
-    event = None
-    if mode != "channel-test":
-        event = center.choose_event(mode)
-        error = notification_evidence_error(event)
-        if error:
-            print(json.dumps({"status": "REJECTED_NO_COMPARABLE_EVIDENCE", "detail": error, "title": (event or {}).get("title")}, ensure_ascii=False))
-            return 0
-        original_choose = center.choose_event
-        center.choose_event = lambda requested: event if requested == mode else original_choose(requested)
-    sys.argv = ["notification_center.py", "--mode", mode]
-    result = center.main()
-    if (
-        result == 0
-        or mode != "event"
-        or not event
-        or str(event.get("event_type") or "") != "REPORT_DELIVERY_REQUEST"
-    ):
-        return result
-
-    for retry_number, delay in enumerate(REPORT_RETRY_DELAYS_SECONDS, start=1):
-        if not _report_retryable_transport_failure(center, event):
-            break
-        print(json.dumps({
-            "status": "RETRYING_REPORT_DELIVERY",
-            "retry_number": retry_number,
-            "delay_seconds": delay,
-            "source_event_id": event.get("source_event_id") or event.get("key"),
-        }, ensure_ascii=False))
-        time.sleep(delay)
-        result = center.main()
-        if result == 0:
-            break
-    return result
-
-
-def _run_regional(market: str) -> int:
-    import market_notification_common as common
-    import send_regional_session_summary as producer
-
-    producer.persist_and_send = _guarded_persist(common.persist_and_send)
-    sys.argv = ["send_regional_session_summary.py", "--market", market]
-    return producer.main()
-
-
-def _run_shock(market: str) -> int:
-    import market_notification_common as common
-    import send_market_shock_notification as producer
-
-    producer._legacy.persist_and_send = _guarded_persist(common.persist_and_send)
-    sys.argv = ["send_market_shock_notification.py", "--market", market]
-    return producer.main()
-
-
-def _run_us() -> int:
-    import market_notification_common as common
-    import send_us_session_summary as producer
-
-    producer.persist_and_send = _guarded_persist(common.persist_and_send)
-    sys.argv = ["send_us_session_summary.py"]
-    return producer.main()
-
-
-def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("family", choices=["center", "regional", "shock", "us", "batch"])
-    parser.add_argument("--mode", choices=["event", "close", "close-test", "channel-test"], default="event")
-    parser.add_argument("--formal-content-file")
-    parser.add_argument("--market", choices=["a-share", "apac", "asia", "us", "pulse", "pulse-test"])
-    args = parser.parse_args()
-
-    if args.family == "center":
-        return _run_center(args.mode, args.formal_content_file)
-    if args.family == "batch":
-        if args.market not in {"a-share", "apac", "us", "pulse", "pulse-test"}:
-            parser.error("batch requires --market a-share|apac|us|pulse")
-        return _run_batch(args.market)
-    if args.family == "regional":
-        if args.market not in {"a-share", "apac"}:
-            parser.error("regional requires --market a-share|apac")
-        return _run_regional(args.market)
-    if args.family == "shock":
-        if args.market not in {"a-share", "asia", "us"}:
-            parser.error("shock requires --market a-share|asia|us")
-        return _run_shock(args.market)
-    return _run_us()
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
-
