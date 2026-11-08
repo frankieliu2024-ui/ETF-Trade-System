@@ -688,12 +688,12 @@ jobs:
         id: current_discovery
         # Current and weekly reviews consume the same latest legal Discovery
         # artifact. The producer is idempotent for the same verified pulse.
-        if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.session_gate.outputs.process_latest_reference == 'true' || github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && github.event.inputs.probe_only != 'true' && github.event_name != 'push' }}
+        if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.session_gate.outputs.process_latest_reference == 'true' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && github.event.inputs.probe_only != 'true' && github.event_name != 'push' }}
         run: python scripts/build_weekly_discovery.py
 
       - name: Build weekly return attribution bridge
         id: weekly_return_attribution
-        if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.session_gate.outputs.process_latest_reference == 'true' || github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && github.event.inputs.probe_only != 'true' && github.event_name != 'push' }}
+        if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.session_gate.outputs.process_latest_reference == 'true' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && github.event.inputs.probe_only != 'true' && github.event_name != 'push' }}
         run: python scripts/build_weekly_return_attribution.py
 
       - name: Quick retry failed core objects after initial publish
