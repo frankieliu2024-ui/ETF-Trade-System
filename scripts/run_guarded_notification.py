@@ -543,6 +543,16 @@ def _discovery_reason(item: dict) -> str:
             if evidence.get("short_vs_medium_normalized_gap") is not None:
                 state_detail.append(f"短中趋势差{pct_text(evidence['short_vs_medium_normalized_gap'])}")
     returns.update((spot.get("window_returns") if isinstance(spot, dict) else None) or {})
+    price_context = item.get("price_context") or {}
+    if isinstance(price_context, dict):
+        for key in ("return_5d", "return_10d", "return_20d", "return_40d", "return_60d", "return_ytd"):
+            if price_context.get(key) is not None:
+                window = key.removeprefix("return_").removesuffix("d").replace("_", "")
+                try:
+                    numeric = float(price_context[key])
+                    returns.setdefault(window, numeric / 100 if abs(numeric) > 1 else numeric)
+                except (TypeError, ValueError):
+                    continue
     trend_detail = [f"{w}日{pct_text(returns[w])}" for w in ("5", "10", "20", "40", "60") if returns.get(w) is not None]
     if trend_detail:
         evidence_parts.append("区间表现：" + "、".join(trend_detail))
@@ -571,6 +581,28 @@ def _discovery_reason(item: dict) -> str:
         path = [spot.get(k) for k in ("open", "high", "low", "price")]
         if all(v not in (None, "") for v in path):
             evidence_parts.append("价格路径：开盘→最高→最低→现价 " + "→".join(f"{float(v):.3f}" for v in path))
+    volume_context = item.get("volume_context") or {}
+    if isinstance(volume_context, dict):
+        volume_parts = []
+        for key, label in (("turnover_ratio", "换手承接"), ("volume_ratio", "量比"), ("amount", "成交额")):
+            value = volume_context.get(key)
+            if value in (None, ""):
+                continue
+            try:
+                if key == "amount":
+                    volume_parts.append(f"{label}{float(value) / 100000000:.2f}亿元")
+                elif key == "turnover_ratio":
+                    volume_parts.append(f"{label}{float(value):+.1f}%")
+                else:
+                    volume_parts.append(f"{label}{float(value):.1f}倍")
+            except (TypeError, ValueError):
+                continue
+        if volume_parts:
+            evidence_parts.append("成交证据：" + "、".join(volume_parts))
+    for key, label in (("reason", "入选理由"), ("selection_reason", "入选理由"), ("impact", "当前影响")):
+        value = item.get(key)
+        if value not in (None, ""):
+            evidence_parts.append(f"{label}：{value}")
     history = item.get("historical_context") or {}
     if history.get("sample_count") not in (None, ""):
         evidence_parts.append(f"历史样本：已完成{history['sample_count']}个交易日")
@@ -611,6 +643,11 @@ def _hyperliquid_user_change(asset: str, before: dict, after: dict) -> str:
 def _hyperliquid_evidence_text(asset: str, labels: list[str], before: dict, after: dict) -> str:
     """Render complete HL evidence for one asset/ETF binding without raw values."""
     _, relation = _hyperliquid_mapping_metadata(asset, labels[0] if labels else "")
+    relation_text = {
+        "直接/产业链关系": "直接对应产业方向",
+        "间接市场/风险偏好关系": "间接反映市场风险偏好",
+        "间接风格或共同风险因子关系": "间接反映共同风格和风险偏好",
+    }.get(relation, relation)
     family_text = {
         "BIOTECH": "美国生物科技与创新药方向",
         "CHINA_TECH_RISK": "中国互联网与平台经济方向",
@@ -625,6 +662,9 @@ def _hyperliquid_evidence_text(asset: str, labels: list[str], before: dict, afte
     family, _ = _hyperliquid_mapping_metadata(asset, labels[0] if labels else "")
     direction = str(after.get("direction") or "").lower()
     direction_text = {"positive": "外部方向偏强", "negative": "外部方向偏弱", "mixed": "外部方向分化"}.get(direction, "外部方向发生变化")
+    old_direction = str(before.get("direction") or "").lower()
+    if old_direction and old_direction != direction:
+        direction_text = f"外部方向由{ {'positive':'偏强','negative':'偏弱','mixed':'分化'}.get(old_direction, '此前未明确') }转为{ {'positive':'偏强','negative':'偏弱','mixed':'分化'}.get(direction, '新的状态') }"
     change = _hyperliquid_user_change(asset, before, after)
     risk_words = ("拥挤加深", "风险上升", "偏离扩大", "压力")
     if direction == "negative" or any(word in change for word in risk_words):
@@ -636,11 +676,11 @@ def _hyperliquid_evidence_text(asset: str, labels: list[str], before: dict, afte
     else:
         effect = "对上述ETF暂不能归类为支持或压制，只能作为观察线索"
         use = "当前只用于观察"
+    target = "、".join(labels)
     return (
-        f"{asset.split(':', 1)[-1]}对应{', '.join(labels)}，属于{relation}；"
-        f"代表{family_text.get(family, '相关外部市场方向')}；"
-        f"本次变化：{direction_text}，{change}；"
-        f"具体影响：{effect}；{use}"
+        f"{asset.split(':', 1)[-1]}代表{family_text.get(family, '相关外部市场方向')}，与{target}{relation_text}；"
+        f"本次变化为{direction_text}，同时{change}；"
+        f"对{target}的直接含义是：{effect}，{use}。"
     )
 
 
@@ -659,6 +699,7 @@ def _discovery_candidate_has_user_value(item: dict) -> bool:
         or (isinstance(spot, dict) and any(spot.get(key) not in (None, "") for key in ("change_pct", "turnover_pct")))
         or role in {"HELD", "HOLDING", "OBSERVED", "OBSERVATION", "OPPORTUNITY", "NEW", "CANDIDATE"}
         or lifecycle
+
     )
 
 def _number_value(value: object) -> float | None:
@@ -699,7 +740,6 @@ def _pulse_user_window(source: str, after: dict) -> bool:
     if not match:
         return False
     return 8 <= int(match.group(1)) < 16
-
 
 
 def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
@@ -1010,6 +1050,7 @@ def _pulse_candidates_from_payloads(payloads: dict[str, dict]) -> list[dict]:
         ordered = [
             item for item in ordered_all
             if str(item.get("_pulse_market_date") or "").strip() == latest_day
+
         ] if latest_day else ordered_all
         return (ordered[-2], ordered[-1]) if len(ordered) >= 2 else ({}, {})
     discovery_before, discovery_after = latest_pair(payloads.get("discovery_pulse") or {})
@@ -1050,7 +1091,6 @@ def _annotate_market_continuous_state(event: dict) -> dict:
     market_date = str(context.get("market_date") or context.get("us_market_date") or event.get("market_date") or "")
     session = str(context.get("session_node") or context.get("session") or context.get("market_phase") or "")
     object_codes = set(str(x) for x in (context.get("object_codes") or []) if str(x))
-
     code = str(event.get("security_code") or context.get("security_code") or "")
     if code:
         object_codes.add(code)
