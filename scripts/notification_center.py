@@ -398,6 +398,7 @@ def report_delivery_event() -> dict | None:
             request = read_json(report_path, {})
             valid, _ = validate_report_delivery_request(request)
             if valid:
+
                 key = str(request["idempotency_key"])
                 return {"key": f"report-delivery:{key}", "source_event_id": f"report-delivery:{key}",
                         "event_type": "REPORT_DELIVERY_REQUEST", "notification_channel": "REPORT",
@@ -798,6 +799,7 @@ def _decision_notification_details(decision: dict, status: str, target: str) -> 
         "decisive_reason": decisive_reason or "正式决策发生实质变化，需按当前资本状态重新判断。",
         "current_action": action_text,
         "capital_route": capital_route,
+
         "next_validation": next_validation,
         "user_action": user_action,
     }
@@ -1029,6 +1031,31 @@ def _pulse_records(index: dict) -> list[dict]:
     return rows
 
 
+def system_event() -> dict | None:
+    """Return only a current-main, decision-critical system interruption."""
+    diagnostic = read_json(STATE / "workflow_failure_diagnostic.json", {})
+    if not isinstance(diagnostic, dict):
+        return None
+    blocked, reason = decision_critical_blockage()
+    if not blocked or str(diagnostic.get("recommended_action") or "") != "ESCALATE_WITH_DIAGNOSTIC":
+        return None
+    return {
+        "key": f"system:{diagnostic.get('run_id') or diagnostic.get('head_sha') or 'current'}",
+        "type": "系统异常",
+        "event_type": "SYSTEM_INTERRUPT",
+        "title": "【系统异常】当前判断链路被关键故障阻断",
+        "content": f"当前正式判断链路存在决策关键阻断（{reason}），请先处理系统故障；系统不会自动下单或调仓。",
+        "source": "workflow_failure_diagnostic",
+        "source_event_id": str(diagnostic.get("run_id") or diagnostic.get("head_sha") or ""),
+        "user_severity": "需要处理",
+        "user_action": "请先处理当前决策关键故障。",
+        "confirmation_context": {
+            "diagnostic_run_id": str(diagnostic.get("run_id") or ""),
+            "decision_blockage_reason": reason,
+        },
+    }
+
+
 def choose_event(mode: str) -> dict | None:
     if mode == "close": return close_account_event()
     if mode == "close-test": return close_account_event(force=True)
@@ -1050,11 +1077,11 @@ def choose_event(mode: str) -> dict | None:
         return report_delivery_event()
     builders = (
         (report_delivery_event, execution_confirmation_event,
-         formal_decision_change_event, account_confirmation_event, system_event, decision_event, formal_decision_pending_event)
+         formal_decision_change_event, account_confirmation_event, system_event, decision_event, formal_decision_report_event)
         if (_report_handoff_path() is not None or _report_delivery_path() is not None)
         else
         (execution_confirmation_event, formal_decision_change_event,
-        account_confirmation_event, system_event, decision_event, formal_decision_pending_event, report_delivery_event)
+        account_confirmation_event, system_event, decision_event, formal_decision_report_event, report_delivery_event)
     )
     for builder in builders:
         event = builder()
@@ -1173,6 +1200,7 @@ def formal_content_event(source_path: Path) -> dict | None:
         if expected_request and expected_request not in {request_id, parent_request_id}:
             return None
         return {
+
             "key": f"report-delivery:ETF_FORMAL_DECISION:{decision_id}",
             "source_event_id": f"formal-bds:{source_path.name}",
             "event_type": "REPORT_DELIVERY_REQUEST",
@@ -1573,14 +1601,3 @@ def main() -> int:
     # Formal Decision is contractually plain text. Keep the established Markdown
     # path for system review, trade review, and other existing notification families.
     pushplus_template = "txt" if item["event_type"] == "FORMAL_DECISION" else "markdown"
-    item["pushplus_template"] = pushplus_template
-    ok, response = send(token, item["title"], item["content"], template=pushplus_template); stamp = now().isoformat(timespec="seconds"); item["last_attempted_at"] = stamp; item["response"] = response
-    item["lifecycle_status"] = "WAITING_CONFIRMATION" if ok and item["event_type"] in {"PENDING_EXECUTION_CONFIRMATION", "成交确认", "账户确认", "ACCOUNT_FACT_CONFIRMATION", "收盘账户"} else ("SENT" if ok else "FAILED"); item["sent_at"] = stamp if ok else item.get("sent_at")
-    if existing: notifications = [x for x in notifications if x.get("notification_id") != item["notification_id"]]
-    notifications.append(item)
-    state = {"schema_version": "2.2", "updated_at": stamp, "last_status": item["lifecycle_status"], "last_type": item["event_type"], "last_title": item["title"], "notifications": notifications[-HISTORY_LIMIT:], "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"], "policy": "只推送会改变用户关注、风险许可、机会状态、持仓动作、执行确认或系统可靠性的实质事件；总资产/市值/浮动盈亏等纯盯市变化不作为账户异常；同一实质账户事件和同一正式decision_id不得重复推送；收盘账户提醒仅在A股交易日触发。", "safety_boundary": "通知中心只转发已有正式判断，不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"}
-    write_json(state_path, state); print(json.dumps(item, ensure_ascii=False)); return 0 if ok else 1
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
