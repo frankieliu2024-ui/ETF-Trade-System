@@ -348,6 +348,7 @@ def _pulse_signal_explanation(signal_changes: list[str]) -> str:
         explanations.append("未平仓量反映市场中尚未平仓的合约规模，变化说明参与资金和风险暴露正在增加或减少")
     if "溢价" in joined:
         explanations.append("溢价反映合约价格相对参考现货的偏离，扩大通常意味着情绪或流动性出现变化")
+
     return "；".join(explanations)
 
 
@@ -700,6 +701,7 @@ def _pulse_user_window(source: str, after: dict) -> bool:
     return 8 <= int(match.group(1)) < 16
 
 
+
 def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
                             hyper_before: dict, hyper_after: dict) -> dict | None:
     """Aggregate both engines into one ETF-level user event for one pulse window."""
@@ -1048,6 +1050,7 @@ def _annotate_market_continuous_state(event: dict) -> dict:
     market_date = str(context.get("market_date") or context.get("us_market_date") or event.get("market_date") or "")
     session = str(context.get("session_node") or context.get("session") or context.get("market_phase") or "")
     object_codes = set(str(x) for x in (context.get("object_codes") or []) if str(x))
+
     code = str(event.get("security_code") or context.get("security_code") or "")
     if code:
         object_codes.add(code)
@@ -1198,3 +1201,114 @@ def _latest_failed_report_response(center, event: dict) -> dict:
 
 
 def _report_retryable_transport_failure(center, event: dict) -> bool:
+    response = _latest_failed_report_response(center, event)
+    error = str(response.get("error") or "")
+    message = str(response.get("message") or "")
+    lowered = message.lower()
+    if error == "URLError" and "handshake operation timed out" in lowered:
+        return True
+    if error == "HTTPError" and any(f"http error {status}:" in lowered for status in (502, 503, 504)):
+        return True
+    return False
+
+
+def _run_center(mode: str, formal_content_file: str | None = None) -> int:
+    import notification_center as center
+
+    if formal_content_file:
+        print(json.dumps({
+            "status": "FAILED",
+            "error": "Formal Decision direct content projection is disabled; use canonical completion event",
+        }, ensure_ascii=False))
+        return 1
+
+    event = None
+    if mode != "channel-test":
+        event = center.choose_event(mode)
+        error = notification_evidence_error(event)
+        if error:
+            print(json.dumps({"status": "REJECTED_NO_COMPARABLE_EVIDENCE", "detail": error, "title": (event or {}).get("title")}, ensure_ascii=False))
+            return 0
+        original_choose = center.choose_event
+        center.choose_event = lambda requested: event if requested == mode else original_choose(requested)
+    sys.argv = ["notification_center.py", "--mode", mode]
+    result = center.main()
+    if (
+        result == 0
+        or mode != "event"
+        or not event
+        or str(event.get("event_type") or "") != "REPORT_DELIVERY_REQUEST"
+    ):
+        return result
+
+    for retry_number, delay in enumerate(REPORT_RETRY_DELAYS_SECONDS, start=1):
+        if not _report_retryable_transport_failure(center, event):
+            break
+        print(json.dumps({
+            "status": "RETRYING_REPORT_DELIVERY",
+            "retry_number": retry_number,
+            "delay_seconds": delay,
+            "source_event_id": event.get("source_event_id") or event.get("key"),
+        }, ensure_ascii=False))
+        time.sleep(delay)
+        result = center.main()
+        if result == 0:
+            break
+    return result
+
+
+def _run_regional(market: str) -> int:
+    import market_notification_common as common
+    import send_regional_session_summary as producer
+
+    producer.persist_and_send = _guarded_persist(common.persist_and_send)
+    sys.argv = ["send_regional_session_summary.py", "--market", market]
+    return producer.main()
+
+
+def _run_shock(market: str) -> int:
+    import market_notification_common as common
+    import send_market_shock_notification as producer
+
+    producer._legacy.persist_and_send = _guarded_persist(common.persist_and_send)
+    sys.argv = ["send_market_shock_notification.py", "--market", market]
+    return producer.main()
+
+
+def _run_us() -> int:
+    import market_notification_common as common
+    import send_us_session_summary as producer
+
+    producer.persist_and_send = _guarded_persist(common.persist_and_send)
+    sys.argv = ["send_us_session_summary.py"]
+    return producer.main()
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("family", choices=["center", "regional", "shock", "us", "batch"])
+    parser.add_argument("--mode", choices=["event", "close", "close-test", "channel-test"], default="event")
+    parser.add_argument("--formal-content-file")
+    parser.add_argument("--market", choices=["a-share", "apac", "asia", "us", "pulse", "pulse-test"])
+    args = parser.parse_args()
+
+    if args.family == "center":
+        return _run_center(args.mode, args.formal_content_file)
+    if args.family == "batch":
+        if args.market not in {"a-share", "apac", "us", "pulse", "pulse-test"}:
+            parser.error("batch requires --market a-share|apac|us|pulse")
+        return _run_batch(args.market)
+    if args.family == "regional":
+        if args.market not in {"a-share", "apac"}:
+            parser.error("regional requires --market a-share|apac")
+        return _run_regional(args.market)
+    if args.family == "shock":
+        if args.market not in {"a-share", "asia", "us"}:
+            parser.error("shock requires --market a-share|asia|us")
+        return _run_shock(args.market)
+    return _run_us()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+
