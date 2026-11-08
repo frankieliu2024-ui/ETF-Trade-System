@@ -81,6 +81,9 @@ jobs:
       - name: Refresh formal overseas and Asia-Pacific index context
         if: ${{ steps.pulse_gate.outputs.eligible == 'true' }}
         run: python scripts/build_overseas_context.py
+      - name: Verify Hyperliquid pulse persistence
+        if: ${{ steps.pulse_gate.outputs.eligible == 'true' }}
+        run: python scripts/validate_hyperliquid_pulse_persistence.py
       - name: Refresh US extended-hours context
         if: ${{ steps.pulse_gate.outputs.eligible == 'true' }}
         run: python scripts/build_us_extended_hours_context.py
