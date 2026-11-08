@@ -745,7 +745,7 @@ def main() -> None:
     )
     if str(pulse_result.get("status") or "") != "UPDATED":
         raise RuntimeError(f"Hyperliquid pulse history was not updated: {pulse_result}")
-    pulse_index = ROOT / "data" / "state" / "hyperliquid_pulse_index.json"
+    pulse_index = ROOT / "data" / "state" / "hyperliquid_pulse_latest.json"
     try:
         persisted = json.loads(pulse_index.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:

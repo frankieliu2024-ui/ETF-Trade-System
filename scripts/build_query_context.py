@@ -16,12 +16,14 @@ try:
     from market_quote_router import build_market_quote_context
     from formal_etf_opportunity_discovery import attach_formal_quotes
     from trading_time_semantics import user_visible_trading_time_anchor
+    from pulse_history import read_pulse_projection
 except ModuleNotFoundError:
     from scripts.state_manager import atomic_json_write, build_decision_context, now_utc, read_account_fact, read_current, read_json
     from scripts.build_stock_context import active_account_asset_codes
     from scripts.market_quote_router import build_market_quote_context
     from scripts.formal_etf_opportunity_discovery import attach_formal_quotes
     from scripts.trading_time_semantics import user_visible_trading_time_anchor
+    from scripts.pulse_history import read_pulse_projection
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
@@ -1419,7 +1421,7 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         "qualified_market_facts": quotes,
         "hyperliquid_external_driver_context": {
             "quality_status": external_driver.get("quality_status") or "NOT_REQUESTED",
-            "pulse_continuity": read_json(root / "data" / "state" / "hyperliquid_pulse_index.json", {}).get("continuity") or {
+            "pulse_continuity": read_pulse_projection(root, "HYPERLIQUID").get("continuity") or {
                 "status": "MISSING",
                 "rule": "Hyperliquid连续脉冲索引不可读或尚未形成，不能用旧正文补齐当前外部证据。",
             },
@@ -2006,8 +2008,8 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
     policy = read_json(root / CANONICAL_FILES["runtime_policy"], {})
     runtime_health = read_json(root / CANONICAL_FILES["runtime_health"], {})
     overseas_context = read_json(root / CANONICAL_FILES["overseas_context"], {})
-    discovery_pulse_index = read_json(root / "data" / "state" / "discovery_pulse_index.json", {})
-    hyperliquid_pulse_index = read_json(root / "data" / "state" / "hyperliquid_pulse_index.json", {})
+    discovery_pulse_index = read_pulse_projection(root, "DISCOVERY")
+    hyperliquid_pulse_index = read_pulse_projection(root, "HYPERLIQUID")
     us_extended = read_json(root / CANONICAL_FILES["us_extended_hours_context"], {})
     stock_context = read_json(root / CANONICAL_FILES["stock_context"], {})
     stock_market_context = read_json(root / CANONICAL_FILES["stock_market_context"], {})

@@ -68,6 +68,8 @@ on:
       - "data/state/us_extended_hours_context.json"
       - "data/state/discovery_pulse_index.json"
       - "data/state/hyperliquid_pulse_index.json"
+      - "data/state/discovery_pulse_latest.json"
+      - "data/state/hyperliquid_pulse_latest.json"
   schedule:
     # Dedicated close-account reminder envelope: Beijing 15:20 Monday-Friday.
     # notification_center.py checks the formal A-share trading calendar;
@@ -267,6 +269,12 @@ jobs:
             echo "hyperliquid_pulse=true" >> "$GITHUB_OUTPUT"
           else
             echo "hyperliquid_pulse=false" >> "$GITHUB_OUTPUT"
+          fi
+          if grep -Fxq 'data/state/discovery_pulse_latest.json' /tmp/changed_files.txt; then
+            echo "discovery_pulse=true" >> "$GITHUB_OUTPUT"
+          fi
+          if grep -Fxq 'data/state/hyperliquid_pulse_latest.json' /tmp/changed_files.txt; then
+            echo "hyperliquid_pulse=true" >> "$GITHUB_OUTPUT"
           fi
           mapfile -t handoff_paths < <(grep -E '^requests/report_handoff/[^/]+\.json$' /tmp/changed_files.txt || true)
           if [ "${#handoff_paths[@]}" -eq 1 ]; then

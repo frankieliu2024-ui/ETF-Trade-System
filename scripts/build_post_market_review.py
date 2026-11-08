@@ -9,11 +9,13 @@ try:
     from rules_version import current_rule_version
     from market_quote_router import build_market_quote_context
     from lifecycle_state import build_lifecycle_projection
+    from pulse_history import read_pulse_projection
 except ModuleNotFoundError:
     from scripts.state_manager import atomic_json_write, build_decision_context, now_utc, read_account_fact, read_current
     from scripts.rules_version import current_rule_version
     from scripts.market_quote_router import build_market_quote_context
     from scripts.lifecycle_state import build_lifecycle_projection
+    from scripts.pulse_history import read_pulse_projection
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 CLOSE_NODES = {"1500", "close"}
@@ -145,8 +147,8 @@ def build(root: Path = ROOT) -> dict:
     discovery_projection = load_projection(root, "data/state/formal_discovery_current.json")
     opportunity_projection = load_projection(root, "data/state/formal_opportunity_current.json")
     intraday_formal_decision_index = load_intraday_formal_decision_index(root, str(current.get("market_date") or ""))
-    discovery_pulse_index = load_projection(root, "data/state/discovery_pulse_index.json")
-    hyperliquid_pulse_index = load_projection(root, "data/state/hyperliquid_pulse_index.json")
+    discovery_pulse_index = read_pulse_projection(root, "DISCOVERY")
+    hyperliquid_pulse_index = read_pulse_projection(root, "HYPERLIQUID")
 
     # A verified explicit close node is authoritative even when the provider
     # observation/query timestamp is later than 15:00. For non-close nodes we
