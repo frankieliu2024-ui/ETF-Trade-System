@@ -42,7 +42,8 @@ def _pulse_object_label(item: dict) -> str:
     if code and not name:
         try:
             from notification_center import ROOT, read_json
-            discovery = read_json(ROOT / "data" / "state" / "discovery_pulse_index.json", {})
+            from pulse_history import read_pulse_projection
+            discovery = read_pulse_projection(ROOT, "DISCOVERY")
             rows = []
             latest = discovery.get("latest") if isinstance(discovery, dict) else None
             if isinstance(latest, dict):
@@ -1079,11 +1080,12 @@ def _pulse_candidates_from_payloads(payloads: dict[str, dict]) -> list[dict]:
 
 def _pulse_candidates() -> list[dict]:
     """Build comparable Discovery/Hyperliquid pulse events from canonical indexes."""
-    from notification_center import ROOT, read_json
+    from notification_center import ROOT
+    from pulse_history import read_pulse_projection
 
     return _pulse_candidates_from_payloads({
-        "discovery_pulse": read_json(ROOT / "data" / "state" / "discovery_pulse_index.json", {}),
-        "hyperliquid_pulse": read_json(ROOT / "data" / "state" / "hyperliquid_pulse_index.json", {}),
+        "discovery_pulse": read_pulse_projection(ROOT, "DISCOVERY"),
+        "hyperliquid_pulse": read_pulse_projection(ROOT, "HYPERLIQUID"),
     })
 
 

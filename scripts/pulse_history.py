@@ -113,10 +113,39 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
     }
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(index, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    latest_path = target.with_name(target.stem.replace("_index", "_latest") + target.suffix)
+    latest_projection = {
+        "schema_version": "1.0",
+        "projection_type": f"{kind}_PULSE_LATEST_PROJECTION",
+        "read_only": True,
+        "latest_market_date": market_date,
+        "latest": index.get("latest"),
+        "continuity": index.get("continuity") or {},
+        "record_count": len(records),
+        "source_index": target.as_posix(),
+        "retention_rule": "Latest valid pulse only; use the history index for audit history.",
+    }
+    latest_path.write_text(json.dumps(latest_projection, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return {
         "status": "UPDATED",
         "path": str(target),
         "market_date": market_date,
         "identity": record["identity"],
         "record_count": len(records),
+        "latest_path": str(latest_path),
     }
+
+
+def read_pulse_projection(root: Path, kind: str) -> dict:
+    """Read the bounded latest projection, with a one-release legacy fallback."""
+    if kind not in {"DISCOVERY", "HYPERLIQUID"}:
+        raise ValueError(f"unsupported pulse kind: {kind}")
+    stem = "discovery" if kind == "DISCOVERY" else "hyperliquid"
+    for name in (f"{stem}_pulse_latest.json", f"{stem}_pulse_index.json"):
+        try:
+            payload = json.loads((root / "data" / "state" / name).read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if isinstance(payload, dict):
+            return payload
+    return {}
