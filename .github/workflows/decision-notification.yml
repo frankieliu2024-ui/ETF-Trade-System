@@ -1033,6 +1033,9 @@ jobs:
         run: |
           set -euo pipefail
           test -s data/state/notification_center.json
+          EXPECTED_EVENT_PATH="${{ steps.scheduled_completion_event.outputs.review_event_path || steps.formal_completion_event.outputs.review_event_path || steps.push_kind.outputs.review_event_path || steps.workflow_review.outputs.review_event_path }}"
+          EXPECTED_REPORT_PATH="${{ steps.push_kind.outputs.report_path || steps.scheduled_review_report_persist.outputs.report_path }}"
+          export EXPECTED_EVENT_PATH EXPECTED_REPORT_PATH
           python - data/state/notification_center.json <<'PY'
           import json, sys
           from pathlib import Path
@@ -1040,8 +1043,15 @@ jobs:
           items = payload.get("notifications")
           if not isinstance(items, list) or not items:
               raise SystemExit("bound notification did not produce a durable notification record")
-          expected_report_id = "etf_system_review:scheduled_system_review_20261108t193537p0800_7c4e9a2b"
-          expected_run_id = "scheduled_system_review_20261108t193537p0800_7c4e9a2b"
+          event_path = Path(__import__("os").environ.get("EXPECTED_EVENT_PATH") or "")
+          report_path = Path(__import__("os").environ.get("EXPECTED_REPORT_PATH") or "")
+          event = json.loads(event_path.read_text(encoding="utf-8")) if event_path.is_file() else {}
+          report = json.loads(report_path.read_text(encoding="utf-8")) if report_path.is_file() else {}
+          binding = event.get("presentation_binding") if isinstance(event.get("presentation_binding"), dict) else {}
+          expected_report_id = str(binding.get("report_id") or event.get("report_id") or report.get("report_id") or "").strip()
+          expected_run_id = str(binding.get("task_run_id") or event.get("task_run_id") or report.get("task_run_id") or "").strip()
+          if not expected_report_id and not expected_run_id:
+              raise SystemExit("bound notification verifier could not derive canonical identity")
           def record_identity_values(item):
               binding = item.get("presentation_binding") if isinstance(item.get("presentation_binding"), dict) else {}
               values = [str(item.get(k) or "").strip().lower() for k in ("report_id", "related_decision_id", "source_event_id", "event_id", "request_id", "parent_request_id", "task_run_id", "idempotency_key")]
