@@ -44,13 +44,28 @@ def build_contribution(*, context: dict | None, node: str = "", task: str = "") 
         "mapped_object_count": len(mapped),
         "mapped_objects": [
             {
+                "object_type": "HYPERLIQUID_ASSET",
+                "object_id": x.get("asset") or x.get("name") or "",
+                "object_name": x.get("name") or x.get("asset") or "",
                 "asset": x.get("asset") or x.get("name") or "",
                 "family": x.get("family") or "",
+                "mapped_assets": list(x.get("etf_codes") or x.get("mapped_assets") or []),
+                "mapping_reason": x.get("mapping_reason") or ("CONFIGURED_EXPOSURE_FAMILY" if x.get("family") else "NO_DIRECT_MAPPING"),
+                "observation_as_of": x.get("observation_as_of") or as_of,
+                "evidence_status": x.get("evidence_status") or ("READY" if x else "DEGRADED"),
+                "consumption_status": x.get("consumption_status") or ("CONSUMED" if x.get("family") else "CONSUMED_AS_LIMITATION"),
                 "direction": x.get("direction") or "",
                 "funding": x.get("funding") or "",
                 "open_interest": x.get("open_interest") or x.get("openInterest") or "",
                 "premium": x.get("premium") or "",
-                "decision_effect": x.get("decision_effect") or "",
+                "decision_effect": x.get("decision_effect") or ("NO_DIRECT_MAPPING" if not (x.get("etf_codes") or x.get("mapped_assets")) else "INSUFFICIENT"),
+                "evidence_summary": x.get("evidence_summary") or {
+                    "direction": x.get("direction") or "",
+                    "funding": x.get("funding") or "",
+                    "open_interest": x.get("open_interest") or x.get("openInterest") or "",
+                    "premium": x.get("premium") or "",
+                },
+                "decision_use": x.get("decision_use") or "作为外部方向、时机或风险证据参与本对象判断；不独立授予交易权限",
             }
             for x in mapped
         ],
