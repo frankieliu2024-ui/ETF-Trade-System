@@ -15,6 +15,8 @@ from typing import Any
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
+from hyperliquid_contribution import build_contribution
+
 BEIJING = timezone(timedelta(hours=8), name="Asia/Shanghai")
 SPOT_URL = "https://push2delay.eastmoney.com/api/qt/clist/get"
 HITHINK_ETF_MASTER_URL = "https://fund.10jqka.com.cn/data/Net/info/ETF_rate_desc_0_0_1_9999_0_0_0_jsonp_g.html"
