@@ -1419,6 +1419,18 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         "qualified_market_facts": quotes,
         "hyperliquid_external_driver_context": {
             "quality_status": external_driver.get("quality_status") or "NOT_REQUESTED",
+            "pulse_continuity": read_json(root / "data" / "state" / "hyperliquid_pulse_index.json", {}).get("continuity") or {
+                "status": "MISSING",
+                "rule": "Hyperliquid连续脉冲索引不可读或尚未形成，不能用旧正文补齐当前外部证据。",
+            },
+            "dual_engine_join_rule": {
+                "key": "ETF代码",
+                "requires_same_etf": True,
+                "requires_discovery_evidence": True,
+                "requires_hyperliquid_evidence": True,
+                "allowed_outcomes": ["SUPPORT", "CONTRADICTION", "TIMING_FILTER", "CROWDING_RISK", "NO_DIRECT_MAPPING", "INSUFFICIENT"],
+                "formal_use": "只有绑定同一ETF且具备当前事实的记录，才可进入该ETF的方向、时机、风险或资本比较；无绑定记录只能保留为跨市场背景。",
+            },
             "dex_count": external_driver.get("dex_count"),
             "catalog_count": external_driver.get("catalog_count"),
             "focused_count": external_driver.get("focused_count"),
