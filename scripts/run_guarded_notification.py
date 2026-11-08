@@ -6,6 +6,7 @@ import os
 import re
 import sys
 import time
+from datetime import datetime, timezone
 
 from notification_materiality_guard import notification_evidence_error
 
@@ -903,6 +904,14 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
 
 def _pulse_candidates_from_payloads(payloads: dict[str, dict]) -> list[dict]:
     """Return at most one integrated user event for the shared pulse window."""
+    def pulse_time(item: dict) -> datetime | None:
+        value = item.get("formed_at_beijing") or item.get("fact_time_beijing")
+        try:
+            parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        except (TypeError, ValueError):
+            return None
+        return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+
     def latest_pair(payload: dict) -> tuple[dict, dict]:
         history = []
         days = payload.get("days") if isinstance(payload, dict) else None
@@ -922,6 +931,14 @@ def _pulse_candidates_from_payloads(payloads: dict[str, dict]) -> list[dict]:
         return (ordered[-2], ordered[-1]) if len(ordered) >= 2 else ({}, {})
     discovery_before, discovery_after = latest_pair(payloads.get("discovery_pulse") or {})
     hyper_before, hyper_after = latest_pair(payloads.get("hyperliquid_pulse") or {})
+    # A dual-engine event must consume the same pulse window.  Independent
+    # producers may finish a few minutes apart, but evidence from separate
+    # windows must not be combined merely because both indexes have a latest
+    # pair.  The 12-minute bound covers the 10-minute cadence plus runner lag.
+    discovery_time = pulse_time(discovery_after)
+    hyper_time = pulse_time(hyper_after)
+    if not discovery_time or not hyper_time or abs((discovery_time - hyper_time).total_seconds()) > 12 * 60:
+        return []
     event = _integrated_pulse_event(
         discovery_before, discovery_after, hyper_before, hyper_after
     )
