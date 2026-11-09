@@ -64,3 +64,20 @@ def test_industry_mapping_resolves_to_current_etf_objects():
     assert result["mapped_object_count"] == 1
     assert result["mapped_objects"][0]["mapping_reason"] == "ECONOMIC_FAMILY_NAME_MARKER_MAPPING"
     assert result["mapped_objects"][0]["mapped_assets"]
+
+
+def test_industry_mapping_includes_discovery_candidates():
+    result = build_contribution(
+        context={
+            "generated_at_beijing": "2026-11-09T11:00:00+08:00",
+            "mapping": [{
+                "asset": "xyz:BABA",
+                "family": "CHINA_TECH_RISK",
+                "name_markers": ["港股", "互联网", "科技"],
+            }],
+            "observations": [{"asset": "xyz:BABA", "direction": "positive"}],
+        },
+        task="DISCOVERY",
+    )
+    assert result["mapped_object_count"] == 1
+    assert result["mapped_objects"][0]["mapped_assets"]
