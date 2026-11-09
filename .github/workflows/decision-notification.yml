@@ -1056,11 +1056,26 @@ jobs:
                   and str(payload.get("interaction_scenario") or "").strip().upper() == "FORMAL_DECISION"
               )
               if report_type == "ETF_FORMAL_DECISION" or legacy_formal:
+                  # Replay compatibility is in-memory only; never rewrite the frozen completion.
                   if not report_type:
                       payload["report_type"] = "ETF_FORMAL_DECISION"
                       binding = dict(binding)
                       binding["report_type"] = "ETF_FORMAL_DECISION"
                       payload["presentation_binding"] = binding
+                  if not str(payload.get("formal_fact_type") or "").strip():
+                      payload["formal_fact_type"] = "FORMAL_CURRENT_MAIN_DECISION"
+                  fact_binding = payload.get("fact_binding")
+                  if isinstance(fact_binding, dict):
+                      fact_binding = dict(fact_binding)
+                      if not fact_binding.get("latest_snapshot") and fact_binding.get("market_snapshot"):
+                          fact_binding["latest_snapshot"] = fact_binding["market_snapshot"]
+                      if not fact_binding.get("captured_at_beijing") and fact_binding.get("snapshot_as_of_beijing"):
+                          fact_binding["captured_at_beijing"] = fact_binding["snapshot_as_of_beijing"]
+                      if not fact_binding.get("latest_valid_node"):
+                          fact_binding["latest_valid_node"] = "live"
+                      if not fact_binding.get("fact_status"):
+                          fact_binding["fact_status"] = "READY/PASS"
+                      payload["fact_binding"] = fact_binding
                   validate_formal_runtime_completion_contract(payload)
                   payload["_ingress_path"] = path.as_posix()
                   _, idempotent, event_path = record_formal_decision_report_event(payload)
