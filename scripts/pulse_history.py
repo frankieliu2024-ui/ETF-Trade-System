@@ -83,7 +83,15 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
             except (TypeError, ValueError):
                 return None
 
-        previous_records = records[-1].get("observations") if records else []
+        # Compare with the latest prior legal pulse, including the prior
+        # market date for the first pre-open pulse. This preserves overnight
+        # continuity instead of silently resetting at midnight.
+        prior_record = records[-1] if records else None
+        if prior_record is None:
+            prior_dates = [key for key in days if str(key) < market_date and isinstance(days.get(key), list) and days.get(key)]
+            if prior_dates:
+                prior_record = sorted(days[max(prior_dates)], key=lambda item: str(item.get("formed_at_beijing") or ""))[-1]
+        previous_records = prior_record.get("observations") if isinstance(prior_record, dict) else []
         previous_by_asset = {
             str(item.get("asset") or ""): item
             for item in (previous_records or [])
