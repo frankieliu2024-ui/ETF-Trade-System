@@ -213,7 +213,7 @@ def _hyperliquid_notification_basis(text: str) -> str:
         if match:
             target = match.group(1).strip().split("，")[0]
         explanation = explain_for_notification(text=text, target=target)
-        return f"{explanation}（Hyperliquid可见采集边界：{_hyperliquid_observation_time()}；接口未提供逐笔事件时间。）"
+        return f"{explanation}（Hyperliquid采集时间：{_hyperliquid_observation_time()}）"
     except Exception as exc:
         return f"Hyperliquid贡献暂无法完成用户侧解释（{type(exc).__name__}）；本通知仍仅依据已确认的本地/区域事实，不扩大交易结论。"
 
