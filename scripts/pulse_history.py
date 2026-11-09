@@ -154,6 +154,19 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
             else:
                 positioning_signal = "SINGLE_PULSE_ONLY"
 
+            if mark is None or prev_day in (None, 0):
+                direction_signal = "UNDETERMINED"
+                direction_signal_reason = "无法判断：缺少当前价格或前日参考价格"
+            elif mark > prev_day:
+                direction_signal = "UP"
+                direction_signal_reason = "当前价格高于前日参考价格"
+            elif mark < prev_day:
+                direction_signal = "DOWN"
+                direction_signal_reason = "当前价格低于前日参考价格"
+            else:
+                direction_signal = "FLAT"
+                direction_signal_reason = "当前价格与前日参考价格相同"
+
             if funding is None:
                 funding_signal = "UNAVAILABLE"
             elif funding > 0:
@@ -207,6 +220,8 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
                 "comparison_horizon": comparison_horizon,
                 "pulse_delta": pulse_delta,
                 "pulse_delta_pct": pulse_delta_pct,
+                "direction_signal": direction_signal,
+                "direction_signal_reason": direction_signal_reason,
                 "positioning_signal": positioning_signal,
                 "funding_signal": funding_signal,
                 "pricing_signal": pricing_signal,
