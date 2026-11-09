@@ -232,13 +232,17 @@ def build_contribution(*, context: dict | None, node: str = "", task: str = "") 
             "mark_px": item.get("mark_px") or "",
             "mid_px": item.get("mid_px") or "",
             "prev_day_px": item.get("prev_day_px") or "",
-            "previous_pulse_as_of": item.get("previous_pulse_as_of") or "",
-            "pulse_comparison_status": item.get("pulse_comparison_status") or "SINGLE_PULSE_ONLY",
+            "previous_pulse_as_of": item.get("previous_pulse_as_of") or None,
+            "pulse_comparison_status": item.get("pulse_comparison_status") or "NOT_COMPARABLE",
+            "comparison_reason": item.get("comparison_reason") or "未提供可验证的上一合法脉冲及原因",
+            "comparison_age_seconds": item.get("comparison_age_seconds"),
+            "comparison_horizon": item.get("comparison_horizon") or "UNKNOWN",
             "pulse_delta": item.get("pulse_delta") or {},
-            "positioning_signal": item.get("positioning_signal") or "UNAVAILABLE",
-            "funding_signal": item.get("funding_signal") or "UNAVAILABLE",
-            "pricing_signal": item.get("pricing_signal") or "UNAVAILABLE",
-            "crowding_signal": item.get("crowding_signal") or "UNAVAILABLE",
+            "pulse_delta_pct": item.get("pulse_delta_pct") or {},
+            "positioning_signal": item.get("positioning_signal") or "UNDETERMINED",
+            "funding_signal": item.get("funding_signal") or ("UNDETERMINED:缺少资金费率" if item.get("funding") in (None, "") else "AVAILABLE"),
+            "pricing_signal": item.get("pricing_signal") or ("UNDETERMINED:缺少溢价/折价" if item.get("premium") in (None, "") else "AVAILABLE"),
+            "crowding_signal": item.get("crowding_signal") or ("UNDETERMINED:" + (item.get("comparison_reason") or "缺少可比基准") if item.get("pulse_comparison_status") != "COMPARABLE" else "NO_CLEAR_CROWDING"),
         }
 
     mapped_objects = []
