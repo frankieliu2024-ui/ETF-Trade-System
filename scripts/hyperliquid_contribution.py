@@ -22,13 +22,27 @@ def _economic_etf_matches(mapping: dict) -> list[str]:
     try:
         universe = json.loads((ROOT / "config/market/etf_monitor_universe.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):
-        return []
+        universe = {}
+    objects = list(universe.get("objects") or [])
+    try:
+        discovery = json.loads((ROOT / "data/state/formal_discovery_current.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        discovery = {}
+    # Discovery candidates are valid mapping targets even before they become
+    # persistent observation ETFs. This prevents the mapping layer from
+    # confusing "not admitted yet" with "no economic relationship".
+    for candidate in discovery.get("candidates") or []:
+        if isinstance(candidate, dict):
+            objects.append({
+                "code": candidate.get("code"),
+                "name": candidate.get("name") or candidate.get("display_name"),
+            })
     markers = [str(x).strip() for x in (mapping.get("name_markers") or []) if str(x).strip()]
     excluded = [str(x).strip() for x in (mapping.get("exclude_name_markers") or []) if str(x).strip()]
     if not markers:
         return []
     matches = []
-    for item in universe.get("objects") or []:
+    for item in objects:
         code = str(item.get("code") or "").strip()
         name = str(item.get("name") or "")
         if code and any(marker in name for marker in markers) and not any(marker in name for marker in excluded):
