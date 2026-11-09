@@ -1048,8 +1048,8 @@ jobs:
           event = json.loads(event_path.read_text(encoding="utf-8")) if event_path.is_file() else {}
           report = json.loads(report_path.read_text(encoding="utf-8")) if report_path.is_file() else {}
           binding = event.get("presentation_binding") if isinstance(event.get("presentation_binding"), dict) else {}
-          expected_report_id = str(binding.get("report_id") or event.get("report_id") or report.get("report_id") or "").strip()
-          expected_run_id = str(binding.get("task_run_id") or event.get("task_run_id") or report.get("task_run_id") or "").strip()
+          expected_report_id = str(binding.get("report_id") or event.get("report_id") or report.get("report_id") or "").strip().lower()
+          expected_run_id = str(binding.get("task_run_id") or event.get("task_run_id") or report.get("task_run_id") or "").strip().lower()
           if not expected_report_id and not expected_run_id:
               raise SystemExit("bound notification verifier could not derive canonical identity")
           def record_identity_values(item):
