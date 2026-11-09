@@ -1070,59 +1070,58 @@ jobs:
             esac
             test -f "$completion_path"
             projection=$(PYTHONPATH=scripts python - "$completion_path" <<'PY'
-              import json
-              import sys
-              from pathlib import Path
-              from scripts.process_state_sync_request import record_formal_decision_report_event
-              from scripts.scheduled_review_completion import validate_formal_runtime_completion_contract
+            import json
+            import sys
+            from pathlib import Path
+            from scripts.process_state_sync_request import record_formal_decision_report_event
+            from scripts.scheduled_review_completion import validate_formal_runtime_completion_contract
 
-              path = Path(sys.argv[1])
-              payload = json.loads(path.read_text(encoding="utf-8"))
-              binding = payload.get("presentation_binding") or {}
-              report_type = str(payload.get("report_type") or binding.get("report_type") or "").strip().upper()
-              task_id = str(payload.get("task_id") or binding.get("task_id") or "").strip()
-              legacy_formal = (
-                  task_id == "ETF正式决策"
-                  and str(payload.get("decision_path") or "").strip().upper() == "FORMAL"
-                  and str(payload.get("interaction_scenario") or "").strip().upper() == "FORMAL_DECISION"
-              )
-              if report_type == "ETF_FORMAL_DECISION" or legacy_formal:
-                  # Replay compatibility is in-memory only; never rewrite the frozen completion.
-                  if not report_type:
-                      payload["report_type"] = "ETF_FORMAL_DECISION"
-                      binding = dict(binding)
-                      binding["report_type"] = "ETF_FORMAL_DECISION"
-                      payload["presentation_binding"] = binding
-                  if not str(payload.get("formal_fact_type") or "").strip():
-                      payload["formal_fact_type"] = "FORMAL_CURRENT_MAIN_DECISION"
-                  fact_binding = payload.get("fact_binding")
-                  if isinstance(fact_binding, dict):
-                      fact_binding = dict(fact_binding)
-                      if not fact_binding.get("market_date") and payload.get("market_date"):
-                          fact_binding["market_date"] = payload["market_date"]
-                      if not fact_binding.get("latest_snapshot") and fact_binding.get("market_snapshot"):
-                          fact_binding["latest_snapshot"] = fact_binding["market_snapshot"]
-                      if not fact_binding.get("captured_at_beijing") and fact_binding.get("snapshot_as_of_beijing"):
-                          fact_binding["captured_at_beijing"] = fact_binding["snapshot_as_of_beijing"]
-                      if not fact_binding.get("latest_valid_node"):
-                          fact_binding["latest_valid_node"] = "live"
-                      if not fact_binding.get("fact_status"):
-                          fact_binding["fact_status"] = "READY/PASS"
-                      payload["fact_binding"] = fact_binding
-                  validate_formal_runtime_completion_contract(payload)
-                  payload["_ingress_path"] = path.as_posix()
-                  _, idempotent, event_path = record_formal_decision_report_event(payload)
-                  print(json.dumps({"canonical_publication": event_path, "idempotent": idempotent}, ensure_ascii=False))
-              else:
-                  import subprocess
-                  result = subprocess.run(
-                      [sys.executable, "scripts/process_state_sync_request.py", str(path)],
-                      check=True,
-                      capture_output=True,
-                      text=True,
-                  )
-                  print(result.stdout.strip())
-              PY
+            path = Path(sys.argv[1])
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            binding = payload.get("presentation_binding") or {}
+            report_type = str(payload.get("report_type") or binding.get("report_type") or "").strip().upper()
+            task_id = str(payload.get("task_id") or binding.get("task_id") or "").strip()
+            legacy_formal = (
+                task_id == "ETF正式决策"
+                and str(payload.get("decision_path") or "").strip().upper() == "FORMAL"
+                and str(payload.get("interaction_scenario") or "").strip().upper() == "FORMAL_DECISION"
+            )
+            if report_type == "ETF_FORMAL_DECISION" or legacy_formal:
+                if not report_type:
+                    payload["report_type"] = "ETF_FORMAL_DECISION"
+                    binding = dict(binding)
+                    binding["report_type"] = "ETF_FORMAL_DECISION"
+                    payload["presentation_binding"] = binding
+                if not str(payload.get("formal_fact_type") or "").strip():
+                    payload["formal_fact_type"] = "FORMAL_CURRENT_MAIN_DECISION"
+                fact_binding = payload.get("fact_binding")
+                if isinstance(fact_binding, dict):
+                    fact_binding = dict(fact_binding)
+                    if not fact_binding.get("market_date") and payload.get("market_date"):
+                        fact_binding["market_date"] = payload["market_date"]
+                    if not fact_binding.get("latest_snapshot") and fact_binding.get("market_snapshot"):
+                        fact_binding["latest_snapshot"] = fact_binding["market_snapshot"]
+                    if not fact_binding.get("captured_at_beijing") and fact_binding.get("snapshot_as_of_beijing"):
+                        fact_binding["captured_at_beijing"] = fact_binding["snapshot_as_of_beijing"]
+                    if not fact_binding.get("latest_valid_node"):
+                        fact_binding["latest_valid_node"] = "live"
+                    if not fact_binding.get("fact_status"):
+                        fact_binding["fact_status"] = "READY/PASS"
+                    payload["fact_binding"] = fact_binding
+                validate_formal_runtime_completion_contract(payload)
+                payload["_ingress_path"] = path.as_posix()
+                _, idempotent, event_path = record_formal_decision_report_event(payload)
+                print(json.dumps({"canonical_publication": event_path, "idempotent": idempotent}, ensure_ascii=False))
+            else:
+                import subprocess
+                result = subprocess.run(
+                    [sys.executable, "scripts/process_state_sync_request.py", str(path)],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+                print(result.stdout.strip())
+            PY
             )
             REVIEW_EVENT_PATH=$(python -c 'import json,sys; print(json.loads(sys.argv[1]).get("canonical_publication", ""))' "$projection")
             if [ -z "$REVIEW_EVENT_PATH" ]; then
