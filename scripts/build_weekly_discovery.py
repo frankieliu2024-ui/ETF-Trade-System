@@ -111,6 +111,7 @@ def build() -> dict:
         "identity_boundary": "This current-pulse artifact is a discovery input only; it does not establish Observation, opportunity, Trial, Confirm, amount, sell quantity or order.",
     }
     atomic_json_write(CURRENT_OUTPUT, artifact)
+    refresh_pending_opportunity_from_discovery(ROOT, artifact)
     try:
         output = str(CURRENT_OUTPUT.relative_to(ROOT))
     except ValueError:
