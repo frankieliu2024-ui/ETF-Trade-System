@@ -228,7 +228,7 @@ def build_contribution(*, context: dict | None, node: str = "", task: str = "") 
             "prev_day_px": item.get("prev_day_px") or "",
             "previous_pulse_as_of": item.get("previous_pulse_as_of") or None,
             "pulse_comparison_status": item.get("pulse_comparison_status") or "NOT_COMPARABLE",
-            "comparison_reason": item.get("comparison_reason") or "未提供可验证的上一合法脉冲及原因",
+            "comparison_reason": (item.get("comparison_reason") or "") if item.get("pulse_comparison_status") == "COMPARABLE" else (item.get("comparison_reason") or "未提供可验证的上一合法脉冲及原因"),
             "comparison_age_seconds": item.get("comparison_age_seconds"),
             "comparison_horizon": item.get("comparison_horizon") or "UNKNOWN",
             "pulse_delta": item.get("pulse_delta") or {},
