@@ -44,3 +44,23 @@ def test_mapping_catalog_is_not_collapsed_into_no_mapping():
     assert result["mapping_coverage_status"] == "CONFIGURED_CANDIDATES_NO_LIVE_SIGNAL"
     assert result["mapping_candidates"][0]["decision_effect"] == "INSUFFICIENT"
     assert result["mapping_candidates"][0]["signal_fields"] == {}
+
+
+def test_industry_mapping_resolves_to_current_etf_objects():
+    result = build_contribution(
+        context={
+            "generated_at_beijing": "2026-11-09T10:59:59+08:00",
+            "mapping": [{
+                "asset": "xyz:SMH",
+                "family": "SEMICONDUCTOR",
+                "name_markers": ["通信", "设备"],
+            }],
+            "observations": [{"asset": "xyz:SMH", "direction": "positive"}],
+        },
+        task="FORMAL_DECISION",
+        node="11:00",
+    )
+    assert result["status"] == "READY"
+    assert result["mapped_object_count"] == 1
+    assert result["mapped_objects"][0]["mapping_reason"] == "ECONOMIC_FAMILY_NAME_MARKER_MAPPING"
+    assert result["mapped_objects"][0]["mapped_assets"]
