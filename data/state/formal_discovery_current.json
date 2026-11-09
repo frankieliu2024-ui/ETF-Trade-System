@@ -1,73 +1,145 @@
 {
   "schema_version": "1.0",
   "layer": "CURRENT_PULSE_DISCOVERY",
-  "status": "READY",
+  "status": "DEGRADED",
   "market_date": "2026-11-09",
-  "latest_valid_node": "auction",
-  "latest_snapshot": "data/market/snapshots/2026-11-09_092810.json",
-  "generated_at_beijing": "2026-11-09T09:28:27+08:00",
+  "latest_valid_node": "1130",
+  "latest_snapshot": "data/market/snapshots/2026-11-09_124243.json",
+  "generated_at_beijing": "2026-11-09T12:43:19+08:00",
   "formation_rule": "EVERY_VERIFIED_A_SHARE_PULSE",
   "source": "EASTMONEY_PRIMARY_HITHINK_SECONDARY_UNIVERSE_PLUS_VERIFIED_NODE_OVERLAY_AND_BOUNDED_HISTORY_REPAIR",
-  "coverage_status": "COMPLETE",
-  "candidate_count": 5,
+  "coverage_status": "PARTIAL",
+  "candidate_count": 8,
   "required_history_end_date": "2026-11-06",
   "empty_reason": "",
   "universe_identity": null,
   "discovery_delta_identity": null,
   "discovery": {
     "schema_version": "1.0",
-    "status": "READY",
-    "generated_at_beijing": "2026-11-09T09:28:13+08:00",
+    "status": "DEGRADED",
+    "generated_at_beijing": "2026-11-09T12:42:45+08:00",
     "market_date": "2026-11-09",
     "required_history_end_date": "2026-11-06",
     "source": "EASTMONEY_PRIMARY_HITHINK_SECONDARY_UNIVERSE_PLUS_VERIFIED_NODE_OVERLAY_AND_BOUNDED_HISTORY_REPAIR",
     "broad_source_reconciliation": {
-      "universe_mode": "EASTMONEY_PRIMARY",
+      "requested_identity_count": 1778,
+      "tencent_quote_count": 1778,
+      "tencent_failed_batch_count": 0,
+      "tencent_failures": [],
+      "tencent_hydration_batch_count": 30,
+      "tencent_hydration_workers": 6,
+      "universe_mode": "HITHINK_TENCENT_SECONDARY_FALLBACK",
       "primary_source": "EASTMONEY_PUSH2_ETF_CROSS_SECTION",
-      "eastmoney_count": 1666,
-      "hithink_identity_count": 0,
-      "eastmoney_error": null,
+      "eastmoney_count": 0,
+      "hithink_identity_count": 1778,
+      "eastmoney_error": "<urlopen error _ssl.c:1001: The handshake operation timed out>",
       "hithink_error": null,
-      "fallback_used": false,
-      "fallback_source": null,
-      "reconciled_count": 1666,
+      "fallback_used": true,
+      "fallback_source": "HITHINK_ETF_MASTER_PLUS_TENCENT",
+      "reconciled_count": 1778,
       "source_elapsed_seconds": {
-        "eastmoney": 5.137
+        "eastmoney": 15.791,
+        "hithink": 4.456
       },
-      "source_join_elapsed_seconds": 5.137,
-      "supplemental_hydration_elapsed_seconds": 0.0,
+      "source_join_elapsed_seconds": 20.247,
+      "supplemental_hydration_elapsed_seconds": 4.837,
       "verified_spot_overlay_count": 16
     },
     "source_role": "DISCOVERY_ONLY; formal trade decision remains MASTER-owned",
-    "broad_universe_count": 1666,
+    "broad_universe_count": 1778,
     "managed_identity_count": 16,
     "held_identity_count": 5,
     "managed_excluded_count": 0,
-    "history_prefilter_count": 24,
-    "candidate_count": 5,
+    "history_prefilter_count": 186,
+    "candidate_count": 8,
     "history_success_budget": 12,
-    "history_attempt_cap": 24,
+    "history_attempt_cap": 36,
     "history_fetch_workers": 2,
     "history_attempted_count": 12,
     "history_succeeded_count": 12,
-    "history_reused_count": 0,
-    "history_repair_attempted_count": 12,
+    "history_reused_count": 1,
+    "history_repair_attempted_count": 11,
     "history_failure_count": 0,
-    "history_elapsed_seconds": 8.989,
+    "history_elapsed_seconds": 9.301,
     "empty_reason": "",
     "latency_observability": {
-      "broad_acquisition_elapsed_seconds": 5.137,
-      "prefilter_elapsed_seconds": 0.003,
-      "history_validation_elapsed_seconds": 8.989,
+      "broad_acquisition_elapsed_seconds": 25.084,
+      "prefilter_elapsed_seconds": 0.005,
+      "history_validation_elapsed_seconds": 9.301,
       "measurement_role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE"
     },
-    "coverage_status": "COMPLETE",
+    "coverage_status": "PARTIAL",
     "history_failures": [],
     "candidates": [
       {
-        "code": "159792",
-        "name": "港股通互联网ETF富国",
-        "display_name": "港股通互联网ETF富国（159792）",
+        "code": "158003",
+        "name": "港股通医疗ETF嘉实",
+        "display_name": "港股通医疗ETF嘉实（158003）",
+        "category": "OBSERVATION_EVALUATION_INPUT",
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "management_identity": null,
+        "auto_promote_to_observation": false,
+        "trial_confirm_permission": false,
+        "trade_signal": null,
+        "decision_output_generated": false,
+        "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
+        "entered_states": [],
+        "surfaced_states": [],
+        "information_classes": [
+          "NEW_RELATIVE_DIVERGENCE",
+          "STRUCTURAL_CHANGE",
+          "SHORT_HISTORY_CURRENT_CHANGE"
+        ],
+        "external_driver_evidence": [],
+        "discovery_spot": {
+          "price": 0.993,
+          "change_pct": 1.846153846153853,
+          "amount": 11960000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
+          "high": 1.001,
+          "low": 0.98,
+          "open": 0.98,
+          "prev_close": 0.975,
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1794197139000
+        },
+        "historical_context": {
+          "status": "SHORT_HISTORY_LIMITED",
+          "as_of": "2026-11-06",
+          "sample_count": 52,
+          "listing_date": "",
+          "avg_amount_20": 13275986.35,
+          "limitation": "不足65个已完成交易日；不得推导完整历史趋势状态。"
+        },
+        "comparison_basis": [
+          "当前相对结构",
+          "有限历史",
+          "成交与可执行性",
+          "风险收益",
+          "资本效率"
+        ],
+        "decision_boundary": "短历史仅授予本节点Observation资格完整评估；不得替代正式行情、Observation ADMIT或MASTER，不产生Trial/Confirm、金额或交易动作。",
+        "management_review": {
+          "object_role": "NEW_DISCOVERY",
+          "direct_conclusion_required": true,
+          "conclusion_status": "PENDING_MASTER_DECISION",
+          "allowed_conclusions": [
+            "RETAIN_DISCOVERY",
+            "REJECT_NEW_DEPLOYMENT",
+            "TRIAL_ELIGIBILITY_REVIEW"
+          ],
+          "decision_owner": "MASTER_FORMAL_DECISION",
+          "decision_boundary": "Discovery supplies object-level evidence and the required conclusion set; only MASTER Formal Decision confirms the final hold, reduce, exit, observation or Trial/Confirm action."
+        },
+        "history_source": "HITHINK_FINANCE_HISTORY_BOUNDED_REPAIR"
+      },
+      {
+        "code": "159303",
+        "name": "恒生医疗ETF大成",
+        "display_name": "恒生医疗ETF大成（159303）",
         "category": "OBSERVATION_EVALUATION_INPUT",
         "eligibility": "OBSERVATION_FULL_EVALUATION",
         "management_identity": null,
@@ -79,48 +151,41 @@
         "entered_states": [],
         "surfaced_states": [
           {
-            "state": "TREND_CHANGE",
-            "evidence": {
-              "direction": "STRENGTHENING",
-              "return_10": 0.076471,
-              "return_40": -0.010811,
-              "short_vs_long_normalized_gap": 0.079173
-            }
-          },
-          {
             "state": "SHORT_TERM_CHANGE",
             "evidence": {
               "direction": "SHORT_TERM_STRENGTHENING",
-              "return_5": 0.10241,
-              "return_20": 0.031955,
-              "short_vs_medium_normalized_gap": 0.094421
+              "return_5": 0.063025,
+              "return_20": -0.038632,
+              "short_vs_medium_normalized_gap": 0.072683
             }
           }
         ],
         "information_classes": [
-          "STRUCTURAL_CHANGE"
+          "NEW_RELATIVE_DIVERGENCE",
+          "STRUCTURAL_CHANGE",
+          "SHORT_HISTORY_CURRENT_CHANGE"
         ],
         "external_driver_evidence": [],
         "discovery_spot": {
-          "price": 0.557,
-          "change_pct": 1.46,
-          "amount": 10833260.1,
-          "amplitude_pct": 0.0,
-          "turnover_pct": 0.03,
-          "volume_ratio": 1.01,
-          "high": 0.557,
-          "low": 0.557,
-          "open": 0.557,
-          "prev_close": 0.549,
-          "return_60d_pct": -10.16,
-          "return_ytd_pct": -33.93,
-          "provider_timestamp": 1794187650
+          "price": 1.546,
+          "change_pct": 1.8445322793148922,
+          "amount": 68840000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
+          "high": 1.565,
+          "low": 1.533,
+          "open": 1.538,
+          "prev_close": 1.518,
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1794197154000
         },
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-06",
           "sample_count": 90,
-          "avg_amount_20": 1667275294.0
+          "avg_amount_20": 64889605.25
         },
         "comparison_basis": [
           "历史趋势/状态变化",
@@ -145,9 +210,218 @@
         "history_source": "HITHINK_FINANCE_HISTORY_BOUNDED_REPAIR"
       },
       {
-        "code": "511880",
-        "name": "银华日利ETF",
-        "display_name": "银华日利ETF（511880）",
+        "code": "159502",
+        "name": "标普生物科技ETF嘉实",
+        "display_name": "标普生物科技ETF嘉实（159502）",
+        "category": "OBSERVATION_EVALUATION_INPUT",
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "management_identity": null,
+        "auto_promote_to_observation": false,
+        "trial_confirm_permission": false,
+        "trade_signal": null,
+        "decision_output_generated": false,
+        "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
+        "entered_states": [],
+        "surfaced_states": [],
+        "information_classes": [
+          "NEW_RELATIVE_DIVERGENCE",
+          "STRUCTURAL_CHANGE",
+          "SHORT_HISTORY_CURRENT_CHANGE"
+        ],
+        "external_driver_evidence": [],
+        "discovery_spot": {
+          "price": 1.566,
+          "change_pct": 2.08604954367666,
+          "amount": 108240000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
+          "high": 1.57,
+          "low": 1.556,
+          "open": 1.563,
+          "prev_close": 1.534,
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1794197124000
+        },
+        "historical_context": {
+          "status": "READY",
+          "as_of": "2026-11-06",
+          "sample_count": 90,
+          "avg_amount_20": 248370554.6
+        },
+        "comparison_basis": [
+          "历史趋势/状态变化",
+          "当前相对结构",
+          "成交与可执行性",
+          "风险收益",
+          "资本效率"
+        ],
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "management_review": {
+          "object_role": "NEW_DISCOVERY",
+          "direct_conclusion_required": true,
+          "conclusion_status": "PENDING_MASTER_DECISION",
+          "allowed_conclusions": [
+            "RETAIN_DISCOVERY",
+            "REJECT_NEW_DEPLOYMENT",
+            "TRIAL_ELIGIBILITY_REVIEW"
+          ],
+          "decision_owner": "MASTER_FORMAL_DECISION",
+          "decision_boundary": "Discovery supplies object-level evidence and the required conclusion set; only MASTER Formal Decision confirms the final hold, reduce, exit, observation or Trial/Confirm action."
+        },
+        "history_source": "HITHINK_FINANCE_HISTORY_BOUNDED_REPAIR"
+      },
+      {
+        "code": "159892",
+        "name": "恒生医药ETF华夏",
+        "display_name": "恒生医药ETF华夏（159892）",
+        "category": "OBSERVATION_EVALUATION_INPUT",
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "management_identity": null,
+        "auto_promote_to_observation": false,
+        "trial_confirm_permission": false,
+        "trade_signal": null,
+        "decision_output_generated": false,
+        "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
+        "entered_states": [],
+        "surfaced_states": [
+          {
+            "state": "SHORT_TERM_CHANGE",
+            "evidence": {
+              "direction": "SHORT_TERM_STRENGTHENING",
+              "return_5": 0.066384,
+              "return_20": -0.053885,
+              "short_vs_medium_normalized_gap": 0.079855
+            }
+          }
+        ],
+        "information_classes": [
+          "NEW_RELATIVE_DIVERGENCE",
+          "STRUCTURAL_CHANGE",
+          "SHORT_HISTORY_CURRENT_CHANGE"
+        ],
+        "external_driver_evidence": [],
+        "discovery_spot": {
+          "price": 0.771,
+          "change_pct": 2.119205298013238,
+          "amount": 360720000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
+          "high": 0.781,
+          "low": 0.765,
+          "open": 0.765,
+          "prev_close": 0.755,
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1794197106000
+        },
+        "historical_context": {
+          "status": "READY",
+          "as_of": "2026-11-06",
+          "sample_count": 90,
+          "avg_amount_20": 555387663.0
+        },
+        "comparison_basis": [
+          "历史趋势/状态变化",
+          "当前相对结构",
+          "成交与可执行性",
+          "风险收益",
+          "资本效率"
+        ],
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "management_review": {
+          "object_role": "NEW_DISCOVERY",
+          "direct_conclusion_required": true,
+          "conclusion_status": "PENDING_MASTER_DECISION",
+          "allowed_conclusions": [
+            "RETAIN_DISCOVERY",
+            "REJECT_NEW_DEPLOYMENT",
+            "TRIAL_ELIGIBILITY_REVIEW"
+          ],
+          "decision_owner": "MASTER_FORMAL_DECISION",
+          "decision_boundary": "Discovery supplies object-level evidence and the required conclusion set; only MASTER Formal Decision confirms the final hold, reduce, exit, observation or Trial/Confirm action."
+        },
+        "history_source": "HITHINK_FINANCE_HISTORY_BOUNDED_REPAIR"
+      },
+      {
+        "code": "513120",
+        "name": "港股创新药ETF广发",
+        "display_name": "港股创新药ETF广发（513120）",
+        "category": "OBSERVATION_EVALUATION_INPUT",
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "management_identity": null,
+        "auto_promote_to_observation": false,
+        "trial_confirm_permission": false,
+        "trade_signal": null,
+        "decision_output_generated": false,
+        "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
+        "entered_states": [],
+        "surfaced_states": [
+          {
+            "state": "SHORT_TERM_CHANGE",
+            "evidence": {
+              "direction": "SHORT_TERM_STRENGTHENING",
+              "return_5": 0.072727,
+              "return_20": -0.052752,
+              "short_vs_medium_normalized_gap": 0.085915
+            }
+          }
+        ],
+        "information_classes": [
+          "NEW_RELATIVE_DIVERGENCE",
+          "STRUCTURAL_CHANGE",
+          "SHORT_HISTORY_CURRENT_CHANGE"
+        ],
+        "external_driver_evidence": [],
+        "discovery_spot": {
+          "price": 1.263,
+          "change_pct": 1.9370460048425908,
+          "amount": 5061000000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
+          "high": 1.28,
+          "low": 1.253,
+          "open": 1.258,
+          "prev_close": 1.239,
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1794197136000
+        },
+        "historical_context": {
+          "status": "READY",
+          "as_of": "2026-11-06",
+          "sample_count": 90,
+          "avg_amount_20": 7296514080.0
+        },
+        "comparison_basis": [
+          "历史趋势/状态变化",
+          "当前相对结构",
+          "成交与可执行性",
+          "风险收益",
+          "资本效率"
+        ],
+        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "management_review": {
+          "object_role": "NEW_DISCOVERY",
+          "direct_conclusion_required": true,
+          "conclusion_status": "PENDING_MASTER_DECISION",
+          "allowed_conclusions": [
+            "RETAIN_DISCOVERY",
+            "REJECT_NEW_DEPLOYMENT",
+            "TRIAL_ELIGIBILITY_REVIEW"
+          ],
+          "decision_owner": "MASTER_FORMAL_DECISION",
+          "decision_boundary": "Discovery supplies object-level evidence and the required conclusion set; only MASTER Formal Decision confirms the final hold, reduce, exit, observation or Trial/Confirm action."
+        },
+        "history_source": "DISCOVERY_NODE_HISTORY"
+      },
+      {
+        "code": "513290",
+        "name": "纳指生物科技ETF汇添富",
+        "display_name": "纳指生物科技ETF汇添富（513290）",
         "category": "OBSERVATION_EVALUATION_INPUT",
         "eligibility": "OBSERVATION_FULL_EVALUATION",
         "management_identity": null,
@@ -162,44 +436,45 @@
             "state": "PERSISTENT_TREND",
             "evidence": {
               "window_returns": {
-                "5": 4e-05,
-                "20": 0.000337,
-                "40": 0.001856,
-                "60": 0.002801
+                "5": -0.038278,
+                "20": 0.013445,
+                "40": -0.019512,
+                "60": 0.107777
               },
               "positive_windows": [
                 20,
-                40,
                 60
               ],
-              "max_drawdown_60": 0.000396
+              "max_drawdown_60": 0.085561
             }
           }
         ],
         "information_classes": [
-          "PERSISTENT_STRUCTURE"
+          "NEW_RELATIVE_DIVERGENCE",
+          "STRUCTURAL_CHANGE",
+          "SHORT_HISTORY_CURRENT_CHANGE"
         ],
         "external_driver_evidence": [],
         "discovery_spot": {
-          "price": 100.957,
-          "change_pct": 0.0,
-          "amount": 71895518.0,
-          "amplitude_pct": 0.0,
-          "turnover_pct": 0.06,
-          "volume_ratio": 0.51,
-          "high": 100.957,
-          "low": 100.957,
-          "open": 100.957,
-          "prev_close": 100.954,
-          "return_60d_pct": 0.28,
-          "return_ytd_pct": 0.88,
-          "provider_timestamp": 1794187689
+          "price": 1.85,
+          "change_pct": 2.2664455500276404,
+          "amount": 240040000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
+          "high": 1.857,
+          "low": 1.836,
+          "open": 1.843,
+          "prev_close": 1.809,
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1794197150000
         },
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-06",
           "sample_count": 90,
-          "avg_amount_20": 31788590100.0
+          "avg_amount_20": 402979183.7
         },
         "comparison_basis": [
           "历史趋势/状态变化",
@@ -224,9 +499,9 @@
         "history_source": "HITHINK_FINANCE_HISTORY_BOUNDED_REPAIR"
       },
       {
-        "code": "512800",
-        "name": "银行ETF华宝",
-        "display_name": "银行ETF华宝（512800）",
+        "code": "518860",
+        "name": "上海金ETF建信",
+        "display_name": "上海金ETF建信（518860）",
         "category": "OBSERVATION_EVALUATION_INPUT",
         "eligibility": "OBSERVATION_FULL_EVALUATION",
         "management_identity": null,
@@ -236,49 +511,33 @@
         "decision_output_generated": false,
         "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
         "entered_states": [],
-        "surfaced_states": [
-          {
-            "state": "PERSISTENT_TREND",
-            "evidence": {
-              "window_returns": {
-                "5": -0.017917,
-                "20": 0.031765,
-                "40": 0.044048,
-                "60": 0.089441
-              },
-              "positive_windows": [
-                20,
-                40,
-                60
-              ],
-              "max_drawdown_60": 0.031927
-            }
-          }
-        ],
+        "surfaced_states": [],
         "information_classes": [
-          "PERSISTENT_STRUCTURE"
+          "NEW_RELATIVE_DIVERGENCE",
+          "STRUCTURAL_CHANGE",
+          "SHORT_HISTORY_CURRENT_CHANGE"
         ],
         "external_driver_evidence": [],
         "discovery_spot": {
-          "price": 0.873,
-          "change_pct": -0.46,
-          "amount": 10180315.0,
-          "amplitude_pct": 0.0,
-          "turnover_pct": 0.08,
-          "volume_ratio": 1.88,
-          "high": 0.873,
-          "low": 0.873,
-          "open": 0.873,
-          "prev_close": 0.877,
-          "return_60d_pct": 9.4,
-          "return_ytd_pct": 6.08,
-          "provider_timestamp": 1794187680
+          "price": 8.418,
+          "change_pct": 1.863504356243939,
+          "amount": 92220000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
+          "high": 8.447,
+          "low": 8.382,
+          "open": 8.393,
+          "prev_close": 8.264,
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1794197147000
         },
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-06",
           "sample_count": 90,
-          "avg_amount_20": 1232321385.5
+          "avg_amount_20": 76095505.75
         },
         "comparison_basis": [
           "历史趋势/状态变化",
@@ -303,9 +562,9 @@
         "history_source": "HITHINK_FINANCE_HISTORY_BOUNDED_REPAIR"
       },
       {
-        "code": "513130",
-        "name": "恒生科技ETF华泰柏瑞",
-        "display_name": "恒生科技ETF华泰柏瑞（513130）",
+        "code": "520870",
+        "name": "巴西ETF易方达",
+        "display_name": "巴西ETF易方达（520870）",
         "category": "OBSERVATION_EVALUATION_INPUT",
         "eligibility": "OBSERVATION_FULL_EVALUATION",
         "management_identity": null,
@@ -315,130 +574,33 @@
         "decision_output_generated": false,
         "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
         "entered_states": [],
-        "surfaced_states": [
-          {
-            "state": "TREND_CHANGE",
-            "evidence": {
-              "direction": "STRENGTHENING",
-              "return_10": 0.048017,
-              "return_40": -0.097122,
-              "short_vs_long_normalized_gap": 0.072297
-            }
-          },
-          {
-            "state": "SHORT_TERM_CHANGE",
-            "evidence": {
-              "direction": "SHORT_TERM_STRENGTHENING",
-              "return_5": 0.088937,
-              "return_20": -0.027132,
-              "short_vs_medium_normalized_gap": 0.09572
-            }
-          }
-        ],
+        "surfaced_states": [],
         "information_classes": [
-          "STRUCTURAL_CHANGE"
+          "NEW_RELATIVE_DIVERGENCE",
+          "STRUCTURAL_CHANGE",
+          "SHORT_HISTORY_CURRENT_CHANGE"
         ],
         "external_driver_evidence": [],
         "discovery_spot": {
-          "price": 0.507,
-          "change_pct": 1.0,
-          "amount": 17628441.0,
-          "amplitude_pct": 0.0,
-          "turnover_pct": 0.06,
-          "volume_ratio": 1.56,
-          "high": 0.507,
-          "low": 0.507,
-          "open": 0.507,
-          "prev_close": 0.502,
-          "return_60d_pct": -16.06,
-          "return_ytd_pct": -29.39,
-          "provider_timestamp": 1794187691
+          "price": 0.988,
+          "change_pct": 1.855670103092777,
+          "amount": 46130000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
+          "high": 0.989,
+          "low": 0.98,
+          "open": 0.983,
+          "prev_close": 0.97,
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1794197134000
         },
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-06",
           "sample_count": 90,
-          "avg_amount_20": 2103235427.5
-        },
-        "comparison_basis": [
-          "历史趋势/状态变化",
-          "当前相对结构",
-          "成交与可执行性",
-          "风险收益",
-          "资本效率"
-        ],
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
-        "management_review": {
-          "object_role": "NEW_DISCOVERY",
-          "direct_conclusion_required": true,
-          "conclusion_status": "PENDING_MASTER_DECISION",
-          "allowed_conclusions": [
-            "RETAIN_DISCOVERY",
-            "REJECT_NEW_DEPLOYMENT",
-            "TRIAL_ELIGIBILITY_REVIEW"
-          ],
-          "decision_owner": "MASTER_FORMAL_DECISION",
-          "decision_boundary": "Discovery supplies object-level evidence and the required conclusion set; only MASTER Formal Decision confirms the final hold, reduce, exit, observation or Trial/Confirm action."
-        },
-        "history_source": "HITHINK_FINANCE_HISTORY_BOUNDED_REPAIR"
-      },
-      {
-        "code": "513330",
-        "name": "恒生互联网ETF华夏",
-        "display_name": "恒生互联网ETF华夏（513330）",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "management_identity": null,
-        "auto_promote_to_observation": false,
-        "trial_confirm_permission": false,
-        "trade_signal": null,
-        "decision_output_generated": false,
-        "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
-        "entered_states": [],
-        "surfaced_states": [
-          {
-            "state": "TREND_CHANGE",
-            "evidence": {
-              "direction": "STRENGTHENING",
-              "return_10": 0.0625,
-              "return_40": -0.055556,
-              "short_vs_long_normalized_gap": 0.076389
-            }
-          },
-          {
-            "state": "SHORT_TERM_CHANGE",
-            "evidence": {
-              "direction": "SHORT_TERM_STRENGTHENING",
-              "return_5": 0.093248,
-              "return_20": 0.008902,
-              "short_vs_medium_normalized_gap": 0.091022
-            }
-          }
-        ],
-        "information_classes": [
-          "STRUCTURAL_CHANGE"
-        ],
-        "external_driver_evidence": [],
-        "discovery_spot": {
-          "price": 0.344,
-          "change_pct": 1.18,
-          "amount": 23219106.0,
-          "amplitude_pct": 0.0,
-          "turnover_pct": 0.09,
-          "volume_ratio": 2.1,
-          "high": 0.344,
-          "low": 0.344,
-          "open": 0.344,
-          "prev_close": 0.34,
-          "return_60d_pct": -14.85,
-          "return_ytd_pct": -33.33,
-          "provider_timestamp": 1794187695
-        },
-        "historical_context": {
-          "status": "READY",
-          "as_of": "2026-11-06",
-          "sample_count": 90,
-          "avg_amount_20": 1736735093.5
+          "avg_amount_20": 209979394.4
         },
         "comparison_basis": [
           "历史趋势/状态变化",
@@ -477,6 +639,7 @@
     },
     "decision_boundary": "发现对象是本节点临时正式评估输入，不是第三种ETF身份；不得自动写观察池、生成Trial/Confirm或交易动作。只有在广域获取、预筛选和所需历史验证均完成时，candidate_count=0才表示合法空集合；empty_reason存在或coverage_status不是COMPLETE时，必须按发现未完成/降级处理。",
     "hyperliquid_contribution": {
+      "schema_version": "2.1",
       "status": "DEGRADED",
       "task": "DISCOVERY",
       "node": "",
@@ -484,12 +647,629 @@
       "as_of_beijing": "",
       "mapped_object_count": 0,
       "mapped_objects": [],
+      "live_signal_count": 0,
+      "mapping_candidate_count": 26,
+      "mapping_candidates": [
+        {
+          "object_type": "HYPERLIQUID_MAPPING_CANDIDATE",
+          "object_id": "xyz:XYZ100",
+          "asset": "xyz:XYZ100",
+          "family": "GLOBAL_RISK_APPETITE",
+          "mapped_assets": [
+            "159941",
+            "588000",
+            "159781",
+            "513180",
+            "159561",
+            "515080"
+          ],
+          "name_markers": [
+            "纳指",
+            "标普",
+            "创业",
+            "科创",
+            "宽基",
+            "成长",
+            "中证1000",
+            "中证2000"
+          ],
+          "mapping_reason": "CONFIGURED_ECONOMIC_FAMILY_CANDIDATE_NO_LIVE_SIGNAL",
+          "evidence_status": "NO_LIVE_SIGNAL",
+          "consumption_status": "CATALOG_ONLY",
+          "decision_effect": "INSUFFICIENT",
+          "signal_fields": {},
+          "evidence_summary": "配置映射存在，但本轮快照没有匹配到该对象的实时观测信号",
+          "decision_use": "仅用于说明可检验的经济族群关联；没有实时信号，不能改变ETF方向、时机或交易判断",
+          "notification_eligibility": "NOT_ELIGIBLE_WITHOUT_LIVE_SIGNAL"
+        },
+        {
+          "object_type": "HYPERLIQUID_MAPPING_CANDIDATE",
+          "object_id": "xyz:SP500",
+          "asset": "xyz:SP500",
+          "family": "GLOBAL_RISK_APPETITE",
+          "mapped_assets": [],
+          "name_markers": [
+            "标普",
+            "宽基",
+            "成长",
+            "价值"
+          ],
+          "mapping_reason": "CONFIGURED_ECONOMIC_FAMILY_CANDIDATE_NO_LIVE_SIGNAL",
+          "evidence_status": "NO_LIVE_SIGNAL",
+          "consumption_status": "CATALOG_ONLY",
+          "decision_effect": "INSUFFICIENT",
+          "signal_fields": {},
+          "evidence_summary": "配置映射存在，但本轮快照没有匹配到该对象的实时观测信号",
+          "decision_use": "仅用于说明可检验的经济族群关联；没有实时信号，不能改变ETF方向、时机或交易判断",
+          "notification_eligibility": "NOT_ELIGIBLE_WITHOUT_LIVE_SIGNAL"
+        },
+        {
+          "object_type": "HYPERLIQUID_MAPPING_CANDIDATE",
+          "object_id": "xyz:SMH",
+          "asset": "xyz:SMH",
+          "family": "SEMICONDUCTOR",
+          "mapped_assets": [],
+          "name_markers": [
+            "半导体",
+            "芯片",
+            "科创",
+            "通信",
+            "电子",
+            "设备"
+          ],
+          "mapping_reason": "CONFIGURED_ECONOMIC_FAMILY_CANDIDATE_NO_LIVE_SIGNAL",
+          "evidence_status": "NO_LIVE_SIGNAL",
+          "consumption_status": "CATALOG_ONLY",
+          "decision_effect": "INSUFFICIENT",
+          "signal_fields": {},
+          "evidence_summary": "配置映射存在，但本轮快照没有匹配到该对象的实时观测信号",
+          "decision_use": "仅用于说明可检验的经济族群关联；没有实时信号，不能改变ETF方向、时机或交易判断",
+          "notification_eligibility": "NOT_ELIGIBLE_WITHOUT_LIVE_SIGNAL"
+        },
+        {
+          "object_type": "HYPERLIQUID_MAPPING_CANDIDATE",
+          "object_id": "xyz:SOXL",
+          "asset": "xyz:SOXL",
+          "family": "SEMICONDUCTOR_HIGH_BETA",
+          "mapped_assets": [],
+          "name_markers": [
+            "半导体",
+            "芯片",
+            "科创",
+            "通信",
+            "电子",
+            "设备"
+          ],
+          "mapping_reason": "CONFIGURED_ECONOMIC_FAMILY_CANDIDATE_NO_LIVE_SIGNAL",
+          "evidence_status": "NO_LIVE_SIGNAL",
+          "consumption_status": "CATALOG_ONLY",
+          "decision_effect": "INSUFFICIENT",
+          "signal_fields": {},
+          "evidence_summary": "配置映射存在，但本轮快照没有匹配到该对象的实时观测信号",
+          "decision_use": "仅用于说明可检验的经济族群关联；没有实时信号，不能改变ETF方向、时机或交易判断",
+          "notification_eligibility": "NOT_ELIGIBLE_WITHOUT_LIVE_SIGNAL"
+        },
+        {
+          "object_type": "HYPERLIQUID_MAPPING_CANDIDATE",
+          "object_id": "xyz:DRAM",
+          "asset": "xyz:DRAM",
+          "family": "MEMORY",
+          "mapped_assets": [],
+          "name_markers": [
+            "半导体",
+            "芯片",
+            "存储",
+            "科创",
+            "通信",
+            "电子",
+            "设备"
+          ],
+          "mapping_reason": "CONFIGURED_ECONOMIC_FAMILY_CANDIDATE_NO_LIVE_SIGNAL",
+          "evidence_status": "NO_LIVE_SIGNAL",
+          "consumption_status": "CATALOG_ONLY",
+          "decision_effect": "INSUFFICIENT",
+          "signal_fields": {},
+          "evidence_summary": "配置映射存在，但本轮快照没有匹配到该对象的实时观测信号",
+          "decision_use": "仅用于说明可检验的经济族群关联；没有实时信号，不能改变ETF方向、时机或交易判断",
+          "notification_eligibility": "NOT_ELIGIBLE_WITHOUT_LIVE_SIGNAL"
+        },
+        {
+          "object_type": "HYPERLIQUID_MAPPING_CANDIDATE",
+          "object_id": "xyz:AMD",
+          "asset": "xyz:AMD",
+          "family": "AI_COMPUTE",
+          "mapped_assets": [],
+          "name_markers": [
+            "半导体",
+            "芯片",
+            "人工智能",
+            "算力",
+            "通信",
+            "电子",
+            "科创"
+          ],
+          "mapping_reason": "CONFIGURED_ECONOMIC_FAMILY_CANDIDATE_NO_LIVE_SIGNAL",
+          "evidence_status": "NO_LIVE_SIGNAL",
+          "consumption_status": "CATALOG_ONLY",
+          "decision_effect": "INSUFFICIENT",
+          "signal_fields": {},
+          "evidence_summary": "配置映射存在，但本轮快照没有匹配到该对象的实时观测信号",
+          "decision_use": "仅用于说明可检验的经济族群关联；没有实时信号，不能改变ETF方向、时机或交易判断",
+          "notification_eligibility": "NOT_ELIGIBLE_WITHOUT_LIVE_SIGNAL"
+        },
+        {
+          "object_type": "HYPERLIQUID_MAPPING_CANDIDATE",
+          "object_id": "xyz:NVDA",
+          "asset": "xyz:NVDA",
+          "family": "AI_COMPUTE",
+          "mapped_assets": [],
+          "name_markers": [
+            "半导体",
+            "芯片",
+            "人工智能",
+            "算力",
+            "通信",
+            "电子",
+            "科创"
+          ],
+          "mapping_reason": "CONFIGURED_ECONOMIC_FAMILY_CANDIDATE_NO_LIVE_SIGNAL",
+          "evidence_status": "NO_LIVE_SIGNAL",
+          "consumption_status": "CATALOG_ONLY",
+          "decision_effect": "INSUFFICIENT",
+          "signal_fields": {},
+          "evidence_summary": "配置映射存在，但本轮快照没有匹配到该对象的实时观测信号",
+          "decision_use": "仅用于说明可检验的经济族群关联；没有实时信号，不能改变ETF方向、时机或交易判断",
+          "notification_eligibility": "NOT_ELIGIBLE_WITHOUT_LIVE_SIGNAL"
+        },
+        {
+          "object_type": "HYPERLIQUID_MAPPING_CANDIDATE",
+          "object_id": "xyz:XBI",
+          "asset": "xyz:XBI",
+          "family": "BIOTECH",
+          "mapped_assets": [],
+          "name_markers": [
+            "创新药",
+            "医药",
+            "生物",
+            "医疗"
+          ],
+          "mapping_reason": "CONFIGURED_ECONOMIC_FAMILY_CANDIDATE_NO_LIVE_SIGNAL",
+          "evidence_status": "NO_LIVE_SIGNAL",
+          "consumption_status": "CATALOG_ONLY",
+          "decision_effect": "INSUFFICIENT",
+          "signal_fields": {},
+          "evidence_summary": "配置映射存在，但本轮快照没有匹配到该对象的实时观测信号",
+          "decision_use": "仅用于说明可检验的经济族群关联；没有实时信号，不能改变ETF方向、时机或交易判断",
+          "notification_eligibility": "NOT_ELIGIBLE_WITHOUT_LIVE_SIGNAL"
+        },
+        {
+          "object_type": "HYPERLIQUID_MAPPING_CANDIDATE",
+          "object_id": "xyz:XLE",
+          "asset": "xyz:XLE",
+          "family": "ENERGY",
+          "mapped_assets": [],
+          "name_markers": [
+            "能源",
+            "油气",
+            "煤炭",
+            "化工",
+            "石化"
+          ],
+          "mapping_reason": "CONFIGURED_ECONOMIC_FAMILY_CANDIDATE_NO_LIVE_SIGNAL",
+          "evidence_status": "NO_LIVE_SIGNAL",
+          "consumption_status": "CATALOG_ONLY",
+          "decision_effect": "INSUFFICIENT",
+          "signal_fields": {},
+          "evidence_summary": "配置映射存在，但本轮快照没有匹配到该对象的实时观测信号",
+          "decision_use": "仅用于说明可检验的经济族群关联；没有实时信号，不能改变ETF方向、时机或交易判断",
+          "notification_eligibility": "NOT_ELIGIBLE_WITHOUT_LIVE_SIGNAL"
+        },
+        {
+          "object_type": "HYPERLIQUID_MAPPING_CANDIDATE",
+          "object_id": "xyz:BRENTOIL",
+          "asset": "xyz:BRENTOIL",
+          "family": "ENERGY",
+          "mapped_assets": [],
+          "name_markers": [
+            "能源",
+            "油气",
+            "煤炭",
+            "化工",
+            "石化"
+          ],
+          "mapping_reason": "CONFIGURED_ECONOMIC_FAMILY_CANDIDATE_NO_LIVE_SIGNAL",
+          "evidence_status": "NO_LIVE_SIGNAL",
+          "consumption_status": "CATALOG_ONLY",
+          "decision_effect": "INSUFFICIENT",
+          "signal_fields": {},
+          "evidence_summary": "配置映射存在，但本轮快照没有匹配到该对象的实时观测信号",
+          "decision_use": "仅用于说明可检验的经济族群关联；没有实时信号，不能改变ETF方向、时机或交易判断",
+          "notification_eligibility": "NOT_ELIGIBLE_WITHOUT_LIVE_SIGNAL"
+        },
+        {
+          "object_type": "HYPERLIQUID_MAPPING_CANDIDATE",
+          "object_id": "xyz:GOLD",
+          "asset": "xyz:GOLD",
+          "family": "GOLD",
+          "mapped_assets": [],
+          "name_markers": [
+            "黄金",
+            "有色",
+            "资源"
+          ],
+          "mapping_reason": "CONFIGURED_ECONOMIC_FAMILY_CANDIDATE_NO_LIVE_SIGNAL",
+          "evidence_status": "NO_LIVE_SIGNAL",
+          "consumption_status": "CATALOG_ONLY",
+          "decision_effect": "INSUFFICIENT",
+          "signal_fields": {},
+          "evidence_summary": "配置映射存在，但本轮快照没有匹配到该对象的实时观测信号",
+          "decision_use": "仅用于说明可检验的经济族群关联；没有实时信号，不能改变ETF方向、时机或交易判断",
+          "notification_eligibility": "NOT_ELIGIBLE_WITHOUT_LIVE_SIGNAL"
+        },
+        {
+          "object_type": "HYPERLIQUID_MAPPING_CANDIDATE",
+          "object_id": "xyz:COPPER",
+          "asset": "xyz:COPPER",
+          "family": "INDUSTRIAL_METALS",
+          "mapped_assets": [],
+          "name_markers": [
+            "有色",
+            "工业金属",
+            "资源",
+            "电网",
+            "新能源"
+          ],
+          "mapping_reason": "CONFIGURED_ECONOMIC_FAMILY_CANDIDATE_NO_LIVE_SIGNAL",
+          "evidence_status": "NO_LIVE_SIGNAL",
+          "consumption_status": "CATALOG_ONLY",
+          "decision_effect": "INSUFFICIENT",
+          "signal_fields": {},
+          "evidence_summary": "配置映射存在，但本轮快照没有匹配到该对象的实时观测信号",
+          "decision_use": "仅用于说明可检验的经济族群关联；没有实时信号，不能改变ETF方向、时机或交易判断",
+          "notification_eligibility": "NOT_ELIGIBLE_WITHOUT_LIVE_SIGNAL"
+        },
+        {
+          "object_type": "HYPERLIQUID_MAPPING_CANDIDATE",
+          "object_id": "xyz:EWY",
+          "asset": "xyz:EWY",
+          "family": "KOREA_EQUITY",
+          "mapped_assets": [],
+          "name_markers": [
+            "韩国",
+            "亚洲",
+            "科技",
+            "宽基",
+            "恒生"
+          ],
+          "mapping_reason": "CONFIGURED_ECONOMIC_FAMILY_CANDIDATE_NO_LIVE_SIGNAL",
+          "evidence_status": "NO_LIVE_SIGNAL",
+          "consumption_status": "CATALOG_ONLY",
+          "decision_effect": "INSUFFICIENT",
+          "signal_fields": {},
+          "evidence_summary": "配置映射存在，但本轮快照没有匹配到该对象的实时观测信号",
+          "decision_use": "仅用于说明可检验的经济族群关联；没有实时信号，不能改变ETF方向、时机或交易判断",
+          "notification_eligibility": "NOT_ELIGIBLE_WITHOUT_LIVE_SIGNAL"
+        },
+        {
+          "object_type": "HYPERLIQUID_MAPPING_CANDIDATE",
+          "object_id": "xyz:EWJ",
+          "asset": "xyz:EWJ",
+          "family": "JAPAN_EQUITY",
+          "mapped_assets": [],
+          "name_markers": [
+            "日本",
+            "日经",
+            "亚洲"
+          ],
+          "mapping_reason": "CONFIGURED_ECONOMIC_FAMILY_CANDIDATE_NO_LIVE_SIGNAL",
+          "evidence_status": "NO_LIVE_SIGNAL",
+          "consumption_status": "CATALOG_ONLY",
+          "decision_effect": "INSUFFICIENT",
+          "signal_fields": {},
+          "evidence_summary": "配置映射存在，但本轮快照没有匹配到该对象的实时观测信号",
+          "decision_use": "仅用于说明可检验的经济族群关联；没有实时信号，不能改变ETF方向、时机或交易判断",
+          "notification_eligibility": "NOT_ELIGIBLE_WITHOUT_LIVE_SIGNAL"
+        },
+        {
+          "object_type": "HYPERLIQUID_MAPPING_CANDIDATE",
+          "object_id": "xyz:EWT",
+          "asset": "xyz:EWT",
+          "family": "TAIWAN_EQUITY",
+          "mapped_assets": [],
+          "name_markers": [
+            "台湾",
+            "亚洲",
+            "半导体",
+            "科技"
+          ],
+          "mapping_reason": "CONFIGURED_ECONOMIC_FAMILY_CANDIDATE_NO_LIVE_SIGNAL",
+          "evidence_status": "NO_LIVE_SIGNAL",
+          "consumption_status": "CATALOG_ONLY",
+          "decision_effect": "INSUFFICIENT",
+          "signal_fields": {},
+          "evidence_summary": "配置映射存在，但本轮快照没有匹配到该对象的实时观测信号",
+          "decision_use": "仅用于说明可检验的经济族群关联；没有实时信号，不能改变ETF方向、时机或交易判断",
+          "notification_eligibility": "NOT_ELIGIBLE_WITHOUT_LIVE_SIGNAL"
+        },
+        {
+          "object_type": "HYPERLIQUID_MAPPING_CANDIDATE",
+          "object_id": "xyz:CXMT",
+          "asset": "xyz:CXMT",
+          "family": "CHINA_MEMORY_CHAIN",
+          "mapped_assets": [],
+          "name_markers": [
+            "半导体",
+            "芯片",
+            "存储",
+            "科创",
+            "通信",
+            "电子",
+            "设备"
+          ],
+          "mapping_reason": "CONFIGURED_ECONOMIC_FAMILY_CANDIDATE_NO_LIVE_SIGNAL",
+          "evidence_status": "NO_LIVE_SIGNAL",
+          "consumption_status": "CATALOG_ONLY",
+          "decision_effect": "INSUFFICIENT",
+          "signal_fields": {},
+          "evidence_summary": "配置映射存在，但本轮快照没有匹配到该对象的实时观测信号",
+          "decision_use": "仅用于说明可检验的经济族群关联；没有实时信号，不能改变ETF方向、时机或交易判断",
+          "notification_eligibility": "NOT_ELIGIBLE_WITHOUT_LIVE_SIGNAL"
+        },
+        {
+          "object_type": "HYPERLIQUID_MAPPING_CANDIDATE",
+          "object_id": "xyz:GIGADEV",
+          "asset": "xyz:GIGADEV",
+          "family": "CHINA_MEMORY_CHAIN",
+          "mapped_assets": [],
+          "name_markers": [
+            "半导体",
+            "芯片",
+            "存储",
+            "科创",
+            "通信",
+            "电子",
+            "设备"
+          ],
+          "mapping_reason": "CONFIGURED_ECONOMIC_FAMILY_CANDIDATE_NO_LIVE_SIGNAL",
+          "evidence_status": "NO_LIVE_SIGNAL",
+          "consumption_status": "CATALOG_ONLY",
+          "decision_effect": "INSUFFICIENT",
+          "signal_fields": {},
+          "evidence_summary": "配置映射存在，但本轮快照没有匹配到该对象的实时观测信号",
+          "decision_use": "仅用于说明可检验的经济族群关联；没有实时信号，不能改变ETF方向、时机或交易判断",
+          "notification_eligibility": "NOT_ELIGIBLE_WITHOUT_LIVE_SIGNAL"
+        },
+        {
+          "object_type": "HYPERLIQUID_MAPPING_CANDIDATE",
+          "object_id": "xyz:SNDK",
+          "asset": "xyz:SNDK",
+          "family": "MEMORY",
+          "mapped_assets": [],
+          "name_markers": [
+            "半导体",
+            "芯片",
+            "存储",
+            "科创",
+            "通信",
+            "电子",
+            "设备"
+          ],
+          "mapping_reason": "CONFIGURED_ECONOMIC_FAMILY_CANDIDATE_NO_LIVE_SIGNAL",
+          "evidence_status": "NO_LIVE_SIGNAL",
+          "consumption_status": "CATALOG_ONLY",
+          "decision_effect": "INSUFFICIENT",
+          "signal_fields": {},
+          "evidence_summary": "配置映射存在，但本轮快照没有匹配到该对象的实时观测信号",
+          "decision_use": "仅用于说明可检验的经济族群关联；没有实时信号，不能改变ETF方向、时机或交易判断",
+          "notification_eligibility": "NOT_ELIGIBLE_WITHOUT_LIVE_SIGNAL"
+        },
+        {
+          "object_type": "HYPERLIQUID_MAPPING_CANDIDATE",
+          "object_id": "io:SNDK",
+          "asset": "io:SNDK",
+          "family": "MEMORY",
+          "mapped_assets": [],
+          "name_markers": [
+            "半导体",
+            "芯片",
+            "存储",
+            "科创",
+            "通信",
+            "电子",
+            "设备"
+          ],
+          "mapping_reason": "CONFIGURED_ECONOMIC_FAMILY_CANDIDATE_NO_LIVE_SIGNAL",
+          "evidence_status": "NO_LIVE_SIGNAL",
+          "consumption_status": "CATALOG_ONLY",
+          "decision_effect": "INSUFFICIENT",
+          "signal_fields": {},
+          "evidence_summary": "配置映射存在，但本轮快照没有匹配到该对象的实时观测信号",
+          "decision_use": "仅用于说明可检验的经济族群关联；没有实时信号，不能改变ETF方向、时机或交易判断",
+          "notification_eligibility": "NOT_ELIGIBLE_WITHOUT_LIVE_SIGNAL"
+        },
+        {
+          "object_type": "HYPERLIQUID_MAPPING_CANDIDATE",
+          "object_id": "io:NVDA",
+          "asset": "io:NVDA",
+          "family": "AI_COMPUTE",
+          "mapped_assets": [],
+          "name_markers": [
+            "半导体",
+            "芯片",
+            "人工智能",
+            "算力",
+            "通信",
+            "电子",
+            "科创"
+          ],
+          "mapping_reason": "CONFIGURED_ECONOMIC_FAMILY_CANDIDATE_NO_LIVE_SIGNAL",
+          "evidence_status": "NO_LIVE_SIGNAL",
+          "consumption_status": "CATALOG_ONLY",
+          "decision_effect": "INSUFFICIENT",
+          "signal_fields": {},
+          "evidence_summary": "配置映射存在，但本轮快照没有匹配到该对象的实时观测信号",
+          "decision_use": "仅用于说明可检验的经济族群关联；没有实时信号，不能改变ETF方向、时机或交易判断",
+          "notification_eligibility": "NOT_ELIGIBLE_WITHOUT_LIVE_SIGNAL"
+        },
+        {
+          "object_type": "HYPERLIQUID_MAPPING_CANDIDATE",
+          "object_id": "io:EWY",
+          "asset": "io:EWY",
+          "family": "KOREA_EQUITY",
+          "mapped_assets": [],
+          "name_markers": [
+            "韩国",
+            "亚洲",
+            "恒生",
+            "科技"
+          ],
+          "mapping_reason": "CONFIGURED_ECONOMIC_FAMILY_CANDIDATE_NO_LIVE_SIGNAL",
+          "evidence_status": "NO_LIVE_SIGNAL",
+          "consumption_status": "CATALOG_ONLY",
+          "decision_effect": "INSUFFICIENT",
+          "signal_fields": {},
+          "evidence_summary": "配置映射存在，但本轮快照没有匹配到该对象的实时观测信号",
+          "decision_use": "仅用于说明可检验的经济族群关联；没有实时信号，不能改变ETF方向、时机或交易判断",
+          "notification_eligibility": "NOT_ELIGIBLE_WITHOUT_LIVE_SIGNAL"
+        },
+        {
+          "object_type": "HYPERLIQUID_MAPPING_CANDIDATE",
+          "object_id": "xyz:BABA",
+          "asset": "xyz:BABA",
+          "family": "CHINA_TECH_RISK",
+          "mapped_assets": [],
+          "name_markers": [
+            "中国",
+            "港股",
+            "互联网",
+            "科技",
+            "宽基"
+          ],
+          "mapping_reason": "CONFIGURED_ECONOMIC_FAMILY_CANDIDATE_NO_LIVE_SIGNAL",
+          "evidence_status": "NO_LIVE_SIGNAL",
+          "consumption_status": "CATALOG_ONLY",
+          "decision_effect": "INSUFFICIENT",
+          "signal_fields": {},
+          "evidence_summary": "配置映射存在，但本轮快照没有匹配到该对象的实时观测信号",
+          "decision_use": "仅用于说明可检验的经济族群关联；没有实时信号，不能改变ETF方向、时机或交易判断",
+          "notification_eligibility": "NOT_ELIGIBLE_WITHOUT_LIVE_SIGNAL"
+        },
+        {
+          "object_type": "HYPERLIQUID_MAPPING_CANDIDATE",
+          "object_id": "xyz:AVGO",
+          "asset": "xyz:AVGO",
+          "family": "AI_NETWORKING",
+          "mapped_assets": [],
+          "name_markers": [
+            "半导体",
+            "芯片",
+            "人工智能",
+            "算力",
+            "通信",
+            "电子"
+          ],
+          "mapping_reason": "CONFIGURED_ECONOMIC_FAMILY_CANDIDATE_NO_LIVE_SIGNAL",
+          "evidence_status": "NO_LIVE_SIGNAL",
+          "consumption_status": "CATALOG_ONLY",
+          "decision_effect": "INSUFFICIENT",
+          "signal_fields": {},
+          "evidence_summary": "配置映射存在，但本轮快照没有匹配到该对象的实时观测信号",
+          "decision_use": "仅用于说明可检验的经济族群关联；没有实时信号，不能改变ETF方向、时机或交易判断",
+          "notification_eligibility": "NOT_ELIGIBLE_WITHOUT_LIVE_SIGNAL"
+        },
+        {
+          "object_type": "HYPERLIQUID_MAPPING_CANDIDATE",
+          "object_id": "para:COHR",
+          "asset": "para:COHR",
+          "family": "AI_NETWORKING",
+          "mapped_assets": [],
+          "name_markers": [
+            "半导体",
+            "芯片",
+            "人工智能",
+            "算力",
+            "通信",
+            "电子"
+          ],
+          "mapping_reason": "CONFIGURED_ECONOMIC_FAMILY_CANDIDATE_NO_LIVE_SIGNAL",
+          "evidence_status": "NO_LIVE_SIGNAL",
+          "consumption_status": "CATALOG_ONLY",
+          "decision_effect": "INSUFFICIENT",
+          "signal_fields": {},
+          "evidence_summary": "配置映射存在，但本轮快照没有匹配到该对象的实时观测信号",
+          "decision_use": "仅用于说明可检验的经济族群关联；没有实时信号，不能改变ETF方向、时机或交易判断",
+          "notification_eligibility": "NOT_ELIGIBLE_WITHOUT_LIVE_SIGNAL"
+        },
+        {
+          "object_type": "HYPERLIQUID_MAPPING_CANDIDATE",
+          "object_id": "xyz:NBIS",
+          "asset": "xyz:NBIS",
+          "family": "AI_COMPUTE",
+          "mapped_assets": [],
+          "name_markers": [
+            "人工智能",
+            "算力",
+            "科技",
+            "通信",
+            "电子"
+          ],
+          "mapping_reason": "CONFIGURED_ECONOMIC_FAMILY_CANDIDATE_NO_LIVE_SIGNAL",
+          "evidence_status": "NO_LIVE_SIGNAL",
+          "consumption_status": "CATALOG_ONLY",
+          "decision_effect": "INSUFFICIENT",
+          "signal_fields": {},
+          "evidence_summary": "配置映射存在，但本轮快照没有匹配到该对象的实时观测信号",
+          "decision_use": "仅用于说明可检验的经济族群关联；没有实时信号，不能改变ETF方向、时机或交易判断",
+          "notification_eligibility": "NOT_ELIGIBLE_WITHOUT_LIVE_SIGNAL"
+        },
+        {
+          "object_type": "HYPERLIQUID_MAPPING_CANDIDATE",
+          "object_id": "io:NBIS",
+          "asset": "io:NBIS",
+          "family": "AI_COMPUTE",
+          "mapped_assets": [],
+          "name_markers": [
+            "人工智能",
+            "算力",
+            "科技",
+            "通信",
+            "电子"
+          ],
+          "mapping_reason": "CONFIGURED_ECONOMIC_FAMILY_CANDIDATE_NO_LIVE_SIGNAL",
+          "evidence_status": "NO_LIVE_SIGNAL",
+          "consumption_status": "CATALOG_ONLY",
+          "decision_effect": "INSUFFICIENT",
+          "signal_fields": {},
+          "evidence_summary": "配置映射存在，但本轮快照没有匹配到该对象的实时观测信号",
+          "decision_use": "仅用于说明可检验的经济族群关联；没有实时信号，不能改变ETF方向、时机或交易判断",
+          "notification_eligibility": "NOT_ELIGIBLE_WITHOUT_LIVE_SIGNAL"
+        }
+      ],
+      "mapping_coverage_status": "CONFIGURED_CANDIDATES_NO_LIVE_SIGNAL",
+      "contribution_summary": "本轮存在可检验的Hyperliquid经济族群映射，但没有匹配到可消费的实时信号；不能把映射候选当作方向证据。",
+      "notification_contract": {
+        "shared_with_formal_decision": true,
+        "materiality_gate_required": true,
+        "comparable_before_after_required": true,
+        "no_push_for_catalog_or_provider_only_change": true,
+        "no_push_for_unmapped_asset_without_decision_relevance": true,
+        "allowed_effects": [
+          "SUPPORT",
+          "CONFIRMATORY",
+          "CONTRADICTION",
+          "TIMING_FILTER",
+          "CROWDING_RISK",
+          "NO_INCREMENTAL_VALUE",
+          "NO_DIRECT_MAPPING",
+          "INSUFFICIENT"
+        ]
+      },
       "node_roles": {
         "preopen": "隔夜聚合用于次日开盘预期、开盘风险和是否等待确认",
-        "intraday": "盘中用于外部确认、背离、强化和反转识别",
+        "intraday": "盘中用于外部确认、背离、强化、反转和拥挤风险识别",
         "post_close": "盘后用于信号归因和下一交易日研究输入"
       },
-      "consumer_contract": "同一只读贡献包供正式决策和交易复盘消费；不独立生成交易权限、金额或订单"
+      "consumer_contract": "同一只读贡献包供正式决策、交易复盘和Hyperliquid脉冲主动通知消费；不独立生成交易权限、金额或订单"
     }
   },
   "read_only": true,
