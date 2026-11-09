@@ -175,6 +175,13 @@ def _same_node_persisted_formal_discovery(root: Path, current: dict, universe_id
     current_market_date = str(current.get("market_date") or "")
     current_node = str(current.get("latest_valid_node") or "")
     current_snapshot = str(current.get("latest_snapshot") or "")
+    current_snapshot_payload = read_json(root / current_snapshot, {}) if current_snapshot else {}
+    current_fact_time = str(
+        current_snapshot_payload.get("formed_at_beijing")
+        or current_snapshot_payload.get("fact_time_beijing")
+        or current_snapshot_payload.get("captured_at_beijing")
+        or ""
+    )
     current_delta = _discovery_delta_identity(root)
     for discovery in sources:
         if str(discovery.get("status") or "").upper() != "READY":
@@ -184,6 +191,19 @@ def _same_node_persisted_formal_discovery(root: Path, current: dict, universe_id
         if str(discovery.get("latest_valid_node") or "") != current_node:
             continue
         discovery_snapshot = str(discovery.get("latest_snapshot") or "")
+        discovery_fact_time = str(discovery.get("generated_at_beijing") or discovery.get("formed_at_beijing") or "")
+        if current_fact_time and discovery_fact_time and current_node != "close":
+            try:
+                current_dt = datetime.fromisoformat(current_fact_time.replace("Z", "+00:00"))
+                discovery_dt = datetime.fromisoformat(discovery_fact_time.replace("Z", "+00:00"))
+                if current_dt.tzinfo is None:
+                    current_dt = current_dt.replace(tzinfo=SHANGHAI)
+                if discovery_dt.tzinfo is None:
+                    discovery_dt = discovery_dt.replace(tzinfo=SHANGHAI)
+                if (current_dt - discovery_dt).total_seconds() > 15 * 60:
+                    continue
+            except ValueError:
+                pass
         canonical_node_producer = (
             str(discovery.get("formation_rule") or "") == "EVERY_VERIFIED_A_SHARE_PULSE"
             or "VERIFIED_NODE_OVERLAY" in str(discovery.get("source") or "")
