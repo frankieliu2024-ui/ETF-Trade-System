@@ -56,6 +56,10 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
         "observation_time_basis": str(payload.get("observation_time_basis") or payload.get("time_basis") or ""),
         "mapping": payload.get("mapping") if kind == "HYPERLIQUID" else None,
         "etf_bindings": payload.get("etf_bindings") if kind == "HYPERLIQUID" else None,
+        "binding_candidates": payload.get("binding_candidates") if kind == "HYPERLIQUID" else None,
+        "binding_status": str(payload.get("binding_status") or "") if kind == "HYPERLIQUID" else "",
+        "binding_generated_at_beijing": str(payload.get("binding_generated_at_beijing") or "") if kind == "HYPERLIQUID" else "",
+        "binding_source_discovery_generated_at_beijing": str(payload.get("binding_source_discovery_generated_at_beijing") or "") if kind == "HYPERLIQUID" else "",
     }
     if kind == "DISCOVERY":
         record["candidates"] = [
