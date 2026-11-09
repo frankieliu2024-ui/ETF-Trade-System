@@ -928,6 +928,22 @@ jobs:
               fact_binding = payload.get("fact_binding")
               if isinstance(fact_binding, dict):
                   fact_binding = dict(fact_binding)
+                  if not fact_binding.get("market_date") and payload.get("market_date"):
+                      fact_binding["market_date"] = payload["market_date"]
+                  if not fact_binding.get("latest_snapshot") and fact_binding.get("market_snapshot"):
+                      fact_binding["latest_snapshot"] = fact_binding["market_snapshot"]
+                  if not fact_binding.get("captured_at_beijing") and fact_binding.get("snapshot_as_of_beijing"):
+                      fact_binding["captured_at_beijing"] = fact_binding["snapshot_as_of_beijing"]
+                  if not fact_binding.get("latest_valid_node"):
+                      fact_binding["latest_valid_node"] = "live"
+                  if not fact_binding.get("fact_status"):
+                      fact_binding["fact_status"] = "READY/PASS"
+                  payload["fact_binding"] = fact_binding
+              if not str(payload.get("formal_fact_type") or "").strip():
+                  payload["formal_fact_type"] = "FORMAL_CURRENT_MAIN_DECISION"
+              fact_binding = payload.get("fact_binding")
+              if isinstance(fact_binding, dict):
+                  fact_binding = dict(fact_binding)
                   if not fact_binding.get("latest_snapshot") and fact_binding.get("market_snapshot"):
                       fact_binding["latest_snapshot"] = fact_binding["market_snapshot"]
                   if not fact_binding.get("captured_at_beijing") and fact_binding.get("snapshot_as_of_beijing"):
