@@ -127,7 +127,36 @@ def dispatch_notification(completion_path: str, *, force_resend: bool = False) -
             "reason": str(exc),
             "completion_path": completion_path,
         }
-    return {"submitted": True, "completion_path": completion_path, "read_back": False}
+    # A 204 only means GitHub accepted the API request.  Confirm that Actions
+    # actually created the workflow run; otherwise the caller cannot tell a
+    # silently dropped wake from a successful handoff.
+    run_created = wait_for_notification_run(completion_path)
+    return {"submitted": True, "accepted": True, "workflow_run_created": run_created, "completion_path": completion_path, "read_back": False}
+
+
+def wait_for_notification_run(completion_path: str, *, timeout_seconds: int = 15) -> bool:
+    """Confirm a workflow_dispatch run exists for this exact completion path."""
+    token, repository = _credentials()
+    owner, repo = repository.split("/", 1)
+    endpoint = f"https://api.github.com/repos/{owner}/{repo}/actions/workflows/decision-notification.yml/runs?event=workflow_dispatch&branch=main&per_page=20"
+    headers = {"Accept": "application/vnd.github+json", "Authorization": f"Bearer {token}", "X-GitHub-Api-Version": "2022-11-28"}
+    needle = str(completion_path).strip()
+    deadline = time.time() + max(0, timeout_seconds)
+    while True:
+        try:
+            with urllib_request.urlopen(urllib_request.Request(endpoint, headers=headers), timeout=30) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+            for run in payload.get("workflow_runs") or []:
+                name = str(run.get("display_title") or run.get("name") or "")
+                if needle in name:
+                    return True
+        except Exception:
+            # Dispatch acceptance remains useful evidence; failure to inspect
+            # runs must not create a blind duplicate here.
+            return False
+        if time.time() >= deadline:
+            return False
+        time.sleep(3)
 
 
 def dispatch_notification_with_one_recovery(completion_path: str) -> dict[str, object]:
@@ -145,8 +174,17 @@ def dispatch_notification_with_one_recovery(completion_path: str) -> dict[str, o
         # dispatch. Retrying would create a second notification chain.
         primary = {"submitted": False, "accepted": False, "explicit_failure": False, "reason": str(exc), "exception": True}
         return {"primary": primary, "recovery": None, "recovery_attempted": False, "same_completion_path": True}
-    if primary.get("submitted") or primary.get("accepted"):
+    if (primary.get("submitted") or primary.get("accepted")) and primary.get("workflow_run_created") is not False:
         return {"primary": primary, "recovery": None, "recovery_attempted": False}
+    # GitHub can return 204 while failing to materialize the Actions run.  A
+    # single same-completion recovery makes this self-healing; notification
+    # dedupe still prevents a second user-visible message.
+    if primary.get("submitted") and primary.get("workflow_run_created") is False:
+        try:
+            recovery = dispatch_notification(completion_path, force_resend=True)
+        except Exception as exc:
+            recovery = {"submitted": False, "accepted": False, "reason": str(exc), "exception": True}
+        return {"primary": primary, "recovery": recovery, "recovery_attempted": True, "same_completion_path": True, "recovery_limit": 1}
     if not primary.get("explicit_failure"):
         return {"primary": primary, "recovery": None, "recovery_attempted": False, "same_completion_path": True}
     try:
