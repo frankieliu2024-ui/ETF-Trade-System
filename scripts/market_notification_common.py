@@ -199,63 +199,591 @@ def _hyperliquid_observation_time() -> str:
     return "尚未确认"
 
 def _hyperliquid_notification_basis(text: str) -> str:
-    """Render the shared Hyperliquid consumption result for user notifications.
-
-    This is deliberately explanatory rather than a trading rule.  It lets the
-    ordinary market-shock/session paths expose the same object-level check as
-    the integrated Discovery/Hyperliquid pulse path, while preserving the
-    independent materiality gate in ``persist_and_send``.
-    """
+    """Return one compact user-facing Hyperliquid contribution sentence."""
     try:
         from hyperliquid_user_explanation import explain_for_notification
         target = ""
-        match = re.search(r"(?:对象/结构|对象|结构)[:： ]+([^\n]+)", text)
+        match = re.search(r"(?:对象/结构|对象|结构)[:： ]+([^\\n]+)", text)
         if match:
             target = match.group(1).strip().split("，")[0]
-        explanation = explain_for_notification(text=text, target=target)
-        return f"{explanation}（Hyperliquid采集时间：{_hyperliquid_observation_time()}）"
-    except Exception as exc:
-        return f"Hyperliquid贡献暂无法完成用户侧解释（{type(exc).__name__}）；本通知仍仅依据已确认的本地/区域事实，不扩大交易结论。"
+        return explain_for_notification(text=text, target=target)
+    except Exception:
+        return "Hyperliquid本轮未形成可改变该通知判断的增量证据。"
 
+def _hyperliquid_as_of_line() -> str:
+    return f"- **Hyperliquid行情时点（北京时间）**：{_hyperliquid_observation_time()}。"
+
+def _extract_object(what: list[str]) -> tuple[str, str, str, str]:
+    joined = " ".join(what)
+    object_line = next((x for x in what if "对象/结构" in x or "触发对象" in x), joined)
+    clean = re.sub(r"^[-*\s]+", "", object_line)
+    clean = re.sub(r"\*+", "", clean)
+    clean = clean.split("：", 1)[-1].strip()
+    match = re.search(r"（([A-Za-z0-9_]+)）", clean)
+    code = match.group(1) if match else ""
+    name = clean.split("（", 1)[0].strip() if clean else ""
+    if "ETF" in clean:
+        asset = "ETF"
+    elif "指数" in clean or code in {"NDX", "SOX", "N225", "KOSPI", "TWII", "HSTECH"}:
+        asset = "A_SHARE_INDEX" if code.isdigit() and len(code) == 6 else "INDEX"
+    elif code.isdigit() and len(code) == 6:
+        asset = "ACCOUNT_STOCK"
+    else:
+        asset = "OTHER"
+    market = "A_SHARE" if code.isdigit() and len(code) == 6 or code.startswith("A_SHARE_") else "OVERSEAS"
+    return code, name, asset, market
+
+
+def _decision_readable_implication(what: list[str], implication: str, action: str) -> tuple[str, str]:
+    """Central semantic gate for index/ETF/stock/overseas market alerts."""
+    joined = " ".join(what)
+    text = implication.strip()
+    act = action.strip()
+    should_override = (
+        text.startswith("立即检查该新事实是否改变全部持仓ETF与观察ETF")
+        or text.startswith("把本次新事实作为结构证据")
+        or "相关ETF自身反馈、候选比较或下一节点准备" in text
+    )
+    if should_override:
+        try:
+            from notification_semantics import shock_implication
+
+            code, name, asset, market = _extract_object(what)
+            if name:
+                return shock_implication(code, name, asset, market)
+        except Exception as exc:
+            print(f"shock semantic fallback: {exc}")
+
+    if "HSTECH" not in joined and "恒生科技指数" not in joined:
+        text = text.replace("；恒生科技指数（HSTECH）事件还要直接复核恒生科技ETF（513180）的自身反馈", "")
+        text = text.replace("恒生科技指数（HSTECH）事件还要直接复核恒生科技ETF（513180）的自身反馈。", "")
+    return text.strip(), act
+
+
+def render_shock(*, what: list[str], why: str, implication: str, action: str, as_of: str, boundary: str) -> str:
+    implication, action = _decision_readable_implication(what, implication, action)
+    display_what = list(what[:5])
+    if any("关键结构" in line and "当前" in line for line in display_what):
+        display_what = [line for line in display_what if "当日涨跌" not in line and "当前涨跌" not in line]
+    hl_basis = _hyperliquid_notification_basis(" ".join(display_what + [why, implication, action]))
+    if hl_basis:
+        why = f"{why}；外部市场证据显示：{hl_basis}"
+        implication = f"{implication}；Hyperliquid仅用于方向确认、背离识别或时机/拥挤风险过滤，不单独改变交易判断。"
+    return (
+        "### 核心结论\n" + "\n".join(display_what)
+        + "\n\n**判断**：" + why
+        + "\n\n### 对ETF系统的影响\n" + implication
+        + "\n\n### 当前动作\n**" + action
+        + "**\n\n### 数据与边界\n"
+        + f"- **行情时点（北京时间）**：{as_of}\n"
+        + _hyperliquid_as_of_line() + "\n"
+        + f"- **边界**：{boundary}\n"
+    )
+
+def _parse_time(value: Any) -> datetime | None:
+    if not value:
+        return None
+    try:
+        dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=now().tzinfo)
+    return dt.astimezone(now().tzinfo)
+
+
+def _future_time_error(event: dict) -> str:
+    ctx = event.get("confirmation_context") or {}
+    for key in (
+        "market_as_of_beijing",
+        "provider_observed_as_of_beijing",
+        "a_share_as_of_beijing",
+    ):
+        dt = _parse_time(ctx.get(key))
+        if dt and dt > now() + timedelta(minutes=2):
+            return f"{key}={dt.isoformat(timespec='seconds')}"
+    return ""
+
+
+def _market_event_staleness_error(event: dict) -> str:
+    """Reject old market facts from the live-event channel.
+
+    Replay/recovery is still possible, but it must opt in explicitly so an old
+    snapshot cannot look like a newly observed market move.
+    """
+    if str(event.get("event_type") or "") not in MARKET_EVENT_TYPES:
+        return ""
+    ctx = _market_context(event)
+    observed = _parse_time(ctx.get("market_as_of_beijing") or ctx.get("provider_observed_as_of_beijing") or ctx.get("event_time_beijing"))
+    if not observed:
+        return "market event has no auditable observation time; live notification is rejected"
+    if str(ctx.get("notification_mode") or "").upper() in {"RECOVERY", "BACKFILL"}:
+        return ""
+    policy = read_json(ROOT / "config" / "runtime_policy.json", {})
+    max_age = int(policy.get("stale_after_seconds", policy.get("degraded_max_age_seconds", 1500)))
+    age = (now() - observed).total_seconds()
+    if age > max_age:
+        return f"market fact is {int(age)} seconds old; live notification requires explicit recovery mode"
+    return ""
+
+
+def _annotate_summary_increment(event: dict, notifications: list[dict]) -> dict:
+    """Make a post-cutoff fact explicit instead of presenting two conflicting claims."""
+    if str(event.get("event_type") or "") not in MARKET_EVENT_TYPES or _is_protected_event(event):
+        return event
+    event_time = _parse_time(_market_context(event).get("market_as_of_beijing"))
+    if not event_time:
+        return event
+    for summary in reversed(notifications):
+        if str(summary.get("event_type") or "") not in {"A_SHARE_SESSION_SUMMARY", "APAC_SESSION_SUMMARY", "US_SESSION_SUMMARY"}:
+            continue
+        sctx = _market_context(summary)
+        cutoff = _parse_time(sctx.get("market_as_of_beijing"))
+        sent = _parse_time(summary.get("sent_at") or summary.get("created_at"))
+        if cutoff and sent and cutoff < event_time <= sent + timedelta(minutes=SUMMARY_ABSORB_MINUTES):
+            event = dict(event)
+            ctx = dict(_market_context(event))
+            ctx["summary_relation"] = "NEW_FACT_AFTER_SUMMARY_CUTOFF"
+            event["confirmation_context"] = ctx
+            event["content"] = str(event.get("content") or "") + f"\n\n> 这是收盘总结数据截止{cutoff.isoformat(timespec='seconds')}后的新增事实；不否定此前总结，仅作为增量变化展示。"
+            return event
+    return event
+
+
+def _late_apac_update_error(event: dict) -> str:
+    """Reject false HK-late updates caused only by data-coverage/tone drift.
+
+    The 16:00+ APAC add-on is intentionally narrow: a missing primary summary may
+    be recovered, otherwise the already-closed Japan/Korea/Taiwan facts cannot
+    create a new regional direction by disappearing from the comparable set.
+    A user-visible late update therefore requires a real HSTECH move of at least
+    the production attention threshold from the primary APAC close.
+    """
+    if str(event.get("event_type") or "") != "APAC_SESSION_SUMMARY":
+        return ""
+    ctx = event.get("confirmation_context") or {}
+    if str(ctx.get("session_node") or "") != "HK_LATE_UPDATE":
+        return ""
+    title = str(event.get("title") or "")
+    if "主总结兜底" in title:
+        return ""
+    delta = number(ctx.get("hstech_change_since_primary_pct"))
+    if delta is None:
+        return "HK_LATE_UPDATE has no comparable HSTECH delta; coverage/tone drift is not material market change"
+    if abs(delta) < APAC_LATE_HK_MIN_DELTA_PCT:
+        return f"HK_LATE_UPDATE HSTECH delta {delta:+.2f}% is below {APAC_LATE_HK_MIN_DELTA_PCT:.2f}% materiality threshold"
+    return ""
+
+
+def _refine_reversal_user_title(event: dict) -> dict:
+    ctx = event.get("confirmation_context") or {}
+    if str(ctx.get("event_category") or "") != "REVERSAL":
+        return event
+    title = str(event.get("title") or "")
+    if "日内方向明显反转" not in title:
+        return event
+    day = number(ctx.get("day_change_pct"))
+    direction = str(ctx.get("direction") or "")
+    replacement = ""
+    if direction == "DOWN" and day is not None and day >= 0:
+        replacement = "冲高明显回吐"
+    elif direction == "UP" and day is not None and day <= 0:
+        replacement = "下探明显修复"
+    if not replacement:
+        return event
+    event = dict(event)
+    event["title"] = title.replace("日内方向明显反转", replacement)
+    return event
+
+
+def _normalize_user_title(event: dict) -> dict:
+    event = _refine_reversal_user_title(event)
+    title = str(event.get("title") or "")
+    if title.startswith("【异动提醒】"):
+        event = dict(event)
+        event["title"] = "【市场异动】" + title[len("【异动提醒】"):]
+    return event
+
+
+SUMMARY_ABSORB_MINUTES = 5
+AGGREGATION_WINDOW_MINUTES = 5
+MARKET_EVENT_TYPES = {"MARKET_SHOCK_ALERT", "MARKET_VALUE_ALERT", "APAC_OPEN_SIGNAL", "US_OPEN_VALUE_ALERT"}
+PROTECTED_EVENT_TYPES = {"FORMAL_DECISION_MATERIAL_CHANGE", "ACCOUNT_FACT_CONFIRMATION", "PENDING_EXECUTION_CONFIRMATION", "交易判断", "风险许可", "持仓动作", "Trial机会", "Confirm机会", "机会失效"}
+MERGEABLE_CATEGORIES = {"OPEN_SIGNAL", "APAC_OPEN_SIGNAL", "SUDDEN", "EXTREME", "REVERSAL", "DIVERGENCE"}
+
+
+def _market_context(event: dict) -> dict:
+    return event.get("confirmation_context") or {}
+
+
+def _market_fact_key(event: dict) -> str:
+    ctx = _market_context(event)
+    explicit = str(ctx.get("fact_key") or event.get("fact_key") or "")
+    if explicit:
+        return explicit
+    return "|".join(str(ctx.get(k) or event.get(k) or "") for k in ("market_date", "security_code", "event_category", "direction"))
+
+
+def _event_category(event: dict) -> str:
+    """Return the user-facing market fact family, including opening signals."""
+    ctx = _market_context(event)
+    return str(ctx.get("event_category") or ("APAC_OPEN_SIGNAL" if str(event.get("event_type") or "") == "APAC_OPEN_SIGNAL" else ""))
+
+
+def _event_family_id(event: dict) -> str:
+    """Identify a continuing user-facing event family, not one quote fact."""
+    ctx = _market_context(event)
+    market = str(ctx.get("market") or event.get("market") or "")
+    date = str(ctx.get("market_date") or event.get("market_date") or "")
+    session = str(ctx.get("session") or ctx.get("market_phase") or ctx.get("session_node") or market)
+    code = str(event.get("security_code") or ctx.get("security_code") or "")
+    category = _event_category(event)
+    direction = str(ctx.get("direction") or "")
+    return ":".join((market, date, session, code, category, direction, str(ctx.get("structure_cluster_id") or "")))
+
+
+def _text_list(value: Any) -> list[str]:
+    if isinstance(value, str):
+        return [value] if value else []
+    if isinstance(value, (list, tuple, set)):
+        return [str(x) for x in value if str(x)]
+    return []
+
+
+def _fact_metadata(event: dict) -> dict:
+    """Read explicit user-level relationship metadata from the canonical event."""
+    ctx = _market_context(event)
+    market_date = str(ctx.get("market_date") or ctx.get("us_market_date") or event.get("market_date") or "")
+    session = str(ctx.get("session") or ctx.get("market_phase") or ctx.get("session_node") or "")
+    codes = []
+    for key in ("object_codes", "related_object_codes", "comparison_object_codes", "covered_object_codes"):
+        codes.extend(_text_list(ctx.get(key)))
+    primary = str(event.get("security_code") or ctx.get("security_code") or "")
+    if primary and primary not in codes and not primary.endswith("_DIVERGENCE"):
+        codes.append(primary)
+    return {
+        "market": str(ctx.get("market") or event.get("market") or "").upper(),
+        "market_date": market_date,
+        "session": session.upper(),
+        "direction": str(ctx.get("direction") or "").upper(),
+        "fact_family": str(ctx.get("fact_family") or ctx.get("user_fact_family") or "").upper(),
+        "object_codes": set(codes),
+        "structure_cluster_id": str(ctx.get("structure_cluster_id") or "").upper(),
+    }
+
+
+def _same_user_level_fact(prior: dict, event: dict) -> bool:
+    old, new = _fact_metadata(prior), _fact_metadata(event)
+    old_code = str(prior.get("security_code") or (_market_context(prior)).get("security_code") or "")
+    new_code = str(event.get("security_code") or (_market_context(event)).get("security_code") or "")
+    if not old["market_date"] or old["market_date"] != new["market_date"]:
+        return False
+    # Explicit session identity takes precedence over the legacy exact-code
+    # compatibility shortcut.  A shared code is not the same user-level fact
+    # across PRE_MARKET, REGULAR, and POST_MARKET.
+    if old["session"] and new["session"] and old["session"] != new["session"]:
+        return False
+    # Preserve compatibility with older canonical events that predate the
+    # explicit market metadata when the primary object identity is exact.
+    if old_code and old_code == new_code:
+        if (old_code.endswith("_DIVERGENCE") and old["object_codes"] and new["object_codes"]
+                and not (old["object_codes"] & new["object_codes"])):
+            return False
+        if (old["direction"] and new["direction"]
+                and old["direction"] not in {"DIVERGED", "MIXED"}
+                and new["direction"] not in {"DIVERGED", "MIXED"}
+                and old["direction"] != new["direction"]):
+            return False
+        return True
+    if not old["market"] or old["market"] != new["market"]:
+        return False
+    if (old["direction"] and new["direction"]
+            and old["direction"] not in {"DIVERGED", "MIXED"}
+            and new["direction"] not in {"DIVERGED", "MIXED"}
+            and old["direction"] != new["direction"]):
+        return False
+    if old["structure_cluster_id"] and old["structure_cluster_id"] == new["structure_cluster_id"]:
+        return True
+    if old["object_codes"] & new["object_codes"]:
+        return True
+    return bool(old["fact_family"] and old["fact_family"] == new["fact_family"]
+                and old["object_codes"] and new["object_codes"]
+                and old["object_codes"] & new["object_codes"])
+
+
+def _summary_covers_object(summary: dict, event: dict) -> bool:
+    old, new = _fact_metadata(summary), _fact_metadata(event)
+    return bool(old["market_date"] == new["market_date"]
+                and old["fact_family"] and old["fact_family"] == new["fact_family"]
+                and old["object_codes"] & new["object_codes"])
+
+
+def _is_protected_event(event: dict) -> bool:
+    event_type = str(event.get("event_type") or event.get("type") or "")
+    title = str(event.get("title") or "")
+    return event_type in PROTECTED_EVENT_TYPES or any(title.startswith(f"【{x}") for x in ("Trial机会", "Confirm机会", "机会失效", "持仓动作", "风险许可"))
+
+
+def _event_magnitude(event: dict) -> float | None:
+    ctx = _market_context(event)
+    for key in ("family_peak_magnitude_pct", "event_magnitude_pct", "covered_event_magnitude_pct", "lead_change_pct", "day_change_pct", "phase_metric_change_pct", "sudden_change_pct"):
+        value = number(ctx.get(key))
+        if value is not None:
+            return abs(value)
+    return None
+
+
+def _is_material_upgrade(event: dict, prior: dict) -> bool:
+    current, old = _event_magnitude(event), _event_magnitude(prior)
+    return current is not None and old is not None and current >= old + max(0.5, old * 0.35)
+
+
+def _summary_covers_event(summary: dict, event: dict) -> bool:
+    if _is_protected_event(event):
+        return False
+    sctx, ectx = _market_context(summary), _market_context(event)
+    if str(sctx.get("market_date") or "") != str(ectx.get("market_date") or "") or _is_material_upgrade(event, summary):
+        return False
+    fact_key = _market_fact_key(event)
+    if fact_key and fact_key in {str(x) for x in (sctx.get("covered_fact_keys") or [])}:
+        return True
+    if _summary_covers_object(summary, event):
+        return not _is_material_upgrade(event, summary)
+    code = str(event.get("security_code") or ectx.get("security_code") or "")
+    name = str(event.get("security_name") or ectx.get("security_name") or "")
+    text = f"{summary.get('title') or ''} {summary.get('content') or ''}"
+    return bool(code and (code in text or (name and name in text))) and str(ectx.get("event_category") or "") == "REVERSAL" and any(word in text for word in ("修复", "反转", "V形", "回吐"))
+
+
+def _find_recent_summary_absorption(items: list[dict], event: dict) -> dict | None:
+    if _is_protected_event(event):
+        return None
+    stamp = parse_notification_time(event.get("created_at") or event.get("sent_at")) or now()
+    for item in reversed(items):
+        if str(item.get("event_type") or "") not in {"A_SHARE_SESSION_SUMMARY", "APAC_SESSION_SUMMARY", "US_SESSION_SUMMARY"}:
+            continue
+        prior_stamp = parse_notification_time(item.get("sent_at") or item.get("created_at"))
+        if not prior_stamp or not (timedelta(0) <= stamp - prior_stamp <= timedelta(minutes=SUMMARY_ABSORB_MINUTES)):
+            continue
+        if _summary_covers_event(item, event):
+            return item
+    return None
+
+
+def _find_aggregate_target(items: list[dict], event: dict) -> dict | None:
+    if _is_protected_event(event):
+        return None
+    category = _event_category(event)
+    metadata = _fact_metadata(event)
+    if category not in MERGEABLE_CATEGORIES or not metadata["market_date"]:
+        return None
+    current_stamp = parse_notification_time(event.get("created_at")) or now()
+    for item in reversed(items):
+        if str(item.get("event_type") or "") not in MARKET_EVENT_TYPES:
+            continue
+        if _event_category(item) not in MERGEABLE_CATEGORIES:
+            continue
+        if not _same_user_level_fact(item, event):
+            continue
+        if _is_material_upgrade(event, item):
+            continue
+        prior_stamp = parse_notification_time(item.get("sent_at") or item.get("created_at"))
+        old_meta = _fact_metadata(item)
+        same_session = bool(old_meta["session"] and old_meta["session"] == metadata["session"])
+        within_window = prior_stamp and timedelta(0) <= current_stamp - prior_stamp <= timedelta(minutes=AGGREGATION_WINDOW_MINUTES)
+        exact_object = bool(
+            str(item.get("security_code") or _market_context(item).get("security_code") or "")
+            and str(item.get("security_code") or _market_context(item).get("security_code") or "")
+            == str(event.get("security_code") or _market_context(event).get("security_code") or "")
+        )
+        if within_window or exact_object:
+            return item
+    return None
+
+
+def _absorb_or_aggregate(notifications: list[dict], event: dict) -> tuple[str, dict] | None:
+    # Scheduled-review REPORTs are separately auditable delivery objects.
+    # Do not merge them into pulse/market notifications before report identity
+    # is persisted, or delivery can succeed while handoff verification loses it.
+    if str(event.get("event_type") or "") == "REPORT_DELIVERY_REQUEST":
+        return None
+    summary = _find_recent_summary_absorption(notifications, event)
+    if summary:
+        return "ABSORBED_BY_SUMMARY", summary
+    target = _find_aggregate_target(notifications, event)
+    if target:
+        ctx = dict(target.get("confirmation_context") or {})
+        tags = list(ctx.get("event_tags") or [])
+        for value in (ctx.get("event_category"), _market_context(event).get("event_category")):
+            if value and value not in tags:
+                tags.append(value)
+        ctx["event_tags"] = tags
+        ctx["aggregation_status"] = "MERGED_SAME_OBJECT_CONTINUOUS_FACT"
+        ctx["event_family_id"] = str(ctx.get("event_family_id") or _event_family_id(target))
+        source_fact = str(_market_context(event).get("source_fact_id") or _market_fact_key(event))
+        source_facts = list(ctx.get("source_fact_ids") or [])
+        if source_fact and source_fact not in source_facts:
+            source_facts.append(source_fact)
+        ctx["source_fact_ids"] = source_facts
+        current_magnitude = _event_magnitude(event)
+        peak = _event_magnitude(target)
+        if current_magnitude is not None:
+            ctx["family_peak_magnitude_pct"] = max(current_magnitude, peak or current_magnitude)
+        target["confirmation_context"] = ctx
+        return "AGGREGATED_INTO_EXISTING", target
+    return None
+
+
+def _state_without_updated_at(state: dict) -> dict:
+    """Return persisted notification content without the volatile write timestamp."""
+    content = deepcopy(state)
+    content.pop("updated_at", None)
+    return content
+
+def aggregate_candidate_events(events: list[dict]) -> list[dict]:
+    """Return the complete bounded interrupt set using canonical aggregation rules."""
+    groups: list[dict] = []
+    for raw in (event for event in events if event):
+        candidate = normalize_notification(raw, raw)
+        candidate["confirmation_context"] = dict(raw.get("confirmation_context") or {})
+        candidate["content"] = str(raw.get("content") or "")
+        candidate["title"] = str(raw.get("title") or "")
+        candidate["event_type"] = str(raw.get("event_type") or raw.get("type") or "")
+        candidate["security_code"] = str(raw.get("security_code") or "")
+        merged = False
+        for index, target in enumerate(groups):
+            result = _absorb_or_aggregate([target], candidate)
+            if not result:
+                continue
+            status, updated = result
+            if status != "AGGREGATED_INTO_EXISTING":
+                continue
+            ctx = dict(updated.get("confirmation_context") or {})
+            evidence = list(ctx.get("constituent_events") or [])
+            if not evidence:
+                evidence.append({"source_event_id": target.get("source_event_id"),
+                                 "security_code": target.get("security_code"),
+                                 "event_type": target.get("event_type")})
+            evidence.append({"source_event_id": candidate.get("source_event_id"),
+                             "security_code": candidate.get("security_code"),
+                             "event_type": candidate.get("event_type")})
+            ctx["constituent_events"] = evidence
+            updated["confirmation_context"] = ctx
+            updated["content"] = "\\n\\n".join(x for x in (target.get("content"), candidate.get("content")) if x)
+            groups[index] = updated
+            merged = True
+            break
+        if not merged:
+            groups.append(candidate)
+    return groups
+
+def persist_and_send(event: dict, *, policy: str) -> dict:
+    event = _normalize_user_visible_event(event)
+    event = _normalize_user_title(event)
+    event["confirmation_context"] = dict(_market_context(event))
+    event["confirmation_context"]["event_family_id"] = _event_family_id(event)
+    materiality_error = _late_apac_update_error(event)
+    if materiality_error:
+        return {"status": "REJECTED_NO_MATERIAL_APAC_CHANGE", "detail": materiality_error, "title": event.get("title")}
+    future_error = _future_time_error(event)
+    if future_error:
+        return {"status": "REJECTED_FUTURE_MARKET_TIME", "detail": future_error, "title": event.get("title")}
+
+    state = read_json(NOTIFICATION_STATE, {"schema_version": "2.2", "notifications": [], "recent": []})
+    raw_items = list(state.get("notifications") or [])
+    if not raw_items:
+        raw_items = [normalize_notification(x, x) for x in (state.get("recent") or [])]
+    notifications = expire_notifications(raw_items)
+    stale_error = _market_event_staleness_error(event)
+    if stale_error:
+        status = "REJECTED_UNAUDITABLE_MARKET_EVENT" if "no auditable observation time" in stale_error else "REJECTED_STALE_MARKET_EVENT"
+        return {"status": status, "detail": stale_error, "title": event.get("title")}
+    event = _annotate_summary_increment(event, notifications)
+    aggregate_result = _absorb_or_aggregate(notifications, event)
+    if aggregate_result:
+        status, target = aggregate_result
+        if status == "AGGREGATED_INTO_EXISTING":
+            prior_state = deepcopy(state)
+            stamp = now().isoformat(timespec="seconds")
+            state.update({"schema_version": "2.2", "updated_at": stamp, "last_status": status, "last_type": target.get("event_type"), "last_title": target.get("title"), "notifications": notifications[-HISTORY_LIMIT:], "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"], "policy": policy})
+            if _state_without_updated_at(state) != _state_without_updated_at(prior_state):
+                write_json(NOTIFICATION_STATE, state)
+        return {"status": status, "notification_id": target.get("notification_id"), "event_tags": (target.get("confirmation_context") or {}).get("event_tags", [])}
+    existing = find_existing_notification(notifications, event)
+    if existing and existing.get("lifecycle_status") in {"SENT", "WAITING_CONFIRMATION", "CONFIRMED", "ARCHIVED"}:
+        return {"status": "ALREADY_MANAGED", "notification_id": existing.get("notification_id")}
+    item = normalize_notification(event, existing)
+    # Preserve the exact REPORT identity through the shared state writer. The
+    # sender may deliver successfully, but persistence must remain bound to the
+    # same report/run/request before the workflow can declare handoff complete.
+    if str(event.get("event_type") or "") == "REPORT_DELIVERY_REQUEST":
+        for key in ("report_type", "report_id", "request_id", "parent_request_id", "task_id", "task_run_id", "occurrence_id", "idempotency_key", "content_hash"):
+            if event.get(key) not in (None, ""):
+                item[key] = event.get(key)
+        if isinstance(event.get("presentation_binding"), dict):
+            item["presentation_binding"] = dict(event["presentation_binding"])
+    token = os.environ.get("PUSHPLUS_TOKEN", "").strip()
+    if not token:
+        stamp = now().isoformat(timespec="seconds")
+        item["last_attempted_at"] = stamp
+        item["response"] = {"error": "PUSHPLUS_TOKEN missing"}
+        item["lifecycle_status"] = "FAILED"
+        notifications = [x for x in notifications if x.get("notification_id") != item["notification_id"]]
+        notifications.append(item)
+        state.update({"schema_version": "2.2", "updated_at": stamp, "last_status": "FAILED", "last_type": item["event_type"], "last_title": item["title"], "notifications": notifications[-HISTORY_LIMIT:], "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"], "policy": policy})
+        write_json(NOTIFICATION_STATE, state)
+        return {"status": "FAILED", "notification_id": item.get("notification_id"), "response": item["response"]}
+    ok, response = send(token, item["title"], item["content"])
+    stamp = now().isoformat(timespec="seconds")
+    item["last_attempted_at"] = stamp
+    item["response"] = response
+    item["lifecycle_status"] = "SENT" if ok else "FAILED"
+    item["sent_at"] = stamp if ok else item.get("sent_at")
+    if existing:
+        notifications = [x for x in notifications if x.get("notification_id") != item["notification_id"]]
+    notifications.append(item)
+    state.update({
+        "schema_version": "2.2",
+        "updated_at": stamp,
+        "last_status": item["lifecycle_status"],
+        "last_type": item["event_type"],
+        "last_title": item["title"],
+        "notifications": notifications[-HISTORY_LIMIT:],
+        "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]],
+        "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"],
+        "policy": policy,
+        "safety_boundary": "通知只总结已取得的行情、账户、研究或系统事实；不生成自动交易，不修改MASTER、风险许可、金额或卖出份额。",
+    })
+    write_json(NOTIFICATION_STATE, state)
+    return {"status": item["lifecycle_status"], "notification_id": item["notification_id"], "title": item["title"], "response": response}
 
 def render_summary(*, headline_lines: list[str], path_lines: list[str], implication: str, action: str, as_of_lines: list[str], boundary: str) -> str:
-    """One user semantics for all session summaries.
-
-    Producers still own data acquisition and event qualification. This layer owns
-    what the user reads. For A-share session summaries it deliberately rebuilds
-    the text from current market/account facts so old field-heavy producers cannot
-    leak a machine-style report into PushPlus.
-    """
+    """Render one concise user-facing summary across all market pulse producers."""
     if _is_a_share_session_summary(headline_lines):
         try:
             from notification_semantics import a_share_structure
-
             indices, etfs, features = _current_a_share_inputs()
             if indices and etfs:
                 is_close = any("15:00正式收盘" in line for line in headline_lines)
-            headline_lines, path_lines, implication, action = a_share_structure(indices, etfs, features, is_close=is_close)
+                headline_lines, path_lines, implication, action = a_share_structure(indices, etfs, features, is_close=is_close)
         except Exception as exc:
             print(f"notification semantic fallback: {exc}")
 
     path = "\n".join(path_lines[:3]) if path_lines else "- 当前没有额外路径事实需要展开。"
     hl_basis = _hyperliquid_notification_basis(" ".join(headline_lines + path_lines + [implication, action]))
+    visible_headline = list(headline_lines[:5])
+    if hl_basis:
+        visible_headline.append(f"- **外部市场证据**：{hl_basis}")
+        implication = f"{implication}；Hyperliquid仅作为方向确认、背离识别或时机/拥挤风险过滤，不单独改变交易判断。"
+    visible_as_of = list(as_of_lines) + [_hyperliquid_as_of_line()]
     return (
-        "### 核心结论\n"
-        + "\n".join(headline_lines[:5])
-        + ("\n\n**Hyperliquid补充**：" + hl_basis if hl_basis else "")
-        + "\n\n### 关键路径\n"
-        + path
-        + "\n\n### 对ETF系统的影响\n"
-        + implication
-        + ("；Hyperliquid对本对象的影响：" + hl_basis if hl_basis else "")
-        + "\n\n### 当前动作\n**"
-        + action
-        + "**\n\n### 数据与边界\n"
-        + "\n".join(as_of_lines)
-        + "\n"
-        + f"- **边界**：{boundary}"
+        "### 核心结论\n" + "\n".join(visible_headline[:6])
+        + "\n\n### 关键路径\n" + path
+        + "\n\n### 对ETF系统的影响\n" + implication
+        + "\n\n### 当前动作\n**" + action
+        + "**\n\n### 数据与边界\n" + "\n".join(visible_as_of)
+        + "\n" + f"- **边界**：{boundary}"
     )
-
 
 def _extract_object(what: list[str]) -> tuple[str, str, str, str]:
     joined = " ".join(what)
