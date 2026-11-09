@@ -857,7 +857,7 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         "earliest_observation_collected_at_utc": external_driver.get("earliest_observation_collected_at_utc") or "",
         "latest_observation_collected_at_utc": external_driver.get("latest_observation_collected_at_utc") or "",
         "visible_observation_as_of_beijing": hyperliquid_observation_time_beijing,
-        "visible_observation_time_note": "接口未提供逐笔事件时间；该时间是本次可见状态的采集/形成边界，不是逐笔事件发生时间。",
+        "visible_observation_time_note": "Hyperliquid采集时间。",
         "observation_count": external_driver.get("observation_count", len(external_driver.get("observations") or [])),
         "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
         "time_basis": external_driver.get("time_basis") or "COLLECTION_FINISHED_TIME_AS_VISIBLE_STATE_BOUNDARY",
