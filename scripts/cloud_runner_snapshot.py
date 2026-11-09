@@ -662,7 +662,7 @@ def main() -> int:
 
     scheduled_close_recovery = scheduled_close_recovery_intent(run_started_dt, market_date)
     if args.node == "scheduled" and not args.probe_only and not scheduled_close_recovery and not in_a_share_capture_window(run_started_dt):
-        write_runtime_health({"status": "SKIPPED", "reason": "outside_a_share_capture_window", "market_date": market_date, "run_started_at": run_started_at, "capture_started_at_beijing": capture_started_at, "market_phase": market_phase})
+        write_runtime_health({"status": "SKIPPED", "failure_stage": "session_gate", "reason": "outside_a_share_capture_window", "market_date": market_date, "run_started_at": run_started_at, "capture_started_at_beijing": capture_started_at, "market_phase": market_phase})
         print(json.dumps({"ok": True, "skipped": True, "reason": "outside_a_share_capture_window", "market_date": market_date, "capture_started_at_beijing": capture_started_at}, ensure_ascii=False))
         return 0
 
@@ -676,18 +676,18 @@ def main() -> int:
     query_time_refresh = os.environ.get("QUERY_TIME_REFRESH", "").lower() == "true"
     if args.node == "scheduled" and node == "1130" and morning_close_already_recorded(market_date) and not query_time_refresh:
         current = read_current(ROOT)
-        write_runtime_health({"status": "SKIPPED", "reason": "morning_close_already_recorded", "market_date": market_date, "run_started_at": run_started_at, "capture_started_at_beijing": capture_started_at, "market_phase": market_phase, "latest_snapshot": current.get("latest_snapshot", ""), "provider_as_of": (current.get("data_freshness") or {}).get("provider_as_of", "")})
+        write_runtime_health({"status": "SKIPPED", "failure_stage": "session_gate", "reason": "morning_close_already_recorded", "market_date": market_date, "run_started_at": run_started_at, "capture_started_at_beijing": capture_started_at, "market_phase": market_phase, "latest_snapshot": current.get("latest_snapshot", ""), "provider_as_of": (current.get("data_freshness") or {}).get("provider_as_of", "")})
         print(json.dumps({"ok": True, "skipped": True, "reason": "morning_close_already_recorded", "market_date": market_date, "latest_snapshot": current.get("latest_snapshot", "")}, ensure_ascii=False))
         return 0
 
     if args.node == "scheduled" and node == "close" and close_already_recorded(market_date):
         current = read_current(ROOT)
-        write_runtime_health({"status": "SKIPPED", "reason": "close_already_recorded", "market_date": market_date, "run_started_at": run_started_at, "capture_started_at_beijing": capture_started_at, "market_phase": market_phase, "latest_snapshot": current.get("latest_snapshot", ""), "provider_as_of": (current.get("data_freshness") or {}).get("captured_at_beijing", "")})
+        write_runtime_health({"status": "SKIPPED", "failure_stage": "session_gate", "reason": "close_already_recorded", "market_date": market_date, "run_started_at": run_started_at, "capture_started_at_beijing": capture_started_at, "market_phase": market_phase, "latest_snapshot": current.get("latest_snapshot", ""), "provider_as_of": (current.get("data_freshness") or {}).get("captured_at_beijing", "")})
         print(json.dumps({"ok": True, "skipped": True, "reason": "close_already_recorded", "market_date": market_date, "latest_snapshot": current.get("latest_snapshot", "")}, ensure_ascii=False))
         return 0
 
     if run_started_dt.weekday() >= 5 and not args.probe_only:
-        write_runtime_health({"status": "SKIPPED", "reason": "non_trading_weekend", "market_date": market_date, "run_started_at": run_started_at})
+        write_runtime_health({"status": "SKIPPED", "failure_stage": "session_gate", "reason": "non_trading_weekend", "market_date": market_date, "run_started_at": run_started_at})
         print(json.dumps({"ok": True, "skipped": True, "reason": "non_trading_weekend", "market_date": market_date}, ensure_ascii=False))
         return 0
 
