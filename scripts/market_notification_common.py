@@ -246,6 +246,7 @@ def render_summary(*, headline_lines: list[str], path_lines: list[str], implicat
         + path
         + "\n\n### 对ETF系统的影响\n"
         + implication
+        + ("；" + hl_basis if hl_basis else "")
         + "\n\n### 当前动作\n**"
         + action
         + ("；" + hl_basis if hl_basis else "")
@@ -314,6 +315,7 @@ def render_shock(*, what: list[str], why: str, implication: str, action: str, as
         + "\n".join(display_what)
         + "\n\n**判断**："
         + why
+        + ("；Hyperliquid补充：" + hl_basis if hl_basis else "")
         + "\n\n### 对ETF系统的影响\n"
         + implication
         + "\n\n### 当前动作\n**"
