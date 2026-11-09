@@ -51,3 +51,21 @@ def test_mapping_candidate_is_explicit_when_no_live_signal():
     candidate = packet["mapping_candidates"][0]
     assert candidate["evidence_status"] == "NO_LIVE_SIGNAL"
     assert candidate["decision_use"]
+
+
+def test_empty_consumer_mapping_falls_back_to_fixed_catalog():
+    packet = build_contribution(
+        context={
+            "mapping": [],
+            "latest": {"observations": [{
+                "asset": "xyz:SMH",
+                "family": "SEMICONDUCTOR",
+                "mapped_assets": ["159941"],
+                "mark_px": "90",
+                "prev_day_px": "100",
+            }]},
+        },
+        task="FORMAL_DECISION",
+    )
+    assert packet["mapped_object_count"] == 1
+    assert packet["mapping_coverage_status"] == "LIVE_SIGNAL_MATCHED"
