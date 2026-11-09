@@ -7,14 +7,14 @@
     "kind": "DISCOVERY",
     "identity": "DISCOVERY:2026-11-09:close:data/state/formal_discovery_current.json",
     "context_id": "",
-    "formed_at_beijing": "2026-11-09T15:17:00+08:00",
+    "formed_at_beijing": "2026-11-09T15:19:00+08:00",
     "fact_time_beijing": "close",
     "source_path": "data/state/formal_discovery_current.json",
-    "status": "DEGRADED",
-    "coverage_status": "PARTIAL",
+    "status": "READY",
+    "coverage_status": "COMPLETE",
     "candidate_count": 8,
     "observation_count": null,
-    "latest_snapshot": "data/market/snapshots/2026-11-09_151659.json",
+    "latest_snapshot": "data/market/snapshots/2026-11-09_151858.json",
     "observation_time_basis": "",
     "mapping": null,
     "etf_bindings": null,
@@ -31,23 +31,22 @@
         "surfaced_states": [],
         "discovery_spot": {
           "price": 0.991,
-          "change_pct": 1.9547325102880597,
-          "amount": 56950000.0,
-          "amplitude_pct": null,
-          "turnover_pct": null,
-          "volume_ratio": null,
+          "change_pct": 1.95,
+          "amount": 56948647.0,
+          "amplitude_pct": 1.03,
+          "turnover_pct": 11.36,
+          "volume_ratio": 0.78,
           "high": 0.992,
           "low": 0.982,
           "open": 0.986,
           "prev_close": 0.972,
-          "return_60d_pct": null,
-          "return_ytd_pct": null,
-          "provider_timestamp": 1794208635000
+          "return_60d_pct": -11.04,
+          "return_ytd_pct": 1.43,
+          "provider_timestamp": 1794208695
         },
         "information_classes": [
           "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE",
-          "SHORT_HISTORY_CURRENT_CHANGE"
+          "STRUCTURAL_CHANGE"
         ],
         "comparison_basis": [
           "历史趋势/状态变化",
@@ -58,40 +57,106 @@
         ]
       },
       {
-        "candidate_signature": "159102::OBSERVATION_EVALUATION_INPUT:OBSERVATION_FULL_EVALUATION",
-        "code": "159102",
-        "name": "港股通生物科技ETF华安",
-        "display_name": "港股通生物科技ETF华安（159102）",
+        "candidate_signature": "159220::OBSERVATION_EVALUATION_INPUT:OBSERVATION_FULL_EVALUATION",
+        "code": "159220",
+        "name": "港股通红利低波ETF华宝",
+        "display_name": "港股通红利低波ETF华宝（159220）",
         "surfaced_states": [
           {
-            "state": "SHORT_TERM_CHANGE",
+            "state": "PERSISTENT_TREND",
             "evidence": {
-              "direction": "SHORT_TERM_STRENGTHENING",
-              "return_5": 0.066486,
-              "return_20": -0.050725,
-              "short_vs_medium_normalized_gap": 0.079167
+              "window_returns": {
+                "5": 0.033101,
+                "20": 0.025952,
+                "40": 0.0189,
+                "60": 0.02418
+              },
+              "positive_windows": [
+                20,
+                40,
+                60
+              ],
+              "max_drawdown_60": 0.050934
+            }
+          },
+          {
+            "state": "TREND_CHANGE",
+            "evidence": {
+              "direction": "STRENGTHENING",
+              "return_10": 0.058929,
+              "return_40": 0.0189,
+              "short_vs_long_normalized_gap": 0.054203
             }
           }
         ],
         "discovery_spot": {
-          "price": 0.798,
-          "change_pct": 1.526717557251911,
-          "amount": 48370000.0,
-          "amplitude_pct": null,
-          "turnover_pct": null,
-          "volume_ratio": null,
-          "high": 0.812,
-          "low": 0.794,
-          "open": 0.794,
-          "prev_close": 0.786,
-          "return_60d_pct": null,
-          "return_ytd_pct": null,
-          "provider_timestamp": 1794208620000
+          "price": 0.594,
+          "change_pct": 0.17,
+          "amount": 18277393.9,
+          "amplitude_pct": 0.67,
+          "turnover_pct": 7.53,
+          "volume_ratio": 0.82,
+          "high": 0.595,
+          "low": 0.591,
+          "open": 0.593,
+          "prev_close": 0.593,
+          "return_60d_pct": 3.13,
+          "return_ytd_pct": 2.41,
+          "provider_timestamp": 1794208710
         },
         "information_classes": [
-          "NEW_RELATIVE_DIVERGENCE",
           "STRUCTURAL_CHANGE",
-          "SHORT_HISTORY_CURRENT_CHANGE"
+          "PERSISTENT_STRUCTURE"
+        ],
+        "comparison_basis": [
+          "历史趋势/状态变化",
+          "当前相对结构",
+          "成交与可执行性",
+          "风险收益",
+          "资本效率"
+        ]
+      },
+      {
+        "candidate_signature": "159307::OBSERVATION_EVALUATION_INPUT:OBSERVATION_FULL_EVALUATION",
+        "code": "159307",
+        "name": "红利低波100ETF博时",
+        "display_name": "红利低波100ETF博时（159307）",
+        "surfaced_states": [
+          {
+            "state": "PERSISTENT_TREND",
+            "evidence": {
+              "window_returns": {
+                "5": 0.016284,
+                "20": 0.033106,
+                "40": 0.037146,
+                "60": 0.040196
+              },
+              "positive_windows": [
+                20,
+                40,
+                60
+              ],
+              "max_drawdown_60": 0.027698
+            }
+          }
+        ],
+        "discovery_spot": {
+          "price": 1.06,
+          "change_pct": -0.09,
+          "amount": 66801535.2,
+          "amplitude_pct": 0.66,
+          "turnover_pct": 1.03,
+          "volume_ratio": 0.47,
+          "high": 1.063,
+          "low": 1.056,
+          "open": 1.059,
+          "prev_close": 1.061,
+          "return_60d_pct": 4.54,
+          "return_ytd_pct": 3.52,
+          "provider_timestamp": 1794208650
+        },
+        "information_classes": [
+          "PERSISTENT_STRUCTURE"
         ],
         "comparison_basis": [
           "历史趋势/状态变化",
@@ -119,57 +184,22 @@
         ],
         "discovery_spot": {
           "price": 1.445,
-          "change_pct": 1.6174402250351605,
-          "amount": 11750000.0,
-          "amplitude_pct": null,
-          "turnover_pct": null,
-          "volume_ratio": null,
+          "change_pct": 1.62,
+          "amount": 11754642.408,
+          "amplitude_pct": 1.83,
+          "turnover_pct": 3.92,
+          "volume_ratio": 0.44,
           "high": 1.462,
           "low": 1.436,
           "open": 1.442,
           "prev_close": 1.422,
-          "return_60d_pct": null,
-          "return_ytd_pct": null,
-          "provider_timestamp": 1794208623000
+          "return_60d_pct": -15.89,
+          "return_ytd_pct": -13.68,
+          "provider_timestamp": 1794208710
         },
         "information_classes": [
           "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE",
-          "SHORT_HISTORY_CURRENT_CHANGE"
-        ],
-        "comparison_basis": [
-          "历史趋势/状态变化",
-          "当前相对结构",
-          "成交与可执行性",
-          "风险收益",
-          "资本效率"
-        ]
-      },
-      {
-        "candidate_signature": "159502::OBSERVATION_EVALUATION_INPUT:OBSERVATION_FULL_EVALUATION",
-        "code": "159502",
-        "name": "标普生物科技ETF嘉实",
-        "display_name": "标普生物科技ETF嘉实（159502）",
-        "surfaced_states": [],
-        "discovery_spot": {
-          "price": 1.57,
-          "change_pct": 2.346805736636237,
-          "amount": 248050000.0,
-          "amplitude_pct": null,
-          "turnover_pct": null,
-          "volume_ratio": null,
-          "high": 1.58,
-          "low": 1.556,
-          "open": 1.563,
-          "prev_close": 1.534,
-          "return_60d_pct": null,
-          "return_ytd_pct": null,
-          "provider_timestamp": 1794208605000
-        },
-        "information_classes": [
-          "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE",
-          "SHORT_HISTORY_CURRENT_CHANGE"
+          "STRUCTURAL_CHANGE"
         ],
         "comparison_basis": [
           "历史趋势/状态变化",
@@ -197,23 +227,22 @@
         ],
         "discovery_spot": {
           "price": 0.767,
-          "change_pct": 1.5894039735099286,
-          "amount": 449380000.0,
-          "amplitude_pct": null,
-          "turnover_pct": null,
-          "volume_ratio": null,
+          "change_pct": 1.59,
+          "amount": 449380946.5,
+          "amplitude_pct": 2.12,
+          "turnover_pct": 11.58,
+          "volume_ratio": 0.77,
           "high": 0.781,
           "low": 0.765,
           "open": 0.765,
           "prev_close": 0.755,
-          "return_60d_pct": null,
-          "return_ytd_pct": null,
-          "provider_timestamp": 1794208626000
+          "return_60d_pct": -1.03,
+          "return_ytd_pct": 1.19,
+          "provider_timestamp": 1794208680
         },
         "information_classes": [
           "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE",
-          "SHORT_HISTORY_CURRENT_CHANGE"
+          "STRUCTURAL_CHANGE"
         ],
         "comparison_basis": [
           "历史趋势/状态变化",
@@ -224,91 +253,97 @@
         ]
       },
       {
-        "candidate_signature": "513120::OBSERVATION_EVALUATION_INPUT:OBSERVATION_FULL_EVALUATION",
-        "code": "513120",
-        "name": "港股创新药ETF广发",
-        "display_name": "港股创新药ETF广发（513120）",
-        "surfaced_states": [
-          {
-            "state": "SHORT_TERM_CHANGE",
-            "evidence": {
-              "direction": "SHORT_TERM_STRENGTHENING",
-              "return_5": 0.072727,
-              "return_20": -0.052752,
-              "short_vs_medium_normalized_gap": 0.085915
-            }
-          }
-        ],
-        "discovery_spot": {
-          "price": 1.26,
-          "change_pct": 1.6949152542372836,
-          "amount": 6731900000.0,
-          "amplitude_pct": null,
-          "turnover_pct": null,
-          "volume_ratio": null,
-          "high": 1.28,
-          "low": 1.253,
-          "open": 1.258,
-          "prev_close": 1.239,
-          "return_60d_pct": null,
-          "return_ytd_pct": null,
-          "provider_timestamp": 1794208626000
-        },
-        "information_classes": [
-          "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE",
-          "SHORT_HISTORY_CURRENT_CHANGE"
-        ],
-        "comparison_basis": [
-          "历史趋势/状态变化",
-          "当前相对结构",
-          "成交与可执行性",
-          "风险收益",
-          "资本效率"
-        ]
-      },
-      {
-        "candidate_signature": "513290::OBSERVATION_EVALUATION_INPUT:OBSERVATION_FULL_EVALUATION",
-        "code": "513290",
-        "name": "纳指生物科技ETF汇添富",
-        "display_name": "纳指生物科技ETF汇添富（513290）",
+        "candidate_signature": "512530::OBSERVATION_EVALUATION_INPUT:OBSERVATION_FULL_EVALUATION",
+        "code": "512530",
+        "name": "沪深300红利ETF建信",
+        "display_name": "沪深300红利ETF建信（512530）",
         "surfaced_states": [
           {
             "state": "PERSISTENT_TREND",
             "evidence": {
               "window_returns": {
-                "5": -0.038278,
-                "20": 0.013445,
-                "40": -0.019512,
-                "60": 0.107777
+                "5": -0.013326,
+                "20": 0.025286,
+                "40": 0.025904,
+                "60": 0.057107
               },
               "positive_windows": [
                 20,
+                40,
                 60
               ],
-              "max_drawdown_60": 0.085561
+              "max_drawdown_60": 0.032258
             }
           }
         ],
         "discovery_spot": {
-          "price": 1.861,
-          "change_pct": 2.8745163073521374,
-          "amount": 670020000.0,
-          "amplitude_pct": null,
-          "turnover_pct": null,
-          "volume_ratio": null,
-          "high": 1.886,
-          "low": 1.836,
-          "open": 1.843,
-          "prev_close": 1.809,
-          "return_60d_pct": null,
-          "return_ytd_pct": null,
-          "provider_timestamp": 1794208640000
+          "price": 1.712,
+          "change_pct": 0.53,
+          "amount": 14114146.0,
+          "amplitude_pct": 1.35,
+          "turnover_pct": 8.91,
+          "volume_ratio": 2.13,
+          "high": 1.717,
+          "low": 1.694,
+          "open": 1.703,
+          "prev_close": 1.703,
+          "return_60d_pct": 7.13,
+          "return_ytd_pct": 7.74,
+          "provider_timestamp": 1794208716
         },
         "information_classes": [
-          "NEW_RELATIVE_DIVERGENCE",
           "STRUCTURAL_CHANGE",
-          "SHORT_HISTORY_CURRENT_CHANGE"
+          "PERSISTENT_STRUCTURE"
+        ],
+        "comparison_basis": [
+          "历史趋势/状态变化",
+          "当前相对结构",
+          "成交与可执行性",
+          "风险收益",
+          "资本效率"
+        ]
+      },
+      {
+        "candidate_signature": "517180::OBSERVATION_EVALUATION_INPUT:OBSERVATION_FULL_EVALUATION",
+        "code": "517180",
+        "name": "中国国企ETF南方",
+        "display_name": "中国国企ETF南方（517180）",
+        "surfaced_states": [
+          {
+            "state": "PERSISTENT_TREND",
+            "evidence": {
+              "window_returns": {
+                "5": -0.012453,
+                "20": 0.033225,
+                "40": 0.046865,
+                "60": 0.065144
+              },
+              "positive_windows": [
+                20,
+                40,
+                60
+              ],
+              "max_drawdown_60": 0.035605
+            }
+          }
+        ],
+        "discovery_spot": {
+          "price": 1.578,
+          "change_pct": -0.5,
+          "amount": 28897757.0,
+          "amplitude_pct": 1.01,
+          "turnover_pct": 14.44,
+          "volume_ratio": 0.89,
+          "high": 1.587,
+          "low": 1.571,
+          "open": 1.585,
+          "prev_close": 1.586,
+          "return_60d_pct": 6.05,
+          "return_ytd_pct": 4.78,
+          "provider_timestamp": 1794208739
+        },
+        "information_classes": [
+          "PERSISTENT_STRUCTURE"
         ],
         "comparison_basis": [
           "历史趋势/状态变化",
@@ -326,23 +361,22 @@
         "surfaced_states": [],
         "discovery_spot": {
           "price": 8.398,
-          "change_pct": 1.6214908034849929,
-          "amount": 116590000.0,
-          "amplitude_pct": null,
-          "turnover_pct": null,
-          "volume_ratio": null,
+          "change_pct": 1.62,
+          "amount": 116587371.0,
+          "amplitude_pct": 0.79,
+          "turnover_pct": 2.7,
+          "volume_ratio": 0.76,
           "high": 8.447,
           "low": 8.382,
           "open": 8.393,
           "prev_close": 8.264,
-          "return_60d_pct": null,
-          "return_ytd_pct": null,
-          "provider_timestamp": 1794208638000
+          "return_60d_pct": -5.73,
+          "return_ytd_pct": -9.89,
+          "provider_timestamp": 1794208726
         },
         "information_classes": [
           "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE",
-          "SHORT_HISTORY_CURRENT_CHANGE"
+          "STRUCTURAL_CHANGE"
         ],
         "comparison_basis": [
           "历史趋势/状态变化",
@@ -3536,14 +3570,14 @@
         "kind": "DISCOVERY",
         "identity": "DISCOVERY:2026-11-09:close:data/state/formal_discovery_current.json",
         "context_id": "",
-        "formed_at_beijing": "2026-11-09T15:17:00+08:00",
+        "formed_at_beijing": "2026-11-09T15:19:00+08:00",
         "fact_time_beijing": "close",
         "source_path": "data/state/formal_discovery_current.json",
-        "status": "DEGRADED",
-        "coverage_status": "PARTIAL",
+        "status": "READY",
+        "coverage_status": "COMPLETE",
         "candidate_count": 8,
         "observation_count": null,
-        "latest_snapshot": "data/market/snapshots/2026-11-09_151659.json",
+        "latest_snapshot": "data/market/snapshots/2026-11-09_151858.json",
         "observation_time_basis": "",
         "mapping": null,
         "etf_bindings": null,
@@ -3560,23 +3594,22 @@
             "surfaced_states": [],
             "discovery_spot": {
               "price": 0.991,
-              "change_pct": 1.9547325102880597,
-              "amount": 56950000.0,
-              "amplitude_pct": null,
-              "turnover_pct": null,
-              "volume_ratio": null,
+              "change_pct": 1.95,
+              "amount": 56948647.0,
+              "amplitude_pct": 1.03,
+              "turnover_pct": 11.36,
+              "volume_ratio": 0.78,
               "high": 0.992,
               "low": 0.982,
               "open": 0.986,
               "prev_close": 0.972,
-              "return_60d_pct": null,
-              "return_ytd_pct": null,
-              "provider_timestamp": 1794208635000
+              "return_60d_pct": -11.04,
+              "return_ytd_pct": 1.43,
+              "provider_timestamp": 1794208695
             },
             "information_classes": [
               "NEW_RELATIVE_DIVERGENCE",
-              "STRUCTURAL_CHANGE",
-              "SHORT_HISTORY_CURRENT_CHANGE"
+              "STRUCTURAL_CHANGE"
             ],
             "comparison_basis": [
               "历史趋势/状态变化",
@@ -3587,40 +3620,106 @@
             ]
           },
           {
-            "candidate_signature": "159102::OBSERVATION_EVALUATION_INPUT:OBSERVATION_FULL_EVALUATION",
-            "code": "159102",
-            "name": "港股通生物科技ETF华安",
-            "display_name": "港股通生物科技ETF华安（159102）",
+            "candidate_signature": "159220::OBSERVATION_EVALUATION_INPUT:OBSERVATION_FULL_EVALUATION",
+            "code": "159220",
+            "name": "港股通红利低波ETF华宝",
+            "display_name": "港股通红利低波ETF华宝（159220）",
             "surfaced_states": [
               {
-                "state": "SHORT_TERM_CHANGE",
+                "state": "PERSISTENT_TREND",
                 "evidence": {
-                  "direction": "SHORT_TERM_STRENGTHENING",
-                  "return_5": 0.066486,
-                  "return_20": -0.050725,
-                  "short_vs_medium_normalized_gap": 0.079167
+                  "window_returns": {
+                    "5": 0.033101,
+                    "20": 0.025952,
+                    "40": 0.0189,
+                    "60": 0.02418
+                  },
+                  "positive_windows": [
+                    20,
+                    40,
+                    60
+                  ],
+                  "max_drawdown_60": 0.050934
+                }
+              },
+              {
+                "state": "TREND_CHANGE",
+                "evidence": {
+                  "direction": "STRENGTHENING",
+                  "return_10": 0.058929,
+                  "return_40": 0.0189,
+                  "short_vs_long_normalized_gap": 0.054203
                 }
               }
             ],
             "discovery_spot": {
-              "price": 0.798,
-              "change_pct": 1.526717557251911,
-              "amount": 48370000.0,
-              "amplitude_pct": null,
-              "turnover_pct": null,
-              "volume_ratio": null,
-              "high": 0.812,
-              "low": 0.794,
-              "open": 0.794,
-              "prev_close": 0.786,
-              "return_60d_pct": null,
-              "return_ytd_pct": null,
-              "provider_timestamp": 1794208620000
+              "price": 0.594,
+              "change_pct": 0.17,
+              "amount": 18277393.9,
+              "amplitude_pct": 0.67,
+              "turnover_pct": 7.53,
+              "volume_ratio": 0.82,
+              "high": 0.595,
+              "low": 0.591,
+              "open": 0.593,
+              "prev_close": 0.593,
+              "return_60d_pct": 3.13,
+              "return_ytd_pct": 2.41,
+              "provider_timestamp": 1794208710
             },
             "information_classes": [
-              "NEW_RELATIVE_DIVERGENCE",
               "STRUCTURAL_CHANGE",
-              "SHORT_HISTORY_CURRENT_CHANGE"
+              "PERSISTENT_STRUCTURE"
+            ],
+            "comparison_basis": [
+              "历史趋势/状态变化",
+              "当前相对结构",
+              "成交与可执行性",
+              "风险收益",
+              "资本效率"
+            ]
+          },
+          {
+            "candidate_signature": "159307::OBSERVATION_EVALUATION_INPUT:OBSERVATION_FULL_EVALUATION",
+            "code": "159307",
+            "name": "红利低波100ETF博时",
+            "display_name": "红利低波100ETF博时（159307）",
+            "surfaced_states": [
+              {
+                "state": "PERSISTENT_TREND",
+                "evidence": {
+                  "window_returns": {
+                    "5": 0.016284,
+                    "20": 0.033106,
+                    "40": 0.037146,
+                    "60": 0.040196
+                  },
+                  "positive_windows": [
+                    20,
+                    40,
+                    60
+                  ],
+                  "max_drawdown_60": 0.027698
+                }
+              }
+            ],
+            "discovery_spot": {
+              "price": 1.06,
+              "change_pct": -0.09,
+              "amount": 66801535.2,
+              "amplitude_pct": 0.66,
+              "turnover_pct": 1.03,
+              "volume_ratio": 0.47,
+              "high": 1.063,
+              "low": 1.056,
+              "open": 1.059,
+              "prev_close": 1.061,
+              "return_60d_pct": 4.54,
+              "return_ytd_pct": 3.52,
+              "provider_timestamp": 1794208650
+            },
+            "information_classes": [
+              "PERSISTENT_STRUCTURE"
             ],
             "comparison_basis": [
               "历史趋势/状态变化",
@@ -3648,57 +3747,22 @@
             ],
             "discovery_spot": {
               "price": 1.445,
-              "change_pct": 1.6174402250351605,
-              "amount": 11750000.0,
-              "amplitude_pct": null,
-              "turnover_pct": null,
-              "volume_ratio": null,
+              "change_pct": 1.62,
+              "amount": 11754642.408,
+              "amplitude_pct": 1.83,
+              "turnover_pct": 3.92,
+              "volume_ratio": 0.44,
               "high": 1.462,
               "low": 1.436,
               "open": 1.442,
               "prev_close": 1.422,
-              "return_60d_pct": null,
-              "return_ytd_pct": null,
-              "provider_timestamp": 1794208623000
+              "return_60d_pct": -15.89,
+              "return_ytd_pct": -13.68,
+              "provider_timestamp": 1794208710
             },
             "information_classes": [
               "NEW_RELATIVE_DIVERGENCE",
-              "STRUCTURAL_CHANGE",
-              "SHORT_HISTORY_CURRENT_CHANGE"
-            ],
-            "comparison_basis": [
-              "历史趋势/状态变化",
-              "当前相对结构",
-              "成交与可执行性",
-              "风险收益",
-              "资本效率"
-            ]
-          },
-          {
-            "candidate_signature": "159502::OBSERVATION_EVALUATION_INPUT:OBSERVATION_FULL_EVALUATION",
-            "code": "159502",
-            "name": "标普生物科技ETF嘉实",
-            "display_name": "标普生物科技ETF嘉实（159502）",
-            "surfaced_states": [],
-            "discovery_spot": {
-              "price": 1.57,
-              "change_pct": 2.346805736636237,
-              "amount": 248050000.0,
-              "amplitude_pct": null,
-              "turnover_pct": null,
-              "volume_ratio": null,
-              "high": 1.58,
-              "low": 1.556,
-              "open": 1.563,
-              "prev_close": 1.534,
-              "return_60d_pct": null,
-              "return_ytd_pct": null,
-              "provider_timestamp": 1794208605000
-            },
-            "information_classes": [
-              "NEW_RELATIVE_DIVERGENCE",
-              "STRUCTURAL_CHANGE",
-              "SHORT_HISTORY_CURRENT_CHANGE"
+              "STRUCTURAL_CHANGE"
             ],
             "comparison_basis": [
               "历史趋势/状态变化",
@@ -3726,23 +3790,22 @@
             ],
             "discovery_spot": {
               "price": 0.767,
-              "change_pct": 1.5894039735099286,
-              "amount": 449380000.0,
-              "amplitude_pct": null,
-              "turnover_pct": null,
-              "volume_ratio": null,
+              "change_pct": 1.59,
+              "amount": 449380946.5,
+              "amplitude_pct": 2.12,
+              "turnover_pct": 11.58,
+              "volume_ratio": 0.77,
               "high": 0.781,
               "low": 0.765,
               "open": 0.765,
               "prev_close": 0.755,
-              "return_60d_pct": null,
-              "return_ytd_pct": null,
-              "provider_timestamp": 1794208626000
+              "return_60d_pct": -1.03,
+              "return_ytd_pct": 1.19,
+              "provider_timestamp": 1794208680
             },
             "information_classes": [
               "NEW_RELATIVE_DIVERGENCE",
-              "STRUCTURAL_CHANGE",
-              "SHORT_HISTORY_CURRENT_CHANGE"
+              "STRUCTURAL_CHANGE"
             ],
             "comparison_basis": [
               "历史趋势/状态变化",
@@ -3753,91 +3816,97 @@
             ]
           },
           {
-            "candidate_signature": "513120::OBSERVATION_EVALUATION_INPUT:OBSERVATION_FULL_EVALUATION",
-            "code": "513120",
-            "name": "港股创新药ETF广发",
-            "display_name": "港股创新药ETF广发（513120）",
-            "surfaced_states": [
-              {
-                "state": "SHORT_TERM_CHANGE",
-                "evidence": {
-                  "direction": "SHORT_TERM_STRENGTHENING",
-                  "return_5": 0.072727,
-                  "return_20": -0.052752,
-                  "short_vs_medium_normalized_gap": 0.085915
-                }
-              }
-            ],
-            "discovery_spot": {
-              "price": 1.26,
-              "change_pct": 1.6949152542372836,
-              "amount": 6731900000.0,
-              "amplitude_pct": null,
-              "turnover_pct": null,
-              "volume_ratio": null,
-              "high": 1.28,
-              "low": 1.253,
-              "open": 1.258,
-              "prev_close": 1.239,
-              "return_60d_pct": null,
-              "return_ytd_pct": null,
-              "provider_timestamp": 1794208626000
-            },
-            "information_classes": [
-              "NEW_RELATIVE_DIVERGENCE",
-              "STRUCTURAL_CHANGE",
-              "SHORT_HISTORY_CURRENT_CHANGE"
-            ],
-            "comparison_basis": [
-              "历史趋势/状态变化",
-              "当前相对结构",
-              "成交与可执行性",
-              "风险收益",
-              "资本效率"
-            ]
-          },
-          {
-            "candidate_signature": "513290::OBSERVATION_EVALUATION_INPUT:OBSERVATION_FULL_EVALUATION",
-            "code": "513290",
-            "name": "纳指生物科技ETF汇添富",
-            "display_name": "纳指生物科技ETF汇添富（513290）",
+            "candidate_signature": "512530::OBSERVATION_EVALUATION_INPUT:OBSERVATION_FULL_EVALUATION",
+            "code": "512530",
+            "name": "沪深300红利ETF建信",
+            "display_name": "沪深300红利ETF建信（512530）",
             "surfaced_states": [
               {
                 "state": "PERSISTENT_TREND",
                 "evidence": {
                   "window_returns": {
-                    "5": -0.038278,
-                    "20": 0.013445,
-                    "40": -0.019512,
-                    "60": 0.107777
+                    "5": -0.013326,
+                    "20": 0.025286,
+                    "40": 0.025904,
+                    "60": 0.057107
                   },
                   "positive_windows": [
                     20,
+                    40,
                     60
                   ],
-                  "max_drawdown_60": 0.085561
+                  "max_drawdown_60": 0.032258
                 }
               }
             ],
             "discovery_spot": {
-              "price": 1.861,
-              "change_pct": 2.8745163073521374,
-              "amount": 670020000.0,
-              "amplitude_pct": null,
-              "turnover_pct": null,
-              "volume_ratio": null,
-              "high": 1.886,
-              "low": 1.836,
-              "open": 1.843,
-              "prev_close": 1.809,
-              "return_60d_pct": null,
-              "return_ytd_pct": null,
-              "provider_timestamp": 1794208640000
+              "price": 1.712,
+              "change_pct": 0.53,
+              "amount": 14114146.0,
+              "amplitude_pct": 1.35,
+              "turnover_pct": 8.91,
+              "volume_ratio": 2.13,
+              "high": 1.717,
+              "low": 1.694,
+              "open": 1.703,
+              "prev_close": 1.703,
+              "return_60d_pct": 7.13,
+              "return_ytd_pct": 7.74,
+              "provider_timestamp": 1794208716
             },
             "information_classes": [
-              "NEW_RELATIVE_DIVERGENCE",
               "STRUCTURAL_CHANGE",
-              "SHORT_HISTORY_CURRENT_CHANGE"
+              "PERSISTENT_STRUCTURE"
+            ],
+            "comparison_basis": [
+              "历史趋势/状态变化",
+              "当前相对结构",
+              "成交与可执行性",
+              "风险收益",
+              "资本效率"
+            ]
+          },
+          {
+            "candidate_signature": "517180::OBSERVATION_EVALUATION_INPUT:OBSERVATION_FULL_EVALUATION",
+            "code": "517180",
+            "name": "中国国企ETF南方",
+            "display_name": "中国国企ETF南方（517180）",
+            "surfaced_states": [
+              {
+                "state": "PERSISTENT_TREND",
+                "evidence": {
+                  "window_returns": {
+                    "5": -0.012453,
+                    "20": 0.033225,
+                    "40": 0.046865,
+                    "60": 0.065144
+                  },
+                  "positive_windows": [
+                    20,
+                    40,
+                    60
+                  ],
+                  "max_drawdown_60": 0.035605
+                }
+              }
+            ],
+            "discovery_spot": {
+              "price": 1.578,
+              "change_pct": -0.5,
+              "amount": 28897757.0,
+              "amplitude_pct": 1.01,
+              "turnover_pct": 14.44,
+              "volume_ratio": 0.89,
+              "high": 1.587,
+              "low": 1.571,
+              "open": 1.585,
+              "prev_close": 1.586,
+              "return_60d_pct": 6.05,
+              "return_ytd_pct": 4.78,
+              "provider_timestamp": 1794208739
+            },
+            "information_classes": [
+              "PERSISTENT_STRUCTURE"
             ],
             "comparison_basis": [
               "历史趋势/状态变化",
@@ -3855,23 +3924,22 @@
             "surfaced_states": [],
             "discovery_spot": {
               "price": 8.398,
-              "change_pct": 1.6214908034849929,
-              "amount": 116590000.0,
-              "amplitude_pct": null,
-              "turnover_pct": null,
-              "volume_ratio": null,
+              "change_pct": 1.62,
+              "amount": 116587371.0,
+              "amplitude_pct": 0.79,
+              "turnover_pct": 2.7,
+              "volume_ratio": 0.76,
               "high": 8.447,
               "low": 8.382,
               "open": 8.393,
               "prev_close": 8.264,
-              "return_60d_pct": null,
-              "return_ytd_pct": null,
-              "provider_timestamp": 1794208638000
+              "return_60d_pct": -5.73,
+              "return_ytd_pct": -9.89,
+              "provider_timestamp": 1794208726
             },
             "information_classes": [
               "NEW_RELATIVE_DIVERGENCE",
-              "STRUCTURAL_CHANGE",
-              "SHORT_HISTORY_CURRENT_CHANGE"
+              "STRUCTURAL_CHANGE"
             ],
             "comparison_basis": [
               "历史趋势/状态变化",
@@ -3889,7 +3957,7 @@
   "continuity": {
     "status": "READY",
     "latest_identity": "DISCOVERY:2026-11-09:close:data/state/formal_discovery_current.json",
-    "latest_formed_at_beijing": "2026-11-09T15:17:00+08:00",
+    "latest_formed_at_beijing": "2026-11-09T15:19:00+08:00",
     "latest_observation_count": 0,
     "latest_candidate_count": 8,
     "rule": "正式判断只消费具有identity且含实际对象证据的最新脉冲；缺失时明确降级，不用历史正文或旧状态补齐。"
