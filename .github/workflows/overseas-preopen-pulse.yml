@@ -80,12 +80,43 @@ jobs:
         if: ${{ steps.pulse_gate.outputs.eligible == 'true' }}
         run: |
           [ -f data/state/overseas_context.json ] && cp data/state/overseas_context.json data/state/overseas_context_previous.json || true
+          if [ -f data/state/hyperliquid_pulse_latest.json ]; then
+            python - <<'PY'
+            import json
+            from pathlib import Path
+            p=Path("data/state/hyperliquid_pulse_latest.json")
+            try: old=json.loads(p.read_text(encoding="utf-8"))
+            except Exception: old={}
+            latest=old.get("latest") or {}
+            Path("/tmp/previous-hyperliquid-generation.txt").write_text(
+                str(latest.get("generation_identity") or latest.get("identity") or ""), encoding="utf-8"
+            )
+            PY
+          else
+            : > /tmp/previous-hyperliquid-generation.txt
+          fi
       - name: Refresh formal overseas and Asia-Pacific index context
         if: ${{ steps.pulse_gate.outputs.eligible == 'true' }}
         run: python scripts/build_overseas_context.py
       - name: Verify Hyperliquid pulse persistence
         if: ${{ steps.pulse_gate.outputs.eligible == 'true' }}
         run: python scripts/validate_hyperliquid_pulse_persistence.py
+      - name: Verify Hyperliquid node was regenerated for this pulse
+        if: ${{ steps.pulse_gate.outputs.eligible == 'true' }}
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          context = json.loads(Path("data/state/overseas_context.json").read_text(encoding="utf-8"))
+          hyperliquid = context.get("hyperliquid") or {}
+          current = str(hyperliquid.get("generation_identity") or "").strip()
+          if not current or hyperliquid.get("regeneration_required") is not True:
+              raise SystemExit("Hyperliquid pulse did not publish a regeneration identity")
+          previous = Path("/tmp/previous-hyperliquid-generation.txt").read_text(encoding="utf-8").strip()
+          if previous and current == previous:
+              raise SystemExit("Hyperliquid pulse reused the previous generation identity")
+          print({"generation_identity": current, "previous": previous or None})
+          PY
       - name: Refresh US extended-hours context
         if: ${{ steps.pulse_gate.outputs.eligible == 'true' }}
         run: python scripts/build_us_extended_hours_context.py
