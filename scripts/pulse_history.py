@@ -175,8 +175,12 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
                 crowding_signal = "NO_CLEAR_CROWDING"
 
             observations.append({
+                "object_id": str(item.get("object_id") or asset),
+                "object_name": str(item.get("object_name") or asset),
                 "asset": asset,
-                "family": next((str(mapping.get("family") or "") for mapping in (payload.get("mapping") or []) if str(mapping.get("asset") or "") == asset), ""),
+                "economic_family": str(item.get("economic_family") or next((str(mapping.get("family") or "") for mapping in (payload.get("mapping") or []) if str(mapping.get("asset") or "") == asset), "")),
+                "context_id": str(item.get("context_id") or payload.get("context_id") or ""),
+                "fact_time_boundary": str(item.get("fact_time_boundary") or item.get("collected_at_beijing") or ""),
                 "quality_status": str(item.get("quality_status") or ""),
                 "observation_as_of": str(item.get("collected_at_beijing") or ""),
                 "provider_timestamp_status": str(item.get("provider_timestamp_status") or "NOT_PROVIDED_BY_ENDPOINT"),
