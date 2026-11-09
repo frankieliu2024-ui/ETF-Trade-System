@@ -95,6 +95,20 @@ def build() -> dict:
         for row in (snapshot.get("rows") or [])
         if str(row.get("asset_class") or "") == "ETF" and str(row.get("symbol") or "")
     ]
+    # Hyperliquid is a global evidence layer. Bind the latest legal pulse to
+    # this exact A-share node before Discovery is produced; downstream tasks
+    # consume the resulting node-local packet rather than independently reading
+    # an older Hyperliquid projection.
+    hyperliquid_projection = load_json(ROOT / "data/state/hyperliquid_pulse_latest.json", {})
+    hyperliquid_latest = hyperliquid_projection.get("latest") if isinstance(hyperliquid_projection.get("latest"), dict) else hyperliquid_projection
+    hyperliquid_node = {
+        "collection_time_beijing": str((hyperliquid_latest or {}).get("collected_at_beijing") or (hyperliquid_latest or {}).get("fact_time_beijing") or (hyperliquid_latest or {}).get("generated_at_beijing") or ""),
+        "context_id": str((hyperliquid_latest or {}).get("context_id") or hyperliquid_projection.get("context_id") or ""),
+        "quality_status": str((hyperliquid_latest or {}).get("quality_status") or hyperliquid_projection.get("quality_status") or "UNKNOWN"),
+        "observation_count": len((hyperliquid_latest or {}).get("observations") or []),
+        "source_projection": "data/state/hyperliquid_pulse_latest.json",
+        "node_binding": f"{market_date}:{node}:{snapshot_identity}",
+    }
     discovery = discover_formal_candidates(
         ROOT,
         market_date=market_date,
@@ -102,6 +116,7 @@ def build() -> dict:
         managed_codes=managed_codes,
         held_codes=held_codes,
         verified_spot_rows=verified_spot_rows,
+        external_driver_context={"latest": hyperliquid_latest, "mapping": (hyperliquid_latest or {}).get("mapping") or {}, "node_binding": hyperliquid_node},
     )
     generated = datetime.now(ZoneInfo("Asia/Shanghai")).isoformat(timespec="seconds")
     artifact = {
@@ -116,6 +131,15 @@ def build() -> dict:
         "generation_identity": f"DISCOVERY:{market_date}:{node}:{snapshot_identity}:{generated}",
         "source_snapshot_identity": snapshot_identity,
         "source_snapshot_as_of_beijing": snapshot_as_of,
+        "node_evidence_binding": {
+            "binding_id": f"{market_date}:{node}:{snapshot_identity}",
+            "a_share_snapshot_identity": snapshot_identity,
+            "a_share_snapshot_as_of_beijing": snapshot_as_of,
+            "hyperliquid_collection_time_beijing": hyperliquid_node["collection_time_beijing"],
+            "hyperliquid_context_id": hyperliquid_node["context_id"],
+            "hyperliquid_quality_status": hyperliquid_node["quality_status"],
+            "hyperliquid_observation_count": hyperliquid_node["observation_count"],
+        },
         "regeneration_required": True,
         "source": discovery.get("source"),
         "coverage_status": discovery.get("coverage_status"),
