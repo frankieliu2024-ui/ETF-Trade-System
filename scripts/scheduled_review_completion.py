@@ -943,19 +943,30 @@ def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | N
 
 
 def build_formal_evidence_consumption_audit(fact_summary: dict | None, final_content: str = "") -> dict:
-    """Build the request-bound, object-level evidence consumption ledger."""
+    """Build the request-bound, object-level Hyperliquid consumption ledger.
+
+    The ledger is richer than a direct ETF-code join. Economic-family mappings,
+    observed fields, and cross-engine relations remain available to Formal
+    Decision without turning missing direct codes into global evidence absence.
+    """
     facts = fact_summary if isinstance(fact_summary, dict) else {}
     discovery = facts.get("formal_discovery") or facts.get("discovery") or {}
     pack = facts.get("decision_fact_pack") or {}
     hyper = facts.get("hyperliquid_external_driver_context") or facts.get("hyperliquid") or {}
-    bindings = hyper.get("object_bindings") if isinstance(hyper, dict) else []
-    binding_by_code = {}
-    for item in bindings or []:
-        if isinstance(item, dict):
-            code = str(item.get("code") or item.get("object_code") or "").strip()
-            if code:
-                binding_by_code.setdefault(code, []).append(item)
-    objects = {}
+    bindings = [item for item in (hyper.get("object_bindings") if isinstance(hyper, dict) else []) if isinstance(item, dict)]
+    binding_by_code: dict[str, list[dict]] = {}
+    for item in bindings:
+        code = str(item.get("code") or item.get("object_code") or "").strip()
+        if code:
+            binding_by_code.setdefault(code, []).append(item)
+    observations = [item for item in (hyper.get("observations") or []) if isinstance(item, dict)]
+    observation_by_asset = {
+        str(item.get("asset") or item.get("name") or "").strip(): item
+        for item in observations
+        if str(item.get("asset") or item.get("name") or "").strip()
+    }
+    objects: dict[str, dict] = {}
+
     def add(items, layer):
         for item in items or []:
             if not isinstance(item, dict):
@@ -963,65 +974,125 @@ def build_formal_evidence_consumption_audit(fact_summary: dict | None, final_con
             code = str(item.get("code") or item.get("symbol") or item.get("object_code") or "").strip()
             if not code:
                 continue
-            obj = objects.setdefault(code, {"object_code": code, "object_name": str(item.get("name") or item.get("object_name") or code), "object_layers": [], "source_refs": []})
+            obj = objects.setdefault(code, {
+                "object_code": code,
+                "object_name": str(item.get("name") or item.get("object_name") or code),
+                "object_layers": [],
+                "source_refs": [],
+            })
             if layer not in obj["object_layers"]:
                 obj["object_layers"].append(layer)
             for key in ("source_path", "identity", "discovery_identity", "fact_ref"):
                 value = str(item.get(key) or "").strip()
                 if value and value not in obj["source_refs"]:
                     obj["source_refs"].append(value)
+
     add(discovery.get("candidates") if isinstance(discovery, dict) else [], "DISCOVERY")
     add(pack.get("discovery_inputs"), "DISCOVERY")
     add(pack.get("observation_inputs"), "OBSERVATION")
     add(pack.get("observation_review_inputs"), "OBSERVATION")
     add(pack.get("positions"), "HOLDING")
     add(pack.get("opportunity_inputs"), "OPPORTUNITY")
+
+    def classify_effect(matched: list[dict]) -> str:
+        explicit = [str(item.get("decision_effect") or "").strip().upper() for item in matched]
+        for value in explicit:
+            if value in {"SUPPORT", "CONFIRMATORY", "CONTRADICTION", "TIMING_FILTER", "CROWDING_RISK", "NO_INCREMENTAL_VALUE", "NO_DIRECT_MAPPING", "INSUFFICIENT"}:
+                return value
+        relations = {
+            str((item.get("cross_engine_validation") or {}).get("relation") or "").upper()
+            for item in matched
+            if isinstance(item.get("cross_engine_validation"), dict)
+        }
+        if "CROSS_MARKET_DIVERGENCE" in relations:
+            return "CONTRADICTION"
+        if "EXTERNAL_CONFIRMED_A_SHARE" in relations:
+            return "CONFIRMATORY"
+        if "EXTERNAL_NOT_TRANSMITTED" in relations:
+            return "TIMING_FILTER"
+        return "INSUFFICIENT" if matched else "NO_DIRECT_MAPPING"
+
     object_audit = []
     for code, obj in objects.items():
         matched = binding_by_code.get(code) or []
-        assets = sorted({str(x).strip() for b in matched for x in (b.get("external_assets") or []) if str(x).strip()})
-        raw_evidence_status = "READY" if any(int(b.get("observation_count") or 0) > 0 for b in matched) else "DEGRADED"
+        assets = sorted({
+            str(asset).strip()
+            for item in matched
+            for asset in (item.get("external_assets") or [])
+            if str(asset).strip()
+        })
+        raw_evidence_status = "READY" if any(int(item.get("observation_count") or 0) > 0 for item in matched) else "DEGRADED"
         if str(hyper.get("quality_status") or "").upper() in {"MISSING", "NOT_REQUESTED", "UNAVAILABLE", "FAILED"}:
             raw_evidence_status = "FAILED"
-        effect = str((matched[0].get("decision_effect") if matched else "") or obj.get("decision_effect") or "INSUFFICIENT").strip().upper()
-        mapping_reason = "CONFIGURED_OBJECT_BINDING" if matched else "NO_DIRECT_MAPPING"
-        observation_as_of = str(
-            (matched[0].get("observation_as_of") if matched else "")
-            or hyper.get("as_of_beijing")
-            or hyper.get("latest_observation_collected_at_beijing")
-            or ""
-        )
-        evidence_summary = {
-            "mapped_assets": assets,
-            "observation_count": sum(int(b.get("observation_count") or 0) for b in matched),
-            "hyperliquid_status": str(hyper.get("quality_status") or ""),
-        }
+        effect = classify_effect(matched)
+        matched_observations = [observation_by_asset[asset] for asset in assets if asset in observation_by_asset]
+        signal_fields = [{
+            "asset": item.get("asset") or item.get("name") or "",
+            "family": item.get("family") or "",
+            "direction": item.get("direction") or "",
+            "funding": item.get("funding") or item.get("funding_rate") or "",
+            "open_interest": item.get("open_interest") or item.get("openInterest") or "",
+            "premium": item.get("premium") or "",
+            "crowding": item.get("crowding") or item.get("crowding_status") or "",
+            "observation_as_of": item.get("observation_as_of") or "",
+        } for item in matched_observations]
+        relations = sorted({
+            str((item.get("cross_engine_validation") or {}).get("relation") or "").strip()
+            for item in matched
+            if str((item.get("cross_engine_validation") or {}).get("relation") or "").strip()
+        })
+        observation_as_of = str(next((item.get("observation_as_of") for item in matched if str(item.get("observation_as_of") or "").strip()), "") or hyper.get("as_of_beijing") or hyper.get("latest_observation_collected_at_beijing") or "")
         object_audit.append({
             **obj,
             "object_type": "A_SHARE_ETF_OBJECT",
             "mapped_assets": assets,
-            "mapping_reason": mapping_reason,
+            "mapping_reason": "CONFIGURED_DIRECT_OR_ECONOMIC_FAMILY_BINDING" if matched else "NO_CURRENT_OBJECT_BINDING",
             "observation_as_of": observation_as_of,
             "evidence_status": raw_evidence_status,
             "consumption_status": "CONSUMED" if matched and raw_evidence_status == "READY" else "CONSUMED_AS_LIMITATION",
             "decision_effect": effect,
-            "evidence_summary": evidence_summary,
-            "decision_use": str((matched[0].get("decision_use") if matched else "") or "Hyperliquid证据用于外部方向、时机或风险限制判断；不独立授予交易权限"),
+            "evidence_summary": {
+                "mapped_assets": assets,
+                "observation_count": sum(int(item.get("observation_count") or 0) for item in matched),
+                "hyperliquid_status": str(hyper.get("quality_status") or ""),
+                "signal_fields": signal_fields,
+                "cross_engine_relations": relations,
+                "time_relation": str(next((item.get("time_relation") for item in matched if str(item.get("time_relation") or "").strip()), "")),
+            },
+            "decision_use": str(next((item.get("decision_use") for item in matched if str(item.get("decision_use") or "").strip()), "") or (
+                "已映射证据用于比较外部方向与A股对象的同步/背离，并过滤入场时机或拥挤风险；不独立授予交易权限"
+                if matched else "当前没有该对象的可确认Hyperliquid绑定；不得把其他对象或全局脉冲替代本对象判断"
+            )),
             "business_impact": effect,
         })
+
     audit_status = "PASS_EMPTY" if not object_audit else ("PASS" if all(
         item.get("decision_effect")
         and item.get("evidence_status") in {"READY", "DEGRADED", "FAILED", "NOT_APPLICABLE"}
         and item.get("consumption_status") in {"CONSUMED", "CONSUMED_AS_LIMITATION", "NOT_CONSUMED"}
-        and "decision_use" in item
-        and "evidence_summary" in item
+        and "decision_use" in item and "evidence_summary" in item
         for item in object_audit
     ) else "PARTIAL")
     return {
-        "schema_version": "2.0",
+        "schema_version": "2.1",
         "audit_status": audit_status,
-        "discovery": {"status": "PROVIDED" if discovery else "NOT_PROVIDED", "identity": str(discovery.get("identity") or "").strip() if isinstance(discovery, dict) else "", "generated_at_beijing": discovery.get("generated_at_beijing", "") if isinstance(discovery, dict) else "", "latest_snapshot": discovery.get("latest_snapshot", "") if isinstance(discovery, dict) else "", "candidate_count": discovery.get("candidate_count") if isinstance(discovery, dict) else None, "coverage_status": discovery.get("coverage_status", "") if isinstance(discovery, dict) else ""},
-        "hyperliquid": {"status": "PROVIDED" if hyper else "NOT_PROVIDED", "context_id": hyper.get("context_id", "") if isinstance(hyper, dict) else "", "observation_count": hyper.get("observation_count") if isinstance(hyper, dict) else None, "object_binding_count": len(bindings or [])},
+        "discovery": {
+            "status": "PROVIDED" if discovery else "NOT_PROVIDED",
+            "identity": str(discovery.get("identity") or "").strip() if isinstance(discovery, dict) else "",
+            "generated_at_beijing": discovery.get("generated_at_beijing", "") if isinstance(discovery, dict) else "",
+            "latest_snapshot": discovery.get("latest_snapshot", "") if isinstance(discovery, dict) else "",
+            "candidate_count": discovery.get("candidate_count") if isinstance(discovery, dict) else None,
+            "coverage_status": discovery.get("coverage_status", "") if isinstance(discovery, dict) else "",
+        },
+        "hyperliquid": {
+            "status": "PROVIDED" if hyper else "NOT_PROVIDED",
+            "context_id": hyper.get("context_id", "") if isinstance(hyper, dict) else "",
+            "quality_status": hyper.get("quality_status", "") if isinstance(hyper, dict) else "",
+            "observation_count": hyper.get("observation_count") if isinstance(hyper, dict) else None,
+            "object_binding_count": len(bindings),
+            "time_basis": hyper.get("time_basis", "") if isinstance(hyper, dict) else "",
+            "phase": hyper.get("consumption_phase") or hyper.get("market_phase") or "",
+        },
         "object_audit": object_audit,
         "enforcement": "AUDIT_ONLY; incomplete evidence is reported locally and never converted into a trade block",
     }
