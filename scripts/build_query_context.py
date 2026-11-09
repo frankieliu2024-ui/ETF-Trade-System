@@ -120,17 +120,19 @@ def _hyperliquid_decision_evidence(external: dict, current: dict) -> dict:
     items: list[dict] = []
     families: dict[str, dict] = {}
     for item in observations:
-        ctx = item.get("context") or {}
-        mark = number(ctx.get("markPx")); prev = number(ctx.get("prevDayPx"))
-        funding = number(ctx.get("funding")); premium = number(ctx.get("premium"))
-        collected = str(item.get("collected_at_beijing") or "")
+        raw_asset = item.get("asset")
+        asset_name = str(raw_asset.get("name") or "") if isinstance(raw_asset, dict) else str(raw_asset or item.get("object_name") or "")
+        ctx = item.get("context") if isinstance(item.get("context"), dict) else item
+        mark = number(ctx.get("markPx") or ctx.get("mark_px")); prev = number(ctx.get("prevDayPx") or ctx.get("prev_day_px"))
+        funding = number(ctx.get("funding") or ctx.get("funding_rate")); premium = number(ctx.get("premium") or ctx.get("premium_discount"))
+        collected = str(item.get("observation_as_of") or item.get("collected_at_beijing") or "")
         c_dt = parse(collected)
         delta = abs((c_dt - a_dt).total_seconds()) if c_dt and a_dt else None
         direction = "SUPPORTIVE" if mark is not None and prev not in (None, 0) and mark > prev else ("NEGATIVE" if mark is not None and prev not in (None, 0) and mark < prev else "NEUTRAL")
         crowding = "ELEVATED" if abs(funding or 0) >= 0.0001 or abs(premium or 0) >= 0.002 else "NORMAL"
-        family = next((str(m.get("family") or "") for m in (external.get("mapping") or []) if isinstance(m, dict) and str(m.get("asset") or "") == str((item.get("asset") or {}).get("name") or "")), "")
+        family = next((str(m.get("family") or "") for m in (external.get("mapping") or []) if isinstance(m, dict) and str(m.get("asset") or "") == asset_name), "")
         evidence = {
-            "asset": (item.get("asset") or {}).get("name", ""), "dex": item.get("dex"), "family": family,
+            "asset": asset_name, "dex": item.get("dex"), "family": family,
             "direction": direction, "crowding": crowding, "funding": funding, "premium": premium,
             "mark": mark, "oracle": number(ctx.get("oraclePx")), "mid": number(ctx.get("midPx")),
             "open_interest": number(ctx.get("openInterest")), "day_notional_volume": number(ctx.get("dayNtlVlm")),
