@@ -813,10 +813,9 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
         if re.search(r"[（(](\d{6})[）)]", text)
     }
     overlap = discovery_codes & hl_codes
-    # User-visible pulses require both engines to identify the same ETF.
-    # Different-object evidence remains machine/audit state and is silent.
-    if not overlap:
-        return None
+    # Discovery candidates remain user-visible even when Hyperliquid has no
+    # same-ETF mapping. Hyperliquid is an enrichment channel, not a prerequisite
+    # for notifying a newly formed or materially changed candidate.
     # The overlap is the complete user-visible scope.  Discovery and
     # Hyperliquid may contain other valid machine/audit objects, but those
     # objects are not evidence for this notification and must never leak into
@@ -984,10 +983,7 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
         hyperliquid_time.replace("T", " ").replace("+08:00", "")
         if hyperliquid_time else "尚未确认"
     )
-    hyperliquid_time_note = (
-        f"Hyperliquid可见采集边界：{hyperliquid_time_display}；"
-        "接口未提供逐笔事件时间，不能把它理解为每个合约的事件发生时间。"
-    )
+    hyperliquid_time_note = f"Hyperliquid采集时间（北京时间）：{hyperliquid_time_display}"
     core_conclusion = f"{core_conclusion} Hyperliquid具体依据：{hl_text}（{hyperliquid_time_note}）"
     impact_text = (
         f"{relation}。Hyperliquid在本轮的作用是：{impact}；"
