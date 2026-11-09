@@ -130,7 +130,7 @@ def build() -> dict:
 
 def main() -> None:
     result = build()
-    if result.get("status") in {"READY", "PASS"}:
+    if result.get("status") in {"READY", "PASS", "DEGRADED"}:
         try:
             from pulse_history import append_pulse_history
         except ModuleNotFoundError:
