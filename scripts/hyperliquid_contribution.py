@@ -1,9 +1,52 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone, timedelta
+from pathlib import Path
+import json
 
 
 BEIJING = timezone(timedelta(hours=8), name="Asia/Shanghai")
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def _normalize_observations(context: dict, observations: list) -> list[dict]:
+    """Attach configured economic mappings to raw Hyperliquid observations.
+
+    The collector returns nested ``asset.name`` objects while older discovery
+    projections only carried the raw list.  Normalizing here keeps Discovery,
+    Formal Decision, Trade Review and pulse notifications on the same mapping
+    contract instead of allowing an old projection to become an empty packet.
+    """
+    configured = context.get("mapping") if isinstance(context.get("mapping"), list) else None
+    if configured is None:
+        try:
+            payload = json.loads((ROOT / "config/market/hyperliquid_etf_exposure_map.json").read_text(encoding="utf-8"))
+            configured = payload.get("asset_mappings") or []
+        except (OSError, ValueError):
+            configured = []
+    by_asset = {str(x.get("asset") or ""): x for x in configured if isinstance(x, dict)}
+    normalized = []
+    for item in observations:
+        if not isinstance(item, dict):
+            continue
+        raw_asset = item.get("asset")
+        asset = raw_asset.get("name") if isinstance(raw_asset, dict) else raw_asset
+        mapping = by_asset.get(str(asset or ""), {})
+        row = dict(item)
+        row["asset"] = str(asset or "")
+        for key in ("family", "etf_codes", "mapped_assets", "mapping_reason", "name_markers", "exclude_name_markers"):
+            if mapping.get(key) is not None and row.get(key) in (None, "", []):
+                row[key] = mapping.get(key)
+        ctx = row.get("context") if isinstance(row.get("context"), dict) else row
+        row.setdefault("funding", ctx.get("funding"))
+        row.setdefault("open_interest", ctx.get("openInterest"))
+        row.setdefault("premium", ctx.get("premium"))
+        row.setdefault("mark_px", ctx.get("markPx"))
+        row.setdefault("mid_px", ctx.get("midPx"))
+        row.setdefault("prev_day_px", ctx.get("prevDayPx"))
+        if row.get("family") or row.get("etf_codes") or row.get("mapped_assets"):
+            normalized.append(row)
+    return normalized
 
 
 def _phase(as_of: str) -> str:
@@ -40,6 +83,7 @@ def build_contribution(*, context: dict | None, node: str = "", task: str = "") 
     )
     phase = _phase(as_of)
     observations = latest.get("observations") or context.get("observations") or []
+    observations = _normalize_observations(context, observations)
     mapped = [x for x in observations if isinstance(x, dict) and (x.get("family") or x.get("asset"))]
 
     def effect(item: dict) -> str:

@@ -842,7 +842,7 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
     discovery = formal_discovery or {}
     external_driver = external_driver_context or {}
     hyperliquid_evidence = _hyperliquid_decision_evidence(external_driver, current)
-    hyperliquid_contribution = build_contribution(context={"latest": read_pulse_projection(ROOT, "HYPERLIQUID").get("latest"), "observations": external_driver.get("observations") or [], "generated_at_beijing": external_driver.get("collection_finished_at_utc")}, task="FORMAL_DECISION")
+    hyperliquid_contribution = build_contribution(context={"latest": read_pulse_projection(ROOT, "HYPERLIQUID").get("latest"), "observations": external_driver.get("observations") or [], "mapping": external_driver.get("mapping") or [], "generated_at_beijing": external_driver.get("collection_finished_at_utc")}, task="FORMAL_DECISION")
     hyperliquid_provenance = {
         "context_id": external_driver.get("context_id") or "",
         "collection_started_at_utc": external_driver.get("collection_started_at_utc") or "",
