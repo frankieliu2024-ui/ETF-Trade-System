@@ -840,7 +840,11 @@ def _validate_weekly_projection_contract(report: dict) -> None:
             cursor -= timedelta(days=1)
         return ""
 
-    # On non-close nodes, weekly attribution remains bound to the latest\n    # completed legal week rather than the current in-progress market date.\n    # Friday close keeps the current date as the completed week end.\n    weekly_reference_date = market_date if close_due else latest_completed_week_end(market_date)\n
+    # On non-close nodes, weekly attribution remains bound to the latest
+    # completed legal week rather than the current in-progress market date.
+    # Friday close keeps the current date as the completed week end.
+    weekly_reference_date = market_date if close_due else latest_completed_week_end(market_date)
+
     attribution_path = ROOT / "data/state/weekly_return_attribution.json"
     attribution = _read_json("data/state/weekly_return_attribution.json") if attribution_path.exists() else {}
     if not attribution:
