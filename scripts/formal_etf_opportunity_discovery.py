@@ -852,6 +852,13 @@ def _candidate(row: dict[str, Any], history: list[dict[str, Any]], required_hist
         "code": row["code"], "name": row["name"], "display_name": f'{row["name"]}（{row["code"]}）',
         "category": "OBSERVATION_EVALUATION_INPUT", "eligibility": "OBSERVATION_FULL_EVALUATION",
         "management_identity": None, "auto_promote_to_observation": False,
+        # Discovery is an actionable recommendation input by default.  This is
+        # not an order, Trial, Confirm or permission change; it tells the
+        # consumer to start from BUY and record an explicit counter-evidence
+        # reason before downgrading the candidate.
+        "default_recommendation": "BUY",
+        "recommendation_status": "BUY_UNLESS_DISPROVED",
+        "recommendation_boundary": "人工确认前的积极建议；不自动下单、不授予Trial/Confirm、不改变交易权限",
         "trial_confirm_permission": False, "trade_signal": None, "decision_output_generated": False,
         "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
         "entered_states": entered, "surfaced_states": current_states, "information_classes": info_classes,
@@ -865,7 +872,7 @@ def _candidate(row: dict[str, Any], history: list[dict[str, Any]], required_hist
             "avg_amount_20": round(avg_amount, 2),
         },
         "comparison_basis": ["历史趋势/状态变化", "当前相对结构", "成交与可执行性", "风险收益", "资本效率"],
-        "decision_boundary": "仅取得本节点Observation资格完整评估；Observation身份只能由同节点正式决策ADMIT/RETAIN形成，发现本身不产生Trial/Confirm、金额或交易动作。",
+        "decision_boundary": "默认按买入建议起点进入正式判断；只有明确反证才降级或否决。该建议不自动产生Trial/Confirm、金额或交易动作。",
         "management_review": management_review or {},
     }
 
