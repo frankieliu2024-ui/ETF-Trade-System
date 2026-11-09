@@ -974,11 +974,31 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
         next_check = f"重点核对{primary}自身强势能否延续，以及成交承接是否保持；若本地不再同步，外部信号只保留为风险过滤。"
     else:
         next_check = f"重点核对{primary}自身走势和成交承接，再决定外部证据用于方向确认、时机判断还是风险过滤。"
+    hyperliquid_time = str(
+        hyper_after.get("collected_at_beijing")
+        or hyper_after.get("fact_time_beijing")
+        or hyper_after.get("formed_at_beijing")
+        or ""
+    )
+    hyperliquid_time_display = (
+        hyperliquid_time.replace("T", " ").replace("+08:00", "")
+        if hyperliquid_time else "尚未确认"
+    )
+    hyperliquid_time_note = (
+        f"Hyperliquid可见采集边界：{hyperliquid_time_display}；"
+        "接口未提供逐笔事件时间，不能把它理解为每个合约的事件发生时间。"
+    )
+    core_conclusion = f"{core_conclusion} Hyperliquid具体依据：{hl_text}（{hyperliquid_time_note}）"
+    impact_text = (
+        f"{relation}。Hyperliquid在本轮的作用是：{impact}；"
+        f"具体依据为{hl_text}。"
+    )
     content = (
         f"{core_conclusion}\n\n"
         f"【Discovery依据】{discovery_text}\n\n"
-        f"【Hyperliquid依据】{hl_text}\n\n"
+        f"【对ETF系统的影响】{impact_text}\n\n"
         f"【下一步核对】{next_check}\n\n"
+        f"【数据与边界】{hyperliquid_time_note}\n\n"
         f"【当前边界】不自动下单、不自动调仓。"
     )
     evidence_time = str(
@@ -1007,6 +1027,7 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
             "discovery_identity": discovery_after.get("identity"),
             "hyperliquid_identity": hyper_after.get("identity"),
             "evidence_time_beijing": evidence_time,
+            "hyperliquid_observation_time_beijing": hyperliquid_time,
             "before_fact": "Discovery与Hyperliquid已有可比前序事实",
             "after_fact": "Discovery与Hyperliquid本次窗口事实已完成ETF级合并",
             "discovery_state_transitions": {

@@ -842,13 +842,22 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
     discovery = formal_discovery or {}
     external_driver = external_driver_context or {}
     hyperliquid_evidence = _hyperliquid_decision_evidence(external_driver, current)
-    hyperliquid_contribution = build_contribution(context={"latest": read_pulse_projection(ROOT, "HYPERLIQUID").get("latest"), "observations": external_driver.get("observations") or [], "mapping": external_driver.get("mapping") or [], "generated_at_beijing": external_driver.get("collection_finished_at_utc")}, task="FORMAL_DECISION")
+    hyperliquid_latest = read_pulse_projection(ROOT, "HYPERLIQUID").get("latest") or {}
+    hyperliquid_observation_time_beijing = str(
+        hyperliquid_latest.get("collected_at_beijing")
+        or hyperliquid_latest.get("fact_time_beijing")
+        or hyperliquid_latest.get("formed_at_beijing")
+        or ""
+    )
+    hyperliquid_contribution = build_contribution(context={"latest": hyperliquid_latest, "observations": external_driver.get("observations") or [], "mapping": external_driver.get("mapping") or [], "generated_at_beijing": external_driver.get("collection_finished_at_utc")}, task="FORMAL_DECISION")
     hyperliquid_provenance = {
         "context_id": external_driver.get("context_id") or "",
         "collection_started_at_utc": external_driver.get("collection_started_at_utc") or "",
         "collection_finished_at_utc": external_driver.get("collection_finished_at_utc") or "",
         "earliest_observation_collected_at_utc": external_driver.get("earliest_observation_collected_at_utc") or "",
         "latest_observation_collected_at_utc": external_driver.get("latest_observation_collected_at_utc") or "",
+        "visible_observation_as_of_beijing": hyperliquid_observation_time_beijing,
+        "visible_observation_time_note": "接口未提供逐笔事件时间；该时间是本次可见状态的采集/形成边界，不是逐笔事件发生时间。",
         "observation_count": external_driver.get("observation_count", len(external_driver.get("observations") or [])),
         "provider_timestamp_status": "NOT_PROVIDED_BY_ENDPOINT",
         "time_basis": external_driver.get("time_basis") or "COLLECTION_FINISHED_TIME_AS_VISIBLE_STATE_BOUNDARY",

@@ -187,6 +187,17 @@ def _is_a_share_session_summary(headline_lines: list[str]) -> bool:
     return "开盘/上午有价值信号" in joined or "15:00正式收盘" in joined
 
 
+
+def _hyperliquid_observation_time() -> str:
+    """Return the latest visible Hyperliquid collection boundary in Beijing time."""
+    latest_projection = read_json(STATE / "hyperliquid_pulse_latest.json", {})
+    latest = latest_projection.get("latest") if isinstance(latest_projection.get("latest"), dict) else latest_projection
+    for key in ("collected_at_beijing", "fact_time_beijing", "formed_at_beijing", "generated_at_beijing"):
+        value = str(latest.get(key) or "").strip()
+        if value:
+            return value.replace("T", " ").replace("+08:00", "")
+    return "尚未确认"
+
 def _hyperliquid_notification_basis(text: str) -> str:
     """Render the shared Hyperliquid consumption result for user notifications.
 
@@ -201,7 +212,8 @@ def _hyperliquid_notification_basis(text: str) -> str:
         match = re.search(r"(?:对象/结构|对象|结构)[:： ]+([^\n]+)", text)
         if match:
             target = match.group(1).strip().split("，")[0]
-        return explain_for_notification(text=text, target=target)
+        explanation = explain_for_notification(text=text, target=target)
+        return f"{explanation}（Hyperliquid可见采集边界：{_hyperliquid_observation_time()}；接口未提供逐笔事件时间。）"
     except Exception as exc:
         return f"Hyperliquid贡献暂无法完成用户侧解释（{type(exc).__name__}）；本通知仍仅依据已确认的本地/区域事实，不扩大交易结论。"
 
@@ -234,10 +246,10 @@ def render_summary(*, headline_lines: list[str], path_lines: list[str], implicat
         + path
         + "\n\n### 对ETF系统的影响\n"
         + implication
+        + ("；" + hl_basis if hl_basis else "")
         + "\n\n### 当前动作\n**"
         + action
-        + "**\n\n### Hyperliquid依据\n"
-        + hl_basis
+        + ("；" + hl_basis if hl_basis else "")
         + "\n\n### 数据与边界\n"
         + "\n".join(as_of_lines)
         + "\n"
@@ -303,14 +315,14 @@ def render_shock(*, what: list[str], why: str, implication: str, action: str, as
         + "\n".join(display_what)
         + "\n\n**判断**："
         + why
+        + ("；Hyperliquid补充：" + hl_basis if hl_basis else "")
         + "\n\n### 对ETF系统的影响\n"
         + implication
         + "\n\n### 当前动作\n**"
         + action
         + "**\n\n### 数据与边界\n"
         + f"- **行情时点（北京时间）**：{as_of}\n"
-        + f"- **边界**：{boundary}\n\n### Hyperliquid依据\n"
-        + hl_basis
+        + f"- **边界**：{boundary}\n"
     )
 
 
