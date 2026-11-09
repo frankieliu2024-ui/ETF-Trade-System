@@ -24,3 +24,12 @@ def test_hyperliquid_history_is_validated_after_update():
     text = (ROOT / "scripts/build_overseas_context.py").read_text(encoding="utf-8")
     assert "Hyperliquid pulse history was not updated" in text
     assert "Hyperliquid pulse history has no latest identity after update" in text
+
+
+def test_hyperliquid_is_regenerated_for_each_eligible_overseas_pulse():
+    builder = (ROOT / "scripts/build_overseas_context.py").read_text(encoding="utf-8")
+    workflow = (ROOT / ".github/workflows/overseas-preopen-pulse.yml").read_text(encoding="utf-8")
+    assert '"regeneration_required"] = True' in builder
+    assert '"generation_identity"]' in builder
+    assert "Verify Hyperliquid node was regenerated for this pulse" in workflow
+    assert "current == previous" in workflow
