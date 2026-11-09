@@ -27,3 +27,20 @@ def test_intraday_and_post_close_roles():
     assert intraday["phase"] == "A_SHARE_ACTIVE_WINDOW"
     assert post_close["phase"] == "POST_WINDOW_REFERENCE"
     assert post_close["task"] == "TRADE_REVIEW"
+
+
+def test_mapping_catalog_is_not_collapsed_into_no_mapping():
+    result = build_contribution(
+        context={"generated_at_beijing": "2026-11-09T10:59:59+08:00", "observations": [], "mapping": [
+            {"asset": "xyz:SMH", "family": "SEMICONDUCTOR", "etf_codes": ["159992"]},
+            {"asset": "xyz:CXMT", "family": "CHINA_MEMORY_CHAIN"},
+        ]},
+        task="FORMAL_DECISION",
+        node="11:00",
+    )
+    assert result["status"] == "DEGRADED"
+    assert result["mapped_object_count"] == 0
+    assert result["mapping_candidate_count"] == 2
+    assert result["mapping_coverage_status"] == "CONFIGURED_CANDIDATES_NO_LIVE_SIGNAL"
+    assert result["mapping_candidates"][0]["decision_effect"] == "INSUFFICIENT"
+    assert result["mapping_candidates"][0]["signal_fields"] == {}

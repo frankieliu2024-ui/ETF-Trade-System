@@ -49,6 +49,39 @@ def _normalize_observations(context: dict, observations: list) -> list[dict]:
     return normalized
 
 
+def _mapping_candidates(configured: list[dict], observed_assets: set[str]) -> list[dict]:
+    """Expose configured economic mappings even when no live row matched.
+
+    A catalog entry is not a live signal. Keeping it explicit prevents the
+    consumer from collapsing "mapping exists, live signal absent" into
+    "there is no mapping", while preserving the fail-closed decision boundary.
+    """
+    candidates = []
+    for mapping in configured:
+        if not isinstance(mapping, dict):
+            continue
+        asset = str(mapping.get("asset") or "").strip()
+        if not asset or asset in observed_assets:
+            continue
+        candidates.append({
+            "object_type": "HYPERLIQUID_MAPPING_CANDIDATE",
+            "object_id": asset,
+            "asset": asset,
+            "family": mapping.get("family") or "",
+            "mapped_assets": list(mapping.get("etf_codes") or mapping.get("mapped_assets") or []),
+            "name_markers": list(mapping.get("name_markers") or []),
+            "mapping_reason": "CONFIGURED_ECONOMIC_FAMILY_CANDIDATE_NO_LIVE_SIGNAL",
+            "evidence_status": "NO_LIVE_SIGNAL",
+            "consumption_status": "CATALOG_ONLY",
+            "decision_effect": "INSUFFICIENT",
+            "signal_fields": {},
+            "evidence_summary": "配置映射存在，但本轮快照没有匹配到该对象的实时观测信号",
+            "decision_use": "仅用于说明可检验的经济族群关联；没有实时信号，不能改变ETF方向、时机或交易判断",
+            "notification_eligibility": "NOT_ELIGIBLE_WITHOUT_LIVE_SIGNAL",
+        })
+    return candidates
+
+
 def _phase(as_of: str) -> str:
     try:
         value = datetime.fromisoformat(str(as_of).replace("Z", "+00:00"))
@@ -83,8 +116,23 @@ def build_contribution(*, context: dict | None, node: str = "", task: str = "") 
     )
     phase = _phase(as_of)
     observations = latest.get("observations") or context.get("observations") or []
-    observations = _normalize_observations(context, observations)
+    raw_observations = observations
+    observations = _normalize_observations(context, raw_observations)
     mapped = [x for x in observations if isinstance(x, dict) and (x.get("family") or x.get("asset"))]
+    configured = context.get("mapping") if isinstance(context.get("mapping"), list) else None
+    if configured is None:
+        try:
+            payload = json.loads((ROOT / "config/market/hyperliquid_etf_exposure_map.json").read_text(encoding="utf-8"))
+            configured = payload.get("asset_mappings") or []
+        except (OSError, ValueError):
+            configured = []
+    observed_assets = set()
+    for item in raw_observations:
+        if not isinstance(item, dict):
+            continue
+        raw_asset = item.get("asset")
+        observed_assets.add(str(raw_asset.get("name") if isinstance(raw_asset, dict) else raw_asset or ""))
+    mapping_candidates = _mapping_candidates(configured, observed_assets)
 
     def effect(item: dict) -> str:
         explicit = str(item.get("decision_effect") or "").strip().upper()
@@ -158,6 +206,21 @@ def build_contribution(*, context: dict | None, node: str = "", task: str = "") 
         "as_of_beijing": as_of,
         "mapped_object_count": len(mapped_objects),
         "mapped_objects": mapped_objects,
+        "live_signal_count": len(mapped_objects),
+        "mapping_candidate_count": len(mapping_candidates),
+        "mapping_candidates": mapping_candidates,
+        "mapping_coverage_status": (
+            "LIVE_SIGNAL_MATCHED" if mapped_objects else
+            "CONFIGURED_CANDIDATES_NO_LIVE_SIGNAL" if mapping_candidates else
+            "NO_CONFIGURED_MAPPING"
+        ),
+        "contribution_summary": (
+            "本轮存在可检验的Hyperliquid经济族群映射，但没有匹配到可消费的实时信号；不能把映射候选当作方向证据。"
+            if mapping_candidates and not mapped_objects else
+            "本轮已匹配Hyperliquid实时对象信号，可按对象消费。"
+            if mapped_objects else
+            "本轮没有可用的Hyperliquid映射或实时对象信号。"
+        ),
         "notification_contract": {
             "shared_with_formal_decision": True,
             "materiality_gate_required": True,
