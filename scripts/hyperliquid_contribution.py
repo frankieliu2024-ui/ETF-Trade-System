@@ -9,6 +9,33 @@ BEIJING = timezone(timedelta(hours=8), name="Asia/Shanghai")
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def _economic_etf_matches(mapping: dict) -> list[str]:
+    """Resolve an industry/family mapping to the current ETF universe.
+
+    Explicit etf_codes remain the strongest binding. When a mapping only has
+    name_markers, resolve those markers against the canonical monitored ETF
+    universe so an economic mapping is consumable by all downstream tasks.
+    """
+    explicit = [str(x) for x in (mapping.get("etf_codes") or mapping.get("mapped_assets") or []) if str(x)]
+    if explicit:
+        return explicit
+    try:
+        universe = json.loads((ROOT / "config/market/etf_monitor_universe.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    markers = [str(x).strip() for x in (mapping.get("name_markers") or []) if str(x).strip()]
+    excluded = [str(x).strip() for x in (mapping.get("exclude_name_markers") or []) if str(x).strip()]
+    if not markers:
+        return []
+    matches = []
+    for item in universe.get("objects") or []:
+        code = str(item.get("code") or "").strip()
+        name = str(item.get("name") or "")
+        if code and any(marker in name for marker in markers) and not any(marker in name for marker in excluded):
+            matches.append(code)
+    return sorted(set(matches))
+
+
 def _normalize_observations(context: dict, observations: list) -> list[dict]:
     """Attach configured economic mappings to raw Hyperliquid observations.
 
@@ -37,6 +64,11 @@ def _normalize_observations(context: dict, observations: list) -> list[dict]:
         for key in ("family", "etf_codes", "mapped_assets", "mapping_reason", "name_markers", "exclude_name_markers"):
             if mapping.get(key) is not None and row.get(key) in (None, "", []):
                 row[key] = mapping.get(key)
+        if not row.get("etf_codes") and not row.get("mapped_assets") and mapping:
+            family_matches = _economic_etf_matches(mapping)
+            if family_matches:
+                row["mapped_assets"] = family_matches
+                row["mapping_reason"] = "ECONOMIC_FAMILY_NAME_MARKER_MAPPING"
         ctx = row.get("context") if isinstance(row.get("context"), dict) else row
         row.setdefault("funding", ctx.get("funding"))
         row.setdefault("open_interest", ctx.get("openInterest"))
@@ -199,7 +231,7 @@ def build_contribution(*, context: dict | None, node: str = "", task: str = "") 
 
     return {
         "schema_version": "2.1",
-        "status": "READY" if mapped else "DEGRADED",
+        "status": "READY" if mapped else ("DEGRADED" if mapping_candidates else "MISSING"),
         "task": str(task or ""),
         "node": str(node or ""),
         "phase": phase,
