@@ -704,6 +704,15 @@ def build() -> dict:
         hyperliquid_context = build_hyperliquid_context()
     except Exception as exc:
         hyperliquid_context = {"quality_status": "FAILED", "error": str(exc)[-500:], "observations": [], "catalog": [], "mapping": []}
+    # Every eligible APAC/overseas pulse is a new Hyperliquid node, even when
+    # the object-level observations and mapped candidates are unchanged.
+    hyperliquid_context["source_pulse_identity"] = f"APAC:{generated_beijing.isoformat(timespec='seconds')}"
+    hyperliquid_context["generation_identity"] = (
+        f"HYPERLIQUID:{generated_beijing.date().isoformat()}:"
+        f"{generated_beijing.isoformat(timespec='seconds')}"
+    )
+    hyperliquid_context["regeneration_required"] = True
+    hyperliquid_context["regenerated_from_pulse_at_beijing"] = generated_beijing.isoformat(timespec="seconds")
 
     for record in objects.values():
         raw_quality = str(record.get("quality_status") or "MISSING").upper()
