@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-11-09T05:35:26+08:00",
+  "generated_at": "2026-11-09T08:39:32+08:00",
   "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -46,25 +46,26 @@
     },
     "decision_context": {
       "status": "READY",
-      "reason": "current-main fixed facts are directly consumable; no request-bound Formal Decision context is applicable",
+      "reason": "query and decision contexts are available; legacy minimum-ready observability is diagnostic only",
       "query_context": true,
       "decision_context": true,
+      "minimum_decision_context": "READY_OR_NOT_APPLICABLE",
+      "observability_boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
       "request_bound": false,
       "formal_reply_gate": null,
-      "direct_current_main": true,
       "context_read_contract": {
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 5855409,
-          "sha256": "f9dbb138ad9d908336ab405e2d860d4cd12ee026d926967de8b81e2bad9b308d",
+          "byte_count": 5858541,
+          "sha256": "b326e9c72870c90c78b5523f6a5167d48f89a5c8b60c07bb5d027936127b0181",
           "parsed_object": true
         },
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 512434,
-          "sha256": "0f44e593887d3a2f77927fb045b21246e58e0c015dcad518b39df99829178cb5",
+          "byte_count": 513460,
+          "sha256": "217f2c3a26a7350be74e7e35a0674565aa2fa0c0c8d85615e839004da7610454",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -82,7 +83,7 @@
     "maintenance": {
       "status": "READY",
       "reason": "maintenance guard passed",
-      "checked_at": "2026-11-06T17:58:22+08:00"
+      "checked_at": "2026-11-09T08:39:14+08:00"
     }
   },
   "blockers": [],
@@ -93,15 +94,15 @@
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 5855409,
-      "sha256": "f9dbb138ad9d908336ab405e2d860d4cd12ee026d926967de8b81e2bad9b308d",
+      "byte_count": 5858541,
+      "sha256": "b326e9c72870c90c78b5523f6a5167d48f89a5c8b60c07bb5d027936127b0181",
       "parsed_object": true
     },
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 512434,
-      "sha256": "0f44e593887d3a2f77927fb045b21246e58e0c015dcad518b39df99829178cb5",
+      "byte_count": 513460,
+      "sha256": "217f2c3a26a7350be74e7e35a0674565aa2fa0c0c8d85615e839004da7610454",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"
