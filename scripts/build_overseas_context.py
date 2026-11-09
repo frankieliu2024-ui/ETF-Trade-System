@@ -791,6 +791,18 @@ def main() -> None:
     )
     context["hyperliquid"] = hyperliquid
     atomic_json_write(ROOT / "data" / "state" / "overseas_context.json", context)
+    # Refresh the same history record after bindings are frozen so the
+    # canonical index exposes both comparison facts and ETF contributions.
+    final_pulse = append_pulse_history(
+        ROOT,
+        kind="HYPERLIQUID",
+        payload={**hyperliquid, "market_date": datetime.now(BEIJING).date().isoformat()},
+        path="data/state/overseas_context.json#hyperliquid",
+        identity=str(hyperliquid.get("context_id") or ""),
+        occurred_at=hyperliquid.get("latest_observation_collected_at_utc") or context.get("generated_at_beijing") or "",
+    )
+    if str(final_pulse.get("status") or "") != "UPDATED":
+        raise RuntimeError(f"Hyperliquid pulse history binding refresh failed: {final_pulse}")
     print(json.dumps({"ok": True, "generated_at_beijing": context["generated_at_beijing"], "quality_status": context["quality_status"], "objects": {k: v["quality_status"] for k, v in context["objects"].items()}}, ensure_ascii=False))
 
 
