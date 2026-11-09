@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-11-09T16:35:36+08:00",
+  "updated_at": "2026-11-09T19:34:46+08:00",
   "last_status": "SENT",
   "last_type": "REPORT_DELIVERY_REQUEST",
-  "last_title": "【ETF正式决策】",
+  "last_title": "【ETF系统复核】",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -54473,27 +54473,46 @@
       "task_run_id": "formal-decision-manual-20261109T163039p0800",
       "idempotency_key": "ETF_FORMAL_DECISION:formal-decision-manual-20261109T163039p0800",
       "pushplus_template": "markdown"
-    }
-  ],
-  "recent": [
+    },
     {
-      "key": "market-value:a-share:2026-11-04:159992:UP:EXTREME:2026-11-04T13:23:27+08:00",
-      "type": "MARKET_VALUE_ALERT",
-      "title": "【市场异动】创新药ETF（159992）出现极端波动 +3.04%",
-      "content": "### 核心结论\n- **事件类型**：极端波动\n- **对象/结构**：创新药ETF（159992）\n- **当日涨跌**：+3.04%\n\n**判断**：当前幅度已进入通知层的非常规区间，可能实质改变风险偏好、风险收益或资本比较。\n\n### 对ETF系统的影响\n创新药ETF（159992）是当前持仓ETF。本次异动直接影响其持仓风险收益和资本占用效率，应与其他持仓/观察ETF重新比较，而不是只看绝对涨跌。\n\n### 当前动作\n**先复核持仓假设和边际资本效率；没有正式卖出动作或独立新机会通过完整链时，不机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-11-04 13:23:27\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。\n\n- **分钟级结构**：1分钟路径先低后高（低点09:30、高点13:24）；最近10分钟+0.62%，成交额为前10分钟0.85倍，跟随度有限",
-      "source": "market_delta+CURRENT+stock_market_context+minute_context",
-      "user_severity": "需要关注",
-      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
-      "status": "SENT",
-      "attempted_at": "2026-11-04T13:24:41+08:00",
+      "notification_id": "notification_2a9a5cac604750b61ac4",
+      "event_type": "REPORT_DELIVERY_REQUEST",
+      "notification_channel": "REPORT",
+      "delivery_mode": "FULL_REPORT",
+      "source_event_id": "report-completion:ETF_SYSTEM_REVIEW:scheduled_system_review_20261109T193000p0800_7c2f9d61",
+      "request_id": "scheduled_system_review_20261109T193000p0800_7c2f9d61",
+      "parent_request_id": "",
+      "report_id": "etf_system_review:scheduled_system_review_20261109T193000p0800_7c2f9d61",
+      "content_hash": "ab0b6b80a8e71dd9066a85747d16c814127eaf39f0cdd7f1dde4b42190573328",
+      "related_decision_id": "",
+      "security_code": "",
+      "security_name": "",
+      "user_severity": "正式报告",
+      "user_action": "阅读已完成的正式ETF报告；无需交易操作",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-11-09T19:34:45+08:00",
+      "sent_at": "2026-11-09T19:34:46+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-11-11T19:34:45+08:00",
+      "title": "【ETF系统复核】",
+      "content": "【ETF系统复核】2026-11-09 19:30 晚间复核\n\n【复核时点（北京时间）】\n\n本次为交易日19:30自动晚间复核，事实截止于2026-11-09 19:30。当前收盘事实已形成，正式收盘有效时点为15:00，行情采集于15:18:58；账户事实更新至15:00。\n\n【晚间复核结论】\n\n本次复核已完成。系统当前可以继续运行，收盘行情、账户、成交、Discovery、机会层和Hyperliquid对象事实均已形成并可识别，但生命周期仍存在一个逾期Trial，通知交接能力本轮仍需单独确认。\n\n今日A股收盘事实质量通过，账户总资产170,126.06元，现金111,750.26元，五项ETF持仓可读；今日未记录新增成交或委托。系统没有形成交易判断、交易许可或自动交易动作。\n\n【系统运行与交接能力】\n\n当前main正式索引、MASTER、数据监测、任务调度、自动维护、主动通知、生产治理和Hyperliquid对象级规范可回读；未假定存在独立的“系统复核规范”文件。\n\nA股CURRENT已更新至2026-11-09收盘，行情通过对象身份、质量、PIT和时点校验。账户事实有效，现金和持仓身份与Dashboard一致；成交事实仍以已确认成交为准，今日未发现新增成交。运行健康在收盘后的非采集窗口为门控状态，不等于业务事实失败；海外上下文质量通过，但不同市场时间不能混写。\n\n查询上下文已形成并消费收盘事实。watchdog和主事实识别链可继续运行；下游生命周期投影仍需关注逾期项，不能仅因源事实已发布就视为所有投影均已闭环。\n\n【当日运行与判断链状态】\n\n今日事实链已完成“产生—校验—发布—识别”：收盘行情、账户事实、Discovery和Hyperliquid脉冲均有合法时间边界。Discovery形成8项候选，仅是全市场发现输入；机会层状态为等待MASTER正式决策，数量为空值不等于机会为零。\n\n生命周期投影当前可读：2个Active Trial、1个到期决策项和1个逾期项，其中全指器械（159056）Trial仍待正式决议；港股通创新药ETF工银（159217）处于T+3生命周期节点前。该问题影响生命周期一致性和下一节点准备度，但不自动推出任何交易动作。\n\n【当日新增事实与影响】\n\n今日收盘行情：已确认，market_date为2026-11-09，正式收盘事实有效。\n\n账户与持仓：已确认。账户总资产170,126.06元，股票市值58,375.80元，现金111,750.26元，账户当日盈亏-406.50元；当前持仓为159941、159981、159992、159217和159056。今日没有新增成交或委托事实。\n\nHyperliquid于16:22:39形成质量通过的新脉冲，共561条观测。对象级映射已被下游消费：例如全球风险偏好、AI计算、黄金、能源、亚洲市场和中国科技风险等对象均已绑定到相关ETF集合，消费结果当前多为“证据不足以单独改变判断”。方向表示价格涨跌方向；资金费率表示多空合约之间定期支付的持仓成本；未平仓量表示尚未平仓的合约规模；溢价表示交易价格相对参考价格的偏离；拥挤度表示仓位是否集中在单一方向。它们目前主要用于方向确认、跨市场背离、时机过滤或拥挤风险识别，不能独立产生交易权限。\n\n当前对象级证据与A股收盘事实已实现消费和解释，但对具体ETF的增量影响仍未达到改变正式判断的强度，因此没有改变对象判断或下一步时机。\n\n【ETF定时任务履约与交接状态】\n\n本次按自动入口和交易日19:30节点执行。任务入口、节点路由和三类任务独立边界可读；不能仅凭入口存在推断其他节点均已履约。\n\n本轮专属只读一致性验收已实际启动并成功回读，覆盖正式路由、CURRENT、PIT与新鲜度、对象边界、Hyperliquid降级与消费、completion路径和通知入口。验收未修改账户、权限或业务事实。\n\n【通知与记录状态】\n\n截至正文冻结，唯一FINAL_CONTENT已形成并冻结；completion、canonical event、REPORT、notification记录、服务商投递和用户收到状态均不预先宣称成功，需在冻结后沿同一completion逐层确认。\n\n【未闭环事项】\n\n（1）全指器械（159056）存在逾期Trial，下一节点需要核对正式决议、成交事实、生命周期和Dashboard是否一致。\n\n（2）港股通创新药ETF工银（159217）仍处于T+3生命周期节点前，下一节点需确认是否形成正式覆盖。\n\n（3）Hyperliquid对象级证据已被消费，但仍需持续确认其相对A股收盘事实是否形成可比的支持、背离或时机过滤。\n\n（4）通知链各层不能由一致性验收成功或completion写入成功替代。\n\n【下一交易日重点】\n\n确认下一交易日开盘及首个固定时段行情是否形成合法CURRENT；复核逾期Trial与T+3节点；分别核对Discovery、观察ETF、机会ETF和实际持仓；继续验证Hyperliquid对象与具体ETF之间的映射、增量贡献和通俗解释。所有交易仍由用户人工确认和执行。\n\n【执行状态】\n\n本次晚间系统复核正文已完成并冻结为唯一版本；收盘行情、账户、成交、Discovery、机会层和Hyperliquid事实可用；生命周期存在一致性告警；本轮一致性验收已执行并成功回读。本次未形成交易指令、交易许可或自动交易动作。\n\n【置信度】\n\n收盘行情、账户、持仓、成交、Discovery和一致性验收：高。生命周期投影完整性：中等偏低。Hyperliquid对象级消费：中等偏高；其对具体ETF的增量影响：中等。任务逐节点履约和通知交接：待本次后置回读确认。\n\n【最可能出错的地方】\n\n最可能误读的是把机会层空值当成没有机会，把逾期Trial改写成交易动作，把Hyperliquid采集时间当成事件时间，把外部对象的支持或背离当成交易许可，或把completion、事件、REPORT、通知工作流、服务商投递和用户收到混为同一层级。\n\n本任务只复核系统状态、事实链、任务履约和交接能力，不替代ETF交易复盘或ETF正式决策。",
+      "source": "canonical-review-completion:system_scheduled_system_review_20261109T193000p0800_7c2f9d61.json",
+      "confirmation_context": {},
       "response": {
         "http_status": 200,
         "pushplus_code": 200,
         "pushplus_message": "执行成功"
       },
-      "notification_id": "notification_96a87015f2daaad41463",
-      "lifecycle_status": "SENT"
-    },
+      "last_attempted_at": "2026-11-09T19:34:46+08:00",
+      "report_type": "ETF_SYSTEM_REVIEW",
+      "task_id": "ETF系统复核",
+      "task_run_id": "scheduled_system_review_20261109T193000p0800_7c2f9d61",
+      "idempotency_key": "ETF_SYSTEM_REVIEW:scheduled_system_review_20261109T193000p0800_7c2f9d61",
+      "pushplus_template": "markdown"
+    }
+  ],
+  "recent": [
     {
       "key": "market-value:a-share:2026-11-04:000688:UP:EXTREME:2026-11-04T13:47:48+08:00",
       "type": "MARKET_VALUE_ALERT",
@@ -58074,6 +58093,24 @@
         "pushplus_message": "执行成功"
       },
       "notification_id": "notification_f646c515651295fe59f7",
+      "lifecycle_status": "SENT"
+    },
+    {
+      "key": "report-completion:ETF_SYSTEM_REVIEW:scheduled_system_review_20261109T193000p0800_7c2f9d61",
+      "type": "REPORT_DELIVERY_REQUEST",
+      "title": "【ETF系统复核】",
+      "content": "【ETF系统复核】2026-11-09 19:30 晚间复核\n\n【复核时点（北京时间）】\n\n本次为交易日19:30自动晚间复核，事实截止于2026-11-09 19:30。当前收盘事实已形成，正式收盘有效时点为15:00，行情采集于15:18:58；账户事实更新至15:00。\n\n【晚间复核结论】\n\n本次复核已完成。系统当前可以继续运行，收盘行情、账户、成交、Discovery、机会层和Hyperliquid对象事实均已形成并可识别，但生命周期仍存在一个逾期Trial，通知交接能力本轮仍需单独确认。\n\n今日A股收盘事实质量通过，账户总资产170,126.06元，现金111,750.26元，五项ETF持仓可读；今日未记录新增成交或委托。系统没有形成交易判断、交易许可或自动交易动作。\n\n【系统运行与交接能力】\n\n当前main正式索引、MASTER、数据监测、任务调度、自动维护、主动通知、生产治理和Hyperliquid对象级规范可回读；未假定存在独立的“系统复核规范”文件。\n\nA股CURRENT已更新至2026-11-09收盘，行情通过对象身份、质量、PIT和时点校验。账户事实有效，现金和持仓身份与Dashboard一致；成交事实仍以已确认成交为准，今日未发现新增成交。运行健康在收盘后的非采集窗口为门控状态，不等于业务事实失败；海外上下文质量通过，但不同市场时间不能混写。\n\n查询上下文已形成并消费收盘事实。watchdog和主事实识别链可继续运行；下游生命周期投影仍需关注逾期项，不能仅因源事实已发布就视为所有投影均已闭环。\n\n【当日运行与判断链状态】\n\n今日事实链已完成“产生—校验—发布—识别”：收盘行情、账户事实、Discovery和Hyperliquid脉冲均有合法时间边界。Discovery形成8项候选，仅是全市场发现输入；机会层状态为等待MASTER正式决策，数量为空值不等于机会为零。\n\n生命周期投影当前可读：2个Active Trial、1个到期决策项和1个逾期项，其中全指器械（159056）Trial仍待正式决议；港股通创新药ETF工银（159217）处于T+3生命周期节点前。该问题影响生命周期一致性和下一节点准备度，但不自动推出任何交易动作。\n\n【当日新增事实与影响】\n\n今日收盘行情：已确认，market_date为2026-11-09，正式收盘事实有效。\n\n账户与持仓：已确认。账户总资产170,126.06元，股票市值58,375.80元，现金111,750.26元，账户当日盈亏-406.50元；当前持仓为159941、159981、159992、159217和159056。今日没有新增成交或委托事实。\n\nHyperliquid于16:22:39形成质量通过的新脉冲，共561条观测。对象级映射已被下游消费：例如全球风险偏好、AI计算、黄金、能源、亚洲市场和中国科技风险等对象均已绑定到相关ETF集合，消费结果当前多为“证据不足以单独改变判断”。方向表示价格涨跌方向；资金费率表示多空合约之间定期支付的持仓成本；未平仓量表示尚未平仓的合约规模；溢价表示交易价格相对参考价格的偏离；拥挤度表示仓位是否集中在单一方向。它们目前主要用于方向确认、跨市场背离、时机过滤或拥挤风险识别，不能独立产生交易权限。\n\n当前对象级证据与A股收盘事实已实现消费和解释，但对具体ETF的增量影响仍未达到改变正式判断的强度，因此没有改变对象判断或下一步时机。\n\n【ETF定时任务履约与交接状态】\n\n本次按自动入口和交易日19:30节点执行。任务入口、节点路由和三类任务独立边界可读；不能仅凭入口存在推断其他节点均已履约。\n\n本轮专属只读一致性验收已实际启动并成功回读，覆盖正式路由、CURRENT、PIT与新鲜度、对象边界、Hyperliquid降级与消费、completion路径和通知入口。验收未修改账户、权限或业务事实。\n\n【通知与记录状态】\n\n截至正文冻结，唯一FINAL_CONTENT已形成并冻结；completion、canonical event、REPORT、notification记录、服务商投递和用户收到状态均不预先宣称成功，需在冻结后沿同一completion逐层确认。\n\n【未闭环事项】\n\n（1）全指器械（159056）存在逾期Trial，下一节点需要核对正式决议、成交事实、生命周期和Dashboard是否一致。\n\n（2）港股通创新药ETF工银（159217）仍处于T+3生命周期节点前，下一节点需确认是否形成正式覆盖。\n\n（3）Hyperliquid对象级证据已被消费，但仍需持续确认其相对A股收盘事实是否形成可比的支持、背离或时机过滤。\n\n（4）通知链各层不能由一致性验收成功或completion写入成功替代。\n\n【下一交易日重点】\n\n确认下一交易日开盘及首个固定时段行情是否形成合法CURRENT；复核逾期Trial与T+3节点；分别核对Discovery、观察ETF、机会ETF和实际持仓；继续验证Hyperliquid对象与具体ETF之间的映射、增量贡献和通俗解释。所有交易仍由用户人工确认和执行。\n\n【执行状态】\n\n本次晚间系统复核正文已完成并冻结为唯一版本；收盘行情、账户、成交、Discovery、机会层和Hyperliquid事实可用；生命周期存在一致性告警；本轮一致性验收已执行并成功回读。本次未形成交易指令、交易许可或自动交易动作。\n\n【置信度】\n\n收盘行情、账户、持仓、成交、Discovery和一致性验收：高。生命周期投影完整性：中等偏低。Hyperliquid对象级消费：中等偏高；其对具体ETF的增量影响：中等。任务逐节点履约和通知交接：待本次后置回读确认。\n\n【最可能出错的地方】\n\n最可能误读的是把机会层空值当成没有机会，把逾期Trial改写成交易动作，把Hyperliquid采集时间当成事件时间，把外部对象的支持或背离当成交易许可，或把completion、事件、REPORT、通知工作流、服务商投递和用户收到混为同一层级。\n\n本任务只复核系统状态、事实链、任务履约和交接能力，不替代ETF交易复盘或ETF正式决策。",
+      "source": "canonical-review-completion:system_scheduled_system_review_20261109T193000p0800_7c2f9d61.json",
+      "user_severity": "正式报告",
+      "user_action": "阅读已完成的正式ETF报告；无需交易操作",
+      "status": "SENT",
+      "attempted_at": "2026-11-09T19:34:46+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_2a9a5cac604750b61ac4",
       "lifecycle_status": "SENT"
     }
   ],
