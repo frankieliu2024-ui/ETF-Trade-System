@@ -105,3 +105,43 @@ def test_missing_direction_is_derived_from_price_boundary():
     assert item["signal_fields"]["direction_source"] == "MARK_VS_PREV_DAY"
     assert item["observation_as_of"] == "2026-11-09T16:20:00+08:00"
     assert item["decision_effect"] == "TIMING_FILTER"
+
+
+def test_cross_pulse_fields_are_consumed_without_inventing_history():
+    result = build_contribution(
+        context={
+            "latest": {
+                "fact_time_beijing": "2026-11-09T16:22:39+08:00",
+                "observations": [{
+                    "asset": "xyz:SMH",
+                    "family": "SEMICONDUCTOR",
+                    "direction": "DOWN",
+                    "mark_px": "90",
+                    "prev_day_px": "100",
+                    "funding": "0.0002",
+                    "open_interest": "120",
+                    "premium": "0.003",
+                    "pulse_comparison_status": "COMPARABLE",
+                    "previous_pulse_as_of": "2026-11-09T16:00:00+08:00",
+                    "pulse_delta": {
+                        "funding": 0.0001,
+                        "open_interest": 20,
+                        "premium": 0.001,
+                        "mark_px": -5,
+                    },
+                    "positioning_signal": "PRICE_DOWN_OI_UP",
+                    "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
+                    "pricing_signal": "PREMIUM_ABOVE_REFERENCE",
+                    "crowding_signal": "LONG_CROWDING_RISK",
+                }],
+            },
+        },
+        task="FORMAL_DECISION",
+        node="14:30",
+    )
+    signal = result["mapped_objects"][0]["signal_fields"]
+    assert signal["pulse_comparison_status"] == "COMPARABLE"
+    assert signal["pulse_delta"]["open_interest"] == 20
+    assert signal["positioning_signal"] == "PRICE_DOWN_OI_UP"
+    assert signal["crowding_signal"] == "LONG_CROWDING_RISK"
+    assert result["mapped_objects"][0]["decision_effect"] == "CROWDING_RISK"
