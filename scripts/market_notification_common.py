@@ -832,28 +832,6 @@ def _decision_readable_implication(what: list[str], implication: str, action: st
     return text.strip(), act
 
 
-def render_shock(*, what: list[str], why: str, implication: str, action: str, as_of: str, boundary: str) -> str:
-    implication, action = _decision_readable_implication(what, implication, action)
-    display_what = list(what[:5])
-    if any("关键结构" in line and "当前" in line for line in display_what):
-        display_what = [line for line in display_what if "当日涨跌" not in line and "当前涨跌" not in line]
-    hl_basis = _hyperliquid_notification_basis(" ".join(display_what + [why, implication, action]))
-    return (
-        "### 核心结论\n"
-        + "\n".join(display_what)
-        + "\n\n**判断**："
-        + why
-        + ("；Hyperliquid补充：" + hl_basis if hl_basis else "")
-        + "\n\n### 对ETF系统的影响\n"
-        + implication
-        + "\n\n### 当前动作\n**"
-        + action
-        + "**\n\n### 数据与边界\n"
-        + f"- **行情时点（北京时间）**：{as_of}\n"
-        + f"- **边界**：{boundary}\n"
-    )
-
-
 def _parse_time(value: Any) -> datetime | None:
     if not value:
         return None
