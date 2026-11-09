@@ -242,15 +242,15 @@ def render_summary(*, headline_lines: list[str], path_lines: list[str], implicat
     return (
         "### 核心结论\n"
         + "\n".join(headline_lines[:5])
+        + ("\n\n**Hyperliquid补充**：" + hl_basis if hl_basis else "")
         + "\n\n### 关键路径\n"
         + path
         + "\n\n### 对ETF系统的影响\n"
         + implication
-        + ("；" + hl_basis if hl_basis else "")
+        + ("；Hyperliquid对本对象的影响：" + hl_basis if hl_basis else "")
         + "\n\n### 当前动作\n**"
         + action
-        + ("；" + hl_basis if hl_basis else "")
-        + "\n\n### 数据与边界\n"
+        + "**\n\n### 数据与边界\n"
         + "\n".join(as_of_lines)
         + "\n"
         + f"- **边界**：{boundary}"

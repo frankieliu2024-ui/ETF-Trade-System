@@ -33,6 +33,13 @@ def validate(root: Path) -> dict:
         raise RuntimeError("hyperliquid pulse index latest identity is empty")
     if not isinstance(observations, list) or not observations:
         raise RuntimeError("hyperliquid pulse index latest has no observations")
+    if not any(str(latest.get(key) or "").strip() for key in ("formed_at_beijing", "fact_time_beijing")):
+        raise RuntimeError("hyperliquid pulse index latest has no collection/formation timestamp")
+    for key in ("etf_bindings", "binding_candidates"):
+        if not isinstance(latest.get(key), list):
+            raise RuntimeError(f"hyperliquid pulse index latest {key} is not a list")
+    if not str(latest.get("binding_status") or "").strip():
+        raise RuntimeError("hyperliquid pulse index latest binding_status is empty")
     context_id = str(hyperliquid.get("context_id") or "").strip()
     indexed_context_id = str(latest.get("context_id") or "").strip()
     if context_id and indexed_context_id != context_id:
