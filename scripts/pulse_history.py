@@ -102,7 +102,8 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
         for item in (payload.get("observations") or []):
             if not isinstance(item, dict):
                 continue
-            asset = str((item.get("asset") or {}).get("name") or "")
+            raw_asset = item.get("asset")
+            asset = str(raw_asset.get("name") or "") if isinstance(raw_asset, dict) else str(raw_asset or item.get("object_id") or "")
             context = item.get("context") or {}
             previous = previous_by_asset.get(asset) or {}
             current_values = {
