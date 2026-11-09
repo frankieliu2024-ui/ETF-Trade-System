@@ -211,7 +211,7 @@ def build_contribution(*, context: dict | None, node: str = "", task: str = "") 
         explicit = str(item.get("decision_effect") or "").strip().upper()
         if explicit:
             return explicit
-        if item.get("crowding") or item.get("crowding_status"):
+        if item.get("crowding") or item.get("crowding_status") or "CROWDING_RISK" in str(item.get("crowding_signal") or ""):
             return "CROWDING_RISK"
         if item.get("etf_codes") or item.get("mapped_assets"):
             return "TIMING_FILTER" if direction else "INSUFFICIENT"
@@ -232,6 +232,13 @@ def build_contribution(*, context: dict | None, node: str = "", task: str = "") 
             "mark_px": item.get("mark_px") or "",
             "mid_px": item.get("mid_px") or "",
             "prev_day_px": item.get("prev_day_px") or "",
+            "previous_pulse_as_of": item.get("previous_pulse_as_of") or "",
+            "pulse_comparison_status": item.get("pulse_comparison_status") or "SINGLE_PULSE_ONLY",
+            "pulse_delta": item.get("pulse_delta") or {},
+            "positioning_signal": item.get("positioning_signal") or "UNAVAILABLE",
+            "funding_signal": item.get("funding_signal") or "UNAVAILABLE",
+            "pricing_signal": item.get("pricing_signal") or "UNAVAILABLE",
+            "crowding_signal": item.get("crowding_signal") or "UNAVAILABLE",
         }
 
     mapped_objects = []

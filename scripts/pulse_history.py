@@ -77,23 +77,109 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
             if isinstance(item, dict) and (item.get("code") or item.get("name"))
         ]
     else:
-        record["observations"] = [
-            {
-                "asset": str((item.get("asset") or {}).get("name") or ""),
-                "family": next((str(mapping.get("family") or "") for mapping in (payload.get("mapping") or []) if str(mapping.get("asset") or "") == str((item.get("asset") or {}).get("name") or "")), ""),
+        def _number(value):
+            try:
+                return float(value)
+            except (TypeError, ValueError):
+                return None
+
+        previous_records = records[-1].get("observations") if records else []
+        previous_by_asset = {
+            str(item.get("asset") or ""): item
+            for item in (previous_records or [])
+            if isinstance(item, dict) and str(item.get("asset") or "")
+        }
+
+        observations = []
+        for item in (payload.get("observations") or []):
+            if not isinstance(item, dict):
+                continue
+            asset = str((item.get("asset") or {}).get("name") or "")
+            context = item.get("context") or {}
+            previous = previous_by_asset.get(asset) or {}
+            current_values = {
+                "funding": str(context.get("funding") or ""),
+                "open_interest": str(context.get("openInterest") or ""),
+                "premium": str(context.get("premium") or ""),
+                "mark_px": str(context.get("markPx") or ""),
+            }
+            pulse_delta = {}
+            for key, current in current_values.items():
+                now_value = _number(current)
+                old_value = _number(previous.get(key))
+                if now_value is None or old_value is None:
+                    pulse_delta[key] = None
+                else:
+                    pulse_delta[key] = now_value - old_value
+
+            mark = _number(current_values["mark_px"])
+            prev_day = _number(context.get("prevDayPx"))
+            funding = _number(current_values["funding"])
+            oi_delta = pulse_delta.get("open_interest")
+            if mark is not None and prev_day not in (None, 0) and oi_delta is not None:
+                price_direction = "UP" if mark > prev_day else "DOWN" if mark < prev_day else "FLAT"
+                if price_direction == "UP" and oi_delta > 0:
+                    positioning_signal = "PRICE_UP_OI_UP"
+                elif price_direction == "UP" and oi_delta < 0:
+                    positioning_signal = "PRICE_UP_OI_DOWN"
+                elif price_direction == "DOWN" and oi_delta > 0:
+                    positioning_signal = "PRICE_DOWN_OI_UP"
+                elif price_direction == "DOWN" and oi_delta < 0:
+                    positioning_signal = "PRICE_DOWN_OI_DOWN"
+                else:
+                    positioning_signal = "PRICE_FLAT"
+            else:
+                positioning_signal = "SINGLE_PULSE_ONLY"
+
+            if funding is None:
+                funding_signal = "UNAVAILABLE"
+            elif funding > 0:
+                funding_signal = "POSITIVE_FUNDING_LONGS_PAY"
+            elif funding < 0:
+                funding_signal = "NEGATIVE_FUNDING_SHORTS_PAY"
+            else:
+                funding_signal = "NEUTRAL_FUNDING"
+
+            premium = _number(current_values["premium"])
+            if premium is None:
+                pricing_signal = "UNAVAILABLE"
+            elif premium > 0:
+                pricing_signal = "PREMIUM_ABOVE_REFERENCE"
+            elif premium < 0:
+                pricing_signal = "DISCOUNT_BELOW_REFERENCE"
+            else:
+                pricing_signal = "AT_REFERENCE"
+
+            if positioning_signal == "PRICE_UP_OI_UP" and funding is not None and funding > 0:
+                crowding_signal = "LONG_CROWDING_RISK"
+            elif positioning_signal == "PRICE_DOWN_OI_UP" and funding is not None and funding < 0:
+                crowding_signal = "SHORT_CROWDING_RISK"
+            elif positioning_signal == "SINGLE_PULSE_ONLY":
+                crowding_signal = "INSUFFICIENT_HISTORY"
+            else:
+                crowding_signal = "NO_CLEAR_CROWDING"
+
+            observations.append({
+                "asset": asset,
+                "family": next((str(mapping.get("family") or "") for mapping in (payload.get("mapping") or []) if str(mapping.get("asset") or "") == asset), ""),
                 "quality_status": str(item.get("quality_status") or ""),
                 "observation_as_of": str(item.get("collected_at_beijing") or ""),
                 "provider_timestamp_status": str(item.get("provider_timestamp_status") or "NOT_PROVIDED_BY_ENDPOINT"),
-                "funding": str((item.get("context") or {}).get("funding") or ""),
-                "open_interest": str((item.get("context") or {}).get("openInterest") or ""),
-                "premium": str((item.get("context") or {}).get("premium") or ""),
-                "mark_px": str((item.get("context") or {}).get("markPx") or ""),
-                "mid_px": str((item.get("context") or {}).get("midPx") or ""),
-                "prev_day_px": str((item.get("context") or {}).get("prevDayPx") or ""),
-            }
-            for item in (payload.get("observations") or [])
-            if isinstance(item, dict)
-        ]
+                "funding": current_values["funding"],
+                "open_interest": current_values["open_interest"],
+                "premium": current_values["premium"],
+                "mark_px": current_values["mark_px"],
+                "mid_px": str(context.get("midPx") or ""),
+                "prev_day_px": str(context.get("prevDayPx") or ""),
+                "previous_pulse_as_of": str(previous.get("observation_as_of") or ""),
+                "pulse_comparison_status": "COMPARABLE" if previous else "SINGLE_PULSE_ONLY",
+                "pulse_delta": pulse_delta,
+                "positioning_signal": positioning_signal,
+                "funding_signal": funding_signal,
+                "pricing_signal": pricing_signal,
+                "crowding_signal": crowding_signal,
+            })
+        record["observations"] = observations
     if not record["identity"]:
         record["identity"] = f"{kind}:{record['formed_at_beijing']}:{record['source_path']}"
     records = [item for item in records if str(item.get("identity") or "") != record["identity"]]
