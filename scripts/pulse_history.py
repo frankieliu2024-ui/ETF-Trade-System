@@ -86,7 +86,8 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
         # Compare with the latest prior legal pulse, including the prior
         # market date for the first pre-open pulse. This preserves overnight
         # continuity instead of silently resetting at midnight.
-        prior_record = records[-1] if records else None
+        prior_candidates = [item for item in records if str(item.get("identity") or "") != str(identity or "")]
+        prior_record = prior_candidates[-1] if prior_candidates else None
         if prior_record is None:
             prior_dates = [key for key in days if str(key) < market_date and isinstance(days.get(key), list) and days.get(key)]
             if prior_dates:
