@@ -81,3 +81,27 @@ def test_industry_mapping_includes_discovery_candidates():
     )
     assert result["mapped_object_count"] == 1
     assert result["mapped_objects"][0]["mapped_assets"]
+
+
+def test_missing_direction_is_derived_from_price_boundary():
+    result = build_contribution(
+        context={
+            "latest": {
+                "fact_time_beijing": "2026-11-09T16:22:39+08:00",
+                "observations": [{
+                    "asset": "xyz:SMH",
+                    "family": "SEMICONDUCTOR",
+                    "mark_px": "90",
+                    "prev_day_px": "100",
+                    "collected_at_beijing": "2026-11-09T16:20:00+08:00",
+                }],
+            },
+        },
+        task="FORMAL_DECISION",
+        node="14:30",
+    )
+    item = result["mapped_objects"][0]
+    assert item["signal_fields"]["direction"] == "DOWN"
+    assert item["signal_fields"]["direction_source"] == "MARK_VS_PREV_DAY"
+    assert item["observation_as_of"] == "2026-11-09T16:20:00+08:00"
+    assert item["decision_effect"] == "TIMING_FILTER"
