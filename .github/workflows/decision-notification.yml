@@ -194,7 +194,7 @@ jobs:
                   # Current direct completion builders carry the task identity
                   # inside presentation_binding; accept that canonical shape
                   # without weakening the formal-decision branch above.
-                  print("SCHEDULED_REVIEW")
+                  print("SYSTEM_REVIEW" if task_id == "ETF系统复核" else "TRADE_REVIEW")
               elif payload.get("request_type") == "SCHEDULED_REVIEW_COMPLETION":
                   print("SCHEDULED_REVIEW")
               else:
@@ -208,15 +208,20 @@ jobs:
                 # this exact path once through the existing formal event/report/
                 # notification owner; identity, hash, binding and dedupe guards
                 # remain mandatory and prevent duplicate or drifted delivery.
-                echo "formal_completion=true" >> "$GITHUB_OUTPUT"
-                echo "formal_review_source_path=$completion_path" >> "$GITHUB_OUTPUT"
-                if grep -Eq '\"force_resend\"[[:space:]]*:[[:space:]]*true' "$completion_path"; then
-                  echo "formal_force_resend=true" >> "$GITHUB_OUTPUT"
-                else
-                  echo "formal_force_resend=false" >> "$GITHUB_OUTPUT"
-                fi
+                # Formal Decision completion is consumed only by the explicit
+                # completion-owner dispatch. A Contents push is merely a
+                # persistence side effect and must never forward the same body.
+                echo "formal_completion=false" >> "$GITHUB_OUTPUT"
+                echo "formal_review_source_path=" >> "$GITHUB_OUTPUT"
+                echo "formal_force_resend=false" >> "$GITHUB_OUTPUT"
                 ;;
-              SCHEDULED_REVIEW)
+              SYSTEM_REVIEW)
+                # System Review has the same task-local boundary. Do not alter
+                # the Trade Review push ingress below.
+                echo "scheduled_review_completion=false" >> "$GITHUB_OUTPUT"
+                echo "scheduled_review_completion_path=" >> "$GITHUB_OUTPUT"
+                ;;
+              TRADE_REVIEW)
                 # A Scheduled Review completion is itself the canonical handoff
                 # after the task freezes FINAL_CONTENT. Consume this exact
                 # completion once through the existing event/report/notification
