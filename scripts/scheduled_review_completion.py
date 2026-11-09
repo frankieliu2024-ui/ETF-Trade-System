@@ -867,7 +867,7 @@ def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | N
         if any(part in str(payload.get(key) or "") for part in ("/", "\\", "..")):
             raise ValueError("Formal Decision completion identity is not path-safe")
     content = str(payload.get("final_content") or "")
-    bound_content = str(binding.get("full_content") or "")
+    bound_content = str(binding.get("full_content") or binding.get("final_content") or "")
     if not content or not bound_content or bound_content != content:
         raise ValueError("Formal Decision completion frozen content is missing or mismatched")
     expected_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
