@@ -248,8 +248,7 @@ def render_summary(*, headline_lines: list[str], path_lines: list[str], implicat
         + implication
         + "\n\n### 当前动作\n**"
         + action
-        + "**\n\n### Hyperliquid依据\n"
-        + hl_basis
+        + ("；" + hl_basis if hl_basis else "")
         + "\n\n### 数据与边界\n"
         + "\n".join(as_of_lines)
         + "\n"
