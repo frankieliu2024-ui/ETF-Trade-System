@@ -1,16 +1,16 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-11-09T13:54:02+08:00",
-  "status": "BLOCKED",
+  "generated_at": "2026-11-09T15:57:04+08:00",
+  "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
   "components": {
     "market": {
       "status": "READY",
       "reason": "latest market snapshot is valid",
-      "snapshot": "data/market/snapshots/2026-11-09_135324.json",
-      "captured_at": "2026-11-09T13:53:24+08:00",
-      "market_phase": "CONTINUOUS_AFTERNOON"
+      "snapshot": "data/market/snapshots/2026-11-09_151858.json",
+      "captured_at": "2026-11-09T15:18:58+08:00",
+      "market_phase": "POST_CLOSE_GRACE"
     },
     "account": {
       "status": "READY",
@@ -25,14 +25,13 @@
       "settlement_constraint_status": "NONE"
     },
     "risk": {
-      "status": "DEGRADED",
-      "reason": "ETF strategy equity reconstruction is stale for the current market date and Dashboard cannot be used as a fallback",
-      "etf_strategy_risk_pct": null,
+      "status": "READY",
+      "reason": "formal ETF strategy risk metric is available from a fresh canonical reconstruction",
+      "etf_strategy_risk_pct": -13.7241,
       "source": "data/state/etf_strategy_equity.json",
-      "stale_reconstruction_risk_pct": -13.5209,
       "source_updated_at": null,
-      "reconstruction_as_of_transaction_date": "2026-11-06",
-      "reconstruction_fresh_for_market_date": false,
+      "reconstruction_as_of_transaction_date": "2026-11-09",
+      "reconstruction_fresh_for_market_date": true,
       "data_quality": null
     },
     "close_review": {
@@ -46,24 +45,26 @@
       "business_completion_status": "DEGRADED"
     },
     "decision_context": {
-      "status": "BLOCKED",
-      "reason": "canonical request-bound query context is empty, invalid, or missing a consumable fact pack",
-      "query_context": false,
+      "status": "READY",
+      "reason": "current-main fixed facts are directly consumable; no request-bound Formal Decision context is applicable",
+      "query_context": true,
       "decision_context": true,
+      "request_bound": false,
       "formal_reply_gate": null,
+      "direct_current_main": true,
       "context_read_contract": {
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 5410719,
-          "sha256": "bd6655a75a2f81064a55d506a617f31d9668408cdf55902c0fd1dccf04f972cc",
+          "byte_count": 5596693,
+          "sha256": "6ad4d76bd7d91853fc26e4bf53381ff5945224e98f291ee0fdfbdbc3afe955e0",
           "parsed_object": true
         },
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 473958,
-          "sha256": "baa9a35526a63966486d610c0ed9a17cf730cede62fc181520e4c34483a0a76c",
+          "byte_count": 542146,
+          "sha256": "650a63ab285bd11aa45ea0e14046ed154086b5ce3079ab2791426a6f73c624bc",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -84,26 +85,23 @@
       "checked_at": "2026-11-09T10:08:27+08:00"
     }
   },
-  "blockers": [
-    "decision_context"
-  ],
+  "blockers": [],
   "degradations": [
-    "risk",
     "close_review"
   ],
   "context_read_contract": {
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 5410719,
-      "sha256": "bd6655a75a2f81064a55d506a617f31d9668408cdf55902c0fd1dccf04f972cc",
+      "byte_count": 5596693,
+      "sha256": "6ad4d76bd7d91853fc26e4bf53381ff5945224e98f291ee0fdfbdbc3afe955e0",
       "parsed_object": true
     },
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 473958,
-      "sha256": "baa9a35526a63966486d610c0ed9a17cf730cede62fc181520e4c34483a0a76c",
+      "byte_count": 542146,
+      "sha256": "650a63ab285bd11aa45ea0e14046ed154086b5ce3079ab2791426a6f73c624bc",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"
