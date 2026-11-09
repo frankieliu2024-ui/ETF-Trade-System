@@ -729,7 +729,32 @@ def build() -> dict:
 
 def main() -> None:
     context = build()
-    # Freeze the object-level ETF bindings for this exact Hyperliquid pulse so all consumers use the same PIT packet.\n    try:\n        from hyperliquid_contribution import build_contribution\n    except ModuleNotFoundError:\n        from scripts.hyperliquid_contribution import build_contribution\n    hyperliquid = context.get("hyperliquid") if isinstance(context.get("hyperliquid"), dict) else {}\n    contribution = build_contribution(context={"latest": hyperliquid, "mapping": hyperliquid.get("mapping")}, task="PULSE")\n    hyperliquid["etf_bindings"] = contribution.get("mapped_objects") or []\n    hyperliquid["binding_candidates"] = contribution.get("mapping_candidates") or []\n    hyperliquid["binding_status"] = contribution.get("mapping_coverage_status") or "MISSING"\n    hyperliquid["binding_generated_at_beijing"] = context.get("generated_at_beijing", "")\n    context["hyperliquid"] = hyperliquid\n    atomic_json_write(ROOT / "data" / "state" / "overseas_context.json", context)\n    try:\n        from pulse_history import append_pulse_history
+    # Freeze object-level ETF bindings for this exact Hyperliquid pulse.
+    try:
+        from hyperliquid_contribution import build_contribution
+    except ModuleNotFoundError:
+        from scripts.hyperliquid_contribution import build_contribution
+    hyperliquid = context.get("hyperliquid") if isinstance(context.get("hyperliquid"), dict) else {}
+    contribution = build_contribution(
+        context={"latest": hyperliquid, "mapping": hyperliquid.get("mapping")},
+        task="PULSE",
+    )
+    hyperliquid["etf_bindings"] = contribution.get("mapped_objects") or []
+    hyperliquid["binding_candidates"] = contribution.get("mapping_candidates") or []
+    hyperliquid["binding_status"] = contribution.get("mapping_coverage_status") or "MISSING"
+    hyperliquid["binding_generated_at_beijing"] = context.get("generated_at_beijing", "")
+    try:
+        discovery_state = json.loads(
+            (ROOT / "data" / "state" / "formal_discovery_current.json").read_text(encoding="utf-8")
+        )
+    except (OSError, json.JSONDecodeError):
+        discovery_state = {}
+    hyperliquid["binding_source_discovery_generated_at_beijing"] = str(
+        discovery_state.get("generated_at_beijing") or ""
+    )
+    context["hyperliquid"] = hyperliquid
+    atomic_json_write(ROOT / "data" / "state" / "overseas_context.json", context)
+    try:\n        from pulse_history import append_pulse_history
     except ModuleNotFoundError:
         from scripts.pulse_history import append_pulse_history
     hyperliquid = context.get("hyperliquid") if isinstance(context.get("hyperliquid"), dict) else {}
