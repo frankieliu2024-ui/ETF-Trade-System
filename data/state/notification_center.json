@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-11-09T13:56:03+08:00",
+  "updated_at": "2026-11-09T14:52:50+08:00",
   "last_status": "SENT",
-  "last_type": "REPORT_DELIVERY_REQUEST",
-  "last_title": "【ETF正式决策】",
+  "last_type": "APAC_SESSION_SUMMARY",
+  "last_title": "【收盘总结】日经225指数（N225）、韩国综合指数（KOSPI）、台湾加权指数（TWII）收盘结构，A股参考：区域分化但方向偏强",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -54352,27 +54352,52 @@
       "task_run_id": "auto-20261109-133147",
       "idempotency_key": "ETF_FORMAL_DECISION:occ-20261109-133147",
       "pushplus_template": "markdown"
-    }
-  ],
-  "recent": [
+    },
     {
-      "key": "market-value:a-share:2026-11-04:513350:DOWN:EXTREME:2026-11-04T10:47:41+08:00",
-      "type": "MARKET_VALUE_ALERT",
-      "title": "【市场异动】标普油气ETF（513350）出现极端波动 -3.14%",
-      "content": "### 核心结论\n- **事件类型**：极端波动\n- **对象/结构**：标普油气ETF（513350）\n- **当日涨跌**：-3.14%\n\n**判断**：当前幅度已进入通知层的非常规区间，可能实质改变风险偏好、风险收益或资本比较。\n\n### 对ETF系统的影响\n标普油气ETF（513350）是监测ETF。本次异动提高其注意力优先级，但只有相对强弱、风险收益和独立机会假设共同改善，才可能升级为主候选或Trial/Confirm机会。\n\n### 当前动作\n**提高观察优先级但不直接交易；等待正式机会判断形成。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-11-04 10:47:41\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。\n\n- **分钟级结构**：1分钟路径先高后低（低点10:09、高点09:30）；最近10分钟+0.00%，成交额为前10分钟1.08倍，换手活跃",
-      "source": "market_delta+CURRENT+stock_market_context+minute_context",
+      "notification_id": "notification_f1a4c6b92eff67986f8d",
+      "event_type": "APAC_SESSION_SUMMARY",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "apac-session-summary:2026-11-09:PRIMARY_CLOSE",
+      "request_id": "",
+      "parent_request_id": "",
+      "report_id": "",
+      "content_hash": "",
+      "related_decision_id": "",
+      "security_code": "",
+      "security_name": "",
       "user_severity": "需要关注",
-      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
-      "status": "SENT",
-      "attempted_at": "2026-11-04T10:48:56+08:00",
+      "user_action": "纳入A股尾盘/最近节点跨市场复核，不机械交易",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-11-09T14:52:49+08:00",
+      "sent_at": "2026-11-09T14:52:50+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-11-11T14:52:49+08:00",
+      "title": "【收盘总结】日经225指数（N225）、韩国综合指数（KOSPI）、台湾加权指数（TWII）收盘结构，A股参考：区域分化但方向偏强",
+      "content": "### 核心结论\n- **节点**：日韩台主要市场收盘后\n- **区域判断**：区域分化但方向偏强\n- **当日有效覆盖**：4/4\n- **时点语义**：日本/韩国/台湾已进入收盘结果；香港仍可能在交易\n- **日经225指数（N225）**：较前收+2.33%\n- **外部市场证据**：Hyperliquid显示全球风险偏好与成长方向、美国半导体方向、高波动半导体方向出现变化，相关外部方向出现分化，只形成部分确认；同时提示价格略低于参考价，外部买方溢价不足。对当前对象仅作方向确认和风险/时机过滤，不单独生成交易动作\n\n### 关键路径\n- **日经225指数（N225）**：开盘57,960.70，日内高59,440.18、低57,775.16，收/现价58,775.50；较开盘+1.41%，自低点修复+1.73%，距高点-1.12%，收于日内区间中部。\n- **韩国综合指数（KOSPI）**：开盘5,034.20，日内高5,172.94、低4,990.66，收/现价5,018.85；较开盘-0.30%，自低点修复+0.56%，距高点-2.98%，收于日内区间低位。\n- **台湾加权指数（TWII）**：开盘40,347.28，日内高42,349.36、低40,347.28，收/现价41,661.70；较开盘+3.26%，自低点修复+3.26%，距高点-1.62%，收于日内区间中部。\n\n### 对ETF系统的影响\n优先服务A股尾盘；若因调度或provider延迟而补发，仍保留日韩台收盘事实，但必须以真实时点解释，不能伪装成当前刚发生。；Hyperliquid仅作为方向确认、背离识别或时机/拥挤风险过滤，不单独改变交易判断。\n\n### 当前动作\n**将亚太收盘结构纳入A股尾盘/下一节点复核，重点检查相关指数、持仓ETF和观察ETF自身反馈。**\n\n### 数据与边界\n- **亚太各市场最新有效时点上限**：2026-11-09 14:52:14\n- **A股同步参考时点**：2026-11-09 14:50:09\n- **通知生成**：2026-11-09 14:52:47\n- **Hyperliquid行情时点（北京时间）**：2026-11-09 14:52:20。\n- **边界**：香港尚未收盘时必须标为盘中；不同市场真实时点不伪装同步。",
+      "source": "overseas_context+CURRENT",
+      "confirmation_context": {
+        "market_date": "2026-11-09",
+        "session_node": "PRIMARY_CLOSE",
+        "tone": "区域分化但方向偏强",
+        "coverage": 4,
+        "hstech_change_pct": -0.3776147985768308,
+        "market_as_of_beijing": "2026-11-09T14:52:14+08:00",
+        "a_share_as_of_beijing": "2026-11-09T14:50:09+08:00",
+        "continuous_state_transition": "INITIAL",
+        "continuous_state_contract": "OBJECT_LEVEL_PREVIOUS_CURRENT_TRANSITION",
+        "event_family_id": ":2026-11-09:PRIMARY_CLOSE::::"
+      },
       "response": {
         "http_status": 200,
         "pushplus_code": 200,
         "pushplus_message": "执行成功"
       },
-      "notification_id": "notification_bc53be28a4359bd84145",
-      "lifecycle_status": "SENT"
-    },
+      "last_attempted_at": "2026-11-09T14:52:50+08:00"
+    }
+  ],
+  "recent": [
     {
       "key": "report-completion:ETF_FORMAL_DECISION:auto-20261104-110253",
       "type": "REPORT_DELIVERY_REQUEST",
@@ -57954,6 +57979,24 @@
       },
       "notification_id": "notification_c7296daf2acfba82de91",
       "lifecycle_status": "SENT"
+    },
+    {
+      "key": "apac-session-summary:2026-11-09:PRIMARY_CLOSE",
+      "type": "APAC_SESSION_SUMMARY",
+      "title": "【收盘总结】日经225指数（N225）、韩国综合指数（KOSPI）、台湾加权指数（TWII）收盘结构，A股参考：区域分化但方向偏强",
+      "content": "### 核心结论\n- **节点**：日韩台主要市场收盘后\n- **区域判断**：区域分化但方向偏强\n- **当日有效覆盖**：4/4\n- **时点语义**：日本/韩国/台湾已进入收盘结果；香港仍可能在交易\n- **日经225指数（N225）**：较前收+2.33%\n- **外部市场证据**：Hyperliquid显示全球风险偏好与成长方向、美国半导体方向、高波动半导体方向出现变化，相关外部方向出现分化，只形成部分确认；同时提示价格略低于参考价，外部买方溢价不足。对当前对象仅作方向确认和风险/时机过滤，不单独生成交易动作\n\n### 关键路径\n- **日经225指数（N225）**：开盘57,960.70，日内高59,440.18、低57,775.16，收/现价58,775.50；较开盘+1.41%，自低点修复+1.73%，距高点-1.12%，收于日内区间中部。\n- **韩国综合指数（KOSPI）**：开盘5,034.20，日内高5,172.94、低4,990.66，收/现价5,018.85；较开盘-0.30%，自低点修复+0.56%，距高点-2.98%，收于日内区间低位。\n- **台湾加权指数（TWII）**：开盘40,347.28，日内高42,349.36、低40,347.28，收/现价41,661.70；较开盘+3.26%，自低点修复+3.26%，距高点-1.62%，收于日内区间中部。\n\n### 对ETF系统的影响\n优先服务A股尾盘；若因调度或provider延迟而补发，仍保留日韩台收盘事实，但必须以真实时点解释，不能伪装成当前刚发生。；Hyperliquid仅作为方向确认、背离识别或时机/拥挤风险过滤，不单独改变交易判断。\n\n### 当前动作\n**将亚太收盘结构纳入A股尾盘/下一节点复核，重点检查相关指数、持仓ETF和观察ETF自身反馈。**\n\n### 数据与边界\n- **亚太各市场最新有效时点上限**：2026-11-09 14:52:14\n- **A股同步参考时点**：2026-11-09 14:50:09\n- **通知生成**：2026-11-09 14:52:47\n- **Hyperliquid行情时点（北京时间）**：2026-11-09 14:52:20。\n- **边界**：香港尚未收盘时必须标为盘中；不同市场真实时点不伪装同步。",
+      "source": "overseas_context+CURRENT",
+      "user_severity": "需要关注",
+      "user_action": "纳入A股尾盘/最近节点跨市场复核，不机械交易",
+      "status": "SENT",
+      "attempted_at": "2026-11-09T14:52:50+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_f1a4c6b92eff67986f8d",
+      "lifecycle_status": "SENT"
     }
   ],
   "pending_questions": [
@@ -57963,6 +58006,6 @@
     "notification_d5f3ea1194565824a934",
     "notification_fd7763215037ab96f889"
   ],
-  "policy": "只推送会改变用户关注、风险许可、机会状态、持仓动作、执行确认或系统可靠性的实质事件；总资产/市值/浮动盈亏等纯盯市变化不作为账户异常；同一实质账户事件和同一正式decision_id不得重复推送；收盘账户提醒仅在A股交易日触发。",
-  "safety_boundary": "通知中心只转发已有正式判断，不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"
+  "policy": "canonical bounded market notification batch",
+  "safety_boundary": "通知只总结已取得的行情、账户、研究或系统事实；不生成自动交易，不修改MASTER、风险许可、金额或卖出份额。"
 }
