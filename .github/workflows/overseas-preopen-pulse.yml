@@ -103,6 +103,8 @@ jobs:
               raise SystemExit("Hyperliquid pulse reused the previous generation identity")
           print({"generation_identity": current, "previous": previous or None})
           PY
+      - name: Generate read-only Hyperliquid mapping shadow graph
+        run: python scripts/build_hyperliquid_mapping_shadow.py
       - name: Refresh US extended-hours context
         if: ${{ steps.pulse_gate.outputs.eligible == 'true' }}
         run: python scripts/build_us_extended_hours_context.py
@@ -129,6 +131,7 @@ jobs:
           [ -f data/state/overseas_context_previous.json ] && git add data/state/overseas_context_previous.json || true
           [ -f data/state/hyperliquid_pulse_index.json ] && git add data/state/hyperliquid_pulse_index.json || true
           [ -f data/state/hyperliquid_pulse_latest.json ] && git add data/state/hyperliquid_pulse_latest.json || true
+          [ -f data/state/hyperliquid_mapping_shadow.json ] && git add data/state/hyperliquid_mapping_shadow.json || true
           [ -f data/state/discovery_pulse_latest.json ] && git add data/state/discovery_pulse_latest.json || true
           if git diff --cached --quiet; then
             exit 0
