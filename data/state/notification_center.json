@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-11-09T13:02:56+08:00",
-  "last_status": "AGGREGATED_INTO_EXISTING",
+  "updated_at": "2026-11-09T13:05:35+08:00",
+  "last_status": "SENT",
   "last_type": "MARKET_VALUE_ALERT",
-  "last_title": "【市场异动】韩国综合指数（KOSPI）出现极端波动 +1.70%",
+  "last_title": "【市场异动】科创50（000688）冲高明显回吐",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -54207,27 +54207,64 @@
       "task_run_id": "scheduled-trade-review-20261109-1229",
       "idempotency_key": "ETF_TRADE_REVIEW:scheduled-trade-review-20261109-1229",
       "pushplus_template": "markdown"
-    }
-  ],
-  "recent": [
+    },
     {
-      "key": "market-value:asia:2026-11-04:N225:DOWN:EXTREME:2026-11-04T10:27:52+08:00",
-      "type": "MARKET_VALUE_ALERT",
-      "title": "【市场异动】日经225指数（N225）出现极端波动 -3.59%",
-      "content": "### 核心结论\n- **事件类型**：极端波动\n- **对象/结构**：日经225指数（N225）\n- **较前收**：-3.59%\n\n**判断**：当前幅度已进入通知层的非常规区间，可能实质改变风险偏好、风险收益或资本比较。\n\n### 对ETF系统的影响\n日经225指数（N225）属于海外/区域结构证据。先看A股本地价格是否接受、减弱或背离，再复核日经ETF（513520）的自身反馈、当前主候选和边际资本效率；若海外与A股背离，以A股自身反馈为主。\n\n### 当前动作\n**把该信号纳入最近A股正式节点复核，不因单一海外/区域对象机械调整A股仓位。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-11-04 10:27:52\n- **边界**：市场归属只用于数据时点和传导解释，不决定通知资格。门槛已适度放宽；同一事实依靠去重和升级识别控制重复。",
-      "source": "data/state/overseas_context.json",
+      "notification_id": "notification_3be2eb1cdc0f0a4b68a7",
+      "event_type": "MARKET_VALUE_ALERT",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "market-value:a-share:2026-11-09:000688:DOWN:REVERSAL:2026-11-09T13:04:39+08:00",
+      "request_id": "",
+      "parent_request_id": "",
+      "report_id": "",
+      "content_hash": "",
+      "related_decision_id": "",
+      "security_code": "000688",
+      "security_name": "科创50",
       "user_severity": "需要关注",
-      "user_action": "纳入最近A股决策节点重新验证，不机械交易",
-      "status": "SENT",
-      "attempted_at": "2026-11-04T10:28:44+08:00",
+      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-11-09T13:05:34+08:00",
+      "sent_at": "2026-11-09T13:05:35+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-11-11T13:05:34+08:00",
+      "title": "【市场异动】科创50（000688）冲高明显回吐",
+      "content": "### 核心结论\n- **事件类型**：方向反转\n- **对象/结构**：科创50（000688）\n- **最近脉冲变化**：-0.43%\n- **关键结构**：盘中一度较前收+1.93%，当前回落至+0.26%\n\n**判断**：行情先形成足够大的单向日内幅度，随后大幅回吐或修复，原先的单向市场解释可能已经失效。；Hyperliquid补充：XYZ100代表全球风险偏好与成长方向，与该ETF属于行业或产业链级间接映射，当前价格偏强；SMH代表美国半导体方向，与该ETF属于行业或产业链级间接映射，当前价格偏弱；SOXL代表高波动半导体方向，与该ETF属于行业或产业链级间接映射，当前价格偏弱；DRAM代表全球存储方向，与该ETF属于行业或产业链级间接映射，当前价格偏弱。外部对象方向出现分化，只能形成部分确认，不能视为一致性看多信号。同时，外部方向偏强；价格略低于参考价，外部买方溢价不足；做多一侧向做空一侧支付持仓成本，市场做多押注相对更急。对当前ETF的直接含义是：当前只用于方向确认和风险/时机过滤，不支持单独提高看多判断或生成交易动作。（Hyperliquid采集时间：2026-11-09 13:02:31）\n\n### 对ETF系统的影响\n科创50（000688）代表A股本地风险偏好或风格结构变化。先看变化是否扩散到当前持仓/观察ETF，再判断候选和资本效率是否真正改变。\n\n### 当前动作\n**先验证ETF层是否接受该指数信号；不因指数单一波动机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-11-09 13:04:39\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。\n",
+      "source": "market_delta+CURRENT+stock_market_context",
+      "confirmation_context": {
+        "market": "A_SHARE",
+        "market_date": "2026-11-09",
+        "direction": "DOWN",
+        "event_category": "REVERSAL",
+        "asset_class": "A_SHARE_INDEX",
+        "day_change_pct": 0.2649218001915088,
+        "sudden_change_pct": -0.4302864614287416,
+        "interval_minutes": 15.416666666666666,
+        "event_magnitude_pct": 1.9262687519948862,
+        "market_as_of_beijing": "2026-11-09T13:04:39+08:00",
+        "source_fact_id": "2026-11-09:000688:REVERSAL:DOWN:2026-11-09T13:04:39+08:00",
+        "structure_cluster_id": "A_SHARE_TECH_GROWTH_EPISODE",
+        "structure_cluster_members": [
+          "000688",
+          "159781",
+          "399006",
+          "588000"
+        ],
+        "structure_cluster_scope": "EXPLICIT_SAME_EPISODE_ONLY",
+        "continuous_state_transition": "INITIAL",
+        "continuous_state_contract": "OBJECT_LEVEL_PREVIOUS_CURRENT_TRANSITION",
+        "event_family_id": "A_SHARE:2026-11-09:A_SHARE:000688:REVERSAL:DOWN:A_SHARE_TECH_GROWTH_EPISODE"
+      },
       "response": {
         "http_status": 200,
         "pushplus_code": 200,
         "pushplus_message": "执行成功"
       },
-      "notification_id": "notification_3f7e808494511f0431a4",
-      "lifecycle_status": "SENT"
-    },
+      "last_attempted_at": "2026-11-09T13:05:35+08:00"
+    }
+  ],
+  "recent": [
     {
       "key": "market-value:a-share:2026-11-04:399006:DOWN:REVERSAL:2026-11-04T10:28:15+08:00",
       "type": "MARKET_VALUE_ALERT",
@@ -57809,6 +57846,24 @@
       },
       "notification_id": "notification_3bc0606dc9ad0c8c1215",
       "lifecycle_status": "SENT"
+    },
+    {
+      "key": "market-value:a-share:2026-11-09:000688:DOWN:REVERSAL:2026-11-09T13:04:39+08:00",
+      "type": "MARKET_VALUE_ALERT",
+      "title": "【市场异动】科创50（000688）冲高明显回吐",
+      "content": "### 核心结论\n- **事件类型**：方向反转\n- **对象/结构**：科创50（000688）\n- **最近脉冲变化**：-0.43%\n- **关键结构**：盘中一度较前收+1.93%，当前回落至+0.26%\n\n**判断**：行情先形成足够大的单向日内幅度，随后大幅回吐或修复，原先的单向市场解释可能已经失效。；Hyperliquid补充：XYZ100代表全球风险偏好与成长方向，与该ETF属于行业或产业链级间接映射，当前价格偏强；SMH代表美国半导体方向，与该ETF属于行业或产业链级间接映射，当前价格偏弱；SOXL代表高波动半导体方向，与该ETF属于行业或产业链级间接映射，当前价格偏弱；DRAM代表全球存储方向，与该ETF属于行业或产业链级间接映射，当前价格偏弱。外部对象方向出现分化，只能形成部分确认，不能视为一致性看多信号。同时，外部方向偏强；价格略低于参考价，外部买方溢价不足；做多一侧向做空一侧支付持仓成本，市场做多押注相对更急。对当前ETF的直接含义是：当前只用于方向确认和风险/时机过滤，不支持单独提高看多判断或生成交易动作。（Hyperliquid采集时间：2026-11-09 13:02:31）\n\n### 对ETF系统的影响\n科创50（000688）代表A股本地风险偏好或风格结构变化。先看变化是否扩散到当前持仓/观察ETF，再判断候选和资本效率是否真正改变。\n\n### 当前动作\n**先验证ETF层是否接受该指数信号；不因指数单一波动机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-11-09 13:04:39\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。\n",
+      "source": "market_delta+CURRENT+stock_market_context",
+      "user_severity": "需要关注",
+      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
+      "status": "SENT",
+      "attempted_at": "2026-11-09T13:05:35+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_3be2eb1cdc0f0a4b68a7",
+      "lifecycle_status": "SENT"
     }
   ],
   "pending_questions": [
@@ -57819,5 +57874,5 @@
     "notification_fd7763215037ab96f889"
   ],
   "policy": "canonical bounded market notification batch",
-  "safety_boundary": "通知中心只转发已有正式判断，不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"
+  "safety_boundary": "通知只总结已取得的行情、账户、研究或系统事实；不生成自动交易，不修改MASTER、风险许可、金额或卖出份额。"
 }
