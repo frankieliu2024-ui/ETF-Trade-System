@@ -113,60 +113,38 @@ def _mapping_rows(text: str, context: dict[str, Any]) -> list[tuple[dict[str, An
 
 
 def explain_for_notification(*, text: str, target: str = "") -> str:
-    """Return a plain-language explanation; never exposes raw machine fields."""
+    """Return a compact contribution; never expose object-by-object rows."""
     context = read_json(ROOT / "data/state/overseas_context.json", {})
     rows = _mapping_rows(f"{text} {target}", context)
     if not rows:
-        return "本次已检查Hyperliquid，但没有发现与当前通知对象形成可确认的直接或行业级映射；因此不把缺少外部映射误读为利空或利多，也不改变当前判断。"
+        return "本轮Hyperliquid未形成与当前对象可确认的直接或行业级增量信号，不改变当前判断"
 
-    descriptions = []
     directions = []
+    families = []
     risk_flags = []
-    for mapping, obs in rows[:4]:
-        asset = str(mapping.get("asset") or "").split(":")[-1]
-        family = FAMILY_LABELS.get(str(mapping.get("family") or ""), str(mapping.get("family") or "相关外部方向"))
+    for mapping, obs in rows:
+        family = FAMILY_LABELS.get(str(mapping.get("family") or ""), "相关外部方向")
+        if family not in families:
+            families.append(family)
         ctx = obs.get("context") or {}
         direction = _direction(ctx.get("markPx"), ctx.get("prevDayPx"))
         directions.append(direction)
-        if direction == "价格偏强":
-            risk_flags.append("外部方向偏强")
-        elif direction == "价格偏弱":
-            risk_flags.append("外部方向偏弱")
-        target_text = target or "当前ETF"
-        family_key = str(mapping.get("family") or "")
-        if family_key == "BIOTECH" and any(x in target_text for x in ("创新药", "医药", "生物")):
-            relation_text = "与该ETF直接对应产业方向"
-        elif mapping.get("etf_codes") and any(str(x) in target_text for x in mapping.get("etf_codes") or []):
-            relation_text = "与该ETF直接映射"
-        else:
-            relation_text = "与该ETF属于行业或产业链级间接映射"
-        descriptions.append(f"{asset}代表{family}，{relation_text}，当前{direction}")
-        funding = _funding_text(ctx.get("funding"))
         premium = _premium_text(ctx.get("premium"))
-        risk_flags.append(premium)
-        if funding != "多空双方持仓成本接近中性":
+        if premium not in risk_flags and premium != "价格基本贴近参考价":
+            risk_flags.append(premium)
+        funding = _funding_text(ctx.get("funding"))
+        if funding != "多空双方持仓成本接近中性" and funding not in risk_flags:
             risk_flags.append(funding)
-        risk_flags.append(_open_interest_text(ctx.get("openInterest"), direction))
-        crowding = _crowding_text(obs)
-        if crowding not in {"未形成可确认的拥挤度结论", ""}:
-            risk_flags.append(f"拥挤情况：{crowding}")
 
-    if any(x == "价格偏强" for x in directions) and any(x == "价格偏弱" for x in directions):
-        relation = "外部对象方向出现分化，只能形成部分确认，不能视为一致性看多信号"
-    elif all(x == "价格偏强" for x in directions):
-        relation = "外部相关方向整体偏强，形成方向上的辅助确认"
-    elif all(x == "价格偏弱" for x in directions):
-        relation = "外部相关方向整体偏弱，形成压制或风险过滤"
+    if directions and all(x == "价格偏强" for x in directions):
+        relation = "相关外部方向整体偏强，形成辅助确认"
+    elif directions and all(x == "价格偏弱" for x in directions):
+        relation = "相关外部方向整体偏弱，形成压制或风险过滤"
+    elif any(x in {"价格偏强", "价格偏弱"} for x in directions):
+        relation = "相关外部方向出现分化，只形成部分确认"
     else:
-        relation = "外部方向暂不一致，主要用于时机过滤"
+        relation = "相关外部方向暂不明确，主要用于时机过滤"
 
-    risk = "；".join(dict.fromkeys(risk_flags[:3]))
-    if risk:
-        risk = "同时，" + risk
-    return (
-        "；".join(descriptions) + "。"
-        + relation + "。"
-        + (risk + "。" if risk else "")
-        + f"对{target or '当前ETF'}的直接含义是：当前只用于方向确认和风险/时机过滤，不支持单独提高看多判断或生成交易动作。"
-    )
-
+    family_text = "、".join(families[:3])
+    risk_text = f"同时提示{risk_flags[0]}" if risk_flags else "暂未形成明确拥挤或溢价风险"
+    return f"Hyperliquid显示{family_text}出现变化，{relation}；{risk_text}。对当前对象仅作方向确认和风险/时机过滤，不单独生成交易动作"
