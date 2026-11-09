@@ -1,12 +1,14 @@
-from scripts.hyperliquid_user_explanation import _fixed_etf_labels
+from scripts.hyperliquid_user_explanation import explain_for_notification
 
 
-def test_semiconductor_notification_mapping_excludes_nasdaq_etf():
-    labels = _fixed_etf_labels({"family": "SEMICONDUCTOR"})
-    assert "159941" not in " ".join(labels)
-    assert any(code in " ".join(labels) for code in ("159781", "515880", "159326", "588000"))
+def test_notification_does_not_rebuild_mapping_from_family():
+    text = explain_for_notification(text="SOX费城半导体指数出现极端波动", target="SOX")
+    assert "没有当前对象的固定ETF绑定" in text or "SOX" in text
 
 
-def test_global_risk_mapping_keeps_nasdaq_etf():
-    labels = _fixed_etf_labels({"family": "GLOBAL_RISK_APPETITE"})
-    assert "159941" in " ".join(labels)
+def test_notification_contract_uses_contribution_effect_labels():
+    source = open("scripts/hyperliquid_user_explanation.py", encoding="utf-8").read()
+    assert "etf_bindings" in source
+    assert "decision_effect" in source
+    assert "CROWDING_RISK" in source
+    assert "10分钟变化" in source
