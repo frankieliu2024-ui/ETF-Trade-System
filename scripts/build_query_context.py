@@ -1612,9 +1612,15 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
                 "section_title": "【三层监测】",
                 "layer_1_external_cross_market": "Keep a compact visible Layer 1 with only decision-relevant external/cross-market facts, their actual market phase/data-time semantics, and how they affect this decision.",
                 "layer_2_a_share_internal_feedback": "Keep a compact visible Layer 2 with decision-relevant A-share breadth/style/industry/structure/liquidity evidence and explicitly state whether A-share feedback confirms, rejects, amplifies, weakens, or diverges from Layer 1.",
-                "layer_3_etf_object_opportunity_capital_evidence": "Keep a compact visible Layer 3 with ETF/object-level opportunity and capital-evidence deltas needed to explain the decision. Do not repeat per-position final actions, the full Discovery/Observation disposition list, or the full capital competition; those remain in their dedicated downstream sections.",
+                "layer_3_etf_object_opportunity_capital_evidence": "Keep a compact visible Layer 3 with only aggregate ETF/object opportunity and capital-evidence deltas needed to explain the decision. Do not place Hyperliquid node metadata, object-level Hyperliquid conclusions, per-position final actions, the full Discovery/Observation disposition list, or the full capital competition here; those remain in their dedicated downstream sections.",
                 "degradation_rule": "If any layer is degraded/unavailable, state the localized degradation and whether it changes the decision; never translate an empty/failed optional interface into no risk/no flow/no opportunity.",
-                "anti_duplication_rule": "Visible three-layer monitoring is an evidence summary only. It must not recreate Discovery, Observation management, Position Review, or Capital Competition as duplicate business stages.",
+                "anti_duplication_rule": "Visible three-layer monitoring is an evidence summary only. It must not recreate Discovery, Observation management, Opportunity ETF, Position Review, or Capital Competition as duplicate business stages. Hyperliquid read status/time boundary/quality/coverage belongs in the task's time-and-fact-boundary section; Hyperliquid support/contradiction/timing/crowding/unusable conclusions belong immediately inside each corresponding Discovery, Observation ETF, Opportunity ETF, and actual-holding object section.",
+            },
+            "hyperliquid_visible_placement_contract": {
+                "fact_boundary_section": "Formal Decision: 【判断时点与事实边界】; Trade Review: 【复盘与数据时点（北京时间）】",
+                "object_sections": ["【全市场发现】", "【观察ETF】", "【机会ETF】", "【全部实际持仓】"],
+                "monitoring_exclusion": "【市场监测】/【三层监测】不得承载Hyperliquid整体读取状态、时间边界、质量、覆盖、观测数量、映射状态或对象级结论。",
+                "object_conclusion_requirement": "每个实际形成的对象在自身章节内明确写出Hyperliquid属于支持、矛盾、时机过滤、拥挤/定价偏离或无法用于判断，并说明对该对象动作或资本竞争的影响。",
             },
             "compression_rule": "Compress raw provider/plugin dumps and unchanged evidence, not the three visible layer identities or business conclusions. Every actual holding remains individually visible in its dedicated section. The three-layer section preserves compact decision-relevant evidence and deltas without duplicating downstream Discovery, position actions, or capital competition.",
             "projection_rule": "The user-visible reply must faithfully project the same request-bound Business Decision Source and must not introduce a different candidate, action, amount, capital destination, holding disposition, or next-unit capital use.",
@@ -2381,4 +2387,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
 

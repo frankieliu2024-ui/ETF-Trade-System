@@ -343,6 +343,68 @@ def _formal_holding_items(section: str) -> list[str]:
     return items
 
 
+def _hyperliquid_placement_errors(content: str) -> list[str]:
+    """Keep Hyperliquid node metadata and object conclusions in their owners.
+
+    The market-monitoring section is an aggregate evidence summary.  It must not
+    become a second Hyperliquid report or a substitute for the four dedicated
+    object sections.  This is intentionally a placement check, not a market
+    judgment and not a requirement to infer missing facts.
+    """
+    text = normalize_formal_decision_content(content)
+    if "Hyperliquid" not in text:
+        return []
+    formal = text.startswith("【ETF正式决策】")
+    if formal:
+        boundary_heading = "【判断时点与事实边界】"
+        monitor_heading = "【市场监测】"
+        if monitor_heading not in text:
+            monitor_heading = "【三层监测】"
+    elif text.startswith("【ETF交易复盘】"):
+        boundary_heading = "【复盘与数据时点（北京时间）】"
+        monitor_heading = "【三层监测】"
+    else:
+        return []
+
+    boundary = _formal_section_content(text, boundary_heading)
+    monitor = _formal_section_content(text, monitor_heading)
+    errors: list[str] = []
+    metadata_terms = (
+        "读取状态", "采集时间", "事实身份", "context_id", "时间边界", "质量状态",
+        "观测数量", "覆盖范围", "映射状态", "ETF映射", "刷新失败", "无实时观测",
+    )
+    if not boundary:
+        errors.append("hyperliquid_metadata_missing_fact_boundary_section")
+    elif not _has_any(boundary, ("Hyperliquid",)):
+        errors.append("hyperliquid_metadata_missing_fact_boundary_statement")
+    leaked_metadata = [term for term in metadata_terms if term in monitor]
+    if leaked_metadata:
+        errors.append("hyperliquid_metadata_must_not_be_in_monitoring_section:" + ",".join(leaked_metadata))
+
+    # Object-level conclusions may be mentioned in monitoring only as an
+    # aggregate cross-market summary, never as the object's direct action.
+    # Dedicated sections are checked for the presence of an explicit category
+    # when the report actually presents a Hyperliquid object conclusion.
+    object_sections = (
+        ("【全市场发现】", "【全市场发现逐只评估】"),
+        ("【观察ETF】", "【观察ETF逐只评估】"),
+        ("【机会ETF】", "【机会ETF逐只评估】"),
+        ("【全部实际持仓】", "【全部实际持仓】"),
+    )
+    direct_conclusion_terms = ("支持", "矛盾", "时机过滤", "拥挤", "定价偏离", "无法用于判断")
+    has_direct_conclusion = _has_any(text, direct_conclusion_terms)
+    if has_direct_conclusion:
+        present = 0
+        for primary, alias in object_sections:
+            if primary in text or alias in text:
+                section = _formal_section_content(text, primary if primary in text else alias)
+                if "Hyperliquid" in section and _has_any(section, direct_conclusion_terms):
+                    present += 1
+        if present == 0:
+            errors.append("hyperliquid_object_conclusion_missing_dedicated_object_section")
+    return errors
+
+
 def _has_any(text: str, terms: tuple[str, ...]) -> bool:
     return any(term in text for term in terms)
 
@@ -513,6 +575,7 @@ def validate_user_visible_content(
     errors.extend(_formal_object_numbering_errors(text))
     errors.extend(_formal_required_sections_errors(text))
     errors.extend(formal_decision_semantic_errors(text))
+    errors.extend(_hyperliquid_placement_errors(text))
     errors.extend(_time_presentation_errors(text))
     if not technical_audit_mode:
         for term in _internal_presentation_terms(text):
@@ -635,3 +698,4 @@ def build_formal_decision_presentation_binding(
         "technical_audit_mode": bool(technical_audit_mode),
     })
     return result
+
