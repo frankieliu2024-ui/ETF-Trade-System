@@ -13,7 +13,7 @@ Hyperliquid对象级消费账本与用户主动通知是两个层级。对象有
 
 正式判断涉及Discovery、观察ETF、机会ETF或实际持仓时，必须对每个实际需要评估的对象执行一次对象级映射：
 
-- 关联的Hyperliquid资产及经济暴露族群；映射类型必须区分DIRECT_CODE、ECONOMIC_FAMILY和NAME_MARKER_INFERRED；行业/族群映射必须进一步解析到当前ETF对象集合，不能停留在空的对象字段；
+- 关联的Hyperliquid资产及经济暴露族群；映射类型必须区分DIRECT_CODE、ECONOMIC_FAMILY和NAME_MARKER_INFERRED；行业/族群映射必须进一步解析到当前ETF对象集合，不能停留在空的对象字段；解析范围包括实际持仓、观察ETF、当前Discovery候选和本节点机会评估对象，不能因对象尚未进入观察池而排除；
 - mapping_reason：为什么该资产可以代表该ETF或持仓的外部暴露；
 - observation_as_of：采集完成时间及北京时间；
 - provider_timestamp_status：若接口不提供事件时间，必须明确使用可见状态边界，不得伪造事件时间；
