@@ -748,6 +748,7 @@ def main() -> None:
         context={"latest": hyperliquid, "mapping": hyperliquid.get("mapping")},
         task="PULSE",
     )
+    hyperliquid["contribution_package"] = contribution
     hyperliquid["etf_bindings"] = contribution.get("mapped_objects") or []
     hyperliquid["binding_candidates"] = contribution.get("mapping_candidates") or []
     hyperliquid["binding_status"] = contribution.get("mapping_coverage_status") or "MISSING"

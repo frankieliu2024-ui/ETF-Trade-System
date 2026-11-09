@@ -270,6 +270,12 @@ def build_contribution(*, context: dict | None, node: str = "", task: str = "") 
             "consumption_status": item.get("consumption_status") or (
                 "CONSUMED" if assets or item.get("family") else "CONSUMED_AS_LIMITATION"
             ),
+            "direction_signal": current_signal.get("direction") or "UNDETERMINED",
+            "direction_signal_reason": current_signal.get("direction_source") or "无法判断：缺少当前价格或前日参考价格",
+            "positioning_signal": current_signal.get("positioning_signal") or "UNDETERMINED",
+            "pricing_signal": current_signal.get("pricing_signal") or "UNDETERMINED",
+            "crowding_signal": current_signal.get("crowding_signal") or "UNDETERMINED",
+            "cross_market_relation": item.get("cross_market_relation") or "UNDETERMINED：缺少A股同步事实",
             "decision_effect": current_effect,
             "signal_fields": current_signal,
             "evidence_summary": item.get("evidence_summary") or current_signal,
