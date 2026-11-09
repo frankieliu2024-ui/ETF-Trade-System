@@ -104,13 +104,28 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
                 "mark_px": str(context.get("markPx") or ""),
             }
             pulse_delta = {}
+            pulse_delta_pct = {}
             for key, current in current_values.items():
                 now_value = _number(current)
                 old_value = _number(previous.get(key))
                 if now_value is None or old_value is None:
                     pulse_delta[key] = None
+                    pulse_delta_pct[key] = None
                 else:
                     pulse_delta[key] = now_value - old_value
+                    pulse_delta_pct[key] = None if old_value == 0 else (now_value - old_value) / abs(old_value)
+            current_as_of = _parse(str(item.get("collected_at_beijing") or ""))
+            previous_as_of = _parse(str(previous.get("observation_as_of") or ""))
+            comparison_age_seconds = (
+                int((current_as_of - previous_as_of).total_seconds())
+                if current_as_of and previous_as_of and current_as_of >= previous_as_of else None
+            )
+            comparison_horizon = (
+                "INTRADAY_10M" if comparison_age_seconds is not None and comparison_age_seconds <= 15 * 60
+                else "INTRADAY_SHORT" if comparison_age_seconds is not None and comparison_age_seconds < 2 * 60 * 60
+                else "OVERNIGHT_OR_LONG_GAP" if comparison_age_seconds is not None
+                else "UNKNOWN"
+            )
 
             mark = _number(current_values["mark_px"])
             prev_day = _number(context.get("prevDayPx"))
@@ -172,8 +187,14 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
                 "mid_px": str(context.get("midPx") or ""),
                 "prev_day_px": str(context.get("prevDayPx") or ""),
                 "previous_pulse_as_of": str(previous.get("observation_as_of") or ""),
-                "pulse_comparison_status": "COMPARABLE" if previous else "SINGLE_PULSE_ONLY",
+                "pulse_comparison_status": "COMPARABLE" if previous and comparison_age_seconds is not None else "NOT_COMPARABLE",
+                "comparison_reason": "" if previous and comparison_age_seconds is not None else (
+                    "缺少同对象上一合法脉冲" if not previous else "当前或上一脉冲缺少合法对象时间"
+                ),
+                "comparison_age_seconds": comparison_age_seconds,
+                "comparison_horizon": comparison_horizon,
                 "pulse_delta": pulse_delta,
+                "pulse_delta_pct": pulse_delta_pct,
                 "positioning_signal": positioning_signal,
                 "funding_signal": funding_signal,
                 "pricing_signal": pricing_signal,
