@@ -75,7 +75,7 @@ class ThreeTaskNotificationE2EFaultInjectionTests(unittest.TestCase):
         self.assertIn('TRADE_REVIEW)', workflow)
         self.assertIn('echo "scheduled_review_completion=true"', workflow)
         self.assertIn("explicit", workflow)
-        self.assertIn("completion-owner dispatch", workflow)
+        self.assertIn("scheduled_review_completion_path", workflow)
 
     def test_task_identity_and_report_type_are_not_crossed(self):
         expected = {
