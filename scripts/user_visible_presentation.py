@@ -545,6 +545,10 @@ def normalize_formal_decision_content(content: str) -> str:
     text = str(content or "").strip()
     if not text:
         return ""
+    # Model-generated reports occasionally leak a markdown escape backslash at
+    # the end of a line ("\\\\\\n"). It has no business meaning and must not
+    # reach the frozen user-visible body or its content hash.
+    text = re.sub(r"\\(?=\\n)", "", text)
     lines = text.splitlines()
     first = lines[0].strip()
     if first and len(lines) > 1 and lines[1].strip() == first:
