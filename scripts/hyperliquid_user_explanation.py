@@ -148,4 +148,3 @@ def explain_for_notification(*, text: str, target: str = "") -> str:
     family_text = "、".join(families[:3])
     risk_text = f"同时提示{risk_flags[0]}" if risk_flags else "暂未形成明确拥挤或溢价风险"
     return f"Hyperliquid显示{family_text}出现变化，{relation}；{risk_text}。对当前对象仅作方向确认和风险/时机过滤，不单独生成交易动作"
-\n
