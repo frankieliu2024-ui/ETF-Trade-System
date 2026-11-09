@@ -8,6 +8,7 @@ import re
 from pathlib import Path
 
 try:
+    from formal_entry_contract import formal_decision_title
     from runtime_session_gate import classify_live_snapshot_request
     from task_runtime_identity import derive_runtime_identity, derive_scheduled_review_identity
     from process_state_sync_request import (
@@ -324,9 +325,11 @@ def validate_formal_decision_presentation_timestamp(final_content: str, requeste
     requested = str(requested_at_beijing or "").strip()
     if not requested:
         raise ValueError("formal decision completion requires requested_at_beijing")
-    request_minute = requested[:16].replace("T", " ")
     first_line = content.splitlines()[0].strip() if content.splitlines() else ""
-    expected_prefix = f"【ETF正式决策】{request_minute} "
+    match = re.match(r"^【ETF正式决策】(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}) (正式判断|降级判断|超时判断)$", first_line)
+    if not match:
+        raise ValueError("formal decision presentation title has invalid timestamp or decision path")
+    expected_prefix = formal_decision_title(requested, match.group(2))[:-4]
     if not first_line.startswith(expected_prefix):
         raise ValueError("formal decision presentation title does not match current request timestamp")
     if not first_line.endswith(("正式判断", "降级判断", "超时判断")):
