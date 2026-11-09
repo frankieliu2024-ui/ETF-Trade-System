@@ -28,15 +28,9 @@ def _economic_etf_matches(mapping: dict) -> list[str]:
         discovery = json.loads((ROOT / "data/state/formal_discovery_current.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):
         discovery = {}
-    # Discovery candidates are valid mapping targets even before they become
-    # persistent observation ETFs. This prevents the mapping layer from
-    # confusing "not admitted yet" with "no economic relationship".
-    for candidate in discovery.get("candidates") or []:
-        if isinstance(candidate, dict):
-            objects.append({
-                "code": candidate.get("code"),
-                "name": candidate.get("name") or candidate.get("display_name"),
-            })
+    # Mapping is deliberately fixed to the canonical monitored ETF universe.
+    # Discovery candidates are not added here: a temporary candidate must not
+    # silently create or expand a Hyperliquid ETF mapping.
     markers = [str(x).strip() for x in (mapping.get("name_markers") or []) if str(x).strip()]
     excluded = [str(x).strip() for x in (mapping.get("exclude_name_markers") or []) if str(x).strip()]
     if not markers:
