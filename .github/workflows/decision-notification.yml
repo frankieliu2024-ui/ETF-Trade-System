@@ -1066,8 +1066,14 @@ if report_type == "ETF_FORMAL_DECISION" or legacy_formal:
     _, idempotent, event_path = record_formal_decision_report_event(payload)
     print(json.dumps({"canonical_publication": event_path, "idempotent": idempotent}, ensure_ascii=False))
 else:
-    result = __import__("scripts.process_state_sync_request", fromlist=["process_state_sync_request"]).process_state_sync_request(path)
-    print(json.dumps(result, ensure_ascii=False))
+    import subprocess
+    result = subprocess.run(
+        [sys.executable, "scripts/process_state_sync_request.py", str(path)],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    print(result.stdout.strip())
 PY
 )
             REVIEW_EVENT_PATH=$(python -c 'import json,sys; print(json.loads(sys.argv[1]).get("canonical_publication", ""))' "$projection")
