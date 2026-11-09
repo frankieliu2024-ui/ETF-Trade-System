@@ -499,7 +499,7 @@ def _pulse_object_impact(source: str, related_text: str, added: list[str], remov
     objects = related_text or "相关ETF对象"
     if source == "discovery_pulse":
         changed = "、".join((added + removed)[:6]) or objects
-        return f"对ETF系统的具体价值是：把{changed}这类候选变化提前交给正式决策，与现金、现有持仓和观察ETF比较；它改变的是下一节点的核对重点，不等于已经出现买入机会。"
+        return f"对ETF系统的直接建议是：将{changed}默认列为优先买入建议对象，立即与现金、现有持仓和观察ETF比较；只有明确反证才降级或否决。该建议需要用户确认，不自动下单。"
     return f"对ETF系统的具体价值是：为{objects}提供A股交易时段之外的方向、时机或拥挤风险线索；下一次正式判断要先核对这些ETF自身是否同步，再决定维持观察、继续持有或调整机会排序，不把外部资产直接当成A股ETF。"
 
 
@@ -663,17 +663,20 @@ def _hyperliquid_evidence_text(asset: str, labels: list[str], before: dict, afte
     if direction == "negative" or any(word in change for word in risk_words):
         effect = "对上述ETF属于压制或风险过滤，不支持直接提高看多判断"
         use = "当前只用于风险过滤"
+        recommendation = "建议维持观察或降低新增优先级"
     elif direction == "positive":
         effect = "对上述ETF属于方向支持，但仍需结合ETF自身走势确认"
         use = "当前用于方向确认和时机判断"
+        recommendation = "建议提高买入评估优先级，但仍需核对ETF自身承接"
     else:
         effect = "对上述ETF暂不能归类为支持或压制，只能作为观察线索"
         use = "当前只用于观察"
+        recommendation = "建议暂不据此升级买入，等待可比方向或价格信号"
     target = "、".join(labels)
     return (
         f"{asset.split(':', 1)[-1]}代表{family_text.get(family, '相关外部市场方向')}，与{target}{relation_text}；"
         f"本次变化为{direction_text}，同时{change}；"
-        f"对{target}的直接含义是：{effect}，{use}。"
+        f"对{target}的直接含义是：{effect}，{use}；直接建议：{recommendation}。"
     )
 
 
@@ -813,23 +816,11 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
         if re.search(r"[（(](\d{6})[）)]", text)
     }
     overlap = discovery_codes & hl_codes
-    # Discovery candidates remain user-visible even when Hyperliquid has no
-    # same-ETF mapping. Hyperliquid is an enrichment channel, not a prerequisite
-    # for notifying a newly formed or materially changed candidate.
-    # The overlap is the complete user-visible scope.  Discovery and
-    # Hyperliquid may contain other valid machine/audit objects, but those
-    # objects are not evidence for this notification and must never leak into
-    # the title or body.
-    discovery_changed = [
-        row for row in discovery_changed
-        if (re.search(r"[（(](\d{6})[）)]", label(row))
-            and re.search(r"[（(](\d{6})[）)]", label(row)).group(1) in overlap)
-    ]
-    hl_labels = [
-        text for text in hl_labels
-        if (re.search(r"[（(](\d{6})[）)]", text)
-            and re.search(r"[（(](\d{6})[）)]", text).group(1) in overlap)
-    ]
+    # Discovery and Hyperliquid are independent user-value channels.  A
+    # Discovery candidate must remain notifyable when Hyperliquid has no
+    # same-ETF mapping; Hyperliquid is enrichment, never a prerequisite.
+    # Retain each channel's own affected objects and only describe overlap
+    # when it actually exists.
     bindings = {
         asset: [
             label for label in labels
