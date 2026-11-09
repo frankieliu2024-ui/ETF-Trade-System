@@ -38,6 +38,25 @@ CANONICAL_TASK_ID = "ETF正式决策"
 BEIJING = timezone(timedelta(hours=8))
 
 
+def parse_beijing_timestamp(value: str) -> datetime:
+    """Parse a timezone-aware timestamp and normalize it to Beijing time."""
+    text = str(value or "").strip()
+    if not text:
+        raise ValueError("Beijing timestamp is required")
+    parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    if parsed.tzinfo is None:
+        raise ValueError("Beijing timestamp must include an explicit timezone")
+    return parsed.astimezone(BEIJING)
+
+
+def formal_decision_title(requested_at_beijing: str, decision_label: str) -> str:
+    """Build the only valid user-facing Formal Decision title."""
+    label = str(decision_label or "").strip()
+    if label not in {"正式判断", "降级判断", "超时判断"}:
+        raise ValueError("invalid Formal Decision title label")
+    return f"【ETF正式决策】{parse_beijing_timestamp(requested_at_beijing).strftime('%Y-%m-%d %H:%M')} {label}"
+
+
 def validate_formal_parent_request(payload: dict) -> tuple[bool, str]:
     """Validate the one canonical Formal Decision parent request."""
     if not isinstance(payload, dict):
@@ -91,12 +110,11 @@ def validate_formal_runtime_clock(payload: dict) -> str:
     if not requested:
         return "formal_parent_requested_at_beijing_required"
     try:
-        parsed = datetime.fromisoformat(requested.replace("Z", "+00:00"))
-    except ValueError:
+        beijing = parse_beijing_timestamp(requested)
+    except ValueError as exc:
+        if "timezone" in str(exc):
+            return "formal_parent_requested_at_beijing_timezone_required"
         return "formal_parent_requested_at_beijing_invalid"
-    if parsed.tzinfo is None:
-        return "formal_parent_requested_at_beijing_timezone_required"
-    beijing = parsed.astimezone(BEIJING)
     if beijing.strftime("%Y-%m-%d") != str(payload.get("market_date") or "").strip():
         return "formal_parent_market_date_mismatch"
     triggered = str(payload.get("triggered_at_beijing") or "").strip()
