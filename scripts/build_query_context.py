@@ -128,7 +128,7 @@ def _hyperliquid_decision_evidence(external: dict, current: dict) -> dict:
         delta = abs((c_dt - a_dt).total_seconds()) if c_dt and a_dt else None
         direction = "SUPPORTIVE" if mark is not None and prev not in (None, 0) and mark > prev else ("NEGATIVE" if mark is not None and prev not in (None, 0) and mark < prev else "NEUTRAL")
         crowding = "ELEVATED" if abs(funding or 0) >= 0.0001 or abs(premium or 0) >= 0.002 else "NORMAL"
-        family = next((str(m.get("family") or "") for m in (external.get("mapping") or []) if str(m.get("asset") or "") == str((item.get("asset") or {}).get("name") or "")), "")
+        family = next((str(m.get("family") or "") for m in (external.get("mapping") or []) if isinstance(m, dict) and str(m.get("asset") or "") == str((item.get("asset") or {}).get("name") or "")), "")
         evidence = {
             "asset": (item.get("asset") or {}).get("name", ""), "dex": item.get("dex"), "family": family,
             "direction": direction, "crowding": crowding, "funding": funding, "premium": premium,
