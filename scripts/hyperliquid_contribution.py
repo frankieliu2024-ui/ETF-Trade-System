@@ -289,6 +289,30 @@ def build_contribution(*, context: dict | None, node: str = "", task: str = "") 
             ),
         })
 
+    # Materialize one consumer result per A-share ETF binding. Consumers
+    # read this ledger; they do not reconstruct object-to-ETF conclusions.
+    etf_contributions = []
+    seen_bindings = set()
+    for obj in mapped_objects:
+        direction = (obj.get("signal_fields") or {}).get("direction")
+        relation = "UNDETERMINED"
+        if direction in {"UP", "DOWN", "FLAT"}:
+            relation = "EXTERNAL_DIRECTION_AVAILABLE; A_SHARE_TRANSMISSION_REQUIRES_A_SHARE_FACT"
+        for code in obj.get("mapped_assets") or []:
+            code = str(code)
+            if not code or code in seen_bindings:
+                continue
+            seen_bindings.add(code)
+            etf_contributions.append({
+                "ashare_code": code,
+                "hyperliquid_object_ids": [obj.get("object_id")],
+                "mapping_status": "MAPPED",
+                "cross_market_relation": relation,
+                "decision_effect": obj.get("decision_effect") or "INSUFFICIENT",
+                "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
+                "source_context_id": context.get("context_id") or latest.get("context_id") or "",
+                "source_observation_as_of": obj.get("observation_as_of") or None,
+            })
     return {
         "schema_version": "2.1",
         "status": "READY" if mapped else ("DEGRADED" if mapping_candidates else "MISSING"),
@@ -298,6 +322,8 @@ def build_contribution(*, context: dict | None, node: str = "", task: str = "") 
         "as_of_beijing": as_of,
         "mapped_object_count": len(mapped_objects),
         "mapped_objects": mapped_objects,
+        "etf_contribution_count": len(etf_contributions),
+        "etf_contributions": etf_contributions,
         "live_signal_count": len(mapped_objects),
         "mapping_candidate_count": len(mapping_candidates),
         "mapping_candidates": mapping_candidates,
