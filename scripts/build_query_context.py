@@ -2281,6 +2281,26 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
             "hyperliquid_latest": (hyperliquid_pulse_index or {}).get("latest") if isinstance(hyperliquid_pulse_index, dict) else None,
             "rule": "决策上下文消费最新合法对象投影及其同链脉冲索引；脉冲索引仅提供可追溯事实序列，不自行产生交易许可。"
         },
+        "formal_decision_pulse_provenance": {
+            "discovery": {
+                "identity": (discovery_pulse_index or {}).get("latest", {}).get("identity", "") if isinstance(discovery_pulse_index, dict) else "",
+                "generated_at_beijing": formal_discovery.get("generated_at_beijing", ""),
+                "latest_snapshot": formal_discovery.get("latest_snapshot", ""),
+                "latest_valid_node": formal_discovery.get("latest_valid_node", ""),
+                "candidate_count": formal_discovery.get("candidate_count"),
+                "coverage_status": formal_discovery.get("coverage_status", ""),
+                "source": formal_discovery.get("source", ""),
+            },
+            "hyperliquid": {
+                "identity": (hyperliquid_pulse_index or {}).get("latest", {}).get("identity", "") if isinstance(hyperliquid_pulse_index, dict) else "",
+                "collected_at_beijing": hyperliquid_provenance.get("latest_observation_collected_at_beijing", "") or hyperliquid_source.get("formed_at_beijing", "") or hyperliquid_source.get("fact_time_beijing", "") or hyperliquid_source.get("collected_at_beijing", ""),
+                "status": hyperliquid_source.get("quality_status", ""),
+                "observation_count": hyperliquid_provenance.get("observation_count"),
+                "mapping_status": hyperliquid_source.get("mapping_coverage_status", ""),
+                "time_basis": hyperliquid_provenance.get("time_basis", ""),
+            },
+            "rule": "Formal Decision必须消费本对象包中的最新合法Discovery和Hyperliquid投影，并在数据与边界披露各自北京时间时点；不得仅凭正文概括替代来源身份。"
+        },
         "weekly_return_attribution": weekly_return_attribution,
         "canonical_files": CANONICAL_FILES, "data_status": {**(current.get("data_freshness") or {}), **freshness}, "freshness_at_context_build": freshness,
         "interactive_decision_freshness": market_quote.get("decision_freshness", {}),
