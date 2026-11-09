@@ -159,12 +159,12 @@ requested_at_beijing使用本次真实运行启动时间；平台未提供task_r
 
 FINAL_CONTENT
 → 写入并回读唯一SCHEDULED_REVIEW_COMPLETION
-→ 优先等待既有completion push通知链
+→ 回读成功后立即以同一completion路径显式dispatch既有decision-notification workflow
 → 回读Formal event、REPORT、notification记录和服务商投递结果。
 
 completion写入或回读不等于通知完成；workflow提交或运行结束不等于通知完成；服务商投递成功不等于用户已经收到。
 
-只有completion push在有界窗口内未形成或明确失败时，才允许使用同一completion路径提交一次显式灾备。灾备不得重新生成正文、重新写入completion或创建第二通知链。
+不得把completion push当作正式决策主动通知的必要前置条件，也不得等待push触发后才决定是否dispatch。显式dispatch失败时，只允许在同一运行内对同一completion执行一次有界恢复；不得重新生成正文、重新写入completion或创建第二通知链。
 
 后置交接失败不得重新分析、重新生成正文、重新冻结正文或改写业务判断。最终状态必须分别说明正文、completion、event、REPORT、notification、服务商投递和用户收到状态。
 
