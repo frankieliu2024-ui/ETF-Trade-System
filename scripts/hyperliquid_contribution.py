@@ -180,21 +180,51 @@ def build_contribution(*, context: dict | None, node: str = "", task: str = "") 
         observed_assets.add(str(raw_asset.get("name") if isinstance(raw_asset, dict) else raw_asset or ""))
     mapping_candidates = _mapping_candidates(configured, observed_assets)
 
-    def effect(item: dict) -> str:
+    def _number(value):
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
+
+    def _derived_direction(item: dict) -> tuple[str, str, str]:
+        """Derive a transparent price direction when the provider omits direction."""
+        explicit = str(item.get("direction") or "").strip().upper()
+        if explicit:
+            aliases = {
+                "POSITIVE": "UP", "SUPPORTIVE": "UP", "BULLISH": "UP",
+                "NEGATIVE": "DOWN", "BEARISH": "DOWN",
+                "NEUTRAL": "FLAT", "UNCHANGED": "FLAT",
+            }
+            return aliases.get(explicit, explicit), "PROVIDER_DIRECTION", ""
+        mark = _number(item.get("mark_px"))
+        previous = _number(item.get("prev_day_px"))
+        if mark is None or previous in (None, 0):
+            return "", "UNAVAILABLE", "缺少当前价格或前日参考价格"
+        change = mark / previous - 1
+        if change > 0.0005:
+            return "UP", "MARK_VS_PREV_DAY", f"{change:.4%}"
+        if change < -0.0005:
+            return "DOWN", "MARK_VS_PREV_DAY", f"{change:.4%}"
+        return "FLAT", "MARK_VS_PREV_DAY", f"{change:.4%}"
+
+    def effect(item: dict, direction: str) -> str:
         explicit = str(item.get("decision_effect") or "").strip().upper()
         if explicit:
             return explicit
         if item.get("crowding") or item.get("crowding_status"):
             return "CROWDING_RISK"
         if item.get("etf_codes") or item.get("mapped_assets"):
-            return "INSUFFICIENT"
+            return "TIMING_FILTER" if direction else "INSUFFICIENT"
         if item.get("family"):
             return "NO_DIRECT_MAPPING"
         return "INSUFFICIENT"
 
     def signal(item: dict) -> dict:
+        direction, direction_source, price_change_pct = _derived_direction(item)
         return {
-            "direction": item.get("direction") or "",
+            "direction": direction,
+            "direction_source": direction_source,
+            "price_change_pct": price_change_pct,
             "funding": item.get("funding") or item.get("funding_rate") or "",
             "open_interest": item.get("open_interest") or item.get("openInterest") or "",
             "premium": item.get("premium") or "",
@@ -207,7 +237,8 @@ def build_contribution(*, context: dict | None, node: str = "", task: str = "") 
     mapped_objects = []
     for item in mapped:
         assets = list(item.get("etf_codes") or item.get("mapped_assets") or [])
-        current_effect = effect(item)
+        current_signal = signal(item)
+        current_effect = effect(item, current_signal.get("direction"))
         mapped_objects.append({
             "object_type": "HYPERLIQUID_ASSET",
             "object_id": item.get("asset") or item.get("name") or "",
@@ -219,14 +250,18 @@ def build_contribution(*, context: dict | None, node: str = "", task: str = "") 
                 "CONFIGURED_DIRECT_OR_ECONOMIC_FAMILY_BINDING"
                 if assets or item.get("family") else "NO_DIRECT_MAPPING"
             ),
-            "observation_as_of": item.get("observation_as_of") or as_of,
+            "observation_as_of": (
+                item.get("observation_as_of")
+                or item.get("collected_at_beijing")
+                or as_of
+            ),
             "evidence_status": item.get("evidence_status") or "READY",
             "consumption_status": item.get("consumption_status") or (
                 "CONSUMED" if assets or item.get("family") else "CONSUMED_AS_LIMITATION"
             ),
             "decision_effect": current_effect,
-            "signal_fields": signal(item),
-            "evidence_summary": item.get("evidence_summary") or signal(item),
+            "signal_fields": current_signal,
+            "evidence_summary": item.get("evidence_summary") or current_signal,
             "decision_use": item.get("decision_use") or (
                 "已映射对象用于方向确认、跨市场背离、入场时机过滤或拥挤风险识别；不独立授予交易权限"
                 if assets or item.get("family") else
