@@ -25,7 +25,7 @@ try:
 except ModuleNotFoundError:
     from scripts.build_stock_context import active_account_asset_codes, build_managed_position_projection, first, normalize_code, position_metric
 from sync_formal_files import sync_formal_files, latest_canonical_formal_decision, format_position_pnl
-from observation_etf_management import persist_monitor_universe, validate_observation_management
+from observation_etf_management import persist_monitor_universe, validate_observation_management\ntry:\n    from formal_opportunity_projection import refresh_pending_opportunity_from_discovery\nexcept ModuleNotFoundError:\n    from scripts.formal_opportunity_projection import refresh_pending_opportunity_from_discovery
 
 
 def _persist_formal_opportunity_projection(root: Path, source: dict) -> None:
