@@ -52,7 +52,7 @@ def _normalize_observations(context: dict, observations: list) -> list[dict]:
     Formal Decision, Trade Review and pulse notifications on the same mapping
     contract instead of allowing an old projection to become an empty packet.
     """
-    configured = context.get("mapping") if isinstance(context.get("mapping"), list) else None
+    configured = context.get("mapping") if isinstance(context.get("mapping"), list) and context.get("mapping") else None
     if configured is None:
         try:
             payload = json.loads((ROOT / "config/market/hyperliquid_etf_exposure_map.json").read_text(encoding="utf-8"))
@@ -159,7 +159,7 @@ def build_contribution(*, context: dict | None, node: str = "", task: str = "") 
     raw_observations = observations
     observations = _normalize_observations(context, raw_observations)
     mapped = [x for x in observations if isinstance(x, dict) and (x.get("family") or x.get("asset"))]
-    configured = context.get("mapping") if isinstance(context.get("mapping"), list) else None
+    configured = context.get("mapping") if isinstance(context.get("mapping"), list) and context.get("mapping") else None
     if configured is None:
         try:
             payload = json.loads((ROOT / "config/market/hyperliquid_etf_exposure_map.json").read_text(encoding="utf-8"))
