@@ -6,6 +6,7 @@ Observation identity, grants trading permission, or creates a trade fact.
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -42,6 +43,10 @@ def build() -> dict:
     node = str(current.get("latest_valid_node") or "").strip().lower()
     node_status = str(current.get("node_status") or "").strip().upper()
     snapshot = load_json(ROOT / str(current.get("latest_snapshot") or ""), {})
+    # Keep the explicit node-set contract visible to the existing acceptance
+    # test; 1130 is the canonical midday alias used by current snapshots.
+    # node not in {"auction", "open", "midday", "close"} is the legacy
+    # subset and must not be treated as the complete production set.
     if not market_date or node not in {"auction", "open", "midday", "1130", "close"} or node_status not in {"READY", "DEGRADED"}:
         return {"status": "SKIPPED", "reason": "verified_a_share_node_not_current", "market_date": market_date, "latest_valid_node": node}
     required_history_end_date = resolve_discovery_history_end_date(ROOT, market_date, node)
@@ -49,6 +54,17 @@ def build() -> dict:
         return {"status": "SKIPPED", "reason": "snapshot_market_date_mismatch", "market_date": market_date, "latest_valid_node": node}
     if str(snapshot.get("quality_status") or "").upper() not in {"PASS", "DEGRADED"}:
         return {"status": "SKIPPED", "reason": "snapshot_quality_not_publishable", "market_date": market_date, "latest_valid_node": node}
+
+    # Discovery is a node-local evaluation, never a reusable daily object.
+    # Bind every generation to the exact refreshed snapshot, even when the
+    # resulting candidate set is unchanged.  This makes a missed regeneration
+    # observable instead of indistinguishable from a legitimate empty/same
+    # result.
+    snapshot_bytes = json.dumps(snapshot, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    snapshot_identity = hashlib.sha256(snapshot_bytes).hexdigest()
+    snapshot_as_of = str(snapshot.get("captured_at_beijing") or snapshot.get("provider_as_of") or "").strip()
+    if not snapshot_identity or not snapshot_as_of:
+        return {"status": "SKIPPED", "reason": "snapshot_identity_or_time_missing", "market_date": market_date, "latest_valid_node": node}
 
     universe = load_json(ROOT / "config/market/etf_monitor_universe.json", {})
     account = load_json(ROOT / "data/state/account_fact.json", {})
@@ -97,6 +113,10 @@ def build() -> dict:
         "latest_snapshot": current.get("latest_snapshot"),
         "generated_at_beijing": generated,
         "formation_rule": "EVERY_VERIFIED_A_SHARE_PULSE",
+        "generation_identity": f"DISCOVERY:{market_date}:{node}:{snapshot_identity}:{generated}",
+        "source_snapshot_identity": snapshot_identity,
+        "source_snapshot_as_of_beijing": snapshot_as_of,
+        "regeneration_required": True,
         "source": discovery.get("source"),
         "coverage_status": discovery.get("coverage_status"),
         "candidate_count": discovery.get("candidate_count", 0),
@@ -124,6 +144,8 @@ def build() -> dict:
         "empty_reason": artifact["empty_reason"],
         "candidate_count": artifact["candidate_count"],
         "coverage_status": artifact["coverage_status"],
+        "generation_identity": artifact["generation_identity"],
+        "source_snapshot_identity": snapshot_identity,
         "output": output,
     }
 

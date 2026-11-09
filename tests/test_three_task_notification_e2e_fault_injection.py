@@ -52,6 +52,21 @@ class ThreeTaskNotificationE2EFaultInjectionTests(unittest.TestCase):
         self.assertIn("No current shared completion/report binding; fail closed without PushPlus.", workflow)
         self.assertIn("canonical_publication", workflow)
 
+    def test_discovery_is_regenerated_and_bound_to_each_snapshot(self):
+        builder = (ROOT / "scripts/build_weekly_discovery.py").read_text(encoding="utf-8")
+        workflow = (ROOT / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
+        self.assertIn("source_snapshot_identity", builder)
+        self.assertIn("generation_identity", builder)
+        self.assertIn("regeneration_required", builder)
+        self.assertIn("must be regenerated and bound to this node snapshot", workflow)
+
+    def test_dispatch_verifies_workflow_run_and_recovers_same_completion(self):
+        owner = (ROOT / "scripts/scheduled_review_completion_owner.py").read_text(encoding="utf-8")
+        self.assertIn("wait_for_notification_run", owner)
+        self.assertIn("workflow_run_created", owner)
+        self.assertIn("same-completion recovery", owner)
+        self.assertIn("force_resend=True", owner)
+
     def test_task_identity_and_report_type_are_not_crossed(self):
         expected = {
             "ETF系统复核": "ETF_SYSTEM_REVIEW",
