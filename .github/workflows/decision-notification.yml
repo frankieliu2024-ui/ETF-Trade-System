@@ -132,7 +132,15 @@ jobs:
           payload = json.load(open(sys.argv[1], encoding="utf-8"))
           binding = payload.get("presentation_binding") or {}
           report_type = str(payload.get("report_type") or binding.get("report_type") or "").strip().upper()
-          formal = (report_type == "ETF_FORMAL_DECISION" and str(payload.get("task_id") or "").strip() == "ETF正式决策")
+          task_id = str(payload.get("task_id") or binding.get("task_id") or "").strip()
+          formal = (
+              report_type == "ETF_FORMAL_DECISION"
+              and task_id == "ETF正式决策"
+          ) or (
+              task_id == "ETF正式决策"
+              and str(payload.get("decision_path") or "").strip().upper() == "FORMAL"
+              and str(payload.get("interaction_scenario") or "").strip().upper() == "FORMAL_DECISION"
+          )
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
               out.write("formal=%s\n" % ("true" if formal else "false"))
               out.write("scheduled=%s\n" % ("false" if formal else "true"))
@@ -557,9 +565,15 @@ jobs:
               payload = json.load(handle)
           raise SystemExit(
               0 if (
-              str(payload.get("report_type") or (payload.get("presentation_binding") or {}).get("report_type") or "").strip().upper()
-              == "ETF_FORMAL_DECISION"
-              and str(payload.get("task_id") or "").strip() == "ETF正式决策"
+              (
+                  str(payload.get("report_type") or (payload.get("presentation_binding") or {}).get("report_type") or "").strip().upper()
+                  == "ETF_FORMAL_DECISION"
+                  and str(payload.get("task_id") or (payload.get("presentation_binding") or {}).get("task_id") or "").strip() == "ETF正式决策"
+              ) or (
+                  str(payload.get("task_id") or (payload.get("presentation_binding") or {}).get("task_id") or "").strip() == "ETF正式决策"
+                  and str(payload.get("decision_path") or "").strip().upper() == "FORMAL"
+                  and str(payload.get("interaction_scenario") or "").strip().upper() == "FORMAL_DECISION"
+              )
           ) else 1
           )
           PY
