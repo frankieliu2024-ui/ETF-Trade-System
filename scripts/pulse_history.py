@@ -83,7 +83,15 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
             except (TypeError, ValueError):
                 return None
 
-        previous_records = records[-1].get("observations") if records else []
+        # Compare with the latest prior legal pulse, including the prior
+        # market date for the first pre-open pulse. This preserves overnight
+        # continuity instead of silently resetting at midnight.
+        prior_record = records[-1] if records else None
+        if prior_record is None:
+            prior_dates = [key for key in days if str(key) < market_date and isinstance(days.get(key), list) and days.get(key)]
+            if prior_dates:
+                prior_record = sorted(days[max(prior_dates)], key=lambda item: str(item.get("formed_at_beijing") or ""))[-1]
+        previous_records = prior_record.get("observations") if isinstance(prior_record, dict) else []
         previous_by_asset = {
             str(item.get("asset") or ""): item
             for item in (previous_records or [])
@@ -104,13 +112,28 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
                 "mark_px": str(context.get("markPx") or ""),
             }
             pulse_delta = {}
+            pulse_delta_pct = {}
             for key, current in current_values.items():
                 now_value = _number(current)
                 old_value = _number(previous.get(key))
                 if now_value is None or old_value is None:
                     pulse_delta[key] = None
+                    pulse_delta_pct[key] = None
                 else:
                     pulse_delta[key] = now_value - old_value
+                    pulse_delta_pct[key] = None if old_value == 0 else (now_value - old_value) / abs(old_value)
+            current_as_of = _parse(str(item.get("collected_at_beijing") or ""))
+            previous_as_of = _parse(str(previous.get("observation_as_of") or ""))
+            comparison_age_seconds = (
+                int((current_as_of - previous_as_of).total_seconds())
+                if current_as_of and previous_as_of and current_as_of >= previous_as_of else None
+            )
+            comparison_horizon = (
+                "INTRADAY_10M" if comparison_age_seconds is not None and comparison_age_seconds <= 15 * 60
+                else "INTRADAY_SHORT" if comparison_age_seconds is not None and comparison_age_seconds < 2 * 60 * 60
+                else "OVERNIGHT_OR_LONG_GAP" if comparison_age_seconds is not None
+                else "UNKNOWN"
+            )
 
             mark = _number(current_values["mark_px"])
             prev_day = _number(context.get("prevDayPx"))
@@ -160,8 +183,12 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
                 crowding_signal = "NO_CLEAR_CROWDING"
 
             observations.append({
+                "object_id": str(item.get("object_id") or asset),
+                "object_name": str(item.get("object_name") or asset),
                 "asset": asset,
-                "family": next((str(mapping.get("family") or "") for mapping in (payload.get("mapping") or []) if str(mapping.get("asset") or "") == asset), ""),
+                "economic_family": str(item.get("economic_family") or next((str(mapping.get("family") or "") for mapping in (payload.get("mapping") or []) if str(mapping.get("asset") or "") == asset), "")),
+                "context_id": str(item.get("context_id") or payload.get("context_id") or ""),
+                "fact_time_boundary": str(item.get("fact_time_boundary") or item.get("collected_at_beijing") or ""),
                 "quality_status": str(item.get("quality_status") or ""),
                 "observation_as_of": str(item.get("collected_at_beijing") or ""),
                 "provider_timestamp_status": str(item.get("provider_timestamp_status") or "NOT_PROVIDED_BY_ENDPOINT"),
@@ -172,8 +199,14 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
                 "mid_px": str(context.get("midPx") or ""),
                 "prev_day_px": str(context.get("prevDayPx") or ""),
                 "previous_pulse_as_of": str(previous.get("observation_as_of") or ""),
-                "pulse_comparison_status": "COMPARABLE" if previous else "SINGLE_PULSE_ONLY",
+                "pulse_comparison_status": "COMPARABLE" if previous and comparison_age_seconds is not None else "NOT_COMPARABLE",
+                "comparison_reason": "" if previous and comparison_age_seconds is not None else (
+                    "缺少同对象上一合法脉冲" if not previous else "当前或上一脉冲缺少合法对象时间"
+                ),
+                "comparison_age_seconds": comparison_age_seconds,
+                "comparison_horizon": comparison_horizon,
                 "pulse_delta": pulse_delta,
+                "pulse_delta_pct": pulse_delta_pct,
                 "positioning_signal": positioning_signal,
                 "funding_signal": funding_signal,
                 "pricing_signal": pricing_signal,

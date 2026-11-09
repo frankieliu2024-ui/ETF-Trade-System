@@ -141,6 +141,35 @@ def build() -> dict:
         "focused_assets": sorted(str(x.get("asset", {}).get("name") or "") for x in observations if x.get("observation_scope") == "FOCUSED"),
     }
     context_id = "hl-" + hashlib.sha256(json.dumps(provenance_payload, sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest()[:16]
+    # Publish one canonical object-level fact shape for every collected object.
+    # Downstream consumers must read these fields rather than reconstructing them.
+    mapping_by_asset = {
+        str(item.get("asset") or ""): item
+        for item in (config.get("asset_mappings") or [])
+        if isinstance(item, dict) and str(item.get("asset") or "")
+    }
+    for row in observations:
+        raw = row.get("asset") if isinstance(row.get("asset"), dict) else {}
+        asset_name = str(raw.get("name") or row.get("asset") or "")
+        mapping = mapping_by_asset.get(asset_name, {})
+        row["object_id"] = asset_name
+        row["object_name"] = asset_name
+        row["economic_family"] = str(mapping.get("family") or "")
+        row["context_id"] = context_id
+        row["observation_as_of"] = str(row.get("collected_at_beijing") or "")
+        row["fact_time_boundary"] = str(row.get("collected_at_beijing") or "")
+        row["standardization_status"] = "PASS" if row.get("observation_as_of") else "FAIL"
+        row["standardization_reason"] = "" if row.get("observation_as_of") else "采集完成但缺少对象采集时间"
+        ctx = row.get("context") if isinstance(row.get("context"), dict) else {}
+        row["normalized_fact"] = {
+            "current_price": ctx.get("markPx"),
+            "reference_price": ctx.get("prevDayPx"),
+            "funding_rate": ctx.get("funding"),
+            "open_interest": ctx.get("openInterest"),
+            "premium_discount": ctx.get("premium"),
+            "liquidity": ctx.get("dayNtlVlm"),
+            "data_quality": row.get("quality_status") or "UNKNOWN",
+        }
     return {
         "schema_version": "1.0", "mode": "FORMAL_EXTERNAL_DRIVER_DISCOVERY_INPUT",
         "provider": "hyperliquid_info_api", "read_only": True,

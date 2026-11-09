@@ -84,12 +84,25 @@ def _premium_text(value: Any) -> str:
     return "价格基本贴近参考价"
 
 
+def _latest_pulse_observations() -> dict[str, dict[str, Any]]:
+    """Read the shared latest pulse projection, including cross-pulse fields."""
+    payload = read_json(ROOT / "data/state/hyperliquid_pulse_latest.json", {})
+    latest = payload.get("latest") if isinstance(payload.get("latest"), dict) else {}
+    rows = latest.get("observations") if isinstance(latest, dict) else []
+    return {
+        str(row.get("asset") or ""): row
+        for row in (rows or [])
+        if isinstance(row, dict) and str(row.get("asset") or "")
+    }
+
+
 def _mapping_rows(text: str, context: dict[str, Any]) -> list[tuple[dict[str, Any], dict[str, Any]]]:
     hl = context.get("hyperliquid") if isinstance(context, dict) else {}
     observations = hl.get("observations") if isinstance(hl, dict) else []
     mappings = hl.get("mapping") if isinstance(hl, dict) else []
     if not isinstance(observations, list) or not isinstance(mappings, list):
         return []
+    pulse_by_asset = _latest_pulse_observations()
     by_asset = {}
     for obs in observations:
         if not isinstance(obs, dict):
@@ -108,7 +121,14 @@ def _mapping_rows(text: str, context: dict[str, Any]) -> list[tuple[dict[str, An
         if any(x and x in text for x in excluded):
             relevant = False
         if relevant:
-            rows.append((mapping, by_asset.get(str(mapping.get("asset") or ""), {})))
+            asset = str(mapping.get("asset") or "")
+            current = by_asset.get(asset, {})
+            pulse = pulse_by_asset.get(asset, {})
+            # The pulse projection is authoritative for cross-pulse comparison.
+            # Keep current context as a one-release fallback for raw values.
+            merged = dict(current)
+            merged.update({key: value for key, value in pulse.items() if value not in (None, "", {})})
+            rows.append((mapping, merged))
     return rows
 
 
@@ -126,13 +146,30 @@ def explain_for_notification(*, text: str, target: str = "") -> str:
         family = FAMILY_LABELS.get(str(mapping.get("family") or ""), "相关外部方向")
         if family not in families:
             families.append(family)
-        ctx = obs.get("context") or {}
-        direction = _direction(ctx.get("markPx"), ctx.get("prevDayPx"))
+        ctx = obs.get("context") or obs
+        direction = _direction(
+            ctx.get("markPx") or ctx.get("mark_px"),
+            ctx.get("prevDayPx") or ctx.get("prev_day_px"),
+        )
         directions.append(direction)
-        premium = _premium_text(ctx.get("premium"))
-        if premium not in risk_flags and premium != "价格基本贴近参考价":
+        comparison = str(obs.get("pulse_comparison_status") or "SINGLE_PULSE_ONLY")
+        delta = obs.get("pulse_delta") if isinstance(obs.get("pulse_delta"), dict) else {}
+        funding = _funding_text(ctx.get("funding") or ctx.get("funding"))
+        premium = _premium_text(ctx.get("premium") or ctx.get("premium"))
+        oi_delta = _number(delta.get("open_interest"))
+        funding_delta = _number(delta.get("funding"))
+        premium_delta = _number(delta.get("premium"))
+        crowding = str(obs.get("crowding_signal") or "")
+        if comparison != "COMPARABLE":
+            risk_flags.append("跨脉冲历史不足，无法确认拥挤变化")
+        elif crowding and crowding not in {"NO_CLEAR_CROWDING"}:
+            risk_flags.append(
+                f"{crowding}（资金费率变化{funding_delta if funding_delta is not None else '不可用'}、"
+                f"未平仓量变化{oi_delta if oi_delta is not None else '不可用'}、"
+                f"溢价变化{premium_delta if premium_delta is not None else '不可用'}）"
+            )
+        elif premium not in risk_flags and premium != "价格基本贴近参考价":
             risk_flags.append(premium)
-        funding = _funding_text(ctx.get("funding"))
         if funding != "多空双方持仓成本接近中性" and funding not in risk_flags:
             risk_flags.append(funding)
 
