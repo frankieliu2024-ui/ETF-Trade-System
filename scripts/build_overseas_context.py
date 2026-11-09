@@ -754,7 +754,8 @@ def main() -> None:
     )
     context["hyperliquid"] = hyperliquid
     atomic_json_write(ROOT / "data" / "state" / "overseas_context.json", context)
-    try:\n        from pulse_history import append_pulse_history
+    try:
+        from pulse_history import append_pulse_history
     except ModuleNotFoundError:
         from scripts.pulse_history import append_pulse_history
     hyperliquid = context.get("hyperliquid") if isinstance(context.get("hyperliquid"), dict) else {}
