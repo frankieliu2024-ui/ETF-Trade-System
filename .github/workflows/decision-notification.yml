@@ -1082,6 +1082,8 @@ jobs:
                   fact_binding = payload.get("fact_binding")
                   if isinstance(fact_binding, dict):
                       fact_binding = dict(fact_binding)
+                      if not fact_binding.get("market_date") and payload.get("market_date"):
+                          fact_binding["market_date"] = payload["market_date"]
                       if not fact_binding.get("latest_snapshot") and fact_binding.get("market_snapshot"):
                           fact_binding["latest_snapshot"] = fact_binding["market_snapshot"]
                       if not fact_binding.get("captured_at_beijing") and fact_binding.get("snapshot_as_of_beijing"):
