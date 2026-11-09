@@ -42,7 +42,7 @@ def build() -> dict:
     node = str(current.get("latest_valid_node") or "").strip().lower()
     node_status = str(current.get("node_status") or "").strip().upper()
     snapshot = load_json(ROOT / str(current.get("latest_snapshot") or ""), {})
-    if not market_date or node not in {"auction", "open", "midday", "close"} or node_status not in {"READY", "DEGRADED"}:
+    if not market_date or node not in {"auction", "open", "midday", "1130", "close"} or node_status not in {"READY", "DEGRADED"}:
         return {"status": "SKIPPED", "reason": "verified_a_share_node_not_current", "market_date": market_date, "latest_valid_node": node}
     required_history_end_date = resolve_discovery_history_end_date(ROOT, market_date, node)
     if str(snapshot.get("market_date") or "") != market_date:
