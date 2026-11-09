@@ -85,21 +85,22 @@ def _premium_text(value: Any) -> str:
 
 
 
-def _fixed_etf_labels(mapping: dict[str, Any]) -> list[str]:
-    """Return a conservative fixed ETF projection for notification text."""
-    explicit = [str(x) for x in (mapping.get("etf_codes") or mapping.get("mapped_assets") or []) if str(x)]
-    fixed = {
-        "GLOBAL_RISK_APPETITE": ["159941", "588000", "159781"],
-        "SEMICONDUCTOR": ["159781", "515880", "159326", "588000"],
-        "SEMICONDUCTOR_HIGH_BETA": ["159781", "515880", "159326", "588000"],
-        "MEMORY": ["159326", "159781", "515880", "588000"],
-        "AI_COMPUTE": ["159781", "515880", "588000"],
-        "AI_NETWORKING": ["515880", "159781", "588000"],
-        "BIOTECH": ["159992", "159217"],
-        "ENERGY": ["159981", "513350", "515220"],
-        "GOLD": ["518880", "159315", "518860"],
-    }
-    codes = explicit or fixed.get(str(mapping.get("family") or ""), [])
+def _latest_binding_rows(text: str) -> list[dict[str, Any]]:
+    """Read ETF bindings from the global latest Hyperliquid contribution projection."""
+    payload = read_json(ROOT / "data/state/hyperliquid_pulse_latest.json", {})
+    latest = payload.get("latest") if isinstance(payload.get("latest"), dict) else {}
+    rows = []
+    for row in (latest.get("etf_bindings") or []):
+        if not isinstance(row, dict):
+            continue
+        object_id = str(row.get("object_id") or row.get("asset") or "")
+        if object_id and object_id.split(":", 1)[-1].lower() in text.lower():
+            rows.append(row)
+    return rows
+
+
+def _binding_labels(row: dict[str, Any]) -> list[str]:
+    codes = [str(x) for x in (row.get("mapped_assets") or []) if str(x)]
     universe = read_json(ROOT / "config" / "market" / "etf_monitor_universe.json", {})
     names = {str(x.get("code") or ""): str(x.get("name") or "") for x in (universe.get("objects") or [])}
     return [f"{names.get(code, code)}（{code}）" for code in codes]
@@ -109,83 +110,36 @@ def _format_delta(value: Any) -> str:
     n = _number(value)
     return "不可比" if n is None else f"{n:+.4f}"
 
-def _latest_pulse_observations() -> dict[str, dict[str, Any]]:
-    """Read the shared latest pulse projection, including cross-pulse fields."""
-    payload = read_json(ROOT / "data/state/hyperliquid_pulse_latest.json", {})
-    latest = payload.get("latest") if isinstance(payload.get("latest"), dict) else {}
-    rows = latest.get("observations") if isinstance(latest, dict) else []
-    return {
-        str(row.get("asset") or ""): row
-        for row in (rows or [])
-        if isinstance(row, dict) and str(row.get("asset") or "")
-    }
-
-
-def _mapping_rows(text: str, context: dict[str, Any]) -> list[tuple[dict[str, Any], dict[str, Any]]]:
-    hl = context.get("hyperliquid") if isinstance(context, dict) else {}
-    observations = hl.get("observations") if isinstance(hl, dict) else []
-    mappings = hl.get("mapping") if isinstance(hl, dict) else []
-    if not isinstance(observations, list) or not isinstance(mappings, list):
-        return []
-    pulse_by_asset = _latest_pulse_observations()
-    by_asset = {}
-    for obs in observations:
-        if not isinstance(obs, dict):
-            continue
-        asset = obs.get("asset")
-        asset = asset.get("name") if isinstance(asset, dict) else asset
-        if asset:
-            by_asset[str(asset)] = obs
-    rows = []
-    for mapping in mappings:
-        if not isinstance(mapping, dict):
-            continue
-        markers = [str(x) for x in mapping.get("name_markers") or []]
-        excluded = [str(x) for x in mapping.get("exclude_name_markers") or []]
-        relevant = str(mapping.get("asset") or "") in text or any(x and x in text for x in markers)
-        if any(x and x in text for x in excluded):
-            relevant = False
-        if relevant:
-            asset = str(mapping.get("asset") or "")
-            current = by_asset.get(asset, {})
-            pulse = pulse_by_asset.get(asset, {})
-            # The pulse projection is authoritative for cross-pulse comparison.
-            # Keep current context as a one-release fallback for raw values.
-            merged = dict(current)
-            merged.update({key: value for key, value in pulse.items() if value not in (None, "", {})})
-            rows.append((mapping, merged))
-    return rows
-
 
 def explain_for_notification(*, text: str, target: str = "") -> str:
-    """Render one concise, target-specific Hyperliquid contribution."""
-    context = read_json(ROOT / "data/state/overseas_context.json", {})
-    rows = _mapping_rows(f"{text} {target}", context)
+    """Render the global contribution package without rebuilding mappings."""
+    rows = _latest_binding_rows(f"{text} {target}")
     if not rows:
-        return "Hyperliquid：当前对象无固定映射，无法用于判断。"
+        return "Hyperliquid：全局贡献包中没有当前对象的固定ETF绑定，无法用于判断。"
     statements = []
-    for mapping, obs in rows[:3]:
-        family = FAMILY_LABELS.get(str(mapping.get("family") or ""), "相关外部方向")
-        labels = _fixed_etf_labels(mapping)
-        target_text = "、".join(labels[:4]) if labels else "当前对象无固定ETF映射"
-        ctx = obs.get("context") or obs
-        direction = _direction(ctx.get("markPx") or ctx.get("mark_px"), ctx.get("prevDayPx") or ctx.get("prev_day_px"))
-        comparison = str(obs.get("pulse_comparison_status") or "NOT_COMPARABLE")
-        delta = obs.get("pulse_delta") if isinstance(obs.get("pulse_delta"), dict) else {}
-        crowding = str(obs.get("crowding_signal") or "")
-        if comparison != "COMPARABLE":
-            effect = "无法判断，缺少前一合法脉冲比较基准"
-        elif "CROWDING" in crowding:
-            effect = "拥挤风险，降低追涨优先级"
-        elif direction == "价格偏强":
-            effect = "方向支持/时机过滤，仍需A股ETF自身同步确认"
-        elif direction == "价格偏弱":
-            effect = "方向矛盾/风险过滤，不支持提高新增优先级"
-        else:
-            effect = "当前无法用于方向判断"
-        detail = f"{family}对象映射至{target_text}；{direction}，{effect}"
+    for row in rows[:3]:
+        labels = _binding_labels(row)
+        target_text = "、".join(labels[:4]) if labels else "固定映射对象"
+        direction = str(row.get("direction_signal") or "UNDETERMINED")
+        effect = str(row.get("decision_effect") or "INSUFFICIENT")
+        effect_text = {
+            "SUPPORT": "支持",
+            "CONFIRMATORY": "支持/确认",
+            "CONTRADICT": "矛盾/压制",
+            "CONTRADICTION": "矛盾/压制",
+            "TIMING_FILTER": "时机过滤",
+            "CROWDING_RISK": "拥挤风险",
+            "NO_DIRECT_MAPPING": "无直接映射",
+            "INSUFFICIENT": "当前无法判断",
+        }.get(effect, "当前无法判断")
+        signal = row.get("signal_fields") if isinstance(row.get("signal_fields"), dict) else {}
+        comparison = str(signal.get("pulse_comparison_status") or row.get("pulse_comparison_status") or "NOT_COMPARABLE")
+        detail = f"{row.get('object_id') or row.get('asset')}绑定{target_text}；方向{direction}，结论为{effect_text}"
         if comparison == "COMPARABLE":
+            delta = signal.get("pulse_delta") if isinstance(signal.get("pulse_delta"), dict) else {}
             detail += f"；10分钟变化：资金费率{_format_delta(delta.get('funding'))}、未平仓量{_format_delta(delta.get('open_interest'))}、溢价{_format_delta(delta.get('premium'))}"
+        else:
+            reason = signal.get("comparison_reason") or "缺少前一合法脉冲比较基准"
+            detail += f"；无法进行跨脉冲比较：{reason}"
         statements.append(detail)
     return "Hyperliquid：" + "；".join(statements) + "。"
-
