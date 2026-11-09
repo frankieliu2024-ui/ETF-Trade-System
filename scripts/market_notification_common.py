@@ -196,81 +196,12 @@ def _hyperliquid_notification_basis(text: str) -> str:
     independent materiality gate in ``persist_and_send``.
     """
     try:
-        from hyperliquid_contribution import build_contribution
-
-        context = read_json(HYPERLIQUID_CONTEXT, {})
-        hl = context.get("hyperliquid") if isinstance(context, dict) else {}
-        observations = hl.get("observations") if isinstance(hl, dict) else []
-        mappings = hl.get("mapping") if isinstance(hl, dict) else []
-        if not isinstance(observations, list) or not isinstance(mappings, list):
-            return "本次未形成可比的Hyperliquid确认：外部对象或映射事实不可用，仅保留机器台账，不改变本通知判断。"
-
-        joined = str(text or "")
-        candidates = []
-        for item in mappings:
-            if not isinstance(item, dict):
-                continue
-            asset = str(item.get("asset") or "")
-            markers = [str(x) for x in (item.get("name_markers") or [])]
-            excluded = [str(x) for x in (item.get("exclude_name_markers") or [])]
-            relevant = asset in joined or any(marker and marker in joined for marker in markers)
-            if any(marker and marker in joined for marker in excluded):
-                relevant = False
-            if relevant:
-                candidates.append(item)
-
-        by_asset = {}
-        for item in observations:
-            if not isinstance(item, dict):
-                continue
-            asset = item.get("asset")
-            asset = asset.get("name") if isinstance(asset, dict) else asset
-            if asset:
-                by_asset[str(asset)] = item
-
-        if not candidates:
-            return "本次已检查Hyperliquid，但未发现与本通知对象形成可确认的直接或行业级可比映射；因此不把Hyperliquid缺失误读为反向证据，也不改变当前判断。"
-
-        rows = []
-        enriched = []
-        for mapping in candidates[:4]:
-            asset = str(mapping.get("asset") or "")
-            obs = by_asset.get(asset) or {}
-            ctx = obs.get("context") or {}
-            latest = {
-                "asset": asset,
-                "family": mapping.get("family") or "",
-                "etf_codes": mapping.get("etf_codes") or [],
-                "mapping_reason": "CONFIGURED_ECONOMIC_FAMILY_MAPPING",
-                "observation_as_of": obs.get("collected_at_beijing") or "",
-                "evidence_status": obs.get("quality_status") or "UNKNOWN",
-                "decision_effect": "NO_INCREMENTAL_VALUE",
-                "direction": ("UP" if float(ctx.get("markPx")) > float(ctx.get("prevDayPx")) else "DOWN")
-                if ctx.get("markPx") and ctx.get("prevDayPx") else "",
-                "funding": ctx.get("funding") or "",
-                "open_interest": ctx.get("openInterest") or "",
-                "premium": ctx.get("premium") or "",
-                "mark_px": ctx.get("markPx") or "",
-                "mid_px": ctx.get("midPx") or "",
-                "prev_day_px": ctx.get("prevDayPx") or "",
-            }
-            enriched.append(latest)
-            mark = ctx.get("markPx") or "未提供"
-            prev = ctx.get("prevDayPx") or "未提供"
-            funding = ctx.get("funding") or "未提供"
-            premium = ctx.get("premium") or "未提供"
-            rows.append(f"{asset}/{mapping.get('family') or '未分类'}：标记价{mark}，前日参考{prev}，资金费率{funding}，溢价{premium}")
-
-        packet = build_contribution(
-            context={
-                "latest": {"observations": enriched, "fact_time_beijing": hl.get("collection_finished_at_utc") or hl.get("latest_observation_collected_at_utc") or ""},
-                "observations": enriched,
-            },
-            task="PULSE_NOTIFICATION",
-        )
-        as_of = packet.get("as_of_beijing") or hl.get("collection_finished_at_utc") or "未提供"
-        return ("本次已消费Hyperliquid共享贡献包；可比对象为" + "；".join(rows)
-                + f"。当前只把它作为{packet.get('phase') or '外部'}的方向/时机/拥挤风险辅助证据，观测边界为{as_of}；它不能单独生成交易动作。")
+        from hyperliquid_user_explanation import explain_for_notification
+        target = ""
+        match = re.search(r"(?:对象/结构|对象|结构)[:： ]+([^\n]+)", text)
+        if match:
+            target = match.group(1).strip().split("，")[0]
+        return explain_for_notification(text=text, target=target)
     except Exception as exc:
         return f"Hyperliquid贡献暂无法完成用户侧解释（{type(exc).__name__}）；本通知仍仅依据已确认的本地/区域事实，不扩大交易结论。"
 
