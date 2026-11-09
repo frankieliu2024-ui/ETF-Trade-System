@@ -82,6 +82,8 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
                 "asset": str((item.get("asset") or {}).get("name") or ""),
                 "family": next((str(mapping.get("family") or "") for mapping in (payload.get("mapping") or []) if str(mapping.get("asset") or "") == str((item.get("asset") or {}).get("name") or "")), ""),
                 "quality_status": str(item.get("quality_status") or ""),
+                "observation_as_of": str(item.get("collected_at_beijing") or ""),
+                "provider_timestamp_status": str(item.get("provider_timestamp_status") or "NOT_PROVIDED_BY_ENDPOINT"),
                 "funding": str((item.get("context") or {}).get("funding") or ""),
                 "open_interest": str((item.get("context") or {}).get("openInterest") or ""),
                 "premium": str((item.get("context") or {}).get("premium") or ""),
