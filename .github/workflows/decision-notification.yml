@@ -203,16 +203,14 @@ jobs:
           )
             case "$completion_kind" in
               FORMAL)
-                # A valid Formal Decision completion is itself the canonical
-                # handoff after FINAL_CONTENT is frozen and written.  Consume
-                # this exact path once through the existing formal event/report/
-                # notification owner; identity, hash, binding and dedupe guards
-                # remain mandatory and prevent duplicate or drifted delivery.
-                # Formal Decision completion is consumed only by the explicit
-                # completion-owner dispatch. A Contents push is merely a
-                # persistence side effect and must never forward the same body.
-                echo "formal_completion=false" >> "$GITHUB_OUTPUT"
-                echo "formal_review_source_path=" >> "$GITHUB_OUTPUT"
+                # The completion writer is the canonical producer.  A completion
+                # commit is also a valid wake when explicit dispatch is missed;
+                # downstream identity, hash, task-local binding and dedupe guards
+                # still prevent duplicate or drifted delivery.  This closes the
+                # production gap where a valid Formal Decision completion was
+                # persisted but no active notification was emitted.
+                echo "formal_completion=true" >> "$GITHUB_OUTPUT"
+                echo "formal_review_source_path=$completion_path" >> "$GITHUB_OUTPUT"
                 echo "formal_force_resend=false" >> "$GITHUB_OUTPUT"
                 ;;
               SYSTEM_REVIEW)
