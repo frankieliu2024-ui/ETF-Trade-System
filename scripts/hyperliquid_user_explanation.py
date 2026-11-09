@@ -60,6 +60,30 @@ def _crowding_text(item: dict[str, Any]) -> str:
     return value
 
 
+def _open_interest_text(value: Any, direction: str) -> str:
+    n = _number(value)
+    if n is None:
+        return "未平仓押注变化暂不可判断"
+    if direction == "价格偏强":
+        return "当前未平仓押注规模可读，但缺少前一时点可比值，不能判断新增押注是趋势确认还是拥挤"
+    if direction == "价格偏弱":
+        return "当前未平仓押注规模可读，但缺少前一时点可比值，不能判断是新增做空还是多头退出"
+    return "当前未平仓押注规模可读，但暂不足以判断方向"
+
+
+def _premium_text(value: Any) -> str:
+    n = _number(value)
+    if n is None:
+        return "价格相对参考价的偏离暂不可判断"
+    if abs(n) >= 0.003:
+        return "价格相对参考价偏离较大，情绪和短线波动风险上升"
+    if n > 0:
+        return "价格略高于参考价，存在轻微情绪溢价"
+    if n < 0:
+        return "价格略低于参考价，外部买方溢价不足"
+    return "价格基本贴近参考价"
+
+
 def _mapping_rows(text: str, context: dict[str, Any]) -> list[tuple[dict[str, Any], dict[str, Any]]]:
     hl = context.get("hyperliquid") if isinstance(context, dict) else {}
     observations = hl.get("observations") if isinstance(hl, dict) else []
@@ -118,11 +142,11 @@ def explain_for_notification(*, text: str, target: str = "") -> str:
             relation_text = "与该ETF属于行业或产业链级间接映射"
         descriptions.append(f"{asset}代表{family}，{relation_text}，当前{direction}")
         funding = _funding_text(ctx.get("funding"))
-        premium = _number(ctx.get("premium"))
-        if premium is not None and abs(premium) >= 0.003:
-            risk_flags.append("价格相对参考价偏离较大，短线波动风险上升")
+        premium = _premium_text(ctx.get("premium"))
+        risk_flags.append(premium)
         if funding != "多空双方持仓成本接近中性":
             risk_flags.append(funding)
+        risk_flags.append(_open_interest_text(ctx.get("openInterest"), direction))
         crowding = _crowding_text(obs)
         if crowding not in {"未形成可确认的拥挤度结论", ""}:
             risk_flags.append(f"拥挤情况：{crowding}")
