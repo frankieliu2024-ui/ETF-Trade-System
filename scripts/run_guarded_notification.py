@@ -983,10 +983,7 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
         hyperliquid_time.replace("T", " ").replace("+08:00", "")
         if hyperliquid_time else "尚未确认"
     )
-    hyperliquid_time_note = (
-        f"Hyperliquid可见采集边界：{hyperliquid_time_display}；"
-        "接口未提供逐笔事件时间，不能把它理解为每个合约的事件发生时间。"
-    )
+    hyperliquid_time_note = f"Hyperliquid采集时间（北京时间）：{hyperliquid_time_display}"
     core_conclusion = f"{core_conclusion} Hyperliquid具体依据：{hl_text}（{hyperliquid_time_note}）"
     impact_text = (
         f"{relation}。Hyperliquid在本轮的作用是：{impact}；"
