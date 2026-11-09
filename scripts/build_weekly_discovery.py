@@ -12,10 +12,10 @@ from zoneinfo import ZoneInfo
 from pathlib import Path
 
 try:
-    from formal_etf_opportunity_discovery import discover_formal_candidates, required_completed_history_date
+    from formal_etf_opportunity_discovery import discover_formal_candidates, required_completed_history_date\n    from formal_opportunity_projection import refresh_pending_opportunity_from_discovery
     from state_manager import atomic_json_write
 except ModuleNotFoundError:
-    from scripts.formal_etf_opportunity_discovery import discover_formal_candidates, required_completed_history_date
+    from scripts.formal_etf_opportunity_discovery import discover_formal_candidates, required_completed_history_date\n    from scripts.formal_opportunity_projection import refresh_pending_opportunity_from_discovery
     from scripts.state_manager import atomic_json_write
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
