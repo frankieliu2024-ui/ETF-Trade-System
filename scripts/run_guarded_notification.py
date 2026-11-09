@@ -813,10 +813,9 @@ def _integrated_pulse_event(discovery_before: dict, discovery_after: dict,
         if re.search(r"[（(](\d{6})[）)]", text)
     }
     overlap = discovery_codes & hl_codes
-    # User-visible pulses require both engines to identify the same ETF.
-    # Different-object evidence remains machine/audit state and is silent.
-    if not overlap:
-        return None
+    # Discovery candidates remain user-visible even when Hyperliquid has no
+    # same-ETF mapping. Hyperliquid is an enrichment channel, not a prerequisite
+    # for notifying a newly formed or materially changed candidate.
     # The overlap is the complete user-visible scope.  Discovery and
     # Hyperliquid may contain other valid machine/audit objects, but those
     # objects are not evidence for this notification and must never leak into
