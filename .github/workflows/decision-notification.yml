@@ -907,8 +907,21 @@ jobs:
           binding = payload.get("presentation_binding") or {}
           report_type = str(payload.get("report_type") or binding.get("report_type") or "").strip().upper()
           task_id = str(payload.get("task_id") or binding.get("task_id") or "").strip()
-          if report_type != "ETF_FORMAL_DECISION" or task_id != "ETF正式决策":
+          legacy_formal = (
+              task_id == "ETF正式决策"
+              and str(payload.get("decision_path") or "").strip().upper() == "FORMAL"
+              and str(payload.get("interaction_scenario") or "").strip().upper() == "FORMAL_DECISION"
+          )
+          if report_type != "ETF_FORMAL_DECISION" and not legacy_formal:
               raise SystemExit("Formal Decision completion identity mismatch")
+          if legacy_formal and not report_type:
+              # Historical scheduled-task completions may omit report_type.
+              # Normalize only the in-memory projection payload; never rewrite
+              # the frozen completion file.
+              payload["report_type"] = "ETF_FORMAL_DECISION"
+              binding = dict(binding)
+              binding["report_type"] = "ETF_FORMAL_DECISION"
+              payload["presentation_binding"] = binding
           validate_formal_runtime_completion_contract(payload)
           payload["_ingress_path"] = completion_path.as_posix()
           _, idempotent, event_path = record_formal_decision_report_event(payload)
