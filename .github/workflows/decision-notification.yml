@@ -1038,7 +1038,38 @@ jobs:
               *) completion_path="requests/live_snapshot/$completion_path" ;;
             esac
             test -f "$completion_path"
-            projection=$(python scripts/process_state_sync_request.py "$completion_path")
+            projection=$(PYTHONPATH=scripts python - "$completion_path" <<'PY'
+import json
+import sys
+from pathlib import Path
+from scripts.process_state_sync_request import record_formal_decision_report_event
+from scripts.scheduled_review_completion import validate_formal_runtime_completion_contract
+
+path = Path(sys.argv[1])
+payload = json.loads(path.read_text(encoding="utf-8"))
+binding = payload.get("presentation_binding") or {}
+report_type = str(payload.get("report_type") or binding.get("report_type") or "").strip().upper()
+task_id = str(payload.get("task_id") or binding.get("task_id") or "").strip()
+legacy_formal = (
+    task_id == "ETF正式决策"
+    and str(payload.get("decision_path") or "").strip().upper() == "FORMAL"
+    and str(payload.get("interaction_scenario") or "").strip().upper() == "FORMAL_DECISION"
+)
+if report_type == "ETF_FORMAL_DECISION" or legacy_formal:
+    if not report_type:
+        payload["report_type"] = "ETF_FORMAL_DECISION"
+        binding = dict(binding)
+        binding["report_type"] = "ETF_FORMAL_DECISION"
+        payload["presentation_binding"] = binding
+    validate_formal_runtime_completion_contract(payload)
+    payload["_ingress_path"] = path.as_posix()
+    _, idempotent, event_path = record_formal_decision_report_event(payload)
+    print(json.dumps({"canonical_publication": event_path, "idempotent": idempotent}, ensure_ascii=False))
+else:
+    result = __import__("scripts.process_state_sync_request", fromlist=["process_state_sync_request"]).process_state_sync_request(path)
+    print(json.dumps(result, ensure_ascii=False))
+PY
+)
             REVIEW_EVENT_PATH=$(python -c 'import json,sys; print(json.loads(sys.argv[1]).get("canonical_publication", ""))' "$projection")
             if [ -z "$REVIEW_EVENT_PATH" ]; then
               REVIEW_EVENT_PATH=$(python -c 'import json,sys; p=json.load(open(sys.argv[1])); b=p.get("presentation_binding") or {}; t=str(p.get("report_type") or b.get("report_type") or "").strip().upper(); r=str(b.get("task_run_id") or p.get("task_run_id") or "").strip(); print(("events/reviews/trade-"+r+".json") if t=="ETF_TRADE_REVIEW" and r else ("events/reviews/system_"+r+".json" if t=="ETF_SYSTEM_REVIEW" and r else ""))' "$completion_path")
