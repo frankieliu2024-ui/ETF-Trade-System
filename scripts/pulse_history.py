@@ -106,10 +106,10 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
             context = item.get("context") or {}
             previous = previous_by_asset.get(asset) or {}
             current_values = {
-                "funding": str(context.get("funding") or ""),
-                "open_interest": str(context.get("openInterest") or ""),
-                "premium": str(context.get("premium") or ""),
-                "mark_px": str(context.get("markPx") or ""),
+                "funding": str(context.get("funding") or item.get("funding") or ""),
+                "open_interest": str(context.get("openInterest") or item.get("open_interest") or ""),
+                "premium": str(context.get("premium") or item.get("premium") or ""),
+                "mark_px": str(context.get("markPx") or item.get("mark_px") or ""),
             }
             pulse_delta = {}
             pulse_delta_pct = {}
@@ -122,7 +122,7 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
                 else:
                     pulse_delta[key] = now_value - old_value
                     pulse_delta_pct[key] = None if old_value == 0 else (now_value - old_value) / abs(old_value)
-            current_as_of = _parse(str(item.get("collected_at_beijing") or ""))
+            current_as_of = _parse(str(item.get("observation_as_of") or item.get("collected_at_beijing") or ""))
             previous_as_of = _parse(str(previous.get("observation_as_of") or ""))
             comparison_age_seconds = (
                 int((current_as_of - previous_as_of).total_seconds())
@@ -210,7 +210,7 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
                 "premium": current_values["premium"],
                 "mark_px": current_values["mark_px"],
                 "mid_px": str(context.get("midPx") or ""),
-                "prev_day_px": str(context.get("prevDayPx") or ""),
+                "prev_day_px": str(context.get("prevDayPx") or item.get("prev_day_px") or ""),
                 "previous_pulse_as_of": str(previous.get("observation_as_of") or ""),
                 "pulse_comparison_status": "COMPARABLE" if previous and comparison_age_seconds is not None else "NOT_COMPARABLE",
                 "comparison_reason": "" if previous and comparison_age_seconds is not None else (
