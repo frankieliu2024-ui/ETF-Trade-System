@@ -326,7 +326,7 @@ def validate_formal_decision_presentation_timestamp(final_content: str, requeste
     if not requested:
         raise ValueError("formal decision completion requires requested_at_beijing")
     first_line = content.splitlines()[0].strip() if content.splitlines() else ""
-    match = re.match(r"^【ETF正式决策】(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}) (正式判断|降级判断|超时判断)$", first_line)
+    match = re.match(r"^【ETF正式决策】(\d{4}-\d{2}-\d{2} \d{2}:\d{2}) (正式判断|降级判断|超时判断)$", first_line)
     if not match:
         raise ValueError("formal decision presentation title has invalid timestamp or decision path")
     expected_prefix = formal_decision_title(requested, match.group(2))[:-4]
