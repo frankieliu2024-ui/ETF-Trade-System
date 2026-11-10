@@ -289,5 +289,26 @@ def read_pulse_projection(root: Path, kind: str) -> dict:
         except (OSError, json.JSONDecodeError):
             continue
         if isinstance(payload, dict):
+            # Carry the bounded same-day pulse sequence alongside the latest
+            # projection. Consumers may use latest for the current object state,
+            # but must not lose the auditable 10-minute history.
+            try:
+                index_payload = json.loads(
+                    (root / "data" / "state" / f"{stem}_pulse_index.json").read_text(encoding="utf-8")
+                )
+            except (OSError, json.JSONDecodeError):
+                index_payload = {}
+            market_date = str(payload.get("latest_market_date") or index_payload.get("latest_market_date") or "")
+            days = index_payload.get("days") if isinstance(index_payload.get("days"), dict) else {}
+            sequence = days.get(market_date) if isinstance(days.get(market_date), list) else []
+            payload = dict(payload)
+            payload["pulse_sequence"] = sequence
+            payload["pulse_sequence_summary"] = {
+                "market_date": market_date,
+                "count": len(sequence),
+                "first_formed_at_beijing": str(sequence[0].get("formed_at_beijing") or "") if sequence else "",
+                "last_formed_at_beijing": str(sequence[-1].get("formed_at_beijing") or "") if sequence else "",
+                "identities": [str(item.get("identity") or "") for item in sequence if isinstance(item, dict)],
+            }
             return payload
     return {}
