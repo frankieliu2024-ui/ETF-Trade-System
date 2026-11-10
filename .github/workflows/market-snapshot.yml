@@ -1702,8 +1702,16 @@ jobs:
           if result.get("error"):
               raise SystemExit(result["error"])
           print(result)
-          text = Path("ETF当前状态_DASHBOARD.md").read_text(encoding="utf-8")
+          dashboard_path = Path("ETF当前状态_DASHBOARD.md")
+          text = dashboard_path.read_text(encoding="utf-8")
           start = text.find("### 当前有效生命周期")
+          marker = "<!-- AUTO_STATE_SYNC_END -->"
+          end = text.find(marker, start)
+          if start >= 0 and end >= 0:
+              from scripts.sync_formal_files import render_lifecycle_projection
+              account = json.loads(Path("data/state/account_fact.json").read_text(encoding="utf-8"))
+              text = text[:start] + render_lifecycle_projection(Path("."), account) + "\n\n" + text[end:]
+              dashboard_path.write_text(text, encoding="utf-8")
           end = text.find("<!-- AUTO_STATE_SYNC_END -->", start)
           lifecycle = text[start:end] if start >= 0 and end >= 0 else ""
           if "当前T+|下一节点|" in lifecycle and any(token in lifecycle for token in ("元（", "元；", "元（—）")):
