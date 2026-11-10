@@ -172,15 +172,15 @@ def explain_for_notification(*, text: str, target: str = "") -> str:
             "CONFIRMATORY": "支持/确认",
             "CONTRADICT": "矛盾/压制",
             "CONTRADICTION": "矛盾/压制",
-            "TIMING_FILTER": "时机过滤",
+            "TIMING_FILTER": "方向支持但当前不直接追涨",
             "CROWDING_RISK": "拥挤风险",
             "NO_DIRECT_MAPPING": "无直接映射",
-            "INSUFFICIENT": "保持观察，等待下一合法脉冲",
+            "INSUFFICIENT": "本次不改变优先级，等待下一合法可比脉冲",
         }.get(effect, "当前无法判断")
         signal = row.get("signal_fields") if isinstance(row.get("signal_fields"), dict) else {}
         comparison = str(signal.get("pulse_comparison_status") or row.get("pulse_comparison_status") or "NOT_COMPARABLE")
-        priority = row.get("priority_effect") or "保持观察优先级，等待传导"
-        trigger = row.get("next_trigger") or "A股同步传导且本地承接正常时升级"
+        priority = row.get("priority_effect") or "当前不改变该ETF排序；等待下一合法可比脉冲"
+        trigger = row.get("next_trigger") or "下一合法可比脉冲形成后重新比较"
         detail = f"{row.get('object_id') or row.get('asset')} → {target_text}；方向{direction}，结论为{effect_text}；{priority}；升级条件：{trigger}"
         if comparison == "COMPARABLE":
             delta = signal.get("pulse_delta") if isinstance(signal.get("pulse_delta"), dict) else {}
