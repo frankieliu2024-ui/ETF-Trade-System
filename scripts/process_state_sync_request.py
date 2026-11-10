@@ -2345,7 +2345,7 @@ def record_post_close_review(account: dict, request: dict, *, delivery_only: boo
                 "data_time": {},
             }
             legacy_full_day_compat = True
-    if interaction_scenario not in {"SCHEDULED_REVIEW", "SCHEDULED_TRADE_REVIEW", "TRADE_REVIEW", "POST_CLOSE_REVIEW", "FORMAL_DECISION", "MIDDAY_REVIEW", "WEEKLY_REVIEW"} or not review:
+    if interaction_scenario not in {"SCHEDULED_REVIEW", "SCHEDULED_TRADE_REVIEW", "TRADE_REVIEW", "MANUAL_TRADE_REVIEW", "POST_CLOSE_REVIEW", "FORMAL_DECISION", "MIDDAY_REVIEW", "WEEKLY_REVIEW"} or not review:
         return False, False
     review_scope = str(review.get("review_scope") or "").strip().upper()
     request_phase = str(request.get("market_phase") or request.get("session_stage") or "").strip().upper()
