@@ -113,10 +113,10 @@ def _mapping_candidates(configured: list[dict], observed_assets: set[str]) -> li
             "mapping_reason": "CONFIGURED_ECONOMIC_FAMILY_CANDIDATE_NO_LIVE_SIGNAL",
             "evidence_status": "NO_LIVE_SIGNAL",
             "consumption_status": "CATALOG_ONLY",
-            "decision_effect": "INSUFFICIENT",
+            "decision_effect": "TIMING_FILTER",
             "signal_fields": {},
             "evidence_summary": "配置映射存在，但本轮快照没有匹配到该对象的实时观测信号",
-            "decision_use": "仅用于说明可检验的经济族群关联；没有实时信号，不能改变ETF方向、时机或交易判断",
+            "decision_use": "保持相关ETF观察优先级，等待下一合法脉冲，不升级即时配置",
             "notification_eligibility": "NOT_ELIGIBLE_WITHOUT_LIVE_SIGNAL",
         })
     return candidates
@@ -271,6 +271,8 @@ def build_contribution(*, context: dict | None, node: str = "", task: str = "") 
             "crowding_signal": current_signal.get("crowding_signal") or "UNDETERMINED",
             "cross_market_relation": item.get("cross_market_relation") or "UNDETERMINED：缺少A股同步事实",
             "decision_effect": current_effect,
+            "priority_effect": ("提高观察优先级" if current_effect in {"SUPPORT", "CONFIRMATORY"} else "降低即时配置优先级" if current_effect in {"CONTRADICT", "CROWDING_RISK"} else "保持观察优先级，等待传导"),
+            "next_trigger": "A股同步传导且本地承接正常时升级；否则维持观察或暂缓新增配置",
             "signal_fields": current_signal,
             "evidence_summary": item.get("evidence_summary") or current_signal,
             "decision_use": item.get("decision_use") or (
@@ -308,7 +310,9 @@ def build_contribution(*, context: dict | None, node: str = "", task: str = "") 
                 "hyperliquid_object_ids": [obj.get("object_id")],
                 "mapping_status": "MAPPED",
                 "cross_market_relation": relation,
-                "decision_effect": obj.get("decision_effect") or "INSUFFICIENT",
+                "decision_effect": obj.get("decision_effect") or "TIMING_FILTER",
+                "priority_effect": obj.get("priority_effect") or "保持观察优先级，等待传导",
+                "next_trigger": obj.get("next_trigger") or "A股同步传导且本地承接正常时升级；否则维持观察或暂缓新增配置",
                 "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
                 "source_context_id": context.get("context_id") or latest.get("context_id") or "",
                 "source_observation_as_of": obj.get("observation_as_of") or None,
