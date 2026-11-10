@@ -2328,6 +2328,11 @@ def record_post_close_review(account: dict, request: dict, *, delivery_only: boo
     review = request.get("formal_review")
     legacy_full_day_compat = False
     interaction_scenario = str(request.get("interaction_scenario") or "").strip().upper()
+    # Manual scheduled-task completions use this explicit ingress label; the
+    # canonical owner treats it as the existing scheduled trade-review path
+    # while preserving the original field in the persisted event.
+    if interaction_scenario == "MANUAL_TRADE_REVIEW":
+        interaction_scenario = "SCHEDULED_TRADE_REVIEW"
     # Legacy full-day Trade Review completions may predate the nested
     # formal_review object. Accept only the unambiguous frozen-title shape;
     # every other missing/invalid review remains fail-closed.
