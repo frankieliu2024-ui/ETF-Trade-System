@@ -1692,7 +1692,7 @@ jobs:
       - name: Finalize canonical Dashboard projection before publish
         # Keep the final human projection owned by sync_formal_files.py even
         # when an earlier derived-state producer touched the working tree.
-        if: ${{ always() && github.ref == 'refs/heads/main' && steps.state_sync.outcome != 'failure' && steps.risk_refresh.outcome != 'failure' && github.event.inputs.probe_only != 'true' }}
+        if: ${{ always() && github.ref == 'refs/heads/main' }}
         run: |
           set -euo pipefail
           python - <<'PY'
