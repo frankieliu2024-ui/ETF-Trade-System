@@ -8,8 +8,8 @@
   "actual_run_time": "2026-11-10T16:56:41+08:00",
   "workflow_run_id": "42786361937",
   "capture_started_at_beijing": "2026-11-10T16:55:46+08:00",
-  "captured_at": "2026-11-10T16:56:41+08:00",
-  "captured_at_beijing": "2026-11-10T16:56:41+08:00",
+  "captured_at": "2026-11-10T16:57:17+08:00",
+  "captured_at_beijing": "2026-11-10T16:57:17+08:00",
   "timezone": "Asia/Shanghai",
   "provider": "hithink-finance",
   "quality_status": "DEGRADED",
@@ -34,7 +34,11 @@
       "single_source_risk": [],
       "auto_healed": false,
       "status": "DEGRADED"
-    }
+    },
+    "quick_retry_objects": [
+      "588000"
+    ],
+    "quick_retry_seconds": 18.724
   },
   "rows": [
     {
@@ -608,12 +612,12 @@
       "fallback_reason": "",
       "provider_timestamp_ms": null,
       "as_of_beijing": "",
-      "captured_at": "2026-11-10T16:56:14+08:00",
-      "captured_at_beijing": "2026-11-10T16:56:14+08:00",
+      "captured_at": "2026-11-10T16:57:17+08:00",
+      "captured_at_beijing": "2026-11-10T16:57:17+08:00",
       "timezone": "Asia/Shanghai",
       "market_phase": "OUTSIDE_SESSION",
       "quality_status": "FAILED",
-      "error": "napshot', '--thscodes', '588000.SH']; {\n  \"ok\": false,\n  \"command\": \"market\",\n  \"error\": {\n    \"code\": \"UPSTREAM_NETWORK_FAILURE\",\n    \"category\": \"upstream\",\n    \"message\": \"The Fuyao service could not be reached before the timeout.\",\n    \"hint\": \"Check network connectivity and retry the command.\",\n    \"retryable\": true\n  },\n  \"meta\": {\n    \"cli_version\": \"0.2.0\",\n    \"schema_version\": \"1\"\n  }\n}\n; Eastmoney fallback failed: Eastmoney 588000 provider timestamp is stale: 2026-11-10T16:11:38+08:00",
+      "error": "'588000.SH']; {\n  \"ok\": false,\n  \"command\": \"market\",\n  \"error\": {\n    \"code\": \"FUYAO_3001\",\n    \"category\": \"upstream\",\n    \"message\": \"Target not found\",\n    \"hint\": \"Retry later and retain the request ID when reporting a persistent failure.\",\n    \"retryable\": false,\n    \"request_id\": \"5637358800fd453da5f5839fd5bcb06b\"\n  },\n  \"meta\": {\n    \"cli_version\": \"0.2.0\",\n    \"schema_version\": \"1\"\n  }\n}\n; Eastmoney fallback failed: Eastmoney 588000 provider timestamp is stale: 2026-11-10T16:11:38+08:00",
       "failure_class": "TRANSIENT",
       "semantic_note": "该对象provider请求失败；未使用旧行情、代理或伪造OHLC补齐。"
     },
