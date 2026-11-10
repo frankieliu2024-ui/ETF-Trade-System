@@ -58,17 +58,39 @@ def request_bound_snapshot_alignment(query_context: dict, decision_context: dict
         or (decision_context.get("decision_trigger") or {}).get("request_id")
         or ""
     ).strip()
-    allowed = bool(
+    same_market_date = bool(
+        str(query_current.get("market_date") or "")
+        and str(query_current.get("market_date") or "") == str(decision_current.get("market_date") or "")
+    )
+    same_request_rollforward = bool(
         query_snapshot
         and decision_snapshot
         and query_snapshot != decision_snapshot
         and query_request_id
         and query_request_id == decision_request_id
-        and str(query_current.get("market_date") or "") == str(decision_current.get("market_date") or "")
+        and same_market_date
     )
+    # Query and decision projections are produced independently.  A decision
+    # projection may legally advance first while query_context still points to
+    # an earlier snapshot from the same Beijing trading day.  Accept only this
+    # monotonic same-day roll-forward; cross-day, reverse, or incomparable
+    # snapshot identities remain fail-closed.
+    query_name = query_snapshot.rsplit("/", 1)[-1]
+    decision_name = decision_snapshot.rsplit("/", 1)[-1]
+    monotonic_same_day_rollforward = bool(
+        same_market_date
+        and query_snapshot
+        and decision_snapshot
+        and query_snapshot != decision_snapshot
+        and query_name[:10] == decision_name[:10]
+        and decision_snapshot > query_snapshot
+    )
+    allowed = same_request_rollforward or monotonic_same_day_rollforward
     detail = f"query={query_snapshot} decision={decision_snapshot}"
-    if allowed:
+    if same_request_rollforward:
         detail += " same_request_snapshot_rollforward=true"
+    elif monotonic_same_day_rollforward:
+        detail += " same_day_monotonic_snapshot_rollforward=true"
     return query_snapshot == decision_snapshot or allowed, detail
 
 
