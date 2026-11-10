@@ -17,9 +17,17 @@ from urllib import request as urllib_request
 
 try:
     from scheduled_review_completion import write_completion_request
+    from scheduled_review_completion_owner import (
+        persist_completion,
+        dispatch_notification_with_one_recovery,
+    )
     from task_runtime_identity import derive_runtime_identity
 except ModuleNotFoundError:
     from scripts.scheduled_review_completion import write_completion_request
+    from scripts.scheduled_review_completion_owner import (
+        persist_completion,
+        dispatch_notification_with_one_recovery,
+    )
     from scripts.task_runtime_identity import derive_runtime_identity
 
 
@@ -234,11 +242,11 @@ def main() -> int:
     if not all(checks.values()):
         failed = ", ".join(key for key, ok in checks.items() if not ok)
         raise RuntimeError(f"trade review completion readback mismatch: {failed}")
-    persisted_path, persistence = _persist_completion_to_main(Path(target))
-    canonical_path = persisted_path
-    # Passive push wakes are not completion proof. Explicit workflow dispatch
-    # is the primary handoff path for this completion.
-    dispatch = _dispatch_notification(canonical_path)
+    # Use the single production owner for both hash normalization and the
+    # explicit notification handoff. The actor must not maintain a divergent
+    # writer or notification implementation.
+    canonical_path, persistence = persist_completion(Path(target))
+    dispatch = dispatch_notification_with_one_recovery(canonical_path)
     dispatch["explicit_workflow_dispatch"] = True
     # Same-run hard gate: completion persistence alone is not a successful
     # handoff. The actor must dispatch the canonical notification workflow and
