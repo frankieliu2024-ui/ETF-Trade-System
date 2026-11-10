@@ -12,3 +12,8 @@ def test_notification_contract_uses_contribution_effect_labels():
     assert "decision_effect" in source
     assert "CROWDING_RISK" in source
     assert "10分钟变化" in source
+
+
+def test_notification_uses_central_alias_registry_for_n225():
+    text = explain_for_notification(text="日经225指数（N225）出现极端波动", target="N225")
+    assert "等待下一次贡献包刷新" in text or "EWJ" in text
