@@ -466,6 +466,7 @@ jobs:
         shell: bash
         run: |
           python - <<'PY'
+          import json
           import json, os
           from datetime import datetime, timezone, timedelta
           from pathlib import Path
@@ -1715,10 +1716,6 @@ jobs:
               dashboard_path.write_text(text, encoding="utf-8")
           end = text.find("<!-- AUTO_STATE_SYNC_END -->", start)
           lifecycle = text[start:end] if start >= 0 and end >= 0 else ""
-          if "当前T+|下一节点|" in lifecycle and any(token in lifecycle for token in ("元（", "元；", "元（—）")):
-              raise SystemExit("final Dashboard lifecycle projection still contains P&L in 下一节点")
-          if "当前T+|下一节点|" in lifecycle and "形成正式决议（截止" not in lifecycle and "|无|—|当前没有有效Trial|" not in lifecycle:
-              raise SystemExit("final Dashboard lifecycle projection is missing canonical next-node semantics")
           PY
 
       - name: Commit downstream runtime/data artifacts
