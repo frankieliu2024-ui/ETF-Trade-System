@@ -101,7 +101,7 @@ def _latest_binding_rows(text: str) -> list[dict[str, Any]]:
         contribution.get("mapped_objects"),
         latest.get("etf_bindings"),
     )
-    rows = next(
+    source_rows = next(
         (source for source in binding_sources if isinstance(source, list) and source),
         [],
     )
@@ -113,7 +113,8 @@ def _latest_binding_rows(text: str) -> list[dict[str, Any]]:
         for alias in mapping.get("aliases") or []:
             alias_assets[str(alias).upper()] = asset
     alias_asset = next((asset for alias, asset in alias_assets.items() if alias in upper), "")
-    for row in rows:
+    matched_rows = []
+    for row in source_rows:
         if not isinstance(row, dict):
             continue
         object_id = str(row.get("object_id") or row.get("asset") or "")
@@ -125,8 +126,8 @@ def _latest_binding_rows(text: str) -> list[dict[str, Any]]:
             alias_asset and object_id.split(":", 1)[-1].upper() == alias_asset.split(":", 1)[-1].upper()
         )
         if direct or related:
-            rows.append(row)
-    return rows
+            matched_rows.append(row)
+    return matched_rows or source_rows
 
 
 def _binding_labels(row: dict[str, Any]) -> list[str]:
