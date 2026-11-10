@@ -1,6 +1,12 @@
 from __future__ import annotations
 
 from scripts.hyperliquid_contribution import build_contribution
+from scripts.hyperliquid_contribution import _economic_etf_matches
+
+
+def test_economic_family_mapping_includes_current_discovery_candidate():
+    codes = _economic_etf_matches({"name_markers": ["芯片"]})
+    assert "588200" in codes
 
 
 def test_shared_packet_materializes_etf_consumption_results():
