@@ -28,9 +28,10 @@ def _economic_etf_matches(mapping: dict) -> list[str]:
         discovery = json.loads((ROOT / "data/state/formal_discovery_current.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):
         discovery = {}
-    # Mapping is deliberately fixed to the canonical monitored ETF universe.
-    # Discovery candidates are not added here: a temporary candidate must not
-    # silently create or expand a Hyperliquid ETF mapping.
+    # Resolve both the persistent monitored universe and the current legal
+    # Discovery candidates.  Discovery is an independent consumer class, not
+    # a permission grant; excluding it here made a valid economic-family
+    # signal disappear precisely when a new candidate entered the decision.
     markers = [str(x).strip() for x in (mapping.get("name_markers") or []) if str(x).strip()]
     excluded = [str(x).strip() for x in (mapping.get("exclude_name_markers") or []) if str(x).strip()]
     if not markers:
@@ -39,6 +40,12 @@ def _economic_etf_matches(mapping: dict) -> list[str]:
     for item in objects:
         code = str(item.get("code") or "").strip()
         name = str(item.get("name") or "")
+        if code and any(marker in name for marker in markers) and not any(marker in name for marker in excluded):
+            matches.append(code)
+    discovery_rows = discovery.get("discovery", {}).get("candidates", []) if isinstance(discovery.get("discovery"), dict) else []
+    for item in discovery_rows:
+        code = str(item.get("code") or "").strip()
+        name = str(item.get("name") or item.get("display_name") or "")
         if code and any(marker in name for marker in markers) and not any(marker in name for marker in excluded):
             matches.append(code)
     return sorted(set(matches))
