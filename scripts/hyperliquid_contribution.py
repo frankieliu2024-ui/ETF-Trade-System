@@ -212,6 +212,30 @@ def build_contribution(*, context: dict | None, node: str = "", task: str = "") 
             return "DOWN", "MARK_VS_PREV_DAY", f"{change:.4%}"
         return "FLAT", "MARK_VS_PREV_DAY", f"{change:.4%}"
 
+    def _priority_effect(effect_name: str) -> str:
+        return {
+            "SUPPORT": "提高对应ETF的外部确认优先级；若A股同步上涨且承接正常，进入更高配置优先级比较",
+            "CONFIRMATORY": "提高对应ETF的配置与持有优先级；外部与A股已形成相互确认",
+            "CONTRADICT": "降低对应ETF的新增与持有优先级；若A股同步走弱，进入减持或释放比较",
+            "CROWDING_RISK": "降低即时追涨优先级；保留方向支持，但先等待拥挤缓解或A股承接确认",
+            "TIMING_FILTER": "方向支持成立但当前不直接追涨；将该ETF列入下一节点优先复核",
+            "NO_DIRECT_MAPPING": "不改变该ETF排序；仅作为所属族群背景",
+            "NO_INCREMENTAL_VALUE": "本次不改变该ETF排序；外部证据未增加有效边际信息",
+            "INSUFFICIENT": "当前不改变该ETF排序；等待下一合法可比脉冲",
+        }.get(effect_name, "当前不改变该ETF排序；等待下一合法可比脉冲")
+
+    def _next_trigger(effect_name: str) -> str:
+        return {
+            "SUPPORT": "A股同步上涨且本地承接正常时，提高配置优先级",
+            "CONFIRMATORY": "A股与外部方向继续同步时，维持较高配置与持有优先级",
+            "CONTRADICT": "A股同步走弱或外部方向继续恶化时，提高释放优先级",
+            "CROWDING_RISK": "拥挤度回落且A股承接保持时，恢复配置评估",
+            "TIMING_FILTER": "下一合法脉冲确认方向延续，并核对A股承接",
+            "NO_DIRECT_MAPPING": "继续使用ETF自身行情和所属族群事实判断",
+            "NO_INCREMENTAL_VALUE": "继续使用ETF自身行情和资本比较判断",
+            "INSUFFICIENT": "下一合法可比脉冲形成后重新比较",
+        }.get(effect_name, "下一合法可比脉冲形成后重新比较")
+
     def effect(item: dict, direction: str) -> str:
         explicit = str(item.get("decision_effect") or "").strip().upper()
         if explicit:
@@ -282,8 +306,8 @@ def build_contribution(*, context: dict | None, node: str = "", task: str = "") 
             "crowding_signal": current_signal.get("crowding_signal") or "UNDETERMINED",
             "cross_market_relation": item.get("cross_market_relation") or "UNDETERMINED：缺少A股同步事实",
             "decision_effect": current_effect,
-            "priority_effect": ("提高观察优先级" if current_effect in {"SUPPORT", "CONFIRMATORY"} else "降低即时配置优先级" if current_effect in {"CONTRADICT", "CROWDING_RISK"} else "保持观察优先级，等待传导"),
-            "next_trigger": "A股同步传导且本地承接正常时升级；否则维持观察或暂缓新增配置",
+            "priority_effect": _priority_effect(current_effect),
+            "next_trigger": _next_trigger(current_effect),
             "signal_fields": current_signal,
             "evidence_summary": item.get("evidence_summary") or current_signal,
             "decision_use": item.get("decision_use") or (
@@ -322,8 +346,8 @@ def build_contribution(*, context: dict | None, node: str = "", task: str = "") 
                 "mapping_status": "MAPPED",
                 "cross_market_relation": relation,
                 "decision_effect": obj.get("decision_effect") or "TIMING_FILTER",
-                "priority_effect": obj.get("priority_effect") or "保持观察优先级，等待传导",
-                "next_trigger": obj.get("next_trigger") or "A股同步传导且本地承接正常时升级；否则维持观察或暂缓新增配置",
+                "priority_effect": obj.get("priority_effect") or _priority_effect(str(obj.get("decision_effect") or "INSUFFICIENT")),
+                "next_trigger": obj.get("next_trigger") or _next_trigger(str(obj.get("decision_effect") or "INSUFFICIENT")),
                 "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
                 "source_context_id": context.get("context_id") or latest.get("context_id") or "",
                 "source_observation_as_of": obj.get("observation_as_of") or None,
