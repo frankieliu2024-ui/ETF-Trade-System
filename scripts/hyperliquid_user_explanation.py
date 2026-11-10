@@ -87,9 +87,24 @@ def _premium_text(value: Any) -> str:
 
 def _latest_binding_rows(text: str) -> list[dict[str, Any]]:
     """Read ETF bindings from the global latest Hyperliquid contribution projection."""
+    # The global contribution package is authoritative for notification
+    # rendering. The bounded pulse projection may legitimately lag or omit
+    # binding fields; treating that projection as the sole source collapses
+    # valid economic-family mappings into a generic "no binding" message.
+    context = read_json(ROOT / "data/state/overseas_context.json", {})
+    hyperliquid = context.get("hyperliquid") if isinstance(context.get("hyperliquid"), dict) else {}
+    contribution = hyperliquid.get("contribution_package") if isinstance(hyperliquid.get("contribution_package"), dict) else {}
     payload = read_json(ROOT / "data/state/hyperliquid_pulse_latest.json", {})
     latest = payload.get("latest") if isinstance(payload.get("latest"), dict) else {}
-    rows = []
+    binding_sources = (
+        hyperliquid.get("etf_bindings"),
+        contribution.get("mapped_objects"),
+        latest.get("etf_bindings"),
+    )
+    rows = next(
+        (source for source in binding_sources if isinstance(source, list) and source),
+        [],
+    )
     upper = text.upper()
     configured = read_json(MAP_PATH, {}).get("asset_mappings") or []
     alias_assets = {}
@@ -98,7 +113,7 @@ def _latest_binding_rows(text: str) -> list[dict[str, Any]]:
         for alias in mapping.get("aliases") or []:
             alias_assets[str(alias).upper()] = asset
     alias_asset = next((asset for alias, asset in alias_assets.items() if alias in upper), "")
-    for row in (latest.get("etf_bindings") or []):
+    for row in rows:
         if not isinstance(row, dict):
             continue
         object_id = str(row.get("object_id") or row.get("asset") or "")
