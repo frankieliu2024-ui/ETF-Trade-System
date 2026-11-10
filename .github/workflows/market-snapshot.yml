@@ -82,6 +82,7 @@ jobs:
       GITHUB_EVENT_INPUTS_NODE: ${{ github.event.inputs.node || '' }}
       GITHUB_EVENT_INPUTS_PROBE_ONLY: ${{ github.event.inputs.probe_only || 'false' }}
       SCHEDULED_CRON: ${{ github.event.schedule || '' }}
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v5
         with:
