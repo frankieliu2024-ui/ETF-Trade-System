@@ -68,8 +68,7 @@
 |全指器械（159056）|Trial|逾期|2026-10-26|T+11|-47.30元（—）|尚未找到该Trial在强制节点后的可归属正式决议或完整卖出事实；状态保持开放，逾期只表示应补做正式决议。|FORMAL_COMPLETION:fd_20261026_144323_scheduled_formal_review_b7e14c92|
 |科创芯片ETF嘉实（588200）|Trial|有效|2026-11-10|T+0|-51.40元（—）|尚未找到该Trial在强制节点后的可归属正式决议或完整卖出事实；状态保持开放，逾期只表示应补做正式决议。|formal-auto-20261110T110105+0800__decision|
 
-当前持仓的事实数量以上方‘当前持仓事实’为准；未被生命周期投影单独列出的持仓，不得据此推断为Trial或Confirm。
-<!-- AUTO_STATE_SYNC_END -->
+当前持仓的事实数量以上方‘当前持仓事实’为准；未被生命周期投影单独列出的持仓，不得据此推断为Trial或Confirm。\n\n<!-- AUTO_STATE_SYNC_END -->
 
 <!-- AUTO_TRADE_FACT_CORRECTIONS_START -->
 <!-- AUTO_TRADE_FACT_CORRECTIONS_END -->
