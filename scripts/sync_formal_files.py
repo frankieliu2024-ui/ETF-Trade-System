@@ -210,6 +210,17 @@ def latest_canonical_formal_decision(root: Path = ROOT) -> dict:
             event = load_json(path)
         except (OSError, json.JSONDecodeError, TypeError):
             continue
+        if (
+            directory.name == "live_snapshot"
+            and path.name.endswith("__scheduled_review_completion.json")
+            and str(event.get("task_id") or "").strip() == "ETF正式决策"
+        ):
+            event = dict(event)
+            event["event_type"] = "FORMAL_DECISION_REPORT"
+            event["decision_time_beijing"] = event.get("requested_at_beijing")
+            event["recorded_at_beijing"] = event.get("requested_at_beijing")
+            event["decision_id"] = event.get("decision_id") or event.get("request_id")
+            event["final_content"] = event.get("final_content") or (event.get("presentation_binding") or {}).get("full_content")
         event_type = str(event.get("event_type") or "").upper()
         if event_type not in {"FORMAL_DECISION", "FORMAL_DECISION_REPORT"}:
             continue
@@ -347,7 +358,7 @@ def _formal_decision_index_records(root: Path, market_date: str) -> list[dict]:
     """Read compact same-day Formal Decision records from canonical events."""
     records: list[dict] = []
     seen: set[str] = set()
-    for directory in (root / "events" / "reviews", root / "events" / "decisions"):
+    for directory in (root / "events" / "reviews", root / "events" / "decisions", root / "requests" / "live_snapshot"):
         if not directory.exists():
             continue
         for path in directory.glob("*.json"):
@@ -453,6 +464,11 @@ def render_same_day_formal_decision_index(root: Path, account: dict) -> str:
             canonical_trade_events.append(event)
     for item in records:
         linked = [trade for trade in trades if str(trade.get("decision_id") or trade.get("linked_decision_id") or "") == item["identity"]]
+        decision_stamp = item["stamp"].strftime("%Y-%m-%d %H:%M")
+        linked += [
+            trade for trade in trades
+            if any(decision_stamp in str(label) for label in (trade.get("linked_formal_decisions") or []))
+        ]
         linked += [event for event in canonical_trade_events if str((event.get("execution_attribution") or {}).get("decision_id") or event.get("linked_decision_id") or "") == item["identity"] and str(event.get("execution_date") or event.get("confirmed_at_beijing") or "")[:10] == market_date]
         decision_text = f"{item['candidate']} {item['release']}"
         same_day_object = [
