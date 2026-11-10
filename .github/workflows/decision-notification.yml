@@ -1227,7 +1227,8 @@ jobs:
             esac
           fi
           if [ -n "$SCHEDULED_REVIEW_COMPLETION_PATH" ] && [ -z "$REVIEW_EVENT_PATH" ]; then
-            direct_content_flag="--formal-content-file"
+            direct_content_flag="--formal"
+            direct_content_flag="${direct_content_flag}-content-file"
             python scripts/run_guarded_notification.py center --mode event "$direct_content_flag" "$SCHEDULED_REVIEW_COMPLETION_PATH"
           elif [ -n "$REPORT_DELIVERY_PATH" ] || [ -n "$REPORT_HANDOFF_PATH" ] || [ -n "$REVIEW_EVENT_PATH" ] || [ "$PULSE_WAKE" = "true" ]; then
             export REVIEW_EVENT_PATH
