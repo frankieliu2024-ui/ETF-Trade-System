@@ -271,7 +271,8 @@ def render_shock(*, what: list[str], why: str, implication: str, action: str, as
         # as separate visible lines. This is presentation-only: the global
         # contribution package remains the sole source of Hyperliquid evidence.
         hyperliquid_line = hl_basis
-        implication = f"{implication}；Hyperliquid仅用于方向确认、背离识别或时机/拥挤风险过滤，不单独改变交易判断。"
+        # The Hyperliquid line already carries the object-level conclusion. Do not append
+        # a generic, conservative disclaimer to the ETF impact sentence.
     else:
         hyperliquid_line = "Hyperliquid本轮未形成可改变该通知判断的增量证据。"
     return (
