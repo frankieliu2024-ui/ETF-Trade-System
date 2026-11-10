@@ -17,3 +17,10 @@ def test_notification_contract_uses_contribution_effect_labels():
 def test_notification_uses_central_alias_registry_for_n225():
     text = explain_for_notification(text="日经225指数（N225）出现极端波动", target="N225")
     assert "等待下一次贡献包刷新" in text or "EWJ" in text
+
+
+def test_notification_resolves_a_share_index_family_mapping():
+    text = explain_for_notification(text="创业板指（399006）出现极端波动", target="创业板指（399006）")
+    assert "XYZ100" in text
+    assert "159781" in text or "科创创业ETF" in text
+    assert "结论为" in text
