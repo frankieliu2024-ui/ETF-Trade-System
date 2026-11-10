@@ -594,7 +594,7 @@ jobs:
           print(str(payload.get("report_type") or binding.get("report_type") or "").strip().upper())
           PY
           )
-          if [ "$completion_type" = "ETF_TRADE_REVIEW" ]; then
+          if [ "$completion_type" = "ETF_TRADE_REVIEW" ] || [ "$completion_type" = "SCHEDULED_TRADE_REVIEW" ]; then
             # Trade Review is a delivery-only report.  Do not route it through
             # process_state_sync_request.py: that projector validates Formal
             # Decision managed-position/lifecycle semantics that do not belong
@@ -611,7 +611,7 @@ jobs:
           binding = payload.get("presentation_binding") or {}
           report_type = str(payload.get("report_type") or binding.get("report_type") or "").strip().upper()
           task_id = str(payload.get("task_id") or binding.get("task_id") or "").strip()
-          if report_type != "ETF_TRADE_REVIEW" or task_id != "ETF交易复盘":
+          if report_type not in {"ETF_TRADE_REVIEW", "SCHEDULED_TRADE_REVIEW"} or task_id != "ETF交易复盘":
               raise SystemExit("Trade Review completion identity mismatch")
           review = payload.get("formal_review") if isinstance(payload.get("formal_review"), dict) else {}
           full_content = str(payload.get("final_content") or binding.get("full_content") or "")
