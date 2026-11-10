@@ -64,7 +64,22 @@ def read_latest_snapshot(root: Path, current: dict) -> tuple[str, dict]:
 
 def load_universe(root: Path) -> dict[str, str]:
     cfg = load_json(root / "config/market/etf_monitor_universe.json", {})
-    return {str(x.get("code")): str(x.get("name")) for x in (cfg.get("objects") or []) if x.get("code")}
+    universe = {str(x.get("code")): str(x.get("name")) for x in (cfg.get("objects") or []) if x.get("code")}
+    # The fixed universe is the observation baseline; current held ETFs are a
+    # mandatory runtime overlay so a newly purchased ETF cannot disappear from
+    # close features and strategy-equity valuation before the next config edit.
+    account = load_json(root / "data/state/account_fact.json", {})
+    for position in account.get("positions") or []:
+        if not isinstance(position, dict) or str(position.get("asset_type") or "").upper() != "ETF":
+            continue
+        code = str(position.get("code") or position.get("symbol") or "").strip()
+        try:
+            quantity = float(position.get("quantity") or 0)
+        except (TypeError, ValueError):
+            quantity = 0.0
+        if code and quantity > 0:
+            universe.setdefault(code, str(position.get("name") or code))
+    return universe
 
 
 def path_feature_map(root: Path) -> dict[str, dict]:
