@@ -1254,7 +1254,7 @@ jobs:
           echo "processed=$processed" >> "$GITHUB_OUTPUT"
       - name: Rebuild ETF strategy projection after canonical account sync
         id: account_projection_rebuild
-        if: ${{ steps.state_sync.outcome == 'success' && steps.state_sync.outputs.processed == 'true' && github.event.inputs.probe_only != 'true' }}
+        if: ${{ (steps.state_sync.outcome == 'success' && steps.state_sync.outputs.processed == 'true' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && github.event.inputs.probe_only != 'true' }}
         run: |
           python scripts/build_research_features.py
           python scripts/rebuild_etf_strategy_equity.py --output data/state/etf_strategy_equity.json
