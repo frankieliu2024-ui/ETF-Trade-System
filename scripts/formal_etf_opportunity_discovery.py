@@ -598,10 +598,16 @@ def _apply_external_driver_triggers(rows: list[dict[str, Any]], context: dict[st
         ]
     else:
         observation_items = []
-    observations = {
-        str(item.get("asset", {}).get("name") or item.get("asset") or ""): item
-        for item in observation_items
-    }
+    observations = {}
+    for item in observation_items:
+        raw_asset = item.get("asset")
+        asset_name = (
+            str(raw_asset.get("name") or "")
+            if isinstance(raw_asset, dict)
+            else str(raw_asset or item.get("object_name") or "")
+        )
+        if asset_name:
+            observations[asset_name] = item
     by_code: dict[str, list[dict[str, Any]]] = {}
     for mapping in mappings:
         asset = str(mapping.get("asset") or "")
