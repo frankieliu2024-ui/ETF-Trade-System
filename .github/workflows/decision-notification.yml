@@ -906,6 +906,7 @@ jobs:
 
           from scripts.process_state_sync_request import record_formal_decision_report_event
           from scripts.scheduled_review_completion import validate_formal_runtime_completion_contract
+          from scripts.task_runtime_identity import derive_runtime_identity
 
           completion_path = Path(sys.argv[1])
           payload = json.loads(completion_path.read_text(encoding="utf-8"))
@@ -958,6 +959,26 @@ jobs:
                   if not fact_binding.get("fact_status"):
                       fact_binding["fact_status"] = "READY/PASS"
                   payload["fact_binding"] = fact_binding
+          # Scheduled-task surfaces may omit platform runtime IDs. Fill only
+          # missing IDs from this confirmed request identity; never use history.
+          requested_at = str(payload.get("requested_at_beijing") or payload.get("runtime_now") or "").strip()
+          entry_mode = str(payload.get("entry_mode") or binding.get("entry_mode") or "AUTOMATIC_SCHEDULED_TASK").strip().upper()
+          request_id = str(payload.get("request_id") or "").strip()
+          supplied_run = str(payload.get("task_run_id") or binding.get("task_run_id") or "").strip()
+          supplied_occurrence = str(payload.get("occurrence_id") or binding.get("occurrence_id") or "").strip()
+          if not request_id or not requested_at:
+              raise ValueError("Formal Decision completion missing request identity or requested_at_beijing")
+          task_run_id, occurrence_id = derive_runtime_identity(
+              "ETF正式决策", request_id, requested_at, entry_mode, supplied_run, supplied_occurrence
+          )
+          payload["task_run_id"] = task_run_id
+          payload["occurrence_id"] = occurrence_id
+          binding = dict(payload.get("presentation_binding") or {})
+          binding["task_run_id"] = task_run_id
+          binding["occurrence_id"] = occurrence_id
+          binding.setdefault("task_id", "ETF正式决策")
+          binding.setdefault("report_type", "ETF_FORMAL_DECISION")
+          payload["presentation_binding"] = binding
           validate_formal_runtime_completion_contract(payload)
           payload["_ingress_path"] = completion_path.as_posix()
           _, idempotent, event_path = record_formal_decision_report_event(payload)
