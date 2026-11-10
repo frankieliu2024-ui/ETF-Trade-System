@@ -499,17 +499,17 @@ def render_lifecycle_projection(root: Path, account: dict) -> str:
         f"- 到期/逾期待正式决议：{sum(1 for item in active_trials if item.get('decision_due') or item.get('overdue'))}个",
         "- 有效Confirm：当前投影未发现由正式决策与真实成交共同确认的有效Confirm。",
     ]
-    lines += ["", "|对象|生命周期|状态|形成日期|当前T+|来源决策|", "|-|-|-|-:|-:|-|"]
+    lines += ["", "|对象|生命周期|状态|形成日期|当前T+|", "|-|-|-|-:|-:|"]
     if active_trials:
         for item in active_trials:
             lines.append(
                 f"|{item.get('security_name') or item.get('security_code')}（{item.get('security_code')}）|Trial|"
                 f"{'逾期' if item.get('overdue') else ('待决议' if item.get('decision_due') else '有效')}|"
                 f"{item.get('start_market_date') or '未提供'}|T+{item.get('current_t_plus') or 0}|"
-                f"{item.get('source_decision_id') or '未提供'}|"
+                
             )
     else:
-        lines.append("|无|—|当前没有有效Trial|—|—|—|")
+        lines.append("|无|—|当前没有有效Trial|—|—|")
     lines += ["", "当前持仓的事实数量以上方‘当前持仓事实’为准；未被生命周期投影单独列出的持仓，不得据此推断为Trial或Confirm。"]
     return "\n".join(lines)
 
