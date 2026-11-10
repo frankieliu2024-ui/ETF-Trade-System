@@ -585,10 +585,22 @@ def _apply_external_driver_triggers(rows: list[dict[str, Any]], context: dict[st
     if not context or str(context.get("quality_status") or "").upper() not in {"PASS", "DEGRADED"}:
         return rows
     mappings = context.get("mapping") or []
+    # Accept both the historical list and the canonical object-keyed
+    # projection; never iterate object keys as if they were observations.
+    raw_observations = context.get("observations") or []
+    if isinstance(raw_observations, dict):
+        observation_items = [
+            item for item in raw_observations.values() if isinstance(item, dict)
+        ]
+    elif isinstance(raw_observations, list):
+        observation_items = [
+            item for item in raw_observations if isinstance(item, dict)
+        ]
+    else:
+        observation_items = []
     observations = {
-        str(item.get("asset", {}).get("name") or ""): item
-        for item in (context.get("observations") or [])
-        if isinstance(item, dict)
+        str(item.get("asset", {}).get("name") or item.get("asset") or ""): item
+        for item in observation_items
     }
     by_code: dict[str, list[dict[str, Any]]] = {}
     for mapping in mappings:
