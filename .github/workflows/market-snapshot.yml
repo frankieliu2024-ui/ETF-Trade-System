@@ -1605,6 +1605,7 @@ jobs:
         if: ${{ (steps.risk_refresh.outcome == 'success' || steps.retained_close_risk_refresh.outcome == 'success') && github.event.inputs.probe_only != 'true' }}
         run: |
           python - <<'PY'
+          import json
           from pathlib import Path
           from scripts.sync_formal_files import sync_dashboard_projection
           result = sync_dashboard_projection(Path('.'))
