@@ -379,6 +379,10 @@ def build_formal_review_completion_request(
     else:
         validate_full_day_review(formal_review, account)
     validate_formal_decision_fact_binding(formal_review, request_id)
+    # Formal Decision is a first-class Hyperliquid consumer. Apply the same
+    # contribution-packet and prose-consumption gate as Trade Review so a
+    # valid packet cannot be silently degraded into generic market language.
+    validate_hyperliquid_consumer_if_present(formal_review, final_content)
     validate_user_visible_content(str(final_content or ""), canonical_closure_confirmed=False)
     validate_formal_decision_presentation_timestamp(final_content, requested_at_beijing)
     effective_entry_mode = str(entry_mode or "").strip().upper()
