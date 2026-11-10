@@ -56,12 +56,14 @@ def _remove_error(report: dict, prefix: str) -> None:
 def _normalize_async_context_freshness(report: dict) -> None:
     checks = report.get("checks") or []
     target = next((x for x in checks if x.get("name") == "dynamic_freshness:query_decision_aligned"), None)
-    if not target or target.get("status") != "FAIL":
+    if not target:
         return
     query = next((x for x in checks if x.get("name") == "dynamic_freshness:query_recalculated"), None)
     decision = next((x for x in checks if x.get("name") == "dynamic_freshness:decision_recalculated"), None)
     snapshot = next((x for x in checks if x.get("name") == "decision:query_decision_current_aligned"), None)
     if not query or query.get("status") != "PASS" or not decision or decision.get("status") != "PASS" or not snapshot:
+        return
+    if target.get("status") != "FAIL" and snapshot.get("status") != "FAIL":
         return
 
     # The core check runs before this post-processing hook. Query and decision
