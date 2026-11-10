@@ -72,7 +72,12 @@ def validate_contribution_packet(packet: dict[str, Any]) -> dict[str, Any]:
     objects = list(packet.get("mapped_objects") or [])
     rows = list(packet.get("etf_contributions") or [])
     if not objects or not rows:
-        raise HyperliquidConsumerContractError("Hyperliquid贡献包缺少对象级或ETF级结论")
+        return {
+            "status": "DEGRADED",
+            "reason": "本次没有可消费的Hyperliquid对象级实时信号",
+            "object_count": len(objects),
+            "etf_row_count": len(rows),
+        }
     errors = []
     for item in objects:
         for key in ("object_id", "observation_as_of", "direction_signal", "decision_effect"):
