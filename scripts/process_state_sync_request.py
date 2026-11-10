@@ -24,7 +24,7 @@ try:
     from build_stock_context import active_account_asset_codes, build_managed_position_projection, first, normalize_code, position_metric
 except ModuleNotFoundError:
     from scripts.build_stock_context import active_account_asset_codes, build_managed_position_projection, first, normalize_code, position_metric
-from sync_formal_files import sync_formal_files, latest_canonical_formal_decision, format_position_pnl
+from sync_formal_files import sync_formal_files, sync_dashboard_projection, latest_canonical_formal_decision, format_position_pnl
 from observation_etf_management import persist_monitor_universe, validate_observation_management
 
 
@@ -4910,11 +4910,12 @@ def main() -> int:
         ROOT, account, (request.get("formal_decision") or {}) if formal_decision_current else {}
     ) if (formal_decision_current or account_membership_changed) else False
     formal_files_sync = sync_formal_files(ROOT, account)
-    # Render last so a newly confirmed execution and its lifecycle projection
-    # remain visible in the final canonical Dashboard content.
-    dashboard = replace_block(DASHBOARD.read_text(encoding="utf-8"), START, END, build_dashboard_block(account, latest_canonical_formal_decision(ROOT) or request.get("formal_decision"), request), insert_after_heading=True)
-    dashboard_changed = write_formal_text_if_changed(ROOT, DASHBOARD.name, dashboard)
-    result = {"ok": True, "request_id": request.get("request_id"), "interaction_scenario": request.get("interaction_scenario"), "account_updated_at": account.get("updated_at"), "dashboard_updated": dashboard_changed, "formal_decision_recorded": decision_recorded, "formal_decision_id": decision_id, "trade_event_recorded": trade_event_recorded, "post_close_review_recorded": review_recorded, "post_close_review_idempotent_noop": review_idempotent, "review_prerequisite_unavailable_recorded": unavailable_recorded, "review_prerequisite_unavailable_idempotent_noop": unavailable_idempotent, "formal_files_sync": formal_files_sync, "observation_universe_changed": observation_universe_changed, "account_sync_status": account_sync_status, "normalized_non_security_asset_count": normalized_non_security_asset_count, "canonical_ingress_state": canonical_ingress_contract["terminal_state"], "canonical_ingress_failure_reason": None if canonical_ingress_contract["terminal_state"] == CANONICAL_INGRESS_SUBMITTED else canonical_ingress_contract["reason"]}
+    # There is exactly one Dashboard projection owner: sync_formal_files.py.
+    # Do not rebuild the Dashboard through the legacy state-sync renderer here;
+    # that path omits the canonical lifecycle projection and reintroduces stale
+    # P&L values into the lifecycle "下一节点" column.
+    dashboard_sync = sync_dashboard_projection(ROOT, account)
+    result = {"ok": True, "request_id": request.get("request_id"), "interaction_scenario": request.get("interaction_scenario"), "account_updated_at": account.get("updated_at"), "dashboard_updated": bool(dashboard_sync.get("dashboard_changed")), "formal_decision_recorded": decision_recorded, "formal_decision_id": decision_id, "trade_event_recorded": trade_event_recorded, "post_close_review_recorded": review_recorded, "post_close_review_idempotent_noop": review_idempotent, "review_prerequisite_unavailable_recorded": unavailable_recorded, "review_prerequisite_unavailable_idempotent_noop": unavailable_idempotent, "formal_files_sync": formal_files_sync, "observation_universe_changed": observation_universe_changed, "account_sync_status": account_sync_status, "normalized_non_security_asset_count": normalized_non_security_asset_count, "canonical_ingress_state": canonical_ingress_contract["terminal_state"], "canonical_ingress_failure_reason": None if canonical_ingress_contract["terminal_state"] == CANONICAL_INGRESS_SUBMITTED else canonical_ingress_contract["reason"]}
     if review_recorded and str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION":
         # The completion projection owner needs the exact event produced by the
         # same request.  Trade Review events are keyed by market_date, unlike
