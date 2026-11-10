@@ -91,15 +91,24 @@ def _latest_binding_rows(text: str) -> list[dict[str, Any]]:
     latest = payload.get("latest") if isinstance(payload.get("latest"), dict) else {}
     rows = []
     upper = text.upper()
-    aliases = {"NDX": "XYZ100", "纳指": "XYZ100", "纳斯达克": "XYZ100", "SOX": "SEMICONDUCTOR", "费城半导体": "SEMICONDUCTOR"}
-    alias = next((v for k, v in aliases.items() if k in upper), "")
+    configured = read_json(MAP_PATH, {}).get("asset_mappings") or []
+    alias_assets = {}
+    for mapping in configured:
+        asset = str(mapping.get("asset") or "")
+        for alias in mapping.get("aliases") or []:
+            alias_assets[str(alias).upper()] = asset
+    alias_asset = next((asset for alias, asset in alias_assets.items() if alias in upper), "")
     for row in (latest.get("etf_bindings") or []):
         if not isinstance(row, dict):
             continue
         object_id = str(row.get("object_id") or row.get("asset") or "")
         family = str(row.get("family") or "").upper()
         direct = object_id and object_id.split(":", 1)[-1].lower() in text.lower()
-        related = alias and (alias == object_id.split(":", 1)[-1].upper() or alias == family or (alias == "SEMICONDUCTOR" and family in {"SEMICONDUCTOR", "SEMICONDUCTOR_HIGH_BETA"}))
+        related = (
+            alias_asset and object_id.upper() == alias_asset.upper()
+        ) or (
+            alias_asset and object_id.split(":", 1)[-1].upper() == alias_asset.split(":", 1)[-1].upper()
+        )
         if direct or related:
             rows.append(row)
     return rows
@@ -121,7 +130,7 @@ def explain_for_notification(*, text: str, target: str = "") -> str:
     """Render the global contribution package without rebuilding mappings."""
     rows = _latest_binding_rows(f"{text} {target}")
     if not rows:
-        return "Hyperliquid：当前对象暂不升级ETF配置优先级，保持观察，等待下一合法脉冲。"
+        return "Hyperliquid：当前对象未在本次全局贡献包形成可消费绑定；不改变ETF配置，等待下一次贡献包刷新。该状态不是对象无映射，而是当前投影未提供可消费绑定。"
     statements = []
     for row in rows[:3]:
         labels = _binding_labels(row)

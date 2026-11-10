@@ -69,9 +69,11 @@ def _normalize_observations(context: dict, observations: list) -> list[dict]:
         mapping = by_asset.get(str(asset or ""), {})
         row = dict(item)
         row["asset"] = str(asset or "")
-        for key in ("family", "etf_codes", "mapped_assets", "mapping_reason", "name_markers", "exclude_name_markers"):
+        for key in ("family", "economic_family", "etf_codes", "mapped_assets", "mapping_reason", "name_markers", "exclude_name_markers", "aliases"):
             if mapping.get(key) is not None and row.get(key) in (None, "", []):
                 row[key] = mapping.get(key)
+        if not row.get("family") and row.get("economic_family"):
+            row["family"] = row.get("economic_family")
         if not row.get("etf_codes") and not row.get("mapped_assets") and mapping:
             family_matches = _economic_etf_matches(mapping)
             if family_matches:
@@ -158,7 +160,7 @@ def build_contribution(*, context: dict | None, node: str = "", task: str = "") 
     observations = latest.get("observations") or context.get("observations") or []
     raw_observations = observations
     observations = _normalize_observations(context, raw_observations)
-    mapped = [x for x in observations if isinstance(x, dict) and (x.get("family") or x.get("asset"))]
+    mapped = [x for x in observations if isinstance(x, dict) and x.get("asset") and (x.get("family") or x.get("mapped_assets") or x.get("etf_codes"))]
     configured = context.get("mapping") if isinstance(context.get("mapping"), list) and context.get("mapping") else None
     if configured is None:
         try:

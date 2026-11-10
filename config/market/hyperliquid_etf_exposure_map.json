@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.1",
+  "schema_version": "1.2",
   "owner": "scripts/build_overseas_context.py",
   "mode": "FORMAL_EXTERNAL_DRIVER_DISCOVERY_INPUT",
   "read_only": true,
@@ -26,6 +26,13 @@
         "513180",
         "159561",
         "515080"
+      ],
+      "aliases": [
+        "NDX",
+        "NASDAQ100",
+        "纳指",
+        "纳斯达克100",
+        "纳斯达克"
       ]
     },
     {
@@ -48,6 +55,12 @@
         "通信",
         "电子",
         "设备"
+      ],
+      "aliases": [
+        "SOX",
+        "费城半导体",
+        "费城半导体指数",
+        "半导体指数"
       ]
     },
     {
@@ -178,6 +191,13 @@
         "日本",
         "日经",
         "亚洲"
+      ],
+      "aliases": [
+        "N225",
+        "NIKKEI225",
+        "日经225",
+        "日经225指数",
+        "日经"
       ]
     },
     {
@@ -360,6 +380,8 @@
       "ECONOMIC_FAMILY",
       "NAME_MARKER_INFERRED"
     ],
-    "consumer_rule": "行业/族群映射必须解析为当前ETF对象集合后才能进入共享贡献包；无法解析时保留为明确的映射候选，不得写成无映射。"
+    "consumer_rule": "行业/族群映射必须解析为当前ETF对象集合后才能进入共享贡献包；无法解析时保留为明确的映射候选，不得写成无映射。",
+    "shared_alias_registry": true,
+    "alias_rule": "消费者不得维护独立别名；对象名称、代码和族群别名统一由本配置解析"
   }
 }
