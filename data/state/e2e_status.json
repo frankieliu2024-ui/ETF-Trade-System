@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-11-10T14:32:23+08:00",
+  "generated_at": "2026-11-10T16:45:20+08:00",
   "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -8,20 +8,20 @@
     "market": {
       "status": "READY",
       "reason": "latest market snapshot is valid",
-      "snapshot": "data/market/snapshots/2026-11-10_143123.json",
-      "captured_at": "2026-11-10T14:31:23+08:00",
-      "market_phase": "CONTINUOUS_AFTERNOON"
+      "snapshot": "data/market/snapshots/2026-11-10_150109.json",
+      "captured_at": "2026-11-10T15:01:09+08:00",
+      "market_phase": "POST_CLOSE_GRACE"
     },
     "account": {
       "status": "READY",
       "reason": "confirmed account facts remain valid; historical audit deltas are not pending updates",
-      "updated_at": "2026-11-09T15:00:00+08:00",
-      "source": "BROKER_HOLDINGS_SCREENSHOT_20261109_1731_USER_CONFIRMED_CLOSE",
+      "updated_at": "2026-11-10T15:00:00+08:00",
+      "source": "BROKER_HOLDINGS_AND_TRADE_SCREENSHOTS_20261110_1633_USER_CONFIRMED_CLOSE",
       "pending_change_events": [],
-      "historical_audit_event_count": 137,
-      "cash": 111750.26,
+      "historical_audit_event_count": 142,
+      "cash": 86964.37,
       "reserved_cash_for_settlement": 0,
-      "deployable_cash": 111750.26,
+      "deployable_cash": 86964.37,
       "settlement_constraint_status": "NONE"
     },
     "risk": {
@@ -58,15 +58,15 @@
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 39363862,
-          "sha256": "17211fb5f2c33b1348cbc755fa5043d12b6d9ad42a8a9ae2ff17cef2ef8c8aaa",
+          "byte_count": 49340838,
+          "sha256": "890f2471a76d01ae9b99bf254e3e5dd262e73f0c423a6c444b2ddfe76529a2bd",
           "parsed_object": true
         },
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 483120,
-          "sha256": "308d02a29c7b49d392306e78dbddc23a3be023c61236ff8e4cfbdb6fe53b44b7",
+          "byte_count": 635162,
+          "sha256": "3cdb5e573169ba6667c78cda54dcf4d004b55e55e1ed5dcf94343a32511f47b6",
           "parsed_object": true
         },
         "rule": "EMPTY_TRANSPORT_READ_REQUIRES_SAME_SOURCE_REVERIFY"
@@ -82,29 +82,30 @@
       "source": "formal decision + executed trade facts"
     },
     "maintenance": {
-      "status": "READY",
-      "reason": "maintenance guard passed",
-      "checked_at": "2026-11-10T14:31:23+08:00"
+      "status": "DEGRADED",
+      "reason": "maintenance status=MAINTENANCE_INCOMPLETE; capability must be evaluated from canonical inputs",
+      "checked_at": "2026-11-10T16:44:48+08:00"
     }
   },
   "blockers": [],
   "degradations": [
     "risk",
-    "close_review"
+    "close_review",
+    "maintenance"
   ],
   "context_read_contract": {
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 39363862,
-      "sha256": "17211fb5f2c33b1348cbc755fa5043d12b6d9ad42a8a9ae2ff17cef2ef8c8aaa",
+      "byte_count": 49340838,
+      "sha256": "890f2471a76d01ae9b99bf254e3e5dd262e73f0c423a6c444b2ddfe76529a2bd",
       "parsed_object": true
     },
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 483120,
-      "sha256": "308d02a29c7b49d392306e78dbddc23a3be023c61236ff8e4cfbdb6fe53b44b7",
+      "byte_count": 635162,
+      "sha256": "3cdb5e573169ba6667c78cda54dcf4d004b55e55e1ed5dcf94343a32511f47b6",
       "parsed_object": true
     },
     "rule": "UNVERIFIED_READ_MUST_NOT_BE_TREATED_AS_VERIFIED_EMPTY"

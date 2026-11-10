@@ -1,20 +1,54 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-11-09T09:35:00Z",
+  "generated_at": "2026-11-10T08:44:47Z",
   "mode": "DECISION_EXECUTION_ATTRIBUTION",
   "read_only": true,
-  "trade_event_count": 53,
+  "trade_event_count": 57,
   "linked_trade_count": 53,
-  "unlinked_trade_count": 0,
+  "unlinked_trade_count": 4,
   "ineligible_unrecoverable_trade_count": 0,
   "attribution_backlog": {
-    "status": "CLEAR",
-    "items": [],
+    "status": "OPEN",
+    "items": [
+      {
+        "trade_event_id": "broker-close-20261110-1633-chatgpt_1_fed2ae55c660f71e",
+        "status": "UNLINKED_TRADE",
+        "link_status": "NO_PRIOR_MATCHING_DECISION",
+        "code": "300124",
+        "name": "汇川技术"
+      },
+      {
+        "trade_event_id": "broker-close-20261110-1633-chatgpt_2_f772934480b124f3",
+        "status": "UNLINKED_TRADE",
+        "link_status": "NO_PRIOR_MATCHING_DECISION",
+        "code": "300124",
+        "name": "汇川技术"
+      },
+      {
+        "trade_event_id": "broker-close-20261110-1633-chatgpt_3_230865a03c7703b5",
+        "status": "UNLINKED_TRADE",
+        "link_status": "NO_PRIOR_MATCHING_DECISION",
+        "code": "601899",
+        "name": "紫金矿业"
+      },
+      {
+        "trade_event_id": "broker-close-20261110-1633-chatgpt_4_cfecc8e1272eb6ac",
+        "status": "UNLINKED_TRADE",
+        "link_status": "NO_PRIOR_MATCHING_DECISION",
+        "code": "588200",
+        "name": "科创芯片ETF嘉实"
+      }
+    ],
     "rule": "未找到PIT有效正式决策时保留UNLINKED_TRADE；不得按时间、标的或持仓结果自动追认decision_id。后续必须补齐正式决策证据，或由正式复盘记录不可恢复归因。"
   },
   "attribution_gate": {
-    "status": "PASS",
-    "unlinked_trade_ids": [],
+    "status": "BLOCKED",
+    "unlinked_trade_ids": [
+      "broker-close-20261110-1633-chatgpt_1_fed2ae55c660f71e",
+      "broker-close-20261110-1633-chatgpt_2_f772934480b124f3",
+      "broker-close-20261110-1633-chatgpt_3_230865a03c7703b5",
+      "broker-close-20261110-1633-chatgpt_4_cfecc8e1272eb6ac"
+    ],
     "rule": "每一笔EXECUTED成交必须存在PIT有效正式决策；无法关联时只能进入硬失败门，不得作为普通警告、不得自动追认、不得进入健康闭环。"
   },
   "corrected_future_or_invalid_link_count": 35,
@@ -330,6 +364,34 @@
       "decision_to_execution_seconds": 3899055.0,
       "adverse_execution_cost_pct": null,
       "status": "PARTIAL"
+    },
+    {
+      "trade_event_id": "broker-close-20261110-1633-chatgpt_1_fed2ae55c660f71e",
+      "status": "UNLINKED_TRADE",
+      "link_status": "NO_PRIOR_MATCHING_DECISION",
+      "code": "300124",
+      "name": "汇川技术"
+    },
+    {
+      "trade_event_id": "broker-close-20261110-1633-chatgpt_2_f772934480b124f3",
+      "status": "UNLINKED_TRADE",
+      "link_status": "NO_PRIOR_MATCHING_DECISION",
+      "code": "300124",
+      "name": "汇川技术"
+    },
+    {
+      "trade_event_id": "broker-close-20261110-1633-chatgpt_3_230865a03c7703b5",
+      "status": "UNLINKED_TRADE",
+      "link_status": "NO_PRIOR_MATCHING_DECISION",
+      "code": "601899",
+      "name": "紫金矿业"
+    },
+    {
+      "trade_event_id": "broker-close-20261110-1633-chatgpt_4_cfecc8e1272eb6ac",
+      "status": "UNLINKED_TRADE",
+      "link_status": "NO_PRIOR_MATCHING_DECISION",
+      "code": "588200",
+      "name": "科创芯片ETF嘉实"
     },
     {
       "trade_event_id": "broker-screenshot-20261015-141944-exits_1_3178d4d4aff02556",
