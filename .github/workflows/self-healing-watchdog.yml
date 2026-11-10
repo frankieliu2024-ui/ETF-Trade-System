@@ -59,7 +59,11 @@ jobs:
   watchdog:
     # issue_comment is a wake-only external ingress. Restrict it to Issue #385
     # and the exact prefix so ordinary issue/PR comments cannot run production.
-    if: ${{ github.event_name != 'issue_comment' || (github.event.issue.number == 385 && startsWith(github.event.comment.body, '[ETF_L0_WAKE]')) }}
+    if: >-
+      ${{
+        (github.event_name != 'issue_comment' || (github.event.issue.number == 385 && startsWith(github.event.comment.body, '[ETF_L0_WAKE]'))) &&
+        (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion != 'success')
+      }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
