@@ -16,7 +16,7 @@ try:
         validate_managed_position_lifecycle,
     )
     from user_visible_presentation import validate_user_visible_content
-    from validate_hyperliquid_consumer_output import validate_hyperliquid_consumer_output
+    from validate_hyperliquid_consumer_output import validate_hyperliquid_consumer_output, validate_contribution_packet
 except ModuleNotFoundError:
     from scripts.runtime_session_gate import classify_live_snapshot_request
     from scripts.task_runtime_identity import derive_runtime_identity, derive_scheduled_review_identity
@@ -25,7 +25,7 @@ except ModuleNotFoundError:
         validate_managed_position_lifecycle,
     )
     from scripts.user_visible_presentation import validate_user_visible_content
-    from scripts.validate_hyperliquid_consumer_output import validate_hyperliquid_consumer_output
+    from scripts.validate_hyperliquid_consumer_output import validate_hyperliquid_consumer_output, validate_contribution_packet
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 REQUEST_DIR = ROOT / "requests" / "live_snapshot"
@@ -171,6 +171,7 @@ def validate_hyperliquid_consumer_if_present(review: dict, final_content: str) -
     packet = review.get("hyperliquid_contribution") or review.get("hyperliquid")
     if not isinstance(packet, dict):
         return
+    validate_contribution_packet(packet)
     validate_hyperliquid_consumer_output(str(final_content or ""), packet)
 
 
