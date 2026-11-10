@@ -54,6 +54,28 @@ def canonical_ineligibility(root: Path, trade: dict) -> dict:
             and str(item.get("eligibility") or "").upper() == "EXPLICIT_CANONICAL_INELIGIBILITY"
         ):
             return item
+
+    # User-confirmed broker facts may classify a same-day stock purchase as
+    # an IPO base position. It is outside the ETF Formal Decision domain and
+    # must be closed explicitly, without inventing a decision_id.
+    account = load_json(root / "data" / "state" / "account_fact.json", {})
+    for fact in account.get("trades") or []:
+        if (
+            str(fact.get("code") or "") == str(trade.get("code") or "")
+            and str(fact.get("side") or "").upper() == str(trade.get("side") or "").upper()
+            and str(fact.get("asset_type") or "").upper() == "STOCK"
+            and "打新底仓" in str(fact.get("role") or "")
+            and abs(float(fact.get("quantity") or 0) - float(trade.get("quantity") or 0)) < 0.01
+            and abs(float(fact.get("amount") or 0) - float(trade.get("amount") or 0)) < 0.01
+        ):
+            return {
+                "trade_event_id": event_id,
+                "eligibility": "EXPLICIT_CANONICAL_INELIGIBILITY",
+                "reason": "用户确认的非ETF打新底仓成交，不属于ETF正式决策归因域",
+                "source": "data/state/account_fact.json",
+                "role": fact.get("role"),
+                "asset_type": fact.get("asset_type"),
+            }
     return {}
 
 
