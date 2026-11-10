@@ -677,6 +677,12 @@ jobs:
           # The frozen completion remains unchanged; only the reconstructed
           # morning-scope input is consumed by the existing projection path.
           projection_payload = dict(payload)
+          # Older direct task completions may omit the shared Scheduled Review
+          # identity fields. Reconstruct them in memory for the canonical
+          # delivery-only projector; never rewrite the frozen completion.
+          projection_payload.setdefault("request_type", "SCHEDULED_REVIEW_COMPLETION")
+          projection_payload.setdefault("formal_fact_type", "FORMAL_SCHEDULED_TRADE_REVIEW")
+          projection_payload.setdefault("source", "CHATGPT_MANUAL_TRADE_REVIEW")
           if inferred_morning_scope or not isinstance(projection_payload.get("formal_review"), dict) or not projection_payload.get("formal_review"):
               projection_payload["formal_review"] = review
               # Older completions carry entry_mode at the top level only.
