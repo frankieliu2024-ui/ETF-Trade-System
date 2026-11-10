@@ -22,7 +22,7 @@
       "automation_id": "6accb02805ec8191aca29791a72636bd",
       "conversation_id": "6accb04b-9d30-83ec-9e9f-f632d3815e92",
       "canonical_interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
-      "live_snapshot_status": "LIVE_READBACK_CONFIRMED_CURRENT_MAIN_AUDIT_ONLY",
+      "live_snapshot_status": "LIVE_READBACK_CONFIRMED_MINIMAL_HANDOFF_REPAIR_CURRENT_MAIN_AUDIT_ONLY",
       "historical_versions": [
         "2026-10-16-v1",
         "2026-10-16-v2"
@@ -34,7 +34,7 @@
       "automation_id": "6ab78aab49988191818abf8660c65362",
       "conversation_id": "6ab89c94-e798-83e8-90e6-0b57c60905c5",
       "canonical_interaction_scenario": "SCHEDULED_TRADE_REVIEW",
-      "live_snapshot_status": "LIVE_READBACK_CONFIRMED_CURRENT_MAIN_AUDIT_ONLY",
+      "live_snapshot_status": "LIVE_READBACK_CONFIRMED_MINIMAL_HANDOFF_REPAIR_CURRENT_MAIN_AUDIT_ONLY",
       "historical_versions": [
         "2026-10-16-v1",
         "2026-10-16-v2"
@@ -46,7 +46,7 @@
       "automation_id": "6ad1d7b4c05c819180eb6af2c8086cb8",
       "conversation_id": "6ad0aef0-7718-83ee-b901-d24316ce92b6",
       "canonical_interaction_scenario": "FORMAL_DECISION_CANONICAL_SCENARIO_PER_CURRENT_MAIN",
-      "live_snapshot_status": "LIVE_READBACK_CONFIRMED_CURRENT_MAIN_AUDIT_ONLY",
+      "live_snapshot_status": "LIVE_READBACK_CONFIRMED_MINIMAL_HANDOFF_REPAIR_CURRENT_MAIN_AUDIT_ONLY",
       "historical_versions": [
         "2026-10-16-v1",
         "2026-10-16-v2"
@@ -84,15 +84,15 @@
     "当前live快照未完成逐项回读前，不得宣称三任务已完成最终冻结。",
     "live配置回读未取得可验证hash前，必须保持RECONCILIATION_REQUIRED，不得将历史Prompt hash冒充当前live hash。"
   ],
-  "registry_revision": "2026-10-18-live-readback",
+  "registry_revision": "2026-11-10-live-readback-aligned",
   "live_readback": {
-    "captured_at_beijing": "2026-10-27",
+    "captured_at_beijing": "2026-11-10",
     "source": "ChatGPT scheduled tasks cloud browser refreshed readback",
-    "result": "THREE_TASKS_LIVE_PROMPTS_READ_BACK_ENABLED",
+    "result": "THREE_TASKS_LIVE_PROMPTS_READ_BACK_AND_MINIMAL_HANDOFF_REPAIR_ALIGNED",
     "platform_hash_status": "NOT_EXPOSED_BY_UI",
     "authority": "ChatGPT scheduled task UI live prompts",
     "repository_role": "audit/test/production protocol only",
-    "limitation": "平台未提供可验证的原生Prompt/Schedule hash，不推算hash"
+    "limitation": "平台未提供可验证的原生Prompt/Schedule hash，不推算hash；冻结文件只登记刷新回读事实和main审计提交"
   },
   "current_main_role": "审计、测试、生产协议和回退登记；不得覆盖ChatGPT定时任务界面live Prompt"
 }
