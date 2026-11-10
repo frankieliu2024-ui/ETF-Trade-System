@@ -368,6 +368,10 @@ def build_contribution(*, context: dict | None, node: str = "", task: str = "") 
         },
         "consumer_contract": "同一只读贡献包供正式决策、交易复盘和Hyperliquid脉冲主动通知消费；不独立生成交易权限、金额或订单",
     }
-    from scripts.validate_hyperliquid_consumer_output import validate_contribution_packet
+    try:
+        from scripts.validate_hyperliquid_consumer_output import validate_contribution_packet
+    except ModuleNotFoundError:
+        # Direct script execution puts scripts/ on sys.path, not the repository root.
+        from validate_hyperliquid_consumer_output import validate_contribution_packet
     packet["validation"] = validate_contribution_packet(packet)
     return packet
