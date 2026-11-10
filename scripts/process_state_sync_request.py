@@ -2554,6 +2554,7 @@ def record_post_close_review(account: dict, request: dict, *, delivery_only: boo
         close_verified = canonical_close_verified and (
             supplied_close_snapshot == canonical_close_snapshot
             or effective_close_timestamp
+            or (delivery_only and not supplied_close_snapshot)
         )
         # Review completion is independent from close-data completeness. Preserve
         # the canonical close contract when available; otherwise persist an explicit
