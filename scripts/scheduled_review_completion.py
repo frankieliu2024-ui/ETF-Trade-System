@@ -16,6 +16,7 @@ try:
         validate_managed_position_lifecycle,
     )
     from user_visible_presentation import validate_user_visible_content
+    from validate_hyperliquid_consumer_output import validate_hyperliquid_consumer_output
 except ModuleNotFoundError:
     from scripts.runtime_session_gate import classify_live_snapshot_request
     from scripts.task_runtime_identity import derive_runtime_identity, derive_scheduled_review_identity
@@ -24,6 +25,7 @@ except ModuleNotFoundError:
         validate_managed_position_lifecycle,
     )
     from scripts.user_visible_presentation import validate_user_visible_content
+    from scripts.validate_hyperliquid_consumer_output import validate_hyperliquid_consumer_output
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 REQUEST_DIR = ROOT / "requests" / "live_snapshot"
@@ -163,6 +165,15 @@ def validate_formal_object_coverage(review: dict, account: dict | None = None) -
     }
 
 
+def validate_hyperliquid_consumer_if_present(review: dict, final_content: str) -> None:
+    """Apply the shared Hyperliquid prose gate when a packet is carried."""
+    review = review if isinstance(review, dict) else {}
+    packet = review.get("hyperliquid_contribution") or review.get("hyperliquid")
+    if not isinstance(packet, dict):
+        return
+    validate_hyperliquid_consumer_output(str(final_content or ""), packet)
+
+
 def validate_trade_review_presentation_semantics(
     review: dict, final_content: str, account: dict | None = None
 ) -> None:
@@ -240,6 +251,7 @@ def build_trade_review_completion_request(
     else:
         validate_full_day_review(formal_review, account)
     validate_trade_review_presentation_semantics(formal_review, final_content, account)
+    validate_hyperliquid_consumer_if_present(formal_review, final_content)
     coverage = validate_formal_object_coverage(formal_review, account)
     validate_user_visible_content(str(final_content or ""), canonical_closure_confirmed=False)
     effective_entry_mode = str(entry_mode or "").strip().upper()
