@@ -63,3 +63,33 @@ def validate_hyperliquid_consumer_output(text: str, packet: dict[str, Any]) -> d
         text=text,
         contributions=list(packet.get("etf_contributions") or []),
     )
+
+
+def validate_contribution_packet(packet: dict[str, Any]) -> dict[str, Any]:
+    """Validate the shared packet before any consumer can read it."""
+    if not isinstance(packet, dict):
+        raise HyperliquidConsumerContractError("Hyperliquid贡献包不是对象")
+    objects = list(packet.get("mapped_objects") or [])
+    rows = list(packet.get("etf_contributions") or [])
+    if not objects or not rows:
+        return {
+            "status": "DEGRADED",
+            "reason": "本次没有可消费的Hyperliquid对象级实时信号",
+            "object_count": len(objects),
+            "etf_row_count": len(rows),
+        }
+    errors = []
+    for item in objects:
+        for key in ("object_id", "observation_as_of", "direction_signal", "decision_effect"):
+            if not str(item.get(key) or "").strip():
+                errors.append(f"对象缺少字段:{key}")
+        signal = item.get("signal_fields") if isinstance(item.get("signal_fields"), dict) else {}
+        if signal.get("pulse_comparison_status") == "COMPARABLE" and signal.get("comparison_reason"):
+            errors.append(f"{item.get('object_id')}可比较但残留比较缺失原因")
+    for row in rows:
+        for key in ("ashare_code", "decision_effect", "priority_effect", "next_trigger"):
+            if not str(row.get(key) or "").strip():
+                errors.append(f"{row.get('ashare_code') or 'UNKNOWN'}缺少字段:{key}")
+    if errors:
+        raise HyperliquidConsumerContractError("；".join(errors))
+    return {"status": "PASS", "object_count": len(objects), "etf_row_count": len(rows)}
