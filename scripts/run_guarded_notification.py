@@ -1300,11 +1300,18 @@ def _run_center(mode: str, formal_content_file: str | None = None) -> int:
 
     event = None
     if mode != "channel-test":
-        event = center.choose_event(mode)
-        error = notification_evidence_error(event)
-        if error:
-            print(json.dumps({"status": "REJECTED_NO_COMPARABLE_EVIDENCE", "detail": error, "title": (event or {}).get("title")}, ensure_ascii=False))
-            return 0
+        if formal_content_file:
+            from pathlib import Path
+            event = center.formal_content_event(Path(formal_content_file))
+            if not event:
+                print(json.dumps({"status": "FAILED", "error": "ETF交易复盘 direct content is missing or incomplete"}, ensure_ascii=False))
+                return 1
+        else:
+            event = center.choose_event(mode)
+            error = notification_evidence_error(event)
+            if error:
+                print(json.dumps({"status": "REJECTED_NO_COMPARABLE_EVIDENCE", "detail": error, "title": (event or {}).get("title")}, ensure_ascii=False))
+                return 0
         original_choose = center.choose_event
         center.choose_event = lambda requested: event if requested == mode else original_choose(requested)
     sys.argv = ["notification_center.py", "--mode", mode]
