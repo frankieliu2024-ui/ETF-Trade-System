@@ -157,6 +157,8 @@ def build_contribution(*, context: dict | None, node: str = "", task: str = "") 
         or ""
     )
     phase = _phase(as_of)
+    pulse_sequence = context.get("pulse_sequence") if isinstance(context.get("pulse_sequence"), list) else []
+    pulse_sequence_summary = context.get("pulse_sequence_summary") if isinstance(context.get("pulse_sequence_summary"), dict) else {}
     observations = latest.get("observations") or context.get("observations") or []
     raw_observations = observations
     observations = _normalize_observations(context, raw_observations)
@@ -326,6 +328,8 @@ def build_contribution(*, context: dict | None, node: str = "", task: str = "") 
         "node": str(node or ""),
         "phase": phase,
         "as_of_beijing": as_of,
+        "pulse_sequence": pulse_sequence,
+        "pulse_sequence_summary": pulse_sequence_summary,
         "mapped_object_count": len(mapped_objects),
         "mapped_objects": mapped_objects,
         "etf_contribution_count": len(etf_contributions),
