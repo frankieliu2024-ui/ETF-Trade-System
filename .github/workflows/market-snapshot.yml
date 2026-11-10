@@ -1699,6 +1699,7 @@ jobs:
         run: |
           set -euo pipefail
           python - <<'PY'
+          import json
           from pathlib import Path
           from scripts.sync_formal_files import sync_dashboard_projection
           result = sync_dashboard_projection(Path('.'))
