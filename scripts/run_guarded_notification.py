@@ -1291,13 +1291,6 @@ def _run_center(mode: str, formal_content_file: str | None = None) -> int:
     import notification_center as center
 
     if formal_content_file:
-        print(json.dumps({
-            "status": "FAILED",
-            "error": "Formal Decision direct content projection is disabled; use canonical completion event",
-        }, ensure_ascii=False))
-        return 1
-
-    if formal_content_file:
         from pathlib import Path
         direct_payload = json.loads(Path(formal_content_file).read_text(encoding="utf-8"))
         direct_task = str(direct_payload.get("task_id") or (direct_payload.get("presentation_binding") or {}).get("task_id") or "").strip()
