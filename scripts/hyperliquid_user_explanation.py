@@ -90,11 +90,17 @@ def _latest_binding_rows(text: str) -> list[dict[str, Any]]:
     payload = read_json(ROOT / "data/state/hyperliquid_pulse_latest.json", {})
     latest = payload.get("latest") if isinstance(payload.get("latest"), dict) else {}
     rows = []
+    upper = text.upper()
+    aliases = {"NDX": "XYZ100", "纳指": "XYZ100", "纳斯达克": "XYZ100", "SOX": "SEMICONDUCTOR", "费城半导体": "SEMICONDUCTOR"}
+    alias = next((v for k, v in aliases.items() if k in upper), "")
     for row in (latest.get("etf_bindings") or []):
         if not isinstance(row, dict):
             continue
         object_id = str(row.get("object_id") or row.get("asset") or "")
-        if object_id and object_id.split(":", 1)[-1].lower() in text.lower():
+        family = str(row.get("family") or "").upper()
+        direct = object_id and object_id.split(":", 1)[-1].lower() in text.lower()
+        related = alias and (alias == object_id.split(":", 1)[-1].upper() or alias == family or (alias == "SEMICONDUCTOR" and family in {"SEMICONDUCTOR", "SEMICONDUCTOR_HIGH_BETA"}))
+        if direct or related:
             rows.append(row)
     return rows
 
@@ -115,7 +121,7 @@ def explain_for_notification(*, text: str, target: str = "") -> str:
     """Render the global contribution package without rebuilding mappings."""
     rows = _latest_binding_rows(f"{text} {target}")
     if not rows:
-        return "Hyperliquid：全局贡献包中没有当前对象的固定ETF绑定，无法用于判断。"
+        return "Hyperliquid：当前对象暂不升级ETF配置优先级，保持观察，等待下一合法脉冲。"
     statements = []
     for row in rows[:3]:
         labels = _binding_labels(row)
@@ -130,16 +136,18 @@ def explain_for_notification(*, text: str, target: str = "") -> str:
             "TIMING_FILTER": "时机过滤",
             "CROWDING_RISK": "拥挤风险",
             "NO_DIRECT_MAPPING": "无直接映射",
-            "INSUFFICIENT": "当前无法判断",
+            "INSUFFICIENT": "保持观察，等待下一合法脉冲",
         }.get(effect, "当前无法判断")
         signal = row.get("signal_fields") if isinstance(row.get("signal_fields"), dict) else {}
         comparison = str(signal.get("pulse_comparison_status") or row.get("pulse_comparison_status") or "NOT_COMPARABLE")
-        detail = f"{row.get('object_id') or row.get('asset')}绑定{target_text}；方向{direction}，结论为{effect_text}"
+        priority = row.get("priority_effect") or "保持观察优先级，等待传导"
+        trigger = row.get("next_trigger") or "A股同步传导且本地承接正常时升级"
+        detail = f"{row.get('object_id') or row.get('asset')}绑定{target_text}；方向{direction}，结论为{effect_text}；{priority}；升级条件：{trigger}"
         if comparison == "COMPARABLE":
             delta = signal.get("pulse_delta") if isinstance(signal.get("pulse_delta"), dict) else {}
             detail += f"；10分钟变化：资金费率{_format_delta(delta.get('funding'))}、未平仓量{_format_delta(delta.get('open_interest'))}、溢价{_format_delta(delta.get('premium'))}"
         else:
             reason = signal.get("comparison_reason") or "缺少前一合法脉冲比较基准"
-            detail += f"；无法进行跨脉冲比较：{reason}"
+            detail += f"；本次不升级优先级：{reason}"
         statements.append(detail)
     return "Hyperliquid：" + "；".join(statements) + "。"
