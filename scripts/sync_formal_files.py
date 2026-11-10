@@ -629,6 +629,13 @@ def normalize_dashboard_projection(text: str, root: Path = ROOT, account: dict |
         if "|ETF层当前结构|" in line:
             lines[index] = replacement
             break
+    lifecycle_heading = "### 当前有效生命周期"
+    lifecycle_marker = "<!-- AUTO_STATE_SYNC_END -->"
+    if lifecycle_heading in lines and lifecycle_marker in lines:
+        lifecycle_start = lines.index(lifecycle_heading)
+        lifecycle_end = lines.index(lifecycle_marker, lifecycle_start)
+        canonical_lifecycle = render_lifecycle_projection(root, account or {})
+        lines[lifecycle_start:lifecycle_end] = canonical_lifecycle.splitlines()
     heading = "### 下一关键节点"
     if heading in lines:
         start = lines.index(heading)
