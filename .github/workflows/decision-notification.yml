@@ -683,6 +683,14 @@ jobs:
           projection_payload.setdefault("request_type", "SCHEDULED_REVIEW_COMPLETION")
           projection_payload.setdefault("formal_fact_type", "FORMAL_SCHEDULED_TRADE_REVIEW")
           projection_payload.setdefault("source", "CHATGPT_MANUAL_TRADE_REVIEW")
+          projection_payload.setdefault("interaction_scenario", "MANUAL_TRADE_REVIEW")
+          projection_payload.setdefault("entry_mode", "MANUAL_SCHEDULED_TASK")
+          # Older direct completions also omitted the entry-mode binding. Keep
+          # the reconstructed projection internally consistent for the strict
+          # production identity validator; the frozen completion is untouched.
+          projection_binding = dict(projection_payload.get("presentation_binding") or {})
+          projection_binding.setdefault("entry_mode", projection_payload["entry_mode"])
+          projection_payload["presentation_binding"] = projection_binding
           if inferred_morning_scope or not isinstance(projection_payload.get("formal_review"), dict) or not projection_payload.get("formal_review"):
               projection_payload["formal_review"] = review
               # Older completions carry entry_mode at the top level only.
