@@ -732,17 +732,17 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git reset -- data/state/system_consistency.json
           git reset -- data/state/notification_center.json
-          if git diff --quiet -- data/state/formal_discovery_current.json data/state/discovery_pulse_latest.json data/state/discovery_pulse_index.json data/state/pulse_history.json; then
+          if git diff --quiet -- data/state/formal_discovery_current.json data/state/discovery_pulse_latest.json data/state/discovery_pulse_index.json; then
             echo "Discovery projection already published."
             exit 0
           fi
-          git add -- data/state/formal_discovery_current.json data/state/discovery_pulse_latest.json data/state/discovery_pulse_index.json data/state/pulse_history.json
+          git add -- data/state/formal_discovery_current.json data/state/discovery_pulse_latest.json data/state/discovery_pulse_index.json
           git commit -m "data: publish node-local Discovery with verified pulse"
           for attempt in 1 2 3; do
             git fetch origin main
             git reset --hard origin/main
             python scripts/build_weekly_discovery.py
-            git add -- data/state/formal_discovery_current.json data/state/discovery_pulse_latest.json data/state/discovery_pulse_index.json data/state/pulse_history.json
+            git add -- data/state/formal_discovery_current.json data/state/discovery_pulse_latest.json data/state/discovery_pulse_index.json
             git reset -- data/state/system_consistency.json
             git reset -- data/state/notification_center.json
             if git diff --cached --quiet; then
