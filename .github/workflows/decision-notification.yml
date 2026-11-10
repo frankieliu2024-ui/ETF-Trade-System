@@ -601,6 +601,7 @@ jobs:
             # to a review whose contract is exact full-body forwarding.
             result=$(PYTHONPATH=scripts python - "$completion_path" <<'PY'
           import json
+          import re
           import sys
           from pathlib import Path
           from scripts.process_state_sync_request import record_post_close_review
@@ -940,6 +941,14 @@ jobs:
                       fact_binding["latest_snapshot"] = fact_binding["market_snapshot"]
                   if not fact_binding.get("captured_at_beijing") and fact_binding.get("snapshot_as_of_beijing"):
                       fact_binding["captured_at_beijing"] = fact_binding["snapshot_as_of_beijing"]
+                  if not fact_binding.get("captured_at_beijing"):
+                      snapshot_ref = str(fact_binding.get("latest_snapshot") or fact_binding.get("market_snapshot") or "").strip()
+                      match = re.search(r"(\\d{4}-\\d{2}-\\d{2})_(\\d{6})", snapshot_ref)
+                      if match:
+                          clock = match.group(2)
+                          fact_binding["captured_at_beijing"] = (
+                              f"{match.group(1)}T{clock[:2]}:{clock[2:4]}:{clock[4:]}+08:00"
+                          )
                   if not fact_binding.get("latest_valid_node"):
                       fact_binding["latest_valid_node"] = "live"
                   if not fact_binding.get("fact_status"):
@@ -959,6 +968,26 @@ jobs:
                   if not fact_binding.get("fact_status"):
                       fact_binding["fact_status"] = "READY/PASS"
                   payload["fact_binding"] = fact_binding
+          # Scheduled-task surfaces may omit platform runtime IDs. Fill only
+          # missing IDs from this confirmed request identity; never use history.
+          requested_at = str(payload.get("requested_at_beijing") or payload.get("runtime_now") or "").strip()
+          entry_mode = str(payload.get("entry_mode") or binding.get("entry_mode") or "AUTOMATIC_SCHEDULED_TASK").strip().upper()
+          request_id = str(payload.get("request_id") or "").strip()
+          supplied_run = str(payload.get("task_run_id") or binding.get("task_run_id") or "").strip()
+          supplied_occurrence = str(payload.get("occurrence_id") or binding.get("occurrence_id") or "").strip()
+          if not request_id or not requested_at:
+              raise ValueError("Formal Decision completion missing request identity or requested_at_beijing")
+          task_run_id, occurrence_id = derive_runtime_identity(
+              "ETF正式决策", request_id, requested_at, entry_mode, supplied_run, supplied_occurrence
+          )
+          payload["task_run_id"] = task_run_id
+          payload["occurrence_id"] = occurrence_id
+          binding = dict(payload.get("presentation_binding") or {})
+          binding["task_run_id"] = task_run_id
+          binding["occurrence_id"] = occurrence_id
+          binding.setdefault("task_id", "ETF正式决策")
+          binding.setdefault("report_type", "ETF_FORMAL_DECISION")
+          payload["presentation_binding"] = binding
           # Scheduled-task surfaces may omit platform runtime IDs. Fill only
           # missing IDs from this confirmed request identity; never use history.
           requested_at = str(payload.get("requested_at_beijing") or payload.get("runtime_now") or "").strip()
