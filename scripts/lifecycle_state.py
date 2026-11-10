@@ -500,6 +500,18 @@ def build_lifecycle_projection(root: Path, as_of_market_date: str | None = None)
             "overdue": bool(not resolved and as_of > mandatory),
             "next_lifecycle_node": "RESOLVED" if resolved else "TRADE_MANDATORY_LIFECYCLE_NODE:T+3",
             "resolution": resolution,
+            "decision_coverage_status": (
+                "RESOLVED_BY_LATER_FORMAL_DECISION" if resolution and resolution.get("resolution_reason") == "LATEST_FORMAL_DECISION_COVERAGE"
+                else "RESOLVED_BY_EXECUTION" if resolution
+                else "NO_LATER_FORMAL_COVERAGE"
+            ),
+            "lifecycle_status_explanation": (
+                "已由后续正式判断覆盖，仍保留历史Trial身份；不自动生成交易动作。"
+                if resolution and resolution.get("resolution_reason") == "LATEST_FORMAL_DECISION_COVERAGE"
+                else "已由可归属的完整卖出事实结案；不自动生成交易动作。"
+                if resolution
+                else "尚未找到该Trial在强制节点后的可归属正式决议或完整卖出事实；状态保持开放，逾期只表示应补做正式决议。"
+            ),
             "execution_status": execution.get("execution_status"),
         })
     due = [x for x in trials if x["decision_due"]]

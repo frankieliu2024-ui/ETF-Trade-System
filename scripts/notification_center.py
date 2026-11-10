@@ -1611,7 +1611,10 @@ def main() -> int:
         state.update({"schema_version": "2.2", "updated_at": stamp, "last_status": "FAILED", "last_type": item["event_type"], "last_title": item["title"], "notifications": notifications[-HISTORY_LIMIT:], "recent": [compact_recent(x) for x in notifications[-HISTORY_LIMIT:]], "pending_questions": [x["notification_id"] for x in notifications if x.get("lifecycle_status") == "WAITING_CONFIRMATION"]}); write_json(state_path, state); print(json.dumps({"status": "FAILED", "notification_id": item["notification_id"], "lifecycle_status": "FAILED"}, ensure_ascii=False)); return 1
     # Formal Decision is contractually plain text. Keep the established Markdown
     # path for system review, trade review, and other existing notification families.
-    pushplus_template = "txt" if item["event_type"] == "FORMAL_DECISION" else "markdown"
+    # Plain text preserves standalone section headings and blank lines for all
+    # canonical frozen reports. Markdown rendering may collapse a heading and
+    # its first paragraph in the PushPlus client; the frozen body is unchanged.
+    pushplus_template = "txt" if item["event_type"] in {"FORMAL_DECISION", "REPORT_DELIVERY_REQUEST"} else "markdown"
     item["pushplus_template"] = pushplus_template
     ok, response = send(token, item["title"], item["content"], template=pushplus_template); stamp = now().isoformat(timespec="seconds"); item["last_attempted_at"] = stamp; item["response"] = response
     item["lifecycle_status"] = "WAITING_CONFIRMATION" if ok and item["event_type"] in {"PENDING_EXECUTION_CONFIRMATION", "成交确认", "账户确认", "ACCOUNT_FACT_CONFIRMATION", "收盘账户"} else ("SENT" if ok else "FAILED"); item["sent_at"] = stamp if ok else item.get("sent_at")
