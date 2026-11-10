@@ -38,6 +38,33 @@ def _persist_completion_to_main(completion_path: str) -> str:
     except ValueError as exc:
         raise RuntimeError("trade review completion must be inside the repository root") from exc
     body = path.read_bytes()
+    # Hashes are audit metadata, not a notification gate. Normalize missing
+    # values from the already-frozen body before the direct write; reject only
+    # an existing hash that conflicts with that body.
+    try:
+        envelope = json.loads(body.decode("utf-8"))
+        frozen = envelope.get("final_content")
+        if isinstance(frozen, str):
+            computed_hash = hashlib.sha256(frozen.encode("utf-8")).hexdigest()
+            existing_hash = str(envelope.get("content_hash") or "").strip().lower()
+            if existing_hash and existing_hash != computed_hash:
+                raise RuntimeError("trade review content_hash does not match final_content")
+            binding = envelope.get("presentation_binding")
+            if isinstance(binding, dict):
+                binding_hash = str(binding.get("content_hash") or "").strip().lower()
+                if binding_hash and binding_hash != computed_hash:
+                    raise RuntimeError("trade review presentation_binding content_hash does not match final_content")
+                binding["content_hash"] = computed_hash
+            if "final_content_hash" in envelope:
+                final_hash = str(envelope.get("final_content_hash") or "").strip().lower()
+                if final_hash and final_hash != computed_hash:
+                    raise RuntimeError("trade review final_content_hash does not match final_content")
+                envelope["final_content_hash"] = computed_hash
+            envelope["content_hash"] = computed_hash
+            body = (json.dumps(envelope, ensure_ascii=False, indent=2) + "\\n").encode("utf-8")
+            path.write_bytes(body)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError("trade review completion is not valid JSON") from exc
     base = "https://api.github.com/repos/" + owner + "/" + repo
     endpoint = base + "/contents/" + relative_path
     headers = {
