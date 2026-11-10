@@ -30,7 +30,22 @@ def r4(value):
 
 def load_universe(root: Path) -> dict[str, str]:
     cfg = read_json(root / "config/market/etf_monitor_universe.json", {})
-    return {str(x.get("code")): str(x.get("name")) for x in (cfg.get("objects") or []) if x.get("code")}
+    universe = {str(x.get("code")): str(x.get("name")) for x in (cfg.get("objects") or []) if x.get("code")}
+    # Keep risk evidence aligned with the same held-ETF runtime overlay used by
+    # market acquisition and close valuation; do not require config churn for a
+    # newly purchased holding to become part of current risk evidence.
+    account = read_account_fact(root)
+    for position in account.get("positions") or []:
+        if not isinstance(position, dict) or str(position.get("asset_type") or "").upper() != "ETF":
+            continue
+        code = str(position.get("code") or position.get("symbol") or "").strip()
+        try:
+            quantity = float(position.get("quantity") or 0)
+        except (TypeError, ValueError):
+            quantity = 0.0
+        if code and quantity > 0:
+            universe.setdefault(code, str(position.get("name") or code))
+    return universe
 
 
 def load_close_history(root: Path, universe: dict[str, str]) -> tuple[list[str], dict[str, dict[str, float]]]:
