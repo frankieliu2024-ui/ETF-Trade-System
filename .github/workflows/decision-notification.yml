@@ -654,6 +654,13 @@ jobs:
           if scope not in {"FULL_DAY", "FULL_TRADING_DAY"}:
               if scope != "MORNING_SESSION_STAGE_ONLY":
                   raise SystemExit("Trade Review completion has an unsupported review scope")
+          if scope in {"FULL_DAY", "FULL_TRADING_DAY"} and not review:
+              review = {
+                  "review_scope": scope,
+                  "market_date": str(payload.get("market_date") or "").strip(),
+                  "reviewed_at_beijing": str(payload.get("requested_at_beijing") or "").strip(),
+                  "data_time": {},
+              }
           account_path = Path("data/state/account_fact.json")
           account = json.loads(account_path.read_text(encoding="utf-8"))
           if inferred_morning_scope:
