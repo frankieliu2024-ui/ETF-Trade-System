@@ -1786,12 +1786,10 @@ jobs:
           fi
           git add -f -- data/state/query_context.json
           git add -A -- data/market/snapshots data/market/discovery_history data/state post_market_review events config/market/etf_monitor_universe.json ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md
-              if [ "${TRADE_CORRECTIONS_APPLIED:-false}" = "true" ]; then
-                # The correction consumer has already published the canonical Dashboard.
-                # Do not let this run republish its pre-correction working copy.
-                git reset -- ETF当前状态_DASHBOARD.md
-              fi
-              git reset -- data/state/system_consistency.json
+              # Keep the final Dashboard projection in the staged publish set.
+          # It is rebuilt after account/correction inputs; resetting it here would
+          # republish a stale pre-projection copy.
+          git reset -- data/state/system_consistency.json
               git reset -- data/state/notification_center.json
           if git diff --cached --quiet; then
             exit 0
