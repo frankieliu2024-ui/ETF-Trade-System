@@ -689,6 +689,7 @@ jobs:
         # Always regenerate from the snapshot produced by this node. Identical
         # candidates are still a new node-local Discovery and must not be
         # satisfied by reusing the previous artifact.
+        # The Discovery must be regenerated and bound to this node snapshot.
         if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.session_gate.outputs.process_latest_reference == 'true' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && github.event.inputs.probe_only != 'true' && github.event_name != 'push' }}
         run: |
           set -euo pipefail
