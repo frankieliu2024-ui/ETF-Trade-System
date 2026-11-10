@@ -214,10 +214,10 @@ jobs:
                 echo "formal_force_resend=false" >> "$GITHUB_OUTPUT"
                 ;;
               SYSTEM_REVIEW)
-                # System Review has the same task-local boundary. Do not alter
-                # the Trade Review push ingress below.
-                echo "scheduled_review_completion=false" >> "$GITHUB_OUTPUT"
-                echo "scheduled_review_completion_path=" >> "$GITHUB_OUTPUT"
+                # System Review uses the same direct completion forwarding path
+                # as Trade Review. Keep the Trade Review branch unchanged.
+                echo "scheduled_review_completion=true" >> "$GITHUB_OUTPUT"
+                echo "scheduled_review_completion_path=$completion_path" >> "$GITHUB_OUTPUT"
                 ;;
               TRADE_REVIEW)
                 # A Scheduled Review completion is itself the canonical handoff
