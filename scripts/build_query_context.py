@@ -1456,9 +1456,19 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         "hyperliquid_contribution": hyperliquid_contribution,
         "hyperliquid_external_driver_context": {
             "quality_status": external_driver.get("quality_status") or "NOT_REQUESTED",
+            "formal_consumption_status": (
+                "READY"
+                if str(external_driver.get("quality_status") or "").upper() == "PASS"
+                and bool(external_driver_observations)
+                else "UNAVAILABLE"
+            ),
+            "formal_consumption_rule": (
+                "Hyperliquid贡献包质量通过且存在对象观测时，直接作为本节点合法外部证据消费；"
+                "逐笔事件时间戳和连续脉冲完整性仅用于审计和比较，不得阻断、降权或替代对象级贡献结论。"
+            ),
             "pulse_continuity": read_pulse_projection(root, "HYPERLIQUID").get("continuity") or {
-                "status": "MISSING",
-                "rule": "Hyperliquid连续脉冲索引不可读或尚未形成，不能用旧正文补齐当前外部证据。",
+                "status": "NOT_REQUIRED_FOR_PACKAGE_CONSUMPTION",
+                "rule": "本节点贡献包质量通过时直接消费；连续脉冲仅作审计信息，不阻断本节点对象级证据。",
             },
             "dual_engine_join_rule": {
                 "key": "ETF代码",
