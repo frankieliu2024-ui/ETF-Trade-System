@@ -181,8 +181,8 @@ def build() -> dict:
             "name": str(first(position, "name", "security_name", "instrument_name") or roles.get(code, {}).get("name", "")),
             "quantity": quantity,
             "market_value": numeric(first(position, "market_value", "value", "position_value")),
-            "role": roles.get(code, {}).get("role", "UNCLASSIFIED_STOCK"),
-            "role_status": roles.get(code, {}).get("status", "UNCONFIRMED"),
+            "role": str(first(position, "role", "asset_role") or roles.get(code, {}).get("role", "UNCLASSIFIED_STOCK")),
+            "role_status": str(first(position, "role_status", "asset_role_status") or roles.get(code, {}).get("status", "UNCONFIRMED")),
             "source": "account_fact.positions",
         }
         detected_non_etf_stocks.append(item)
