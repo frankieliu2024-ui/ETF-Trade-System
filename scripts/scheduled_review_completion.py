@@ -875,6 +875,22 @@ def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | N
         "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
         "CHATGPT_SCHEDULED_TASK",
     }
+    # Some scheduled-task writers historically emitted a valid completion body
+    # with null task_run_id/occurrence_id. Recover those two identity fields
+    # deterministically from the already-required unique request_id, but only
+    # for the authorized automatic scheduled Formal Decision source. This is
+    # normalization of one completion, not a second run or a new event.
+    source = str(payload.get("source") or "").strip().upper()
+    entry_source = str(payload.get("formal_entry_source") or "").strip().upper()
+    if (
+        entry_source in {"CHATGPT_SCHEDULED_FORMAL_ANALYSIS", "CHATGPT_SCHEDULED_TASK"}
+        and str(payload.get("entry_mode") or "").strip().upper() == "AUTOMATIC_SCHEDULED_TASK"
+    ):
+        request_id = str(payload.get("request_id") or "").strip()
+        if request_id and not str(payload.get("task_run_id") or "").strip():
+            payload["task_run_id"] = "scheduled-formal:" + request_id
+        if request_id and not str(payload.get("occurrence_id") or "").strip():
+            payload["occurrence_id"] = "occurrence:" + request_id
     # Scheduled-task completions may use the top-level ``source`` for the\n    # fact provenance and carry the task writer identity separately in\n    # ``formal_entry_source``.  Accept that existing contract while keeping\n    # the writer identity mandatory and restricted to the same allow-list.\n    source = str(payload.get("source") or "").strip().upper()\n    entry_source = str(payload.get("formal_entry_source") or "").strip().upper()\n    if source not in allowed_sources and entry_source not in allowed_sources:\n        raise ValueError("Formal Decision completion source mismatch")
     if str(payload.get("formal_fact_type") or "").strip().upper() != "FORMAL_CURRENT_MAIN_DECISION":
         raise ValueError("Formal Decision completion fact type mismatch")
