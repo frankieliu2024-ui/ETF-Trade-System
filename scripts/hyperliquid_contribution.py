@@ -317,7 +317,7 @@ def build_contribution(*, context: dict | None, node: str = "", task: str = "") 
                 "source_context_id": context.get("context_id") or latest.get("context_id") or "",
                 "source_observation_as_of": obj.get("observation_as_of") or None,
             })
-    return {
+    packet = {
         "schema_version": "2.1",
         "status": "READY" if mapped else ("DEGRADED" if mapping_candidates else "MISSING"),
         "task": str(task or ""),
@@ -362,3 +362,6 @@ def build_contribution(*, context: dict | None, node: str = "", task: str = "") 
         },
         "consumer_contract": "同一只读贡献包供正式决策、交易复盘和Hyperliquid脉冲主动通知消费；不独立生成交易权限、金额或订单",
     }
+    from scripts.validate_hyperliquid_consumer_output import validate_contribution_packet
+    packet["validation"] = validate_contribution_packet(packet)
+    return packet
