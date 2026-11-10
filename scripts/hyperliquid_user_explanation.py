@@ -113,21 +113,34 @@ def _latest_binding_rows(text: str) -> list[dict[str, Any]]:
         for alias in mapping.get("aliases") or []:
             alias_assets[str(alias).upper()] = asset
     alias_asset = next((asset for alias, asset in alias_assets.items() if alias in upper), "")
+
+    # Keep pulse rendering object-scoped. Never fall back to all observations:
+    # an unrelated index pulse must not display a misleading global asset list.
+    target_codes = set(re.findall(r"(?<!\d)(\d{6})(?!\d)", text))
+    target_assets = set()
+    if alias_asset:
+        target_assets.add(alias_asset.upper())
+    for mapping in configured:
+        asset = str(mapping.get("asset") or "")
+        markers = [str(x).upper() for x in (mapping.get("name_markers") or []) if str(x)]
+        excludes = [str(x).upper() for x in (mapping.get("exclude_name_markers") or []) if str(x)]
+        if markers and any(marker in upper for marker in markers) and not any(ex in upper for ex in excludes):
+            target_assets.add(asset.upper())
     matched_rows = []
     for row in source_rows:
         if not isinstance(row, dict):
             continue
         object_id = str(row.get("object_id") or row.get("asset") or "")
-        family = str(row.get("family") or "").upper()
-        direct = object_id and object_id.split(":", 1)[-1].lower() in text.lower()
-        related = (
-            alias_asset and object_id.upper() == alias_asset.upper()
-        ) or (
-            alias_asset and object_id.split(":", 1)[-1].upper() == alias_asset.split(":", 1)[-1].upper()
+        mapped_codes = {str(x) for x in (row.get("mapped_assets") or [])}
+        direct = object_id and object_id.upper() in target_assets
+        direct = direct or any(
+            object_id.split(":", 1)[-1].upper() == asset.split(":", 1)[-1].upper()
+            for asset in target_assets
         )
-        if direct or related:
+        etf_match = bool(target_codes & mapped_codes)
+        if direct or etf_match:
             matched_rows.append(row)
-    return matched_rows or source_rows
+    return matched_rows
 
 
 def _binding_labels(row: dict[str, Any]) -> list[str]:
@@ -146,7 +159,7 @@ def explain_for_notification(*, text: str, target: str = "") -> str:
     """Render the global contribution package without rebuilding mappings."""
     rows = _latest_binding_rows(f"{text} {target}")
     if not rows:
-        return "Hyperliquid：当前对象未在本次全局贡献包形成可消费绑定；不改变ETF配置，等待下一次贡献包刷新。该状态不是对象无映射，而是当前投影未提供可消费绑定。"
+        return "当前通知对象未命中本次全局贡献包的对象级映射；不把其他对象的证据借用于本通知。"
     statements = []
     for row in rows[:3]:
         labels = _binding_labels(row)
@@ -167,7 +180,7 @@ def explain_for_notification(*, text: str, target: str = "") -> str:
         comparison = str(signal.get("pulse_comparison_status") or row.get("pulse_comparison_status") or "NOT_COMPARABLE")
         priority = row.get("priority_effect") or "保持观察优先级，等待传导"
         trigger = row.get("next_trigger") or "A股同步传导且本地承接正常时升级"
-        detail = f"{row.get('object_id') or row.get('asset')}绑定{target_text}；方向{direction}，结论为{effect_text}；{priority}；升级条件：{trigger}"
+        detail = f"{row.get('object_id') or row.get('asset')} → {target_text}；方向{direction}，结论为{effect_text}；{priority}；升级条件：{trigger}"
         if comparison == "COMPARABLE":
             delta = signal.get("pulse_delta") if isinstance(signal.get("pulse_delta"), dict) else {}
             detail += f"；10分钟变化：资金费率{_format_delta(delta.get('funding'))}、未平仓量{_format_delta(delta.get('open_interest'))}、溢价{_format_delta(delta.get('premium'))}"
@@ -175,4 +188,4 @@ def explain_for_notification(*, text: str, target: str = "") -> str:
             reason = signal.get("comparison_reason") or "缺少前一合法脉冲比较基准"
             detail += f"；本次不升级优先级：{reason}"
         statements.append(detail)
-    return "Hyperliquid：" + "；".join(statements) + "。"
+    return "\n".join(f"- {statement}。" for statement in statements)
