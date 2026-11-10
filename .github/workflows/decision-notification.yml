@@ -210,6 +210,7 @@ jobs:
                 # production gap where a valid Formal Decision completion was
                 # persisted but no active notification was emitted.
                 echo "formal_completion=true" >> "$GITHUB_OUTPUT"
+              echo "scheduled_review_completion=false" >> "$GITHUB_OUTPUT"
                 echo "formal_review_source_path=$completion_path" >> "$GITHUB_OUTPUT"
                 echo "formal_force_resend=false" >> "$GITHUB_OUTPUT"
                 ;;
@@ -472,6 +473,7 @@ jobs:
             echo "review_completion_path=$completion_path" >> "$GITHUB_OUTPUT"
             if [ "$completion_kind" = "FORMAL" ]; then
               echo "formal_completion=true" >> "$GITHUB_OUTPUT"
+              echo "scheduled_review_completion=false" >> "$GITHUB_OUTPUT"
               echo "formal_review_source_path=$completion_path" >> "$GITHUB_OUTPUT"
             else
               echo "formal_completion=false" >> "$GITHUB_OUTPUT"
@@ -1292,4 +1294,3 @@ jobs:
         run: |
           echo "User notification delivery failed; ETF market/data/trading-decision workflows remain unaffected."
           exit 1
-
