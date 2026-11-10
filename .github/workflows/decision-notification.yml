@@ -1226,7 +1226,9 @@ jobs:
               *) echo "Manual Scheduled Review completion did not resolve to an exact review event." >&2; exit 1 ;;
             esac
           fi
-          if [ -n "$REPORT_DELIVERY_PATH" ] || [ -n "$REPORT_HANDOFF_PATH" ] || [ -n "$REVIEW_EVENT_PATH" ] || [ "$PULSE_WAKE" = "true" ]; then
+          if [ -n "$SCHEDULED_REVIEW_COMPLETION_PATH" ] && [ -z "$REVIEW_EVENT_PATH" ]; then
+            python scripts/run_guarded_notification.py center --mode event --formal-content-file "$SCHEDULED_REVIEW_COMPLETION_PATH"
+          elif [ -n "$REPORT_DELIVERY_PATH" ] || [ -n "$REPORT_HANDOFF_PATH" ] || [ -n "$REVIEW_EVENT_PATH" ] || [ "$PULSE_WAKE" = "true" ]; then
             export REVIEW_EVENT_PATH
             python scripts/run_guarded_notification.py center --mode event
           else
