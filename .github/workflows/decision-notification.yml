@@ -944,7 +944,7 @@ jobs:
                       fact_binding["captured_at_beijing"] = fact_binding["snapshot_as_of_beijing"]
                   if not fact_binding.get("captured_at_beijing"):
                       snapshot_ref = str(fact_binding.get("latest_snapshot") or fact_binding.get("market_snapshot") or "").strip()
-                      match = re.search(r"(\\d{4}-\\d{2}-\\d{2})_(\\d{6})", snapshot_ref)
+                      match = re.search(r"(\d{4}-\d{2}-\d{2})_(\d{6})", snapshot_ref)
                       if match:
                           clock = match.group(2)
                           fact_binding["captured_at_beijing"] = (
@@ -1162,7 +1162,7 @@ jobs:
                       fact_binding["captured_at_beijing"] = fact_binding["snapshot_as_of_beijing"]
                   if not fact_binding.get("captured_at_beijing"):
                       snapshot_ref = str(fact_binding.get("latest_snapshot") or fact_binding.get("market_snapshot") or "").strip()
-                      match = re.search(r"(\\d{4}-\\d{2}-\\d{2})_(\\d{6})", snapshot_ref)
+                      match = re.search(r"(\d{4}-\d{2}-\d{2})_(\d{6})", snapshot_ref)
                       if match:
                           clock = match.group(2)
                           fact_binding["captured_at_beijing"] = (
