@@ -1223,7 +1223,7 @@ jobs:
             fi
             case "$REVIEW_EVENT_PATH" in
               events/reviews/*.json) ;;
-              *) echo "Manual Scheduled Review completion did not resolve to an exact review event." >&2; exit 1 ;;
+              *) REVIEW_EVENT_PATH="" ;;
             esac
           fi
           if [ -n "$SCHEDULED_REVIEW_COMPLETION_PATH" ] && [ -z "$REVIEW_EVENT_PATH" ]; then
