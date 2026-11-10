@@ -1326,16 +1326,16 @@ jobs:
           fi
       - name: Build objective intraday market delta
         # Derived observability must not block the formal decision critical path.
-        if: ${{ always() && steps.state_sync.outcome != 'failure' && (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.session_gate.outputs.process_latest_reference == 'true') && github.event.inputs.probe_only != 'true' }}
+        if: ${{ always() && steps.state_sync.outcome != 'failure' && (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.session_gate.outputs.process_latest_reference == 'true' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && github.event.inputs.probe_only != 'true' }}
         continue-on-error: true
         run: python scripts/build_market_delta.py
       - name: Build dynamic stock context from current account
         # Decision input: run independently of unrelated prior-step failures.
-        if: ${{ always() && steps.state_sync.outcome != 'failure' && (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.session_gate.outputs.process_latest_reference == 'true') && github.event.inputs.probe_only != 'true' }}
+        if: ${{ always() && steps.state_sync.outcome != 'failure' && (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.session_gate.outputs.process_latest_reference == 'true' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_stock_context.py
       - name: Collect current account-stock market facts
         # Decision input: run independently of unrelated prior-step failures.
-        if: ${{ always() && steps.state_sync.outcome != 'failure' && (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.session_gate.outputs.process_latest_reference == 'true') && github.event.inputs.probe_only != 'true' }}
+        if: ${{ always() && steps.state_sync.outcome != 'failure' && (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.session_gate.outputs.process_latest_reference == 'true' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_account_stock_market.py
       - name: Build on-demand query context
         id: query_context
