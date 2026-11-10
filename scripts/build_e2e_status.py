@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import hashlib
+import time
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 try:
@@ -84,6 +85,22 @@ def read_json(path: Path) -> dict:
         return data if isinstance(data, dict) else {}
     except (OSError, json.JSONDecodeError):
         return {}
+
+
+def read_json_with_bounded_retry(path: Path, attempts: int = 3, delay_seconds: float = 0.2) -> tuple[dict, int]:
+    """Re-read the same canonical file after an empty/transient read.
+    
+    This is a read-recovery guard only: it never substitutes an older file or
+    creates a second request. The returned attempt count is persisted for audit.
+    """
+    last = {}
+    for attempt in range(1, max(1, attempts) + 1):
+        last = read_json(path)
+        if last:
+            return last, attempt
+        if attempt < attempts:
+            time.sleep(delay_seconds)
+    return last, max(1, attempts)
 
 
 def parse_time(value: object) -> datetime | None:
@@ -928,9 +945,18 @@ def main() -> int:
     # One canonical Beijing clock for all derived lifecycle decisions.
     # Orphan-gate recovery compares persisted request time with this instant.
     now = datetime.now(TZ)
-    data = {name: read_json(path) for name, path in FILES.items()}
+    data = {}
+    read_attempts = {}
+    for name, path in FILES.items():
+        value, attempts = read_json_with_bounded_retry(path) if name in {"query", "decision"} else (read_json(path), 1)
+        data[name] = value
+        read_attempts[name] = attempts
     query_read = context_read_contract(FILES["query"], data["query"])
+    query_read["retry_attempts"] = read_attempts.get("query", 1)
+    query_read["retry_required"] = query_read["status"] in {"VERIFIED_EMPTY", "UNVERIFIED_READ"}
     decision_read = context_read_contract(FILES["decision"], data["decision"])
+    decision_read["retry_attempts"] = read_attempts.get("decision", 1)
+    decision_read["retry_required"] = decision_read["status"] in {"VERIFIED_EMPTY", "UNVERIFIED_READ"}
     prior = read_json(OUT)
     components = {
         "market": market_component(data["current"]),
