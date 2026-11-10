@@ -3,36 +3,34 @@
   "freeze_id": "ETF_THREE_TASKS_CURRENT_FREEZE_20261027_LIVE_PROMPT_AUTHORITY",
   "freeze_status": "LIVE_PROMPT_AUTHORITY_CONFIRMED_AUDIT_POINTER",
   "authority": "CHATGPT_SCHEDULED_TASK_LIVE_PROMPT",
-  "captured_at_beijing": "2026-10-28",
+  "captured_at_beijing": "2026-11-10",
   "captured_main_commit": "4503ffefbd925b3ddf432d1edde4ec28b1d6bbcf",
   "current_pointer": "docs/freezes/ETF_THREE_TASKS_CURRENT_FREEZE.json",
   "index_path": "ETF_SYSTEM_INDEX.md",
   "purpose": "ChatGPT定时任务界面中的三类live Prompt是唯一运行指令；current main仅保存审计、测试、生产协议和回退指针，不覆盖live Prompt。",
   "non_goals": [
-    "不以current main中的历史Prompt覆盖ChatGPT定时任务界面live Prompt",
+    "不修改ETF交易复盘任务指令、completion或通知链",
+    "不实施三类任务的统一或共享live Prompt修改",
     "不修改三类任务的业务语义、调度、MASTER、账户、行情、权限或通知生产逻辑",
     "不新增任务、workflow、producer、checker、state或writer"
   ],
   "live_readback": {
-    "captured_at_beijing": "2026-10-28",
+    "captured_at_beijing": "2026-11-10",
     "source": "ChatGPT scheduled-task UI cloud-browser readback after refresh",
     "platform_hash_status": "NOT_EXPOSED_BY_UI",
     "schedule_status": "THREE_TASKS_ENABLED_DAILY_CUSTOM_FREQUENCY",
-    "result": "ALL_THREE_CURRENT_PROMPTS_READ_BACK_AFTER_REFRESH_AND_ALIGNED",
+    "result": "ETF正式决策与ETF系统复核当前Prompt已刷新后全文回读并完成最小交接修正；ETF交易复盘未修改",
     "rules_verified": [
-      "三类任务均以ChatGPT定时任务界面live Prompt为唯一运行指令",
-      "三类任务均允许普通对话、任务界面手动和自动注册入口",
-      "completion是FINAL_CONTENT冻结并输出后的强制后置步骤",
-      "completion失败、工具不可见或回读失败不得阻断正文",
-      "completion失败不得无限等待或要求用户再次运行",
-      "交接未闭环不得改写正文或创建第二链",
-      "canonical快照、查询刷新、watchdog和下游投影状态分层",
-      "三类任务保持业务对象和通知链独立"
+      "ETF正式决策与ETF系统复核仍以ChatGPT定时任务界面live Prompt为唯一运行指令",
+      "ETF正式决策的completion路径为唯一正文冻结后直接写入、同路径回读、再原文转发",
+      "ETF系统复核的completion路径为唯一正文冻结后直接写入、同路径回读、再原文转发",
+      "completion或通知失败不得改写正文、创建第二链或阻断正文形成",
+      "ETF交易复盘本次未修改，保持原有独立任务指令和通知链"
     ],
     "alignment_status": {
-      "ETF正式决策": "ALIGNED_WITH_NON_BLOCKING_COMPLETION_RULE",
-      "ETF交易复盘": "ALIGNED_WITH_NON_BLOCKING_COMPLETION_RULE",
-      "ETF系统复核": "ALIGNED_WITH_NON_BLOCKING_COMPLETION_RULE"
+      "ETF正式决策": "已刷新回读；completion/通知交接表述已最小精简",
+      "ETF交易复盘": "本次未读取修改内容；未实施变更",
+      "ETF系统复核": "已刷新回读；completion/通知交接表述已最小精简并修正不可用判定句"
     }
   },
   "tasks": [
@@ -41,30 +39,30 @@
       "automation_id": "6adb5dbc116c819185f9c6ab45630baa",
       "interaction_scenario": "FORMAL_DECISION",
       "enabled": true,
-      "prompt_readback_status": "FULL_CURRENT_PROMPT_READ_BACK_AFTER_REFRESH",
+      "prompt_readback_status": "FULL_CURRENT_PROMPT_READ_BACK_AFTER_REFRESH_AND_MINIMAL_HANDOFF_REPAIR",
       "authority": "CHATGPT_SCHEDULED_TASK_UI",
       "repository_role": "AUDIT_TEST_PRODUCTION_PROTOCOL_ONLY",
-      "live_prompt_audit_note": "已包含事实生产—发布—识别契约、事实受限判断路径、13:30固定节点补充及统一completion owner主链；不设置Actor生产入口，入口与completion解耦，completion为强制后置步骤但非任务阻断条件"
+      "live_prompt_audit_note": "已全文刷新回读；仅将重复的completion/通知前置表述压缩为唯一直接写入—同路径回读—原文转发链；未修改业务规则、调度或ETF交易复盘。"
     },
     {
       "task_id": "ETF交易复盘",
       "automation_id": "6ab78aab49988191818abf8660c65362",
       "interaction_scenario": "SCHEDULED_TRADE_REVIEW",
       "enabled": true,
-      "prompt_readback_status": "FULL_CURRENT_PROMPT_READ_BACK_AFTER_REFRESH",
+      "prompt_readback_status": "UNCHANGED_NOT_MODIFIED",
       "authority": "CHATGPT_SCHEDULED_TASK_UI",
       "repository_role": "AUDIT_TEST_PRODUCTION_PROTOCOL_ONLY",
-      "live_prompt_audit_note": "已包含目标复盘事实优先、查询刷新/watchdog非阻断、第十四节补充及统一completion owner直接接线；入口与completion解耦，completion为强制后置步骤但非任务阻断条件"
+      "live_prompt_audit_note": "本次未修改；保持原有独立任务指令、completion和通知链。"
     },
     {
       "task_id": "ETF系统复核",
       "automation_id": "6accb02805ec8191aca29791a72636bd",
       "interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
       "enabled": true,
-      "prompt_readback_status": "FULL_CURRENT_PROMPT_READ_BACK_AFTER_REFRESH",
+      "prompt_readback_status": "FULL_CURRENT_PROMPT_READ_BACK_AFTER_REFRESH_AND_MINIMAL_HANDOFF_REPAIR",
       "authority": "CHATGPT_SCHEDULED_TASK_UI",
       "repository_role": "AUDIT_TEST_PRODUCTION_PROTOCOL_ONLY",
-      "live_prompt_audit_note": "已包含事实生产、发布、识别、查询刷新、watchdog和下游投影分层复核及统一completion owner直接接线；入口与completion解耦，completion为强制后置步骤但非任务阻断条件"
+      "live_prompt_audit_note": "已全文刷新回读；修正completion能力不可用判定的矛盾句，并保留唯一直接写入—同路径回读—原文转发链；未修改业务规则、调度或ETF交易复盘。"
     }
   ],
   "common_chain": [
@@ -93,6 +91,6 @@
     "冻结指针JSON可解析并回读",
     "相关一致性、预检、故障注入和三类任务模拟验收通过"
   ],
-  "evidence_note": "云浏览器刷新后已重新回读三类live Prompt：ETF正式决策、ETF交易复盘和ETF系统复核均已包含completion强制后置、失败不阻断、不得无限等待和同一FINAL_CONTENT恢复规则。平台未提供原生Prompt hash，因此不伪造或推算hash。仓库文件仅作审计、测试、生产协议和回退登记，不覆盖live Prompt。",
-  "alignment_note": "三类任务统一直接调用唯一completion owner；不设置Actor生产入口。"
+  "evidence_note": "2026-11-10云浏览器刷新后，ETF正式决策与ETF系统复核live Prompt均已全文回读并确认最小修正已保存；ETF交易复盘未修改。仓库文件仅作审计、测试、生产协议和回退登记，不覆盖live Prompt。",
+  "alignment_note": "本次仅修正ETF正式决策与ETF系统复核的交接指令表述；ETF交易复盘及其通知链保持不变，不新增统一或共享生产链。"
 }
