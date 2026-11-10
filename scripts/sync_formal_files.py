@@ -205,22 +205,12 @@ def latest_canonical_formal_decision(root: Path = ROOT) -> dict:
     candidates = []
     paths = list((root / "events" / "decisions").glob("*.json"))
     paths += list((root / "events" / "reviews").glob("formal_*.json"))
+    paths += list((root / "requests" / "live_snapshot").glob("*__scheduled_review_completion.json"))
     for path in paths:
         try:
             event = load_json(path)
         except (OSError, json.JSONDecodeError, TypeError):
             continue
-        if (
-            directory.name == "live_snapshot"
-            and path.name.endswith("__scheduled_review_completion.json")
-            and str(event.get("task_id") or "").strip() == "ETF正式决策"
-        ):
-            event = dict(event)
-            event["event_type"] = "FORMAL_DECISION_REPORT"
-            event["decision_time_beijing"] = event.get("requested_at_beijing")
-            event["recorded_at_beijing"] = event.get("requested_at_beijing")
-            event["decision_id"] = event.get("decision_id") or event.get("request_id")
-            event["final_content"] = event.get("final_content") or (event.get("presentation_binding") or {}).get("full_content")
         event_type = str(event.get("event_type") or "").upper()
         if event_type not in {"FORMAL_DECISION", "FORMAL_DECISION_REPORT"}:
             continue
@@ -366,6 +356,17 @@ def _formal_decision_index_records(root: Path, market_date: str) -> list[dict]:
                 event = load_json(path)
             except (OSError, json.JSONDecodeError, TypeError):
                 continue
+            if (
+                path.parent.name == "live_snapshot"
+                and path.name.endswith("__scheduled_review_completion.json")
+                and str(event.get("task_id") or "").strip() == "ETF正式决策"
+            ):
+                event = dict(event)
+                event["event_type"] = "FORMAL_DECISION_REPORT"
+                event["decision_time_beijing"] = event.get("requested_at_beijing")
+                event["recorded_at_beijing"] = event.get("requested_at_beijing")
+                event["decision_id"] = event.get("decision_id") or event.get("request_id")
+                event["final_content"] = event.get("final_content") or (event.get("presentation_binding") or {}).get("full_content")
             if str(event.get("event_type") or "").upper() not in {"FORMAL_DECISION", "FORMAL_DECISION_REPORT"}:
                 continue
             stamp = event.get("decision_time_beijing") or event.get("decision_effective_at_beijing") or event.get("reviewed_at_beijing") or event.get("recorded_at_beijing")
