@@ -691,14 +691,36 @@ jobs:
         # satisfied by reusing the previous artifact.
         if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.session_gate.outputs.process_latest_reference == 'true' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && github.event.inputs.probe_only != 'true' && github.event_name != 'push' }}
         run: |
-          python scripts/build_weekly_discovery.py
-          python - <<'PY'
+          set -euo pipefail
+          discovery_result="$(python scripts/build_weekly_discovery.py)"
+          echo "$discovery_result"
+          python - "$discovery_result" <<'PY'
+          import hashlib
           import json
+          import sys
           from pathlib import Path
-          p = Path("data/state/formal_discovery_current.json")
-          d = json.loads(p.read_text(encoding="utf-8"))
-          if not d.get("regeneration_required") or not d.get("source_snapshot_identity") or not d.get("generation_identity"):
-              raise SystemExit("Discovery must be regenerated and bound to this node snapshot")
+
+          result = json.loads(sys.argv[1])
+          if str(result.get("status") or "").upper() not in {"READY", "PASS", "DEGRADED"}:
+              raise SystemExit(
+                  "Discovery regeneration did not produce a publishable result: "
+                  + json.dumps(result, ensure_ascii=False)
+              )
+          current = json.loads(Path("data/state/CURRENT.json").read_text(encoding="utf-8"))
+          snapshot_path = Path(str(current.get("latest_snapshot") or ""))
+          snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+          snapshot_identity = hashlib.sha256(
+              json.dumps(snapshot, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+          ).hexdigest()
+          artifact = json.loads(Path("data/state/formal_discovery_current.json").read_text(encoding="utf-8"))
+          if artifact.get("source_snapshot_identity") != snapshot_identity:
+              raise SystemExit("Discovery is not bound to the verified current snapshot")
+          if artifact.get("market_date") != current.get("market_date"):
+              raise SystemExit("Discovery market_date does not match CURRENT")
+          if str(artifact.get("latest_valid_node") or "").lower() != str(current.get("latest_valid_node") or "").lower():
+              raise SystemExit("Discovery node does not match CURRENT")
+          if not artifact.get("regeneration_required") or not artifact.get("generation_identity"):
+              raise SystemExit("Discovery artifact identity is incomplete")
           PY
 
       - name: Publish node-local Discovery with the verified A-share pulse
