@@ -267,11 +267,17 @@ def render_shock(*, what: list[str], why: str, implication: str, action: str, as
         display_what = [line for line in display_what if "当日涨跌" not in line and "当前涨跌" not in line]
     hl_basis = _hyperliquid_notification_basis(" ".join(display_what + [why, implication, action]))
     if hl_basis:
-        why = f"{why}；外部市场证据显示：{hl_basis}"
+        # Keep the user's primary judgement and the external-evidence conclusion
+        # as separate visible lines. This is presentation-only: the global
+        # contribution package remains the sole source of Hyperliquid evidence.
+        hyperliquid_line = hl_basis
         implication = f"{implication}；Hyperliquid仅用于方向确认、背离识别或时机/拥挤风险过滤，不单独改变交易判断。"
+    else:
+        hyperliquid_line = "Hyperliquid本轮未形成可改变该通知判断的增量证据。"
     return (
         "### 核心结论\n" + "\n".join(display_what)
         + "\n\n**判断**：" + why
+        + "\n\n**Hyperliquid**：" + hyperliquid_line
         + "\n\n### 对ETF系统的影响\n" + implication
         + "\n\n### 当前动作\n**" + action
         + "**\n\n### 数据与边界\n"
