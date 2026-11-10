@@ -1,15 +1,14 @@
 {
-  "schema_version": "3.0",
+  "schema_version": "3.1",
   "freeze_id": "ETF_THREE_TASKS_CURRENT_FREEZE_20261027_LIVE_PROMPT_AUTHORITY",
   "freeze_status": "LIVE_PROMPT_AUTHORITY_CONFIRMED_AUDIT_POINTER",
   "authority": "CHATGPT_SCHEDULED_TASK_LIVE_PROMPT",
   "captured_at_beijing": "2026-11-10",
-  "captured_main_commit": "4503ffefbd925b3ddf432d1edde4ec28b1d6bbcf",
+  "captured_main_commit": "b95e18b7247e189e37d41b0a442e7941f66c4124",
   "current_pointer": "docs/freezes/ETF_THREE_TASKS_CURRENT_FREEZE.json",
   "index_path": "ETF_SYSTEM_INDEX.md",
   "purpose": "ChatGPT定时任务界面中的三类live Prompt是唯一运行指令；current main仅保存审计、测试、生产协议和回退指针，不覆盖live Prompt。",
   "non_goals": [
-    "不修改ETF交易复盘任务指令、completion或通知链",
     "不实施三类任务的统一或共享live Prompt修改",
     "不修改三类任务的业务语义、调度、MASTER、账户、行情、权限或通知生产逻辑",
     "不新增任务、workflow、producer、checker、state或writer"
@@ -19,17 +18,19 @@
     "source": "ChatGPT scheduled-task UI cloud-browser readback after refresh",
     "platform_hash_status": "NOT_EXPOSED_BY_UI",
     "schedule_status": "THREE_TASKS_ENABLED_DAILY_CUSTOM_FREQUENCY",
-    "result": "ETF正式决策与ETF系统复核当前Prompt已刷新后全文回读并完成最小交接修正；ETF交易复盘未修改",
+    "result": "三类任务当前Prompt均已刷新后全文回读并完成各自最小交接修正；未实施统一或共享live Prompt修改",
     "rules_verified": [
-      "ETF正式决策与ETF系统复核仍以ChatGPT定时任务界面live Prompt为唯一运行指令",
+      "三类任务仍以ChatGPT定时任务界面live Prompt为各自唯一运行指令",
       "ETF正式决策的completion路径为唯一正文冻结后直接写入、同路径回读、再原文转发",
       "ETF系统复核的completion路径为唯一正文冻结后直接写入、同路径回读、再原文转发",
+      "ETF交易复盘的completion路径为唯一正文冻结后直接写入、同路径回读、再原文转发",
+      "哈希缺失只作completion审计字段补齐，不阻断同一冻结正文写入和通知；已有哈希漂移仍失败",
       "completion或通知失败不得改写正文、创建第二链或阻断正文形成",
-      "ETF交易复盘本次未修改，保持原有独立任务指令和通知链"
+      "三类任务保持业务、运行身份、completion、事件、REPORT和通知链独立"
     ],
     "alignment_status": {
       "ETF正式决策": "已刷新回读；completion/通知交接表述已最小精简",
-      "ETF交易复盘": "本次未读取修改内容；未实施变更",
+      "ETF交易复盘": "已刷新回读；完成最小交接修正，哈希缺失不阻断，保留直接写入—同路径回读—原文转发链",
       "ETF系统复核": "已刷新回读；completion/通知交接表述已最小精简并修正不可用判定句"
     }
   },
@@ -49,10 +50,10 @@
       "automation_id": "6ab78aab49988191818abf8660c65362",
       "interaction_scenario": "SCHEDULED_TRADE_REVIEW",
       "enabled": true,
-      "prompt_readback_status": "UNCHANGED_NOT_MODIFIED",
+      "prompt_readback_status": "FULL_CURRENT_PROMPT_READ_BACK_AFTER_REFRESH_AND_MINIMAL_HANDOFF_REPAIR",
       "authority": "CHATGPT_SCHEDULED_TASK_UI",
       "repository_role": "AUDIT_TEST_PRODUCTION_PROTOCOL_ONLY",
-      "live_prompt_audit_note": "本次未修改；保持原有独立任务指令、completion和通知链。"
+      "live_prompt_audit_note": "已全文刷新回读；仅明确哈希为辅助审计字段、保留直接写入—同路径回读—原文转发链；未引入共享owner或第二通知链。"
     },
     {
       "task_id": "ETF系统复核",
@@ -84,6 +85,7 @@
   "acceptance_required": [
     "三条任务均启用且live Prompt完整回读",
     "三条任务均包含completion强制后置且非阻断规则",
+    "completion哈希缺失时可由直接写入边界补齐，不阻断同一冻结正文通知；哈希漂移必须失败",
     "普通对话入口不被completion owner拒绝",
     "canonical快照与查询刷新健康状态分离",
     "watchdog不覆盖canonical事实判断",
@@ -91,6 +93,15 @@
     "冻结指针JSON可解析并回读",
     "相关一致性、预检、故障注入和三类任务模拟验收通过"
   ],
-  "evidence_note": "2026-11-10云浏览器刷新后，ETF正式决策与ETF系统复核live Prompt均已全文回读并确认最小修正已保存；ETF交易复盘未修改。仓库文件仅作审计、测试、生产协议和回退登记，不覆盖live Prompt。",
-  "alignment_note": "本次仅修正ETF正式决策与ETF系统复核的交接指令表述；ETF交易复盘及其通知链保持不变，不新增统一或共享生产链。"
+  "evidence_note": "2026-11-10云浏览器刷新后，三类任务live Prompt均已全文回读并确认各自最小交接修正已保存；仓库文件仅作审计、测试、生产协议和回退登记，不覆盖live Prompt。",
+  "alignment_note": "本次同步登记三类任务各自的最小指令修正和刷新回读结果；不实施统一或共享生产链，三类任务继续保持独立。",
+  "repository_sync": {
+    "main_commit": "b95e18b7247e189e37d41b0a442e7941f66c4124",
+    "synchronized_at_beijing": "2026-11-10",
+    "paths": [
+      "docs/freezes/ETF_THREE_TASKS_CURRENT_FREEZE.json",
+      "docs/freezes/archive/registries/ETF三类任务冻结注册表.json"
+    ],
+    "platform_hash_status": "NOT_EXPOSED_BY_UI"
+  }
 }
