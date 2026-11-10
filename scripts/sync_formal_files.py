@@ -666,6 +666,13 @@ def normalize_dashboard_projection(text: str, root: Path = ROOT, account: dict |
             "- 当前无待处理结算现金约束。",
         ]
     result = "\n".join(lines)
+    lifecycle_heading = "### 当前有效生命周期"
+    lifecycle_marker = "<!-- AUTO_STATE_SYNC_END -->"
+    lifecycle_start = result.find(lifecycle_heading)
+    lifecycle_end = result.find(lifecycle_marker, lifecycle_start)
+    if lifecycle_start >= 0 and lifecycle_end >= 0:
+        canonical_lifecycle = render_lifecycle_projection(root, account or {})
+        result = result[:lifecycle_start] + canonical_lifecycle + "\\n\\n" + result[lifecycle_end:]
     # Keep the registered correction block present even when the input
     # projection had no historical correction rows.
     if "<!-- AUTO_TRADE_FACT_CORRECTIONS_START -->" not in result:
