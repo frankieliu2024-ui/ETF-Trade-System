@@ -2498,6 +2498,7 @@ def record_post_close_review(account: dict, request: dict, *, delivery_only: boo
             raw_presentation_binding,
             "ETF_FORMAL_DECISION" if is_formal_decision_production else "ETF_TRADE_REVIEW",
             strict_production=is_trade_review_production or is_formal_decision_production,
+            _delivery_only=delivery_only,
         )
         if raw_presentation_binding is not None
         else {}
@@ -2633,7 +2634,7 @@ def record_post_close_review(account: dict, request: dict, *, delivery_only: boo
     return True, False
 
 
-def _validate_presentation_binding(binding: dict, report_type: str, strict_production: bool = False) -> dict:
+def _validate_presentation_binding(binding: dict, report_type: str, strict_production: bool = False, _delivery_only: bool = False) -> dict:
     if not isinstance(binding, dict):
         raise ValueError("scheduled completion presentation_binding must be an object")
     required = ("task_id", "task_run_id", "request_id", "report_id", "full_content")
@@ -2650,8 +2651,12 @@ def _validate_presentation_binding(binding: dict, report_type: str, strict_produ
     if strict_production:
         if not str(binding.get("occurrence_id") or "").strip():
             raise ValueError("scheduled trade review production binding requires occurrence_id")
-        if not supplied_hash:
+        if not supplied_hash and not _delivery_only:
             raise ValueError("scheduled trade review production binding requires content_hash")
+        # A delivery-only replay may repair a historical completion whose
+        # binding predates the content-hash field; the canonical owner below
+        # recomputes the hash from the frozen body before persisting the event.
+        # Normal production completion remains fail-closed on missing hashes.
         # content_hash is an audit field, not a notification prerequisite.
         # The frozen full_content is the sole delivery payload.  Preserve the
         # mismatch as a warning and normalize the binding to the content that
