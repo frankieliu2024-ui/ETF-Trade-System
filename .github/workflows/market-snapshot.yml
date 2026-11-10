@@ -1689,6 +1689,29 @@ jobs:
         # close_review data can survive in e2e_status.
         if: ${{ always() && steps.state_sync.outcome != 'failure' && (steps.query_context.outcome == 'success' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && (steps.state_sync.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (steps.triggering_request.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (github.event_name == 'push' || steps.state_sync.outputs.processed == 'true' || steps.session_gate.outputs.process_latest_reference == 'true' || github.event.inputs.formal_context_recovery_request != '' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_e2e_status.py
+      - name: Finalize canonical Dashboard projection before publish
+        # Keep the final human projection owned by sync_formal_files.py even
+        # when an earlier derived-state producer touched the working tree.
+        if: ${{ always() && github.ref == 'refs/heads/main' && steps.state_sync.outcome != 'failure' && steps.risk_refresh.outcome != 'failure' && github.event.inputs.probe_only != 'true' }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          from scripts.sync_formal_files import sync_dashboard_projection
+          result = sync_dashboard_projection(Path('.'))
+          if result.get("error"):
+              raise SystemExit(result["error"])
+          print(result)
+          text = Path("ETF当前状态_DASHBOARD.md").read_text(encoding="utf-8")
+          start = text.find("### 当前有效生命周期")
+          end = text.find("<!-- AUTO_STATE_SYNC_END -->", start)
+          lifecycle = text[start:end] if start >= 0 and end >= 0 else ""
+          if "当前T+|下一节点|" in lifecycle and any(token in lifecycle for token in ("元（", "元；", "元（—）")):
+              raise SystemExit("final Dashboard lifecycle projection still contains P&L in 下一节点")
+          if "当前T+|下一节点|" in lifecycle and "形成正式决议（截止" not in lifecycle and "|无|—|当前没有有效Trial|" not in lifecycle:
+              raise SystemExit("final Dashboard lifecycle projection is missing canonical next-node semantics")
+          PY
+
       - name: Commit downstream runtime/data artifacts
         # A failed close-derived refresh must not publish a mixed generation
         # containing fresh market facts alongside stale risk/decision state.
