@@ -3742,6 +3742,14 @@ def _request_trade_events(request: dict) -> list[dict]:
 
     account_fact = request.get("account_fact")
     statement_trades = account_fact.get("trades") if isinstance(account_fact, dict) else None
+    # Broker screenshot envelopes historically used confirmed_trades for
+    # executed rows while the account-fact schema uses trades. Both are
+    # explicit broker evidence; normalize them into the same canonical
+    # execution-event path and let the existing idempotency key suppress
+    # duplicates on replay.
+    confirmed_trades = account_fact.get("confirmed_trades") if isinstance(account_fact, dict) else None
+    if isinstance(confirmed_trades, list) and confirmed_trades:
+        statement_trades = list(statement_trades or []) + list(confirmed_trades)
     if not isinstance(statement_trades, list) or not statement_trades:
         return explicit
 
