@@ -635,7 +635,7 @@ jobs:
           scope = str(review.get("review_scope") or "").strip().upper()
           # Older valid full-day Trade Review completions predate the nested review_scope field.
           # Infer only from the frozen title, preserving fail-closed behavior for all other shapes.
-          if not scope and "完整日复盘" in review_title:
+          if not scope and ("完整日复盘" in review_title or "日复盘" in review_title):
               scope = "FULL_DAY"
           # Direct task writers may carry the frozen morning review only in
           # final_content/presentation_binding. The canonical owner already
