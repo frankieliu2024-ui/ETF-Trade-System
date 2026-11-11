@@ -73,6 +73,8 @@ jobs:
       ETF_SYSTEM_ROOT: ${{ github.workspace }}
       HITHINK_RETRY_LIMIT: "2"
       HITHINK_TIMEOUT_SECONDS: "25"
+      # Bound post-publish repair so it cannot cancel the canonical snapshot path.
+      QUICK_RETRY_TIMEOUT_SECONDS: "60"
       QUERY_TIME_REFRESH: ${{ github.event_name == 'push' && 'true' || 'false' }}
       EVENT_BEFORE: ${{ github.event.before }}
       REPLAY_REQUEST: ${{ github.event.inputs.replay_request || '' }}
@@ -782,7 +784,18 @@ jobs:
         # A user request gets the first publishable PASS/DEGRADED/FAILED result
         # immediately. Slow repair remains a scheduled, post-publish activity.
         if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' && github.event_name != 'push' }}
-        run: python scripts/cloud_runner_snapshot.py --retry-failed
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          timeout --signal=TERM --kill-after=5s "${QUICK_RETRY_TIMEOUT_SECONDS}s" \
+            python scripts/cloud_runner_snapshot.py --retry-failed
+          status=$?
+          if [ "$status" -eq 124 ] || [ "$status" -eq 137 ] || [ "$status" -eq 143 ]; then
+            echo "Post-publish core retry reached its bounded ${QUICK_RETRY_TIMEOUT_SECONDS}s budget; initial snapshot remains canonical."
+            exit 0
+          fi
+          exit "$status"
       - name: Process optional broker/dashboard state sync
         id: state_sync
         if: ${{ (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.replay_request != '' || github.event.inputs.formal_replay_request != ''))) && github.event.inputs.probe_only != 'true' }}
