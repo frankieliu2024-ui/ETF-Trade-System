@@ -117,6 +117,8 @@ def build(root: Path = ROOT) -> dict:
     items = []
     for path in sorted(trade_dir.glob("*.json")) if trade_dir.exists() else []:
         trade = load_json(path, {})
+        if str(trade.get("execution_status") or "").upper() == "SUPERSEDED":
+            continue
         requested = str(trade.get("linked_decision_id") or "")
         linked, decision, link_status = resolve_link(root, trade, requested)
         if not linked:
