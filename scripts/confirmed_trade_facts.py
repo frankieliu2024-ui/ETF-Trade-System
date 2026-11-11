@@ -227,6 +227,7 @@ def canonical_etf_trade_facts(root: Path, reconstructed_trades: list[dict]) -> l
     # fee, and trade-count projection. The replacement event remains eligible
     # through the normal canonical event path below.
     superseded_event_ids = set()
+    superseded_signatures = set()
     events_dir = root / "events" / "trades"
     if events_dir.exists():
         for event_path in events_dir.glob("*.json"):
@@ -235,10 +236,15 @@ def canonical_etf_trade_facts(root: Path, reconstructed_trades: list[dict]) -> l
                 event_id = str(event.get("event_id") or event_path.stem).strip()
                 if event_id:
                     superseded_event_ids.add(event_id)
+                signature = trade_signature(event)
+                if signature[0]:
+                    superseded_signatures.add(signature)
 
     for trade in reconstructed_trades:
         event_id = str(trade.get("event_id") or "").strip()
-        if event_id and event_id in superseded_event_ids:
+        # Historical reconstruction rows may omit event_id. Retire the same
+        # economic execution by signature after a user-confirmed correction.
+        if (event_id and event_id in superseded_event_ids) or trade_signature(trade) in superseded_signatures:
             continue
         if not _is_reconstructed_etf_trade(trade, universe_codes):
             continue
