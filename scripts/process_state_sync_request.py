@@ -2754,14 +2754,6 @@ def record_scheduled_system_review(request: dict) -> tuple[bool, bool]:
     top_task_run_id = str(request.get("task_run_id") or "").strip()
     top_occurrence_id = str(request.get("occurrence_id") or top_task_run_id).strip()
     top_request_id = str(request.get("request_id") or "").strip()
-    # Manual system-review completions may legitimately arrive without platform
-    # task_run_id/occurrence_id.  Use the immutable request_id as a local
-    # canonical fallback for event/report binding, and record the degradation;
-    # never synthesize or claim a platform runtime identity.
-    identity_fallback = not top_task_run_id and bool(top_request_id)
-    if identity_fallback:
-        top_task_run_id = top_request_id
-        top_occurrence_id = top_request_id
     if not isinstance(raw_binding, dict):
         raw_binding = {}
     else:
@@ -2779,9 +2771,6 @@ def record_scheduled_system_review(request: dict) -> tuple[bool, bool]:
     for key, fallback in fallback_fields.items():
         if not str(raw_binding.get(key) or "").strip() and str(fallback or "").strip():
             raw_binding[key] = fallback
-    if identity_fallback:
-        raw_binding["identity_mode"] = "REQUEST_ID_FALLBACK"
-        raw_binding["platform_identity_available"] = False
     if not str(raw_binding.get("content_hash") or "").strip() and str(raw_binding.get("full_content") or "").strip():
         raw_binding["content_hash"] = hashlib.sha256(str(raw_binding["full_content"]).encode("utf-8")).hexdigest()
     if not str(raw_binding.get("content_hash_source") or "").strip():
@@ -4238,8 +4227,6 @@ def merge_account_fact(prior: dict, supplied: dict) -> dict:
     return merged
 
 
-
-
 def apply_superseded_trade_corrections(request: dict) -> None:
     """Retire explicitly misidentified trade events without deleting history."""
     event_ids = request.get("supersedes_trade_event_ids") or []
@@ -4733,7 +4720,7 @@ def main() -> int:
         return 0
     system_review_recorded, system_review_idempotent = record_scheduled_system_review(request)
     if system_review_recorded:
-        result = {"ok": True, "request_id": request.get("request_id"), "system_review_completion": True, "idempotent_replay": system_review_idempotent, "canonical_publication": "events/reviews/system_" + str(((request.get("presentation_binding") or {}).get("task_run_id") or request.get("task_run_id") or request.get("request_id") or (request.get("presentation_binding") or {}).get("request_id") or "")).strip() + ".json"}
+        result = {"ok": True, "request_id": request.get("request_id"), "system_review_completion": True, "idempotent_replay": system_review_idempotent, "canonical_publication": "events/reviews/system_" + str(((request.get("presentation_binding") or {}).get("task_run_id") or request.get("task_run_id") or "")).strip() + ".json"}
         print(json.dumps(result, ensure_ascii=False))
         return 0
     if str(request.get("ingress_mode") or "").upper() == "HISTORICAL_BACKFILL":
