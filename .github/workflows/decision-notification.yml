@@ -2,6 +2,14 @@ name: ETF decision notification
 run-name: ETF decision notification — ${{ inputs.scheduled_review_completion_path || github.event_name }}
 
 on:
+  workflow_run:
+    workflows:
+      - "ETF market snapshot"
+      - "Overseas pre-open pulse"
+      - "US extended-hours pulse"
+      - "ETF workflow failure guard"
+      - "ETF system consistency"
+    types: [completed]
   # Canonical Scheduled Review events are committed to main by the market-snapshot
   # workflow. GitHub does not recursively create a push-triggered workflow from a
   # commit made with GITHUB_TOKEN, so consume that producer completion directly.
@@ -37,9 +45,36 @@ on:
         default: "false"
   push:
     paths:
+      # Formal Decision notifications are authorized only by events/reviews/formal_*.json.
       - "requests/live_snapshot/*__scheduled_review_completion.json"
       - "requests/live_snapshot/scheduled_review_completion_*.json"
+      # Scheduled trade-review task writes persist their canonical completion at the
+      # request-id path. Keep this as an ingress alias; identity and content
+      # validation below remain mandatory before any notification is sent.
       - "requests/live_snapshot/etf_trade_review_*.json"
+      - "events/trades/*.json"
+      - "events/reviews/*.json"
+      - "data/state/account_fact.json"
+      - "requests/notification_test/*.json"
+      - "requests/report_delivery/*.json"
+      - "requests/report_handoff/*.json"
+      # Canonical market-state publication is an independent notification wake.
+      # This preserves one notification engine while avoiding a hard dependency
+      # on workflow_run creation after a producer was itself recovered from a
+      # missed Actions wake. Existing evidence/materiality/dedupe guards absorb
+      # duplicate push + workflow_run wake opportunities for the same fact.
+      - "data/state/CURRENT.json"
+      - "data/state/overseas_context.json"
+      - "data/state/us_extended_hours_context.json"
+      - "data/state/discovery_pulse_index.json"
+      - "data/state/hyperliquid_pulse_index.json"
+      - "data/state/discovery_pulse_latest.json"
+      - "data/state/hyperliquid_pulse_latest.json"
+  schedule:
+    # Dedicated close-account reminder envelope: Beijing 15:20 Monday-Friday.
+    # notification_center.py checks the formal A-share trading calendar;
+    # non-trading weekdays produce no close-account reminder.
+    - cron: "20 7 * * 1-5"
 
 permissions:
   contents: write
