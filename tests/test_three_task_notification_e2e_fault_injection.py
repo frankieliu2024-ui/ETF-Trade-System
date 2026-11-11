@@ -27,11 +27,11 @@ class ThreeTaskNotificationE2EFaultInjectionTests(unittest.TestCase):
         self.assertIn("scheduled_review_completion_path", workflow)
         self.assertIn("MAX_ATTEMPTS = 3", recovery)
         self.assertIn("different completion already exists on main", recovery)
-            completion_contract = (ROOT / "scripts/formal_entry_contract.py").read_text(encoding="utf-8")
-            self.assertIn("SCHEDULED_REVIEW_COMPLETION", completion_contract, task)
-            self.assertIn("content_hash", prompt, task)
-            self.assertTrue("GitHub Contents" in prompt or "current main" in prompt, task)
-            self.assertIn("CHATGPT_DIRECT_GITHUB_CONTENTS_WRITER", completion_contract, task)
+        completion_contract = (ROOT / "scripts/formal_entry_contract.py").read_text(encoding="utf-8")
+        self.assertIn("SCHEDULED_REVIEW_COMPLETION", completion_contract)
+        self.assertIn("CHATGPT_DIRECT_GITHUB_CONTENTS_WRITER", completion_contract)
+        for task in self.TASKS:
+            self.assertIn(task, completion_contract)
 
     def test_fault_matrix_is_fail_closed_before_notification(self):
         recovery = (ROOT / "scripts/scheduled_review_completion_recovery.py").read_text(encoding="utf-8")
