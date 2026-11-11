@@ -732,6 +732,7 @@ def _validate_historical_trade_case_mapping(report: dict) -> None:
     # them as active executions for CASE mapping. The replacement event is the
     # sole current fact; history remains readable and immutable.
     superseded_rows = set()
+    superseded_day_codes = set()
     trade_dir = ROOT / "events" / "trades"
     if trade_dir.exists():
         for path in trade_dir.glob("*.json"):
@@ -741,9 +742,12 @@ def _validate_historical_trade_case_mapping(report: dict) -> None:
                 continue
             if str(event.get("execution_status") or "").upper() != "SUPERSEDED":
                 continue
+            event_date = str(event.get("execution_date") or event.get("confirmed_at_beijing") or event.get("executed_at_beijing") or "")[:10]
+            event_code = str(event.get("code") or "")
+            superseded_day_codes.add((event_date, event_code))
             superseded_rows.add((
-                str(event.get("execution_date") or event.get("confirmed_at_beijing") or event.get("executed_at_beijing") or "")[:10],
-                str(event.get("code") or ""),
+                event_date,
+                event_code,
                 str(event.get("side") or "").upper(),
                 str(event.get("quantity") or ""),
                 str(event.get("price") or ""),
@@ -753,7 +757,7 @@ def _validate_historical_trade_case_mapping(report: dict) -> None:
     for cols in rows:
         dt, name, code, side, qty, price, principal, fee, cashflow, _remark = cols[:10]
         row_key = (dt[:10], code, side.upper(), qty.replace(",", ""), price)
-        if row_key in superseded_rows:
+        if row_key in superseded_rows or (dt[:10], code) in superseded_day_codes:
             continue
         event_ids = []
         trade_dir = ROOT / "events" / "trades"
