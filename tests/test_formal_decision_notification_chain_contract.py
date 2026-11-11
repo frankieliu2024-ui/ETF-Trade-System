@@ -288,6 +288,13 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
         self.assertNotIn('process_state_sync_request.py "$COMPLETION_PATH"', formal_block)
         self.assertIn("PYTHONPATH=scripts python", formal_block)
 
+    def test_shared_scheduled_review_projection_is_non_blocking_for_notification(self):
+        workflow = (ROOT / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
+        start = workflow.index("Project Scheduled Review completion to canonical review event")
+        block = workflow[start:workflow.index("      - name:", start + 10)]
+        self.assertIn("continue-on-error: true", block)
+        self.assertIn("Review-event/REPORT projection is audit-only", block)
+
     def test_formal_completion_persistence_has_current_fact_gate(self):
         owner = (ROOT / "scripts" / "scheduled_review_completion_owner.py").read_text(encoding="utf-8")
         completion = (ROOT / "scripts" / "scheduled_review_completion.py").read_text(encoding="utf-8")
