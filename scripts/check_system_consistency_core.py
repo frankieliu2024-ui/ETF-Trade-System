@@ -898,12 +898,30 @@ def main() -> int:
             index_rows = [row for row in rows if row.get("asset_class") == "A_SHARE_INDEX"]
             account_for_runtime = read_json("data/state/account_fact.json")
             runtime_etf_codes = expected_runtime_etf_codes(objects, account_for_runtime)
-            expected_snapshot_count = expected_a_share_snapshot_count(runtime_etf_codes)
+            snapshot_etf_codes = {str(row.get("symbol", "")) for row in etf_rows}
+            snapshot_universe_count = snapshot.get("etf_universe_count")
+            snapshot_rows_self_consistent = (
+                snapshot_universe_count == len(etf_rows)
+                and all(row.get("quality_status") == "PASS" for row in etf_rows)
+            )
+            runtime_universe_extra = sorted(runtime_etf_codes - snapshot_etf_codes)
+            # A snapshot is a point-in-time artifact.  The current runtime
+            # universe may have expanded after it was captured.  Do not turn a
+            # self-consistent historical snapshot into a hard failure merely
+            # because current main now contains an additional monitored ETF.
+            snapshot_runtime_codes = (
+                snapshot_etf_codes
+                if runtime_universe_extra and snapshot_rows_self_consistent
+                else runtime_etf_codes
+            )
+            expected_snapshot_count = expected_a_share_snapshot_count(snapshot_runtime_codes)
             check("a_share_runtime:snapshot_count", snapshot.get("count") == len(rows) == expected_snapshot_count, f"snapshot_count={snapshot.get('count')} rows={len(rows)} expected={expected_snapshot_count}")
             query_only_runtime = str(runtime_health.get("status", "")).upper() == "SKIPPED" and str(runtime_health.get("trigger_mode", "")).upper() == "QUERY_TIME_PUSH"
             market_date_aligned = snapshot.get("market_date") == current.get("market_date") == runtime_health.get("market_date")
             check("a_share_runtime:market_date_alignment", market_date_aligned or query_only_runtime, f"snapshot={snapshot.get('market_date')} current={current.get('market_date')} health={runtime_health.get('market_date')} query_only={query_only_runtime}")
-            check("a_share_runtime:etf_complete", {str(row.get('symbol', '')) for row in etf_rows} == runtime_etf_codes and all(row.get("quality_status") == "PASS" for row in etf_rows), f"count={len(etf_rows)} expected={len(runtime_etf_codes)}")
+            check("a_share_runtime:etf_complete", snapshot_etf_codes == snapshot_runtime_codes and all(row.get("quality_status") == "PASS" for row in etf_rows), f"count={len(etf_rows)} expected={len(snapshot_runtime_codes)}")
+            if runtime_universe_extra and snapshot_rows_self_consistent:
+                check("a_share_runtime:current_universe_drift", False, f"snapshot-time ETF universe is complete; current main adds {runtime_universe_extra}", warning=True)
             check("a_share_runtime:core_indices_complete", {str(row.get('thscode', '')) for row in index_rows} == CORE_A_SHARE_INDEX_CODES and all(row.get("quality_status") == "PASS" for row in index_rows), f"indices={[row.get('thscode') for row in index_rows]}")
             check("a_share_runtime:beijing_capture", bool(snapshot.get("captured_at_beijing")) and snapshot.get("timezone") == "Asia/Shanghai", f"captured_at_beijing={snapshot.get('captured_at_beijing')} timezone={snapshot.get('timezone')}")
 
