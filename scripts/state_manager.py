@@ -412,7 +412,7 @@ def build_etf_strategy_risk_metrics(root: Path) -> dict[str, Any]:
     canonical_risk = read_json(root / "data" / "state" / "skfolio_risk_evidence.json", {})
     canonical_risk_status = str(canonical_risk.get("status") or "").upper()
     canonical_alignment = str(canonical_risk.get("data_alignment") or "").upper()
-    if canonical_risk_status == "DEGRADED" and canonical_alignment != "ALIGNED_WITH_CURRENT_MARKET_DATE" and reconstruction_risk is None:
+    if canonical_risk_status == "DEGRADED" and canonical_alignment != "ALIGNED_WITH_CURRENT_MARKET_DATE":
         return {
             "etf_strategy_risk_pct": None,
             "risk_source": "data/state/skfolio_risk_evidence.json",
