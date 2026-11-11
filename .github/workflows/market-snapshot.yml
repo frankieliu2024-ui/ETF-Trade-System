@@ -1153,7 +1153,7 @@ jobs:
           # subscription/allotment record without an ETF execution event. It is
           # state synchronization, not an ETF trade-event replay.
           is_broker_account_fact_sync = (
-              formal_fact_type == "BROKER_SCREENSHOT_ACCOUNT_FACT"
+              formal_fact_type in {"BROKER_SCREENSHOT_ACCOUNT_FACT", "BROKER_ACCOUNT_SNAPSHOT"}
               and interaction_scenario == "BROKER_SCREENSHOT_SYNC"
           )
           if is_formal_post_close_review:
