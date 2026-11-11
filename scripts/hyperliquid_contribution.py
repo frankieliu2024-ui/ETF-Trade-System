@@ -355,6 +355,7 @@ def build_contribution(*, context: dict | None, node: str = "", task: str = "") 
     packet = {
         "schema_version": "2.1",
         "status": "READY" if mapped else ("DEGRADED" if mapping_candidates else "MISSING"),
+        "quality_status": str(latest.get("quality_status") or context.get("quality_status") or latest.get("status") or "UNKNOWN"),
         "task": str(task or ""),
         "node": str(node or ""),
         "phase": phase,

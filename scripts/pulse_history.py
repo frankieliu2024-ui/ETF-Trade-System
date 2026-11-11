@@ -49,6 +49,7 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
         "fact_time_beijing": str(payload.get("latest_valid_node") or payload.get("a_share_fact_as_of_beijing") or _beijing_iso(str(payload.get("latest_observation_collected_at_utc") or ""))),
         "source_path": path,
         "status": str(payload.get("status") or payload.get("quality_status") or "UNKNOWN"),
+        "quality_status": str(payload.get("quality_status") or payload.get("status") or "UNKNOWN"),
         "coverage_status": str(payload.get("coverage_status") or ""),
         "candidate_count": payload.get("candidate_count") if kind == "DISCOVERY" else None,
         "observation_count": payload.get("observation_count") if kind == "HYPERLIQUID" else None,
