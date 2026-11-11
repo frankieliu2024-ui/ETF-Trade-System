@@ -533,6 +533,10 @@ jobs:
 
       - name: Project Scheduled Review completion to canonical review event
         id: scheduled_completion_event
+        # Canonical notification is already bound to the same completion.
+        # Review-event/REPORT projection is audit-only and must not turn a
+        # successful System Review or Trade Review notification into failure.
+        continue-on-error: true
         if: ${{ (github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path != '' && steps.dispatch_completion_kind.outputs.scheduled == 'true') || (github.event_name == 'push' && steps.push_kind.outputs.scheduled_review_completion == 'true') || (github.event_name == 'workflow_run' && steps.workflow_review.outputs.review_completion == 'true' && steps.workflow_review.outputs.formal_completion != 'true') }}
         shell: bash
         env:
