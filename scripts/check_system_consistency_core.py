@@ -921,7 +921,7 @@ def main() -> int:
                     account_postdated_snapshot = account_dt > captured_dt
                 except ValueError:
                     account_postdated_snapshot = False
-            account_missing_only = bool(missing_runtime_etfs) and missing_runtime_etfs <= active_account_etf_codes(account_for_runtime)
+            account_missing_only = bool(missing_runtime_etfs) and set(missing_runtime_etfs) <= active_account_etf_codes(account_for_runtime)
             deferred_coverage = account_postdated_snapshot and account_missing_only
             snapshot_count_ok = snapshot.get("count") == len(rows) == expected_snapshot_count
             check(
