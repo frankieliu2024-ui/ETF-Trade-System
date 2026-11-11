@@ -364,7 +364,7 @@ def _parse_beijing_time(value: object) -> datetime | None:
 
 def _latest_formal_review_risk(root: Path) -> dict[str, Any]:
     directory = root / "events" / "reviews"
-    candidates: list[tuple[datetime, dict[str, Any]]] = []
+    candidates: list[tuple[str, datetime, dict[str, Any]]] = []
     if directory.exists():
         for path in directory.glob("*.json"):
             event = read_json(path, {})
@@ -377,13 +377,14 @@ def _latest_formal_review_risk(root: Path) -> dict[str, Any]:
             updated = _parse_beijing_time(event.get("updated_at_beijing") or event.get("account_updated_at"))
             if updated is None:
                 continue
+            market_date = str(event.get("market_date") or review.get("market_date") or "")
             equity = fact.get("known_net_strategy_equity")
             try:
                 equity = float(equity) if equity is not None else None
             except (TypeError, ValueError):
                 equity = None
-            candidates.append((updated, {"risk_pct": risk, "equity": equity, "updated_at": updated.isoformat(timespec="seconds"), "market_date": event.get("market_date") or review.get("market_date"), "source": str(path.relative_to(root)).replace("\\", "/")}))
-    return max(candidates, key=lambda x: x[0])[1] if candidates else {}
+            candidates.append((market_date, updated, {"risk_pct": risk, "equity": equity, "updated_at": updated.isoformat(timespec="seconds"), "market_date": market_date, "source": str(path.relative_to(root)).replace("\\", "/")}))
+    return max(candidates, key=lambda x: (x[0], x[1]))[2] if candidates else {}
 
 
 def build_etf_strategy_risk_metrics(root: Path) -> dict[str, Any]:
