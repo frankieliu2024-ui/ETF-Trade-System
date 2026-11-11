@@ -9,7 +9,7 @@ class FormalReplayForensicReachabilityTests(unittest.TestCase):
         cls.workflow = pathlib.Path('.github/workflows/market-snapshot.yml').read_text(encoding='utf-8')
 
     def test_dispatch_input_and_restricted_env_mapping_exist(self):
-        self.assertRegex(self.workflow, r'^\s{6}formal_replay_forensic:\s*', re.MULTILINE)
+        self.assertIsNotNone(re.search(r'^\\s{6}formal_replay_forensic:\\s*', self.workflow, re.MULTILINE))
         self.assertIn('default: "false"', self.workflow)
         self.assertIn('type: boolean', self.workflow)
         self.assertIn('ETF_FORMAL_REPLAY_FORENSIC:', self.workflow)
