@@ -847,6 +847,68 @@ def select_latest_qualified_formal_discovery(
     return discovery
 
 
+def normalize_legacy_formal_runtime_completion(payload: dict) -> dict:
+    """Normalize the historical direct Formal Decision envelope in memory.
+
+    Some scheduled-task writers emitted a complete FINAL_CONTENT with legacy
+    labels (hashed task_id, human report_type, missing hash/report fields).
+    Preserve the frozen body and runtime identity, but project the canonical
+    notification identity so audit defects cannot suppress an otherwise unique
+    original-body notification.
+    """
+    if not isinstance(payload, dict):
+        return payload
+    binding = payload.get("presentation_binding")
+    if not isinstance(binding, dict):
+        return payload
+    content = str(payload.get("final_content") or "")
+    source = str(payload.get("source") or payload.get("formal_entry_source") or "").strip().upper()
+    entry_mode = str(payload.get("entry_mode") or "").strip().upper()
+    is_legacy_formal = (
+        str(payload.get("interaction_scenario") or "").strip().upper() == "FORMAL_DECISION"
+        and content.lstrip().startswith("【ETF正式决策】")
+        and source in {
+            "CHATGPT_DIRECT_GITHUB_CONTENTS_WRITER",
+            "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
+            "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
+            "CHATGPT_SCHEDULED_TASK",
+        }
+        and entry_mode in {"MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK", "MANUAL_CONVERSATION"}
+    )
+    if not is_legacy_formal:
+        return payload
+    task_run_id = str(payload.get("task_run_id") or payload.get("request_id") or "").strip()
+    occurrence_id = str(payload.get("occurrence_id") or task_run_id).strip()
+    request_id = str(payload.get("request_id") or task_run_id).strip()
+    if not task_run_id or not occurrence_id or not request_id or not content:
+        return payload
+    report_id = f"ETF_FORMAL_DECISION:{task_run_id}"
+    content_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
+    payload["request_type"] = "SCHEDULED_REVIEW_COMPLETION"
+    payload["formal_fact_type"] = "FORMAL_CURRENT_MAIN_DECISION"
+    payload["task_id"] = "ETF正式决策"
+    payload["task_run_id"] = task_run_id
+    payload["occurrence_id"] = occurrence_id
+    payload["request_id"] = request_id
+    payload["report_type"] = "ETF_FORMAL_DECISION"
+    payload["report_id"] = report_id
+    payload["content_hash"] = content_hash
+    binding = dict(binding)
+    binding.update({
+        "report_type": "ETF_FORMAL_DECISION",
+        "task_id": "ETF正式决策",
+        "task_run_id": task_run_id,
+        "occurrence_id": occurrence_id,
+        "request_id": request_id,
+        "report_id": report_id,
+        "full_content": content,
+        "content_hash": content_hash,
+        "content_hash_source": "notification_compatibility_normalizer",
+    })
+    payload["presentation_binding"] = binding
+    return payload
+
+
 def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | None = None) -> dict:
     """Fail closed before a Formal Decision completion can enter the notification chain.
 
@@ -857,6 +919,7 @@ def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | N
     """
     if not isinstance(payload, dict):
         raise ValueError("Formal Decision completion must be an object")
+    payload = normalize_legacy_formal_runtime_completion(payload)
     binding = payload.get("presentation_binding")
     if not isinstance(binding, dict):
         raise ValueError("Formal Decision completion requires presentation_binding")
