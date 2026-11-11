@@ -859,24 +859,30 @@ def normalize_legacy_formal_runtime_completion(payload: dict) -> dict:
     if not isinstance(payload, dict):
         return payload
     binding = payload.get("presentation_binding")
-    if not isinstance(binding, dict):
-        return payload
     content = str(payload.get("final_content") or "")
-    source = str(payload.get("source") or payload.get("formal_entry_source") or "").strip().upper()
+    source = str(payload.get("source") or "").strip().upper()
+    entry_source = str(payload.get("formal_entry_source") or "").strip().upper()
     entry_mode = str(payload.get("entry_mode") or "").strip().upper()
     is_legacy_formal = (
         str(payload.get("interaction_scenario") or "").strip().upper() == "FORMAL_DECISION"
         and content.lstrip().startswith("【ETF正式决策】")
-        and source in {
-            "CHATGPT_DIRECT_GITHUB_CONTENTS_WRITER",
-            "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
-            "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
-            "CHATGPT_SCHEDULED_TASK",
-        }
+        and (
+            source in {
+                "CHATGPT_DIRECT_GITHUB_CONTENTS_WRITER",
+                "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
+                "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
+                "CHATGPT_SCHEDULED_TASK",
+                "CHATGPT_SCHEDULED_REVIEW_ACTOR",
+            }
+            or entry_source in {
+                "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+                "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
+                "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
+                "CHATGPT_SCHEDULED_TASK",
+            }
+        )
         and entry_mode in {"MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK", "MANUAL_CONVERSATION"}
     )
-    if not is_legacy_formal:
-        return payload
     task_run_id = str(payload.get("task_run_id") or payload.get("request_id") or "").strip()
     occurrence_id = str(payload.get("occurrence_id") or task_run_id).strip()
     request_id = str(payload.get("request_id") or task_run_id).strip()
@@ -893,7 +899,7 @@ def normalize_legacy_formal_runtime_completion(payload: dict) -> dict:
     payload["report_type"] = "ETF_FORMAL_DECISION"
     payload["report_id"] = report_id
     payload["content_hash"] = content_hash
-    binding = dict(binding)
+    binding = dict(binding) if isinstance(binding, dict) else {}
     binding.update({
         "report_type": "ETF_FORMAL_DECISION",
         "task_id": "ETF正式决策",
@@ -937,6 +943,9 @@ def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | N
         "CHATGPT_DIRECT_GITHUB_CONTENTS_WRITER",
         "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
         "CHATGPT_SCHEDULED_TASK",
+        "CHATGPT_SCHEDULED_REVIEW_ACTOR",
+        "CHATGPT_MANUAL_FORMAL_ANALYSIS",
+        "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
     }
     # Some scheduled-task writers historically emitted a valid completion body
     # with null task_run_id/occurrence_id. Recover those two identity fields
