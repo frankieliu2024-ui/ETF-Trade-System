@@ -462,7 +462,7 @@ def build_etf_strategy_risk_metrics(root: Path) -> dict[str, Any]:
         and reconstruction_as_of >= risk_fact_date
     )
     formal = _latest_formal_review_risk(root)
-    if "current_strategy_return_pct_gross" not in summary and formal.get("risk_pct") is not None:
+    if formal.get("risk_pct") is not None and ("current_strategy_return_pct_gross" not in summary or not reconstruction_fresh):
         risk_pct = round(float(formal["risk_pct"]), 2)
         risk_source = formal.get("source")
         risk_source_updated_at = formal.get("updated_at")
