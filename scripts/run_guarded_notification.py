@@ -1294,8 +1294,10 @@ def _run_center(mode: str, formal_content_file: str | None = None) -> int:
         from pathlib import Path
         direct_payload = json.loads(Path(formal_content_file).read_text(encoding="utf-8"))
         direct_task = str(direct_payload.get("task_id") or (direct_payload.get("presentation_binding") or {}).get("task_id") or "").strip()
-        if direct_task != "ETF交易复盘":
-            print(json.dumps({"status": "FAILED", "error": "Formal Decision direct content projection is disabled; use canonical completion event"}, ensure_ascii=False))
+        direct_task_name = str(direct_payload.get("task_name") or "").strip()
+        report_type = str(direct_payload.get("report_type") or (direct_payload.get("presentation_binding") or {}).get("report_type") or "").strip().upper()
+        if direct_task != "ETF交易复盘" and not (direct_task_name == "ETF正式决策" or report_type == "ETF_FORMAL_DECISION"):
+            print(json.dumps({"status": "FAILED", "error": "Unsupported direct completion task"}, ensure_ascii=False))
             return 1
 
     event = None

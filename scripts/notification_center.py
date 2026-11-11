@@ -1210,8 +1210,28 @@ def formal_content_event(source_path: Path) -> dict | None:
     if not source_path.is_file():
         return None
     event = read_json(source_path, {})
-    task_id = str(event.get("task_id") or (event.get("presentation_binding") or {}).get("task_id") or "").strip()
+    binding = event.get("presentation_binding") if isinstance(event.get("presentation_binding"), dict) else {}
+    task_id = str(event.get("task_id") or binding.get("task_id") or "").strip()
+    task_name = str(event.get("task_name") or "").strip()
     direct_content = str(event.get("final_content") or event.get("presentation_content") or "").strip()
+    report_type = str(event.get("report_type") or binding.get("report_type") or "").strip().upper()
+    if (task_name == "ETF正式决策" or report_type == "ETF_FORMAL_DECISION") and direct_content:
+        request_id = str(event.get("request_id") or binding.get("request_id") or "").strip()
+        task_run_id = str(event.get("task_run_id") or binding.get("task_run_id") or request_id or source_path.stem).strip()
+        occurrence_id = str(event.get("occurrence_id") or binding.get("occurrence_id") or task_run_id).strip()
+        content_hash = hashlib.sha256(direct_content.encode("utf-8")).hexdigest()
+        return {
+            "key": "report-delivery:ETF_FORMAL_DECISION:" + (request_id or task_run_id),
+            "source_event_id": "direct-formal-decision:" + source_path.name,
+            "event_type": "REPORT_DELIVERY_REQUEST", "notification_channel": "REPORT",
+            "delivery_mode": "FULL_REPORT", "type": "正式报告", "title": "【ETF正式决策】",
+            "content": direct_content, "source": "direct-scheduled-formal-decision:" + source_path.name,
+            "report_type": "ETF_FORMAL_DECISION", "report_id": str(event.get("report_id") or binding.get("report_id") or ("ETF_FORMAL_DECISION:" + task_run_id)),
+            "request_id": request_id, "task_id": "ETF正式决策", "task_run_id": task_run_id,
+            "occurrence_id": occurrence_id, "entry_mode": str(event.get("entry_mode") or "AUTOMATIC_SCHEDULED_TASK"),
+            "idempotency_key": "ETF_FORMAL_DECISION:" + (request_id or task_run_id),
+            "no_trade_authority": True, "content_hash": content_hash,
+        }
     if task_id == "ETF交易复盘" and direct_content:
         binding = event.get("presentation_binding") if isinstance(event.get("presentation_binding"), dict) else {}
         task_run_id = str(event.get("task_run_id") or binding.get("task_run_id") or event.get("request_id") or source_path.stem).strip()

@@ -133,11 +133,12 @@ jobs:
           binding = payload.get("presentation_binding") or {}
           report_type = str(payload.get("report_type") or binding.get("report_type") or "").strip().upper()
           task_id = str(payload.get("task_id") or binding.get("task_id") or "").strip()
+          task_name = str(payload.get("task_name") or "").strip()
           source = str(payload.get("source") or payload.get("formal_entry_source") or "").strip().upper()
           content = str(payload.get("final_content") or "")
           formal = (
               report_type == "ETF_FORMAL_DECISION"
-              and task_id == "ETF正式决策"
+              and (task_id == "ETF正式决策" or task_name == "ETF正式决策")
           )
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
               out.write("formal=%s\n" % ("true" if formal else "false"))
@@ -180,7 +181,7 @@ jobs:
           content = str(payload.get("final_content") or "")
           if (
               report_type == "ETF_FORMAL_DECISION"
-              and str(payload.get("task_id") or "").strip() == "ETF正式决策"
+              and str(payload.get("task_id") or binding.get("task_id") or payload.get("task_name") or "").strip() == "ETF正式决策"
           ):
               print("FORMAL")
           else:
@@ -615,6 +616,14 @@ jobs:
           binding = payload.get("presentation_binding") or {}
           report_type = str(payload.get("report_type") or binding.get("report_type") or "").strip().upper()
           task_id = str(payload.get("task_id") or binding.get("task_id") or "").strip()
+          task_name = str(payload.get("task_name") or "").strip()
+          # A direct scheduled completion is already a sufficient notification
+          # source. Missing presentation_binding is an audit limitation, not a
+          # delivery failure; leave event projection to the independent audit
+          # step and let the exact completion reach the notification center.
+          if report_type == "ETF_FORMAL_DECISION" and (task_id == "ETF正式决策" or task_name == "ETF正式决策") and not payload.get("presentation_binding"):
+              print(json.dumps({"canonical_publication": ""}, ensure_ascii=False))
+              raise SystemExit(0)
           if report_type not in {"ETF_TRADE_REVIEW", "SCHEDULED_TRADE_REVIEW"} or task_id != "ETF交易复盘":
               raise SystemExit("Trade Review completion identity mismatch")
           review = payload.get("formal_review") if isinstance(payload.get("formal_review"), dict) else {}
@@ -1177,6 +1186,10 @@ jobs:
           binding = payload.get("presentation_binding") or {}
           report_type = str(payload.get("report_type") or binding.get("report_type") or "").strip().upper()
           task_id = str(payload.get("task_id") or binding.get("task_id") or "").strip()
+          task_name = str(payload.get("task_name") or "").strip()
+          if report_type == "ETF_FORMAL_DECISION" and (task_id == "ETF正式决策" or task_name == "ETF正式决策") and not payload.get("presentation_binding"):
+              print(json.dumps({"canonical_publication": ""}, ensure_ascii=False))
+              raise SystemExit(0)
           legacy_formal = (
               task_id == "ETF正式决策"
               and str(payload.get("decision_path") or "").strip().upper() == "FORMAL"
