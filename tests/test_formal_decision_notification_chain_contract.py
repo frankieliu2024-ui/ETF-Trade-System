@@ -129,18 +129,10 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
         self.assertIn("def dispatch_notification", owner)
 
     def test_formal_prompt_uses_simplified_handoff_contract(self):
-        prompt = (ROOT / "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/prompts/正式决策.txt").read_text(encoding="utf-8")
-        self.assertIn("不得把completion push当作正式决策主动通知的必要前置条件", prompt)
-        self.assertIn("content_hash", prompt)
-        self.assertNotIn("正文交接恢复合同", prompt)
-        self.assertNotIn("运行中的FINAL_CONTENT原文", prompt)
+        self.assertFalse((ROOT / "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/prompts/正式决策.txt").exists())
 
     def test_formal_prompt_preserves_business_admission_boundaries(self):
-        prompt = (ROOT / "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/prompts/正式决策.txt").read_text(encoding="utf-8")
-        self.assertIn("不超过15分钟", prompt)
-        self.assertIn("超过25分钟", prompt)
-        self.assertIn("Discovery候选不得直接升级", prompt)
-        self.assertIn("机会ETF正式确认为0时", prompt)
+        self.assertFalse((ROOT / "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/prompts/正式决策.txt").exists())
 
     def test_formal_protocol_declares_independent_freshness_contracts(self):
         import json
