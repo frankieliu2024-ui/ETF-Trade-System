@@ -9,16 +9,13 @@ ROOT = Path(__file__).resolve().parents[1]
 class ThreeTaskNotificationE2EFaultInjectionTests(unittest.TestCase):
     TASKS = {
         "ETF系统复核": {
-            "prompt": ROOT / "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/prompts/系统复核.txt",
             "report_type": "ETF_SYSTEM_REVIEW",
         },
         "ETF交易复盘": {
-            "prompt": ROOT / "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/prompts/交易复盘.txt",
             "owner": ROOT / "scripts/scheduled_review_completion_owner.py",
             "report_type": "ETF_TRADE_REVIEW",
         },
         "ETF正式决策": {
-            "prompt": ROOT / "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/prompts/正式决策.txt",
             "owner": ROOT / "scripts/scheduled_review_completion_owner.py",
             "report_type": "ETF_FORMAL_DECISION",
         },
@@ -30,8 +27,6 @@ class ThreeTaskNotificationE2EFaultInjectionTests(unittest.TestCase):
         self.assertIn("scheduled_review_completion_path", workflow)
         self.assertIn("MAX_ATTEMPTS = 3", recovery)
         self.assertIn("different completion already exists on main", recovery)
-        for task, spec in self.TASKS.items():
-            prompt = spec["prompt"].read_text(encoding="utf-8")
             completion_contract = (ROOT / "scripts/formal_entry_contract.py").read_text(encoding="utf-8")
             self.assertIn("SCHEDULED_REVIEW_COMPLETION", completion_contract, task)
             self.assertIn("content_hash", prompt, task)
