@@ -2,7 +2,7 @@
   "schema_version": "1.1",
   "registry_type": "ETF_THREE_TASK_FREEZE_REGISTRY",
   "authority": "current_main",
-  "canonical_status": "LIVE_PROMPT_AUTHORITY_CONFIRMED_AUDIT_POINTER",
+  "canonical_status": "SEALED",
   "purpose": "统一登记三个ETF任务的冻结、历史归档、版本追踪和回滚关系；不复制业务规则，不构成第二任务、第二workflow、第二状态或第二业务链。",
   "current_main_only": true,
   "index_path": "ETF_SYSTEM_INDEX.md",
@@ -19,10 +19,10 @@
   "tasks": [
     {
       "task_id": "ETF系统复核",
-      "automation_id": "6accb02805ec8191aca29791a72636bd",
-      "conversation_id": "6accb04b-9d30-83ec-9e9f-f632d3815e92",
+      "automation_id": "6ae879151ae88191980f514e4e4bab6f",
+      "conversation_id": "6af1146e-4430-83e8-9b73-716514b0e6cb",
       "canonical_interaction_scenario": "SCHEDULED_SYSTEM_REVIEW",
-      "live_snapshot_status": "LIVE_READBACK_CONFIRMED_MINIMAL_HANDOFF_REPAIR_CURRENT_MAIN_AUDIT_ONLY",
+      "live_snapshot_status": "LIVE_READBACK_CONFIRMED_INTEGRATED_HANDOFF_CURRENT_MAIN_AUDIT_ONLY",
       "historical_versions": [
         "2026-10-16-v1",
         "2026-10-16-v2"
@@ -31,10 +31,10 @@
     },
     {
       "task_id": "ETF交易复盘",
-      "automation_id": "6ab78aab49988191818abf8660c65362",
-      "conversation_id": "6ab89c94-e798-83e8-90e6-0b57c60905c5",
+      "automation_id": "6ae943fe50d48191b4ac25389f2d4a84",
+      "conversation_id": "6ae943ca-6d38-83ee-a71f-297ddeb0144e",
       "canonical_interaction_scenario": "SCHEDULED_TRADE_REVIEW",
-      "live_snapshot_status": "LIVE_READBACK_CONFIRMED_MINIMAL_HANDOFF_REPAIR_CURRENT_MAIN_AUDIT_ONLY",
+      "live_snapshot_status": "LIVE_READBACK_CONFIRMED_INTEGRATED_HANDOFF_CURRENT_MAIN_AUDIT_ONLY",
       "historical_versions": [
         "2026-10-16-v1",
         "2026-10-16-v2"
@@ -43,10 +43,10 @@
     },
     {
       "task_id": "ETF正式决策",
-      "automation_id": "6ad1d7b4c05c819180eb6af2c8086cb8",
-      "conversation_id": "6ad0aef0-7718-83ee-b901-d24316ce92b6",
-      "canonical_interaction_scenario": "FORMAL_DECISION_CANONICAL_SCENARIO_PER_CURRENT_MAIN",
-      "live_snapshot_status": "LIVE_READBACK_CONFIRMED_MINIMAL_HANDOFF_REPAIR_CURRENT_MAIN_AUDIT_ONLY",
+      "automation_id": "6adb5dbc116c819185f9c6ab45630baa",
+      "conversation_id": "6af2b933-4a00-83ee-9bde-2589806181fe",
+      "canonical_interaction_scenario": "FORMAL_DECISION",
+      "live_snapshot_status": "LIVE_READBACK_CONFIRMED_INTEGRATED_HANDOFF_CURRENT_MAIN_AUDIT_ONLY",
       "historical_versions": [
         "2026-10-16-v1",
         "2026-10-16-v2"
@@ -84,11 +84,11 @@
     "当前live快照未完成逐项回读前，不得宣称三任务已完成最终冻结。",
     "live配置回读未取得可验证hash前，必须保持RECONCILIATION_REQUIRED，不得将历史Prompt hash冒充当前live hash。"
   ],
-  "registry_revision": "2026-11-10-live-readback-aligned",
+  "registry_revision": "2026-11-11-live-readback-integrated",
   "live_readback": {
-    "captured_at_beijing": "2026-11-10",
+    "captured_at_beijing": "2026-11-11",
     "source": "ChatGPT scheduled tasks cloud browser refreshed readback",
-    "result": "THREE_TASKS_LIVE_PROMPTS_READ_BACK_AND_MINIMAL_HANDOFF_REPAIR_ALIGNED",
+    "result": "THREE_TASKS_LIVE_PROMPTS_READ_BACK_AND_INTEGRATED_HANDOFF_RULES",
     "platform_hash_status": "NOT_EXPOSED_BY_UI",
     "authority": "ChatGPT scheduled task UI live prompts",
     "repository_role": "audit/test/production protocol only",
