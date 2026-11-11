@@ -886,6 +886,8 @@ def normalize_legacy_formal_runtime_completion(payload: dict) -> dict:
     task_run_id = str(payload.get("task_run_id") or payload.get("request_id") or "").strip()
     occurrence_id = str(payload.get("occurrence_id") or task_run_id).strip()
     request_id = str(payload.get("request_id") or task_run_id).strip()
+    if is_legacy_formal:
+        raise ValueError("legacy Formal Decision completion is audit-only and cannot enter the production notification path")
     if not task_run_id or not occurrence_id or not request_id or not content:
         return payload
     report_id = f"ETF_FORMAL_DECISION:{task_run_id}"
