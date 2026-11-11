@@ -221,7 +221,25 @@ def canonical_etf_trade_facts(root: Path, reconstructed_trades: list[dict]) -> l
     facts: list[dict] = []
     seen: set[tuple] = set()
 
+    # A correction request retires the earlier event without deleting it from
+    # the audit trail. Reconstructed replay rows can predate that event-level
+    # retirement, so exclude their superseded event identities before position,
+    # fee, and trade-count projection. The replacement event remains eligible
+    # through the normal canonical event path below.
+    superseded_event_ids = set()
+    events_dir = root / "events" / "trades"
+    if events_dir.exists():
+        for event_path in events_dir.glob("*.json"):
+            event = read_json(event_path, {}) or {}
+            if str(event.get("execution_status") or "").upper() == "SUPERSEDED":
+                event_id = str(event.get("event_id") or event_path.stem).strip()
+                if event_id:
+                    superseded_event_ids.add(event_id)
+
     for trade in reconstructed_trades:
+        event_id = str(trade.get("event_id") or "").strip()
+        if event_id and event_id in superseded_event_ids:
+            continue
         if not _is_reconstructed_etf_trade(trade, universe_codes):
             continue
         signature = trade_signature(trade)
