@@ -156,6 +156,31 @@ class StateLayerTests(unittest.TestCase):
         error = state_sync.validate_broker_account_fact_ingress(request, None)
         self.assertEqual(error, "broker screenshot request must provide account_fact")
 
+    def test_broker_confirmed_trades_enter_canonical_event_ingress(self) -> None:
+        request = {
+            "request_id": "broker-confirmed-trade",
+            "requested_at_beijing": "2026-11-11T18:04:00+08:00",
+            "source": "CHATGPT_USER_BROKER_SCREENSHOT",
+            "account_fact": {
+                "source": "CHATGPT_USER_BROKER_SCREENSHOT",
+                "confirmed_trades": [{
+                    "code": "588370",
+                    "name": "科创50增强ETF",
+                    "asset_type": "ETF",
+                    "side": "BUY",
+                    "quantity": 1400,
+                    "price": 1.691,
+                    "amount": 2367.4,
+                    "executed_at_beijing": "2026-11-11T14:35:21+08:00",
+                }],
+            },
+        }
+        trades = state_sync._request_trade_events(request)
+        self.assertEqual(len(trades), 1)
+        self.assertEqual(trades[0]["code"], "588370")
+        self.assertEqual(trades[0]["side"], "BUY")
+        self.assertEqual(trades[0]["quantity"], 1400)
+
     def test_broker_screenshot_account_fact_is_accepted(self) -> None:
         request = {
             "request_id": "broker-canonical",
