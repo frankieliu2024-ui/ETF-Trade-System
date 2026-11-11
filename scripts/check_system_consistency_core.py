@@ -899,11 +899,49 @@ def main() -> int:
             account_for_runtime = read_json("data/state/account_fact.json")
             runtime_etf_codes = expected_runtime_etf_codes(objects, account_for_runtime)
             expected_snapshot_count = expected_a_share_snapshot_count(runtime_etf_codes)
-            check("a_share_runtime:snapshot_count", snapshot.get("count") == len(rows) == expected_snapshot_count, f"snapshot_count={snapshot.get('count')} rows={len(rows)} expected={expected_snapshot_count}")
+            snapshot_codes = {str(row.get("symbol", "")) for row in etf_rows}
+            missing_runtime_etfs = sorted(runtime_etf_codes - snapshot_codes)
+            # Account screenshots can be confirmed after the last market pulse.
+            # In that bounded interval, a newly confirmed holding is a pending
+            # acquisition obligation, not evidence that the prior snapshot was
+            # malformed.  Keep the gap visible as WARNING and require the next
+            # eligible market capture to close it; never waive a missing object
+            # when the account fact predates the snapshot.
+            captured_at = str(snapshot.get("captured_at_beijing") or snapshot.get("captured_at") or "")
+            account_updated_at = str(account_for_runtime.get("updated_at_beijing") or account_for_runtime.get("updated_at") or "")
+            account_postdated_snapshot = False
+            if captured_at and account_updated_at:
+                try:
+                    captured_dt = datetime.fromisoformat(captured_at.replace("Z", "+00:00"))
+                    account_dt = datetime.fromisoformat(account_updated_at.replace("Z", "+00:00"))
+                    if captured_dt.tzinfo is None:
+                        captured_dt = captured_dt.replace(tzinfo=SHANGHAI)
+                    if account_dt.tzinfo is None:
+                        account_dt = account_dt.replace(tzinfo=SHANGHAI)
+                    account_postdated_snapshot = account_dt > captured_dt
+                except ValueError:
+                    account_postdated_snapshot = False
+            account_missing_only = bool(missing_runtime_etfs) and missing_runtime_etfs <= active_account_etf_codes(account_for_runtime)
+            deferred_coverage = account_postdated_snapshot and account_missing_only
+            snapshot_count_ok = snapshot.get("count") == len(rows) == expected_snapshot_count
+            check(
+                "a_share_runtime:snapshot_count",
+                snapshot_count_ok or deferred_coverage,
+                f"snapshot_count={snapshot.get('count')} rows={len(rows)} expected={expected_snapshot_count}"
+                + (f" deferred_missing={missing_runtime_etfs} account_updated_after_capture=true" if deferred_coverage else ""),
+                warning=deferred_coverage,
+            )
             query_only_runtime = str(runtime_health.get("status", "")).upper() == "SKIPPED" and str(runtime_health.get("trigger_mode", "")).upper() == "QUERY_TIME_PUSH"
             market_date_aligned = snapshot.get("market_date") == current.get("market_date") == runtime_health.get("market_date")
             check("a_share_runtime:market_date_alignment", market_date_aligned or query_only_runtime, f"snapshot={snapshot.get('market_date')} current={current.get('market_date')} health={runtime_health.get('market_date')} query_only={query_only_runtime}")
-            check("a_share_runtime:etf_complete", {str(row.get('symbol', '')) for row in etf_rows} == runtime_etf_codes and all(row.get("quality_status") == "PASS" for row in etf_rows), f"count={len(etf_rows)} expected={len(runtime_etf_codes)}")
+            etf_complete_ok = snapshot_codes == runtime_etf_codes and all(row.get("quality_status") == "PASS" for row in etf_rows)
+            check(
+                "a_share_runtime:etf_complete",
+                etf_complete_ok or deferred_coverage,
+                f"count={len(etf_rows)} expected={len(runtime_etf_codes)}"
+                + (f" deferred_missing={missing_runtime_etfs} account_updated_after_capture=true" if deferred_coverage else ""),
+                warning=deferred_coverage,
+            )
             check("a_share_runtime:core_indices_complete", {str(row.get('thscode', '')) for row in index_rows} == CORE_A_SHARE_INDEX_CODES and all(row.get("quality_status") == "PASS" for row in index_rows), f"indices={[row.get('thscode') for row in index_rows]}")
             check("a_share_runtime:beijing_capture", bool(snapshot.get("captured_at_beijing")) and snapshot.get("timezone") == "Asia/Shanghai", f"captured_at_beijing={snapshot.get('captured_at_beijing')} timezone={snapshot.get('timezone')}")
 
