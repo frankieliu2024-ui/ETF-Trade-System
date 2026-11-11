@@ -149,7 +149,7 @@ class NotificationWorkflowStructureTests(unittest.TestCase):
         runner = (ROOT / "scripts" / "run_guarded_notification.py").read_text(encoding="utf-8")
         self.assertIn('parser.add_argument("--formal-content-file")', runner)
         self.assertIn('def _run_center(mode: str, formal_content_file: str | None = None)', runner)
-        self.assertIn("Formal Decision direct content projection is disabled", runner)
+        self.assertIn("Unsupported direct completion task", runner)
         self.assertIn("return _run_center(args.mode, args.formal_content_file)", runner)
 
 
