@@ -1084,7 +1084,7 @@ jobs:
           # Scheduled Review completion is a notification handoff, not a market
           # snapshot/state-sync request. Optional broker/dashboard maintenance
           # must not fail or delay canonical review projection.
-          if [ "$scheduled_review_completion" = "true" ]; then
+          if [ "$scheduled_review_completion" = "true" ] && [ -z "${REPLAY_REQUEST:-}" ]; then
             echo "Scheduled Review completion detected; skip optional broker/dashboard state sync."
             echo "processed=false" >> "$GITHUB_OUTPUT"
             exit 0
