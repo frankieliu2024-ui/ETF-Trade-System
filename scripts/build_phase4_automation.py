@@ -58,7 +58,11 @@ def _enhanced_risk_review(value: Any) -> bool:
 
 
 def _display(name: Any, code: Any) -> str:
-    return f"{name}（{code}）" if name and code else str(code or name or "未知标的")
+    try:
+        from security_display import security_display_name
+    except ModuleNotFoundError:
+        from scripts.security_display import security_display_name
+    return security_display_name(name, code)
 
 
 def _material_unreconciled_account_changes(account: dict) -> list[dict]:
