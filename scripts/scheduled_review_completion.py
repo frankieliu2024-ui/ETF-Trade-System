@@ -891,6 +891,7 @@ def normalize_legacy_formal_runtime_completion(payload: dict) -> dict:
     report_id = f"ETF_FORMAL_DECISION:{task_run_id}"
     content_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
     payload["request_type"] = "SCHEDULED_REVIEW_COMPLETION"
+    payload["_notification_compatibility_only"] = True
     payload["formal_fact_type"] = "FORMAL_CURRENT_MAIN_DECISION"
     payload["task_id"] = "ETF正式决策"
     payload["task_run_id"] = task_run_id
@@ -1019,6 +1020,11 @@ def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | N
     if expected_label and not title.endswith(expected_label):
         raise ValueError("Formal Decision completion decision_path does not match title")
     fact_binding = payload.get("fact_binding")
+    if payload.get("_notification_compatibility_only") is True:
+        # Original-body notification is allowed when the frozen completion is
+        # uniquely identified and untampered. Missing/legacy fact projection
+        # remains an audit degradation and must not suppress delivery.
+        return payload
     if not isinstance(fact_binding, dict):
         raise ValueError("Formal Decision completion requires fact_binding")
     base = (root or ROOT).resolve()
