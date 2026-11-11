@@ -306,6 +306,7 @@ def execute_post_handoff(target: Path, *, completion_kind: str = "SCHEDULED_REVI
         "completion_readback": {"attempted": False, "status": "NOT_STARTED"},
         "notification_dispatch": {"attempted": False, "status": "NOT_STARTED"},
         "projection_readback": {"attempted": False, "status": "NOT_STARTED"},
+        "business_notification": {"status": "NOT_STARTED"},
         "ok": False,
     }
     try:
@@ -330,9 +331,15 @@ def execute_post_handoff(target: Path, *, completion_kind: str = "SCHEDULED_REVI
             **dispatch,
         }
         if not submitted:
+            result["business_notification"] = {"status": "FAILED"}
             result["failure_stage"] = "notification_dispatch"
             result["failure_reason"] = str(dispatch.get("reason") or "notification dispatch was not submitted")
             return result
+        result["business_notification"] = {"status": "SUBMITTED", "completion_path": relative}
+        # Notification submission is the business handoff boundary.  Audit
+        # projections are deliberately reported after it and cannot rewrite a
+        # successful business notification as a notification failure.
+        result["ok"] = True
     except Exception as exc:
         result["notification_dispatch"] = {"attempted": True, "status": "FAILED", "reason": str(exc)}
         result["failure_stage"] = "notification_dispatch"
@@ -342,13 +349,14 @@ def execute_post_handoff(target: Path, *, completion_kind: str = "SCHEDULED_REVI
     try:
         projection = readback_projection(target)
         result["projection_readback"] = {"attempted": True, **projection}
-        result["ok"] = projection.get("status") == "READ_BACK"
-        if not result["ok"]:
+        result["projection_readback"]["audit_status"] = "COMPLETE" if projection.get("status") == "READ_BACK" else "INCOMPLETE"
+        if projection.get("status") != "READ_BACK":
             result["failure_stage"] = "projection_readback"
-            result["failure_reason"] = "canonical event/REPORT/notification/provider state was not fully confirmed"
+            result["failure_reason"] = "audit projection was not fully confirmed; business notification status is preserved"
     except Exception as exc:
         result["projection_readback"] = {"attempted": True, "status": "FAILED", "reason": str(exc)}
         result["failure_stage"] = "projection_readback"
         result["failure_reason"] = str(exc)
     return result
+
 
