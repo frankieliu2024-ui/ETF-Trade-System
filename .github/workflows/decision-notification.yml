@@ -1247,7 +1247,7 @@ jobs:
           )
             REVIEW_EVENT_PATH=$(python -c 'import json,sys; print(json.loads(sys.argv[1]).get("canonical_publication", ""))' "$projection")
             if [ -z "$REVIEW_EVENT_PATH" ]; then
-              REVIEW_EVENT_PATH=$(python -c 'import json,sys; p=json.load(open(sys.argv[1])); b=p.get("presentation_binding") or {}; t=str(p.get("report_type") or b.get("report_type") or "").strip().upper(); r=str(b.get("task_run_id") or p.get("task_run_id") or "").strip(); print(("events/reviews/trade-"+r+".json") if t=="ETF_TRADE_REVIEW" and r else ("events/reviews/system_"+r+".json" if t=="ETF_SYSTEM_REVIEW" and r else ""))' "$completion_path")
+              REVIEW_EVENT_PATH=$(python -c 'import json,sys; p=json.load(open(sys.argv[1])); b=p.get("presentation_binding") or {}; t=str(p.get("report_type") or b.get("report_type") or "").strip().upper(); r=str(b.get("task_run_id") or p.get("task_run_id") or p.get("request_id") or b.get("request_id") or "").strip(); print(("events/reviews/trade-"+r+".json") if t=="ETF_TRADE_REVIEW" and r else ("events/reviews/system_"+r+".json" if t=="ETF_SYSTEM_REVIEW" and r else ""))' "$completion_path")
             fi
             case "$REVIEW_EVENT_PATH" in
               events/reviews/*.json) ;;
