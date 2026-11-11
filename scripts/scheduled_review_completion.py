@@ -902,7 +902,7 @@ def normalize_legacy_formal_runtime_completion(payload: dict) -> dict:
     # Historical direct completions may omit decision_path even though the
     # frozen title carries the exact path. Recover only that audit field.
     first_line = content.splitlines()[0].strip() if content.splitlines() else ""
-    title_match = re.match(r"^【ETF正式决策】\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2} (正式判断|降级判断|超时判断)$", first_line)
+    title_match = re.match(r"^【ETF正式决策】\d{4}-\d{2}-\d{2} \d{2}:\d{2} (正式判断|降级判断|超时判断)$", first_line)
     if title_match:
         payload["decision_path"] = title_match.group(1)
     binding = dict(binding) if isinstance(binding, dict) else {}
