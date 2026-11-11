@@ -740,6 +740,11 @@ def _validate_historical_trade_case_mapping(report: dict) -> None:
                     event = json.loads(path.read_text(encoding="utf-8"))
                 except (OSError, json.JSONDecodeError):
                     continue
+                # Superseded broker events remain immutable history but must not
+                # satisfy the active historical trade-to-CASE mapping.  The
+                # replacement event is the sole canonical execution fact.
+                if str(event.get("execution_status") or "").upper() == "SUPERSEDED":
+                    continue
                 event_code = str(event.get("code") or "")
                 event_stamp = str(event.get("confirmed_at_beijing") or event.get("executed_at_beijing") or event.get("event_id") or "")
                 if event_code == code and event_stamp[:10] == dt[:10] and event_stamp[:10] >= HISTORICAL_TRADE_EVENT_EFFECTIVE_DATE:
