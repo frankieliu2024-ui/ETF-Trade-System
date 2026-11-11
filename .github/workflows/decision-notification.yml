@@ -538,7 +538,10 @@ jobs:
         # Review-event/REPORT projection is audit-only and must not turn a
         # successful System Review or Trade Review notification into failure.
         continue-on-error: true
-        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path != '' && steps.dispatch_completion_kind.outputs.scheduled == 'true') || (github.event_name == 'push' && steps.push_kind.outputs.scheduled_review_completion == 'true') || (github.event_name == 'workflow_run' && steps.workflow_review.outputs.review_completion == 'true' && steps.workflow_review.outputs.formal_completion != 'true') }}
+        # Scheduled Review completion is dispatched explicitly by the producer
+        # in the same run.  Push/workflow_run are audit wakes only and must not
+        # become a second notification ingress.
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path != '' && steps.dispatch_completion_kind.outputs.scheduled == 'true' }}
         shell: bash
         env:
           COMPLETION_PATH: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path || steps.push_kind.outputs.scheduled_review_completion_path || steps.workflow_review.outputs.review_completion_path }}
@@ -782,7 +785,7 @@ jobs:
 
       - name: Persist Scheduled Review canonical review event
         id: scheduled_review_report_persist
-        if: ${{ ((github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path != '') || (github.event_name == 'push' && steps.push_kind.outputs.scheduled_review_completion == 'true') || (github.event_name == 'workflow_run' && steps.workflow_review.outputs.review_completion == 'true')) && steps.scheduled_completion_event.outputs.review_event_path != '' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path != '' && steps.scheduled_completion_event.outputs.review_event_path != '' }}
         shell: bash
         env:
           EVENT_PATH: ${{ steps.scheduled_completion_event.outputs.review_event_path }}
@@ -939,7 +942,7 @@ jobs:
         # Formal event projection is audit-only and must not turn a successful
         # notification into a failed business handoff.
         continue-on-error: true
-        if: ${{ (github.event_name == 'push' && steps.push_kind.outputs.formal_completion == 'true') || (github.event_name == 'workflow_run' && steps.workflow_review.outputs.formal_completion == 'true') || (github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path != '' && steps.dispatch_completion_kind.outputs.formal == 'true') }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path != '' && steps.dispatch_completion_kind.outputs.formal == 'true' }}
         shell: bash
         env:
           COMPLETION_PATH: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path || steps.push_kind.outputs.formal_review_source_path || steps.workflow_review.outputs.formal_review_source_path }}
@@ -1075,7 +1078,7 @@ jobs:
           echo "review_event_path=$event_path" >> "$GITHUB_OUTPUT"
 
       - name: Persist Formal Decision canonical review event
-        if: ${{ (github.event_name == 'push' && steps.formal_completion_event.outputs.review_event_path != '') || (github.event_name == 'workflow_run' && steps.formal_completion_event.outputs.review_event_path != '') || (github.event_name == 'workflow_dispatch' && steps.formal_completion_event.outputs.review_event_path != '') }}
+        if: ${{ github.event_name == 'workflow_dispatch' && steps.formal_completion_event.outputs.review_event_path != '' }}
         shell: bash
         env:
           EVENT_PATH: ${{ steps.formal_completion_event.outputs.review_event_path }}
@@ -1150,7 +1153,7 @@ jobs:
       - name: Send material user-action notification
         id: event_notify
         # Delivery uses the already-bound current REPORT/review event. It must still run when a prior state persistence step fails; the sender remains fail-closed and never creates a second object.
-        if: ${{ always() && ((github.event_name == 'workflow_run' && github.event.workflow_run.name == 'ETF market snapshot' && steps.workflow_review.outputs.review_completion == 'true') || (github.event_name == 'push' && (steps.push_kind.outputs.decision == 'true' || steps.push_kind.outputs.trade == 'true' || steps.push_kind.outputs.account == 'true' || steps.push_kind.outputs.report == 'true' || steps.push_kind.outputs.report_handoff == 'true' || steps.push_kind.outputs.review_completion == 'true' || steps.push_kind.outputs.discovery_pulse == 'true' || steps.push_kind.outputs.hyperliquid_pulse == 'true' || steps.scheduled_completion_event.outputs.review_event_path != '')) || (github.event_name == 'workflow_dispatch' && (inputs.scheduled_review_completion_path != '' || steps.scheduled_completion_event.outputs.review_event_path != '' || steps.formal_completion_event.outputs.review_event_path != ''))) }}
+        if: ${{ always() && ((github.event_name == 'push' && (steps.push_kind.outputs.decision == 'true' || steps.push_kind.outputs.trade == 'true' || steps.push_kind.outputs.account == 'true' || steps.push_kind.outputs.report == 'true' || steps.push_kind.outputs.report_handoff == 'true' || steps.push_kind.outputs.discovery_pulse == 'true' || steps.push_kind.outputs.hyperliquid_pulse == 'true')) || (github.event_name == 'workflow_dispatch' && (inputs.scheduled_review_completion_path != '' || steps.scheduled_completion_event.outputs.review_event_path != '' || steps.formal_completion_event.outputs.review_event_path != ''))) }}
         env:
           REPORT_DELIVERY_PATH: ${{ steps.push_kind.outputs.report_path || steps.scheduled_review_report_persist.outputs.report_path }}
           REPORT_HANDOFF_PATH: ${{ steps.push_kind.outputs.report_handoff_path }}
@@ -1412,3 +1415,4 @@ jobs:
         run: |
           echo "User notification delivery failed; ETF market/data/trading-decision workflows remain unaffected."
           exit 1
+

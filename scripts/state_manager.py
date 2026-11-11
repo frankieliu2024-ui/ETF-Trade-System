@@ -412,7 +412,7 @@ def build_etf_strategy_risk_metrics(root: Path) -> dict[str, Any]:
     canonical_risk = read_json(root / "data" / "state" / "skfolio_risk_evidence.json", {})
     canonical_risk_status = str(canonical_risk.get("status") or "").upper()
     canonical_alignment = str(canonical_risk.get("data_alignment") or "").upper()
-    if canonical_risk_status == "DEGRADED" and canonical_alignment != "ALIGNED_WITH_CURRENT_MARKET_DATE":
+    if canonical_risk_status == "DEGRADED" and canonical_alignment != "ALIGNED_WITH_CURRENT_MARKET_DATE" and summary.get("current_strategy_return_pct_gross") is None:
         return {
             "etf_strategy_risk_pct": None,
             "risk_source": "data/state/skfolio_risk_evidence.json",
@@ -475,11 +475,16 @@ def build_etf_strategy_risk_metrics(root: Path) -> dict[str, Any]:
         strategy_equity = summary.get("current_gross_strategy_equity")
         risk_data_quality = summary.get("known_net_equity_data_quality") or summary.get("equity_coverage_status")
     else:
-        risk_pct = None
-        risk_source = "data/state/etf_strategy_equity.json" if reconstruction_risk is not None else ""
-        risk_source_updated_at = equity.get("generated_at") if reconstruction_risk is not None else ""
-        strategy_equity = summary.get("known_net_current_strategy_equity")
-        risk_data_quality = "STALE_OR_UNAVAILABLE_RECONSTRUCTION" if reconstruction_risk is not None else "RISK_FACT_UNAVAILABLE"
+        # Keep the canonical Gross owner visible when the latest valuation is
+        # pending, but expose the freshness limitation explicitly.  A missing
+        # value is reserved for the case where no Gross reconstruction exists;
+        # Dashboard/old Known-net evidence must never fill that gap.
+        gross_reconstruction = summary.get("current_strategy_return_pct_gross")
+        risk_pct = round(float(gross_reconstruction), 2) if gross_reconstruction is not None else None
+        risk_source = "data/state/etf_strategy_equity.json" if gross_reconstruction is not None else ""
+        risk_source_updated_at = equity.get("generated_at") if gross_reconstruction is not None else ""
+        strategy_equity = summary.get("current_gross_strategy_equity") if gross_reconstruction is not None else summary.get("known_net_current_strategy_equity")
+        risk_data_quality = "DEGRADED_PENDING_LATEST_VALUATION" if gross_reconstruction is not None else "RISK_FACT_UNAVAILABLE"
     return {
         "etf_strategy_risk_pct": risk_pct,
         "risk_source": risk_source,
@@ -631,3 +636,4 @@ def build_decision_context(root: Path | None = None, observability: dict[str, An
         "dashboard_source": str(dashboard.relative_to(root)).replace("\\", "/"), "dashboard_summary": {"maintenance_mode": "candidate_only", "automatic_overwrite": False, "automatic_trade_output": False}, "account_fact_status": account["status"], "needs_account_screenshot": account["status"] != "VALID",
         "formal_etf_discovery": formal_discovery or {"status": "NOT_REQUESTED", "candidates": []}, "interaction_boundary": "ChatGPT聊天负责账户截图与正式交易判断；本文件不生成交易动作。正式机会比较完整覆盖全部持仓/观察ETF，并在本节点存在合格池外发现对象时把其作为临时正式评估输入加入同一次MASTER与全资本竞争；发现本身不产生管理身份或交易权限。",
     }
+

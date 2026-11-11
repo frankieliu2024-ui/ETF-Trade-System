@@ -92,6 +92,18 @@ def execution_time_for_trade(root: Path, trade: dict) -> str | None:
             executed = nested.get("executed_at") or nested.get("executed_at_beijing")
             if executed:
                 return str(executed)
+    # Broker screenshot ingress stores the exact execution timestamp under the
+    # canonical account fact when the request does not carry a nested trade
+    # object.  The screenshot receipt time is only a confirmation boundary and
+    # must never be used as execution time when this fact is available.
+    account = load_json(root / "data" / "state" / "account_fact.json", {})
+    for fact in account.get("confirmed_trades") or []:
+        if not isinstance(fact, dict):
+            continue
+        if all(str(fact.get(key) or "") == str(trade.get(key) or "") for key in ("code", "side", "quantity", "price")):
+            executed = fact.get("executed_at_beijing") or fact.get("executed_at")
+            if executed:
+                return str(executed)
     return str(
         trade.get("executed_at")
         or trade.get("executed_at_beijing")
@@ -220,3 +232,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
