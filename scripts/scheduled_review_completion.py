@@ -907,7 +907,7 @@ def normalize_legacy_formal_runtime_completion(payload: dict) -> dict:
     if title_match:
         payload["decision_path"] = title_match.group(1)
     binding = dict(binding) if isinstance(binding, dict) else {}
-    binding.update({
+    defaults = {
         "report_type": "ETF_FORMAL_DECISION",
         "task_id": "ETF正式决策",
         "task_run_id": task_run_id,
@@ -917,7 +917,11 @@ def normalize_legacy_formal_runtime_completion(payload: dict) -> dict:
         "full_content": content,
         "content_hash": content_hash,
         "content_hash_source": "notification_compatibility_normalizer",
-    })
+    }
+    for key, value in defaults.items():
+        # Fill absent legacy fields only; preserve existing conflicts so the
+        # validator can reject tampered or mismatched binding data.
+        binding.setdefault(key, value)
     payload["presentation_binding"] = binding
     return payload
 
