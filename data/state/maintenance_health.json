@@ -1,23 +1,23 @@
 {
   "schema_version": "1.1",
-  "checked_at": "2026-11-11T18:25:01+08:00",
+  "checked_at": "2026-11-11T19:28:52+08:00",
   "mode": "DETERMINISTIC_MAINTENANCE_GUARD",
-  "status": "MAINTENANCE_INCOMPLETE",
-  "system_consistency_status": "PASS",
-  "self_healing_classification": "HEALTHY",
-  "runtime_health_status": "SKIPPED",
-  "current_snapshot": "data/market/snapshots/2026-11-10_150109.json",
+  "status": "FAIL",
+  "system_consistency_status": "WARNING",
+  "self_healing_classification": "DERIVED_CONTEXT_IDENTITY_DRIFT",
+  "runtime_health_status": "PASS",
+  "current_snapshot": "data/market/snapshots/2026-11-11_192733.json",
   "reconciliation": {
-    "status": "PASS",
+    "status": "FAIL",
     "trade_count": 46,
     "trade_count_matches_summary": true,
     "declared_trade_count": 46,
     "fact_enrichment_only_count": 0,
     "trade_count_migration": null,
     "executed_trade_event_overlay_count": 0,
-    "position_ledger_basis": "CANONICAL_EXECUTED_TRADE_FACTS_CURRENT_POSITION_IDENTITY_WITH_PRIOR_EOD_EQUITY",
+    "position_ledger_basis": "CANONICAL_REPLAY_FINAL_COMPLETE_POSITION_IDENTITY",
     "position_reconciliation": {
-      "status": "PASS",
+      "status": "FAIL",
       "checks": [
         {
           "code": "159056",
@@ -30,20 +30,6 @@
           "code": "159217",
           "ledger_quantity": 4400.0,
           "account_quantity": 4400.0,
-          "difference": 0.0,
-          "status": "PASS"
-        },
-        {
-          "code": "159326",
-          "ledger_quantity": 0.0,
-          "account_quantity": 0.0,
-          "difference": 0.0,
-          "status": "PASS"
-        },
-        {
-          "code": "159781",
-          "ledger_quantity": 0.0,
-          "account_quantity": 0.0,
           "difference": 0.0,
           "status": "PASS"
         },
@@ -69,60 +55,18 @@
           "status": "PASS"
         },
         {
-          "code": "513180",
-          "ledger_quantity": 0.0,
-          "account_quantity": 0.0,
-          "difference": 0.0,
-          "status": "PASS"
-        },
-        {
-          "code": "513520",
-          "ledger_quantity": 0.0,
-          "account_quantity": 0.0,
-          "difference": 0.0,
-          "status": "PASS"
-        },
-        {
-          "code": "515220",
-          "ledger_quantity": 0.0,
-          "account_quantity": 0.0,
-          "difference": 0.0,
-          "status": "PASS"
-        },
-        {
-          "code": "515880",
-          "ledger_quantity": 0.0,
-          "account_quantity": 0.0,
-          "difference": 0.0,
-          "status": "PASS"
-        },
-        {
-          "code": "518880",
-          "ledger_quantity": 0.0,
-          "account_quantity": 0.0,
-          "difference": 0.0,
-          "status": "PASS"
-        },
-        {
-          "code": "561980",
-          "ledger_quantity": 0.0,
-          "account_quantity": 0.0,
-          "difference": 0.0,
-          "status": "PASS"
-        },
-        {
-          "code": "588000",
-          "ledger_quantity": 0.0,
-          "account_quantity": 0.0,
-          "difference": 0.0,
-          "status": "PASS"
-        },
-        {
           "code": "588200",
           "ledger_quantity": 5800.0,
           "account_quantity": 5800.0,
           "difference": 0.0,
           "status": "PASS"
+        },
+        {
+          "code": "588370",
+          "ledger_quantity": 0.0,
+          "account_quantity": 1400.0,
+          "difference": 1400.0,
+          "status": "FAIL"
         }
       ]
     },
@@ -143,9 +87,9 @@
     },
     "gross_equity_reconciliation": {
       "status": "PASS",
-      "strategy_cash": 114175.9,
-      "current_etf_market_value": 58375.8,
-      "reported_gross_equity": 172551.7,
+      "strategy_cash": 109182.1,
+      "current_etf_market_value": 64250.1,
+      "reported_gross_equity": 173432.2,
       "difference": 0.0,
       "series_row_difference": 0.0,
       "canonical_replay_complete": true
@@ -157,37 +101,5 @@
     "workflow_failure_diagnosis": "AUTO_CLASSIFY_FAILED_STEP_AND_RECENT_DIFF",
     "rollback": "RESTRICTED_MAINTENANCE_ONLY; HEAD_ONLY; STRICT_ALLOWLIST; NEVER_FORMAL_RULES_OR_ACCOUNT_FACTS",
     "ai_patch_main": "FORBIDDEN"
-  },
-  "account_sync": {
-    "request_id": "20261111_1804_broker_close_trade_588370",
-    "request_path": "requests/live_snapshot/20261111_1804_broker_close_trade_588370.json",
-    "owner": "scripts/process_state_sync_request.py",
-    "workflow_run_id": "43003242454",
-    "status": "OWNER_REJECTED",
-    "failure_class": "OWNER_REJECTED",
-    "readback_status": "FAILED",
-    "canonical_fact_persisted": false,
-    "recorded_at_beijing": "2026-11-11T18:25:01+08:00"
-  },
-  "account_fact_updated_at": "2026-11-10T15:00:00+08:00",
-  "failure_class": "PROJECTION_INCOMPLETE",
-  "projection_status": "ACCOUNT_FACT_UPDATED_REQUIRES_REBUILD",
-  "reconciliation_stale": true,
-  "reconciliation_stale_reason": "account_fact changed; projection rebuild or same-fact Dashboard readback was not confirmed",
-  "projection_required": [
-    "strategy_equity",
-    "risk",
-    "lifecycle",
-    "dashboard",
-    "reconciliation"
-  ],
-  "last_non_account_maintenance": {
-    "request_id": "scheduled-formal-decision-20261111T155028+0800-a84f6e21",
-    "request_path": "requests/live_snapshot/scheduled-formal-decision-20261111T155028+0800-a84f6e21__scheduled_review_completion.json",
-    "owner": "scripts/process_state_sync_request.py",
-    "workflow_run_id": "42982614765",
-    "status": "NOT_APPLICABLE",
-    "failure_class": "NO_ACCOUNT_SYNC_REQUEST",
-    "recorded_at_beijing": "2026-11-11T15:53:08+08:00"
   }
 }
