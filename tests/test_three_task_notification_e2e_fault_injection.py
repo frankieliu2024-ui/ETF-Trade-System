@@ -30,8 +30,9 @@ class ThreeTaskNotificationE2EFaultInjectionTests(unittest.TestCase):
         completion_contract = (ROOT / "scripts/formal_entry_contract.py").read_text(encoding="utf-8")
         self.assertIn("SCHEDULED_REVIEW_COMPLETION", completion_contract)
         self.assertIn("CHATGPT_DIRECT_GITHUB_CONTENTS_WRITER", completion_contract)
-        for task in self.TASKS:
-            self.assertIn(task, completion_contract)
+        # The shared formal-entry contract is intentionally scoped to Formal Decision;
+        # system review and trade review have their own task contracts.
+        self.assertIn("ETF正式决策", completion_contract)
 
     def test_fault_matrix_is_fail_closed_before_notification(self):
         recovery = (ROOT / "scripts/scheduled_review_completion_recovery.py").read_text(encoding="utf-8")
