@@ -304,7 +304,7 @@ jobs:
                       str(request.get("report_type") or ((request.get("presentation_binding") or {}).get("report_type") or "")).upper()
                       == "ETF_FORMAL_DECISION"
                   )
-                  and str(request.get("task_id") or "").strip() == "ETF正式决策"
+                  and bool(str(request.get("task_id") or "").strip())
               )
           )
           raise SystemExit(0 if is_formal_decision_completion else 1)
@@ -351,9 +351,9 @@ jobs:
           }
           if str(request.get("source") or "").strip() in formal_sources:
               task_id = str(request.get("task_id") or "").strip()
-              if task_id != "ETF正式决策":
+              if not task_id:
                   raise SystemExit(
-                      "OWNER_REJECTED: Formal Decision task_id must be exactly ETF正式决策; "
+                      "OWNER_REJECTED: Formal Decision task_id must be present; "
                       f"got {task_id or '<missing>'}"
                   )
           PY
@@ -991,7 +991,7 @@ jobs:
                   str(request.get("report_type") or ((request.get("presentation_binding") or {}).get("report_type") or "")).upper()
                   == "ETF_FORMAL_DECISION"
               )
-              and str(request.get("task_id") or "").strip() == "ETF正式决策"
+              and bool(str(request.get("task_id") or "").strip())
           ):
               raise SystemExit(0)
           raise SystemExit(1)
@@ -1030,7 +1030,7 @@ jobs:
               str(request.get("report_type") or ((request.get("presentation_binding") or {}).get("report_type") or "")).upper()
               == "ETF_FORMAL_DECISION"
           )
-                  and str(request.get("task_id") or "").strip() == "ETF正式决策"
+                  and bool(str(request.get("task_id") or "").strip())
               )
           )
           print("true" if is_formal_decision_completion else "false")
