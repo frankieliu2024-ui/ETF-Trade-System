@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-11-11T08:57:40+08:00",
+  "updated_at": "2026-11-11T09:02:07+08:00",
   "last_status": "SENT",
-  "last_type": "MARKET_VALUE_ALERT",
-  "last_title": "【市场异动】半导体ETF代理（SOXX）出现极端波动 +1.58%",
+  "last_type": "APAC_OPEN_SIGNAL",
+  "last_title": "【市场异动】台湾加权指数（TWII）实际开盘出现异常跳空",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -56369,27 +56369,67 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-11-11T08:57:40+08:00"
-    }
-  ],
-  "recent": [
+    },
     {
-      "key": "market-value:asia:2026-11-05:TWII:DOWN:EXTREME:2026-11-05T12:14:00+08:00",
-      "type": "MARKET_VALUE_ALERT",
-      "title": "【市场异动】台湾加权指数（TWII）出现极端波动 -2.61%",
-      "content": "### 核心结论\n- **较上一同类通知**：-1.85% → -2.61%，变化0.77个百分点。\n- **事件类型**：极端波动\n- **对象/结构**：台湾加权指数（TWII）\n- **较前收**：-2.61%\n\n**判断**：当前幅度已进入通知层的非常规区间，可能实质改变风险偏好、风险收益或资本比较。\n\n### 对ETF系统的影响\n台湾加权指数（TWII）属于海外/区域结构证据。先看A股本地价格是否接受、减弱或背离，再复核相关持仓/观察ETF的自身反馈、当前主候选和边际资本效率；若海外与A股背离，以A股自身反馈为主。\n\n### 当前动作\n**把该信号纳入最近A股正式节点复核，不因单一海外/区域对象机械调整A股仓位。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-11-05 12:14:00\n- **边界**：市场归属只用于数据时点和传导解释，不决定通知资格。门槛已适度放宽；同一事实依靠去重和升级识别控制重复。",
-      "source": "data/state/overseas_context.json",
+      "notification_id": "notification_274012533b7df5cd189f",
+      "event_type": "APAC_OPEN_SIGNAL",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "apac-open-signal:2026-11-11:TWII:UP",
+      "request_id": "",
+      "parent_request_id": "",
+      "report_id": "",
+      "content_hash": "",
+      "related_decision_id": "",
+      "security_code": "TWII",
+      "security_name": "台湾加权指数",
       "user_severity": "需要关注",
-      "user_action": "纳入最近A股决策节点重新验证，不机械交易",
-      "status": "SENT",
-      "attempted_at": "2026-11-05T12:16:38+08:00",
+      "user_action": "纳入最近A股节点，检查本地传导和直接相关ETF自身反馈，不机械交易",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-11-11T09:02:06+08:00",
+      "sent_at": "2026-11-11T09:02:07+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-11-13T09:02:06+08:00",
+      "title": "【市场异动】台湾加权指数（TWII）实际开盘出现异常跳空",
+      "content": "### 核心结论\n- **节点**：亚太错位开盘异常\n- **触发对象**：台湾加权指数（TWII）\n- **实际开盘较前收**：+0.99%\n- **当前较前收**：+0.99%\n- **区域结构**：区域普遍偏强\n- **数据质量**：覆盖3/4；触发判断使用PASS对象3/4；当前未发现需单列的数据质量降级。\n\n### 关键路径\n- **触发对象**：高开+0.99%后当前+0.99%，高开后仍保持偏强，开盘优势尚在。\n- **区域对照**：其他市场对照：韩国综合指数（KOSPI）+0.70%、日经225指数（N225）+0.67%。\n\n### 对ETF系统的影响\n外部结构：台湾加权指数（TWII）的实际开盘异常仍需结合当前+0.99%和区域判断“区域普遍偏强”继续验证是否延续。\n\n本地传导：A股同步反馈为A股当日同步数据不可用；外部信号只有被A股自身价格结构接受，才可能改变当前ETF判断。\n\nETF自身反馈：当前没有需要机械绑定的直接监测ETF，区域指数变化只进入跨市场证据层。\n\n机会判断：本通知不生成Trial/Confirm或卖出动作；只有外部结构、本地传导和ETF自身反馈共同改变正式判断时，才进入交易链。\n\n### 当前动作\n**把该事件纳入最近A股正式节点复核；不因单一海外/区域指数跳空机械买卖，重点看A股是否接受以及直接相关ETF自身反馈。**\n\n### 数据与边界\n- **触发对象行情时点（北京时间）**：2026-11-11 09:00:05\n- **亚太对象最新有效时点上限**：2026-11-11 09:01:09\n- **A股同步参考时点**：未提供\n- **通知生成**：2026-11-11 09:02:06\n- **边界**：约0.8%的门槛只检查实际开盘价相对前收；开盘后的累计涨跌不回填成开盘异常。覆盖数量与数据质量分开表达，DEGRADED/延迟对象不得被包装成全部实时FRESH。",
+      "source": "overseas_context+CURRENT",
+      "confirmation_context": {
+        "market": "ASIA",
+        "market_date": "2026-11-11",
+        "direction": "UP",
+        "event_category": "APAC_OPEN_SIGNAL",
+        "fact_family": "APAC_OBJECT_DIRECTIONAL_SESSION",
+        "object_codes": [
+          "N225",
+          "KOSPI",
+          "TWII"
+        ],
+        "source_fact_ids": [
+          "2026-11-11:N225:2026-11-11T09:00:55+08:00",
+          "2026-11-11:KOSPI:2026-11-11T09:01:09+08:00",
+          "2026-11-11:TWII:2026-11-11T09:00:05+08:00"
+        ],
+        "session_node": "OPEN_SIGNAL",
+        "lead_code": "TWII",
+        "lead_open_gap_pct": 0.9923225179294226,
+        "lead_change_pct": 0.9923225179294226,
+        "tone": "区域普遍偏强",
+        "market_as_of_beijing": "2026-11-11T09:00:05+08:00",
+        "a_share_as_of_beijing": "",
+        "continuous_state_transition": "INITIAL",
+        "continuous_state_contract": "OBJECT_LEVEL_PREVIOUS_CURRENT_TRANSITION",
+        "event_family_id": "ASIA:2026-11-11:OPEN_SIGNAL:TWII:APAC_OPEN_SIGNAL:UP:"
+      },
       "response": {
         "http_status": 200,
         "pushplus_code": 200,
         "pushplus_message": "执行成功"
       },
-      "notification_id": "notification_357d0523ab3929a60374",
-      "lifecycle_status": "SENT"
-    },
+      "last_attempted_at": "2026-11-11T09:02:07+08:00"
+    }
+  ],
+  "recent": [
     {
       "key": "market-value:asia:2026-11-05:N225:DOWN:EXTREME:2026-11-05T12:27:42+08:00",
       "type": "MARKET_VALUE_ALERT",
@@ -59970,6 +60010,24 @@
         "pushplus_message": "执行成功"
       },
       "notification_id": "notification_5ae5294cd4b4226ce197",
+      "lifecycle_status": "SENT"
+    },
+    {
+      "key": "apac-open-signal:2026-11-11:TWII:UP",
+      "type": "APAC_OPEN_SIGNAL",
+      "title": "【市场异动】台湾加权指数（TWII）实际开盘出现异常跳空",
+      "content": "### 核心结论\n- **节点**：亚太错位开盘异常\n- **触发对象**：台湾加权指数（TWII）\n- **实际开盘较前收**：+0.99%\n- **当前较前收**：+0.99%\n- **区域结构**：区域普遍偏强\n- **数据质量**：覆盖3/4；触发判断使用PASS对象3/4；当前未发现需单列的数据质量降级。\n\n### 关键路径\n- **触发对象**：高开+0.99%后当前+0.99%，高开后仍保持偏强，开盘优势尚在。\n- **区域对照**：其他市场对照：韩国综合指数（KOSPI）+0.70%、日经225指数（N225）+0.67%。\n\n### 对ETF系统的影响\n外部结构：台湾加权指数（TWII）的实际开盘异常仍需结合当前+0.99%和区域判断“区域普遍偏强”继续验证是否延续。\n\n本地传导：A股同步反馈为A股当日同步数据不可用；外部信号只有被A股自身价格结构接受，才可能改变当前ETF判断。\n\nETF自身反馈：当前没有需要机械绑定的直接监测ETF，区域指数变化只进入跨市场证据层。\n\n机会判断：本通知不生成Trial/Confirm或卖出动作；只有外部结构、本地传导和ETF自身反馈共同改变正式判断时，才进入交易链。\n\n### 当前动作\n**把该事件纳入最近A股正式节点复核；不因单一海外/区域指数跳空机械买卖，重点看A股是否接受以及直接相关ETF自身反馈。**\n\n### 数据与边界\n- **触发对象行情时点（北京时间）**：2026-11-11 09:00:05\n- **亚太对象最新有效时点上限**：2026-11-11 09:01:09\n- **A股同步参考时点**：未提供\n- **通知生成**：2026-11-11 09:02:06\n- **边界**：约0.8%的门槛只检查实际开盘价相对前收；开盘后的累计涨跌不回填成开盘异常。覆盖数量与数据质量分开表达，DEGRADED/延迟对象不得被包装成全部实时FRESH。",
+      "source": "overseas_context+CURRENT",
+      "user_severity": "需要关注",
+      "user_action": "纳入最近A股节点，检查本地传导和直接相关ETF自身反馈，不机械交易",
+      "status": "SENT",
+      "attempted_at": "2026-11-11T09:02:07+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_274012533b7df5cd189f",
       "lifecycle_status": "SENT"
     }
   ],
