@@ -100,6 +100,7 @@ def _normalize_us_phase_freshness(report: dict) -> None:
     match = re.search(r"failures=\[(.*?)\]\s+limit=(\d+)", detail)
     age_only = False
     reference_only = False
+    proxy_stale_only = False
     if match:
         limit = int(match.group(2))
         entries = re.findall(r"[^,\[]+?:[^,\[]+?:age=(\d+):freshness=([A-Z_]+)", match.group(1))
@@ -108,9 +109,10 @@ def _normalize_us_phase_freshness(report: dict) -> None:
         # QQQ/SOXX may legitimately remain a previous-session reference.
         # This is an observability degradation, not a canonical-fact conflict.
         reference_only = bool(entries) and all(freshness == "PREVIOUS_SESSION_REFERENCE" for _, freshness in entries)
-    if "max_age_seconds" in detail or age_only or reference_only:
+        proxy_stale_only = bool(entries) and all(freshness == "STALE" for _, freshness in entries) and all("_EXTENDED_HOURS_PROXY:" in entry for entry in match.group(1).split(", "))
+    if "max_age_seconds" in detail or age_only or reference_only or proxy_stale_only:
         target["status"] = "WARNING"
-        reason = "previous_session_reference" if reference_only else "stale_observation"
+        reason = "previous_session_reference" if reference_only else ("proxy_stale_observation" if proxy_stale_only else "stale_observation")
         target["detail"] = f"observability_{reason} {detail} canonical_facts_unaffected"
         _remove_error(report, "us_extended:live_freshness:")
         warning = f"us_extended:live_freshness: {reason}"
