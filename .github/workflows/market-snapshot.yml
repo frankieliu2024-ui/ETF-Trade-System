@@ -1057,6 +1057,13 @@ jobs:
           PY
             )
           fi
+          # Formal Decision completions are canonical Scheduled Review handoffs even
+          # when an upstream ChatGPT writer omitted the transport-only request_type.
+          # The report_type/task_id identity was already validated above; use it to
+          # preserve the single explicit notification dispatch path.
+          if [ "$scheduled_review_completion" != "true" ] && [ "$formal_completion" = "true" ]; then
+            scheduled_review_completion=true
+          fi
           echo "SCHEDULED_REVIEW_COMPLETION=$scheduled_review_completion" >> "$GITHUB_ENV"
           # A completion push is the canonical handoff. Dispatch the existing
           # notification workflow once with the exact completion path so the
