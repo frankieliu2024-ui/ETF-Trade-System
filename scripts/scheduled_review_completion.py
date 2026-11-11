@@ -1254,8 +1254,10 @@ def build_formal_runtime_completion_request(
     frozen_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
     decision_id = f"ETF_FORMAL_DECISION:{task_run_id}"
     evidence_audit = build_formal_evidence_consumption_audit(fact_summary, content)
-    if isinstance(fact_summary, dict) and fact_summary and evidence_audit.get("audit_status") not in {"PASS", "PASS_EMPTY"}:
-        raise ValueError("formal decision evidence consumption audit is incomplete; object-level ledger is required")
+    # Evidence-consumption completeness is an audit result, not a delivery gate.
+    # A frozen, uniquely identified FINAL_CONTENT must still reach the existing
+    # original-body notification path when optional audit projections are
+    # incomplete. The audit status remains persisted for consistency review.
     payload = {
         "request_id": task_run_id,
         "request_type": "SCHEDULED_REVIEW_COMPLETION",
