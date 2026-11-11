@@ -949,7 +949,9 @@ jobs:
               and str(payload.get("decision_path") or "").strip().upper() == "FORMAL"
               and str(payload.get("interaction_scenario") or "").strip().upper() == "FORMAL_DECISION"
           )
-          if report_type != "ETF_FORMAL_DECISION" and not legacy_formal:
+          if legacy_formal:
+              raise SystemExit("legacy Formal Decision projection is audit-only and cannot enter the production event path")
+          if report_type != "ETF_FORMAL_DECISION":
               raise SystemExit("Formal Decision completion identity mismatch")
           if legacy_formal and not report_type:
               # Historical scheduled-task completions may omit report_type.
@@ -1172,7 +1174,9 @@ jobs:
               and str(payload.get("decision_path") or "").strip().upper() == "FORMAL"
               and str(payload.get("interaction_scenario") or "").strip().upper() == "FORMAL_DECISION"
           )
-          if report_type == "ETF_FORMAL_DECISION" or legacy_formal:
+          if legacy_formal:
+              raise SystemExit("legacy Formal Decision recovery projection is audit-only and cannot enter the production event path")
+          if report_type == "ETF_FORMAL_DECISION":
               if not report_type:
                   payload["report_type"] = "ETF_FORMAL_DECISION"
                   binding = dict(binding)
