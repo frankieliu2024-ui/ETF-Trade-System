@@ -130,7 +130,7 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
 
     def test_formal_prompt_uses_simplified_handoff_contract(self):
         prompt = (ROOT / "docs/freezes/bundles/ETF_THREE_TASKS_FREEZE_20261020T1817/prompts/正式决策.txt").read_text(encoding="utf-8")
-        self.assertIn("优先等待既有completion push通知链", prompt)
+        self.assertIn("不得把completion push当作正式决策主动通知的必要前置条件", prompt)
         self.assertIn("content_hash", prompt)
         self.assertNotIn("正文交接恢复合同", prompt)
         self.assertNotIn("运行中的FINAL_CONTENT原文", prompt)
@@ -249,6 +249,8 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
             "parent_request_id": "formal-request-0903",
             "decision_id": "ETF_FORMAL_DECISION:formal-run-0903",
             "task_id": "ETF正式决策",
+            "formal_fact_type": "FORMAL_CURRENT_MAIN_DECISION",
+            "interaction_scenario": "FORMAL_DECISION",
             "task_run_id": "formal-run-0903",
             "occurrence_id": "formal-run-0903",
             "requested_at_beijing": "2026-10-30T09:03:00+08:00",
