@@ -5,7 +5,7 @@
 
 > 账户事实更新时间：2026-11-11T21:36:47+08:00  
 > 账户事实来源：BROKER_ACCOUNT_HOLDINGS_TRADE_SCREENSHOTS_20261111_2136_USER_CONFIRMED_CORRECTION  
-> ETF策略风险as-of：2026-11-10  
+> ETF策略风险as-of：2026-11-12  
 > ETF策略风险来源：data/state/etf_strategy_equity.json::summary.current_strategy_return_pct_gross  
 > 场景：账户事实维护  
 > 账户事实与ETF策略风险使用各自canonical provenance；本区块不推导交易权限或下单。
@@ -20,7 +20,7 @@
 |账户持仓盈亏|-1,034.80元|
 |当日盈亏|394.00元（+0.23%）|
 |账户总风险暴露率|约50.41%|
-|ETF策略风险率|约-13.6029%（Gross；as-of 2026-11-10）|
+|ETF策略风险率|约-13.2804%（Gross；as-of 2026-11-12）|
 |累计已知ETF费用（有效事实）|237.23元；已执行成交overlay 0.00元；待确认费用状态：存在|
 |账户事实内已确认费用记录合计|0.00元（仅统计account_fact中明确标记CONFIRMED的记录；不代表历史累计ETF费用）|
 
@@ -71,9 +71,7 @@
 |全指器械（159056）|Trial|逾期|2026-10-26|T+12|
 |科创芯片ETF嘉实（588200）|Trial|有效|2026-11-10|T+1|
 
-当前持仓的事实数量以上方‘当前持仓事实’为准；未被生命周期投影单独列出的持仓，不得据此推断为Trial或Confirm。
-
-<!-- AUTO_STATE_SYNC_END -->
+当前持仓的事实数量以上方‘当前持仓事实’为准；未被生命周期投影单独列出的持仓，不得据此推断为Trial或Confirm。\n\n<!-- AUTO_STATE_SYNC_END -->
 
 <!-- AUTO_TRADE_FACT_CORRECTIONS_START -->
 <!-- AUTO_TRADE_FACT_CORRECTIONS_END -->
