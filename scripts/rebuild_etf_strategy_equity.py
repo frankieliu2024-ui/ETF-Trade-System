@@ -87,6 +87,26 @@ def _load_prices(root: Path, price_dir: Path | None = None):
                 close = row.get("close")
                 if close is not None:
                     prices[market_date][code] = _f(close, f"{market_date}/{code}/close")
+    # A newly held object may first appear in the monitored universe after its
+    # trade date.  When the next eligible daily feature explicitly carries its
+    # previous close, that field is a date-aligned EOD-equivalent fact for the
+    # missing prior date.  Use it only for a missing object/date pair and never
+    # replace an observed close or infer a value from a trade price.
+    feature_docs = []
+    for path in sorted(directory.glob("*.json")):
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if str(payload.get("quality_status") or "PASS").upper() != "PASS":
+            continue
+        feature_docs.append((str(payload.get("market_date") or path.stem), payload))
+    for index, (market_date, payload) in enumerate(feature_docs):
+        if index == 0:
+            continue
+        prior_date = feature_docs[index - 1][0]
+        for row in payload.get("features") or []:
+            code = str(row.get("code") or "").strip()
+            previous_close = row.get("prev_close")
+            if code and code not in prices[prior_date] and previous_close is not None:
+                prices[prior_date][code] = _f(previous_close, f"{prior_date}/{code}/prev_close")
     return prices
 
 
