@@ -138,8 +138,15 @@ def validate_formal_entry_identity(payload: dict) -> tuple[bool, str]:
     missing = [name for name in required if not str(payload.get(name) or "").strip()]
     if missing:
         return False, "missing:" + ",".join(missing)
-    if str(payload.get("task_id") or "").strip() != CANONICAL_TASK_ID:
-        return False, "task_id_must_be_ETF正式决策"
+    task_id = str(payload.get("task_id") or "").strip()
+    # Scheduled-task runtimes may bind the platform automation UUID as task_id;
+    # the display name remains the canonical semantic identity. Accept only the
+    # canonical display name or a UUID-shaped bound runtime identity.
+    if task_id != CANONICAL_TASK_ID and not re.fullmatch(
+        r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
+        task_id,
+    ):
+        return False, "task_id_must_be_ETF正式决策_or_bound_uuid"
     source = str(payload.get("trigger_source") or payload.get("source") or "").strip().upper()
     expected = {
         ENTRY_MANUAL_CONVERSATION: "CHATGPT_MANUAL_FORMAL_ANALYSIS",
