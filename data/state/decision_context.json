@@ -7,12 +7,12 @@
     "snapshot_commit": "779bf7b81ff7f2111b6980eb23e887f4c98c64cc",
     "boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
     "timing": {
-      "state_builder_started_at": "2026-11-11T11:07:44Z",
+      "state_builder_started_at": "2026-11-11T11:12:54Z",
       "current_published_at": "2026-11-11T19:06:26+08:00",
-      "market_regime_ready_at": "2026-11-11T11:07:50Z",
-      "market_structure_ready_at": "2026-11-11T11:07:50Z",
-      "full_state_context_observation_at": "2026-11-11T11:07:51Z",
-      "decision_context_written_at": "2026-11-11T11:07:59Z"
+      "market_regime_ready_at": "2026-11-11T11:13:02Z",
+      "market_structure_ready_at": "2026-11-11T11:13:03Z",
+      "full_state_context_observation_at": "2026-11-11T11:13:04Z",
+      "decision_context_written_at": "2026-11-11T11:13:15Z"
     },
     "trigger": {
       "request_id": "",
@@ -22,10 +22,10 @@
       "source": "",
       "entry_mode": "",
       "requested_at_beijing": "",
-      "market_date": ""
+      "market_date": "2026-11-11"
     }
   },
-  "generated_at": "2026-11-11T11:07:51Z",
+  "generated_at": "2026-11-11T11:13:05Z",
   "rules_version": "V2.2.34",
   "market_date": "2026-11-11",
   "latest_node": "close",
@@ -1792,7 +1792,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 27.777,
-    "age_seconds": 85
+    "age_seconds": 399
   },
   "freshness_at_context_build": {
     "status": "FRESH",
@@ -1809,7 +1809,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 27.777,
-    "age_seconds": 85
+    "age_seconds": 399
   },
   "data_quality_summary": {
     "pass_count": 20,
@@ -1910,7 +1910,7 @@
     "account_fact_time": "2026-11-10T15:00:00+08:00",
     "market_snapshot_time": "2026-11-11T19:06:26+08:00",
     "market_phase": "OUTSIDE_SESSION",
-    "context_generated_time": "2026-11-11T11:07:51Z",
+    "context_generated_time": "2026-11-11T11:13:05Z",
     "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
     "read_only": true
   },
@@ -1950,7 +1950,7 @@
     "read_only": true
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-11-11T19:07:51+08:00",
+    "generated_at_beijing": "2026-11-11T19:13:05+08:00",
     "refresh_mode": "CACHED_STATE",
     "refresh_failures": [],
     "decision_freshness": {
@@ -1959,8 +1959,8 @@
       "captured_at": "2026-11-11T11:06:26+00:00",
       "provider_as_of": "2026-11-11T11:06:26+00:00",
       "effective_as_of": "2026-11-11T11:06:26+00:00",
-      "request_time": "2026-11-11T11:07:51.781792+00:00",
-      "age_seconds": 85,
+      "request_time": "2026-11-11T11:13:05.086573+00:00",
+      "age_seconds": 399,
       "post_request": false,
       "preferred_max_age_seconds": 300,
       "fallback_max_age_seconds": 900,
@@ -2537,8 +2537,8 @@
         "market_status_cn": "美股盘前",
         "data_nature_cn": "盘前行情（附最近正式收盘基准）",
         "source": "yahoo_chart_api",
-        "freshness": "FRESH",
-        "freshness_cn": "时点正常",
+        "freshness": "DEGRADED",
+        "freshness_cn": "存在延迟",
         "quality_status": "FRESH",
         "quality_status_cn": "状态待确认",
         "direct_quote": false,
@@ -2981,7 +2981,7 @@
   },
   "decision_trigger": {
     "schema_version": "1.2",
-    "generated_at": "2026-11-11T19:07:50+08:00",
+    "generated_at": "2026-11-11T19:13:03+08:00",
     "status": "NO_NEW_TRIGGER",
     "trigger_type": "",
     "triggered_at": "",
@@ -2989,7 +2989,7 @@
     "previous_decision_id": "20260921_130350_manual_intraday_decision",
     "evidence_change": "",
     "evidence_time": "2026-11-11T19:06:26+08:00",
-    "e2e_status": "DEGRADED",
+    "e2e_status": "BLOCKED",
     "requires_formal_reassessment": false,
     "pending_trigger": false,
     "idempotency_key": "",
@@ -3006,14 +3006,14 @@
     "source": "",
     "entry_mode": "",
     "requested_at_beijing": "",
-    "market_date": "",
+    "market_date": "2026-11-11",
     "request_bound": false
   },
   "capital_efficiency_ranking": {
     "schema_version": "1.2",
-    "generated_at": "2026-11-11T19:07:50+08:00",
+    "generated_at": "2026-11-11T19:13:03+08:00",
     "as_of": "2026-11-11T19:06:26+08:00",
-    "e2e_status": "DEGRADED",
+    "e2e_status": "BLOCKED",
     "risk_zone": "RISK_CONTROL",
     "risk_zone_semantics": "REVIEW_CONTEXT_ONLY_NOT_TRADING_PERMISSION",
     "enhanced_risk_review_required": true,
@@ -3033,7 +3033,9 @@
         "eligibility": "COMPARISON_AVAILABLE",
         "data_availability": "READY",
         "reason": "等待价值与风险缓冲属于合法资本用途；是否优于其他用途由MASTER完整判断决定。",
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3058,7 +3060,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3083,7 +3087,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3108,7 +3114,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3133,7 +3141,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3158,7 +3168,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3183,7 +3195,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3208,7 +3222,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3233,7 +3249,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3258,7 +3276,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3283,7 +3303,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3308,7 +3330,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3333,7 +3357,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3358,7 +3384,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3383,7 +3411,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3408,7 +3438,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3433,7 +3465,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3458,7 +3492,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3475,7 +3511,9 @@
         "quantity": 200,
         "market_value": 11170,
         "releasable_capital_role": "CURRENT_CAPITAL_CAN_BE_EVALUATED_FOR_RELEASE",
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3492,7 +3530,9 @@
         "quantity": 300,
         "market_value": 8454,
         "releasable_capital_role": "CURRENT_CAPITAL_CAN_BE_EVALUATED_FOR_RELEASE",
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3508,7 +3548,9 @@
         "eligibility": "COMPARISON_AVAILABLE",
         "data_availability": "READY",
         "reason": "等待价值与风险缓冲属于合法资本用途；是否优于其他用途由MASTER完整判断决定。",
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3533,7 +3575,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3558,7 +3602,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3583,7 +3629,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3608,7 +3656,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3633,7 +3683,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3658,7 +3710,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3683,7 +3737,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3708,7 +3764,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3733,7 +3791,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3758,7 +3818,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3783,7 +3845,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3808,7 +3872,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3833,7 +3899,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3858,7 +3926,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3883,7 +3953,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3908,7 +3980,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3933,7 +4007,9 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3950,7 +4026,9 @@
         "quantity": 200,
         "market_value": 11170,
         "releasable_capital_role": "CURRENT_CAPITAL_CAN_BE_EVALUATED_FOR_RELEASE",
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3967,7 +4045,9 @@
         "quantity": 300,
         "market_value": 8454,
         "releasable_capital_role": "CURRENT_CAPITAL_CAN_BE_EVALUATED_FOR_RELEASE",
-        "execution_constraints": [],
+        "execution_constraints": [
+          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+        ],
         "risk_review_context": [
           "MASTER_MINUS_8_RISK_REVIEW_BOUNDARY",
           "MASTER_MINUS_10_ENHANCED_REVIEW_BOUNDARY"
@@ -3976,7 +4056,9 @@
       }
     ],
     "excluded_candidates": [],
-    "execution_constraints": [],
+    "execution_constraints": [
+      "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
+    ],
     "key_reason": "机器层已枚举完整资本比较全集；候选选择、风险许可、金额和份额仍由MASTER正式判断。数据或执行限制只标记可用范围，不把分析状态改写为未准备好。",
     "previous_top_candidate": null,
     "order_semantics": "LEGAL_CAPITAL_UNIVERSE_ONLY_NOT_RANKING",
@@ -3989,7 +4071,7 @@
     "observation_eligibility_inputs": []
   },
   "intraday_path_features": {
-    "generated_at": "2026-11-11T11:07:44Z",
+    "generated_at": "2026-11-11T11:12:54Z",
     "market_date": "2026-11-11",
     "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
     "read_only": true,
@@ -6016,7 +6098,7 @@
     },
     "market_structure_context": {
       "schema_version": "1.4",
-      "generated_at": "2026-11-11T11:07:50Z",
+      "generated_at": "2026-11-11T11:13:03Z",
       "market_date": "2026-11-11",
       "as_of_beijing": "2026-11-11T19:06:26+08:00",
       "source_snapshot": "data/market/snapshots/2026-11-11_190626.json",
