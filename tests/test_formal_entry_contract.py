@@ -36,7 +36,16 @@ class FormalEntryContractTests(unittest.TestCase):
             "manual",
         )
         payload["task_id"] = "CHATGPT_MANUAL_FORMAL_ANALYSIS_20261016T205101_MANUAL_FORMAL"
-        self.assertEqual(validate_formal_entry_identity(payload), (False, "task_id_must_be_ETF正式决策"))
+        self.assertEqual(validate_formal_entry_identity(payload), (False, "task_id_must_be_ETF正式决策_or_bound_uuid"))
+
+    def test_bound_automation_uuid_is_accepted(self):
+        payload = self.base(
+            ENTRY_AUTOMATIC_SCHEDULED_TASK,
+            "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
+            "scheduled_20261013_1430",
+        )
+        payload["task_id"] = "6adb5dbc-116c-8191-85f9-c6ab45630baa"
+        self.assertEqual(validate_formal_entry_identity(payload), (True, ""))
 
     def test_manual_task_cannot_impersonate_automatic_occurrence(self):
         payload = self.base(
