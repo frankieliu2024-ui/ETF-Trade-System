@@ -806,6 +806,12 @@ def main() -> int:
         warning=True,
     )
     check(
+        "formal_layers:opportunity_same_discovery_batch",
+        bool(discovery_generation) and discovery_generation == opportunity_source_generation,
+        f"discovery_generation={discovery_generation} opportunity_source_generation={opportunity_source_generation}",
+        warning=True,
+    )
+    check(
         "formal_layers:review_context_aligned",
         str(review_discovery.get("latest_snapshot") or discovery_snapshot) == discovery_snapshot
         and str(review_opportunity.get("source_discovery_latest_snapshot") or opportunity_snapshot) == opportunity_snapshot
