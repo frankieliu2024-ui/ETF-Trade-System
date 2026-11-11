@@ -99,15 +99,21 @@ def _normalize_us_phase_freshness(report: dict) -> None:
     # Scheduled-pulse cache age is observability only; decision-time PIT stays fail-closed.
     match = re.search(r"failures=\[(.*?)\]\s+limit=(\d+)", detail)
     age_only = False
+    reference_only = False
     if match:
         limit = int(match.group(2))
         entries = re.findall(r"[^,\[]+?:[^,\[]+?:age=(\d+):freshness=([A-Z_]+)", match.group(1))
         age_only = bool(entries) and all(int(age) > limit and freshness == "FRESH" for age, freshness in entries)
-    if "max_age_seconds" in detail or age_only:
+        # Before a provider has produced the current extended-hours quote,
+        # QQQ/SOXX may legitimately remain a previous-session reference.
+        # This is an observability degradation, not a canonical-fact conflict.
+        reference_only = bool(entries) and all(freshness == "PREVIOUS_SESSION_REFERENCE" for _, freshness in entries)
+    if "max_age_seconds" in detail or age_only or reference_only:
         target["status"] = "WARNING"
-        target["detail"] = f"observability_stale {detail} canonical_facts_unaffected"
+        reason = "previous_session_reference" if reference_only else "stale_observation"
+        target["detail"] = f"observability_{reason} {detail} canonical_facts_unaffected"
         _remove_error(report, "us_extended:live_freshness:")
-        warning = "us_extended:live_freshness: derived observation stale"
+        warning = f"us_extended:live_freshness: {reason}"
         if warning not in report.setdefault("warnings", []):
             report["warnings"].append(warning)
         _recount(report)
