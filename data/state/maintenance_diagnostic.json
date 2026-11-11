@@ -1,14 +1,14 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-11-11T19:51:30+08:00",
+  "generated_at": "2026-11-11T22:51:27+08:00",
   "classification": "MAINTENANCE_GUARD_FAILURE",
   "requires_codex_or_manual_review": true,
-  "head_sha": "198d74b6faa63f4da7dff65124d53f17b66471f3",
+  "head_sha": "30fa64d87baf64f35fc652ceb90671972b52e3c0",
   "system_consistency": {
     "status": "FAIL",
-    "hard_error_count": 2,
+    "hard_error_count": 9,
     "warning_count": 3,
-    "run_id": "43014682753"
+    "run_id": "43042151767"
   },
   "self_healing": {
     "classification": "CONSISTENCY_REGRESSION",
@@ -21,16 +21,16 @@
     "captured_at": "2026-11-11T19:27:33+08:00"
   },
   "reconciliation": {
-    "status": "PASS",
-    "trade_count": 47,
+    "status": "FAIL",
+    "trade_count": 48,
     "trade_count_matches_summary": true,
-    "declared_trade_count": 47,
+    "declared_trade_count": 48,
     "fact_enrichment_only_count": 0,
     "trade_count_migration": null,
     "executed_trade_event_overlay_count": 0,
     "position_ledger_basis": "CANONICAL_EXECUTED_TRADE_FACTS_CURRENT_POSITION_IDENTITY_WITH_PRIOR_EOD_EQUITY",
     "position_reconciliation": {
-      "status": "PASS",
+      "status": "FAIL",
       "checks": [
         {
           "code": "159056",
@@ -139,6 +139,13 @@
         },
         {
           "code": "588370",
+          "ledger_quantity": 1400.0,
+          "account_quantity": 0.0,
+          "difference": -1400.0,
+          "status": "FAIL"
+        },
+        {
+          "code": "588450",
           "ledger_quantity": 1400.0,
           "account_quantity": 1400.0,
           "difference": 0.0,
