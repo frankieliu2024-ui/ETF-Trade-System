@@ -290,7 +290,8 @@ def recover_canonical_etf_trade_facts(root: Path, reconstructed_trades: list[dic
     allowed only when an existing persisted summary declares a larger expected
     count. Experience §2.1 may fill that exact deficit; event facts are then
     overlaid/deduplicated. A legacy declared count may contract only by the
-    exact number of proven FACT_ENRICHMENT_ONLY adoption-time shadows.
+    exact number of proven FACT_ENRICHMENT_ONLY adoption-time shadows or
+    superseded reconstructed rows retired by a confirmed correction event.
     """
     current = canonical_etf_trade_facts(root, reconstructed_trades)
     if expected_count <= 0 or len(current) >= expected_count:
@@ -303,9 +304,26 @@ def recover_canonical_etf_trade_facts(root: Path, reconstructed_trades: list[dic
     shadow_count = len({trade_signature(t) for t in seed if trade_signature(t) in adoption_shadows})
     if shadow_count and len(recovered) + shadow_count == expected_count:
         return recovered
+    superseded_cores = set()
+    events_dir = root / "events" / "trades"
+    if events_dir.exists():
+        for event_path in events_dir.glob("*.json"):
+            event = read_json(event_path, {}) or {}
+            if str(event.get("execution_status") or "").upper() == "SUPERSEDED":
+                core = _economic_trade_core(event)
+                if core[0]:
+                    superseded_cores.add(core)
+    superseded_reconstructed_count = len({
+        trade_signature(trade)
+        for trade in reconstructed_trades
+        if _economic_trade_core(trade) in superseded_cores
+    })
+    if superseded_reconstructed_count and len(recovered) + superseded_reconstructed_count == expected_count:
+        return recovered
     raise ValueError(
         f"formal ETF trade reconstruction deficit: expected {expected_count}, "
-        f"recovered {len(recovered)}, adoption_shadows={shadow_count}"
+        f"recovered {len(recovered)}, adoption_shadows={shadow_count}, "
+        f"superseded_reconstructed={superseded_reconstructed_count}"
     )
 
 
