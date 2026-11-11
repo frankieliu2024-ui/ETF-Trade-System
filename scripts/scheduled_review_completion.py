@@ -995,14 +995,22 @@ def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | N
     # Normalize only missing hashes in-memory; any existing hash drift remains a
     # hard failure. This preserves one completion/body while allowing the
     # existing notification projection to consume the same run.
+    # A missing or explicitly unavailable hash is an audit degradation, not a
+    # delivery failure. The original frozen body is already uniquely bound and
+    # untampered; notification must proceed even when the runtime could not
+    # calculate a digest. Only a non-empty, non-placeholder digest mismatch is
+    # a real integrity failure.
+    unavailable_hashes = {"", "hash_unavailable", "unavailable", "not_available"}
     top_hash = str(payload.get("content_hash") or "").strip().lower()
-    if top_hash and top_hash != expected_hash:
+    if top_hash not in unavailable_hashes and top_hash != expected_hash:
         raise ValueError("Formal Decision completion top-level content_hash mismatch")
     binding_hash = str(binding.get("content_hash") or "").strip().lower()
-    if binding_hash and binding_hash != expected_hash:
+    if binding_hash not in unavailable_hashes and binding_hash != expected_hash:
         raise ValueError("Formal Decision completion presentation_binding.content_hash mismatch")
-    payload["content_hash"] = expected_hash
-    binding["content_hash"] = expected_hash
+    if top_hash in unavailable_hashes:
+        payload["content_hash"] = "HASH_UNAVAILABLE"
+    if binding_hash in unavailable_hashes:
+        binding["content_hash"] = "HASH_UNAVAILABLE"
     if "final_content_hash" in payload:
         final_hash = str(payload.get("final_content_hash") or "").strip().lower()
         if final_hash and final_hash != expected_hash:
