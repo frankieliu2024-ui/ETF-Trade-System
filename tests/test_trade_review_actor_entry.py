@@ -36,7 +36,9 @@ class TradeReviewCompletionOwnerTests(unittest.TestCase):
         dispatch.assert_called_once()
         self.assertEqual(result["completion_readback"]["status"], "SUCCEEDED")
         self.assertEqual(result["projection_readback"]["status"], "NOT_CONFIRMED")
-        self.assertFalse(result["ok"])
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["business_notification"]["status"], "SUBMITTED")
+        self.assertEqual(result["projection_readback"]["audit_status"], "INCOMPLETE")
 
     def test_recovery_reuses_same_completion_once_after_explicit_failure(self):
         with patch.object(owner, "dispatch_notification", side_effect=[
@@ -71,3 +73,4 @@ class TradeReviewCompletionOwnerTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
