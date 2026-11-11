@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import hashlib
 import json
 import os
@@ -608,6 +609,47 @@ def send(token: str, title: str, content: str, *, template: str = "markdown") ->
             return ok, {"http_status": http_status, "pushplus_code": body.get("code"), "pushplus_message": body.get("msg")}
     except (urllib.error.URLError, TimeoutError, OSError) as exc:
         return False, {"error": type(exc).__name__, "message": str(exc)[:300]}
+
+
+def claim_provider_delivery(event: dict) -> tuple[bool, dict]:
+    """Atomically claim one provider delivery across independent Actions runs."""
+    token = os.environ.get("GITHUB_TOKEN", "").strip()
+    repository = os.environ.get("GITHUB_REPOSITORY", "").strip()
+    key = str(event.get("idempotency_key") or event.get("key") or "").strip()
+    if not token or not repository or not key:
+        return True, {"claim": "local_only"}
+    digest = hashlib.sha256(key.encode("utf-8")).hexdigest()
+    path = f"requests/notification_claims/{digest}.json"
+    api = f"https://api.github.com/repos/{repository}/contents/{path}"
+    owner = os.environ.get("GITHUB_RUN_ID", "").strip() or "unknown"
+    claim = {"schema_version": "1.0", "idempotency_key": key, "owner": owner,
+             "status": "CLAIMED", "claimed_at": now().isoformat(timespec="seconds")}
+    request = urllib.request.Request(
+        api,
+        data=json.dumps({"message": f"state: claim notification delivery {digest[:12]}",
+                         "content": base64.b64encode(json.dumps(claim, ensure_ascii=False).encode()).decode(),
+                         "branch": "main"}).encode(),
+        headers={"Accept": "application/vnd.github+json", "Authorization": f"Bearer {token}",
+                 "Content-Type": "application/json"},
+        method="PUT",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=20):
+            return True, {"claim": "claimed", "path": path, "owner": owner}
+    except urllib.error.HTTPError as exc:
+        if exc.code != 422:
+            return False, {"claim": "error", "error": f"github_contents_http_{exc.code}"}
+        get = urllib.request.Request(api, headers={"Accept": "application/vnd.github+json",
+                                                   "Authorization": f"Bearer {token}"})
+        try:
+            with urllib.request.urlopen(get, timeout=20) as response:
+                current = json.loads(response.read().decode())
+            existing = json.loads(base64.b64decode(current["content"]).decode())
+            if existing.get("owner") == owner:
+                return True, {"claim": "same_run_retry", "path": path, "owner": owner}
+            return False, {"claim": "already_claimed", "path": path, "owner": existing.get("owner")}
+        except Exception as read_error:
+            return False, {"claim": "claim_read_error", "error": str(read_error)}
 
 
 def display_from_code(code: str, account: dict) -> str:
@@ -1624,6 +1666,16 @@ def main() -> int:
     # its first paragraph in the PushPlus client; the frozen body is unchanged.
     pushplus_template = "txt" if item["event_type"] in {"FORMAL_DECISION", "REPORT_DELIVERY_REQUEST"} else "markdown"
     item["pushplus_template"] = pushplus_template
+    claimed, claim_response = claim_provider_delivery(item)
+    item["provider_claim"] = claim_response
+    if not claimed:
+        if claim_response.get("claim") == "already_claimed":
+            print(json.dumps({"status": "ALREADY_CLAIMED", "idempotency_key": item.get("idempotency_key")}, ensure_ascii=False))
+            return 0
+        item["lifecycle_status"] = "FAILED"
+        item["response"] = claim_response
+        print(json.dumps({"status": "FAILED", "error": "provider_claim_failed", "details": claim_response}, ensure_ascii=False))
+        return 1
     ok, response = send(token, item["title"], item["content"], template=pushplus_template); stamp = now().isoformat(timespec="seconds"); item["last_attempted_at"] = stamp; item["response"] = response
     item["lifecycle_status"] = "WAITING_CONFIRMATION" if ok and item["event_type"] in {"PENDING_EXECUTION_CONFIRMATION", "成交确认", "账户确认", "ACCOUNT_FACT_CONFIRMATION", "收盘账户"} else ("SENT" if ok else "FAILED"); item["sent_at"] = stamp if ok else item.get("sent_at")
     if existing: notifications = [x for x in notifications if x.get("notification_id") != item["notification_id"]]
