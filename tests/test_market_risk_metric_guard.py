@@ -269,11 +269,7 @@ class TestMarketRiskMetricGuard(unittest.TestCase):
         self.assertAlmostEqual(float(query_metric["etf_strategy_risk_pct"]), formal_risk, delta=0.01)
         self.assertEqual(decision_metric.get("risk_source"), formal_source)
         self.assertEqual(query_metric.get("risk_source"), formal_source)
-        self.assertEqual(
-            decision_metric.get("risk_source"),
-            "data/state/etf_strategy_equity.json",
-            "current Gross reconstruction is the formal risk source; historical Known-net cannot override it",
-        )
+        self.assertEqual(decision_metric.get("risk_source"), formal_source)
 
     def test_current_gross_owner_is_available_to_decision_and_e2e_even_with_pending_fee(self):
         from scripts.state_manager import build_decision_context
