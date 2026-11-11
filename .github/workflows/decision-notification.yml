@@ -133,10 +133,17 @@ jobs:
           binding = payload.get("presentation_binding") or {}
           report_type = str(payload.get("report_type") or binding.get("report_type") or "").strip().upper()
           task_id = str(payload.get("task_id") or binding.get("task_id") or "").strip()
+          source = str(payload.get("source") or payload.get("formal_entry_source") or "").strip().upper()
+          content = str(payload.get("final_content") or "")
+          legacy_formal = (
+              str(payload.get("interaction_scenario") or "").strip().upper() == "FORMAL_DECISION"
+              and content.lstrip().startswith("【ETF正式决策】")
+              and source in {"CHATGPT_DIRECT_GITHUB_CONTENTS_WRITER", "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS", "CHATGPT_SCHEDULED_FORMAL_ANALYSIS", "CHATGPT_SCHEDULED_TASK"}
+          )
           formal = (
               report_type == "ETF_FORMAL_DECISION"
               and task_id == "ETF正式决策"
-          ) or (
+          ) or legacy_formal or (
               task_id == "ETF正式决策"
               and str(payload.get("decision_path") or "").strip().upper() == "FORMAL"
               and str(payload.get("interaction_scenario") or "").strip().upper() == "FORMAL_DECISION"
@@ -178,10 +185,17 @@ jobs:
           report_type = str(
               payload.get("report_type") or binding.get("report_type") or ""
           ).strip().upper()
+          source = str(payload.get("source") or payload.get("formal_entry_source") or "").strip().upper()
+          content = str(payload.get("final_content") or "")
+          legacy_formal = (
+              str(payload.get("interaction_scenario") or "").strip().upper() == "FORMAL_DECISION"
+              and content.lstrip().startswith("【ETF正式决策】")
+              and source in {"CHATGPT_DIRECT_GITHUB_CONTENTS_WRITER", "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS", "CHATGPT_SCHEDULED_FORMAL_ANALYSIS", "CHATGPT_SCHEDULED_TASK"}
+          )
           if (
               report_type == "ETF_FORMAL_DECISION"
               and str(payload.get("task_id") or "").strip() == "ETF正式决策"
-          ):
+          ) or legacy_formal:
               print("FORMAL")
           else:
               task_id = str(
