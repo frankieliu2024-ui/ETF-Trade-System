@@ -341,7 +341,30 @@ def build_scheduled_pulse_health(root: Path, current: dict[str, Any]) -> dict[st
 
 
 def build_point_in_time_summary(current: dict[str, Any], account: dict[str, Any], snapshot: dict[str, Any], generated_at: str) -> dict[str, Any]:
-    return {"account_fact_time": str(account.get("updated_at") or ""), "market_snapshot_time": str(snapshot.get("captured_at_beijing") or snapshot.get("captured_at") or current.get("captured_at") or ""), "market_phase": snapshot.get("market_phase") or (current.get("data_freshness") or {}).get("market_phase") or "", "context_generated_time": generated_at, "source_separation": "账户事实时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。", "read_only": True}
+    account_time = str(account.get("updated_at") or "")
+    formal_action = account.get("formal_action") if isinstance(account.get("formal_action"), dict) else {}
+    formal_time = str(formal_action.get("decision_time") or "")
+    relation = "NO_FORMAL_DECISION_TIME"
+    if formal_time and account_time:
+        try:
+            relation = (
+                "ACCOUNT_FACT_AFTER_FORMAL_DECISION_REQUIRES_REASSESSMENT"
+                if _parse_beijing_time(account_time) > _parse_beijing_time(formal_time)
+                else "ACCOUNT_FACT_NOT_AFTER_FORMAL_DECISION"
+            )
+        except TypeError:
+            relation = "UNCOMPARABLE_TIME"
+    return {
+        "account_fact_time": account_time,
+        "market_snapshot_time": str(snapshot.get("captured_at_beijing") or snapshot.get("captured_at") or current.get("captured_at") or ""),
+        "market_phase": snapshot.get("market_phase") or (current.get("data_freshness") or {}).get("market_phase") or "",
+        "context_generated_time": generated_at,
+        "latest_formal_decision_time": formal_time,
+        "account_fact_decision_relation": relation,
+        "account_fact_requires_formal_reassessment": relation == "ACCOUNT_FACT_AFTER_FORMAL_DECISION_REQUIRES_REASSESSMENT",
+        "source_separation": "账户事实时间、正式决策时间、行情provider时间和context生成时间分别保留；截图时间不得冒充行情时间。",
+        "read_only": True,
+    }
 
 
 def build_formal_action_summary(account: dict[str, Any]) -> dict[str, Any]:
@@ -621,6 +644,26 @@ def build_decision_context(root: Path | None = None, observability: dict[str, An
         read_json(root / "data" / "state" / "capital_efficiency_ranking.json", {"status": "NOT_BUILT", "ordered_candidates": [], "read_only": True}),
         formal_discovery,
     )
+    ranking_source = capital_comparison if isinstance(capital_comparison, dict) else {}
+    discovery_generation = str((formal_discovery or {}).get("generated_at_beijing") or "")
+    ranking_generation = str(ranking_source.get("source_discovery_generated_at_beijing") or "")
+    discovery_snapshot = str((formal_discovery or {}).get("latest_snapshot") or "")
+    ranking_snapshot = str(ranking_source.get("source_discovery_latest_snapshot") or "")
+    batch_aligned = bool(
+        discovery_generation and ranking_generation
+        and discovery_generation == ranking_generation
+        and discovery_snapshot and discovery_snapshot == ranking_snapshot
+    )
+    batch_consistency = {
+        "status": "ALIGNED" if batch_aligned else "REASSESSMENT_REQUIRED",
+        "discovery_generated_at_beijing": discovery_generation,
+        "opportunity_source_generated_at_beijing": ranking_generation,
+        "discovery_latest_snapshot": discovery_snapshot,
+        "opportunity_source_latest_snapshot": ranking_snapshot,
+        "analysis_ready": batch_aligned,
+        "reason": "Discovery与机会层必须来自同一生成批次和同一行情快照；不一致时不得把旧机会排名当作当前机会资格。",
+        "read_only": True,
+    }
     return {
         "observability": trace, "generated_at": generated, "rules_version": current_rule_version(root) or str(current.get("rules_version") or ""), "market_date": current.get("market_date", ""), "latest_node": current.get("latest_valid_node", ""), "current": current, "latest_snapshot": snapshot, "data_status": effective, "freshness_at_context_build": effective,
         "data_quality_summary": quality, "account_funding": build_account_funding_summary(account), "etf_strategy_risk_metrics": build_etf_strategy_risk_metrics(root), "analysis_coverage": analysis_coverage, "point_in_time": build_point_in_time_summary(current, account, snapshot, generated), "scheduled_pulse_health": build_scheduled_pulse_health(root, current), "formal_action": build_formal_action_summary(account),
@@ -630,6 +673,7 @@ def build_decision_context(root: Path | None = None, observability: dict[str, An
         "market_quote_router": market_quote_context if market_quote_context is not None else build_market_quote_context(root, decision_request_time=decision_request_time), "lifecycle_projection": build_lifecycle_projection(root),
         "decision_trigger": read_json(root / "data" / "state" / "decision_trigger.json", {"status": "NOT_BUILT", "requires_formal_reassessment": False, "read_only": True}),
         "capital_efficiency_ranking": capital_comparison,
+        "discovery_opportunity_batch_consistency": batch_consistency,
         "intraday_path_features": read_json(root / "data" / "state" / "intraday_path_features.json", {"status": "MISSING", "features": []}), "research_evidence": build_research_evidence_summary(root),
         "research_context_file": "data/state/research_context.json", "relative_strength_file": "data/state/relative_strength.json", "research_evidence_delta_file": "data/state/research_evidence_delta.json",
         "research_master_feedback": {"current_decision": "研究证据及其节点变化直接进入机会判断、统一资本比较、持仓资本效率与正式输出解释。", "master_maintenance": "研究结论只有通过MASTER第8.1正式研究转化机制后才可修改MASTER；自动程序只提供证据，不修改规则。"},
