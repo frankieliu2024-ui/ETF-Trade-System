@@ -2702,6 +2702,30 @@ def merge_account_fact(prior: dict, supplied: dict) -> dict:
     return merged
 
 
+def apply_superseded_trade_corrections(request: dict) -> None:
+    """Retire explicitly misidentified trade events without deleting history."""
+    event_ids = request.get("supersedes_trade_event_ids") or []
+    if not isinstance(event_ids, list):
+        return
+    replacement = str(request.get("replacement_trade_event_id") or "").strip()
+    for raw_id in event_ids:
+        event_id = str(raw_id or "").strip()
+        if not event_id or "/" in event_id or "\\\\" in event_id or ".." in event_id:
+            continue
+        path = ROOT / "events" / "trades" / f"{event_id}.json"
+        if not path.exists():
+            continue
+        event = load_json(path)
+        if str(event.get("execution_status") or "").upper() == "SUPERSEDED":
+            continue
+        event["execution_status"] = "SUPERSEDED"
+        event["superseded_by_event_id"] = replacement or None
+        event["supersession_reason"] = str(request.get("supersession_reason") or "EXPLICIT_USER_FACT_CORRECTION")
+        event["linked_decision_id"] = None
+        event["execution_attribution"] = {"status": "SUPERSEDED", "replacement_event_id": replacement or None}
+        atomic_json_write(path, event)
+
+
 def process_historical_backfill_request(request: dict) -> dict:
     """Persist confirmed historical trade facts without touching current account state."""
     if str(request.get("ingress_mode") or "").upper() != "HISTORICAL_BACKFILL":
@@ -3383,6 +3407,7 @@ def main() -> int:
     # Refresh the CURRENT trade mirror only after this request's trade events
     # are durable.  Doing this before the loop leaves CURRENT and downstream
     # trigger construction one confirmed trade behind.
+    apply_superseded_trade_corrections(request)
     latest_trade_event_id = _latest_trade_event_id()
     if latest_trade_event_id:
         current_path = ROOT / "data/state/CURRENT.json"
