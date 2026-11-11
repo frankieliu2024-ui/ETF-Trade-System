@@ -266,7 +266,7 @@ def _apply_attribution_request(req: dict) -> int:
                 break
     if not event or not decision: raise RuntimeError("attribution correction source fact or Decision Fact is missing")
     from decision_trade_link import _effective_time, _time, _decision_mentions_trade
-    dt, tt = _effective_time(decision), _time(event.get("confirmed_at_beijing") or event.get("executed_at_beijing"))
+    dt, tt = _effective_time(decision), _time(event.get("executed_at_beijing") or event.get("executed_at") or event.get("confirmed_at_beijing"))
     if str(event.get("execution_status") or "EXECUTED").upper() != "EXECUTED" or not dt or not tt or dt >= tt:
         raise RuntimeError("attribution correction violates executed-trade/PIT contract")
     if not _decision_mentions_trade(decision, event): raise RuntimeError("attribution correction action/security semantics are incompatible")
@@ -289,19 +289,9 @@ def _apply_attribution_request(req: dict) -> int:
             raise RuntimeError("attribution correction request identity conflict")
         if not target.exists():
             write_json(target, req)
-    # The request is idempotent, but the trade event is the projection that
-    # consumers actually read. Always repair that projection when the same
-    # canonical request is replayed; an existing request must not imply that
-    # the event already carries its attribution.
-    stamp = str(req.get("applied_at_beijing") or datetime.now(TZ).isoformat(timespec="seconds"))
-    event["linked_decision_id"] = decision_id
-    event["execution_attribution"] = {
-        "status": "READY",
-        "decision_id": decision_id,
-        "resolution": "EXPLICIT_PIT_VALID",
-    }
-    event["attribution_updated_at_beijing"] = stamp
-    write_json(ROOT / "events" / "trades" / f"{event_id}.json", event)
+    # The correction is an audit-side canonical input.  Keep the observed
+    # executed trade immutable; decision_trade_link resolves this request at
+    # read time instead of rewriting the original trade fact.
     print(json.dumps({"status":"RECONCILED" if existing else "APPLIED","trade_event_id":event_id,"linked_decision_id":decision_id,"immutable_trade_source":True},ensure_ascii=False)); return 0
 
 
@@ -425,3 +415,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
