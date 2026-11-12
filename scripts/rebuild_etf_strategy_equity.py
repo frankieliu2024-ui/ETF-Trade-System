@@ -19,6 +19,7 @@ try:
         recover_canonical_etf_trade_facts,
         trade_signature,
         confirmed_fee_amount,
+        experience_etf_trade_index_facts,
     )
 except ModuleNotFoundError:
     from scripts.confirmed_trade_facts import (
@@ -126,7 +127,42 @@ def replay(root: Path = ROOT, *, price_dir: Path | None = None, cutoff: str | No
     facts = canonical_etf_trade_facts(root, reconstructed)
     if expected_count and len(facts) < expected_count:
         facts = recover_canonical_etf_trade_facts(root, reconstructed, expected_count)
+
+    # A persisted count can remain numerically complete while a historical
+    # predecessor is absent from the canonical projection (for example, a
+    # FACT_ENRICHMENT_ONLY adoption row alongside its later SELL). Do not let
+    # FIFO fail only after state writing has started. Recover only the formal
+    # historical BUY facts required to make an already-recorded SELL replayable;
+    # never infer a trade from price, position, or broker balance.
     facts.sort(key=lambda t: (_stamp(t), trade_signature(t)))
+    historical = experience_etf_trade_index_facts(root)
+    known = {trade_signature(t) for t in facts}
+    lots = defaultdict(float)
+    for trade in facts:
+        code = str(trade.get("code") or "")
+        side = str(trade.get("side") or trade.get("action") or "").upper()
+        qty = float(trade.get("quantity") or 0)
+        if side == "BUY":
+            lots[code] += qty
+        elif side == "SELL":
+            lots[code] -= qty
+    missing_codes = {code for code, qty in lots.items() if qty < -1e-9}
+    if missing_codes:
+        for candidate in historical:
+            code = str(candidate.get("code") or "")
+            if code not in missing_codes or str(candidate.get("side") or "").upper() != "BUY":
+                continue
+            signature = trade_signature(candidate)
+            if signature in known:
+                continue
+            facts.append(candidate)
+            known.add(signature)
+            lots[code] += float(candidate.get("quantity") or 0)
+            if lots[code] >= -1e-9:
+                missing_codes.discard(code)
+        if missing_codes:
+            raise ValueError("unmatched historical SELL predecessor(s): " + ",".join(sorted(missing_codes)))
+        facts.sort(key=lambda t: (_stamp(t), trade_signature(t)))
     unique = {trade_signature(t) for t in facts}
     if len(unique) != len(facts):
         raise ValueError("duplicate canonical trade facts")
