@@ -53,7 +53,7 @@ def canonical_report_title(report_type: str) -> str:
 
 def validate_report_delivery_request(request: dict) -> tuple[bool, str]:
     """Validate a completed active formal report before shared delivery."""
-    required = ("schema_version", "channel", "report_type", "report_id", "task_id", "task_run_id",
+    required = ("schema_version", "channel", "report_type", "report_id", "task_id",
                 "generated_at", "effective_market_date", "source_actor", "source_reference",
                 "title", "summary", "full_content", "idempotency_key")
     missing = [key for key in required if not str(request.get(key) or "").strip()]
@@ -99,7 +99,7 @@ def build_report_delivery_request(*, task_id: str, task_run_id: str, report_id: 
 
 def validate_report_handoff(handoff: dict) -> tuple[bool, str]:
     """Validate the minimal delivery-only envelope from a Scheduled Review."""
-    required = ("schema_version", "report_type", "task_id", "task_run_id",
+    required = ("schema_version", "report_type", "task_id",
                 "generated_at", "effective_market_date", "title", "summary", "full_content")
     missing = [key for key in required if not str(handoff.get(key) or "").strip()]
     if missing:
@@ -473,7 +473,7 @@ def canonical_scheduled_report_events(event_path: str | None = None) -> list[dic
         binding = event.get("presentation_binding")
         if not isinstance(binding, dict):
             continue
-        required = ("report_type", "task_id", "task_run_id", "full_content")
+        required = ("report_type", "task_id", "full_content")
         if any(not str(binding.get(key) or "").strip() for key in required):
             continue
         report_type = str(binding["report_type"])
