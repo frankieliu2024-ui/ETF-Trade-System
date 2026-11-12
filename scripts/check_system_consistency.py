@@ -1236,6 +1236,75 @@ def _validate_semantic_formal_structure(report: dict) -> None:
     _recount(report)
 
 
+def _validate_cross_object_account_closure(report: dict) -> None:
+    """Validate semantic closure across the current account batch.
+
+    File-level checks can all pass while a newly confirmed BUY is absent from
+    the lifecycle projection or still points at an unrelated historical
+    decision.  These are business-integrity failures, not warnings.
+    """
+    account = _read_json("data/state/account_fact.json")
+    current = _read_json("data/state/CURRENT.json")
+    account_date = str(account.get("updated_at") or "")[:10]
+    account_batch = str(account.get("account_snapshot_id") or account.get("snapshot_id") or "")
+    errors = []
+    details = []
+    try:
+        from lifecycle_state import build_lifecycle_projection
+    except ModuleNotFoundError:
+        from scripts.lifecycle_state import build_lifecycle_projection
+    projection = build_lifecycle_projection(ROOT, account_date or None)
+    lifecycle_codes = {str(x.get("security_code") or "") for x in (projection.get("active_lifecycles") or [])}
+
+    trade_dir = ROOT / "events" / "trades"
+    same_day_buys = []
+    if trade_dir.exists() and account_date:
+        for path in sorted(trade_dir.glob("*.json")):
+            event = _read_json(str(path.relative_to(ROOT)))
+            event_date = str(event.get("execution_date") or event.get("confirmed_at_beijing") or "")[:10]
+            side = str(event.get("side") or event.get("action") or "").upper()
+            if event_date == account_date and side in {"BUY", "B", "买", "买入"}:
+                same_day_buys.append((path, event))
+    missing_lifecycle = [str(event.get("code") or event.get("security_code") or "") for _, event in same_day_buys if str(event.get("code") or event.get("security_code") or "") not in lifecycle_codes]
+    if missing_lifecycle:
+        errors.append("current_account:confirmed_buy_missing_lifecycle:" + ",".join(sorted(set(missing_lifecycle))))
+    details.append(f"account_batch={account_batch or 'MISSING'} same_day_buys={len(same_day_buys)} lifecycle_codes={sorted(lifecycle_codes)}")
+
+    try:
+        from decision_trade_link import resolve_link
+    except ModuleNotFoundError:
+        from scripts.decision_trade_link import resolve_link
+    attribution_mismatches = []
+    for path, event in same_day_buys:
+        requested = str(event.get("linked_decision_id") or "").strip()
+        resolved, _, status = resolve_link(ROOT, event, requested)
+        if not requested or not resolved or requested != resolved:
+            attribution_mismatches.append(f"{path.name}:stored={requested or 'MISSING'}:resolved={resolved or 'MISSING'}:{status}")
+    if attribution_mismatches:
+        errors.append("current_account:trade_decision_provenance_mismatch:" + "|".join(attribution_mismatches))
+    details.append(f"trade_provenance_checked={len(same_day_buys)} mismatches={attribution_mismatches}")
+
+    # CURRENT must identify the same account snapshot as the canonical account
+    # fact.  Missing identity is a hard failure once an account snapshot exists.
+    current_account = current.get("account_fact") if isinstance(current.get("account_fact"), dict) else {}
+    current_batch = str(current_account.get("account_snapshot_id") or current.get("account_snapshot_id") or "")
+    if account_batch and current_batch and account_batch != current_batch:
+        errors.append(f"current_account:snapshot_batch_mismatch:account={account_batch}:current={current_batch}")
+    elif account_batch and not current_batch:
+        errors.append("current_account:snapshot_batch_missing_from_current")
+
+    status = "FAIL" if errors else "PASS"
+    report.setdefault("checks", []).append({
+        "name": "current_account:cross_object_closure",
+        "status": status,
+        "detail": "; ".join(details + (["errors=" + str(errors)] if errors else [])),
+    })
+    for item in errors:
+        if item not in report.setdefault("errors", []):
+            report["errors"].append(item)
+    _recount(report)
+
+
 def main() -> int:
     import argparse
     global REPORT
@@ -1265,6 +1334,7 @@ def main() -> int:
     _validate_current_formal_decision_projection(report)
     _validate_readme_front_door(report)
     _validate_production_mutation_protocol(report)
+    _validate_cross_object_account_closure(report)
     REPORT.parent.mkdir(parents=True, exist_ok=True)
     REPORT.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({"status": report.get("status"), "hard_error_count": report.get("hard_error_count"), "warning_count": report.get("warning_count"), "async_context_freshness": next((x for x in report.get("checks", []) if x.get("name") == "dynamic_freshness:query_decision_aligned"), {}), "us_phase_freshness": next((x for x in report.get("checks", []) if x.get("name") == "us_extended:live_freshness"), {}), "a_share_market_date_alignment": next((x for x in report.get("checks", []) if x.get("name") == "a_share_runtime:market_date_alignment"), {}), "stock_market_time_alignment": next((x for x in report.get("checks", []) if x.get("name") == "stock_runtime:market_time_alignment"), {}), "formal_trade_event_sync": next((x for x in report.get("checks", []) if x.get("name") == "formal_files:executed_trade_event_sync"), {}), "readme_front_door": next((x for x in report.get("checks", []) if x.get("name") == "readme:canonical_front_door"), {}), "production_mutation_protocol": report.get("production_mutation_protocol") or {}, "errors": report.get("errors") or []}, ensure_ascii=False))
@@ -1273,4 +1343,5 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
 
