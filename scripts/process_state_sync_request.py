@@ -5065,7 +5065,7 @@ def main() -> int:
         if request.get("account_fact") is None and existing is None:
             supplied_account = _apply_trade_to_account(supplied_account or prior_account, trade)
     with account_snapshot_transaction(ROOT):
-    account_sync_status = "NOT_APPLICABLE"
+        account_sync_status = "NOT_APPLICABLE"
         if is_broker_screenshot_request(request) and not isinstance(supplied_account, dict) and not trades:
             result = {
                 "ok": False,
