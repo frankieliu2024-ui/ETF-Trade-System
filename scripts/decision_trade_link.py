@@ -140,6 +140,15 @@ def resolve_link(root: Path, trade: dict, requested_id: str = "") -> tuple[str, 
         return "", {}, correction_status
     if corrected_id:
         decision = _load(decision_dir / f"{corrected_id}.json")
+        if not decision:
+            # Canonical scheduled Formal Decisions are owned by the review
+            # event store.  Attribution corrections may therefore point to a
+            # reviewed decision rather than an older events/decisions file.
+            for candidate in sorted((root / "events" / "reviews").glob("formal_*.json")):
+                obj = _load(candidate)
+                if str(obj.get("decision_id") or "") == corrected_id:
+                    decision = obj
+                    break
         dt = _effective_time(decision)
         tt = _time(trade.get("confirmed_at_beijing") or trade.get("executed_at_beijing"))
         if not decision or not dt or not tt or dt >= tt:
