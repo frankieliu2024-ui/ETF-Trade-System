@@ -1,21 +1,21 @@
 {
   "schema_version": "1.1",
-  "checked_at": "2026-11-11T23:10:20+08:00",
+  "checked_at": "2026-11-12T11:26:03+08:00",
   "mode": "DETERMINISTIC_MAINTENANCE_GUARD",
-  "status": "MAINTENANCE_INCOMPLETE",
-  "system_consistency_status": "FAIL",
-  "self_healing_classification": "CONSISTENCY_REGRESSION",
+  "status": "PASS",
+  "system_consistency_status": "WARNING",
+  "self_healing_classification": "EXPECTED_PULSE_MISSING",
   "runtime_health_status": "PASS",
-  "current_snapshot": "data/market/snapshots/2026-11-11_192733.json",
+  "current_snapshot": "data/market/snapshots/2026-11-12_111700.json",
   "reconciliation": {
     "status": "FAIL",
-    "trade_count": 48,
+    "trade_count": 47,
     "trade_count_matches_summary": true,
-    "declared_trade_count": 48,
+    "declared_trade_count": 47,
     "fact_enrichment_only_count": 0,
     "trade_count_migration": null,
     "executed_trade_event_overlay_count": 0,
-    "position_ledger_basis": "CANONICAL_EXECUTED_TRADE_FACTS_CURRENT_POSITION_IDENTITY_WITH_PRIOR_EOD_EQUITY",
+    "position_ledger_basis": "CANONICAL_REPLAY_FINAL_COMPLETE_POSITION_IDENTITY",
     "position_reconciliation": {
       "status": "FAIL",
       "checks": [
@@ -30,20 +30,6 @@
           "code": "159217",
           "ledger_quantity": 4400.0,
           "account_quantity": 4400.0,
-          "difference": 0.0,
-          "status": "PASS"
-        },
-        {
-          "code": "159326",
-          "ledger_quantity": 0.0,
-          "account_quantity": 0.0,
-          "difference": 0.0,
-          "status": "PASS"
-        },
-        {
-          "code": "159781",
-          "ledger_quantity": 0.0,
-          "account_quantity": 0.0,
           "difference": 0.0,
           "status": "PASS"
         },
@@ -69,55 +55,6 @@
           "status": "PASS"
         },
         {
-          "code": "513180",
-          "ledger_quantity": 0.0,
-          "account_quantity": 0.0,
-          "difference": 0.0,
-          "status": "PASS"
-        },
-        {
-          "code": "513520",
-          "ledger_quantity": 0.0,
-          "account_quantity": 0.0,
-          "difference": 0.0,
-          "status": "PASS"
-        },
-        {
-          "code": "515220",
-          "ledger_quantity": 0.0,
-          "account_quantity": 0.0,
-          "difference": 0.0,
-          "status": "PASS"
-        },
-        {
-          "code": "515880",
-          "ledger_quantity": 0.0,
-          "account_quantity": 0.0,
-          "difference": 0.0,
-          "status": "PASS"
-        },
-        {
-          "code": "518880",
-          "ledger_quantity": 0.0,
-          "account_quantity": 0.0,
-          "difference": 0.0,
-          "status": "PASS"
-        },
-        {
-          "code": "561980",
-          "ledger_quantity": 0.0,
-          "account_quantity": 0.0,
-          "difference": 0.0,
-          "status": "PASS"
-        },
-        {
-          "code": "588000",
-          "ledger_quantity": 0.0,
-          "account_quantity": 0.0,
-          "difference": 0.0,
-          "status": "PASS"
-        },
-        {
           "code": "588200",
           "ledger_quantity": 5800.0,
           "account_quantity": 5800.0,
@@ -125,18 +62,18 @@
           "status": "PASS"
         },
         {
-          "code": "588370",
-          "ledger_quantity": 1400.0,
-          "account_quantity": 0.0,
-          "difference": -1400.0,
-          "status": "FAIL"
-        },
-        {
           "code": "588450",
           "ledger_quantity": 1400.0,
           "account_quantity": 1400.0,
           "difference": 0.0,
           "status": "PASS"
+        },
+        {
+          "code": "588710",
+          "ledger_quantity": 0.0,
+          "account_quantity": 6400.0,
+          "difference": 6400.0,
+          "status": "FAIL"
         }
       ]
     },
@@ -157,9 +94,9 @@
     },
     "gross_equity_reconciliation": {
       "status": "PASS",
-      "strategy_cash": 109182.1,
-      "current_etf_market_value": 63612.1,
-      "reported_gross_equity": 172794.2,
+      "strategy_cash": 106814.7,
+      "current_etf_market_value": 66958.7,
+      "reported_gross_equity": 173773.4,
       "difference": 0.0,
       "series_row_difference": 0.0,
       "canonical_replay_complete": true
@@ -173,26 +110,21 @@
     "ai_patch_main": "FORBIDDEN"
   },
   "account_sync": {
-    "request_id": "20261111_2136_broker_screenshot_correction_588450",
-    "request_path": "requests/live_snapshot/20261111_2136_broker_screenshot_correction_588450.json",
+    "request_id": "broker-trade-20261112-112000-chatgpt",
+    "request_path": "requests/live_snapshot/broker-trade-20261112-112000-chatgpt.json",
     "owner": "scripts/process_state_sync_request.py",
-    "workflow_run_id": "43045347361",
+    "workflow_run_id": "43147970541",
     "status": "PASS",
     "failure_class": "",
     "readback_status": "CONFIRMED",
     "canonical_fact_persisted": true,
-    "recorded_at_beijing": "2026-11-11T23:10:20+08:00"
+    "recorded_at_beijing": "2026-11-12T11:26:03+08:00"
   },
-  "account_fact_updated_at": "2026-11-11T21:36:47+08:00",
-  "failure_class": "PROJECTION_INCOMPLETE",
-  "projection_status": "ACCOUNT_FACT_UPDATED_REQUIRES_REBUILD",
-  "reconciliation_stale": true,
-  "reconciliation_stale_reason": "account_fact changed; projection rebuild or same-fact Dashboard readback was not confirmed",
-  "projection_required": [
-    "strategy_equity",
-    "risk",
-    "lifecycle",
-    "dashboard",
-    "reconciliation"
-  ]
+  "account_fact_updated_at": "2026-11-12T11:20:00+08:00",
+  "failure_class": "",
+  "projection_status": "REBUILT_AND_READ_BACK",
+  "reconciliation_stale": false,
+  "reconciliation_stale_reason": "",
+  "projection_required": [],
+  "projections_rebuilt_at": "2026-11-12T11:26:03+08:00"
 }
