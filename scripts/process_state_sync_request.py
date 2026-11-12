@@ -2384,7 +2384,7 @@ def record_post_close_review(account: dict, request: dict, *, delivery_only: boo
     # Manual scheduled-task completions use this explicit ingress label; the
     # canonical owner treats it as the existing scheduled trade-review path
     # while preserving the original field in the persisted event.
-    if interaction_scenario == "MANUAL_TRADE_REVIEW":
+    if interaction_scenario in {"MANUAL_TRADE_REVIEW", "CHATGPT_MANUAL_TRADE_REVIEW"}:
         interaction_scenario = "SCHEDULED_TRADE_REVIEW"
     # Legacy full-day Trade Review completions may predate the nested
     # formal_review object. Accept only the unambiguous frozen-title shape;
