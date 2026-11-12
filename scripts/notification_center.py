@@ -495,7 +495,7 @@ def canonical_scheduled_report_events(event_path: str | None = None) -> list[dic
             continue
         expected = hashlib.sha256(content.encode("utf-8")).hexdigest()
         # A supplied hash may be stale or absent; it is audit metadata only.
-        task_run_id = str(binding["task_run_id"])
+        task_run_id = str(binding.get("task_run_id") or event.get("task_run_id") or "")
         task_id = str(binding["task_id"])
         event_occurrence = str(event.get("occurrence_id") or event.get("task_run_id") or "")
         # Formal Decision has independent occurrence_id and task_run_id identities.
