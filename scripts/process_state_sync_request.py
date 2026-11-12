@@ -220,6 +220,18 @@ def safe_float(value):
         return None
 
 
+def _account_snapshot_identity(request: dict, supplied: dict) -> str:
+    """Return a stable identity for one complete broker snapshot batch."""
+    payload = {
+        "request_id": str(request.get("request_id") or ""),
+        "source_fingerprint": str(request.get("_source_fingerprint") or request.get("source_fingerprint") or ""),
+        "account_updated_at": str(request.get("account_updated_at") or request.get("submitted_at_beijing") or ""),
+        "account": supplied,
+    }
+    digest = hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()[:20]
+    return f"acctsnap-{digest}"
+
+
 def parse_time(text: object) -> datetime | None:
     if not text:
         return None
@@ -494,6 +506,8 @@ def sync_current_account_mirror(root: Path, account: dict) -> None:
             "status", "updated_at", "source", "cash",
             "reserved_cash_for_settlement", "deployable_cash",
             "settlement_constraint_status",
+            "account_snapshot_id",
+            "account_snapshot_version",
         )
     }
     current["settlement_obligations"] = account.get("settlement_obligations") or []
@@ -508,6 +522,8 @@ def sync_current_account_mirror(root: Path, account: dict) -> None:
     current["account_fact_source"] = account.get("source", "")
     current["account_fact_status"] = account.get("status", "")
     current["account_fact_reference_synced_at"] = datetime.now(SHANGHAI).isoformat(timespec="seconds")
+    current["account_snapshot_id"] = account.get("account_snapshot_id", "")
+    current["account_snapshot_version"] = account.get("account_snapshot_version", "")
     atomic_json_write(current_path, current)
 
 
@@ -4247,6 +4263,13 @@ def normalize_broker_account_fact_ingress(request: dict, supplied: object) -> tu
         )
     ]
     normalized.setdefault("source", request.get("source") or "CHATGPT_USER_BROKER_SCREENSHOT")
+    if _is_complete_account_snapshot(normalized):
+        snapshot_id = str(normalized.get("account_snapshot_id") or "").strip() or _account_snapshot_identity(request, normalized)
+        normalized["account_snapshot_id"] = snapshot_id
+        normalized["account_snapshot_version"] = snapshot_id
+        normalized["account_snapshot_source_request_id"] = str(request.get("request_id") or "")
+        normalized["account_snapshot_observed_at"] = str(normalized.get("broker_displayed_at_beijing") or normalized.get("account_screenshot_captured_at_beijing") or normalized.get("updated_at") or "")
+        normalized["account_snapshot_received_at"] = datetime.now(SHANGHAI).isoformat(timespec="seconds")
     # Keep display aliases synchronized with the current screenshot facts.
     if normalized.get("total_asset") is not None:
         normalized["total_assets"] = normalized["total_asset"]
@@ -4501,6 +4524,13 @@ def merge_account_fact(prior: dict, supplied: dict) -> dict:
     for key, value in (supplied or {}).items():
         if key not in {"settlement_obligations", "_screenshot_clear_missing_fields"} and value is not None:
             merged[key] = json.loads(json.dumps(value))
+
+    if _is_complete_account_snapshot(supplied or {}):
+        merged.setdefault("account_snapshot_id", supplied.get("account_snapshot_id"))
+        merged.setdefault("account_snapshot_version", supplied.get("account_snapshot_version"))
+        merged.setdefault("account_snapshot_source_request_id", supplied.get("account_snapshot_source_request_id"))
+        merged.setdefault("account_snapshot_observed_at", supplied.get("account_snapshot_observed_at"))
+        merged.setdefault("account_snapshot_received_at", supplied.get("account_snapshot_received_at"))
 
     # Account facts have one date authority only.  The broker-confirmed
     # account date is stored as last_confirmed_market_date; legacy
