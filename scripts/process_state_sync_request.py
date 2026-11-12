@@ -6,6 +6,8 @@ import json
 import os
 import re
 import subprocess
+import shutil
+from contextlib import contextmanager
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
@@ -170,6 +172,42 @@ CASE_DETAILS_START = "<!-- AUTO_CASE_DETAILS_START -->"
 CASE_DETAILS_END = "<!-- AUTO_CASE_DETAILS_END -->"
 REVIEW_UNAVAILABLE_START = "<!-- AUTO_REVIEW_PREREQUISITE_UNAVAILABLE_START -->"
 REVIEW_UNAVAILABLE_END = "<!-- AUTO_REVIEW_PREREQUISITE_UNAVAILABLE_END -->"
+
+
+@contextmanager
+def account_snapshot_transaction(root: Path):
+    """Make the account sync's state and projection writes one recoverable batch."""
+    roots = [root / "data" / "state", root / "events"]
+    files = [
+        root / "ETF当前状态_DASHBOARD.md",
+        root / "ETF市场行情档案_2026.md",
+        root / "ETF交易复盘与经验库_2026.md",
+    ]
+    snapshot = {}
+    for base in roots:
+        if base.exists():
+            files.extend(path for path in base.rglob("*") if path.is_file())
+    for path in files:
+        if path.exists():
+            snapshot[path] = path.read_bytes()
+    try:
+        yield
+    except Exception:
+        current = set()
+        for base in roots:
+            if base.exists():
+                current.update(path for path in base.rglob("*") if path.is_file())
+        current.update(path for path in (
+            root / "ETF当前状态_DASHBOARD.md",
+            root / "ETF市场行情档案_2026.md",
+            root / "ETF交易复盘与经验库_2026.md",
+        ) if path.exists())
+        for path in current - set(snapshot):
+            path.unlink(missing_ok=True)
+        for path, content in snapshot.items():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(content)
+        raise
 
 
 def load_json(path: Path) -> dict:
@@ -5027,211 +5065,213 @@ def main() -> int:
         existing_trades.append(existing)
         if request.get("account_fact") is None and existing is None:
             supplied_account = _apply_trade_to_account(supplied_account or prior_account, trade)
-    account_sync_status = "NOT_APPLICABLE"
-    if is_broker_screenshot_request(request) and not isinstance(supplied_account, dict) and not trades:
-        result = {
-            "ok": False,
-            "request_id": request.get("request_id"),
-            "interaction_scenario": request.get("interaction_scenario"),
-            "status": "NO_ACCOUNT_FACT",
-            "account_sync_status": "ACCOUNT_SYNC_NOT_PERFORMED",
-            "canonical_ingress_state": canonical_ingress_contract["terminal_state"],
-            "canonical_ingress_failure_reason": canonical_ingress_contract["reason"],
-            "dashboard_updated": False,
-            "detail": "Broker screenshot request has no request-scoped account_fact; market success must not be treated as account sync success.",
-        }
-        print(json.dumps(result, ensure_ascii=False))
-        return 1
-    if (
-        canonical_ingress_contract["required"]
-        and canonical_ingress_contract["terminal_state"] == CANONICAL_INGRESS_FAILED_EXPLICITLY
-        and canonical_ingress_contract["reason"] != "missing_account_fact"
-    ):
-        print(json.dumps({
-            "ok": False,
-            "status": "CANONICAL_INGRESS_FAILED_EXPLICITLY",
-            "canonical_ingress_state": canonical_ingress_contract["terminal_state"],
-            "canonical_ingress_failure_reason": canonical_ingress_contract["reason"],
-            "request": str(req_path.relative_to(ROOT)).replace("\\", "/"),
-        }, ensure_ascii=False, indent=2, sort_keys=True))
-        return 1
-
-    supplied_account, normalized_non_security_asset_count = normalize_broker_account_fact_ingress(request, supplied_account)
-    broker_shape_error = validate_broker_account_fact_ingress(request, supplied_account)
-    if broker_shape_error:
-        print(json.dumps({
-            "ok": False,
-            "request_id": request.get("request_id"),
-            "status": "BROKER_ACCOUNT_FACT_SCHEMA_INVALID",
-            "account_sync_status": "ACCOUNT_SYNC_NOT_PERFORMED",
-            "canonical_ingress_state": CANONICAL_INGRESS_FAILED_EXPLICITLY,
-            "canonical_ingress_failure_reason": "broker_account_fact_schema_invalid",
-            "dashboard_updated": False,
-            "detail": broker_shape_error,
-        }, ensure_ascii=False))
-        return 1
-
-    if isinstance(supplied_account, dict):
-        supplied_account = merge_account_fact(prior_account, supplied_account)
-        supplied_account.setdefault("status", "VALID")
-        supplied_account.setdefault("validity_mode", "EVENT_DRIVEN_CARRY_FORWARD")
-        if account_fact_is_older(prior_account, supplied_account):
-            account_sync_status = "STALE_ACCOUNT_FACT_IGNORED"
-        else:
-            # Use the canonicalized event history returned by merge_account_fact:
-            # it may have upgraded a previously unresolved IPO registration.
-            prior_events = supplied_account.get("account_change_events_after_confirmed_at") or []
-            new_events = _account_change_events(prior_account, supplied_account, request, trades)
-            known = {str(x.get("idempotency_key") or x.get("event_id") or "") for x in prior_events}
-            supplied_account["account_change_events_after_confirmed_at"] = prior_events + [x for x in new_events if str(x.get("idempotency_key")) not in known]
-            if supplied_account == prior_account:
-                account_sync_status = "ACCOUNT_SYNC_IDEMPOTENT_NOOP"
-            else:
-                account_sync_status = "ACCOUNT_FACT_UPDATED"
-                atomic_json_write(ACCOUNT, supplied_account)
-    account = load_json(ACCOUNT)
-    if account.get("status") != "VALID":
-        raise RuntimeError("account_fact is not VALID")
-    decision_recorded, decision_id = record_formal_decision(request)
-    formal_decision_current = False
-    if decision_recorded:
-        formal_decision_current, formal_action_changed = project_current_formal_action(
-            account, request, decision_id
-        )
-        if formal_action_changed:
-            atomic_json_write(ACCOUNT, account)
-    trade_event_recorded = False
-    persisted_trade_events = []
-    for trade_index, trade in enumerate(trades):
-        confirmed_at = trade.get("confirmed_at_beijing") or request.get("requested_at_beijing") or trade.get("executed_at") or account.get("updated_at")
-        idempotency_key = _trade_idempotency_key(trade, confirmed_at)
-        existing = existing_trades[trade_index] or _find_existing_trade(trade, confirmed_at, idempotency_key)
-        if existing:
-            event, event_id, trade_event_recorded = existing, str(existing.get("event_id") or ""), True
-            # A request-scoped replay may repair an earlier unlinked trade, but
-            # never by guessing from the latest account action.  The replay must
-            # carry an explicit decision identity or a same-request formal decision.
-            explicit_replay_decision_id = str(trade.get("linked_decision_id") or trade.get("decision_id") or decision_id or "").strip()
-            if not str(event.get("linked_decision_id") or "").strip() and explicit_replay_decision_id:
-                event["linked_decision_id"] = explicit_replay_decision_id
-            # A request-scoped confirmation time is authoritative for an
-            # idempotent replay.  Never replace an earlier PIT confirmation with
-            # the current account snapshot's updated_at.
-            changed = False
-            requested_confirmed_at = str(trade.get("confirmed_at_beijing") or request.get("requested_at_beijing") or trade.get("executed_at") or "").strip()
-            if requested_confirmed_at and str(event.get("confirmed_at_beijing") or "") != requested_confirmed_at:
-                event["confirmed_at_beijing"] = requested_confirmed_at
-                event["execution_date"] = trade.get("market_date") or requested_confirmed_at[:10]
-                event["confirmation_date"] = trade.get("market_date") or requested_confirmed_at[:10]
-                event["idempotency_key"] = _trade_idempotency_key(trade, requested_confirmed_at)
-                changed = True
-            # Idempotent fee/account replays must also converge stale linkage and
-            # attribution written by an older producer; they never create another event.
-            link_trade = {
-                **trade,
-                "confirmed_at_beijing": requested_confirmed_at
-                or str(event.get("confirmed_at_beijing") or confirmed_at),
-            }
-            linked_decision_id = resolve_trade_linked_decision_id(
-                link_trade,
-                decision_id,
-                existing_linked_decision_id=str(event.get("linked_decision_id") or ""),
-            )
-            if not str(event.get("linked_decision_id") or "").strip() and linked_decision_id:
-                event["linked_decision_id"] = linked_decision_id
-                changed = True
-            refreshed_attribution = execution_attribution(event, linked_decision_id)
-            refreshed_hypothesis = refreshed_attribution.get("hypothesis_id")
+    with account_snapshot_transaction(ROOT):
+        account_sync_status = "NOT_APPLICABLE"
+            if is_broker_screenshot_request(request) and not isinstance(supplied_account, dict) and not trades:
+                result = {
+                    "ok": False,
+                    "request_id": request.get("request_id"),
+                    "interaction_scenario": request.get("interaction_scenario"),
+                    "status": "NO_ACCOUNT_FACT",
+                    "account_sync_status": "ACCOUNT_SYNC_NOT_PERFORMED",
+                    "canonical_ingress_state": canonical_ingress_contract["terminal_state"],
+                    "canonical_ingress_failure_reason": canonical_ingress_contract["reason"],
+                    "dashboard_updated": False,
+                    "detail": "Broker screenshot request has no request-scoped account_fact; market success must not be treated as account sync success.",
+                }
+                print(json.dumps(result, ensure_ascii=False))
+                return 1
             if (
-                event.get("execution_attribution") != refreshed_attribution
-                or event.get("hypothesis_id") != refreshed_hypothesis
+                canonical_ingress_contract["required"]
+                and canonical_ingress_contract["terminal_state"] == CANONICAL_INGRESS_FAILED_EXPLICITLY
+                and canonical_ingress_contract["reason"] != "missing_account_fact"
             ):
-                event["execution_attribution"] = refreshed_attribution
-                event["hypothesis_id"] = refreshed_hypothesis
-                changed = True
-            if changed:
-                atomic_json_write(ROOT / "events" / "trades" / f"{event_id}.json", event)
-        else:
-            event_id = _trade_event_id(request, trade, idempotency_key, trade_index, len(trades))
-            link_trade = {**trade, "confirmed_at_beijing": confirmed_at}
-            linked_decision_id = resolve_trade_linked_decision_id(link_trade, decision_id)
-            attribution = execution_attribution(link_trade, linked_decision_id)
-            event = {"event_id": event_id, "idempotency_key": idempotency_key, "confirmed_at_beijing": confirmed_at, "executed_at_beijing": trade.get("executed_at_beijing") or trade.get("executed_at") or trade.get("trade_time_beijing") or trade.get("trade_time") or confirmed_at, "account_confirmed_at_beijing": trade.get("account_confirmed_at_beijing"), "execution_date": trade.get("execution_date") or str(confirmed_at)[:10], "confirmation_date": trade.get("confirmation_date") or str(confirmed_at)[:10], "notification_id": trade.get("notification_id"), "name": trade.get("name"), "code": trade.get("code"), "side": trade.get("side"), "quantity": trade.get("quantity"), "price": trade.get("price"), "amount": trade.get("amount"), "lifecycle": trade.get("lifecycle"), "source": trade.get("source", account.get("source")), "source_confidence": trade.get("source_confidence"), "linked_decision_id": linked_decision_id or None, "hypothesis_id": trade.get("hypothesis_id") or attribution.get("hypothesis_id") or None, "execution_status": "EXECUTED", "execution_attribution": attribution}
-            event_path = ROOT / "events" / "trades" / f"{event_id}.json"
-            event_path.parent.mkdir(parents=True, exist_ok=True)
-            atomic_json_write(event_path, event)
-            trade_event_recorded = True
-        # Always reconcile event-backed human-readable records, including idempotent replay.
-        # This repairs a missing archive/CASE line without creating a second trade event.
-        archive_line = f"- {event['confirmed_at_beijing']}：{event.get('name')}（{event.get('code')}）{event.get('side')} {int(event.get('quantity') or 0):,}份/股，成交价{event.get('price')}，成交本金{float(event.get('amount') or 0):,.2f}元；来源：{event.get('source')}。"
-        case_line = f"- 待复盘CASE｜{event['confirmed_at_beijing']}｜{event.get('name')}（{event.get('code')}）｜{event.get('side')} {int(event.get('quantity') or 0):,}份/股｜生命周期：{event.get('lifecycle') or '待确认'}｜仅登记真实成交，复盘结论留待盘后形成。"
-        upsert_formal_line(ROOT, ARCHIVE.name, TRADE_START, TRADE_END, event_id, archive_line, before_heading="## 6. 历史Excel与专项数据来源")
-        upsert_formal_line(ROOT, EXPERIENCE.name, CASE_START, CASE_END, event_id, case_line, before_heading="## 3. 历史研究与专项回测")
-        sync_experience_transaction_index(event)
-        linked_event_decision_id = str(event.get("linked_decision_id") or "").strip()
-        prior_formal_action = account.get("formal_action") or {}
-        if linked_event_decision_id:
-            decision_path = ROOT / "events" / "decisions" / f"{linked_event_decision_id}.json"
-            linked_decision = load_json(decision_path) if decision_path.exists() else {}
-            linked_formal = linked_decision.get("formal_decision") if isinstance(linked_decision.get("formal_decision"), dict) else {}
-            account["formal_action"] = {
-                **prior_formal_action,
-                "action": linked_formal.get("action") or linked_formal.get("amount_action") or prior_formal_action.get("action") or "",
-                "quantity": linked_formal.get("quantity", prior_formal_action.get("quantity")),
-                "decision_id": linked_event_decision_id,
-                "decision_time": linked_formal.get("decision_time") or linked_formal.get("data_as_of_beijing") or linked_decision.get("decision_time_beijing") or prior_formal_action.get("decision_time"),
-                "source": "CHATGPT_FORMAL_DECISION",
-                "lifecycle": linked_formal.get("lifecycle") or prior_formal_action.get("lifecycle"),
-                "applicable_object": linked_formal.get("candidate_code") or linked_formal.get("code") or linked_decision.get("candidate_code") or prior_formal_action.get("applicable_object") or "",
-                "validity": "ACTIVE",
-                "execution_status": "EXECUTED",
-                "execution_fact_ref": f"events/trades/{event_id}.json",
-                "last_executed_event_id": event_id,
-            }
-        else:
-            account["formal_action"] = {
-                **prior_formal_action,
-                "execution_status": "EXECUTED",
-                "execution_fact_ref": f"events/trades/{event_id}.json",
-                "last_executed_event_id": event_id,
-            }
-        atomic_json_write(ACCOUNT, account)
-        write_trade_review_required(event)
-        persisted_trade_events.append((trade, event))
+                print(json.dumps({
+                    "ok": False,
+                    "status": "CANONICAL_INGRESS_FAILED_EXPLICITLY",
+                    "canonical_ingress_state": canonical_ingress_contract["terminal_state"],
+                    "canonical_ingress_failure_reason": canonical_ingress_contract["reason"],
+                    "request": str(req_path.relative_to(ROOT)).replace("\\", "/"),
+                }, ensure_ascii=False, indent=2, sort_keys=True))
+                return 1
 
-    # Refresh the CURRENT trade mirror only after this request's trade events
-    # are durable.  Doing this before the loop leaves CURRENT and downstream
-    # trigger construction one confirmed trade behind.
-    apply_superseded_trade_corrections(request)
-    latest_trade_event_id = _latest_trade_event_id()
-    if latest_trade_event_id:
-        current_path = ROOT / "data/state/CURRENT.json"
-        current = load_json(current_path) if current_path.exists() else {}
-        if current.get("last_trade_event_id") != latest_trade_event_id:
-            current["last_trade_event_id"] = latest_trade_event_id
-            current["generated_at"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-            atomic_json_write(current_path, current)
+            supplied_account, normalized_non_security_asset_count = normalize_broker_account_fact_ingress(request, supplied_account)
+            broker_shape_error = validate_broker_account_fact_ingress(request, supplied_account)
+            if broker_shape_error:
+                print(json.dumps({
+                    "ok": False,
+                    "request_id": request.get("request_id"),
+                    "status": "BROKER_ACCOUNT_FACT_SCHEMA_INVALID",
+                    "account_sync_status": "ACCOUNT_SYNC_NOT_PERFORMED",
+                    "canonical_ingress_state": CANONICAL_INGRESS_FAILED_EXPLICITLY,
+                    "canonical_ingress_failure_reason": "broker_account_fact_schema_invalid",
+                    "dashboard_updated": False,
+                    "detail": broker_shape_error,
+                }, ensure_ascii=False))
+                return 1
 
-    sync_current_account_mirror(ROOT, account)
-    review_recorded, review_idempotent = record_post_close_review(account, request)
-    unavailable_recorded, unavailable_idempotent = (False, False)
-    for trade, event in persisted_trade_events:
-        recorded, idempotent = record_unrecoverable_review_prerequisite(account, request, event)
-        unavailable_recorded = unavailable_recorded or recorded
-        unavailable_idempotent = unavailable_idempotent or idempotent
-    # Keep the three human-readable fact documents synchronized before the
-    # final Dashboard render.  sync_formal_files owns factual account projection
-    # but must not overwrite the lifecycle projection rendered below.
-    account_membership_changed = account_sync_status == "ACCOUNT_FACT_UPDATED" or bool(trade_event_recorded)
-    observation_universe_changed = persist_monitor_universe(
-        ROOT, account, (request.get("formal_decision") or {}) if formal_decision_current else {}
-    ) if (formal_decision_current or account_membership_changed) else False
-    formal_files_sync = sync_formal_files(ROOT, account)
-    # There is exactly one Dashboard projection owner: sync_formal_files.py.
-    # Do not rebuild the Dashboard through the legacy state-sync renderer here;
-    # that path omits the canonical lifecycle projection and reintroduces stale
-    # P&L values into the lifecycle "下一节点" column.
-    dashboard_sync = sync_dashboard_projection(ROOT, account)
+            if isinstance(supplied_account, dict):
+                supplied_account = merge_account_fact(prior_account, supplied_account)
+                supplied_account.setdefault("status", "VALID")
+                supplied_account.setdefault("validity_mode", "EVENT_DRIVEN_CARRY_FORWARD")
+                if account_fact_is_older(prior_account, supplied_account):
+                    account_sync_status = "STALE_ACCOUNT_FACT_IGNORED"
+                else:
+                    # Use the canonicalized event history returned by merge_account_fact:
+                    # it may have upgraded a previously unresolved IPO registration.
+                    prior_events = supplied_account.get("account_change_events_after_confirmed_at") or []
+                    new_events = _account_change_events(prior_account, supplied_account, request, trades)
+                    known = {str(x.get("idempotency_key") or x.get("event_id") or "") for x in prior_events}
+                    supplied_account["account_change_events_after_confirmed_at"] = prior_events + [x for x in new_events if str(x.get("idempotency_key")) not in known]
+                    if supplied_account == prior_account:
+                        account_sync_status = "ACCOUNT_SYNC_IDEMPOTENT_NOOP"
+                    else:
+                        account_sync_status = "ACCOUNT_FACT_UPDATED"
+                        atomic_json_write(ACCOUNT, supplied_account)
+            account = load_json(ACCOUNT)
+            if account.get("status") != "VALID":
+                raise RuntimeError("account_fact is not VALID")
+            decision_recorded, decision_id = record_formal_decision(request)
+            formal_decision_current = False
+            if decision_recorded:
+                formal_decision_current, formal_action_changed = project_current_formal_action(
+                    account, request, decision_id
+                )
+                if formal_action_changed:
+                    atomic_json_write(ACCOUNT, account)
+            trade_event_recorded = False
+            persisted_trade_events = []
+            for trade_index, trade in enumerate(trades):
+                confirmed_at = trade.get("confirmed_at_beijing") or request.get("requested_at_beijing") or trade.get("executed_at") or account.get("updated_at")
+                idempotency_key = _trade_idempotency_key(trade, confirmed_at)
+                existing = existing_trades[trade_index] or _find_existing_trade(trade, confirmed_at, idempotency_key)
+                if existing:
+                    event, event_id, trade_event_recorded = existing, str(existing.get("event_id") or ""), True
+                    # A request-scoped replay may repair an earlier unlinked trade, but
+                    # never by guessing from the latest account action.  The replay must
+                    # carry an explicit decision identity or a same-request formal decision.
+                    explicit_replay_decision_id = str(trade.get("linked_decision_id") or trade.get("decision_id") or decision_id or "").strip()
+                    if not str(event.get("linked_decision_id") or "").strip() and explicit_replay_decision_id:
+                        event["linked_decision_id"] = explicit_replay_decision_id
+                    # A request-scoped confirmation time is authoritative for an
+                    # idempotent replay.  Never replace an earlier PIT confirmation with
+                    # the current account snapshot's updated_at.
+                    changed = False
+                    requested_confirmed_at = str(trade.get("confirmed_at_beijing") or request.get("requested_at_beijing") or trade.get("executed_at") or "").strip()
+                    if requested_confirmed_at and str(event.get("confirmed_at_beijing") or "") != requested_confirmed_at:
+                        event["confirmed_at_beijing"] = requested_confirmed_at
+                        event["execution_date"] = trade.get("market_date") or requested_confirmed_at[:10]
+                        event["confirmation_date"] = trade.get("market_date") or requested_confirmed_at[:10]
+                        event["idempotency_key"] = _trade_idempotency_key(trade, requested_confirmed_at)
+                        changed = True
+                    # Idempotent fee/account replays must also converge stale linkage and
+                    # attribution written by an older producer; they never create another event.
+                    link_trade = {
+                        **trade,
+                        "confirmed_at_beijing": requested_confirmed_at
+                        or str(event.get("confirmed_at_beijing") or confirmed_at),
+                    }
+                    linked_decision_id = resolve_trade_linked_decision_id(
+                        link_trade,
+                        decision_id,
+                        existing_linked_decision_id=str(event.get("linked_decision_id") or ""),
+                    )
+                    if not str(event.get("linked_decision_id") or "").strip() and linked_decision_id:
+                        event["linked_decision_id"] = linked_decision_id
+                        changed = True
+                    refreshed_attribution = execution_attribution(event, linked_decision_id)
+                    refreshed_hypothesis = refreshed_attribution.get("hypothesis_id")
+                    if (
+                        event.get("execution_attribution") != refreshed_attribution
+                        or event.get("hypothesis_id") != refreshed_hypothesis
+                    ):
+                        event["execution_attribution"] = refreshed_attribution
+                        event["hypothesis_id"] = refreshed_hypothesis
+                        changed = True
+                    if changed:
+                        atomic_json_write(ROOT / "events" / "trades" / f"{event_id}.json", event)
+                else:
+                    event_id = _trade_event_id(request, trade, idempotency_key, trade_index, len(trades))
+                    link_trade = {**trade, "confirmed_at_beijing": confirmed_at}
+                    linked_decision_id = resolve_trade_linked_decision_id(link_trade, decision_id)
+                    attribution = execution_attribution(link_trade, linked_decision_id)
+                    event = {"event_id": event_id, "idempotency_key": idempotency_key, "confirmed_at_beijing": confirmed_at, "executed_at_beijing": trade.get("executed_at_beijing") or trade.get("executed_at") or trade.get("trade_time_beijing") or trade.get("trade_time") or confirmed_at, "account_confirmed_at_beijing": trade.get("account_confirmed_at_beijing"), "execution_date": trade.get("execution_date") or str(confirmed_at)[:10], "confirmation_date": trade.get("confirmation_date") or str(confirmed_at)[:10], "notification_id": trade.get("notification_id"), "name": trade.get("name"), "code": trade.get("code"), "side": trade.get("side"), "quantity": trade.get("quantity"), "price": trade.get("price"), "amount": trade.get("amount"), "lifecycle": trade.get("lifecycle"), "source": trade.get("source", account.get("source")), "source_confidence": trade.get("source_confidence"), "linked_decision_id": linked_decision_id or None, "hypothesis_id": trade.get("hypothesis_id") or attribution.get("hypothesis_id") or None, "execution_status": "EXECUTED", "execution_attribution": attribution}
+                    event_path = ROOT / "events" / "trades" / f"{event_id}.json"
+                    event_path.parent.mkdir(parents=True, exist_ok=True)
+                    atomic_json_write(event_path, event)
+                    trade_event_recorded = True
+                # Always reconcile event-backed human-readable records, including idempotent replay.
+                # This repairs a missing archive/CASE line without creating a second trade event.
+                archive_line = f"- {event['confirmed_at_beijing']}：{event.get('name')}（{event.get('code')}）{event.get('side')} {int(event.get('quantity') or 0):,}份/股，成交价{event.get('price')}，成交本金{float(event.get('amount') or 0):,.2f}元；来源：{event.get('source')}。"
+                case_line = f"- 待复盘CASE｜{event['confirmed_at_beijing']}｜{event.get('name')}（{event.get('code')}）｜{event.get('side')} {int(event.get('quantity') or 0):,}份/股｜生命周期：{event.get('lifecycle') or '待确认'}｜仅登记真实成交，复盘结论留待盘后形成。"
+                upsert_formal_line(ROOT, ARCHIVE.name, TRADE_START, TRADE_END, event_id, archive_line, before_heading="## 6. 历史Excel与专项数据来源")
+                upsert_formal_line(ROOT, EXPERIENCE.name, CASE_START, CASE_END, event_id, case_line, before_heading="## 3. 历史研究与专项回测")
+                sync_experience_transaction_index(event)
+                linked_event_decision_id = str(event.get("linked_decision_id") or "").strip()
+                prior_formal_action = account.get("formal_action") or {}
+                if linked_event_decision_id:
+                    decision_path = ROOT / "events" / "decisions" / f"{linked_event_decision_id}.json"
+                    linked_decision = load_json(decision_path) if decision_path.exists() else {}
+                    linked_formal = linked_decision.get("formal_decision") if isinstance(linked_decision.get("formal_decision"), dict) else {}
+                    account["formal_action"] = {
+                        **prior_formal_action,
+                        "action": linked_formal.get("action") or linked_formal.get("amount_action") or prior_formal_action.get("action") or "",
+                        "quantity": linked_formal.get("quantity", prior_formal_action.get("quantity")),
+                        "decision_id": linked_event_decision_id,
+                        "decision_time": linked_formal.get("decision_time") or linked_formal.get("data_as_of_beijing") or linked_decision.get("decision_time_beijing") or prior_formal_action.get("decision_time"),
+                        "source": "CHATGPT_FORMAL_DECISION",
+                        "lifecycle": linked_formal.get("lifecycle") or prior_formal_action.get("lifecycle"),
+                        "applicable_object": linked_formal.get("candidate_code") or linked_formal.get("code") or linked_decision.get("candidate_code") or prior_formal_action.get("applicable_object") or "",
+                        "validity": "ACTIVE",
+                        "execution_status": "EXECUTED",
+                        "execution_fact_ref": f"events/trades/{event_id}.json",
+                        "last_executed_event_id": event_id,
+                    }
+                else:
+                    account["formal_action"] = {
+                        **prior_formal_action,
+                        "execution_status": "EXECUTED",
+                        "execution_fact_ref": f"events/trades/{event_id}.json",
+                        "last_executed_event_id": event_id,
+                    }
+                atomic_json_write(ACCOUNT, account)
+                write_trade_review_required(event)
+                persisted_trade_events.append((trade, event))
+
+            # Refresh the CURRENT trade mirror only after this request's trade events
+            # are durable.  Doing this before the loop leaves CURRENT and downstream
+            # trigger construction one confirmed trade behind.
+            apply_superseded_trade_corrections(request)
+            latest_trade_event_id = _latest_trade_event_id()
+            if latest_trade_event_id:
+                current_path = ROOT / "data/state/CURRENT.json"
+                current = load_json(current_path) if current_path.exists() else {}
+                if current.get("last_trade_event_id") != latest_trade_event_id:
+                    current["last_trade_event_id"] = latest_trade_event_id
+                    current["generated_at"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+                    atomic_json_write(current_path, current)
+
+            sync_current_account_mirror(ROOT, account)
+            review_recorded, review_idempotent = record_post_close_review(account, request)
+            unavailable_recorded, unavailable_idempotent = (False, False)
+            for trade, event in persisted_trade_events:
+                recorded, idempotent = record_unrecoverable_review_prerequisite(account, request, event)
+                unavailable_recorded = unavailable_recorded or recorded
+                unavailable_idempotent = unavailable_idempotent or idempotent
+            # Keep the three human-readable fact documents synchronized before the
+            # final Dashboard render.  sync_formal_files owns factual account projection
+            # but must not overwrite the lifecycle projection rendered below.
+            account_membership_changed = account_sync_status == "ACCOUNT_FACT_UPDATED" or bool(trade_event_recorded)
+            observation_universe_changed = persist_monitor_universe(
+                ROOT, account, (request.get("formal_decision") or {}) if formal_decision_current else {}
+            ) if (formal_decision_current or account_membership_changed) else False
+            formal_files_sync = sync_formal_files(ROOT, account)
+            # There is exactly one Dashboard projection owner: sync_formal_files.py.
+            # Do not rebuild the Dashboard through the legacy state-sync renderer here;
+            # that path omits the canonical lifecycle projection and reintroduces stale
+            # P&L values into the lifecycle "下一节点" column.
+            dashboard_sync = sync_dashboard_projection(ROOT, account)
+
     result = {"ok": True, "request_id": request.get("request_id"), "interaction_scenario": request.get("interaction_scenario"), "account_updated_at": account.get("updated_at"), "dashboard_updated": bool(dashboard_sync.get("dashboard_changed")), "formal_decision_recorded": decision_recorded, "formal_decision_id": decision_id, "trade_event_recorded": trade_event_recorded, "post_close_review_recorded": review_recorded, "post_close_review_idempotent_noop": review_idempotent, "review_prerequisite_unavailable_recorded": unavailable_recorded, "review_prerequisite_unavailable_idempotent_noop": unavailable_idempotent, "formal_files_sync": formal_files_sync, "observation_universe_changed": observation_universe_changed, "account_sync_status": account_sync_status, "normalized_non_security_asset_count": normalized_non_security_asset_count, "canonical_ingress_state": canonical_ingress_contract["terminal_state"], "canonical_ingress_failure_reason": None if canonical_ingress_contract["terminal_state"] == CANONICAL_INGRESS_SUBMITTED else canonical_ingress_contract["reason"]}
     if review_recorded and str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION":
         # The completion projection owner needs the exact event produced by the
