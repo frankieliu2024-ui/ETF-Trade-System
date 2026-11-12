@@ -718,6 +718,7 @@ def build_dashboard_block(account: dict, equity: dict, existing: str, root: Path
         "## 云端实时状态（自动同步）", "",
         f"> 账户事实更新时间：{account.get('updated_at', '')}  ",
         f"> 账户事实来源：{account.get('source', '')}  ",
+        f"> 账户快照批次：{account.get('account_snapshot_id', '') or '未提供'}  ",
         f"> ETF策略风险as-of：{risk_cutoff}  ",
         f"> ETF策略风险来源：{risk_source}  ",
         "> 场景：ACCOUNT_FACT_MAINTENANCE  ",
@@ -819,6 +820,7 @@ def build_archive_fact_block(account: dict) -> str:
         "### 账户事实增量维护（仅客观事实）",
         f"- 账户事实确认时间：{account.get('updated_at', '')}",
         f"- 来源：{account.get('source', '')}",
+        f"- 账户快照批次：{account.get('account_snapshot_id', '') or '未提供'}",
         f"- 总资产：{money(account.get('total_asset'))}；可用资金：{money(account.get('cash'))}；持仓数量沿用最新确认账户事实。",
         *trade_lines,
         "- 本区块不生成交易权限、买卖建议或MASTER修改；未确认费用不写入已知费用。",
@@ -836,6 +838,8 @@ def sync_current_account_reference(root: Path, account: dict) -> bool:
         "account_fact_updated_at": account.get("updated_at"),
         "account_fact_status": account.get("status"),
         "account_fact_source": account.get("source"),
+        "account_snapshot_id": account.get("account_snapshot_id"),
+        "account_snapshot_version": account.get("account_snapshot_version"),
     }
     for key, value in wanted.items():
         if current.get(key) != value:
