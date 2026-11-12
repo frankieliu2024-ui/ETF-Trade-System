@@ -861,7 +861,7 @@ jobs:
           market_date = str(event.get("market_date") or binding.get("market_date") or "").strip()
           generated_at = str(event.get("generated_at") or event.get("recorded_at") or "").strip()
           content = str(binding.get("full_content") or event.get("full_content") or "")
-          if not all((report_type, task_id, task_run_id, report_id, market_date, generated_at, content)):
+          if not all((report_type, task_id, report_id, market_date, generated_at, content)):
               raise SystemExit("canonical review event lacks REPORT projection fields")
           title = content.splitlines()[0].strip() if content.splitlines() else report_type
           request = build_report_delivery_request(
