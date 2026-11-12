@@ -32,7 +32,10 @@ def build_and_write_report_request(*, output: Path, task_id: str, task_run_id: s
     if not valid:
         raise ValueError("canonical REPORT validation failed before persistence: " + reason)
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(request, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    serialized = json.dumps(request, ensure_ascii=False, indent=2) + "\n"
+    temporary = output.with_suffix(output.suffix + ".tmp")
+    temporary.write_text(serialized, encoding="utf-8")
+    temporary.replace(output)
     return request
 
 
