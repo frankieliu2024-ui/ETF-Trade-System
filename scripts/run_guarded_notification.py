@@ -1296,7 +1296,7 @@ def _run_center(mode: str, formal_content_file: str | None = None) -> int:
         direct_task = str(direct_payload.get("task_id") or (direct_payload.get("presentation_binding") or {}).get("task_id") or "").strip()
         direct_task_name = str(direct_payload.get("task_name") or "").strip()
         report_type = str(direct_payload.get("report_type") or (direct_payload.get("presentation_binding") or {}).get("report_type") or "").strip().upper()
-        if direct_task != "ETF交易复盘" and not (direct_task_name == "ETF正式决策" or report_type == "ETF_FORMAL_DECISION"):
+        if direct_task != "ETF交易复盘" and not (direct_task_name == "ETF正式决策" or report_type in {"ETF_FORMAL_DECISION", "ETF正式决策"}):
             print(json.dumps({"status": "FAILED", "error": "Unsupported direct completion task"}, ensure_ascii=False))
             return 1
 

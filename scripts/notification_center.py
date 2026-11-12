@@ -1215,7 +1215,7 @@ def formal_content_event(source_path: Path) -> dict | None:
     task_name = str(event.get("task_name") or "").strip()
     direct_content = str(event.get("final_content") or event.get("presentation_content") or "").strip()
     report_type = str(event.get("report_type") or binding.get("report_type") or "").strip().upper()
-    if (task_name == "ETF正式决策" or report_type == "ETF_FORMAL_DECISION") and direct_content:
+    if (task_name == "ETF正式决策" or report_type in {"ETF_FORMAL_DECISION", "ETF正式决策"}) and direct_content:
         request_id = str(event.get("request_id") or binding.get("request_id") or "").strip()
         task_run_id = str(event.get("task_run_id") or binding.get("task_run_id") or request_id or source_path.stem).strip()
         occurrence_id = str(event.get("occurrence_id") or binding.get("occurrence_id") or task_run_id).strip()
