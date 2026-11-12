@@ -450,7 +450,12 @@ def _validate_post_close_review_contract(report: dict, now=None) -> None:
     binding = review.get("presentation_binding") if isinstance(review.get("presentation_binding"), dict) else {}
     report_id = str(binding.get("report_id") or review.get("report_id") or "").strip()
     report_path = ROOT / "requests" / "report_delivery" / f"{report_id.replace(':', '__')}.json" if report_id else None
-    delivery_report = _read_json(str(report_path.relative_to(ROOT)).replace("\\", "/")) if report_path and report_path.exists() else {}
+    delivery_report = {}
+    if report_path and report_path.exists():
+        try:
+            delivery_report = _read_json(str(report_path.relative_to(ROOT)).replace("\\", "/"))
+        except (OSError, json.JSONDecodeError):
+            errors.append("malformed_report_delivery_projection")
     if (not report_path or not report_path.exists()
             or delivery_report.get("event_type") != "REPORT_DELIVERY_REQUEST"
             or delivery_report.get("report_id") != report_id
