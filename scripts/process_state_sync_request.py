@@ -4316,6 +4316,22 @@ def _snapshot_number(value):
         return None
 
 
+def _reject_account_snapshot_cross_domain_mutation(prior: dict, supplied: dict) -> None:
+    """A broker snapshot may replace account facts, never formal or lifecycle facts."""
+    if not _is_complete_account_snapshot(supplied):
+        return
+    protected = ("formal_action", "formal_decision", "lifecycle")
+    for field in protected:
+        if field not in supplied:
+            continue
+        incoming = supplied.get(field)
+        existing = prior.get(field)
+        if incoming not in (None, {}, []) and incoming != existing:
+            raise ValueError(
+                f"account snapshot cannot modify non-account field {field}"
+            )
+
+
 def _validate_account_snapshot_candidate(candidate: dict, supplied: dict) -> None:
     """Fail closed before persistence when one screenshot batch is internally inconsistent."""
     if not _is_complete_account_snapshot(supplied):
@@ -4415,6 +4431,7 @@ def _canonicalize_account_positions(prior: dict, supplied: dict, merged: dict) -
 def merge_account_fact(prior: dict, supplied: dict) -> dict:
     """Merge confirmed screenshot facts and derive settlement cash canonically."""
     merged = json.loads(json.dumps(prior or {}))
+    _reject_account_snapshot_cross_domain_mutation(prior or {}, supplied or {})
     clear_missing = list(supplied.get("_screenshot_clear_missing_fields") or [])
     # Keep the safety invariant at the merge boundary as well. Historical
     # request adapters may omit the internal marker, but an explicit broker
