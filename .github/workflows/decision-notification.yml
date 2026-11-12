@@ -132,13 +132,12 @@ jobs:
           payload = json.load(open(sys.argv[1], encoding="utf-8"))
           binding = payload.get("presentation_binding") or {}
           report_type = str(payload.get("report_type") or binding.get("report_type") or "").strip().upper()
-          task_id = str(payload.get("task_id") or binding.get("task_id") or "").strip()
-          task_name = str(payload.get("task_name") or "").strip()
+          task_name = str(payload.get("task_name") or binding.get("task_name") or "").strip()
           source = str(payload.get("source") or payload.get("formal_entry_source") or "").strip().upper()
           content = str(payload.get("final_content") or "")
           formal = (
               report_type == "ETF_FORMAL_DECISION"
-              and (task_id == "ETF正式决策" or task_name == "ETF正式决策")
+              and (not task_name or task_name == "ETF正式决策")
           )
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
               out.write("formal=%s\n" % ("true" if formal else "false"))
@@ -179,25 +178,23 @@ jobs:
           ).strip().upper()
           source = str(payload.get("source") or payload.get("formal_entry_source") or "").strip().upper()
           content = str(payload.get("final_content") or "")
+          task_name = str(payload.get("task_name") or binding.get("task_name") or "").strip()
+          semantic_name = task_name or {
+              "ETF_FORMAL_DECISION": "ETF正式决策",
+              "ETF_TRADE_REVIEW": "ETF交易复盘",
+              "SCHEDULED_TRADE_REVIEW": "ETF交易复盘",
+              "ETF_SYSTEM_REVIEW": "ETF系统复核",
+          }.get(report_type, "")
           if (
               report_type == "ETF_FORMAL_DECISION"
-              and str(payload.get("task_id") or binding.get("task_id") or payload.get("task_name") or "").strip() == "ETF正式决策"
+              and semantic_name == "ETF正式决策"
           ):
               print("FORMAL")
-          else:
-              task_id = str(
-                  payload.get("task_id") or binding.get("task_id") or ""
-              ).strip()
-              task_name = str(payload.get("task_name") or "").strip()
-              review_identity = task_id or task_name
-              if (
-                  report_type in {"ETF_TRADE_REVIEW", "SCHEDULED_TRADE_REVIEW", "ETF_SYSTEM_REVIEW"}
-                  and review_identity in {"ETF交易复盘", "ETF系统复核"}
-              ):
-                  # task_id is optional when the platform does not expose it.
-                  # task_name is the stable business identity; never fabricate
-                  # task_id, but do not reject a valid completion for its absence.
-                  print("SYSTEM_REVIEW" if review_identity == "ETF系统复核" else "TRADE_REVIEW")
+          elif (
+              report_type in {"ETF_TRADE_REVIEW", "SCHEDULED_TRADE_REVIEW", "ETF_SYSTEM_REVIEW"}
+              and semantic_name in {"ETF交易复盘", "ETF系统复核"}
+          ):
+              print("SYSTEM_REVIEW" if semantic_name == "ETF系统复核" else "TRADE_REVIEW")
               elif payload.get("request_type") == "SCHEDULED_REVIEW_COMPLETION":
                   print("SCHEDULED_REVIEW")
               else:
@@ -451,9 +448,13 @@ jobs:
           import json, sys
           from pathlib import Path
           obj = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          binding = obj.get("presentation_binding") or {}
+          report_type = str(obj.get("report_type") or binding.get("report_type") or "").strip().upper()
+          task_name = str(obj.get("task_name") or binding.get("task_name") or "").strip()
           if (
               str(obj.get("request_type") or "").upper() == "SCHEDULED_REVIEW_COMPLETION"
-              and str(obj.get("task_id") or "").strip() in {"ETF正式决策", "ETF交易复盘", "ETF系统复核"}
+              and report_type in {"ETF_FORMAL_DECISION", "ETF_TRADE_REVIEW", "SCHEDULED_TRADE_REVIEW", "ETF_SYSTEM_REVIEW"}
+              and (not task_name or task_name in {"ETF正式决策", "ETF交易复盘", "ETF系统复核"})
           ):
               raise SystemExit(0)
           raise SystemExit(1)
