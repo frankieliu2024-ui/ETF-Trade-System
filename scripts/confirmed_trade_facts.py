@@ -299,6 +299,16 @@ def recover_canonical_etf_trade_facts(root: Path, reconstructed_trades: list[dic
     current = canonical_etf_trade_facts(root, reconstructed_trades)
     if expected_count <= 0 or len(current) >= expected_count:
         return current
+    # A stale persisted count can be caused by two rows carrying one stable
+    # event_id at different confirmation clocks. Once canonicalization has
+    # collapsed that identity, historical recovery must not re-add the shadow.
+    stable_ids = [
+        str(item.get("event_id") or "").strip()
+        for item in reconstructed_trades
+        if str(item.get("event_id") or "").strip()
+    ]
+    if len(stable_ids) != len(set(stable_ids)):
+        return current
     seed = list(reconstructed_trades) + experience_etf_trade_index_facts(root)
     recovered = canonical_etf_trade_facts(root, seed)
     if len(recovered) == expected_count:
