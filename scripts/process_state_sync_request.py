@@ -4313,11 +4313,19 @@ def _canonicalize_account_positions(prior: dict, supplied: dict, merged: dict) -
     if not isinstance(rows, list):
         return
     supplied_rows = supplied.get("positions")
-    supplied_by_code = {
-        str(row.get("code") or "").strip(): json.loads(json.dumps(row))
-        for row in (supplied_rows or [])
-        if isinstance(row, dict) and str(row.get("code") or "").strip()
-    }
+    supplied_by_code = {}
+    for index, row in enumerate(supplied_rows or []):
+        if not isinstance(row, dict):
+            continue
+        code = str(row.get("code") or "").strip()
+        if not code:
+            continue
+        if code in supplied_by_code:
+            raise ValueError(
+                "account snapshot contains duplicate security code "
+                f"{code!r} at positions[{index}]"
+            )
+        supplied_by_code[code] = json.loads(json.dumps(row))
     canonical = {}
     order = []
     for row in rows:
