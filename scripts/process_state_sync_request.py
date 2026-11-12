@@ -4469,9 +4469,11 @@ def merge_account_fact(prior: dict, supplied: dict) -> dict:
         if key not in merged and key in (prior or {}):
             merged[key] = json.loads(json.dumps(prior[key]))
     _canonicalize_settlement_account(merged)
-    _annotate_confirmed_ipo_origins(merged)
     _reconcile_known_ipo_events(merged)
     _canonicalize_account_positions(prior or {}, supplied or {}, merged)
+    # Canonical position rebuilding must happen before confirmed-origin
+    # annotation; otherwise the rebuild silently drops the origin fact.
+    _annotate_confirmed_ipo_origins(merged)
     _validate_account_snapshot_candidate(merged, supplied or {})
     codes = [str(row.get("code") or "").strip() for row in merged.get("positions") or []]
     if len(codes) != len(set(codes)):
