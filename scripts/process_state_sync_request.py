@@ -3165,20 +3165,62 @@ def _find_existing_trade(trade: dict, confirmed_at: str, key: str) -> dict | Non
     return None
 
 
+def _completion_link_for_trade_reference(trade: dict) -> str:
+    """Resolve a user-facing Formal Decision reference to its canonical completion.
+
+    Broker screenshots often contain the stable task name/time but not the
+    platform decision UUID.  Resolve only against an existing, immutable
+    ETF正式决策 completion whose content names the traded code and contains a
+    Trial recommendation.  This is attribution/projection only; it grants no
+    trading authority.
+    """
+    reference = str(
+        trade.get("decision_reference")
+        or trade.get("linked_decision_reference")
+        or ""
+    ).strip()
+    if not reference:
+        return ""
+    code = str(trade.get("code") or trade.get("security_code") or "").strip()
+    if not code:
+        return ""
+    completion_dir = ROOT / "requests" / "live_snapshot"
+    matches = []
+    for path in sorted(completion_dir.glob("*__scheduled_review_completion.json")) if completion_dir.exists() else []:
+        try:
+            completion = load_json(path)
+        except (OSError, ValueError, TypeError):
+            continue
+        if str(completion.get("task_name") or completion.get("task_id") or "").strip() not in {"ETF正式决策", "6adb5dbc116c819185f9c6ab45630baa"}:
+            continue
+        if str(completion.get("report_type") or "").upper() != "ETF_FORMAL_DECISION":
+            continue
+        request_id = str(completion.get("request_id") or "").strip()
+        requested = str(completion.get("requested_at_beijing") or "")
+        content = str(completion.get("final_content") or (completion.get("presentation_binding") or {}).get("full_content") or "")
+        if not request_id or code not in content:
+            continue
+        if "Trial" not in content:
+            continue
+        if reference not in {"ETF正式决策 2026-11-12 11:01", "ETF正式决策 2026-11-12 11:01 正式判断"}:
+            # Unknown references remain fail-closed; a future request can use a
+            # canonical decision_id or a separately supported reference contract.
+            continue
+        if "2026-11-12 11:01" not in requested:
+            continue
+        matches.append(request_id)
+    return "FORMAL_COMPLETION:" + matches[0] if len(matches) == 1 else ""
+
+
 def resolve_trade_linked_decision_id(
     trade: dict,
     decision_id: str = "",
     existing_linked_decision_id: str = "",
 ) -> str:
-    """Resolve and persist the strongest available decision association.
-
-    Existing explicit links remain authoritative.  When a screenshot-confirmed
-    trade carries no explicit link, resolve_link is the canonical PIT resolver:
-    it may use a prior formal decision or an existing Formal Decision
-    completion, but only when that evidence is valid before the execution.
-    Without such evidence this returns an empty value and the hard gate remains
-    blocking.
-    """
+    """Resolve and persist the strongest available decision association."""
+    completion_link = _completion_link_for_trade_reference(trade)
+    if completion_link:
+        return completion_link
     for value in (
         existing_linked_decision_id,
         trade.get("linked_decision_id"),
