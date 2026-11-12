@@ -137,6 +137,9 @@ def replay(root: Path = ROOT, *, price_dir: Path | None = None, cutoff: str | No
     # never infer a trade from price, position, or broker balance.
     facts.sort(key=lambda t: (_stamp(t), trade_signature(t)))
     historical = experience_etf_trade_index_facts(root)
+    # Include reconstructed seed rows as recovery candidates too: canonical
+    # projection may have filtered a legacy BUY while retaining its paired SELL.
+    predecessor_candidates = historical + list(reconstructed)
     known = {trade_signature(t) for t in facts}
     lots = defaultdict(float)
     for trade in facts:
@@ -149,7 +152,7 @@ def replay(root: Path = ROOT, *, price_dir: Path | None = None, cutoff: str | No
             lots[code] -= qty
     missing_codes = {code for code, qty in lots.items() if qty < -1e-9}
     if missing_codes:
-        for candidate in historical:
+        for candidate in predecessor_candidates:
             code = str(candidate.get("code") or "")
             if code not in missing_codes or str(candidate.get("side") or "").upper() != "BUY":
                 continue
