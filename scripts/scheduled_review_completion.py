@@ -860,8 +860,21 @@ def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | N
     binding = payload.get("presentation_binding")
     if not isinstance(binding, dict):
         raise ValueError("Formal Decision completion requires presentation_binding")
-    if str(payload.get("task_id") or binding.get("task_id") or "").strip() != "ETF正式决策":
+    # Keep platform task identity opaque. The scheduled-task runtime may
+    # provide a UUID in task_id; the business identity is task_name. Bind both
+    # layers instead of comparing the platform UUID with the display name.
+    task_name = str(payload.get("task_name") or binding.get("task_name") or "").strip()
+    platform_task_id = str(payload.get("task_id") or "").strip()
+    bound_task_id = str(binding.get("task_id") or "").strip()
+    if task_name != "ETF正式决策":
         raise ValueError("Formal Decision completion task identity mismatch")
+    if not platform_task_id:
+        raise ValueError("Formal Decision completion missing platform task_id")
+    if bound_task_id and bound_task_id != platform_task_id:
+        raise ValueError("Formal Decision completion platform task identity mismatch")
+    binding["task_id"] = platform_task_id
+    binding["task_name"] = task_name
+    payload["presentation_binding"] = binding
     if str(payload.get("report_type") or binding.get("report_type") or "").strip().upper() != "ETF_FORMAL_DECISION":
         raise ValueError("Formal Decision completion report identity mismatch")
     if str(payload.get("interaction_scenario") or "").strip().upper() != "FORMAL_DECISION":
