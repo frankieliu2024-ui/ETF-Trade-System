@@ -4347,7 +4347,26 @@ def _canonicalize_account_positions(prior: dict, supplied: dict, merged: dict) -
 def merge_account_fact(prior: dict, supplied: dict) -> dict:
     """Merge confirmed screenshot facts and derive settlement cash canonically."""
     merged = json.loads(json.dumps(prior or {}))
-    for field in supplied.get("_screenshot_clear_missing_fields") or []:
+    clear_missing = list(supplied.get("_screenshot_clear_missing_fields") or [])
+    # Keep the safety invariant at the merge boundary as well. Historical
+    # request adapters may omit the internal marker, but an explicit broker
+    # screenshot source still makes absent summary fields unknown.
+    source = str(supplied.get("source") or "").upper()
+    if not clear_missing and ("BROKER" in source or "SCREENSHOT" in source):
+        aliases = {
+            "total_asset": "total_assets",
+            "stock_market_value": "securities_market_value",
+            "cash": "available_cash",
+            "holding_pnl": "floating_pnl",
+        }
+        clear_missing = [
+            field for field in (
+                "total_asset", "stock_market_value", "cash",
+                "holding_pnl", "daily_pnl", "daily_pnl_pct",
+            )
+            if field not in supplied and aliases.get(field) not in supplied
+        ]
+    for field in clear_missing:
         merged[field] = None
     for key, value in (supplied or {}).items():
         if key not in {"settlement_obligations", "_screenshot_clear_missing_fields"} and value is not None:
