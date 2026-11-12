@@ -4217,6 +4217,7 @@ def normalize_broker_account_fact_ingress(request: dict, supplied: object) -> tu
         normalized["available_cash"] = normalized["cash"]
         normalized["deployable_cash_before_settlement"] = normalized["cash"]
     if normalized.get("stock_market_value") is not None:
+        normalized["securities_market_value"] = normalized["stock_market_value"]
         normalized["total_market_value"] = normalized["stock_market_value"]
     # Keep legacy account readers aligned with the current screenshot aliases.
     if normalized.get("daily_pnl") is not None:
