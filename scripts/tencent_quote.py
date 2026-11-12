@@ -189,6 +189,12 @@ def fetch_tencent_daily_history(
     return rows, meta
 
 
+def _positive_quote_field(value: object) -> float | None:
+    """Treat provider zero/sentinel OHLC values as unavailable, never as prices."""
+    parsed = _number(value)
+    return parsed if parsed is not None and parsed > 0 else None
+
+
 def fetch_tencent_quotes(thscodes: list[str], timeout: int = 10) -> dict[str, dict]:
     """Fetch a batch of Shanghai/Shenzhen quotes from Tencent's public quote endpoint."""
     normalized = [_provider_symbol(thscode) for thscode in thscodes]
@@ -214,9 +220,9 @@ def fetch_tencent_quotes(thscodes: list[str], timeout: int = 10) -> dict[str, di
         result[str(thscode).upper()] = {
             "name": fields[1].strip(),
             "provider_symbol": provider_symbol,
-            "open_price": None if suspended else _number(fields[5]),
-            "high_price": None if suspended else _number(fields[33]),
-            "low_price": None if suspended else _number(fields[34]),
+            "open_price": None if suspended else _positive_quote_field(fields[5]),
+            "high_price": None if suspended else _positive_quote_field(fields[33]),
+            "low_price": None if suspended else _positive_quote_field(fields[34]),
             "last_price": price,
             "prev_price": prev_close,
             "provider_price_change_amount": _number(fields[31]),

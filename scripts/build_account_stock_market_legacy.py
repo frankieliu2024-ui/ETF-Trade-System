@@ -109,7 +109,7 @@ def fetch_eastmoney_stock(stock: dict) -> dict:
         "volume_raw": data.get("f47"), "volume_unit_raw": "hand", "volume_unit": "share", "amount_unit": "CNY",
         "quality_status": "PASS", "quantity": stock.get("quantity"), "market_value_from_account": stock.get("market_value"),
     }
-    ok, reason = validate_market_row(candidate, code, expected_name=str(data.get("f58") or stock.get("name") or ""), market_date=now_dt.date().isoformat(), now=now_dt.astimezone(timezone.utc), runtime_policy={"degraded_max_age_seconds": 1500})
+    ok, reason = validate_market_row(candidate, code, expected_name=str(data.get("f58") or stock.get("name") or ""), market_date=now_dt.date().isoformat(), now=now_dt.astimezone(timezone.utc), runtime_policy={"degraded_max_age_seconds": 1500}, allow_auction_partial=False)
     if not ok:
         raise RuntimeError(f"{code} quality guard: {reason}")
     return candidate
