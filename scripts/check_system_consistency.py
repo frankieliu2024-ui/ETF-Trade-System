@@ -1044,7 +1044,7 @@ def _validate_readme_front_door(report: dict) -> None:
 
 
 def _validate_current_formal_decision_projection(report: dict) -> None:
-    """Expose a stale formal decision that conflicts with current account facts."""
+    """Expose a stale formal decision only after today's first legal node is due."""
     try:
         from sync_formal_files import latest_canonical_formal_decision
         decision = latest_canonical_formal_decision(ROOT)
@@ -1054,6 +1054,30 @@ def _validate_current_formal_decision_projection(report: dict) -> None:
         return
     if not decision:
         return
+
+    # Formal Decision has fixed legal nodes at 09:00, 10:00, 11:00, 13:30
+    # and 14:30 Beijing time. Before the first node of a trading day, the
+    # previous day's decision is expected to precede today's account facts;
+    # that is normal sequencing, not stale applicability.
+    now = datetime.now(SHANGHAI)
+    current_market_date = str((_read_json("data/state/CURRENT.json") or {}).get("market_date") or "")
+    try:
+        calendar = _read_json("config/market/a_share_trading_calendar_2026.json")
+        trading_day = bool(current_market_date and calendar.get(current_market_date) not in {"WEEKEND", "HOLIDAY", False})
+    except (OSError, json.JSONDecodeError, AttributeError, TypeError):
+        trading_day = now.weekday() < 5
+    first_node_due = now.hour > 9 or (now.hour == 9 and now.minute >= 0)
+    if now.date().isoformat() != current_market_date:
+        first_node_due = True
+    if trading_day and not first_node_due:
+        report.setdefault("checks", []).append({
+            "name": "formal_projection:current_applicability",
+            "status": "PASS",
+            "detail": f"pre_first_formal_decision_node now={now.strftime('%Y-%m-%d %H:%M:%S%z')} first_node=09:00 account_facts_may_precede_today_decision",
+        })
+        _recount(report)
+        return
+
     applicability = str(decision.get("_current_applicability") or "CURRENT")
     detail = str(decision.get("_stale_reason") or "selected formal decision is compatible with current account facts")
     status = "WARNING" if applicability != "CURRENT" else "PASS"
@@ -1067,7 +1091,6 @@ def _validate_current_formal_decision_projection(report: dict) -> None:
         if message not in report.setdefault("warnings", []):
             report["warnings"].append(message)
     _recount(report)
-
 
 def _validate_production_mutation_protocol(report: dict) -> None:
     result = run_mutation_protocol(ROOT)
