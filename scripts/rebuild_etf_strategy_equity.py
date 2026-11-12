@@ -27,6 +27,7 @@ except ModuleNotFoundError:
         recover_canonical_etf_trade_facts,
         trade_signature,
         confirmed_fee_amount,
+        experience_etf_trade_index_facts,
     )
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
