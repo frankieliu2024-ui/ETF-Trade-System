@@ -1122,7 +1122,13 @@ def _validate_current_formal_decision_projection(report: dict) -> None:
     # already available before the decision but were not consumed.
     account = _read_json("data/state/account_fact.json")
     account_at = str(account.get("updated_at") or "")
-    decision_at = str((decision.get("formal_action") or {}).get("decision_time") or "")
+    decision_at = str(
+        (decision.get("formal_action") or {}).get("decision_time")
+        or decision.get("_decision_stamp")
+        or decision.get("decision_time")
+        or decision.get("decision_effective_at_beijing")
+        or ""
+    )
     try:
         account_dt = datetime.fromisoformat(account_at.replace("Z", "+00:00")) if account_at else None
         decision_dt = datetime.fromisoformat(decision_at.replace("Z", "+00:00")) if decision_at else None
