@@ -557,6 +557,7 @@ jobs:
           PY
 
       - name: Run data-only snapshot
+      if: ${{ steps.session_gate.outputs.request_class != 'STATE_SYNC_ONLY' }}
         id: capture
         # Scheduled pulses and user requests share the same phase-aware producer.
         # `scheduled` is resolved by cloud_runner_snapshot.py into auction/live/close
@@ -631,6 +632,7 @@ jobs:
           path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
           PY
       - name: Verify a new valid snapshot was written
+      if: ${{ steps.session_gate.outputs.request_class != 'STATE_SYNC_ONLY' }}
         id: snapshot_result
         if: ${{ steps.capture.outcome == 'success' }}
         env:
@@ -702,6 +704,7 @@ jobs:
             done
           fi
       - name: Refresh current ETF Discovery on every verified A-share pulse
+      if: ${{ steps.session_gate.outputs.request_class != 'STATE_SYNC_ONLY' }}
         id: current_discovery
         # Always regenerate from the snapshot produced by this node. Identical
         # candidates are still a new node-local Discovery and must not be
@@ -776,11 +779,13 @@ jobs:
           exit 1
 
       - name: Build weekly return attribution bridge
+      if: ${{ steps.session_gate.outputs.request_class != 'STATE_SYNC_ONLY' }}
         id: weekly_return_attribution
         if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.session_gate.outputs.process_latest_reference == 'true' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && github.event.inputs.probe_only != 'true' && github.event_name != 'push' }}
         run: python scripts/build_weekly_return_attribution.py
 
       - name: Quick retry failed core objects after initial publish
+      if: ${{ steps.session_gate.outputs.request_class != 'STATE_SYNC_ONLY' }}
         id: quick_retry
         # A user request gets the first publishable PASS/DEGRADED/FAILED result
         # immediately. Slow repair remains a scheduled, post-publish activity.
@@ -1373,19 +1378,23 @@ jobs:
             fi
           fi
       - name: Build objective intraday market delta
+      if: ${{ steps.session_gate.outputs.request_class != 'STATE_SYNC_ONLY' }}
         # Derived observability must not block the formal decision critical path.
         if: ${{ always() && steps.state_sync.outcome != 'failure' && (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.session_gate.outputs.process_latest_reference == 'true' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && github.event.inputs.probe_only != 'true' }}
         continue-on-error: true
         run: python scripts/build_market_delta.py
       - name: Build dynamic stock context from current account
+      if: ${{ steps.session_gate.outputs.request_class != 'STATE_SYNC_ONLY' }}
         # Decision input: run independently of unrelated prior-step failures.
         if: ${{ always() && steps.state_sync.outcome != 'failure' && (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.session_gate.outputs.process_latest_reference == 'true' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_stock_context.py
       - name: Collect current account-stock market facts
+      if: ${{ steps.session_gate.outputs.request_class != 'STATE_SYNC_ONLY' }}
         # Decision input: run independently of unrelated prior-step failures.
         if: ${{ always() && steps.state_sync.outcome != 'failure' && (steps.snapshot_result.outputs.snapshot_written == 'true' || steps.session_gate.outputs.process_latest_reference == 'true' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_account_stock_market.py
       - name: Build on-demand query context
+      if: ${{ steps.session_gate.outputs.request_class != 'STATE_SYNC_ONLY' }}
         id: query_context
         # Formal decision critical path. Do not let an unrelated optional/derived
         # step failure suppress request binding and PIT qualification.
@@ -1609,6 +1618,7 @@ jobs:
           fi
 
       - name: Refresh close-derived research and risk evidence
+      if: ${{ steps.session_gate.outputs.request_class != 'STATE_SYNC_ONLY' }}
         id: risk_refresh
         # A close review may not consume a stale derived-risk snapshot. Build the
         # date-aligned feature, replay valuation and risk evidence from the same
@@ -1626,6 +1636,7 @@ jobs:
           PY
 
       - name: Refresh retained close risk evidence
+      if: ${{ steps.session_gate.outputs.request_class != 'STATE_SYNC_ONLY' }}
         id: retained_close_risk_refresh
         # A manual close replay may intentionally retain an already-published
         # canonical snapshot. It must still rebuild date-aligned research/risk
@@ -1643,6 +1654,7 @@ jobs:
           PY
 
       - name: Reconcile Dashboard after canonical risk rebuild
+      if: ${{ steps.session_gate.outputs.request_class != 'STATE_SYNC_ONLY' }}
         # Risk/equity is a canonical input to the human Dashboard projection.
         # Reconcile it after both normal and retained-close rebuilds so the
         # projection cannot keep the prior day's strategy risk while the
@@ -1658,6 +1670,7 @@ jobs:
           PY
 
       - name: Build state context and candidates
+      if: ${{ steps.session_gate.outputs.request_class != 'STATE_SYNC_ONLY' }}
         id: state_context
         # A manual close is also the legal derived-state recovery path. It may
         # have no request-bound query_context, but the canonical builder still
@@ -1673,6 +1686,7 @@ jobs:
           fi
 
       - name: Promote formal request gate after full context validation
+      if: ${{ steps.session_gate.outputs.request_class != 'STATE_SYNC_ONLY' }}
         id: formal_gate_promotion
         if: ${{ steps.query_context.outcome == 'success' && steps.state_context.outcome == 'success' && env.TRIGGERING_REQUEST_EXPECTED == 'true' && github.event.inputs.probe_only != 'true' }}
         run: |
@@ -1726,18 +1740,21 @@ jobs:
           fi
           TRIGGERING_REQUEST_FILE="$TRIGGERING_REQUEST_FILE" python scripts/refresh_gate.py --annotate-contexts
       - name: Build post-market review context
+      if: ${{ steps.session_gate.outputs.request_class != 'STATE_SYNC_ONLY' }}
         # Review is a close/state-sync consumer, not a generic intraday pulse
         # responsibility. Explicit/manual close remains a legal recovery path.
         if: ${{ always() && steps.state_sync.outcome != 'failure' && (steps.state_sync.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (steps.triggering_request.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (steps.state_sync.outputs.formal_post_close_review == 'true' || (steps.snapshot_result.outputs.snapshot_written == 'true' && (steps.session_gate.outputs.close_intent == 'true' || github.event.inputs.node == 'close')) || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && github.event.inputs.probe_only != 'true' }}
         continue-on-error: true
         run: python scripts/build_post_market_review.py
       - name: Rebuild E2E usability state after close-review projection
+      if: ${{ steps.session_gate.outputs.request_class != 'STATE_SYNC_ONLY' }}
         # The close-review producer must publish before the E2E consumer reads
         # closure/evidence/business-completion state; otherwise stale or future
         # close_review data can survive in e2e_status.
         if: ${{ always() && steps.state_sync.outcome != 'failure' && (steps.query_context.outcome == 'success' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && (steps.state_sync.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (steps.triggering_request.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (github.event_name == 'push' || steps.state_sync.outputs.processed == 'true' || steps.session_gate.outputs.process_latest_reference == 'true' || github.event.inputs.formal_context_recovery_request != '' || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && github.event.inputs.probe_only != 'true' }}
         run: python scripts/build_e2e_status.py
       - name: Finalize canonical Dashboard projection before publish
+      if: ${{ steps.session_gate.outputs.request_class != 'STATE_SYNC_ONLY' }}
         # Keep the final human projection owned by sync_formal_files.py even
         # when an earlier derived-state producer touched the working tree.
         if: ${{ always() && github.ref == 'refs/heads/main' }}
@@ -1766,6 +1783,7 @@ jobs:
           PY
 
       - name: Commit downstream runtime/data artifacts
+      if: ${{ steps.session_gate.outputs.request_class != 'STATE_SYNC_ONLY' }}
         # A failed close-derived refresh must not publish a mixed generation
         # containing fresh market facts alongside stale risk/decision state.
         if: ${{ always() && github.ref == 'refs/heads/main' && steps.state_sync.outcome != 'failure' && steps.risk_refresh.outcome != 'failure' && (steps.session_gate.outcome == 'success' || steps.capture.outcome == 'success' || steps.state_sync.outputs.processed == 'true') }}
