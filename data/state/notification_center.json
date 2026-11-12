@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-11-12T10:02:51+08:00",
+  "updated_at": "2026-11-12T10:11:05+08:00",
   "last_status": "SENT",
   "last_type": "MARKET_VALUE_ALERT",
-  "last_title": "【市场异动】科创50增强ETF招商（588450）出现极端波动 +3.77%",
+  "last_title": "【市场异动】A股核心指数出现显著分化",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -58639,27 +58639,56 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-11-12T10:02:51+08:00"
-    }
-  ],
-  "recent": [
+    },
     {
-      "key": "pulse:hyperliquid_pulse:PULSE_TEST_HYPERLIQUID_AFTER_42176230334",
-      "type": "PULSE_FACT_UPDATE",
-      "title": "【市场异动】既有监测对象出现可比事实变化",
-      "content": "### 发生了什么\n【核心结论】Hyperliquid证据发生可比变化。\n\n【证据变化】\n证据时间：2026-11-06 15:20:30\n前一脉冲：状态=READY；覆盖=COMPLETE；对象数=2\n当前脉冲：状态=READY；覆盖=COMPLETE；对象数=2\n新增对象：XBI（方向：positive）\n延续对象：BABA（方向：negative）\n\n【对ETF系统的影响】该变化用于下一正式判断逐对象核对方向、时机、风险和资本影响；不能单独授予Trial、Confirm、买入、卖出或调仓权限。\n\n【当前动作】无需自动交易；下一正式判断必须核对上述对象与持仓、观察ETF、Discovery和现金的竞争关系。\n\n【数据与边界】本通知仅说明脉冲事实发生可比变化，不等同于交易结论或实际成交。\n\n涉及对象：Hyperliquid\n\n### 变化前后\n状态：READY；覆盖：COMPLETE；对象数：2；对象：BABA（方向：negative）。\n状态：READY；覆盖：COMPLETE；对象数：2；对象：BABA（方向：negative）、XBI（方向：positive）。\n\n### 你需要做什么\n无需自动交易；下一正式判断逐对象核对变化及其对持仓、观察、Discovery和现金竞争的影响。\n\n### 当前边界\n仅转发可比市场事实变化，不代表正式决策、Trial、Confirm或成交。\n\n### 事实时点（北京时间）\n2026-11-06 15:20:30",
-      "source": "hyperliquid_pulse",
-      "user_severity": "",
-      "user_action": "无需自动交易；下一正式判断逐对象核对变化及其对持仓、观察、Discovery和现金竞争的影响。",
-      "status": "SENT",
-      "attempted_at": "2026-11-06T14:43:32+08:00",
+      "notification_id": "notification_52833cb6dac5cd7ce852",
+      "event_type": "MARKET_VALUE_ALERT",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "market-value:a-share:2026-11-12:A_SHARE_INDEX_DIVERGENCE:DIVERGED:DIVERGENCE:2026-11-12T10:08:46+08:00",
+      "request_id": "",
+      "parent_request_id": "",
+      "report_id": "",
+      "content_hash": "",
+      "related_decision_id": "",
+      "security_code": "A_SHARE_INDEX_DIVERGENCE",
+      "security_name": "A股核心指数",
+      "user_severity": "需要关注",
+      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-11-12T10:11:03+08:00",
+      "sent_at": "2026-11-12T10:11:05+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-11-14T10:11:03+08:00",
+      "title": "【市场异动】A股核心指数出现显著分化",
+      "content": "### 核心结论\n- **事件类型**：显著分化\n- **对象/结构**：A股核心指数\n- **关键结构**：横截面两端：科创50（000688）+3.72%，上证指数（000001）+0.23%，涨跌幅相差3.49个百分点\n\n**判断**：相关对象之间的相对差已经扩大到值得单独关注的程度，不能再用单一市场方向概括全部机会和风险。\n\n**Hyperliquid**：当前通知对象未命中本次全局贡献包的对象级映射；不把其他对象的证据借用于本通知。\n\n### 对ETF系统的影响\nA股核心指数（A股核心指数）代表A股本地风险偏好或风格结构变化。先看变化是否扩散到当前持仓/观察ETF，再判断候选和资本效率是否真正改变。\n\n### 当前动作\n**先验证ETF层是否接受该指数信号；不因指数单一波动机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-11-12 10:08:46\n- **Hyperliquid行情时点（北京时间）**：2026-11-12 09:54:37。\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。\n",
+      "source": "market_delta+CURRENT+stock_market_context",
+      "confirmation_context": {
+        "market": "A_SHARE",
+        "market_date": "2026-11-12",
+        "direction": "DIVERGED",
+        "event_category": "DIVERGENCE",
+        "asset_class": "STRUCTURE",
+        "day_change_pct": null,
+        "sudden_change_pct": null,
+        "interval_minutes": 9.45,
+        "event_magnitude_pct": 3.487067620469131,
+        "market_as_of_beijing": "2026-11-12T10:08:46+08:00",
+        "source_fact_id": "2026-11-12:A_SHARE_INDEX_DIVERGENCE:DIVERGENCE:DIVERGED:2026-11-12T10:08:46+08:00",
+        "continuous_state_transition": "INITIAL",
+        "continuous_state_contract": "OBJECT_LEVEL_PREVIOUS_CURRENT_TRANSITION",
+        "event_family_id": "A_SHARE:2026-11-12:A_SHARE:A_SHARE_INDEX_DIVERGENCE:DIVERGENCE:DIVERGED:"
+      },
       "response": {
         "http_status": 200,
         "pushplus_code": 200,
         "pushplus_message": "执行成功"
       },
-      "notification_id": "notification_a1d7b48fec9eb8d4f3b3",
-      "lifecycle_status": "SENT"
-    },
+      "last_attempted_at": "2026-11-12T10:11:05+08:00"
+    }
+  ],
+  "recent": [
     {
       "key": "pulse:discovery_pulse:PULSE_TEST_DISCOVERY_AFTER_42177968751",
       "type": "PULSE_FACT_UPDATE",
@@ -62240,6 +62269,24 @@
         "pushplus_message": "执行成功"
       },
       "notification_id": "notification_fcbbff984539b67dfadb",
+      "lifecycle_status": "SENT"
+    },
+    {
+      "key": "market-value:a-share:2026-11-12:A_SHARE_INDEX_DIVERGENCE:DIVERGED:DIVERGENCE:2026-11-12T10:08:46+08:00",
+      "type": "MARKET_VALUE_ALERT",
+      "title": "【市场异动】A股核心指数出现显著分化",
+      "content": "### 核心结论\n- **事件类型**：显著分化\n- **对象/结构**：A股核心指数\n- **关键结构**：横截面两端：科创50（000688）+3.72%，上证指数（000001）+0.23%，涨跌幅相差3.49个百分点\n\n**判断**：相关对象之间的相对差已经扩大到值得单独关注的程度，不能再用单一市场方向概括全部机会和风险。\n\n**Hyperliquid**：当前通知对象未命中本次全局贡献包的对象级映射；不把其他对象的证据借用于本通知。\n\n### 对ETF系统的影响\nA股核心指数（A股核心指数）代表A股本地风险偏好或风格结构变化。先看变化是否扩散到当前持仓/观察ETF，再判断候选和资本效率是否真正改变。\n\n### 当前动作\n**先验证ETF层是否接受该指数信号；不因指数单一波动机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-11-12 10:08:46\n- **Hyperliquid行情时点（北京时间）**：2026-11-12 09:54:37。\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。\n",
+      "source": "market_delta+CURRENT+stock_market_context",
+      "user_severity": "需要关注",
+      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
+      "status": "SENT",
+      "attempted_at": "2026-11-12T10:11:05+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_52833cb6dac5cd7ce852",
       "lifecycle_status": "SENT"
     }
   ],
