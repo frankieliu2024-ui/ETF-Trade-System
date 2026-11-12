@@ -2463,7 +2463,7 @@ def record_post_close_review(account: dict, request: dict, *, delivery_only: boo
         is_scheduled_trade_review = (
             str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION"
             and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_SCHEDULED_TRADE_REVIEW"
-            and str(request.get("interaction_scenario") or "").strip().upper() == "SCHEDULED_TRADE_REVIEW"
+            and str(request.get("interaction_scenario") or "").strip().upper() in {"SCHEDULED_TRADE_REVIEW", "CHATGPT_MANUAL_TRADE_REVIEW", "MANUAL_TRADE_REVIEW"}
         )
         if is_scheduled_trade_review:
             _persist_post_close_review_projections(account, request, prior_review, prior)
