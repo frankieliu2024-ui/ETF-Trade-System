@@ -188,14 +188,16 @@ jobs:
               task_id = str(
                   payload.get("task_id") or binding.get("task_id") or ""
               ).strip()
+              task_name = str(payload.get("task_name") or "").strip()
+              review_identity = task_id or task_name
               if (
                   report_type in {"ETF_TRADE_REVIEW", "SCHEDULED_TRADE_REVIEW", "ETF_SYSTEM_REVIEW"}
-                  and task_id in {"ETF交易复盘", "ETF系统复核"}
+                  and review_identity in {"ETF交易复盘", "ETF系统复核"}
               ):
-                  # Current direct completion builders carry the task identity
-                  # inside presentation_binding; accept that canonical shape
-                  # without weakening the formal-decision branch above.
-                  print("SYSTEM_REVIEW" if task_id == "ETF系统复核" else "TRADE_REVIEW")
+                  # task_id is optional when the platform does not expose it.
+                  # task_name is the stable business identity; never fabricate
+                  # task_id, but do not reject a valid completion for its absence.
+                  print("SYSTEM_REVIEW" if review_identity == "ETF系统复核" else "TRADE_REVIEW")
               elif payload.get("request_type") == "SCHEDULED_REVIEW_COMPLETION":
                   print("SCHEDULED_REVIEW")
               else:
@@ -541,7 +543,7 @@ jobs:
         # Scheduled Review completion is dispatched explicitly by the producer
         # in the same run.  Push/workflow_run are audit wakes only and must not
         # become a second notification ingress.
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path != '' && steps.dispatch_completion_kind.outputs.scheduled == 'true' }}
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path != '' && steps.dispatch_completion_kind.outputs.scheduled == 'true') || (github.event_name == 'push' && steps.push_kind.outputs.scheduled_review_completion == 'true' && steps.push_kind.outputs.scheduled_review_completion_path != '') }}
         shell: bash
         env:
           COMPLETION_PATH: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path || steps.push_kind.outputs.scheduled_review_completion_path || steps.workflow_review.outputs.review_completion_path }}
@@ -620,6 +622,7 @@ jobs:
           report_type = str(payload.get("report_type") or binding.get("report_type") or "").strip().upper()
           task_id = str(payload.get("task_id") or binding.get("task_id") or "").strip()
           task_name = str(payload.get("task_name") or "").strip()
+          review_identity = task_id or task_name
           # A direct scheduled completion is already a sufficient notification
           # source. Missing presentation_binding is an audit limitation, not a
           # delivery failure; leave event projection to the independent audit
@@ -627,7 +630,10 @@ jobs:
           if report_type == "ETF_FORMAL_DECISION" and (task_id == "ETF正式决策" or task_name == "ETF正式决策") and not payload.get("presentation_binding"):
               print(json.dumps({"canonical_publication": ""}, ensure_ascii=False))
               raise SystemExit(0)
-          if report_type not in {"ETF_TRADE_REVIEW", "SCHEDULED_TRADE_REVIEW"} or task_id != "ETF交易复盘":
+          if (
+              report_type not in {"ETF_TRADE_REVIEW", "SCHEDULED_TRADE_REVIEW"}
+              or review_identity != "ETF交易复盘"
+          ):
               raise SystemExit("Trade Review completion identity mismatch")
           review = payload.get("formal_review") if isinstance(payload.get("formal_review"), dict) else {}
           full_content = str(payload.get("final_content") or binding.get("full_content") or "")
@@ -1158,7 +1164,7 @@ jobs:
           REPORT_DELIVERY_PATH: ${{ steps.push_kind.outputs.report_path || steps.scheduled_review_report_persist.outputs.report_path }}
           REPORT_HANDOFF_PATH: ${{ steps.push_kind.outputs.report_handoff_path }}
           REVIEW_EVENT_PATH: ${{ steps.scheduled_completion_event.outputs.review_event_path || steps.formal_completion_event.outputs.review_event_path || steps.push_kind.outputs.review_event_path || steps.workflow_review.outputs.review_event_path }}
-          SCHEDULED_REVIEW_COMPLETION_PATH: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path }}
+          SCHEDULED_REVIEW_COMPLETION_PATH: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path || (github.event_name == 'push' && steps.push_kind.outputs.scheduled_review_completion_path) }}
           FORMAL_COMPLETION_EVENT: ${{ steps.formal_completion_event.outputs.review_event_path != '' && 'true' || 'false' }}
           FORCE_NOTIFICATION_RESEND: ${{ github.event_name == 'workflow_dispatch' && inputs.force_resend || (github.event_name == 'push' && steps.push_kind.outputs.formal_force_resend == 'true' && 'true' || 'false') }}
           PULSE_WAKE: ${{ github.event_name == 'push' && (steps.push_kind.outputs.discovery_pulse == 'true' || steps.push_kind.outputs.hyperliquid_pulse == 'true') && 'true' || 'false' }}
