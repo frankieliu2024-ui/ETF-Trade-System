@@ -2565,9 +2565,9 @@ def record_post_close_review(account: dict, request: dict, *, delivery_only: boo
     if presentation_binding:
         presentation_binding["request_id"] = str(request.get("request_id") or "")
         presentation_binding["report_id"] = (
-            f"etf_formal_decision:{presentation_binding['task_run_id']}"
+            f"etf_formal_decision:{presentation_binding.get('task_run_id') or request.get('request_id')}"
             if is_formal_decision_production
-            else f"etf_trade_review:{presentation_binding['task_run_id']}"
+            else f"etf_trade_review:{presentation_binding.get('task_run_id') or request.get('request_id')}"
         )
     data_time = dict(review.get("data_time")) if isinstance(review.get("data_time"), dict) else {}
     if is_midday_review:
