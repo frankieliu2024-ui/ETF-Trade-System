@@ -3878,20 +3878,19 @@ def _request_trade_events(request: dict) -> list[dict]:
         if not trade.get("executed_at") and trade.get("executed_at_beijing"):
             trade["executed_at"] = trade["executed_at_beijing"]
         if not trade.get("confirmed_at_beijing"):
-            # The broker screenshot time confirms the account observation; it
-            # must never replace an explicit execution time.  Keep both clocks
-            # separate so replay cannot rewrite execution quality.
-            execution_time = str(
-                trade.get("executed_at_beijing")
-                or trade.get("executed_at")
-                or trade.get("trade_time_beijing")
-                or trade.get("trade_time")
-                or ""
-            ).strip()
-            if execution_time:
-                trade["confirmed_at_beijing"] = execution_time
-            elif screenshot_confirmed_at:
+            # Keep the two clocks distinct: executed_at is the broker's actual
+            # execution time; confirmed_at_beijing is the later screenshot/account
+            # confirmation time. The latter must not be replaced by execution time.
+            if screenshot_confirmed_at:
                 trade["confirmed_at_beijing"] = str(screenshot_confirmed_at)
+            else:
+                trade["confirmed_at_beijing"] = str(
+                    trade.get("executed_at_beijing")
+                    or trade.get("executed_at")
+                    or trade.get("trade_time_beijing")
+                    or trade.get("trade_time")
+                    or ""
+                ).strip()
         if screenshot_confirmed_at and not trade.get("account_confirmed_at_beijing"):
             trade["account_confirmed_at_beijing"] = str(screenshot_confirmed_at)
         trade.setdefault("source", source)
