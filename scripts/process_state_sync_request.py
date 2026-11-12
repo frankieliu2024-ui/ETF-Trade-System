@@ -4457,6 +4457,11 @@ def _canonicalize_account_positions(prior: dict, supplied: dict, merged: dict) -
         return
     supplied_rows = supplied.get("positions")
     supplied_by_code = {}
+    prior_by_code = {
+        str(row.get("code") or "").strip(): row
+        for row in (prior.get("positions") or [])
+        if isinstance(row, dict) and str(row.get("code") or "").strip()
+    }
     for index, row in enumerate(supplied_rows or []):
         if not isinstance(row, dict):
             continue
@@ -4485,7 +4490,14 @@ def _canonicalize_account_positions(prior: dict, supplied: dict, merged: dict) -
         if code in canonical:
             raise ValueError(f"account snapshot contains duplicate security code {code}")
         order.append(code)
-        canonical[code] = json.loads(json.dumps(row))
+        canonical_row = json.loads(json.dumps(row))
+        # Security code is the identity.  A broker screenshot may abbreviate
+        # the display name; preserve the existing canonical name for the same
+        # code so a snapshot cannot regress formal identity labels.
+        prior_row = prior_by_code.get(code)
+        if prior_row and prior_row.get("name"):
+            canonical_row["name"] = prior_row["name"]
+        canonical[code] = canonical_row
     if not snapshot_mode:
         for code, row in supplied_by_code.items():
             if code in canonical:
