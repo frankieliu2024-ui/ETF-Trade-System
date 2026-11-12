@@ -860,8 +860,21 @@ def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | N
     binding = payload.get("presentation_binding")
     if not isinstance(binding, dict):
         raise ValueError("Formal Decision completion requires presentation_binding")
-    if str(payload.get("task_id") or binding.get("task_id") or "").strip() != "ETF正式决策":
+    # Keep platform task identity opaque. The scheduled-task runtime may
+    # provide a UUID in task_id; the business identity is task_name. Bind both
+    # layers instead of comparing the platform UUID with the display name.
+    task_name = str(payload.get("task_name") or binding.get("task_name") or "").strip()
+    platform_task_id = str(payload.get("task_id") or "").strip()
+    bound_task_id = str(binding.get("task_id") or "").strip()
+    if task_name != "ETF正式决策":
         raise ValueError("Formal Decision completion task identity mismatch")
+    if not platform_task_id:
+        raise ValueError("Formal Decision completion missing platform task_id")
+    if bound_task_id and bound_task_id != platform_task_id:
+        raise ValueError("Formal Decision completion platform task identity mismatch")
+    binding["task_id"] = platform_task_id
+    binding["task_name"] = task_name
+    payload["presentation_binding"] = binding
     if str(payload.get("report_type") or binding.get("report_type") or "").strip().upper() != "ETF_FORMAL_DECISION":
         raise ValueError("Formal Decision completion report identity mismatch")
     if str(payload.get("interaction_scenario") or "").strip().upper() != "FORMAL_DECISION":
@@ -894,7 +907,14 @@ def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | N
             payload["task_run_id"] = "scheduled-formal:" + request_id
         if request_id and not str(payload.get("occurrence_id") or "").strip():
             payload["occurrence_id"] = "occurrence:" + request_id
-    # Scheduled-task completions may use the top-level ``source`` for the\n    # fact provenance and carry the task writer identity separately in\n    # ``formal_entry_source``.  Accept that existing contract while keeping\n    # the writer identity mandatory and restricted to the same allow-list.\n    source = str(payload.get("source") or "").strip().upper()\n    entry_source = str(payload.get("formal_entry_source") or "").strip().upper()\n    if source not in allowed_sources and entry_source not in allowed_sources:\n        raise ValueError("Formal Decision completion source mismatch")
+    # Scheduled-task completions may use the top-level ``source`` for the
+    # fact provenance and carry the task writer identity separately in
+    # ``formal_entry_source``. Accept that existing contract while keeping
+    # the writer identity mandatory and restricted to the same allow-list.
+    source = str(payload.get("source") or "").strip().upper()
+    entry_source = str(payload.get("formal_entry_source") or "").strip().upper()
+    if source not in allowed_sources and entry_source not in allowed_sources:
+        raise ValueError("Formal Decision completion source mismatch")
     if str(payload.get("formal_fact_type") or "").strip().upper() != "FORMAL_CURRENT_MAIN_DECISION":
         raise ValueError("Formal Decision completion fact type mismatch")
     if not str(payload.get("report_id") or binding.get("report_id") or "").strip():
