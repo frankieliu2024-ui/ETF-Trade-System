@@ -195,10 +195,10 @@ jobs:
               and semantic_name in {"ETF交易复盘", "ETF系统复核"}
           ):
               print("SYSTEM_REVIEW" if semantic_name == "ETF系统复核" else "TRADE_REVIEW")
-              elif payload.get("request_type") == "SCHEDULED_REVIEW_COMPLETION":
-                  print("SCHEDULED_REVIEW")
-              else:
-                  print("UNKNOWN")
+          elif payload.get("request_type") == "SCHEDULED_REVIEW_COMPLETION":
+              print("SCHEDULED_REVIEW")
+          else:
+              print("UNKNOWN")
           PY
           )
             case "$completion_kind" in
