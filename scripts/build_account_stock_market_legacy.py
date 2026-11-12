@@ -215,7 +215,7 @@ def fetch_tencent_many(stocks: list[dict]) -> dict[str, dict]:
             "change_pct": quote.get("price_change_ratio_pct"), "volume": quote.get("volume"), "amount": quote.get("turnover"), "provider_timestamp_ms": quote.get("provider_timestamp_ms"), "as_of_beijing": as_beijing(quote.get("provider_timestamp_ms")),
             "market_phase": market_phase(quote.get("provider_timestamp_ms")), "provider": "tencent_qq", "provider_primary": "tencent_qq", "provider_used": "tencent_qq", "fallback_used": False, "fallback_reason": "", "provider_timestamp_field": "Tencent field 30", "quality_status": "PASS", "quantity": stock.get("quantity"), "market_value_from_account": stock.get("market_value"),
         }
-        ok, reason = validate_market_row(candidate, code, expected_name=candidate["name"], market_date=datetime.now(SHANGHAI).date().isoformat(), now=datetime.now(timezone.utc), runtime_policy={"degraded_max_age_seconds": 1500})
+        ok, reason = validate_market_row(candidate, code, expected_name=candidate["name"], market_date=datetime.now(SHANGHAI).date().isoformat(), now=datetime.now(timezone.utc), runtime_policy={"degraded_max_age_seconds": 1500}, allow_auction_partial=False)
         if not ok:
             raise RuntimeError(f"Tencent {code} quality guard: {reason}")
         result[code] = candidate
