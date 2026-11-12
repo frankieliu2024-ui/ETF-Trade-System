@@ -4286,6 +4286,49 @@ def validate_broker_account_fact_ingress(request: dict, supplied: object) -> str
     return ""
 
 
+def _canonicalize_account_positions(prior: dict, supplied: dict, merged: dict) -> None:
+    """Build one canonical row per security code after account-fact merge.
+
+    A broker screenshot is a complete observation of the visible positions.
+    When a prior trade-driven row and the screenshot row share a code, the
+    screenshot row is authoritative.  Historical rows not present in the
+    screenshot are retained only for non-screenshot/event-driven merges.
+    """
+    rows = merged.get("positions")
+    if not isinstance(rows, list):
+        return
+    supplied_rows = supplied.get("positions")
+    supplied_by_code = {
+        str(row.get("code") or "").strip(): json.loads(json.dumps(row))
+        for row in (supplied_rows or [])
+        if isinstance(row, dict) and str(row.get("code") or "").strip()
+    }
+    canonical = {}
+    order = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        code = str(row.get("code") or "").strip()
+        if not code:
+            continue
+        if code not in canonical:
+            order.append(code)
+            canonical[code] = json.loads(json.dumps(row))
+        else:
+            # Preserve non-empty metadata from a duplicate legacy row, but
+            # never allow it to override the latest authoritative row.
+            for key, value in row.items():
+                if canonical[code].get(key) in (None, "") and value not in (None, ""):
+                    canonical[code][key] = json.loads(json.dumps(value))
+    for code, row in supplied_by_code.items():
+        if code in canonical:
+            canonical[code] = row
+        else:
+            order.append(code)
+            canonical[code] = row
+    merged["positions"] = [canonical[code] for code in order if code in canonical]
+
+
 def merge_account_fact(prior: dict, supplied: dict) -> dict:
     """Merge confirmed screenshot facts and derive settlement cash canonically."""
     merged = json.loads(json.dumps(prior or {}))
@@ -4324,6 +4367,10 @@ def merge_account_fact(prior: dict, supplied: dict) -> dict:
     _canonicalize_settlement_account(merged)
     _annotate_confirmed_ipo_origins(merged)
     _reconcile_known_ipo_events(merged)
+    _canonicalize_account_positions(prior or {}, supplied or {}, merged)
+    codes = [str(row.get("code") or "").strip() for row in merged.get("positions") or []]
+    if len(codes) != len(set(codes)):
+        raise ValueError("canonical account_fact.positions contains duplicate security code")
     return merged
 
 
