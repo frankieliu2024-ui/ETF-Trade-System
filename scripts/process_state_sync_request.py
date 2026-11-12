@@ -4304,7 +4304,9 @@ def validate_broker_account_fact_ingress(request: dict, supplied: object) -> str
 
 def _is_complete_account_snapshot(supplied: dict) -> bool:
     source = str(supplied.get("source") or "").upper()
-    return ("BROKER" in source or "SCREENSHOT" in source) and isinstance(supplied.get("positions"), list)
+    required = ("total_asset", "cash", "stock_market_value")
+    has_core_summary = all(_snapshot_number(supplied.get(field)) is not None for field in required)
+    return ("BROKER" in source or "SCREENSHOT" in source) and has_core_summary and isinstance(supplied.get("positions"), list)
 
 
 def _snapshot_number(value):
