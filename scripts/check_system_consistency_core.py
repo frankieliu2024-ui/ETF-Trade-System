@@ -999,9 +999,32 @@ def main() -> int:
     check("overseas_runtime:structured", bool(overseas_health.get("status")), f"status={overseas_health.get('status', 'MISSING')}")
     check("overseas_runtime:pulse_success", overseas_health.get("pulse_success") is True, f"pulse_success={overseas_health.get('pulse_success')}", warning=True)
     check("overseas_runtime:hard_errors", int(overseas_health.get("hard_error_count", 0)) == 0, f"hard_error_count={overseas_health.get('hard_error_count')}", warning=True)
+    # N225 has an explicit opening-buffer rule: the APAC pulse may observe
+    # the prior session at the 08:00 Beijing boundary, but same-day coverage is
+    # mandatory after the configured 08:20 cutoff. Keep the real degradation
+    # visible after that cutoff; do not turn the boundary window into a false
+    # consistency warning.
+    n225_cutoff = str((overseas_health.get("rules") or {}).get("n225_kospi_same_day_required_after_beijing") or "08:20")
+    try:
+        cutoff_hour, cutoff_minute = (int(part) for part in n225_cutoff.split(":", 1))
+        now_beijing = datetime.now(SHANGHAI)
+        n225_same_day_required = (now_beijing.hour, now_beijing.minute) >= (cutoff_hour, cutoff_minute)
+    except (TypeError, ValueError):
+        n225_same_day_required = True
     for object_id in ("N225", "KOSPI"):
         object_health = (overseas_health.get("objects") or {}).get(object_id) or {}
-        check(f"overseas_runtime:{object_id}:same_day_bar", object_health.get("quality_status") == "PASS" and bool(object_health.get("as_of_beijing")), f"quality={object_health.get('quality_status')} as_of_beijing={object_health.get('as_of_beijing', '')}", warning=True)
+        same_day_ok = object_health.get("quality_status") == "PASS" and bool(object_health.get("as_of_beijing"))
+        opening_buffer_ok = object_id == "N225" and not n225_same_day_required and bool(object_health.get("as_of_beijing"))
+        check(
+            f"overseas_runtime:{object_id}:same_day_bar",
+            same_day_ok or opening_buffer_ok,
+            (
+                f"quality={object_health.get('quality_status')} "
+                f"as_of_beijing={object_health.get('as_of_beijing', '')}"
+                + (" opening_buffer_before=" + n225_cutoff if opening_buffer_ok else "")
+            ),
+            warning=True,
+        )
     check("account_fact:current_availability", account.get("status") == "VALID", f"status={account.get('status', 'MISSING')} (state warning only)", warning=True)
 
     result = {
