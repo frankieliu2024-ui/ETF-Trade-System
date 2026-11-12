@@ -714,15 +714,23 @@ jobs:
           projection_payload.setdefault("source", "CHATGPT_MANUAL_TRADE_REVIEW")
           projection_payload.setdefault("interaction_scenario", "MANUAL_TRADE_REVIEW")
           projection_payload.setdefault("entry_mode", "MANUAL_SCHEDULED_TASK")
+          # Older direct completions may not receive task_run_id or
+          # occurrence_id from the platform. Use the already-bound request_id
+          # as a stable request-local fallback for delivery projection only.
+          # Never rewrite the frozen completion or create a second request.
+          request_identity = str(projection_payload.get("request_id") or "").strip()
+          projection_payload.setdefault("task_run_id", request_identity)
+          projection_payload.setdefault("occurrence_id", projection_payload.get("task_run_id") or request_identity)
+          projection_payload.setdefault("report_id", f"etf_trade_review:{projection_payload.get('task_run_id') or request_identity}")
           # Older direct completions also omitted the entry-mode binding. Keep
           # the reconstructed projection internally consistent for the strict
           # production identity validator; the frozen completion is untouched.
           projection_binding = dict(projection_payload.get("presentation_binding") or {})
-          projection_binding.setdefault("task_id", projection_payload.get("task_id", "ETF交易复盘"))
-          projection_binding.setdefault("task_run_id", projection_payload.get("task_run_id", ""))
-          projection_binding.setdefault("occurrence_id", projection_payload.get("occurrence_id", projection_payload.get("task_run_id", "")))
-          projection_binding.setdefault("request_id", projection_payload.get("request_id", ""))
-          projection_binding.setdefault("report_id", projection_payload.get("report_id", ""))
+          projection_binding.setdefault("task_id", projection_payload.get("task_id") or projection_payload.get("task_name") or "ETF交易复盘")
+          projection_binding.setdefault("task_run_id", projection_payload.get("task_run_id") or request_identity)
+          projection_binding.setdefault("occurrence_id", projection_payload.get("occurrence_id") or projection_payload.get("task_run_id") or request_identity)
+          projection_binding.setdefault("request_id", request_identity)
+          projection_binding.setdefault("report_id", projection_payload.get("report_id") or f"etf_trade_review:{projection_payload.get('task_run_id') or request_identity}")
           projection_binding.setdefault("report_type", "ETF_TRADE_REVIEW")
           projection_binding.setdefault("full_content", projection_payload.get("final_content", ""))
           projection_binding.setdefault("content_hash", projection_payload.get("content_hash", ""))
