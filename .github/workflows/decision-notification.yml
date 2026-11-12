@@ -719,18 +719,17 @@ jobs:
           # as a stable request-local fallback for delivery projection only.
           # Never rewrite the frozen completion or create a second request.
           request_identity = str(projection_payload.get("request_id") or "").strip()
-          projection_payload.setdefault("task_run_id", request_identity)
-          projection_payload.setdefault("occurrence_id", projection_payload.get("task_run_id") or request_identity)
-          projection_payload.setdefault("report_id", f"etf_trade_review:{projection_payload.get('task_run_id') or request_identity}")
+          # Platform task_run_id/occurrence_id are optional and remain absent when the
+          # original task entry did not provide them. request_id is the sole durable
+          # business identity for this replay.
+          projection_payload.setdefault("report_id", f"etf_trade_review:{request_identity}")
           # Older direct completions also omitted the entry-mode binding. Keep
           # the reconstructed projection internally consistent for the strict
           # production identity validator; the frozen completion is untouched.
           projection_binding = dict(projection_payload.get("presentation_binding") or {})
           projection_binding.setdefault("task_id", projection_payload.get("task_id") or projection_payload.get("task_name") or "ETF交易复盘")
-          projection_binding.setdefault("task_run_id", projection_payload.get("task_run_id") or request_identity)
-          projection_binding.setdefault("occurrence_id", projection_payload.get("occurrence_id") or projection_payload.get("task_run_id") or request_identity)
           projection_binding.setdefault("request_id", request_identity)
-          projection_binding.setdefault("report_id", projection_payload.get("report_id") or f"etf_trade_review:{projection_payload.get('task_run_id') or request_identity}")
+          projection_binding.setdefault("report_id", projection_payload.get("report_id") or f"etf_trade_review:{request_identity}")
           projection_binding.setdefault("report_type", "ETF_TRADE_REVIEW")
           projection_binding.setdefault("full_content", projection_payload.get("final_content", ""))
           projection_binding.setdefault("content_hash", projection_payload.get("content_hash", ""))
@@ -740,7 +739,7 @@ jobs:
               projection_payload["formal_review"] = review
               # Older completions carry entry_mode at the top level only.
               # Copy it into the replay binding without mutating the frozen file.
-              binding = dict(payload.get("presentation_binding") or {})
+              binding = dict(projection_payload.get("presentation_binding") or {})
               binding["entry_mode"] = str(payload.get("entry_mode") or "").strip()
               binding["full_content"] = str(
                   binding.get("full_content") or payload.get("final_content") or ""
