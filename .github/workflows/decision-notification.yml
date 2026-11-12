@@ -750,7 +750,7 @@ jobs:
           # retain identity/hash/idempotency binding, but must not re-run the
           # business managed-position/lifecycle gate; that gate belongs to the
           # task that produced the completion, not to notification delivery.
-          ok, duplicate = record_post_close_review(account, projection_payload, delivery_only=False)
+          ok, duplicate = record_post_close_review(account, projection_payload, delivery_only=True)
           if not ok:
               raise SystemExit("canonical post-close trade review projection was not accepted")
           market_date = str(review.get("market_date") or payload.get("market_date") or "").strip()
