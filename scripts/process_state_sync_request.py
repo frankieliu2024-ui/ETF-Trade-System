@@ -4301,6 +4301,62 @@ def validate_broker_account_fact_ingress(request: dict, supplied: object) -> str
     return ""
 
 
+def _is_complete_account_snapshot(supplied: dict) -> bool:
+    source = str(supplied.get("source") or "").upper()
+    return ("BROKER" in source or "SCREENSHOT" in source) and isinstance(supplied.get("positions"), list)
+
+
+def _snapshot_number(value):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _validate_account_snapshot_candidate(candidate: dict, supplied: dict) -> None:
+    """Fail closed before persistence when one screenshot batch is internally inconsistent."""
+    if not _is_complete_account_snapshot(supplied):
+        return
+    positions = candidate.get("positions")
+    if not isinstance(positions, list):
+        raise ValueError("account snapshot positions must be a list")
+    seen = set()
+    position_market_value = 0.0
+    for index, position in enumerate(positions):
+        if not isinstance(position, dict):
+            raise ValueError(f"account snapshot positions[{index}] must be an object")
+        code = str(position.get("code") or "").strip()
+        if not re.fullmatch(r"\\d{6}", code):
+            raise ValueError(f"account snapshot positions[{index}] has invalid security code")
+        if code in seen:
+            raise ValueError(f"account snapshot contains duplicate security code {code}")
+        seen.add(code)
+        asset_type = str(position.get("asset_type") or "").strip().upper()
+        if asset_type and asset_type not in {"ETF", "STOCK", "FUND", "OTHER"}:
+            raise ValueError(f"account snapshot positions[{index}] has invalid asset_type")
+        market_value = _snapshot_number(position.get("market_value"))
+        if market_value is not None:
+            position_market_value += market_value
+
+    total_asset = _snapshot_number(candidate.get("total_asset"))
+    cash = _snapshot_number(candidate.get("cash"))
+    stock_market_value = _snapshot_number(candidate.get("stock_market_value"))
+    if total_asset is None or cash is None or stock_market_value is None:
+        raise ValueError("account snapshot requires total_asset, cash and stock_market_value")
+    if abs(total_asset - cash - stock_market_value) > 0.01:
+        raise ValueError(
+            "account snapshot amount reconciliation failed: "
+            f"total_asset={total_asset}, cash={cash}, stock_market_value={stock_market_value}"
+        )
+    if positions and any(_snapshot_number(p.get("market_value")) is None for p in positions):
+        raise ValueError("account snapshot position market_value is required for reconciliation")
+    if abs(position_market_value - stock_market_value) > 0.01:
+        raise ValueError(
+            "account snapshot position market value reconciliation failed: "
+            f"positions={round(position_market_value, 2)}, stock_market_value={stock_market_value}"
+        )
+
+
 def _canonicalize_account_positions(prior: dict, supplied: dict, merged: dict) -> None:
     """Build one canonical row per security code after account-fact merge.
 
@@ -4326,29 +4382,30 @@ def _canonicalize_account_positions(prior: dict, supplied: dict, merged: dict) -
                 f"{code!r} at positions[{index}]"
             )
         supplied_by_code[code] = json.loads(json.dumps(row))
+    # A broker screenshot is a complete position observation. Rebuild the
+    # position table from this batch instead of retaining positions absent from
+    # the screenshot; event-driven merges continue to preserve prior history.
+    snapshot_mode = _is_complete_account_snapshot(supplied)
     canonical = {}
     order = []
-    for row in rows:
+    source_rows = supplied_rows if snapshot_mode else rows
+    for row in source_rows or []:
         if not isinstance(row, dict):
             continue
         code = str(row.get("code") or "").strip()
         if not code:
             continue
-        if code not in canonical:
-            order.append(code)
-            canonical[code] = json.loads(json.dumps(row))
-        else:
-            # Preserve non-empty metadata from a duplicate legacy row, but
-            # never allow it to override the latest authoritative row.
-            for key, value in row.items():
-                if canonical[code].get(key) in (None, "") and value not in (None, ""):
-                    canonical[code][key] = json.loads(json.dumps(value))
-    for code, row in supplied_by_code.items():
         if code in canonical:
-            canonical[code] = row
-        else:
-            order.append(code)
-            canonical[code] = row
+            raise ValueError(f"account snapshot contains duplicate security code {code}")
+        order.append(code)
+        canonical[code] = json.loads(json.dumps(row))
+    if not snapshot_mode:
+        for code, row in supplied_by_code.items():
+            if code in canonical:
+                canonical[code] = row
+            else:
+                order.append(code)
+                canonical[code] = row
     merged["positions"] = [canonical[code] for code in order if code in canonical]
 
 
@@ -4412,6 +4469,7 @@ def merge_account_fact(prior: dict, supplied: dict) -> dict:
     _annotate_confirmed_ipo_origins(merged)
     _reconcile_known_ipo_events(merged)
     _canonicalize_account_positions(prior or {}, supplied or {}, merged)
+    _validate_account_snapshot_candidate(merged, supplied or {})
     codes = [str(row.get("code") or "").strip() for row in merged.get("positions") or []]
     if len(codes) != len(set(codes)):
         raise ValueError("canonical account_fact.positions contains duplicate security code")
