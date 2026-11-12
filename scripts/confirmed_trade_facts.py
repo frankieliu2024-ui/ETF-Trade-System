@@ -117,6 +117,23 @@ def _economic_trade_core(trade: dict) -> tuple:
     )
 
 
+def _execution_stamp(trade: dict) -> str:
+    """Return the broker execution time, never the later adoption/confirmation time."""
+    return str(
+        trade.get("executed_at_beijing")
+        or trade.get("executed_at")
+        or trade.get("trade_time")
+        or trade.get("datetime")
+        or trade.get("confirmed_at_beijing")
+        or ""
+    ).replace("T", " ")[:19]
+
+
+def _execution_identity(trade: dict) -> tuple:
+    """Identify one economic execution across replay rows and event-backed facts."""
+    return _economic_trade_core(trade) + (_execution_stamp(trade),)
+
+
 def _fact_enrichment_adoption_shadows(root: Path) -> set[tuple]:
     """Return adoption-time signatures that are metadata shadows, not executions."""
     events_dir = root / "events" / "trades"
@@ -223,6 +240,7 @@ def canonical_etf_trade_facts(root: Path, reconstructed_trades: list[dict]) -> l
     adoption_shadows = _fact_enrichment_adoption_shadows(root)
     facts: list[dict] = []
     seen: set[tuple] = set()
+    seen_execution_identities: set[tuple] = set()
 
     # A correction request retires the earlier event without deleting it from
     # the audit trail. Reconstructed replay rows can predate that event-level
@@ -257,6 +275,7 @@ def canonical_etf_trade_facts(root: Path, reconstructed_trades: list[dict]) -> l
         if signature in adoption_shadows or signature in seen:
             continue
         seen.add(signature)
+        seen_execution_identities.add(_execution_identity(trade))
         facts.append(trade)
 
     for trade in unintegrated_executed_trade_events(root, reconstructed_trades):
@@ -265,13 +284,18 @@ def canonical_etf_trade_facts(root: Path, reconstructed_trades: list[dict]) -> l
         if str(trade.get("replay_semantics") or "").upper() == "FACT_ENRICHMENT_ONLY":
             continue
         signature = trade_signature(trade)
+        execution_identity = _execution_identity(trade)
         if signature in adoption_shadows:
             continue
-        if signature in seen:
+        if signature in seen or execution_identity in seen_execution_identities:
             # Keep one economic trade, but let the canonical event enrich the
-            # reconstructed row with later broker-confirmed facts.
+            # replay row when event_id/source differs but broker execution is
+            # identical. Confirmation time is not an execution identity.
             for existing in facts:
-                if trade_signature(existing) != signature:
+                if not (
+                    trade_signature(existing) == signature
+                    or _execution_identity(existing) == execution_identity
+                ):
                     continue
                 if str(trade.get("fee_status") or "").upper() == "CONFIRMED":
                     existing["fee_amount"] = round(confirmed_fee_amount(trade), 2)
@@ -282,6 +306,7 @@ def canonical_etf_trade_facts(root: Path, reconstructed_trades: list[dict]) -> l
                 break
             continue
         seen.add(signature)
+        seen_execution_identities.add(execution_identity)
         facts.append(trade)
     return facts
 
