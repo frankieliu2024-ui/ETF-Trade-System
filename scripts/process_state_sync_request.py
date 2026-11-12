@@ -2704,7 +2704,7 @@ def _validate_presentation_binding(binding: dict, report_type: str, strict_produ
     supplied_hash_source = str(binding.get("content_hash_source") or "").strip()
     binding_warning = ""
     if strict_production:
-        if not str(binding.get("occurrence_id") or "").strip():
+        if not _delivery_only and not str(binding.get("occurrence_id") or "").strip():
             raise ValueError("scheduled trade review production binding requires occurrence_id")
         if not supplied_hash and not _delivery_only:
             raise ValueError("scheduled trade review production binding requires content_hash")
