@@ -882,7 +882,10 @@ jobs:
               source_actor="Scheduled Review Notification Owner",
           )
           report_path.parent.mkdir(parents=True, exist_ok=True)
-          report_path.write_text(json.dumps(request, ensure_ascii=False, indent=2) + "\\n", encoding="utf-8")
+          serialized = json.dumps(request, ensure_ascii=False, indent=2) + "\\n"
+          temporary = report_path.with_suffix(report_path.suffix + ".tmp")
+          temporary.write_text(serialized, encoding="utf-8")
+          temporary.replace(report_path)
           print(json.dumps({"status": "CREATED", "report_path": str(report_path)}, ensure_ascii=False))
           PY
           elif [ -n "$report_path" ]; then
