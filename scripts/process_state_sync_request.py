@@ -4194,6 +4194,21 @@ def normalize_broker_account_fact_ingress(request: dict, supplied: object) -> tu
         "当前账户金额、现金和持仓来自本次用户提供的券商截图；"
         "未显示代码的可见资产保持未确认，不并入正式ETF持仓。"
     )
+    # Screenshot-scoped summary fields absent from the new screenshot must
+    # become explicitly unknown instead of silently inheriting stale values.
+    summary_fields = (
+        "total_asset", "stock_market_value", "cash",
+        "holding_pnl", "daily_pnl", "daily_pnl_pct",
+    )
+    normalized["_screenshot_clear_missing_fields"] = [
+        field for field in summary_fields
+        if field not in supplied and not (
+            field == "total_asset" and "total_assets" in supplied
+            or field == "stock_market_value" and "securities_market_value" in supplied
+            or field == "cash" and "available_cash" in supplied
+            or field == "holding_pnl" and "floating_pnl" in supplied
+        )
+    ]
     normalized.setdefault("source", request.get("source") or "CHATGPT_USER_BROKER_SCREENSHOT")
     # Keep display aliases synchronized with the current screenshot facts.
     if normalized.get("total_asset") is not None:
@@ -4332,8 +4347,10 @@ def _canonicalize_account_positions(prior: dict, supplied: dict, merged: dict) -
 def merge_account_fact(prior: dict, supplied: dict) -> dict:
     """Merge confirmed screenshot facts and derive settlement cash canonically."""
     merged = json.loads(json.dumps(prior or {}))
+    for field in supplied.get("_screenshot_clear_missing_fields") or []:
+        merged[field] = None
     for key, value in (supplied or {}).items():
-        if key != "settlement_obligations" and value is not None:
+        if key not in {"settlement_obligations", "_screenshot_clear_missing_fields"} and value is not None:
             merged[key] = json.loads(json.dumps(value))
 
     # Account facts have one date authority only.  The broker-confirmed
