@@ -219,6 +219,41 @@ def _normalize_stock_market_time_alignment(report: dict) -> None:
     _recount(report)
 
 
+def _normalize_idempotent_morning_close_skip(report: dict) -> None:
+    """Treat a duplicate morning-close attempt as an idempotent PASS.
+
+    A 11:30 node that sees the same day's READY morning-close projection is
+    not a failed market capture; it is a deliberate duplicate-prevention path.
+    """
+    runtime = _read_json("data/state/runtime_health.json")
+    current = _read_json("data/state/CURRENT.json")
+    if str(runtime.get("status") or "").upper() != "SKIPPED" or str(runtime.get("reason") or "") != "morning_close_already_recorded":
+        return
+    if str(current.get("node_status") or "").upper() != "READY" or str(current.get("latest_valid_node") or "") != "1130":
+        return
+    market_date = str(current.get("market_date") or "")
+    latest_snapshot = str(current.get("latest_snapshot") or "")
+    if not market_date or not latest_snapshot or str(runtime.get("market_date") or "") != market_date or str(runtime.get("latest_snapshot") or "") != latest_snapshot:
+        return
+    snapshot_path = ROOT / latest_snapshot
+    if not snapshot_path.exists():
+        return
+    try:
+        snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return
+    if str(snapshot.get("market_date") or "") != market_date:
+        return
+    target = next((x for x in report.get("checks", []) if x.get("name") == "runtime_health:skipped_reason"), None)
+    if not target or target.get("status") != "WARNING":
+        return
+    target["status"] = "PASS"
+    target["detail"] = f"idempotent_morning_close_skip reason=morning_close_already_recorded snapshot={latest_snapshot}"
+    prefix = "runtime_health:skipped_reason:"
+    report["warnings"] = [x for x in (report.get("warnings") or []) if not str(x).startswith(prefix)]
+    _recount(report)
+
+
 def _normalize_idempotent_close_skip(report: dict) -> None:
     runtime = _read_json("data/state/runtime_health.json")
     current = _read_json("data/state/CURRENT.json")
@@ -1080,6 +1115,23 @@ def _validate_current_formal_decision_projection(report: dict) -> None:
 
     applicability = str(decision.get("_current_applicability") or "CURRENT")
     detail = str(decision.get("_stale_reason") or "selected formal decision is compatible with current account facts")
+
+    # An account screenshot can arrive after a formal decision has already
+    # been made. That is expected temporal ordering, not a stale decision.
+    # Keep the warning only for the opposite ordering: account facts were
+    # already available before the decision but were not consumed.
+    account = _read_json("data/state/account_fact.json")
+    account_at = str(account.get("updated_at") or "")
+    decision_at = str((decision.get("formal_action") or {}).get("decision_time") or "")
+    try:
+        account_dt = datetime.fromisoformat(account_at.replace("Z", "+00:00")) if account_at else None
+        decision_dt = datetime.fromisoformat(decision_at.replace("Z", "+00:00")) if decision_at else None
+    except ValueError:
+        account_dt = decision_dt = None
+    if applicability != "CURRENT" and account_dt and decision_dt and account_dt > decision_dt:
+        applicability = "CURRENT"
+        detail = f"account_fact_after_formal_decision account_updated_at={account_at} decision_time={decision_at}; expected temporal ordering"
+
     status = "WARNING" if applicability != "CURRENT" else "PASS"
     report.setdefault("checks", []).append({
         "name": "formal_projection:current_applicability",
@@ -1195,6 +1247,7 @@ def main() -> int:
     _normalize_a_share_off_window_market_date(report)
     _normalize_stock_market_time_alignment(report)
     _normalize_idempotent_close_skip(report)
+    _normalize_idempotent_morning_close_skip(report)
     _validate_formal_risk_precedence(report)
     _validate_post_close_review_contract(report)
     _validate_trade_event_formal_sync(report)
