@@ -2454,7 +2454,14 @@ def record_post_close_review(account: dict, request: dict, *, delivery_only: boo
     )
     replay_received = parse_time(request.get("requested_at_beijing") or request.get("request_time_beijing"))
     prior_updated = parse_time(prior.get("updated_at_beijing"))
-    if prior_updated and replay_received and replay_received < prior_updated and review == prior_review:
+    prior_binding = prior.get("presentation_binding") if isinstance(prior.get("presentation_binding"), dict) else {}
+    request_binding = request.get("presentation_binding") if isinstance(request.get("presentation_binding"), dict) else {}
+    same_canonical_identity = bool(
+        str(prior_binding.get("report_id") or prior.get("report_id") or "").strip()
+        and str(prior_binding.get("report_id") or prior.get("report_id") or "").strip()
+        == str(request_binding.get("report_id") or request.get("report_id") or "").strip()
+    )
+    if prior_updated and replay_received and replay_received <= prior_updated and (review == prior_review or same_canonical_identity):
         # Exact replay of the already-persisted canonical review: repair all
         # downstream projections idempotently without revalidating historical
         # PIT against today's account or rewriting the canonical review event.
