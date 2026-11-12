@@ -5,6 +5,7 @@
 
 > 账户事实更新时间：2026-11-12T18:01:00+08:00  
 > 账户事实来源：CHATGPT_USER_BROKER_SCREENSHOT  
+> 账户快照批次：acctsnap-3e5956a685cc18d955f5  
 > ETF策略风险as-of：2026-11-12  
 > ETF策略风险来源：data/state/etf_strategy_equity.json::summary.current_strategy_return_pct_gross  
 > 场景：账户事实维护  
