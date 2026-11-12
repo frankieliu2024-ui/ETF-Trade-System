@@ -201,8 +201,23 @@ def _completion_trial_decisions(root: Path, executions: list[dict[str, Any]]) ->
             if code not in content:
                 continue
             # Candidate-level Trial wording is required; generic risk or
-            # portfolio wording must not manufacture a lifecycle.
-            if not any(phrase in content for phrase in ("Trial通过审查", "进入Trial审查", "Trial评估成立", "达到Trial评估标准")):
+            # portfolio wording must not manufacture a lifecycle.  Support the
+            # live decision wording “建议人工确认…Trial” while keeping the
+            # security-code match and completion identity mandatory.
+            opportunity_text = content
+            if "【机会ETF逐只评估】" in content:
+                opportunity_text = content.split("【机会ETF逐只评估】", 1)[1].split("【", 1)[0]
+            if code not in opportunity_text or not any(
+                phrase in opportunity_text
+                for phrase in (
+                    "Trial通过审查",
+                    "进入Trial审查",
+                    "Trial评估成立",
+                    "达到Trial评估标准",
+                    "建议人工确认",
+                    "优先Trial",
+                )
+            ):
                 continue
             existing = [x for x in completions if x["decision_id"] == decision_id and x["candidate_code"] == code]
             if existing:
