@@ -223,7 +223,13 @@ def fetch_tencent_many(stocks: list[dict]) -> dict[str, dict]:
 
 def build() -> dict:
     stock_context = read_json(STOCK_CONTEXT, {})
-    stocks = stock_context.get("default_stock_layer", {}).get("monitored_account_stocks", []) or []
+    stock_layer = stock_context.get("default_stock_layer", {})
+    # Current-account stock discovery is authoritative for the default stock
+    # layer.  Keep the legacy monitored list as the first choice, but consume
+    # the dynamically detected list when role confirmation is still pending;
+    # otherwise valid account stocks can be present in stock_context yet never
+    # reach the quote builder.
+    stocks = stock_layer.get("monitored_account_stocks", []) or stock_layer.get("detected_non_etf_stocks", []) or []
     result = {
         "generated_at": now_utc(),
         "source_stock_context": "data/state/stock_context.json",
