@@ -17,9 +17,12 @@ def read_json(path: Path, default: Any = None) -> Any:
 
 
 def trade_signature(trade: dict) -> tuple:
-    # Economic trade identity is anchored to execution time. Historical
-    # canonical-adoption/confirmation time is metadata and must not create a
-    # second execution identity for the same broker-confirmed trade.
+    # A stable canonical event identity dominates adoption/confirmation clocks.
+    # The same event_id may be replayed after a screenshot timestamp or
+    # execution-time repair; it must remain one economic execution.
+    event_id = str(trade.get("event_id") or "").strip()
+    if event_id:
+        return ("event_id", event_id)
     stamp = str(
         trade.get("datetime")
         or trade.get("executed_at_beijing")
