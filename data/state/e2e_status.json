@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-11-12T20:15:13+08:00",
-  "status": "BLOCKED",
+  "generated_at": "2026-11-12T20:33:19+08:00",
+  "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
   "components": {
@@ -45,17 +45,20 @@
       "business_completion_status": "DEGRADED"
     },
     "decision_context": {
-      "status": "BLOCKED",
-      "reason": "canonical request-bound query context is empty, invalid, or missing a consumable fact pack",
-      "query_context": false,
+      "status": "READY",
+      "reason": "query and decision contexts are available; legacy minimum-ready observability is diagnostic only",
+      "query_context": true,
       "decision_context": true,
+      "minimum_decision_context": "READY_OR_NOT_APPLICABLE",
+      "observability_boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
+      "request_bound": false,
       "formal_reply_gate": null,
       "context_read_contract": {
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 8280701,
-          "sha256": "c8933d46dbd911af749a854c8757ecd3d6871154d10dff76523afbab3afe3c3b",
+          "byte_count": 8285045,
+          "sha256": "d34639bb7a59be071e9251716d8b20e3aa393a25b5bb306324fc3d1b72627f4e",
           "parsed_object": true,
           "retry_attempts": 1,
           "retry_required": false
@@ -63,8 +66,8 @@
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 718647,
-          "sha256": "0ff51aaec3144f99c62d43fea9f9c0e05b2c7fd0dc182eb5102664a98e328728",
+          "byte_count": 722249,
+          "sha256": "ece23e83c2e1a63bf4f3ea74a81848070068f1b3d7749049b0457f14e815822d",
           "parsed_object": true,
           "retry_attempts": 1,
           "retry_required": false
@@ -75,7 +78,7 @@
     "lifecycle": {
       "status": "READY",
       "reason": "canonical lifecycle projection available; mandatory_due=2",
-      "active_trial_count": 4,
+      "active_trial_count": 5,
       "decision_due_count": 2,
       "overdue_count": 2,
       "next_mandatory_node": "2026-10-29",
@@ -84,12 +87,10 @@
     "maintenance": {
       "status": "READY",
       "reason": "maintenance guard passed",
-      "checked_at": "2026-11-12T19:36:59+08:00"
+      "checked_at": "2026-11-12T20:31:25+08:00"
     }
   },
-  "blockers": [
-    "decision_context"
-  ],
+  "blockers": [],
   "degradations": [
     "close_review"
   ],
@@ -97,8 +98,8 @@
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 8280701,
-      "sha256": "c8933d46dbd911af749a854c8757ecd3d6871154d10dff76523afbab3afe3c3b",
+      "byte_count": 8285045,
+      "sha256": "d34639bb7a59be071e9251716d8b20e3aa393a25b5bb306324fc3d1b72627f4e",
       "parsed_object": true,
       "retry_attempts": 1,
       "retry_required": false
@@ -106,8 +107,8 @@
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 718647,
-      "sha256": "0ff51aaec3144f99c62d43fea9f9c0e05b2c7fd0dc182eb5102664a98e328728",
+      "byte_count": 722249,
+      "sha256": "ece23e83c2e1a63bf4f3ea74a81848070068f1b3d7749049b0457f14e815822d",
       "parsed_object": true,
       "retry_attempts": 1,
       "retry_required": false
