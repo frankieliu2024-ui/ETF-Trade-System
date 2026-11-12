@@ -231,10 +231,6 @@ jobs:
           for attempt in 1 2 3; do
             git fetch --no-tags origin main
             git reset --hard origin/main
-            # Refresh the maintenance projection from this exact consistency
-            # report before publishing either state. This keeps the core report
-            # and maintenance health from diverging after a successful audit.
-            python scripts/maintenance_guard.py
             python - <<'PY
           import json
           import os
@@ -259,6 +255,9 @@ jobs:
           candidate["persisted_at_beijing"] = datetime.now(timezone.utc).astimezone(ZoneInfo("Asia/Shanghai")).isoformat()
           target.write_text(json.dumps(candidate, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
           PY
+            # Refresh maintenance health only after the consistency report has
+            # been generated and the heredoc has completed.
+            python scripts/maintenance_guard.py
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add data/state/system_consistency.json data/state/maintenance_health.json data/state/maintenance_diagnostic.json
