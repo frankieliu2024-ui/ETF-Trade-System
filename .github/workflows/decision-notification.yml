@@ -873,7 +873,7 @@ jobs:
               summary=title,
               full_content=content,
               source_reference=f"canonical-review-event:{event_path.name}",
-              idempotency_key=f"{report_type}:{task_run_id}",
+              idempotency_key=f"{report_type}:{task_run_id or binding.get("request_id") or event.get("request_id")}",
               generated_at=generated_at,
               source_actor="Scheduled Review Notification Owner",
           )
