@@ -1,6 +1,9 @@
+import tempfile
 import unittest
+from pathlib import Path
 
-from scripts.process_state_sync_request import merge_account_fact
+
+from scripts.process_state_sync_request import account_snapshot_transaction, merge_account_fact
 
 
 class AccountPositionCanonicalizationTests(unittest.TestCase):
@@ -84,6 +87,21 @@ class AccountPositionCanonicalizationTests(unittest.TestCase):
         self.assertEqual(merged["daily_pnl"], -154.2)
         self.assertIsNone(merged["daily_pnl_pct"])
 
+
+    def test_snapshot_transaction_restores_all_state_on_projection_failure(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            state = root / "data" / "state"
+            state.mkdir(parents=True)
+            account = state / "account_fact.json"
+            account.write_text("old", encoding="utf-8")
+            with self.assertRaisesRegex(RuntimeError, "projection failure"):
+                with account_snapshot_transaction(root):
+                    account.write_text("new", encoding="utf-8")
+                    (state / "Dashboard_projection.json").write_text("partial", encoding="utf-8")
+                    raise RuntimeError("projection failure")
+            self.assertEqual(account.read_text(encoding="utf-8"), "old")
+            self.assertFalse((state / "Dashboard_projection.json").exists())
 
     def test_complete_snapshot_cannot_modify_formal_or_lifecycle_facts(self):
         prior = {
