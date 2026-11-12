@@ -537,7 +537,6 @@ jobs:
       - name: Project Scheduled Review completion to canonical review event
         id: scheduled_completion_event
         # Canonical event construction is post-processing; it must not turn a completed task into a business failure.
-        continue-on-error: true
         # Canonical notification is already bound to the same completion.
         # Review-event/REPORT projection is audit-only and must not turn a
         # successful System Review or Trade Review notification into failure.
