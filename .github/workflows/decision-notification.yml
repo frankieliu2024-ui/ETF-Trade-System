@@ -760,11 +760,11 @@ jobs:
           PY
           )
             echo "$result"
-            event_path=$(python -c 'import json,sys; print(json.loads(sys.argv[1]).get("canonical_publication",""))' "$result")
+            event_path=$(python -c 'import json,sys; print(json.loads([line for line in sys.argv[1].splitlines() if line.strip()][-1]).get("canonical_publication",""))' "$result")
           else
             result=$(python scripts/process_state_sync_request.py "$completion_path")
             echo "$result"
-            event_path=$(python -c 'import json,sys; print(json.loads(sys.argv[1]).get("canonical_publication",""))' "$result")
+            event_path=$(python -c 'import json,sys; print(json.loads([line for line in sys.argv[1].splitlines() if line.strip()][-1]).get("canonical_publication",""))' "$result")
             case "$event_path" in
               events/reviews/*.json)
                 case "$event_path" in
@@ -1083,7 +1083,7 @@ jobs:
           PY
           )
           echo "$result"
-          event_path=$(python -c 'import json,sys; print(json.loads(sys.argv[1]).get("canonical_publication",""))' "$result")
+          event_path=$(python -c 'import json,sys; print(json.loads([line for line in sys.argv[1].splitlines() if line.strip()][-1]).get("canonical_publication",""))' "$result")
           case "$event_path" in
             events/reviews/formal_*.json) ;;
             *) echo "Formal Decision canonical event path invalid: $event_path" >&2; exit 1 ;;
