@@ -1293,10 +1293,12 @@ def _run_center(mode: str, formal_content_file: str | None = None) -> int:
     if formal_content_file:
         from pathlib import Path
         direct_payload = json.loads(Path(formal_content_file).read_text(encoding="utf-8"))
-        direct_task = str(direct_payload.get("task_id") or (direct_payload.get("presentation_binding") or {}).get("task_id") or "").strip()
-        direct_task_name = str(direct_payload.get("task_name") or "").strip()
-        report_type = str(direct_payload.get("report_type") or (direct_payload.get("presentation_binding") or {}).get("report_type") or "").strip().upper()
-        if direct_task != "ETF交易复盘" and not (direct_task_name == "ETF正式决策" or report_type in {"ETF_FORMAL_DECISION", "ETF正式决策"}):
+        binding = direct_payload.get("presentation_binding") or {}
+        direct_task_name = str(direct_payload.get("task_name") or binding.get("task_name") or "").strip()
+        report_type = str(direct_payload.get("report_type") or binding.get("report_type") or "").strip().upper()
+        supported_types = {"ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW", "ETF_FORMAL_DECISION"}
+        supported_names = {"ETF交易复盘", "ETF系统复核", "ETF正式决策"}
+        if report_type not in supported_types or (direct_task_name and direct_task_name not in supported_names):
             print(json.dumps({"status": "FAILED", "error": "Unsupported direct completion task"}, ensure_ascii=False))
             return 1
 

@@ -1232,11 +1232,18 @@ def formal_content_event(source_path: Path) -> dict | None:
             "idempotency_key": "ETF_FORMAL_DECISION:" + (request_id or task_run_id),
             "no_trade_authority": True, "content_hash": content_hash,
         }
-    if task_id == "ETF交易复盘" and direct_content:
+    if report_type in {"ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW"} and direct_content:
+        semantic_name = task_name or {
+            "ETF_TRADE_REVIEW": "ETF交易复盘",
+            "ETF_SYSTEM_REVIEW": "ETF系统复核",
+        }[report_type]
+        if semantic_name not in {"ETF交易复盘", "ETF系统复核"}:
+            return None
         binding = event.get("presentation_binding") if isinstance(event.get("presentation_binding"), dict) else {}
         task_run_id = str(event.get("task_run_id") or binding.get("task_run_id") or event.get("request_id") or source_path.stem).strip()
-        report_id = str(event.get("report_id") or binding.get("report_id") or ("etf_trade_review:" + task_run_id)).strip()
-        return {"key": "report-delivery:ETF_TRADE_REVIEW:" + task_run_id, "source_event_id": "direct-trade-review:" + source_path.name, "event_type": "REPORT_DELIVERY_REQUEST", "notification_channel": "REPORT", "delivery_mode": "FULL_REPORT", "type": "正式报告", "title": "【ETF交易复盘】", "content": direct_content, "source": "direct-scheduled-trade-review:" + source_path.name, "report_type": "ETF_TRADE_REVIEW", "report_id": report_id, "request_id": str(event.get("request_id") or binding.get("request_id") or ""), "task_id": task_id, "task_run_id": task_run_id, "occurrence_id": str(event.get("occurrence_id") or binding.get("occurrence_id") or task_run_id), "entry_mode": str(event.get("entry_mode") or "MANUAL_SCHEDULED_TASK"), "idempotency_key": "ETF_TRADE_REVIEW:" + task_run_id, "no_trade_authority": True, "content_hash": hashlib.sha256(direct_content.encode("utf-8")).hexdigest()}
+        report_id = str(event.get("report_id") or binding.get("report_id") or (report_type.lower() + ":" + task_run_id)).strip()
+        title = "【ETF交易复盘】" if report_type == "ETF_TRADE_REVIEW" else "【ETF系统复核】"
+        return {"key": "report-delivery:" + report_type + ":" + task_run_id, "source_event_id": "direct-scheduled-review:" + source_path.name, "event_type": "REPORT_DELIVERY_REQUEST", "notification_channel": "REPORT", "delivery_mode": "FULL_REPORT", "type": "正式报告", "title": title, "content": direct_content, "source": "direct-scheduled-review:" + source_path.name, "report_type": report_type, "report_id": report_id, "request_id": str(event.get("request_id") or binding.get("request_id") or ""), "task_id": task_id, "task_run_id": task_run_id, "occurrence_id": str(event.get("occurrence_id") or binding.get("occurrence_id") or task_run_id), "entry_mode": str(event.get("entry_mode") or "MANUAL_SCHEDULED_TASK"), "idempotency_key": report_type + ":" + task_run_id, "no_trade_authority": True, "content_hash": hashlib.sha256(direct_content.encode("utf-8")).hexdigest()}
 
     # The notification workflow is bound directly to the current BDS. A BDS
     # is already the immutable formal presentation source; requiring a later
