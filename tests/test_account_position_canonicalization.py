@@ -85,5 +85,25 @@ class AccountPositionCanonicalizationTests(unittest.TestCase):
         self.assertIsNone(merged["daily_pnl_pct"])
 
 
+    def test_complete_snapshot_cannot_modify_formal_or_lifecycle_facts(self):
+        prior = {
+            "formal_action": {"action": "HOLD", "decision_id": "d1"},
+            "lifecycle": {"159056": "Trial"},
+        }
+        supplied = {
+            "source": "BROKER_HOLDINGS_SCREENSHOT",
+            "total_asset": 1010.0,
+            "cash": 10.0,
+            "stock_market_value": 1000.0,
+            "positions": [{"code": "588710", "quantity": 6400, "market_value": 1000.0}],
+            "formal_action": {"action": "BUY", "decision_id": "d2"},
+            "lifecycle": {"159056": "退出"},
+        }
+        with self.assertRaisesRegex(ValueError, "non-account field"):
+            merge_account_fact(prior, supplied)
+        self.assertEqual(prior["formal_action"]["action"], "HOLD")
+        self.assertEqual(prior["lifecycle"]["159056"], "Trial")
+
+
 if __name__ == "__main__":
     unittest.main()
