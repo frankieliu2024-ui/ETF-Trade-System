@@ -536,6 +536,8 @@ jobs:
 
       - name: Project Scheduled Review completion to canonical review event
         id: scheduled_completion_event
+        # Canonical event construction is post-processing; it must not turn a completed task into a business failure.
+        continue-on-error: true
         # Canonical notification is already bound to the same completion.
         # Review-event/REPORT projection is audit-only and must not turn a
         # successful System Review or Trade Review notification into failure.
@@ -798,6 +800,8 @@ jobs:
 
       - name: Persist Scheduled Review canonical review event
         id: scheduled_review_report_persist
+        # REPORT/event persistence is warning-level post-processing; notification delivery remains independently observable.
+        continue-on-error: true
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path != '' && steps.scheduled_completion_event.outputs.review_event_path != '' }}
         shell: bash
         env:
@@ -1091,6 +1095,8 @@ jobs:
           echo "review_event_path=$event_path" >> "$GITHUB_OUTPUT"
 
       - name: Persist Formal Decision canonical review event
+        # Formal event/Dashboard projection is audit post-processing, not the business-result gate.
+        continue-on-error: true
         if: ${{ github.event_name == 'workflow_dispatch' && steps.formal_completion_event.outputs.review_event_path != '' }}
         shell: bash
         env:
