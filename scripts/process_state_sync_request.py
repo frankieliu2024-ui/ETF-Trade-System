@@ -3152,15 +3152,45 @@ def execution_attribution(trade: dict, linked_decision_id: str) -> dict:
 
 def _trade_idempotency_key(trade: dict, confirmed_at: str) -> str:
     explicit = str(trade.get("idempotency_key") or "").strip()
-    return explicit or "|".join(str(trade.get(key) or "") for key in ("code", "side", "quantity", "price")) + "|" + str(confirmed_at)
+    if explicit:
+        return explicit
+    execution_time = str(
+        trade.get("executed_at_beijing")
+        or trade.get("executed_at")
+        or trade.get("trade_time_beijing")
+        or trade.get("trade_time")
+        or confirmed_at
+    ).strip()
+    return "|".join(str(trade.get(key) or "") for key in ("code", "side", "quantity", "price")) + "|" + execution_time
 
 
 def _find_existing_trade(trade: dict, confirmed_at: str, key: str) -> dict | None:
     directory = ROOT / "events" / "trades"
+    execution_time = str(
+        trade.get("executed_at_beijing")
+        or trade.get("executed_at")
+        or trade.get("trade_time_beijing")
+        or trade.get("trade_time")
+        or ""
+    ).strip()
     for path in sorted(directory.glob("*.json")) if directory.exists() else []:
-        try: prior = load_json(path)
-        except Exception: continue
-        if prior.get("idempotency_key") == key or (all(str(prior.get(k) or "") == str(trade.get(k) or "") for k in ("code", "side", "quantity", "price")) and str(prior.get("confirmed_at_beijing") or "") == str(confirmed_at)):
+        try:
+            prior = load_json(path)
+        except Exception:
+            continue
+        if prior.get("idempotency_key") == key:
+            return prior
+        if str(trade.get("event_id") or "").strip() and str(prior.get("event_id") or "").strip() == str(trade.get("event_id")).strip():
+            return prior
+        core_match = all(str(prior.get(k) or "") == str(trade.get(k) or "") for k in ("code", "side", "quantity", "price"))
+        prior_execution_time = str(
+            prior.get("executed_at_beijing")
+            or prior.get("executed_at")
+            or ""
+        ).strip()
+        if core_match and execution_time and prior_execution_time == execution_time:
+            return prior
+        if core_match and not execution_time and str(prior.get("confirmed_at_beijing") or "") == str(confirmed_at):
             return prior
     return None
 
@@ -4956,7 +4986,7 @@ def main() -> int:
             link_trade = {**trade, "confirmed_at_beijing": confirmed_at}
             linked_decision_id = resolve_trade_linked_decision_id(link_trade, decision_id)
             attribution = execution_attribution(link_trade, linked_decision_id)
-            event = {"event_id": event_id, "idempotency_key": idempotency_key, "confirmed_at_beijing": confirmed_at, "execution_date": trade.get("execution_date") or str(confirmed_at)[:10], "confirmation_date": trade.get("confirmation_date") or str(confirmed_at)[:10], "notification_id": trade.get("notification_id"), "name": trade.get("name"), "code": trade.get("code"), "side": trade.get("side"), "quantity": trade.get("quantity"), "price": trade.get("price"), "amount": trade.get("amount"), "lifecycle": trade.get("lifecycle"), "source": trade.get("source", account.get("source")), "source_confidence": trade.get("source_confidence"), "linked_decision_id": linked_decision_id or None, "hypothesis_id": trade.get("hypothesis_id") or attribution.get("hypothesis_id") or None, "execution_status": "EXECUTED", "execution_attribution": attribution}
+            event = {"event_id": event_id, "idempotency_key": idempotency_key, "confirmed_at_beijing": confirmed_at, "executed_at_beijing": trade.get("executed_at_beijing") or trade.get("executed_at") or trade.get("trade_time_beijing") or trade.get("trade_time") or confirmed_at, "account_confirmed_at_beijing": trade.get("account_confirmed_at_beijing"), "execution_date": trade.get("execution_date") or str(confirmed_at)[:10], "confirmation_date": trade.get("confirmation_date") or str(confirmed_at)[:10], "notification_id": trade.get("notification_id"), "name": trade.get("name"), "code": trade.get("code"), "side": trade.get("side"), "quantity": trade.get("quantity"), "price": trade.get("price"), "amount": trade.get("amount"), "lifecycle": trade.get("lifecycle"), "source": trade.get("source", account.get("source")), "source_confidence": trade.get("source_confidence"), "linked_decision_id": linked_decision_id or None, "hypothesis_id": trade.get("hypothesis_id") or attribution.get("hypothesis_id") or None, "execution_status": "EXECUTED", "execution_attribution": attribution}
             event_path = ROOT / "events" / "trades" / f"{event_id}.json"
             event_path.parent.mkdir(parents=True, exist_ok=True)
             atomic_json_write(event_path, event)
