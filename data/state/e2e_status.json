@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-11-12T16:05:29+08:00",
+  "generated_at": "2026-11-12T20:15:13+08:00",
   "status": "BLOCKED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -13,19 +13,16 @@
       "market_phase": "POST_CLOSE_GRACE"
     },
     "account": {
-      "status": "BLOCKED",
-      "reason": "ACCOUNT_SYNC_NOT_PERFORMED: latest broker screenshot request has not converged into canonical account_fact",
-      "updated_at": "2026-11-12T11:20:00+08:00",
-      "source": "BROKER_HOLDINGS_AND_TRADE_SCREENSHOTS_20261112_1120_USER_CONFIRMED",
+      "status": "READY",
+      "reason": "confirmed account facts remain valid; historical audit deltas are not pending updates",
+      "updated_at": "2026-11-12T18:01:00+08:00",
+      "source": "CHATGPT_USER_BROKER_SCREENSHOT",
       "pending_change_events": [],
-      "historical_audit_event_count": 148,
-      "pending_broker_request": {
-        "path": "requests/live_snapshot/broker-trade-recovery-20261112-110747-chatgpt.json",
-        "request_id": "broker-trade-recovery-20261112-110747-chatgpt",
-        "request_time": "2026-11-12T11:50:00+08:00",
-        "has_account_fact": false,
-        "status": "ACCOUNT_SYNC_NOT_PERFORMED"
-      }
+      "historical_audit_event_count": 149,
+      "cash": 79614.17,
+      "reserved_cash_for_settlement": 0,
+      "deployable_cash": 79614.17,
+      "settlement_constraint_status": "NONE"
     },
     "risk": {
       "status": "READY",
@@ -57,8 +54,8 @@
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 8282432,
-          "sha256": "f4b51f3af64f92111a981f18752f1318f9bb66cb388ce6631012d8db3b42d471",
+          "byte_count": 8280701,
+          "sha256": "c8933d46dbd911af749a854c8757ecd3d6871154d10dff76523afbab3afe3c3b",
           "parsed_object": true,
           "retry_attempts": 1,
           "retry_required": false
@@ -66,8 +63,8 @@
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 718353,
-          "sha256": "61bf0e4f12530ffce957bd74607ee087017435a69503bb8dc22cfc6ca23b8952",
+          "byte_count": 718647,
+          "sha256": "0ff51aaec3144f99c62d43fea9f9c0e05b2c7fd0dc182eb5102664a98e328728",
           "parsed_object": true,
           "retry_attempts": 1,
           "retry_required": false
@@ -87,11 +84,10 @@
     "maintenance": {
       "status": "READY",
       "reason": "maintenance guard passed",
-      "checked_at": "2026-11-12T16:00:01+08:00"
+      "checked_at": "2026-11-12T19:36:59+08:00"
     }
   },
   "blockers": [
-    "account",
     "decision_context"
   ],
   "degradations": [
@@ -101,8 +97,8 @@
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 8282432,
-      "sha256": "f4b51f3af64f92111a981f18752f1318f9bb66cb388ce6631012d8db3b42d471",
+      "byte_count": 8280701,
+      "sha256": "c8933d46dbd911af749a854c8757ecd3d6871154d10dff76523afbab3afe3c3b",
       "parsed_object": true,
       "retry_attempts": 1,
       "retry_required": false
@@ -110,8 +106,8 @@
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 718353,
-      "sha256": "61bf0e4f12530ffce957bd74607ee087017435a69503bb8dc22cfc6ca23b8952",
+      "byte_count": 718647,
+      "sha256": "0ff51aaec3144f99c62d43fea9f9c0e05b2c7fd0dc182eb5102664a98e328728",
       "parsed_object": true,
       "retry_attempts": 1,
       "retry_required": false
