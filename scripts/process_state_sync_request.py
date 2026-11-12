@@ -3174,11 +3174,14 @@ def _completion_link_for_trade_reference(trade: dict) -> str:
     Trial recommendation.  This is attribution/projection only; it grants no
     trading authority.
     """
-    reference = str(
-        trade.get("decision_reference")
-        or trade.get("linked_decision_reference")
-        or ""
-    ).strip()
+    references = [
+        str(trade.get("decision_reference") or "").strip(),
+        str(trade.get("linked_decision_reference") or "").strip(),
+    ]
+    linked_refs = trade.get("linked_formal_decisions")
+    if isinstance(linked_refs, list):
+        references.extend(str(item or "").strip() for item in linked_refs)
+    reference = next((item for item in references if item), "")
     if not reference:
         return ""
     code = str(trade.get("code") or trade.get("security_code") or "").strip()
@@ -3844,8 +3847,23 @@ def _request_trade_events(request: dict) -> list[dict]:
             trade["side"] = "BUY" if "买" in operation else "SELL" if "卖" in operation else operation
         if not trade.get("executed_at") and trade.get("executed_at_beijing"):
             trade["executed_at"] = trade["executed_at_beijing"]
-        if not trade.get("confirmed_at_beijing") and screenshot_confirmed_at:
-            trade["confirmed_at_beijing"] = str(screenshot_confirmed_at)
+        if not trade.get("confirmed_at_beijing"):
+            # The broker screenshot time confirms the account observation; it
+            # must never replace an explicit execution time.  Keep both clocks
+            # separate so replay cannot rewrite execution quality.
+            execution_time = str(
+                trade.get("executed_at_beijing")
+                or trade.get("executed_at")
+                or trade.get("trade_time_beijing")
+                or trade.get("trade_time")
+                or ""
+            ).strip()
+            if execution_time:
+                trade["confirmed_at_beijing"] = execution_time
+            elif screenshot_confirmed_at:
+                trade["confirmed_at_beijing"] = str(screenshot_confirmed_at)
+        if screenshot_confirmed_at and not trade.get("account_confirmed_at_beijing"):
+            trade["account_confirmed_at_beijing"] = str(screenshot_confirmed_at)
         trade.setdefault("source", source)
         if not any(same_trade(trade, existing) for existing in normalized):
             normalized.append(trade)
