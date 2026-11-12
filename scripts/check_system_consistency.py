@@ -1063,7 +1063,7 @@ def _validate_current_formal_decision_projection(report: dict) -> None:
     current_market_date = str((_read_json("data/state/CURRENT.json") or {}).get("market_date") or "")
     try:
         calendar = _read_json("config/market/a_share_trading_calendar_2026.json")
-        trading_day = bool(current_market_date and calendar.get(current_market_date) not in {"WEEKEND", "HOLIDAY", False})
+        trading_day = bool(current_market_date and current_market_date not in set(calendar.get("closed_dates") or []) and datetime.fromisoformat(current_market_date).weekday() < 5)
     except (OSError, json.JSONDecodeError, AttributeError, TypeError):
         trading_day = now.weekday() < 5
     first_node_due = now.hour > 9 or (now.hour == 9 and now.minute >= 0)
