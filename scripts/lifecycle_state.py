@@ -242,7 +242,20 @@ def _executions(root: Path) -> list[dict[str, Any]]:
     for path in sorted(directory.glob("*.json")) if directory.exists() else []:
         event = _load(path, {})
         if str(event.get("execution_status") or "").upper() == "EXECUTED":
-            result.append(event)
+            # Attribution corrections are projection inputs, not mutations of
+            # the immutable broker trade fact.  Lifecycle must consume the
+            # same canonical attribution resolver as execution-quality and
+            # consistency checks; otherwise a repaired trade remains invisible
+            # to the Trial projection.
+            projected = dict(event)
+            try:
+                from decision_trade_link import resolve_link
+            except ModuleNotFoundError:
+                from scripts.decision_trade_link import resolve_link
+            resolved, _decision, _status = resolve_link(root, projected, str(projected.get("linked_decision_id") or ""))
+            if resolved:
+                projected["linked_decision_id"] = resolved
+            result.append(projected)
     return result
 
 
