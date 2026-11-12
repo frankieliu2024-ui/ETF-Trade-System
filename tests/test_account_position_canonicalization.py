@@ -41,6 +41,39 @@ class AccountPositionCanonicalizationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "duplicate security code"):
             merge_account_fact({}, supplied)
 
+
+    def test_broker_snapshot_replaces_positions_absent_from_batch(self):
+        prior = {
+            "positions": [
+                {"code": "588710", "quantity": 6400},
+                {"code": "159941", "quantity": 12200},
+            ]
+        }
+        supplied = {
+            "source": "BROKER_HOLDINGS_SCREENSHOT",
+            "total_asset": 1010.0,
+            "cash": 10.0,
+            "stock_market_value": 1000.0,
+            "positions": [
+                {"code": "588710", "quantity": 6400, "market_value": 1000.0},
+            ],
+        }
+        merged = merge_account_fact(prior, supplied)
+        self.assertEqual([row["code"] for row in merged["positions"]], ["588710"])
+
+    def test_broker_snapshot_amount_mismatch_fails_before_persistence(self):
+        supplied = {
+            "source": "BROKER_HOLDINGS_SCREENSHOT",
+            "total_asset": 1011.0,
+            "cash": 10.0,
+            "stock_market_value": 1000.0,
+            "positions": [
+                {"code": "588710", "quantity": 6400, "market_value": 1000.0},
+            ],
+        }
+        with self.assertRaisesRegex(ValueError, "amount reconciliation failed"):
+            merge_account_fact({}, supplied)
+
     def test_missing_screenshot_summary_does_not_carry_stale_value(self):
         prior = {"daily_pnl": -12.0, "daily_pnl_pct": 0.23}
         supplied = {
