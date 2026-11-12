@@ -4382,7 +4382,7 @@ def _validate_account_snapshot_candidate(candidate: dict, supplied: dict) -> Non
         if not isinstance(position, dict):
             raise ValueError(f"account snapshot positions[{index}] must be an object")
         code = str(position.get("code") or "").strip()
-        if not re.fullmatch(r"\\d{6}", code):
+        if not re.fullmatch(r"\d{6}", code):
             raise ValueError(f"account snapshot positions[{index}] has invalid security code")
         if code in seen:
             raise ValueError(f"account snapshot contains duplicate security code {code}")
@@ -4399,11 +4399,19 @@ def _validate_account_snapshot_candidate(candidate: dict, supplied: dict) -> Non
     stock_market_value = _snapshot_number(candidate.get("stock_market_value"))
     if total_asset is None or cash is None or stock_market_value is None:
         raise ValueError("account snapshot requires total_asset, cash and stock_market_value")
-    if abs(total_asset - cash - stock_market_value) > 0.01:
+    reconciliation_delta = round(total_asset - cash - stock_market_value, 2)
+    if abs(reconciliation_delta) > 1.00:
         raise ValueError(
             "account snapshot amount reconciliation failed: "
             f"total_asset={total_asset}, cash={cash}, stock_market_value={stock_market_value}"
         )
+    if reconciliation_delta:
+        candidate["account_reconciliation_warning"] = {
+            "type": "SMALL_UNRECONCILED_AMOUNT",
+            "delta": reconciliation_delta,
+            "status": "PENDING_STATEMENT_RECONCILIATION",
+            "note": "小额差额暂不归因于现金、费用或其他字段，待后续券商对账单复核。",
+        }
     if positions and any(_snapshot_number(p.get("market_value")) is None for p in positions):
         raise ValueError("account snapshot position market_value is required for reconciliation")
     if abs(position_market_value - stock_market_value) > 0.01:
@@ -5295,4 +5303,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
