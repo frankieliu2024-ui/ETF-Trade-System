@@ -63,5 +63,27 @@ class Issue656AdoptionShadowReplayTests(unittest.TestCase):
             td.cleanup()
 
 
+    def test_event_with_new_id_does_not_duplicate_same_broker_execution(self):
+        td, root = self._root()
+        try:
+            (root / "events/trades/broker-trade.json").write_text(json.dumps({
+                "event_id": "broker-trade-20261112-112000-chatgpt",
+                "code": "159781", "side": "BUY", "quantity": 7600, "price": 1.305,
+                "execution_status": "EXECUTED",
+                "executed_at_beijing": "2026-07-13T09:36:43+08:00",
+                "confirmed_at_beijing": "2026-09-16T06:00:00+08:00",
+                "asset_type": "ETF",
+            }), encoding="utf-8")
+            reconstructed = [{
+                "datetime": "2026-07-13 09:36:43",
+                "code": "159781", "side": "BUY", "quantity": 7600, "price": 1.305,
+            }]
+            facts = canonical_etf_trade_facts(root, reconstructed)
+            self.assertEqual(len(facts), 1)
+            self.assertEqual(facts[0]["quantity"], 7600)
+        finally:
+            td.cleanup()
+
+
 if __name__ == "__main__":
     unittest.main()
