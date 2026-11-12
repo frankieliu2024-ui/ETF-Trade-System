@@ -6,7 +6,6 @@ import json
 import os
 import re
 import subprocess
-import shutil
 from contextlib import contextmanager
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
