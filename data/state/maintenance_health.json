@@ -1,23 +1,23 @@
 {
   "schema_version": "1.1",
-  "checked_at": "2026-11-12T13:10:33+08:00",
+  "checked_at": "2026-11-12T13:35:46+08:00",
   "mode": "DETERMINISTIC_MAINTENANCE_GUARD",
   "status": "PASS",
-  "system_consistency_status": "FAIL",
-  "self_healing_classification": "CONSISTENCY_REGRESSION",
-  "runtime_health_status": "SKIPPED",
-  "current_snapshot": "data/market/snapshots/2026-11-12_113552.json",
+  "system_consistency_status": "WARNING",
+  "self_healing_classification": "DERIVED_CONTEXT_IDENTITY_DRIFT",
+  "runtime_health_status": "PASS",
+  "current_snapshot": "data/market/snapshots/2026-11-12_133424.json",
   "reconciliation": {
-    "status": "FAIL",
-    "trade_count": 49,
+    "status": "PASS",
+    "trade_count": 48,
     "trade_count_matches_summary": true,
-    "declared_trade_count": 49,
+    "declared_trade_count": 48,
     "fact_enrichment_only_count": 0,
     "trade_count_migration": null,
     "executed_trade_event_overlay_count": 0,
     "position_ledger_basis": "CANONICAL_REPLAY_FINAL_COMPLETE_POSITION_IDENTITY",
     "position_reconciliation": {
-      "status": "FAIL",
+      "status": "PASS",
       "checks": [
         {
           "code": "159056",
@@ -70,10 +70,10 @@
         },
         {
           "code": "588710",
-          "ledger_quantity": 12800.0,
+          "ledger_quantity": 6400.0,
           "account_quantity": 6400.0,
-          "difference": -6400.0,
-          "status": "FAIL"
+          "difference": 0.0,
+          "status": "PASS"
         }
       ]
     },
@@ -94,9 +94,9 @@
     },
     "gross_equity_reconciliation": {
       "status": "PASS",
-      "strategy_cash": 96869.1,
-      "current_etf_market_value": 76810.7,
-      "reported_gross_equity": 173679.8,
+      "strategy_cash": 101841.9,
+      "current_etf_market_value": 71630.4,
+      "reported_gross_equity": 173472.3,
       "difference": 0.0,
       "series_row_difference": 0.0,
       "canonical_replay_complete": true
@@ -113,12 +113,12 @@
     "request_id": "broker-trade-20261112-112000-chatgpt",
     "request_path": "requests/live_snapshot/broker-trade-20261112-112000-chatgpt.json",
     "owner": "scripts/process_state_sync_request.py",
-    "workflow_run_id": "43159308025",
+    "workflow_run_id": "43162136590",
     "status": "PASS",
     "failure_class": "",
     "readback_status": "CONFIRMED",
     "canonical_fact_persisted": true,
-    "recorded_at_beijing": "2026-11-12T13:10:33+08:00"
+    "recorded_at_beijing": "2026-11-12T13:35:46+08:00"
   },
   "account_fact_updated_at": "2026-11-12T11:20:00+08:00",
   "failure_class": "",
@@ -126,14 +126,5 @@
   "reconciliation_stale": false,
   "reconciliation_stale_reason": "",
   "projection_required": [],
-  "projections_rebuilt_at": "2026-11-12T11:52:12+08:00",
-  "last_non_account_maintenance": {
-    "request_id": "trade-review-20261112-122844-7f3c9a",
-    "request_path": "requests/live_snapshot/trade-review-20261112-122844-7f3c9a__scheduled_review_completion.json",
-    "owner": "scripts/process_state_sync_request.py",
-    "workflow_run_id": "43155261110",
-    "status": "NOT_APPLICABLE",
-    "failure_class": "NO_ACCOUNT_SYNC_REQUEST",
-    "recorded_at_beijing": "2026-11-12T12:31:34+08:00"
-  }
+  "projections_rebuilt_at": "2026-11-12T13:35:46+08:00"
 }
