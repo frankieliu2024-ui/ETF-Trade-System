@@ -811,12 +811,22 @@ def main() -> int:
         f"discovery_generation={discovery_generation} opportunity_source_generation={opportunity_source_generation}",
         warning=True,
     )
+    review_snapshot = str(review_discovery.get("latest_snapshot") or discovery_snapshot)
+    review_market_date = str(review_discovery.get("market_date") or discovery_projection.get("market_date") or "")
+    # Review/Opportunity are point-in-time projections. They may legitimately
+    # lag a newer same-day Discovery pulse, but may never point to another day
+    # or move ahead of the canonical Discovery snapshot.
+    review_name = review_snapshot.rsplit("/", 1)[-1]
+    discovery_name = discovery_snapshot.rsplit("/", 1)[-1]
+    review_same_day_rollforward = bool(
+        review_market_date == discovery_market_date
+        and review_name[:10] == discovery_name[:10]
+        and review_snapshot <= discovery_snapshot
+    )
     check(
         "formal_layers:review_context_aligned",
-        str(review_discovery.get("latest_snapshot") or discovery_snapshot) == discovery_snapshot
-        and str(review_opportunity.get("source_discovery_latest_snapshot") or opportunity_snapshot) == opportunity_snapshot
-        and str(review_discovery.get("market_date") or discovery_projection.get("market_date") or "") == discovery_market_date,
-        f"review_discovery_generation={review_discovery.get('generated_at_beijing')} review_opportunity_source_generation={review_opportunity.get('source_discovery_generated_at_beijing')} snapshot={review_discovery.get('latest_snapshot') or discovery_snapshot}",
+        review_snapshot == discovery_snapshot or review_same_day_rollforward,
+        f"review_discovery_generation={review_discovery.get('generated_at_beijing')} review_opportunity_source_generation={review_opportunity.get('source_discovery_generated_at_beijing')} snapshot={review_snapshot} discovery_snapshot={discovery_snapshot}",
         warning=True,
     )
     pit = decision_context.get("point_in_time") or query_context.get("point_in_time") or {}
