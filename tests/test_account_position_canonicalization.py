@@ -30,6 +30,17 @@ class AccountPositionCanonicalizationTests(unittest.TestCase):
         merged = merge_account_fact(prior, {})
         self.assertEqual([row["code"] for row in merged["positions"]], ["588710"])
 
+    def test_duplicate_snapshot_rows_fail_fast(self):
+        supplied = {
+            "source": "BROKER_HOLDINGS_SCREENSHOT",
+            "positions": [
+                {"code": "588710", "quantity": 6400},
+                {"code": "588710", "quantity": 6400},
+            ],
+        }
+        with self.assertRaisesRegex(ValueError, "duplicate security code"):
+            merge_account_fact({}, supplied)
+
     def test_missing_screenshot_summary_does_not_carry_stale_value(self):
         prior = {"daily_pnl": -12.0, "daily_pnl_pct": 0.23}
         supplied = {
