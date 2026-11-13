@@ -46,7 +46,7 @@ def _normalize_observations(context: dict, observations: list) -> list[dict]:
         mapping = by_asset.get(str(asset or ""), {})
         row = dict(item)
         row["asset"] = str(asset or "")
-        for key in ("family", "economic_family", "etf_codes", "mapped_assets", "mapping_reason", "name_markers", "exclude_name_markers", "aliases"):
+        for key in ("family", "economic_family", "mapping_scope", "validated_etf_codes", "etf_codes", "mapped_assets", "mapping_reason", "name_markers", "exclude_name_markers", "aliases"):
             if mapping.get(key) is not None and row.get(key) in (None, "", []):
                 row[key] = mapping.get(key)
         if not row.get("family") and row.get("economic_family"):
@@ -87,6 +87,7 @@ def _mapping_candidates(configured: list[dict], observed_assets: set[str]) -> li
             "object_id": asset,
             "asset": asset,
             "family": mapping.get("family") or "",
+            "mapping_scope": mapping.get("mapping_scope") or "CONTEXT_ONLY",
             "mapped_assets": list(mapping.get("etf_codes") or mapping.get("mapped_assets") or []) if str(mapping.get("mapping_scope") or "CONTEXT_ONLY").upper() == "DIRECT_ETF" else list(mapping.get("validated_etf_codes") or []),
             "name_markers": list(mapping.get("name_markers") or []),
             "mapping_reason": "CONFIGURED_ECONOMIC_FAMILY_CANDIDATE_NO_LIVE_SIGNAL",
