@@ -16,9 +16,17 @@ def _economic_etf_matches(mapping: dict) -> list[str]:
     name_markers, resolve those markers against the canonical monitored ETF
     universe so an economic mapping is consumable by all downstream tasks.
     """
-    explicit = [str(x) for x in (mapping.get("etf_codes") or mapping.get("mapped_assets") or []) if str(x)]
-    if explicit:
-        return explicit
+    scope = str(mapping.get("mapping_scope") or "CONTEXT_ONLY").strip().upper()
+    if scope == "DIRECT_ETF":
+        explicit = [str(x) for x in (mapping.get("etf_codes") or mapping.get("mapped_assets") or []) if str(x)]
+        if explicit:
+            return explicit
+    elif scope == "INDUSTRY_CANDIDATE":
+        validated = [str(x) for x in (mapping.get("validated_etf_codes") or []) if str(x)]
+        if validated:
+            return validated
+    # Regional, macro and unvalidated industry relationships are evidence context only.
+    return []
     try:
         universe = json.loads((ROOT / "config/market/etf_monitor_universe.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):
@@ -34,6 +42,8 @@ def _economic_etf_matches(mapping: dict) -> list[str]:
     # signal disappear precisely when a new candidate entered the decision.
     markers = [str(x).strip() for x in (mapping.get("name_markers") or []) if str(x).strip()]
     excluded = [str(x).strip() for x in (mapping.get("exclude_name_markers") or []) if str(x).strip()]
+    if scope != "INDUSTRY_CANDIDATE" or not mapping.get("validated_etf_codes"):
+        return []
     if not markers:
         return []
     matches = []
@@ -117,7 +127,7 @@ def _mapping_candidates(configured: list[dict], observed_assets: set[str]) -> li
             "object_id": asset,
             "asset": asset,
             "family": mapping.get("family") or "",
-            "mapped_assets": list(mapping.get("etf_codes") or mapping.get("mapped_assets") or []),
+            "mapped_assets": list(mapping.get("etf_codes") or mapping.get("mapped_assets") or []) if str(mapping.get("mapping_scope") or "CONTEXT_ONLY").upper() == "DIRECT_ETF" else list(mapping.get("validated_etf_codes") or []),
             "name_markers": list(mapping.get("name_markers") or []),
             "mapping_reason": "CONFIGURED_ECONOMIC_FAMILY_CANDIDATE_NO_LIVE_SIGNAL",
             "evidence_status": "NO_LIVE_SIGNAL",
