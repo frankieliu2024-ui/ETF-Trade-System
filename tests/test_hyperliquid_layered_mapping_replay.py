@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class HyperliquidLayeredMappingReplayTests(unittest.TestCase):
-    def test_context_mappings_do_not_become_etf_candidates(self):
+    def test_context_mappings_resolve_against_current_etf_objects(self):
         config = json.loads(
             (ROOT / "config/market/hyperliquid_etf_exposure_map.json").read_text(
                 encoding="utf-8"
@@ -32,9 +32,10 @@ class HyperliquidLayeredMappingReplayTests(unittest.TestCase):
         self.assertEqual(by_asset["xyz:DRAM"]["mapping_scope"], "CONTEXT_ONLY")
         self.assertEqual(by_asset["xyz:CXMT"]["mapping_scope"], "CONTEXT_ONLY")
 
-        for row in rows:
-            self.assertFalse(row.get("mapped_assets"))
-            self.assertFalse(row.get("etf_codes"))
+        self.assertIn("588200", by_asset["xyz:DRAM"].get("mapped_assets", []))
+        self.assertIn("588710", by_asset["xyz:CXMT"].get("mapped_assets", []))
+        self.assertTrue(by_asset["xyz:DRAM"].get("mapped_assets"))
+        self.assertTrue(by_asset["xyz:CXMT"].get("mapped_assets"))
 
     def test_no_broad_marker_fallback_remains(self):
         config = json.loads(

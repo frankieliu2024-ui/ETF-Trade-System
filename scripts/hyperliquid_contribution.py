@@ -9,18 +9,77 @@ BEIJING = timezone(timedelta(hours=8), name="Asia/Shanghai")
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def _economic_etf_matches(mapping: dict) -> list[str]:
-    """Resolve only explicitly validated ETF relations.
+def _current_etf_objects() -> list[tuple[str, str]]:
+    """Return the current ETF object collection used for economic-family binding."""
+    paths = (
+        ROOT / "config/market/etf_monitor_universe.json",
+        ROOT / "data/state/account_fact.json",
+        ROOT / "data/state/formal_opportunity_current.json",
+        ROOT / "data/state/formal_discovery_current.json",
+    )
+    objects: list[tuple[str, str]] = []
+    for path in paths:
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        rows = (
+            payload.get("objects") or payload.get("positions")
+            or payload.get("opportunities") or payload.get("candidates")
+            or (payload.get("discovery") or {}).get("candidates") or []
+        )
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            code = str(row.get("code") or row.get("security_code") or row.get("symbol") or "").strip()
+            name = str(row.get("name") or row.get("security_name") or row.get("display_name") or "").strip()
+            if code and name and (code, name) not in objects:
+                objects.append((code, name))
+    return objects
 
-    Context, regional and macro mappings remain evidence metadata. They must not
-    become ETF candidates through broad substring matching.
+
+def _economic_etf_matches(mapping: dict, etf_objects: list[tuple[str, str]] | None = None) -> list[str]:
+    """Resolve direct and explicit economic-family bindings to current ETF objects.
+
+    ``CONTEXT_ONLY`` previously meant "never resolve to an ETF", which caused
+    shared consumers to emit an empty mapping for valid AI/semiconductor and
+    macro signals.  Family mappings now resolve only against the current ETF
+    object collection and configured name markers; they do not create new ETF
+    objects or grant trading permission.
     """
     scope = str(mapping.get("mapping_scope") or "CONTEXT_ONLY").strip().upper()
     if scope == "DIRECT_ETF":
         return [str(x) for x in (mapping.get("etf_codes") or mapping.get("mapped_assets") or []) if str(x)]
     if scope == "INDUSTRY_CANDIDATE":
         return [str(x) for x in (mapping.get("validated_etf_codes") or []) if str(x)]
-    return []
+    objects = etf_objects if etf_objects is not None else _current_etf_objects()
+    markers = [str(x).strip().lower() for x in (mapping.get("name_markers") or []) if str(x).strip()]
+    if not markers:
+        return []
+    family = str(mapping.get("family") or "").strip().upper()
+    preferred = {
+        "AI_COMPUTE": ("人工智能", "算力", "半导体", "芯片", "通信", "电子", "科创"),
+        "AI_NETWORKING": ("人工智能", "算力", "通信", "半导体", "电子"),
+        "SEMICONDUCTOR": ("半导体", "芯片", "科创", "通信", "电子", "设备"),
+        "SEMICONDUCTOR_HIGH_BETA": ("半导体", "芯片", "科创", "通信", "电子", "设备"),
+        "MEMORY": ("存储", "内存", "半导体", "芯片", "科创", "通信", "电子", "设备"),
+        "GLOBAL_RISK_APPETITE": ("宽基", "成长", "科创", "创业", "标普", "纳指", "恒生科技"),
+    }.get(family, ())
+    excluded = {
+        "AI_COMPUTE": ("创新药", "医药", "医疗", "器械", "红利", "煤炭", "能源"),
+        "SEMICONDUCTOR": ("创新药", "医药", "医疗", "器械", "红利", "煤炭", "能源"),
+        "MEMORY": ("创新药", "医药", "医疗", "器械", "红利", "煤炭", "能源"),
+    }.get(family, ())
+    matched = [code for code, name in objects if any(marker in name.lower() for marker in markers)]
+    if preferred:
+        focused = [code for code, name in objects if code in matched and any(marker in name.lower() for marker in preferred)]
+        if focused:
+            matched = focused
+    if excluded:
+        matched = [code for code, name in objects if code in matched and not any(marker in name.lower() for marker in excluded)]
+    return list(dict.fromkeys(matched))
+
+
 def _normalize_observations(context: dict, observations: list) -> list[dict]:
     """Attach configured economic mappings to raw Hyperliquid observations.
 
@@ -52,7 +111,7 @@ def _normalize_observations(context: dict, observations: list) -> list[dict]:
         if not row.get("family") and row.get("economic_family"):
             row["family"] = row.get("economic_family")
         if not row.get("etf_codes") and not row.get("mapped_assets") and mapping:
-            family_matches = _economic_etf_matches(mapping)
+            family_matches = _economic_etf_matches(mapping, context.get("etf_objects"))
             if family_matches:
                 row["mapped_assets"] = family_matches
                 row["mapping_reason"] = "ECONOMIC_FAMILY_NAME_MARKER_MAPPING"
@@ -68,7 +127,7 @@ def _normalize_observations(context: dict, observations: list) -> list[dict]:
     return normalized
 
 
-def _mapping_candidates(configured: list[dict], observed_assets: set[str]) -> list[dict]:
+def _mapping_candidates(configured: list[dict], observed_assets: set[str], etf_objects: list[tuple[str, str]] | None = None) -> list[dict]:
     """Expose configured economic mappings even when no live row matched.
 
     A catalog entry is not a live signal. Keeping it explicit prevents the
@@ -88,7 +147,7 @@ def _mapping_candidates(configured: list[dict], observed_assets: set[str]) -> li
             "asset": asset,
             "family": mapping.get("family") or "",
             "mapping_scope": mapping.get("mapping_scope") or "CONTEXT_ONLY",
-            "mapped_assets": list(mapping.get("etf_codes") or mapping.get("mapped_assets") or []) if str(mapping.get("mapping_scope") or "CONTEXT_ONLY").upper() == "DIRECT_ETF" else list(mapping.get("validated_etf_codes") or []),
+            "mapped_assets": _economic_etf_matches(mapping, etf_objects),
             "name_markers": list(mapping.get("name_markers") or []),
             "mapping_reason": "CONFIGURED_ECONOMIC_FAMILY_CANDIDATE_NO_LIVE_SIGNAL",
             "evidence_status": "NO_LIVE_SIGNAL",
@@ -139,7 +198,8 @@ def build_contribution(*, context: dict | None, node: str = "", task: str = "") 
     pulse_sequence_summary = context.get("pulse_sequence_summary") if isinstance(context.get("pulse_sequence_summary"), dict) else {}
     observations = latest.get("observations") or context.get("observations") or []
     raw_observations = observations
-    observations = _normalize_observations(context, raw_observations)
+    etf_objects = context.get("etf_objects") if isinstance(context.get("etf_objects"), list) else None
+    observations = _normalize_observations({**context, "etf_objects": etf_objects}, raw_observations)
     mapped = [x for x in observations if isinstance(x, dict) and x.get("asset") and (x.get("family") or x.get("mapped_assets") or x.get("etf_codes"))]
     configured = context.get("mapping") if isinstance(context.get("mapping"), list) and context.get("mapping") else None
     if configured is None:
@@ -154,7 +214,7 @@ def build_contribution(*, context: dict | None, node: str = "", task: str = "") 
             continue
         raw_asset = item.get("asset")
         observed_assets.add(str(raw_asset.get("name") if isinstance(raw_asset, dict) else raw_asset or ""))
-    mapping_candidates = _mapping_candidates(configured, observed_assets)
+    mapping_candidates = _mapping_candidates(configured, observed_assets, etf_objects)
 
     def _number(value):
         try:
