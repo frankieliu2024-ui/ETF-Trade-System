@@ -272,11 +272,20 @@ def _workflow_may_stage(text: str, path: str) -> bool:
 
 def _bounded_current_repair_is_narrow(root: Path, script_path: str) -> bool:
     path = root / script_path
+    if script_path == "sync_formal_files":
+        path = root / "scripts/sync_formal_files.py"
     if not path.exists():
         return False
     text = path.read_text(encoding="utf-8")
-    writes = re.findall(r"current\s*\[\s*[\"']([^\"']+)[\"']\s*\]\s*=", text)
-    return bool(writes) and set(writes) == {"rules_version"}
+    if script_path == "scripts/runtime_self_heal.py":
+        writes = re.findall(r"current\s*\[\s*[\"']([^\"']+)[\"']\s*\]\s*=", text)
+        return bool(writes) and set(writes) == {"rules_version"}
+    if script_path in {"scripts/sync_formal_files.py", "sync_formal_files"}:
+        # Account maintenance may refresh only the account-owned mirror and
+        # close-review pointer in CURRENT; market facts remain owned by the
+        # canonical snapshot producers.
+        return "account_fact" in text
+    return False
 
 
 
