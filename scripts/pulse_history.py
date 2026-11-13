@@ -315,7 +315,38 @@ def _read_pulse_projection_legacy(root: Path, kind: str) -> dict:
     return {}
 
 
-def read_pulse_projection(root: Path, kind: str) -> dict:
+
+def select_legal_pulse(projection: dict, as_of: str | None = None) -> dict:
+    """Select the newest legal pulse not later than the consumer node."""
+    projection = projection if isinstance(projection, dict) else {}
+    latest = projection.get("latest") if isinstance(projection.get("latest"), dict) else {}
+    if not as_of:
+        return {"latest": latest, "selection_status": "LATEST", "selected_identity": str(latest.get("identity") or "")}
+    cutoff = _parse(as_of)
+    if cutoff is None:
+        return {"latest": {}, "selection_status": "INVALID_CUTOFF", "selected_identity": ""}
+    sequence = projection.get("pulse_sequence") if isinstance(projection.get("pulse_sequence"), list) else []
+    candidates = []
+    for item in sequence:
+        if not isinstance(item, dict):
+            continue
+        formed = _parse(str(item.get("formed_at_beijing") or item.get("fact_time_beijing") or ""))
+        if not formed or formed > cutoff:
+            continue
+        if str(item.get("quality_status") or item.get("status") or "").upper() not in {"PASS", "DEGRADED"}:
+            continue
+        if not (item.get("observations") or item.get("candidates")):
+            continue
+        candidates.append((formed, item))
+    latest_formed = _parse(str(latest.get("formed_at_beijing") or latest.get("fact_time_beijing") or ""))
+    if latest_formed and latest_formed <= cutoff and str(latest.get("quality_status") or latest.get("status") or "").upper() in {"PASS", "DEGRADED"} and (latest.get("observations") or latest.get("candidates")):
+        candidates.append((latest_formed, latest))
+    if not candidates:
+        return {"latest": {}, "selection_status": "NO_LEGAL_PULSE_AT_NODE", "selected_identity": "", "cutoff": as_of}
+    selected = max(candidates, key=lambda pair: pair[0])[1]
+    return {"latest": selected, "selection_status": "SELECTED_AT_OR_BEFORE_NODE", "selected_identity": str(selected.get("identity") or ""), "cutoff": as_of}
+
+def read_pulse_projection(root: Path, kind: str, as_of: str | None = None) -> dict:
     """Read the projection while preserving an explicit read-boundary diagnosis.
 
     The legacy payload shape remains compatible. Diagnostic keys are observational only.
@@ -354,6 +385,12 @@ def read_pulse_projection(root: Path, kind: str) -> dict:
         "warning_only": not bool(valid_source),
     }
     result = dict(result)
+    if as_of is not None:
+        selected = select_legal_pulse(result, as_of)
+        result["latest"] = selected.get("latest") or None
+        result["_selection"] = selected
+        diagnostic["selection_status"] = selected.get("selection_status")
+        diagnostic["selected_identity"] = selected.get("selected_identity")
     result["_read_diagnostic"] = diagnostic
     return result
 
