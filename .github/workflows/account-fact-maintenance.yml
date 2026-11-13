@@ -81,6 +81,21 @@ jobs:
         run: |
           set -euo pipefail
           python scripts/process_state_sync_request.py "$REQUEST_PATH"
+      - name: Rebuild account-owned derived projections
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/rebuild_etf_strategy_equity.py --output data/state/etf_strategy_equity.json
+          python - <<'PY'
+          from pathlib import Path
+          from scripts.sync_formal_files import sync_dashboard_projection
+          result = sync_dashboard_projection(Path("."))
+          if result.get("status") not in {"PASS", "UNCHANGED"} and not result.get("dashboard_changed"):
+              raise SystemExit("account Dashboard projection reconciliation failed")
+          print("account Dashboard projection:", result.get("status"), result.get("dashboard_changed"))
+          PY
+          python scripts/maintenance_guard.py
+
       - name: Record account sync readback
         shell: bash
         env:
@@ -132,8 +147,8 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # Publish only canonical account-owned outputs; derived market and dashboard projections remain with their producers.
-          git add data/state/account_fact.json data/state/maintenance_health.json events/trades requests/account_sync
+          # Publish the canonical fact and every deterministic projection produced from this same fact.
+          git add data/state/account_fact.json data/state/etf_strategy_equity.json data/state/execution_quality.json data/state/maintenance_health.json events/trades requests/account_sync ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md
           git diff --cached --quiet && exit 0
           git commit -m "chore: publish account facts through direct maintenance lane"
           # The owner may generate derived files while applying the canonical fact.
