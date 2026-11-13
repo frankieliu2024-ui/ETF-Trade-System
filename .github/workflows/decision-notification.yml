@@ -452,7 +452,7 @@ jobs:
           report_type = str(obj.get("report_type") or binding.get("report_type") or "").strip().upper()
           task_name = str(obj.get("task_name") or binding.get("task_name") or "").strip()
           if (
-              str(obj.get("request_type") or "").upper() == "SCHEDULED_REVIEW_COMPLETION"
+              str(obj.get("request_type") or "").upper() in {"", "SCHEDULED_REVIEW_COMPLETION"}
               and report_type in {"ETF_FORMAL_DECISION", "ETF_TRADE_REVIEW", "SCHEDULED_TRADE_REVIEW", "ETF_SYSTEM_REVIEW"}
               and (not task_name or task_name in {"ETF正式决策", "ETF交易复盘", "ETF系统复核"})
           ):
