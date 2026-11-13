@@ -103,9 +103,7 @@ def main() -> int:
             target = by_code.get(str(item.get("code")))
             if target is None:
                 return False
-            for key, value in item.items():
-                if not position_value_matches(item, target, key, value):
-                    return False
+            # Security code is the identity key. Quantity availability is\n            # the machine fact contract; broker names and labels are display-only.\n            for key in ("quantity", "available_quantity"):\n                if key in item and not position_value_matches(item, target, key, item[key]):\n                    return False
         return True
 
     success = converged()
