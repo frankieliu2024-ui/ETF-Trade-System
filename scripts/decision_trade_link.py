@@ -157,6 +157,39 @@ def resolve_link(root: Path, trade: dict, requested_id: str = "") -> tuple[str, 
             return "", {}, "CORRECTION_ACTION_MISMATCH"
         return corrected_id, decision, correction_status
     requested_id = str(requested_id or "")
+    if requested_id.startswith("FORMAL_COMPLETION:"):
+        completion_request_id = requested_id.split(":", 1)[1].strip()
+        completion_path = root / "requests" / "live_snapshot" / f"{completion_request_id}__scheduled_review_completion.json"
+        completion = _load(completion_path) if completion_request_id else {}
+        completion_time = _time(completion.get("requested_at_beijing"))
+        execution_time = _time(trade.get("executed_at_beijing") or trade.get("confirmed_at_beijing"))
+        content = str(completion.get("final_content") or "")
+        is_formal = (
+            str(completion.get("task_name") or completion.get("task_id") or "").strip() == "ETF正式决策"
+            and (not completion.get("report_type") or str(completion.get("report_type") or "").upper() == "ETF_FORMAL_DECISION")
+        )
+        code = str(trade.get("code") or "")
+        name = str(trade.get("name") or "")
+        mentions_trade = bool(completion and (code in content or (name and name in content)))
+        buy_side = str(trade.get("side") or "").upper() in {"BUY", "B", "买", "买入"}
+        action_match = any(token in content for token in (("Trial", "Confirm", "新增部署", "买入") if buy_side else ("减持", "退出", "释放", "卖出", "降低风险")))
+        if is_formal and completion_time and execution_time and completion_time < execution_time and mentions_trade and action_match:
+            proxy = {
+                "event_type": "FORMAL_DECISION_COMPLETION_EVIDENCE",
+                "decision_id": requested_id,
+                "request_id": completion_request_id,
+                "report_type": completion.get("report_type"),
+                "decision_effective_at_beijing": completion.get("requested_at_beijing"),
+                "issued_at_beijing": completion.get("requested_at_beijing"),
+                "recorded_at_beijing": completion.get("requested_at_beijing"),
+                "decision_effective_ordering": "BEFORE_EXECUTION",
+                "timing_quality": "USER_CONFIRMED_BOUNDED",
+                "candidate_code": code,
+                "candidate_name": name,
+                "formal_decision": {"completion_request_id": completion_request_id, "final_content": content, "source": completion.get("source")},
+                "attribution_source": str(completion_path.relative_to(root)).replace("\\", "/"),
+            }
+            return requested_id, proxy, "EXPLICIT_FORMAL_COMPLETION_PIT_VALID"
     if requested_id:
         path = decision_dir / f"{requested_id}.json"
         event = _load(path) if path.exists() else {}
