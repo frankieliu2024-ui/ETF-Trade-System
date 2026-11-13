@@ -863,15 +863,31 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
     universe = read_json(root / CANONICAL_FILES["etf_monitor_universe"], {})
     discovery = formal_discovery or {}
     external_driver = external_driver_context or {}
-    hyperliquid_evidence = _hyperliquid_decision_evidence(external_driver, current)
-    hyperliquid_latest = read_pulse_projection(ROOT, "HYPERLIQUID").get("latest") or {}
+    hyperliquid_projection = read_pulse_projection(ROOT, "HYPERLIQUID")
+    hyperliquid_latest = hyperliquid_projection.get("latest") or {}
+    external_id = str(external_driver.get("context_id") or external_driver.get("generation_identity") or "")
+    projection_id = str(hyperliquid_latest.get("context_id") or hyperliquid_latest.get("identity") or "")
+    hyperliquid_consumer_context = dict(external_driver)
+    if projection_id and external_id and projection_id != external_id and hyperliquid_latest.get("observations"):
+        # Keep one batch owner for downstream consumption. This is warning-only;
+        # it does not block the formal decision or create a second chain.
+        hyperliquid_consumer_context.update({
+            "context_id": projection_id,
+            "observations": hyperliquid_latest.get("observations") or [],
+            "mapping": hyperliquid_latest.get("mapping") or external_driver.get("mapping") or [],
+            "observation_count": len(hyperliquid_latest.get("observations") or []),
+            "quality_status": hyperliquid_latest.get("quality_status") or external_driver.get("quality_status") or "UNKNOWN",
+            "collection_finished_at_utc": hyperliquid_latest.get("formed_at_beijing") or external_driver.get("collection_finished_at_utc") or "",
+            "_batch_alignment_warning": "EXTERNAL_CONTEXT_AND_LATEST_PROJECTION_MISMATCH; LATEST_PROJECTION_SELECTED",
+        })
+    hyperliquid_evidence = _hyperliquid_decision_evidence(hyperliquid_consumer_context, current)
     hyperliquid_observation_time_beijing = str(
         hyperliquid_latest.get("collected_at_beijing")
         or hyperliquid_latest.get("fact_time_beijing")
         or hyperliquid_latest.get("formed_at_beijing")
         or ""
     )
-    hyperliquid_contribution = build_contribution(context={"latest": hyperliquid_latest, "observations": external_driver.get("observations") or [], "mapping": external_driver.get("mapping") or [], "generated_at_beijing": external_driver.get("collection_finished_at_utc")}, task="FORMAL_DECISION")
+    hyperliquid_contribution = build_contribution(context={"latest": hyperliquid_latest, "observations": hyperliquid_consumer_context.get("observations") or [], "mapping": hyperliquid_consumer_context.get("mapping") or [], "generated_at_beijing": hyperliquid_consumer_context.get("collection_finished_at_utc")}, task="FORMAL_DECISION")
     hyperliquid_layer_audit = summarize_hyperliquid_layers(external_driver, {"latest": hyperliquid_latest}, hyperliquid_contribution)
     hyperliquid_provenance = {
         "context_id": external_driver.get("context_id") or "",

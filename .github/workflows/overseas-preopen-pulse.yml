@@ -81,6 +81,14 @@ jobs:
         run: |
           [ -f data/state/overseas_context.json ] && cp data/state/overseas_context.json data/state/overseas_context_previous.json || true
           python -c 'import json; from pathlib import Path; p=Path("data/state/hyperliquid_pulse_latest.json"); old=json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}; latest=old.get("latest") or {}; Path("/tmp/previous-hyperliquid-generation.txt").write_text(str(latest.get("generation_identity") or latest.get("identity") or ""), encoding="utf-8")'
+      - name: Select Hyperliquid collection tier
+        if: ${{ steps.pulse_gate.outputs.eligible == 'true' }}
+        run: |
+          if [ "${SCHEDULED_CRON}" = "55 23 * * 0-4" ] || [ "${SCHEDULED_CRON}" = "5 8 * * 1-5" ]; then
+            echo "HYPERLIQUID_COLLECTION_MODE=FULL" >> "$GITHUB_ENV"
+          else
+            echo "HYPERLIQUID_COLLECTION_MODE=CORE" >> "$GITHUB_ENV"
+          fi
       - name: Refresh formal overseas and Asia-Pacific index context
         if: ${{ steps.pulse_gate.outputs.eligible == 'true' }}
         run: python scripts/build_overseas_context.py

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -54,6 +55,8 @@ def build() -> dict:
     started = _now()
     config = json.loads(CONFIG.read_text(encoding="utf-8"))
     targets = set(config["focused_assets"])
+    collection_mode = str(os.environ.get("HYPERLIQUID_COLLECTION_MODE") or "CORE").strip().upper()
+    full_scan = collection_mode == "FULL"
     catalog = []
     observations = []
     failures = []
@@ -106,11 +109,10 @@ def build() -> dict:
                 oi = context.get("openInterest")
                 volume = context.get("dayNtlVlm")
                 active = bool(oi not in (None, "", 0, "0") or volume not in (None, "", 0, "0"))
-                # The configured focus list is a priority list, not the
-                # collection boundary. Every active catalog asset becomes a
-                # current external observation; unmapped assets remain
-                # external facts and cannot create ETF candidates by themselves.
-                if name in targets or active:
+                # Core pulses collect the configured focus list only. Full discovery
+                # pulses additionally retain active catalog assets for new-object recall.
+                # Unmapped assets remain external facts and cannot create ETF candidates.
+                if name in targets or (full_scan and active):
                     observations.append({
                         "dex": dex_name, "asset": asset, "context": context,
                         "observation_scope": "FOCUSED" if name in targets else "DYNAMIC_ACTIVE_CATALOG",
@@ -178,6 +180,8 @@ def build() -> dict:
         "context_id": context_id,
         "earliest_observation_collected_at_utc": earliest_collected,
         "latest_observation_collected_at_utc": latest_collected,
+        "collection_mode": collection_mode,
+        "full_scan": full_scan,
         "observation_count": len(observations),
         "quality_status": status, "dex_count": len(dexes),
         "catalog_count": len(catalog),
