@@ -40,6 +40,19 @@ FORMAL_REQUEST_SOURCES = {
     "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
 }
 
+def _review_due_time(policy: dict) -> str | None:
+    value = ((policy.get("scheduled_trade_review") or {}).get("due_time") if isinstance(policy, dict) else None)
+    value = str(value or "").strip()
+    return value if len(value) == 5 and value[2] == ":" else None
+
+def _review_due_state(review_date: str, current_date: str, now: datetime, due_time: str) -> str:
+    if review_date < current_date:
+        return "PRIOR_DAY_OVERDUE"
+    if review_date > current_date:
+        return "NOT_DUE_TODAY"
+    due = datetime.strptime(f"{review_date} {due_time}", "%Y-%m-%d %H:%M").replace(tzinfo=TZ)
+    return "DUE_OR_OVERDUE" if now >= due else "NOT_DUE_TODAY"
+
 
 def formal_parent_request(request_id: str) -> dict:
     """Return the exact durable parent only when it is a Formal Decision ingress."""
@@ -858,14 +871,10 @@ def close_review_component(current: dict, now=None) -> dict:
             "invalid_projection_market_date": event_market_date,
         }
     market_date = event_market_date or current_market_date
-    try:
-        from post_close_review_due import configured_review_due_time, review_due_state
-    except ModuleNotFoundError:
-        from scripts.post_close_review_due import configured_review_due_time, review_due_state
     from datetime import datetime
     from zoneinfo import ZoneInfo
     policy = read_json(ROOT / "config" / "runtime_policy.json") or {}
-    due = configured_review_due_time(policy)
+    due = _review_due_time(policy)
     if due is None:
         return {
             "status": "BLOCKED",
@@ -875,7 +884,7 @@ def close_review_component(current: dict, now=None) -> dict:
     complete = _event_close_review_complete(market_date)
     if complete:
         return {"status": "READY", "reason": "canonical close review chain is complete", "market_date": market_date}
-    due_state = review_due_state(
+    due_state = _review_due_state(
         market_date,
         str(current.get("market_date") or market_date),
         now or datetime.now(ZoneInfo("Asia/Shanghai")),
