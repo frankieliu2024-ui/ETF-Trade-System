@@ -156,8 +156,24 @@ jobs:
           git stash push --include-untracked -m "account-fact-maintenance-derived" >/dev/null || true
           for attempt in 1 2 3; do
             git fetch origin main
-            if git rebase origin/main && git push origin HEAD:main; then
-              exit 0
+            if git rebase origin/main; then
+              if git push origin HEAD:main; then
+                exit 0
+              fi
+            else
+              # maintenance_health.json is a deterministic projection produced
+              # from this same account fact. If another maintenance lane updated
+              # only this derived file while we were running, keep this run's
+              # freshly rebuilt health projection and continue the publish.
+              conflicted="$(git diff --name-only --diff-filter=U)"
+              if [ "$conflicted" = "data/state/maintenance_health.json" ]; then
+                git checkout --theirs -- data/state/maintenance_health.json
+                git add data/state/maintenance_health.json
+                GIT_EDITOR=true git -c core.editor=true rebase --continue
+                if git push origin HEAD:main; then
+                  exit 0
+                fi
+              fi
             fi
             git rebase --abort || true
           done
