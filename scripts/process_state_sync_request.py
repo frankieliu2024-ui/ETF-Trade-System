@@ -2806,6 +2806,17 @@ def _extract_scheduled_review_final_content(request: dict) -> str:
 
 def _validate_scheduled_system_review_identity(request: dict) -> None:
     """Fail closed when a System Review completion is misclassified or cross-bound."""
+    # Some already-frozen scheduled-task completions contain the complete
+    # system-review identity but omit this transport discriminator. Normalize
+    # only that narrow legacy shape before the existing strict identity gates;
+    # do not infer task, source, runtime identity, or business content.
+    if (
+        not str(request.get("request_type") or "").strip()
+        and str(request.get("formal_fact_type") or "").strip() == "FORMAL_SCHEDULED_SYSTEM_REVIEW"
+        and str(request.get("task_id") or "").strip() == "ETF系统复核"
+        and str(request.get("interaction_scenario") or "").strip().upper() == "SCHEDULED_SYSTEM_REVIEW"
+    ):
+        request["request_type"] = "SCHEDULED_REVIEW_COMPLETION"
     if str(request.get("request_type") or "").strip() != "SCHEDULED_REVIEW_COMPLETION":
         raise ValueError("scheduled system review completion request_type mismatch")
     if str(request.get("task_id") or "").strip() != "ETF系统复核":
