@@ -756,6 +756,31 @@ jobs:
               raise SystemExit("canonical post-close trade review projection was not accepted")
           market_date = str(review.get("market_date") or payload.get("market_date") or "").strip()
           event_path = Path("events/reviews") / f"{market_date}.json"
+          # Legacy direct completions may produce an otherwise valid event without
+          # the delivery identity. Bind the already-derived request-local identity
+          # in the event projection before REPORT materialization; do not rewrite
+          # the frozen completion or alter business content.
+          if event_path.exists():
+              event = json.loads(event_path.read_text(encoding="utf-8"))
+              event_binding = dict(event.get("presentation_binding") or {})
+              report_id = str(projection_payload.get("report_id") or f"etf_trade_review:{request_identity}").strip()
+              for key, value in {
+                  "task_id": projection_binding.get("task_id") or "ETF交易复盘",
+                  "task_run_id": projection_payload.get("task_run_id") or request_identity,
+                  "occurrence_id": projection_payload.get("occurrence_id") or request_identity,
+                  "request_id": request_identity,
+                  "report_id": report_id,
+                  "report_type": "ETF_TRADE_REVIEW",
+                  "full_content": projection_payload.get("final_content", ""),
+              }.items():
+                  if value and not event_binding.get(key):
+                      event_binding[key] = value
+              event["presentation_binding"] = event_binding
+              for key in ("task_id", "task_run_id", "occurrence_id", "request_id", "report_id", "report_type", "full_content"):
+                  if event_binding.get(key) and not event.get(key):
+                      event[key] = event_binding[key]
+              event_path.write_text(json.dumps(event, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          event_path = Path("events/reviews") / f"{market_date}.json"
           if not event_path.exists():
               raise SystemExit("canonical post-close trade review event was not persisted")
           print(json.dumps({"canonical_publication": str(event_path).replace("\\\\", "/"), "duplicate": duplicate}, ensure_ascii=False))
