@@ -132,10 +132,9 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/state/account_fact.json data/state/maintenance_health.json data/state/etf_strategy_equity.json ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md events/trades events/reviews requests/account_sync
+          # Publish only canonical account-owned outputs; derived market and dashboard projections remain with their producers.\n          git add data/state/account_fact.json data/state/maintenance_health.json events/trades requests/account_sync
           git diff --cached --quiet && exit 0
-          git commit -m "chore: publish account facts through direct maintenance lane"
-          for attempt in 1 2 3; do
+          git commit -m "chore: publish account facts through direct maintenance lane"\n          # The owner may generate derived files while applying the canonical fact.\n          # Keep them out of the rebase workspace so latest-main retry is clean.\n          git stash push --include-untracked -m "account-fact-maintenance-derived" >/dev/null || true\n          for attempt in 1 2 3; do
             git fetch origin main
             if git rebase origin/main && git push origin HEAD:main; then
               exit 0
