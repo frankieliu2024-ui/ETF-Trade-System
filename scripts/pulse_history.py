@@ -280,6 +280,19 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
     }
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(index, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    latest_path = target.with_name(target.stem.replace("_index", "_latest") + target.suffix)
+    latest_projection = {
+        "schema_version": "1.1",
+        "projection_type": f"{kind}_PULSE_LATEST_PROJECTION",
+        "read_only": True,
+        "latest_market_date": market_date,
+        "latest": index.get("latest"),
+        "continuity": index.get("continuity") or {},
+        "record_count": len(records),
+        "source_index": target.as_posix(),
+        "retention_rule": "Latest valid pulse plus a 24-pulse PIT recovery window; older history is compact summary only.",
+    }
+    latest_path.write_text(json.dumps(latest_projection, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return {
         "status": "UPDATED",
         "path": str(target),
