@@ -137,6 +137,15 @@ jobs:
                       raise SystemExit(f"position mismatch for {code}: {key}")
           print("account fact readback passed with code-keyed identity")
           PY
+      - name: Finalize maintenance health after account readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Record account sync readback may mark projections stale before the
+          # final verification. Re-run the guard on the same rebuilt state so
+          # the published health file reflects the final closed-loop result.
+          python scripts/maintenance_guard.py
+
       - name: Commit account fact maintenance
         shell: bash
         run: |
