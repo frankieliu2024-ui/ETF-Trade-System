@@ -356,3 +356,30 @@ def read_pulse_projection(root: Path, kind: str) -> dict:
     result = dict(result)
     result["_read_diagnostic"] = diagnostic
     return result
+
+
+def summarize_hyperliquid_layers(external: dict | None, projection: dict | None, contribution: dict | None = None) -> dict:
+    """Report collection-to-consumption counts without creating a decision gate."""
+    external = external if isinstance(external, dict) else {}
+    projection = projection if isinstance(projection, dict) else {}
+    latest = projection.get("latest") if isinstance(projection.get("latest"), dict) else {}
+    contribution = contribution if isinstance(contribution, dict) else {}
+    raw_count = external.get("observation_count")
+    if raw_count is None:
+        raw_count = len(external.get("observations") or [])
+    core_count = len(latest.get("observations") or [])
+    mapped_count = len(latest.get("etf_bindings") or [])
+    etf_count = len(contribution.get("etf_contributions") or [])
+    external_id = str(external.get("context_id") or external.get("generation_identity") or "")
+    projection_id = str(latest.get("context_id") or latest.get("identity") or "")
+    return {
+        "raw_observation_count": int(raw_count or 0),
+        "core_object_count": core_count,
+        "mapped_object_count": mapped_count,
+        "etf_contribution_count": etf_count,
+        "source_context_id": external_id,
+        "projection_identity": projection_id,
+        "identity_status": ("ALIGNED" if external_id and projection_id and external_id == projection_id else "WARNING_MISMATCH" if external_id or projection_id else "UNAVAILABLE"),
+        "warning_only": True,
+        "role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE",
+    }
