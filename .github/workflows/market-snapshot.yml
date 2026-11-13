@@ -1380,7 +1380,7 @@ jobs:
           # when the separate maintenance guard reports an existing ledger mismatch.
           # Keep the mismatch visible in maintenance_health.json; do not roll back
           # the confirmed broker facts that caused the mismatch to be detected.
-          if [ "${ACCOUNT_SYNC_OUTCOME:-}" = "success" ]; then
+          if [ "${{ steps.state_sync.outcome }}" = "success" ]; then
             git add data/state/account_fact.json data/state/CURRENT.json \
               data/state/etf_strategy_equity.json data/state/execution_quality.json \
               data/state/maintenance_health.json ETF当前状态_DASHBOARD.md \
