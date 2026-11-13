@@ -845,6 +845,33 @@ def sync_current_account_reference(root: Path, account: dict) -> bool:
         if current.get(key) != value:
             current[key] = value
             changed = True
+    # Keep the nested mirror and the top-level reference on the same canonical
+    # account batch.  The formal projection maintenance path is replayable and
+    # must repair both representations even when an earlier state-sync request
+    # stopped after persisting account_fact.json.
+    mirror_keys = (
+        "status", "updated_at", "source", "cash",
+        "reserved_cash_for_settlement", "deployable_cash",
+        "settlement_constraint_status", "account_snapshot_id",
+        "account_snapshot_version",
+    )
+    mirror = {key: account.get(key, "") for key in mirror_keys}
+    for key, value in mirror.items():
+        if (current.get("account_fact") or {}).get(key) != value:
+            changed = True
+            break
+    if current.get("account_fact") != mirror:
+        current["account_fact"] = mirror
+        changed = True
+    for key, value in {
+        "settlement_obligations": account.get("settlement_obligations") or [],
+        "reserved_cash_for_settlement": account.get("reserved_cash_for_settlement", 0),
+        "deployable_cash": account.get("deployable_cash"),
+        "needs_account_update": account.get("status") != "VALID",
+    }.items():
+        if current.get(key) != value:
+            current[key] = value
+            changed = True
     if changed:
         path.write_text(json.dumps(current, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return changed
