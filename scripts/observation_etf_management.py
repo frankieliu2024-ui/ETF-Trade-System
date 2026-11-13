@@ -7,6 +7,10 @@ from typing import Any
 VALID_ACTIONS = {"ADMIT", "RETAIN", "EXIT"}
 
 
+class ObservationUniverseResourceLimitError(ValueError):
+    """Backward-compatible exception type; valid monitor universes are no longer capped."""
+
+
 def _code(value: Any) -> str:
     return str(value or "").upper().replace(".SH", "").replace(".SZ", "").strip()
 
