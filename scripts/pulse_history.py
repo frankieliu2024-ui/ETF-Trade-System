@@ -279,7 +279,7 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
     }
 
 
-def read_pulse_projection(root: Path, kind: str) -> dict:
+def _read_pulse_projection_legacy(root: Path, kind: str) -> dict:
     """Read the bounded latest projection, with a one-release legacy fallback."""
     if kind not in {"DISCOVERY", "HYPERLIQUID"}:
         raise ValueError(f"unsupported pulse kind: {kind}")
@@ -313,3 +313,73 @@ def read_pulse_projection(root: Path, kind: str) -> dict:
             }
             return payload
     return {}
+
+
+def read_pulse_projection(root: Path, kind: str) -> dict:
+    """Read the projection while preserving an explicit read-boundary diagnosis.
+
+    The legacy payload shape remains compatible. Diagnostic keys are observational only.
+    """
+    if kind not in {"DISCOVERY", "HYPERLIQUID"}:
+        raise ValueError(f"unsupported pulse kind: {kind}")
+    stem = "discovery" if kind == "DISCOVERY" else "hyperliquid"
+    state_dir = root / "data" / "state"
+    candidates = (f"{stem}_pulse_latest.json", f"{stem}_pulse_index.json")
+    errors = []
+    valid_source = ""
+    for name in candidates:
+        path = state_dir / name
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except FileNotFoundError:
+            errors.append({"source": name, "status": "MISSING"})
+            continue
+        except OSError as exc:
+            errors.append({"source": name, "status": "READ_ERROR", "error": type(exc).__name__})
+            continue
+        except json.JSONDecodeError:
+            errors.append({"source": name, "status": "PARSE_ERROR"})
+            continue
+        if isinstance(payload, dict):
+            valid_source = name
+            break
+        errors.append({"source": name, "status": "INVALID_SHAPE"})
+    result = _read_pulse_projection_legacy(root, kind)
+    if not isinstance(result, dict):
+        result = {}
+    diagnostic = {
+        "status": "VALID_EMPTY" if valid_source and not result.get("latest") else "READY" if valid_source else "READ_FAILED",
+        "source": valid_source,
+        "errors": errors,
+        "warning_only": not bool(valid_source),
+    }
+    result = dict(result)
+    result["_read_diagnostic"] = diagnostic
+    return result
+
+
+def summarize_hyperliquid_layers(external: dict | None, projection: dict | None, contribution: dict | None = None) -> dict:
+    """Report collection-to-consumption counts without creating a decision gate."""
+    external = external if isinstance(external, dict) else {}
+    projection = projection if isinstance(projection, dict) else {}
+    latest = projection.get("latest") if isinstance(projection.get("latest"), dict) else {}
+    contribution = contribution if isinstance(contribution, dict) else {}
+    raw_count = external.get("observation_count")
+    if raw_count is None:
+        raw_count = len(external.get("observations") or [])
+    core_count = len(latest.get("observations") or [])
+    mapped_count = len(latest.get("etf_bindings") or [])
+    etf_count = len(contribution.get("etf_contributions") or [])
+    external_id = str(external.get("context_id") or external.get("generation_identity") or "")
+    projection_id = str(latest.get("context_id") or latest.get("identity") or "")
+    return {
+        "raw_observation_count": int(raw_count or 0),
+        "core_object_count": core_count,
+        "mapped_object_count": mapped_count,
+        "etf_contribution_count": etf_count,
+        "source_context_id": external_id,
+        "projection_identity": projection_id,
+        "identity_status": ("ALIGNED" if external_id and projection_id and external_id == projection_id else "WARNING_MISMATCH" if external_id or projection_id else "UNAVAILABLE"),
+        "warning_only": True,
+        "role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE",
+    }
