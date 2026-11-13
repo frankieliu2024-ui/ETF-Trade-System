@@ -981,13 +981,6 @@ jobs:
           binding = payload.get("presentation_binding") or {}
           report_type = str(payload.get("report_type") or binding.get("report_type") or "").strip().upper()
           task_id = str(payload.get("task_id") or binding.get("task_id") or "").strip()
-          task_name = str(payload.get("task_name") or binding.get("task_name") or "").strip()
-          if report_type == "ETF_FORMAL_DECISION" and not task_name:
-              # Direct Formal Decision completions may carry the opaque platform
-              # task_id without repeating the semantic task name. The report
-              # type is already the request-bound formal identity.
-              task_name = "ETF正式决策"
-              payload["task_name"] = task_name
           legacy_formal = (
               task_id == "ETF正式决策"
               and str(payload.get("decision_path") or "").strip().upper() == "FORMAL"
@@ -1215,10 +1208,7 @@ jobs:
           binding = payload.get("presentation_binding") or {}
           report_type = str(payload.get("report_type") or binding.get("report_type") or "").strip().upper()
           task_id = str(payload.get("task_id") or binding.get("task_id") or "").strip()
-          task_name = str(payload.get("task_name") or binding.get("task_name") or "").strip()
-          if report_type == "ETF_FORMAL_DECISION" and not task_name:
-              task_name = "ETF正式决策"
-              payload["task_name"] = task_name
+          task_name = str(payload.get("task_name") or "").strip()
           if report_type == "ETF_FORMAL_DECISION" and (task_id == "ETF正式决策" or task_name == "ETF正式决策") and not payload.get("presentation_binding"):
               print(json.dumps({"canonical_publication": ""}, ensure_ascii=False))
               raise SystemExit(0)
