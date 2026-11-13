@@ -16,7 +16,7 @@ try:
     from market_quote_router import build_market_quote_context
     from formal_etf_opportunity_discovery import attach_formal_quotes
     from trading_time_semantics import user_visible_trading_time_anchor
-    from pulse_history import read_pulse_projection
+    from pulse_history import read_pulse_projection, summarize_hyperliquid_layers
     from hyperliquid_contribution import build_contribution
 except ModuleNotFoundError:
     from scripts.state_manager import atomic_json_write, build_decision_context, now_utc, read_account_fact, read_current, read_json
@@ -24,7 +24,7 @@ except ModuleNotFoundError:
     from scripts.market_quote_router import build_market_quote_context
     from scripts.formal_etf_opportunity_discovery import attach_formal_quotes
     from scripts.trading_time_semantics import user_visible_trading_time_anchor
-    from scripts.pulse_history import read_pulse_projection
+    from scripts.pulse_history import read_pulse_projection, summarize_hyperliquid_layers
     from scripts.hyperliquid_contribution import build_contribution
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
@@ -872,6 +872,7 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         or ""
     )
     hyperliquid_contribution = build_contribution(context={"latest": hyperliquid_latest, "observations": external_driver.get("observations") or [], "mapping": external_driver.get("mapping") or [], "generated_at_beijing": external_driver.get("collection_finished_at_utc")}, task="FORMAL_DECISION")
+    hyperliquid_layer_audit = summarize_hyperliquid_layers(external_driver, {"latest": hyperliquid_latest}, hyperliquid_contribution)
     hyperliquid_provenance = {
         "context_id": external_driver.get("context_id") or "",
         "collection_started_at_utc": external_driver.get("collection_started_at_utc") or "",
@@ -2333,6 +2334,7 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
         "needs_account_screenshot": not account_gate["can_use_current_account_fact"], "read_only": True,
         "interaction_boundary": "用户主动查询时先进入freshness assurance，再按‘查询时立即补采/复用 → 最近一次有效快照 → 明确降级/缺失’获取行情；正式输出必须标注北京时间真实数据时点，并区分美股现金盘、盘后和盘前。",
         "decision_fact_pack": fact_pack,
+        "hyperliquid_layer_audit": hyperliquid_layer_audit,
         "formal_reply_freeze": fact_pack.get("formal_reply_freeze", {}),
         "freshness_assurance": {"status": (market_quote.get("decision_freshness") or {}).get("status", "UNKNOWN"), "refresh_mode": market_quote.get("refresh_mode", ""), "decision_request_time": request_time.isoformat() if request_time else "", "decision_request_post_current": (market_quote.get("decision_freshness") or {}).get("post_request", False), "rule": "freshness assurance precedes full decision-context construction; post-refresh CURRENT is re-read before formal decision context construction."},
         "fast_path_latency": latency,
