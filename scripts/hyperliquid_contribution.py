@@ -10,57 +10,17 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def _economic_etf_matches(mapping: dict) -> list[str]:
-    """Resolve an industry/family mapping to the current ETF universe.
+    """Resolve only explicitly validated ETF relations.
 
-    Explicit etf_codes remain the strongest binding. When a mapping only has
-    name_markers, resolve those markers against the canonical monitored ETF
-    universe so an economic mapping is consumable by all downstream tasks.
+    Context, regional and macro mappings remain evidence metadata. They must not
+    become ETF candidates through broad substring matching.
     """
     scope = str(mapping.get("mapping_scope") or "CONTEXT_ONLY").strip().upper()
     if scope == "DIRECT_ETF":
-        explicit = [str(x) for x in (mapping.get("etf_codes") or mapping.get("mapped_assets") or []) if str(x)]
-        if explicit:
-            return explicit
-    elif scope == "INDUSTRY_CANDIDATE":
-        validated = [str(x) for x in (mapping.get("validated_etf_codes") or []) if str(x)]
-        if validated:
-            return validated
-    # Regional, macro and unvalidated industry relationships are evidence context only.
+        return [str(x) for x in (mapping.get("etf_codes") or mapping.get("mapped_assets") or []) if str(x)]
+    if scope == "INDUSTRY_CANDIDATE":
+        return [str(x) for x in (mapping.get("validated_etf_codes") or []) if str(x)]
     return []
-    try:
-        universe = json.loads((ROOT / "config/market/etf_monitor_universe.json").read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        universe = {}
-    objects = list(universe.get("objects") or [])
-    try:
-        discovery = json.loads((ROOT / "data/state/formal_discovery_current.json").read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        discovery = {}
-    # Resolve both the persistent monitored universe and the current legal
-    # Discovery candidates.  Discovery is an independent consumer class, not
-    # a permission grant; excluding it here made a valid economic-family
-    # signal disappear precisely when a new candidate entered the decision.
-    markers = [str(x).strip() for x in (mapping.get("name_markers") or []) if str(x).strip()]
-    excluded = [str(x).strip() for x in (mapping.get("exclude_name_markers") or []) if str(x).strip()]
-    if scope != "INDUSTRY_CANDIDATE" or not mapping.get("validated_etf_codes"):
-        return []
-    if not markers:
-        return []
-    matches = []
-    for item in objects:
-        code = str(item.get("code") or "").strip()
-        name = str(item.get("name") or "")
-        if code and any(marker in name for marker in markers) and not any(marker in name for marker in excluded):
-            matches.append(code)
-    discovery_rows = discovery.get("discovery", {}).get("candidates", []) if isinstance(discovery.get("discovery"), dict) else []
-    for item in discovery_rows:
-        code = str(item.get("code") or "").strip()
-        name = str(item.get("name") or item.get("display_name") or "")
-        if code and any(marker in name for marker in markers) and not any(marker in name for marker in excluded):
-            matches.append(code)
-    return sorted(set(matches))
-
-
 def _normalize_observations(context: dict, observations: list) -> list[dict]:
     """Attach configured economic mappings to raw Hyperliquid observations.
 
