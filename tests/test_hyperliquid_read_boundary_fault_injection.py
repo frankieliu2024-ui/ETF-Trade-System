@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from scripts.pulse_history import read_pulse_projection
+from scripts.pulse_history import read_pulse_projection, summarize_hyperliquid_layers
 
 
 class HyperliquidReadBoundaryFaultInjectionTests(unittest.TestCase):
@@ -36,6 +36,19 @@ class HyperliquidReadBoundaryFaultInjectionTests(unittest.TestCase):
         result = read_pulse_projection(root, "HYPERLIQUID")
         self.assertIsNone(result.get("latest"))
         self.assertEqual(result["_read_diagnostic"]["status"], "VALID_EMPTY")
+
+    def test_layer_audit_preserves_counts_and_warning_only_mismatch(self):
+        audit = summarize_hyperliquid_layers(
+            {"context_id": "external-old", "observation_count": 563},
+            {"latest": {"context_id": "projection-new", "observations": [{}, {}], "etf_bindings": [{}]}},
+            {"etf_contributions": [{}, {}]},
+        )
+        self.assertEqual(audit["raw_observation_count"], 563)
+        self.assertEqual(audit["core_object_count"], 2)
+        self.assertEqual(audit["mapped_object_count"], 1)
+        self.assertEqual(audit["etf_contribution_count"], 2)
+        self.assertEqual(audit["identity_status"], "WARNING_MISMATCH")
+        self.assertTrue(audit["warning_only"])
 
     def test_two_sources_can_carry_different_identities(self):
         external = {"context_id": "external-old"}
