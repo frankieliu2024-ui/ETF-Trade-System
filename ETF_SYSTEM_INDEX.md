@@ -83,7 +83,7 @@ Codex协作交接说明：`docs/Codex协作执行说明.md`。它只负责CODEX_
 - 运行健康：`data/state/runtime_health.json`、`data/state/overseas_runtime_health.json`
 - 当前决策证据：`data/state/decision_context.json`
 - 查询上下文：`data/state/query_context.json`
-- 收盘复盘上下文：`data/state/review_context.json`、`post_market_review/post_market_review_event.json`
+- 交易复盘上下文按交易复盘任务协议和当前运行请求读取，不再维护独立收盘复核上下文。
 - 实时相邻变化：`data/state/market_delta.json`
 - 日内路径：`data/state/intraday_path_features.json`、`scripts/build_intraday_path_features.py`
 - 海外／亚洲正式上下文：`data/state/overseas_context.json`

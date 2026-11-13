@@ -86,7 +86,7 @@ def classify_path(path: str) -> str:
         return TRADE_FACT_MUTATION
     if path in FORMAL_FILES:
         return FORMAL_PROJECTION_MUTATION
-    if path.startswith("events/reviews/") or path.startswith("post_market_review/"):
+    if path.startswith("events/reviews/"):
         return REVIEW_EVENT_MUTATION
     if path.startswith("requests/research_backfill/") or path.startswith("events/research/") or path.startswith("research/reports/"):
         return RESEARCH_FORMAL_MUTATION

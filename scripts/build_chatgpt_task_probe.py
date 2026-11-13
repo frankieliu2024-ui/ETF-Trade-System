@@ -21,7 +21,7 @@ def main() -> None:
     probe = {
         "repository": "frankieliu2024-ui/ETF-Trade-System", "latest_commit": commit,
         "CURRENT_path": "data/state/CURRENT.json", "query_context_path": "data/state/query_context.json",
-        "post_market_review_path": "post_market_review/post_market_review_event.json", "last_update": now_utc(),
+        "last_update": now_utc(),
         "read_only": True, "access_verified": False,
         "note": "This is a read-only probe. Codex does not assume ChatGPT Scheduled Tasks can access a private GitHub repository.",
     }
