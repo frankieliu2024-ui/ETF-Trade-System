@@ -350,6 +350,7 @@ def main() -> int:
     parser.add_argument("--output", default="")
     # Compatibility-only input. It is a completion identity, not a market-fact request.
     parser.add_argument("--request-id", default="")
+    parser.add_argument("--fact-summary", required=True, help="Path to the request-bound Formal Decision fact summary")
     args = parser.parse_args()
 
     # A Formal Decision is not a child of the latest account-sync request.
@@ -367,7 +368,16 @@ def main() -> int:
         args.task_run_id,
         args.occurrence_id,
     )
-    from scheduled_review_completion import build_formal_runtime_completion_request
+    from scheduled_review_completion import build_formal_runtime_completion_request, validate_formal_runtime_completion_contract
+    fact_summary_path = (ROOT / args.fact_summary).resolve() if not Path(args.fact_summary).is_absolute() else Path(args.fact_summary).resolve()
+    if ROOT not in fact_summary_path.parents or not fact_summary_path.exists():
+        raise RuntimeError("Formal Decision requires an existing request-bound fact summary inside the repository")
+    try:
+        fact_summary = json.loads(fact_summary_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise RuntimeError("Formal Decision request-bound fact summary is unreadable") from exc
+    if not isinstance(fact_summary, dict):
+        raise RuntimeError("Formal Decision request-bound fact summary must be an object")
     identity = {
         "task_run_id": task_run_id,
         "occurrence_id": occurrence_id,
@@ -379,7 +389,9 @@ def main() -> int:
         market_date=args.market_date,
         final_content=args.final_content,
         decision_path=args.decision_path,
+        fact_summary=fact_summary,
     )
+    validate_formal_runtime_completion_contract(payload, root=ROOT)
     target = (
         Path(args.output).resolve()
         if args.output
