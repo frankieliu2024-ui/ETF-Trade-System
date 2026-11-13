@@ -236,29 +236,53 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
     records = [item for item in records if str(item.get("identity") or "") != record["identity"]]
     records.append(record)
     records.sort(key=lambda item: str(item.get("formed_at_beijing") or ""))
-    days[market_date] = records[-288:]
+
+    # Keep only a short PIT recovery window with full observations. Older
+    # entries remain as compact audit summaries, so consumers never need to
+    # parse an ever-growing detailed history file.
+    def _summary(item):
+        return {
+            key: item.get(key)
+            for key in (
+                "kind", "identity", "context_id", "formed_at_beijing",
+                "fact_time_beijing", "source_path", "status", "quality_status",
+                "coverage_status", "candidate_count", "observation_count",
+                "latest_snapshot", "observation_time_basis", "binding_status",
+            )
+        }
+
+    detailed_window = 24
+    detailed = records[-detailed_window:]
+    days[market_date] = detailed
+    for prior_date, prior_records in list(days.items()):
+        if prior_date != market_date and isinstance(prior_records, list):
+            days[prior_date] = [_summary(item) for item in prior_records[-detailed_window:] if isinstance(item, dict)]
+    retained_days = dict(sorted(days.items())[-31:])
+    latest_record = records[-1] if records else None
     index = {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "projection_type": f"{kind}_PULSE_HISTORY_INDEX",
         "read_only": True,
         "latest_market_date": market_date,
-        "latest": records[-1] if records else None,
-        "days": dict(sorted(days.items())[-31:]),
-        "retention_rule": "Keep up to 288 pulses per day and 31 market days; this index does not create decisions or permissions.",
+        "latest": latest_record,
+        "days": retained_days,
+        "retention_rule": "Keep detailed observations for the latest 24 pulses and compact summaries for up to 31 market days; full current facts remain in the latest projection.",
+        "detailed_window_pulses": detailed_window,
+        "history_storage_mode": "RECENT_DETAIL_PLUS_COMPACT_SUMMARY",
         "continuity": {
-            "status": "READY" if isinstance(records[-1] if records else None, dict) and str((records[-1] if records else {}).get("identity") or "") and ((records[-1] if records else {}).get("observations") or (records[-1] if records else {}).get("candidates") or []) else "MISSING",
-            "latest_identity": str((records[-1] if records else {}).get("identity") or ""),
-            "latest_formed_at_beijing": str((records[-1] if records else {}).get("formed_at_beijing") or ""),
-            "latest_observation_count": len((records[-1] if records else {}).get("observations") or []),
-            "latest_candidate_count": len((records[-1] if records else {}).get("candidates") or []),
-            "rule": "正式判断只消费具有identity且含实际对象证据的最新脉冲；缺失时明确降级，不用历史正文或旧状态补齐。",
+            "status": "READY" if isinstance(latest_record, dict) and str(latest_record.get("identity") or "") and (latest_record.get("observations") or latest_record.get("candidates")) else "MISSING",
+            "latest_identity": str((latest_record or {}).get("identity") or ""),
+            "latest_formed_at_beijing": str((latest_record or {}).get("formed_at_beijing") or ""),
+            "latest_observation_count": len((latest_record or {}).get("observations") or []),
+            "latest_candidate_count": len((latest_record or {}).get("candidates") or []),
+            "rule": "正式判断只消费具有identity且含实际对象证据的最新合法脉冲；历史摘要只用于审计，不作为事实补齐来源。",
         },
     }
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(index, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     latest_path = target.with_name(target.stem.replace("_index", "_latest") + target.suffix)
     latest_projection = {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "projection_type": f"{kind}_PULSE_LATEST_PROJECTION",
         "read_only": True,
         "latest_market_date": market_date,
@@ -266,7 +290,7 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
         "continuity": index.get("continuity") or {},
         "record_count": len(records),
         "source_index": target.as_posix(),
-        "retention_rule": "Latest valid pulse only; use the history index for audit history.",
+        "retention_rule": "Latest valid pulse plus a 24-pulse PIT recovery window; older history is compact summary only.",
     }
     latest_path.write_text(json.dumps(latest_projection, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return {
@@ -277,6 +301,7 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
         "record_count": len(records),
         "latest_path": str(latest_path),
     }
+
 
 
 def _read_pulse_projection_legacy(root: Path, kind: str) -> dict:
