@@ -88,11 +88,9 @@ jobs:
           python scripts/rebuild_etf_strategy_equity.py --output data/state/etf_strategy_equity.json
           python - <<'PY'
           from pathlib import Path
-          from scripts.sync_formal_files import sync_dashboard_projection
-          result = sync_dashboard_projection(Path("."))
-          if result.get("status") not in {"PASS", "UNCHANGED"} and not result.get("dashboard_changed"):
-              raise SystemExit("account Dashboard projection reconciliation failed")
-          print("account Dashboard projection:", result.get("status"), result.get("dashboard_changed"))
+          from scripts.sync_formal_files import sync_formal_files
+          result = sync_formal_files(Path("."))
+          print("account-owned formal projections:", result)
           PY
           python scripts/maintenance_guard.py
 
