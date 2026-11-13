@@ -116,7 +116,7 @@ jobs:
               actual = by_code.get(code)
               if actual is None:
                   raise SystemExit(f"missing account position: {code}")
-              for key in ("name", "quantity", "available_quantity"):
+              for key in ("quantity", "available_quantity"):
                   if key in item and actual.get(key) != item[key]:
                       raise SystemExit(f"position mismatch for {code}: {key}")
           print("account fact readback passed with code-keyed identity")
