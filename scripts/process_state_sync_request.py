@@ -179,39 +179,77 @@ REVIEW_UNAVAILABLE_END = "<!-- AUTO_REVIEW_PREREQUISITE_UNAVAILABLE_END -->"
 
 @contextmanager
 def account_snapshot_transaction(root: Path):
-    """Make the account sync's state and projection writes one recoverable batch."""
-    roots = [root / "data" / "state", root / "events"]
-    files = [
+    """Protect account sync writes without reading the entire state/event tree."""
+    fixed_paths = [
+        root / "data/state/account_fact.json",
+        root / "data/state/CURRENT.json",
+        root / "data/state/review_context.json",
+        root / "data/state/formal_opportunity_current.json",
+        root / "data/state/etf_strategy_equity.json",
+        root / "data/state/execution_quality.json",
+        root / "data/state/maintenance_health.json",
+        root / "config/market/etf_monitor_universe.json",
         root / "ETF当前状态_DASHBOARD.md",
         root / "ETF市场行情档案_2026.md",
         root / "ETF交易复盘与经验库_2026.md",
     ]
-    snapshot = {}
-    for base in roots:
-        if base.exists():
-            files.extend(path for path in base.rglob("*") if path.is_file())
-    for path in files:
-        if path.exists():
-            snapshot[path] = path.read_bytes()
+    snapshot = {path: path.read_bytes() for path in fixed_paths if path.exists()}
+    baseline_tracked = set()
+    baseline_untracked = set()
+    try:
+        status = subprocess.run(
+            ["git", "status", "--porcelain", "--untracked-files=all"],
+            cwd=root,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.splitlines()
+        for line in status:
+            rel = line[3:].strip()
+            if line.startswith("?? "):
+                baseline_untracked.add(rel)
+            else:
+                baseline_tracked.add(rel)
+    except (OSError, subprocess.CalledProcessError):
+        # Local callers may not run inside a Git checkout; fixed-path snapshots
+        # still preserve the original rollback contract for canonical files.
+        baseline_tracked = set()
+        baseline_untracked = set()
     try:
         yield
     except Exception:
-        current = set()
-        for base in roots:
-            if base.exists():
-                current.update(path for path in base.rglob("*") if path.is_file())
-        current.update(path for path in (
-            root / "ETF当前状态_DASHBOARD.md",
-            root / "ETF市场行情档案_2026.md",
-            root / "ETF交易复盘与经验库_2026.md",
-        ) if path.exists())
-        for path in current - set(snapshot):
-            path.unlink(missing_ok=True)
+        # Restore known canonical files from byte snapshots.
         for path, content in snapshot.items():
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(content)
+        # Remove new event/state files and restore tracked files created by this
+        # transaction without recursively reading the whole repository.
+        try:
+            status = subprocess.run(
+                ["git", "status", "--porcelain", "--untracked-files=all"],
+                cwd=root,
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.splitlines()
+            for line in status:
+                rel = line[3:].strip()
+                if line.startswith("?? "):
+                    if rel not in baseline_untracked and (
+                        rel.startswith("events/") or rel.startswith("data/state/")
+                    ):
+                        (root / rel).unlink(missing_ok=True)
+                elif rel not in baseline_tracked:
+                    subprocess.run(
+                        ["git", "checkout", "--", rel],
+                        cwd=root,
+                        check=False,
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                    )
+        except (OSError, subprocess.CalledProcessError):
+            pass
         raise
-
 
 def load_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
