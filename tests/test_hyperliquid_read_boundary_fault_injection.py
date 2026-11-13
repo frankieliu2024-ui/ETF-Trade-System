@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from scripts.pulse_history import read_pulse_projection, summarize_hyperliquid_layers
+from scripts.pulse_history import read_pulse_projection, summarize_hyperliquid_layers, select_legal_pulse
 
 
 class HyperliquidReadBoundaryFaultInjectionTests(unittest.TestCase):
@@ -49,6 +49,26 @@ class HyperliquidReadBoundaryFaultInjectionTests(unittest.TestCase):
         self.assertEqual(audit["etf_contribution_count"], 2)
         self.assertEqual(audit["identity_status"], "WARNING_MISMATCH")
         self.assertTrue(audit["warning_only"])
+
+    def test_selects_latest_legal_pulse_at_or_before_node(self):
+        projection = {
+            "latest": {"identity": "after-node", "formed_at_beijing": "2026-11-13T10:04:05+08:00", "quality_status": "PASS", "observations": [{}]},
+            "pulse_sequence": [
+                {"identity": "before-node", "formed_at_beijing": "2026-11-13T09:55:05+08:00", "quality_status": "PASS", "observations": [{}]},
+                {"identity": "after-node", "formed_at_beijing": "2026-11-13T10:04:05+08:00", "quality_status": "PASS", "observations": [{}]},
+            ],
+        }
+        selected = select_legal_pulse(projection, "2026-11-13T10:00:00+08:00")
+        self.assertEqual(selected["selected_identity"], "before-node")
+        self.assertEqual(selected["selection_status"], "SELECTED_AT_OR_BEFORE_NODE")
+
+    def test_late_only_pulse_is_not_backfilled_into_earlier_node(self):
+        projection = {
+            "latest": {"identity": "after-node", "formed_at_beijing": "2026-11-13T10:04:05+08:00", "quality_status": "PASS", "observations": [{}]},
+        }
+        selected = select_legal_pulse(projection, "2026-11-13T10:00:00+08:00")
+        self.assertEqual(selected["selection_status"], "NO_LEGAL_PULSE_AT_NODE")
+        self.assertEqual(selected["latest"], {})
 
     def test_two_sources_can_carry_different_identities(self):
         external = {"context_id": "external-old"}
