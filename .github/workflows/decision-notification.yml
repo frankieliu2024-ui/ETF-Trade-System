@@ -953,16 +953,41 @@ jobs:
           done
           echo "report_path=$report_path" >> "$GITHUB_OUTPUT"
 
+      - name: Infer unprojected Formal Decision completion from producer wake
+        id: workflow_formal_completion
+        if: ${{ github.event_name == 'workflow_run' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t candidates < <(git log origin/main --format='' --name-only -- requests/live_snapshot/*__scheduled_review_completion.json requests/live_snapshot/scheduled_review_completion_*.json | sed '/^$/d' | awk '!seen[$0]++' | while IFS= read -r path; do
+            python - "$path" <<'PY' 2>/dev/null && echo "$path"
+          import json, sys
+          from pathlib import Path
+          payload=json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
+          binding=payload.get('presentation_binding') or {}
+          report_type=str(payload.get('report_type') or binding.get('report_type') or '').strip().upper()
+          task_name=str(payload.get('task_name') or binding.get('task_name') or '').strip()
+          if report_type == 'ETF_FORMAL_DECISION' and (not task_name or task_name == 'ETF正式决策'):
+              raise SystemExit(0)
+          raise SystemExit(1)
+          PY
+          done)
+          if [ "${#candidates[@]}" -gt 0 ]; then
+            echo "path=${candidates[0]}" >> "$GITHUB_OUTPUT"
+          else
+            echo "path=" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Project Formal Decision completion to canonical review event
         id: formal_completion_event
         # Canonical notification is already sent from the same completion.
         # Formal event projection is audit-only and must not turn a successful
         # notification into a failed business handoff.
         continue-on-error: true
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path != '' && steps.dispatch_completion_kind.outputs.formal == 'true' }}
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path != '' && steps.dispatch_completion_kind.outputs.formal == 'true') || (github.event_name == 'workflow_run' && steps.workflow_formal_completion.outputs.path != '') }}
         shell: bash
         env:
-          COMPLETION_PATH: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path || steps.push_kind.outputs.formal_review_source_path || steps.workflow_review.outputs.formal_review_source_path }}
+          COMPLETION_PATH: ${{ github.event_name == 'workflow_dispatch' && inputs.scheduled_review_completion_path || steps.workflow_formal_completion.outputs.path || steps.push_kind.outputs.formal_review_source_path || steps.workflow_review.outputs.formal_review_source_path }}
         run: |
           set -euo pipefail
           test -f "$COMPLETION_PATH"
