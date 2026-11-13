@@ -257,7 +257,7 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
     for prior_date, prior_records in list(days.items()):
         if prior_date != market_date and isinstance(prior_records, list):
             days[prior_date] = [_summary(item) for item in prior_records[-detailed_window:] if isinstance(item, dict)]
-    retained_days = dict(sorted(days.items())[-31:])
+    retained_days = dict(sorted(days.items())[-2:])
     latest_record = records[-1] if records else None
     index = {
         "schema_version": "1.1",
@@ -266,7 +266,7 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
         "latest_market_date": market_date,
         "latest": latest_record,
         "days": retained_days,
-        "retention_rule": "Keep detailed observations for the latest 24 pulses and compact summaries for up to 31 market days; full current facts remain in the latest projection.",
+        "retention_rule": "Keep detailed observations for the latest 24 pulses and compact summaries for up to 2 market days; full current facts remain in the latest projection.",
         "detailed_window_pulses": detailed_window,
         "history_storage_mode": "RECENT_DETAIL_PLUS_COMPACT_SUMMARY",
         "continuity": {
