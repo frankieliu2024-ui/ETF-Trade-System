@@ -420,14 +420,12 @@ def _validate_post_close_review_contract(report: dict, now=None) -> None:
         return
 
     market_date = event_date
-    try:
-        from post_close_review_due import configured_review_due_time, review_due_state
-    except ModuleNotFoundError:
-        from scripts.post_close_review_due import configured_review_due_time, review_due_state
     from datetime import datetime
     from zoneinfo import ZoneInfo
     policy = _read_json("config/runtime_policy.json") or {}
-    due = configured_review_due_time(policy)
+    due = str(((policy.get("scheduled_trade_review") or {}).get("due_time") if isinstance(policy, dict) else "") or "").strip()
+    if len(due) != 5 or due[2] != ":":
+        due = None
     review_path = ROOT / "events" / "reviews" / f"{market_date}.json"
     closure_path = ROOT / "data" / "state" / f"close_review_closure_{market_date}.json"
     review = _read_json(f"events/reviews/{market_date}.json") if review_path.exists() else {}
@@ -437,12 +435,14 @@ def _validate_post_close_review_contract(report: dict, now=None) -> None:
         errors.append("invalid_or_missing_scheduled_trade_review_due_time")
         due_state = "INVALID_CONFIG"
     else:
-        due_state = review_due_state(
-            market_date,
-            str(current.get("market_date") or market_date),
-            now or datetime.now(ZoneInfo("Asia/Shanghai")),
-            due,
-        )
+        current_date = str(current.get("market_date") or market_date)
+        if market_date < current_date:
+            due_state = "PRIOR_DAY_OVERDUE"
+        elif market_date > current_date:
+            due_state = "NOT_DUE_TODAY"
+        else:
+            due_dt = datetime.strptime(f"{market_date} {due}", "%Y-%m-%d %H:%M").replace(tzinfo=ZoneInfo("Asia/Shanghai"))
+            due_state = "DUE_OR_OVERDUE" if (now or datetime.now(ZoneInfo("Asia/Shanghai"))) >= due_dt else "NOT_DUE_TODAY"
     if review.get("event_type") not in {"FORMAL_POST_CLOSE_REVIEW", "FORMAL_SCHEDULED_TRADE_REVIEW"} or not isinstance(review.get("review"), dict):
         errors.append(f"missing_or_invalid_review=events/reviews/{market_date}.json")
     if closure.get("status") != "CLOSED" or closure.get("formal_review_path") != f"events/reviews/{market_date}.json":
