@@ -81,6 +81,9 @@ jobs:
         run: |
           set -euo pipefail
           python scripts/process_state_sync_request.py "$REQUEST_PATH"
+          # Keep execution-quality attribution as a deterministic read-only projection.
+          # It must be rebuilt in the same maintenance run, but must not block account fact persistence.
+          python scripts/build_execution_quality.py
       - name: Rebuild account-owned derived projections
         shell: bash
         run: |
