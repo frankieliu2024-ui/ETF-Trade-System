@@ -135,7 +135,8 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/state/overseas_context.json data/state/us_extended_hours_context.json data/state/overseas_runtime_health.json
           [ -f data/state/overseas_context_previous.json ] && git add data/state/overseas_context_previous.json || true
-          # hyperliquid_pulse_index.json is an unbounded local index; never push it to GitHub.
+          # Keep the bounded recent pulse index as the canonical PIT readback source.
+          [ -f data/state/hyperliquid_pulse_index.json ] && git add data/state/hyperliquid_pulse_index.json || true
           [ -f data/state/hyperliquid_pulse_latest.json ] && git add data/state/hyperliquid_pulse_latest.json || true
           [ -f data/state/discovery_pulse_latest.json ] && git add data/state/discovery_pulse_latest.json || true
           if git diff --cached --quiet; then
