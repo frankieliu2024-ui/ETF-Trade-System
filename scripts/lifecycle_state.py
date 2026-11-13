@@ -184,7 +184,7 @@ def _completion_trial_decisions(root: Path, executions: list[dict[str, Any]]) ->
     completion_dir = root / "requests" / "live_snapshot"
     for path in sorted(completion_dir.glob("*__scheduled_review_completion.json")) if completion_dir.exists() else []:
         completion = _load(path, {})
-        if str(completion.get("task_id") or "").strip() != "ETF正式决策" or (completion.get("report_type") and completion.get("report_type") != "ETF_FORMAL_DECISION"):
+        if str(completion.get("task_name") or completion.get("task_id") or "").strip() != "ETF正式决策" or (completion.get("report_type") and completion.get("report_type") != "ETF_FORMAL_DECISION"):
             continue
         decision_id = str(completion.get("decision_id") or "").strip()
         decision_time = parse_time(completion.get("requested_at_beijing"))

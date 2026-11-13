@@ -81,7 +81,7 @@ def _completion_candidates(root: Path, trade: dict, trade_time: datetime) -> lis
     for path in sorted(completion_dir.glob("*__scheduled_review_completion.json")):
         completion = _load(path)
         if (
-            str(completion.get("task_id") or "").strip() != "ETF正式决策"
+            str(completion.get("task_name") or completion.get("task_id") or "").strip() != "ETF正式决策"
             or (completion.get("report_type") and str(completion.get("report_type") or "").upper() != "ETF_FORMAL_DECISION")
         ):
             continue
