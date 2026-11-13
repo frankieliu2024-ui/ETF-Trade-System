@@ -1,8 +1,8 @@
 {
   "schema_version": "1.1",
-  "checked_at": "2026-11-13T14:02:15+08:00",
+  "checked_at": "2026-11-13T14:07:41+08:00",
   "mode": "DETERMINISTIC_MAINTENANCE_GUARD",
-  "status": "PASS",
+  "status": "MAINTENANCE_INCOMPLETE",
   "system_consistency_status": "PASS",
   "self_healing_classification": "DERIVED_CONTEXT_IDENTITY_DRIFT",
   "runtime_health_status": "PASS",
@@ -113,11 +113,23 @@
     "request_id": "20261113_131900_chatgpt_broker_screenshot_account_sync_direct_recovery",
     "request_path": "requests/account_sync/20261113_131900_chatgpt_broker_screenshot_account_sync_direct_recovery.json",
     "owner": "scripts/process_state_sync_request.py",
-    "workflow_run_id": "43375681728",
-    "status": "OWNER_REJECTED",
-    "failure_class": "ACCOUNT_FACT_READBACK_MISMATCH",
-    "readback_status": "FAILED",
-    "canonical_fact_persisted": false,
-    "recorded_at_beijing": "2026-11-13T14:02:15+08:00"
-  }
+    "workflow_run_id": "43376248798",
+    "status": "PASS",
+    "failure_class": "",
+    "readback_status": "CONFIRMED",
+    "canonical_fact_persisted": true,
+    "recorded_at_beijing": "2026-11-13T14:07:41+08:00"
+  },
+  "account_fact_updated_at": "2026-11-13T13:19:00+08:00",
+  "failure_class": "PROJECTION_INCOMPLETE",
+  "projection_status": "ACCOUNT_FACT_UPDATED_REQUIRES_REBUILD",
+  "reconciliation_stale": true,
+  "reconciliation_stale_reason": "account_fact changed; projection rebuild or same-fact Dashboard readback was not confirmed",
+  "projection_required": [
+    "strategy_equity",
+    "risk",
+    "lifecycle",
+    "dashboard",
+    "reconciliation"
+  ]
 }
