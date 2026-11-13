@@ -70,6 +70,36 @@ class HyperliquidReadBoundaryFaultInjectionTests(unittest.TestCase):
         self.assertEqual(selected["selection_status"], "NO_LEGAL_PULSE_AT_NODE")
         self.assertEqual(selected["latest"], {})
 
+
+    def test_history_keeps_recent_detail_and_compacts_old_records(self):
+        from scripts.pulse_history import append_pulse_history
+
+        root = self._root()
+        payload_base = {
+            "market_date": "2026-11-13",
+            "quality_status": "PASS",
+            "observation_count": 1,
+            "observations": [{
+                "asset": {"name": "BTC"},
+                "context": {"funding": "0", "openInterest": "1", "premium": "0", "markPx": "1"},
+                "observation_as_of": "2026-11-13T08:00:00+08:00",
+                "collected_at_beijing": "2026-11-13T08:00:00+08:00",
+                "quality_status": "PASS",
+            }],
+        }
+        for minute in range(30):
+            payload = dict(payload_base)
+            payload["generated_at_beijing"] = f"2026-11-13T08:{minute:02d}:00+08:00"
+            append_pulse_history(root, kind="HYPERLIQUID", payload=payload,
+                                 path="data/state/hyperliquid_pulse_latest.json",
+                                 identity=f"pulse-{minute}")
+        index = json.loads((root / "data/state/hyperliquid_pulse_index.json").read_text())
+        records = index["days"]["2026-11-13"]
+        self.assertEqual(len(records), 24)
+        self.assertTrue(records[-1].get("observations"))
+        self.assertTrue(index["latest"].get("observations"))
+        self.assertEqual(index["history_storage_mode"], "RECENT_DETAIL_PLUS_COMPACT_SUMMARY")
+
     def test_two_sources_can_carry_different_identities(self):
         external = {"context_id": "external-old"}
         latest = {"context_id": "projection-new"}
