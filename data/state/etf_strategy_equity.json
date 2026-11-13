@@ -3,7 +3,7 @@
   "read_only_research": true,
   "trade_accounting": "FIFO",
   "replay_start": "2026-07-13",
-  "replay_cutoff": "2026-11-13",
+  "replay_cutoff": "2026-11-12",
   "input_source_identity": {
     "trade_owner": "confirmed_trade_facts.canonical_etf_trade_facts",
     "price_owner": "events/research/daily_features",
@@ -1172,25 +1172,50 @@
         "decision_id": "20260928_104100_chatgpt_formal_decision_decision",
         "resolution": "EXPLICIT_PIT_VALID"
       }
+    },
+    {
+      "event_id": "broker-trade-20261113-144506-159253-chatgpt",
+      "idempotency_key": "159253|BUY|4600|1.071|2026-11-13T14:45:06+08:00",
+      "confirmed_at_beijing": "2026-11-13T17:21:00+08:00",
+      "executed_at_beijing": "2026-11-13T14:45:06+08:00",
+      "account_confirmed_at_beijing": null,
+      "execution_date": "2026-11-13",
+      "confirmation_date": "2026-11-13",
+      "notification_id": null,
+      "name": "银行ETF博时",
+      "code": "159253",
+      "side": "BUY",
+      "quantity": 4600,
+      "price": 1.071,
+      "amount": 4926.6,
+      "lifecycle": "Trial",
+      "source": "CHATGPT_USER_BROKER_SCREENSHOT",
+      "source_confidence": null,
+      "linked_decision_id": null,
+      "hypothesis_id": null,
+      "execution_status": "EXECUTED",
+      "execution_attribution": {
+        "status": "NO_LINKED_DECISION"
+      }
     }
   ],
   "summary": {
     "starting_etf_strategy_capital": 200000.0,
-    "current_gross_strategy_equity": 173367.6,
-    "current_strategy_return_pct_gross": -13.3162,
-    "current_cumulative_pnl_gross": -26632.4,
+    "current_gross_strategy_equity": 173154.7,
+    "current_strategy_return_pct_gross": -13.4226,
+    "current_cumulative_pnl_gross": -26845.3,
     "max_drawdown_amount": -27448.3,
     "max_drawdown_pct": -13.7241,
     "gross_realized_pnl": -26668.4,
     "confirmed_fees_separate": 237.23,
     "known_fees": 237.23,
-    "pending_fee_count": 8,
-    "fee_status": "8 RECORDED TRADE FEE(S) PENDING_OR_NOT_YET_DISPLAYED",
+    "pending_fee_count": 9,
+    "fee_status": "9 RECORDED TRADE FEE(S) PENDING_OR_NOT_YET_DISPLAYED",
     "pending_fees_do_not_block_gross": true,
-    "trade_fact_count": 53,
+    "trade_fact_count": 54,
     "price_date_count": 693,
-    "coverage_status": "COMPLETE",
-    "pending_latest_valuation": false
+    "coverage_status": "DEGRADED_PENDING_LATEST_VALUATION",
+    "pending_latest_valuation": true
   },
   "series": [
     {
@@ -11133,72 +11158,6 @@
           "quantity": 6400.0,
           "close": 0.75,
           "market_value": 4800.0,
-          "cost_basis": 4972.8
-        }
-      },
-      "quality_status": "COMPLETE"
-    },
-    {
-      "date": "2026-11-13",
-      "cash": 96712.8,
-      "market_value": 76654.8,
-      "strategy_equity_gross": 173367.6,
-      "realized_pnl_gross": -26668.4,
-      "drawdown_amount": -26632.4,
-      "drawdown_pct": -13.3162,
-      "positions": {
-        "159529": {
-          "quantity": 3500.0,
-          "close": 1.398,
-          "market_value": 4893.0,
-          "cost_basis": 4893.0
-        },
-        "159941": {
-          "quantity": 12200.0,
-          "close": 1.638,
-          "market_value": 19983.6,
-          "cost_basis": 19821.6
-        },
-        "159981": {
-          "quantity": 8500.0,
-          "close": 1.793,
-          "market_value": 15240.5,
-          "cost_basis": 14810.6
-        },
-        "159992": {
-          "quantity": 17200.0,
-          "close": 0.817,
-          "market_value": 14052.4,
-          "cost_basis": 14916.8
-        },
-        "510230": {
-          "quantity": 3600.0,
-          "close": 1.366,
-          "market_value": 4917.6,
-          "cost_basis": 4870.8
-        },
-        "512690": {
-          "quantity": 11300.0,
-          "close": 0.441,
-          "market_value": 4983.3,
-          "cost_basis": 4972.0
-        },
-        "588200": {
-          "quantity": 5800.0,
-          "close": 0.913,
-          "market_value": 5295.4,
-          "cost_basis": 4993.8
-        },
-        "588450": {
-          "quantity": 1400.0,
-          "close": 1.723,
-          "market_value": 2412.2,
-          "cost_basis": 2367.4
-        },
-        "588710": {
-          "quantity": 6400.0,
-          "close": 0.762,
-          "market_value": 4876.8,
           "cost_basis": 4972.8
         }
       },
