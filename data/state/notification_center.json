@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-11-13T13:34:25+08:00",
+  "updated_at": "2026-11-13T13:35:28+08:00",
   "last_status": "SENT",
-  "last_type": "REPORT_DELIVERY_REQUEST",
-  "last_title": "【ETF正式决策】",
+  "last_type": "MARKET_VALUE_ALERT",
+  "last_title": "【市场异动】创业板指（399006）出现极端波动 -2.86%",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -61440,27 +61440,65 @@
       "provider_claim": {
         "claim": "local_only"
       }
-    }
-  ],
-  "recent": [
+    },
     {
-      "key": "pulse:hyperliquid_pulse:PULSE_TEST_HYPERLIQUID_AFTER_42366176967",
-      "type": "PULSE_FACT_UPDATE",
-      "title": "【市场异动】需复核：恒生科技ETF、创新药ETF、港股通创新药ETF工银",
-      "content": "【核心结论】恒生科技ETF、创新药ETF、港股通创新药ETF工银需要提高下一节点复核优先级，外部信号只影响方向确认、时机或风险过滤，不代表A股方向已经改变。\n\n【发生了什么】恒生科技ETF（513180）：外部参照变化，影响风格、拥挤风险和入场时机判断；创新药ETF（159992）：外部参照变化，直接影响对应产业方向强弱判断；港股通创新药ETF工银（159217）：外部参照变化，直接影响对应产业方向强弱判断；创新药（159992）：外部参照变化，直接影响对应产业方向强弱判断。\n\n【下一步核对】逐只核对ETF自身走势、成交承接和相对强弱；只有A股反馈同步时，外部信号才可作为支持或时机依据，若背离则仅保留为风险提示。\n\n【当前边界】外部资产不是A股ETF，不能直接等同或据此买卖；不自动交易。",
-      "source": "hyperliquid_pulse",
-      "user_severity": "",
-      "user_action": "无需自动交易；下一正式判断逐对象核对变化及其对持仓、观察、Discovery和现金竞争的影响。",
-      "status": "SENT",
-      "attempted_at": "2026-11-07T18:58:46+08:00",
+      "notification_id": "notification_d849fc6e16afcc0dbc32",
+      "event_type": "MARKET_VALUE_ALERT",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "market-value:a-share:2026-11-13:399006:DOWN:EXTREME:2026-11-13T13:33:48+08:00",
+      "request_id": "",
+      "parent_request_id": "",
+      "report_id": "",
+      "content_hash": "",
+      "related_decision_id": "",
+      "security_code": "399006",
+      "security_name": "创业板指",
+      "user_severity": "需要关注",
+      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-11-13T13:35:27+08:00",
+      "sent_at": "2026-11-13T13:35:28+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-11-15T13:35:27+08:00",
+      "title": "【市场异动】创业板指（399006）出现极端波动 -2.86%",
+      "content": "### 核心结论\n- **事件类型**：极端波动\n- **对象/结构**：创业板指（399006）\n- **当日涨跌**：-2.86%\n\n**判断**：当前幅度已进入通知层的非常规区间，可能实质改变风险偏好、风险收益或资本比较。\n\n**Hyperliquid**：- xyz:XYZ100 → 纳指ETF（159941）、科创50ETF（588000）、科创创业ETF（159781）、恒生科技ETF（513180）；方向UP，结论为方向支持但当前不直接追涨；方向支持成立但当前不直接追涨；将该ETF列入下一节点优先复核；升级条件：下一合法脉冲确认方向延续，并核对A股承接；10分钟变化：资金费率-0.0000、未平仓量+9.3478、溢价-0.0001。\n\n### 对ETF系统的影响\n创业板指（399006）代表A股本地风险偏好或风格结构变化。先看变化是否扩散到当前持仓/观察ETF，再判断候选和资本效率是否真正改变。\n\n### 当前动作\n**先验证ETF层是否接受该指数信号；不因指数单一波动机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-11-13 13:33:48\n- **Hyperliquid行情时点（北京时间）**：2026-11-13 13:26:08。\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。\n",
+      "source": "market_delta+CURRENT+stock_market_context",
+      "confirmation_context": {
+        "market": "A_SHARE",
+        "market_date": "2026-11-13",
+        "direction": "DOWN",
+        "event_category": "EXTREME",
+        "asset_class": "A_SHARE_INDEX",
+        "day_change_pct": -2.8632000095639265,
+        "sudden_change_pct": null,
+        "interval_minutes": 57.3,
+        "event_magnitude_pct": 2.8632000095639265,
+        "market_as_of_beijing": "2026-11-13T13:33:48+08:00",
+        "source_fact_id": "2026-11-13:399006:EXTREME:DOWN:2026-11-13T13:33:48+08:00",
+        "structure_cluster_id": "A_SHARE_TECH_GROWTH_EPISODE",
+        "structure_cluster_members": [
+          "000688",
+          "159781",
+          "399006",
+          "588000"
+        ],
+        "structure_cluster_scope": "EXPLICIT_SAME_EPISODE_ONLY",
+        "continuous_state_transition": "REVERSING",
+        "continuous_state_contract": "OBJECT_LEVEL_PREVIOUS_CURRENT_TRANSITION",
+        "previous_notification_id": "notification_feba2822ef08cfac8bcf",
+        "event_family_id": "A_SHARE:2026-11-13:A_SHARE:399006:EXTREME:DOWN:A_SHARE_TECH_GROWTH_EPISODE"
+      },
       "response": {
         "http_status": 200,
         "pushplus_code": 200,
         "pushplus_message": "执行成功"
       },
-      "notification_id": "notification_659078e5088f919eaef0",
-      "lifecycle_status": "SENT"
-    },
+      "last_attempted_at": "2026-11-13T13:35:28+08:00"
+    }
+  ],
+  "recent": [
     {
       "key": "pulse:hyperliquid_pulse:hl-f48672777c83df46",
       "type": "PULSE_FACT_UPDATE",
@@ -65042,6 +65080,24 @@
       },
       "notification_id": "notification_476484d6f881dcf919e1",
       "lifecycle_status": "SENT"
+    },
+    {
+      "key": "market-value:a-share:2026-11-13:399006:DOWN:EXTREME:2026-11-13T13:33:48+08:00",
+      "type": "MARKET_VALUE_ALERT",
+      "title": "【市场异动】创业板指（399006）出现极端波动 -2.86%",
+      "content": "### 核心结论\n- **事件类型**：极端波动\n- **对象/结构**：创业板指（399006）\n- **当日涨跌**：-2.86%\n\n**判断**：当前幅度已进入通知层的非常规区间，可能实质改变风险偏好、风险收益或资本比较。\n\n**Hyperliquid**：- xyz:XYZ100 → 纳指ETF（159941）、科创50ETF（588000）、科创创业ETF（159781）、恒生科技ETF（513180）；方向UP，结论为方向支持但当前不直接追涨；方向支持成立但当前不直接追涨；将该ETF列入下一节点优先复核；升级条件：下一合法脉冲确认方向延续，并核对A股承接；10分钟变化：资金费率-0.0000、未平仓量+9.3478、溢价-0.0001。\n\n### 对ETF系统的影响\n创业板指（399006）代表A股本地风险偏好或风格结构变化。先看变化是否扩散到当前持仓/观察ETF，再判断候选和资本效率是否真正改变。\n\n### 当前动作\n**先验证ETF层是否接受该指数信号；不因指数单一波动机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-11-13 13:33:48\n- **Hyperliquid行情时点（北京时间）**：2026-11-13 13:26:08。\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。\n",
+      "source": "market_delta+CURRENT+stock_market_context",
+      "user_severity": "需要关注",
+      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
+      "status": "SENT",
+      "attempted_at": "2026-11-13T13:35:28+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_d849fc6e16afcc0dbc32",
+      "lifecycle_status": "SENT"
     }
   ],
   "pending_questions": [
@@ -65051,6 +65107,6 @@
     "notification_d5f3ea1194565824a934",
     "notification_fd7763215037ab96f889"
   ],
-  "policy": "只推送会改变用户关注、风险许可、机会状态、持仓动作、执行确认或系统可靠性的实质事件；总资产/市值/浮动盈亏等纯盯市变化不作为账户异常；同一实质账户事件和同一正式decision_id不得重复推送；收盘账户提醒仅在A股交易日触发。",
-  "safety_boundary": "通知中心只转发已有正式判断，不生成交易动作，不修改MASTER、风险许可、金额或卖出份额；正式成交只能由用户确认入口提交。"
+  "policy": "canonical bounded market notification batch",
+  "safety_boundary": "通知只总结已取得的行情、账户、研究或系统事实；不生成自动交易，不修改MASTER、风险许可、金额或卖出份额。"
 }
