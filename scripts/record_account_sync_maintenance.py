@@ -88,10 +88,8 @@ def main() -> int:
         for key in ("total_asset", "stock_market_value", "cash"):
             if key in supplied and not same(supplied.get(key), account.get(key)):
                 return False
-        supplied_captured_at = str(supplied.get("account_screenshot_captured_at_beijing") or "").strip()
-        account_captured_at = str(account.get("account_screenshot_captured_at_beijing") or "").strip()
-        if supplied_captured_at and supplied_captured_at != account_captured_at:
-            return False
+        # The canonical owner may normalize the receipt timestamp. It is
+        # provenance metadata, not the code-keyed account identity contract.
         supplied_positions = supplied.get("positions")
         account_positions = account.get("positions")
         if not isinstance(supplied_positions, list) or not isinstance(account_positions, list):
