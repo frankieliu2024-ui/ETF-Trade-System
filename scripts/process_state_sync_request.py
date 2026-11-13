@@ -26,7 +26,11 @@ try:
 except ModuleNotFoundError:
     from scripts.build_stock_context import active_account_asset_codes, build_managed_position_projection, first, normalize_code, position_metric
 from sync_formal_files import sync_formal_files, sync_dashboard_projection, latest_canonical_formal_decision, format_position_pnl
-from observation_etf_management import persist_monitor_universe, validate_observation_management
+from observation_etf_management import (
+    ObservationUniverseResourceLimitError,
+    persist_monitor_universe,
+    validate_observation_management,
+)
 
 
 def _persist_formal_opportunity_projection(root: Path, source: dict) -> None:
@@ -5320,9 +5324,23 @@ def main() -> int:
         # final Dashboard render.  sync_formal_files owns factual account projection
         # but must not overwrite the lifecycle projection rendered below.
         account_membership_changed = account_sync_status == "ACCOUNT_FACT_UPDATED" or bool(trade_event_recorded)
-        observation_universe_changed = persist_monitor_universe(
-            ROOT, account, (request.get("formal_decision") or {}) if formal_decision_current else {}
-        ) if (formal_decision_current or account_membership_changed) else False
+        observation_projection_status = "NOT_REQUESTED"
+        observation_universe_changed = False
+        if formal_decision_current or account_membership_changed:
+            try:
+                observation_universe_changed = persist_monitor_universe(
+                    ROOT, account, (request.get("formal_decision") or {}) if formal_decision_current else {}
+                )
+                observation_projection_status = "UPDATED" if observation_universe_changed else "UNCHANGED"
+            except ObservationUniverseResourceLimitError as exc:
+                # Account and trade facts are canonical. A resource-protected,
+                # non-core observation projection must not roll them back.
+                observation_projection_status = "DEFERRED_RESOURCE_LIMIT"
+                print(json.dumps({
+                    "request_id": request.get("request_id"),
+                    "warning": "observation_universe_projection_deferred",
+                    "reason": str(exc),
+                }, ensure_ascii=False), flush=True)
         formal_files_sync = sync_formal_files(ROOT, account)
         # There is exactly one Dashboard projection owner: sync_formal_files.py.
         # Do not rebuild the Dashboard through the legacy state-sync renderer here;
@@ -5331,7 +5349,7 @@ def main() -> int:
         dashboard_sync = sync_dashboard_projection(ROOT, account)
 
 
-    result = {"ok": True, "request_id": request.get("request_id"), "interaction_scenario": request.get("interaction_scenario"), "account_updated_at": account.get("updated_at"), "dashboard_updated": bool(dashboard_sync.get("dashboard_changed")), "formal_decision_recorded": decision_recorded, "formal_decision_id": decision_id, "trade_event_recorded": trade_event_recorded, "post_close_review_recorded": review_recorded, "post_close_review_idempotent_noop": review_idempotent, "review_prerequisite_unavailable_recorded": unavailable_recorded, "review_prerequisite_unavailable_idempotent_noop": unavailable_idempotent, "formal_files_sync": formal_files_sync, "observation_universe_changed": observation_universe_changed, "account_sync_status": account_sync_status, "normalized_non_security_asset_count": normalized_non_security_asset_count, "canonical_ingress_state": canonical_ingress_contract["terminal_state"], "canonical_ingress_failure_reason": None if canonical_ingress_contract["terminal_state"] == CANONICAL_INGRESS_SUBMITTED else canonical_ingress_contract["reason"]}
+    result = {"ok": True, "request_id": request.get("request_id"), "interaction_scenario": request.get("interaction_scenario"), "account_updated_at": account.get("updated_at"), "dashboard_updated": bool(dashboard_sync.get("dashboard_changed")), "formal_decision_recorded": decision_recorded, "formal_decision_id": decision_id, "trade_event_recorded": trade_event_recorded, "post_close_review_recorded": review_recorded, "post_close_review_idempotent_noop": review_idempotent, "review_prerequisite_unavailable_recorded": unavailable_recorded, "review_prerequisite_unavailable_idempotent_noop": unavailable_idempotent, "formal_files_sync": formal_files_sync, "observation_universe_changed": observation_universe_changed, "observation_projection_status": observation_projection_status, "account_sync_status": account_sync_status, "normalized_non_security_asset_count": normalized_non_security_asset_count, "canonical_ingress_state": canonical_ingress_contract["terminal_state"], "canonical_ingress_failure_reason": None if canonical_ingress_contract["terminal_state"] == CANONICAL_INGRESS_SUBMITTED else canonical_ingress_contract["reason"]}
     if review_recorded and str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION":
         # The completion projection owner needs the exact event produced by the
         # same request.  Trade Review events are keyed by market_date, unlike
