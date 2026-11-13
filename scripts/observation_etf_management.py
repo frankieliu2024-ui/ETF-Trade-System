@@ -5,12 +5,10 @@ from pathlib import Path
 from typing import Any
 
 VALID_ACTIONS = {"ADMIT", "RETAIN", "EXIT"}
-MAX_OBSERVATION_ETFS = 12
 
 
 class ObservationUniverseResourceLimitError(ValueError):
-    """Non-core observation projection cannot block canonical account sync."""
-
+    """Backward-compatible exception type; valid monitor universes are no longer capped."""
 
 
 def _code(value: Any) -> str:
@@ -117,12 +115,6 @@ def project_monitor_universe(root: Path, account: dict, decision: dict) -> tuple
             if code in held:
                 raise ValueError(f"held ETF cannot exit continuous monitor universe: {code}")
             by_code.pop(code, None)
-
-    projected_observations = set(by_code) - held
-    if len(projected_observations) > MAX_OBSERVATION_ETFS:
-        raise ObservationUniverseResourceLimitError(
-            f"projected observation ETF count exceeds resource protection max {MAX_OBSERVATION_ETFS}"
-        )
 
     projected = {
         **universe,
