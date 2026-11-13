@@ -1329,7 +1329,6 @@ def main() -> int:
     _normalize_idempotent_close_skip(report)
     _normalize_idempotent_morning_close_skip(report)
     _validate_formal_risk_precedence(report)
-    _validate_post_close_review_contract(report)
     _validate_trade_event_formal_sync(report)
     _validate_historical_trade_case_mapping(report)
     _validate_formal_completion_decision_readback(report)

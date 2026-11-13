@@ -42,7 +42,6 @@ on:
       - "scripts/query_time_market_refresh.py"
       - "scripts/tencent_quote.py"
       - "config/market/provider_priority.json"
-      - "scripts/build_post_market_review.py"
       - "scripts/confirmed_trade_facts.py"
       - ".github/workflows/market-snapshot.yml"
   schedule:
@@ -1080,16 +1079,6 @@ jobs:
             )
           fi
           echo "formal_completion=$formal_completion" >> "$GITHUB_OUTPUT"
-          # Formal Decision completion is created by the Actor and consumed directly.\n          formal_post_close_review=false
-          if [ -n "$triggering_request_file" ] && [ -f "$triggering_request_file" ]; then
-            formal_post_close_review=$(python - "$triggering_request_file" <<'PY'
-          import json, sys
-          request = json.load(open(sys.argv[1], encoding="utf-8"))
-          print("true" if str(request.get("formal_fact_type") or "").upper() == "FORMAL_POST_CLOSE_REVIEW" else "false")
-          PY
-            )
-          fi
-          echo "formal_post_close_review=$formal_post_close_review" >> "$GITHUB_OUTPUT"
           scheduled_review_completion=false
           if [ -n "$triggering_request_file" ] && [ -f "$triggering_request_file" ]; then
             scheduled_review_completion=$(python - "$triggering_request_file" <<'PY'
@@ -1186,11 +1175,6 @@ jobs:
           formal_fact_type = str(obj.get("formal_fact_type") or "").upper()
           interaction_scenario = str(obj.get("interaction_scenario") or "").upper()
           review = obj.get("formal_review")
-          is_formal_post_close_review = (
-              formal_fact_type == "FORMAL_POST_CLOSE_REVIEW"
-              and interaction_scenario == "POST_CLOSE_REVIEW"
-              and isinstance(review, dict)
-          )
           # Broker account screenshot synchronization may include a
           # subscription/allotment record without an ETF execution event. It is
           # state synchronization, not an ETF trade-event replay.
@@ -1198,20 +1182,7 @@ jobs:
               formal_fact_type in {"BROKER_SCREENSHOT_ACCOUNT_FACT", "BROKER_ACCOUNT_SNAPSHOT"}
               and interaction_scenario == "BROKER_SCREENSHOT_SYNC"
           )
-          if is_formal_post_close_review:
-              # Historical post-close review replay is a canonical review
-              # request, not a trade-event request. Keep its own temporal
-              # identity checks isolated from account-fact synchronization.
-              required = (
-                  str(obj.get("request_id") or "").strip()
-                  and str(obj.get("requested_at_beijing") or "").strip()
-                  and str(obj.get("market_date") or "").strip()
-                  and str(review.get("market_date") or "").strip() == str(obj.get("market_date") or "").strip()
-                  and str(review.get("reviewed_at_beijing") or "").strip()
-              )
-              if not required:
-                  raise SystemExit("FORMAL_POST_CLOSE_REVIEW replay has invalid request/market temporal identity")
-          elif is_broker_account_fact_sync:
+          if is_broker_account_fact_sync:
               # Broker account-fact synchronization may contain a
               # subscription/allotment record without an ETF execution event.
               # It is state synchronization only; do not require or fabricate
@@ -1764,12 +1735,6 @@ jobs:
           PY
           fi
           TRIGGERING_REQUEST_FILE="$TRIGGERING_REQUEST_FILE" python scripts/refresh_gate.py --annotate-contexts
-      - name: Build post-market review context
-        # Review is a close/state-sync consumer, not a generic intraday pulse
-        # responsibility. Explicit/manual close remains a legal recovery path.
-        if: ${{ (always() && steps.state_sync.outcome != 'failure' && (steps.state_sync.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (steps.triggering_request.outputs.formal_completion != 'true' || steps.state_sync.outputs.formal_post_close_review == 'true') && (steps.state_sync.outputs.formal_post_close_review == 'true' || (steps.snapshot_result.outputs.snapshot_written == 'true' && (steps.session_gate.outputs.close_intent == 'true' || github.event.inputs.node == 'close')) || (github.event_name == 'workflow_dispatch' && github.event.inputs.node == 'close')) && github.event.inputs.probe_only != 'true') && steps.account_sync_route.outputs.account_sync_only != 'true' }}
-        continue-on-error: true
-        run: python scripts/build_post_market_review.py
       - name: Rebuild E2E usability state after close-review projection
         # The close-review producer must publish before the E2E consumer reads
         # closure/evidence/business-completion state; otherwise stale or future
@@ -1900,7 +1865,7 @@ jobs:
             git reset -- data/state/query_context.json data/state/decision_context.json data/state/e2e_status.json data/state/decision_trigger.json data/state/capital_efficiency_ranking.json || true
           fi
           git add -f -- data/state/query_context.json
-          git add -A -- data/market/snapshots data/market/discovery_history data/state post_market_review events config/market/etf_monitor_universe.json ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md
+          git add -A -- data/market/snapshots data/market/discovery_history data/state events config/market/etf_monitor_universe.json ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md
               # Keep the final Dashboard projection in the staged publish set.
           # It is rebuilt after account/correction inputs; resetting it here would
           # republish a stale pre-projection copy.
@@ -1948,7 +1913,7 @@ jobs:
               cp "/tmp/etf-downstream-publish/data/state/query_context.json" data/state/query_context.json
             fi
             git add -f -- data/state/query_context.json
-            git add -A -- data/market/snapshots data/market/discovery_history data/state post_market_review events config/market/etf_monitor_universe.json ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md
+            git add -A -- data/market/snapshots data/market/discovery_history data/state events config/market/etf_monitor_universe.json ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md
             git reset -- data/state/system_consistency.json
             triggering_request_kind=""
             if [ -n "${TRIGGERING_REQUEST_FILE:-}" ] && [ -f "$TRIGGERING_REQUEST_FILE" ]; then

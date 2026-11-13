@@ -423,7 +423,7 @@ def run(root: Path = ROOT) -> dict:
     shadow = {
         "#493": classify_risk_tier(changed_paths=["scripts/process_state_sync_request.py", "data/state/account_fact.json"], account_or_trade_fact=True),
         "#496": classify_risk_tier(
-            changed_paths=["config/runtime_policy.json", "scripts/post_close_review_due.py", "scripts/check_system_consistency.py"],
+            changed_paths=["config/runtime_policy.json", "scripts/check_system_consistency.py"],
             important_runtime_contract=True,
         ),
         "TIER_0": classify_risk_tier(changed_paths=["docs/complexity-audit.md", "tests/test_protocol.py"]),
