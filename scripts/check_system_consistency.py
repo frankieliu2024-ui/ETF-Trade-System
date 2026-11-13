@@ -6,7 +6,6 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 import os
 import re
-from functools import lru_cache
 
 from check_production_mutation_protocol import run as run_mutation_protocol
 import check_system_consistency_core as consistency_core
@@ -39,7 +38,6 @@ LEGACY_UNRECOVERABLE_FORMAL_DECISION_IDS = {
 }
 
 
-@lru_cache(maxsize=None)
 def _read_json(path: str) -> dict:
     return json.loads((ROOT / path).read_text(encoding="utf-8"))
 
@@ -589,7 +587,6 @@ def _valid_unrecoverable_review_terminal(event_id: str, event: dict) -> bool:
     return is_valid_unrecoverable_review_event(review_event, event_id)
 
 
-@lru_cache(maxsize=1)
 def _canonical_case_mappings() -> dict[str, list[dict]]:
     mappings: dict[str, list[dict]] = {}
     review_dir = ROOT / "events" / "reviews"
@@ -645,7 +642,6 @@ def _canonical_case_mappings() -> dict[str, list[dict]]:
 
 
 
-@lru_cache(maxsize=1)
 def _canonical_case_ineligibilities() -> dict[str, dict]:
     """Read explicit canonical review ineligibility, never infer it."""
     result = {}
@@ -725,7 +721,6 @@ def _validate_trade_event_formal_sync(report: dict) -> None:
     _recount(report)
 
 
-@lru_cache(maxsize=None)
 def _has_valid_terminal_for_trade_row(trade_date: str, code: str) -> bool:
     trade_dir = ROOT / "events" / "trades"
     for path in sorted(trade_dir.glob("*.json")) if trade_dir.exists() else []:
