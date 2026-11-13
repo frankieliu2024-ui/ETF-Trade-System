@@ -58,7 +58,7 @@ Formal Decision通知交接使用统一 direct completion writer，并由该运�
 
 ### 券商截图自动路由
 
-用户上传可读的券商账户／持仓／成交截图时，截图本身即构成账户事实输入，不以是否显式`@GitHub`作为是否维护的条件，也不询问用途。ChatGPT必须在回复“已查收／已更新”或继续依赖该账户事实前，先把截图中可确认的账户事实提交到既有`requests/live_snapshot/*.json` canonical ingress，使用`source=CHATGPT_USER_BROKER_SCREENSHOT`并保留真实截图／提交时间；随后回读current main同一request，核对request identity和关键账户事实。截图事实转换必须满足既有ingress的强类型账户合同：`positions`逐项为具名对象并以已确认证券代码作为身份字段，不得用位置数组、名称猜测或聊天记忆代替机器字段；正式owner在账户merge前执行schema fail-fast。不得只在聊天中解释截图而跳过ingress，也不得直接手写正式`account_fact`状态文件或Dashboard。
+用户上传可读的券商账户／持仓／成交截图时，截图本身即构成账户事实输入，不以是否显式`@GitHub`作为是否维护的条件，也不询问用途。ChatGPT必须在回复“已查收／已更新”或继续依赖该账户事实前，先把截图中可确认的账户事实提交到专用`requests/account_sync/*.json` canonical ingress；该入口由轻量账户事实维护workflow直接处理，不启动`ETF market snapshot`，使用`source=CHATGPT_USER_BROKER_SCREENSHOT`并保留真实截图／提交时间；随后回读current main同一request，核对request identity和关键账户事实。截图事实转换必须满足既有ingress的强类型账户合同：`positions`逐项为具名对象并以已确认证券代码作为身份字段，不得用位置数组、名称猜测或聊天记忆代替机器字段；正式owner在账户merge前执行schema fail-fast。不得只在聊天中解释截图而跳过ingress，也不得直接手写正式`account_fact`状态文件或Dashboard。
 
 若ingress提交或回读失败且无法确认，必须明确停在“账户事实尚未持久化”的真实边界，不得声称已维护。真实成交事件优先于时段路由；具体`interaction_scenario`、时间窗口和当前运行参数统一读取`config/runtime_policy.json`，不在INDEX维护第二份时间表。15:00后当天首次最终账户截图按runtime policy进入既有正式收盘复盘链；同日重复截图仅做差异维护。截图提交时间与市场行情时间必须分离。
 

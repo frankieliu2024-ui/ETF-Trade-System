@@ -1,0 +1,147 @@
+name: ETF account fact maintenance
+
+on:
+  workflow_dispatch:
+    inputs:
+      request_path:
+        description: "Canonical account-sync request path under requests/account_sync/"
+        required: true
+        type: string
+  push:
+    paths:
+      - "requests/account_sync/**"
+      - "scripts/process_state_sync_request.py"
+      - "scripts/sync_formal_files.py"
+      - "scripts/record_account_sync_maintenance.py"
+      - ".github/workflows/account-fact-maintenance.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: etf-main-state-writer
+  cancel-in-progress: false
+
+jobs:
+  account-fact-maintenance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    env:
+      ETF_SYSTEM_ROOT: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Select one canonical account-sync request
+        id: request
+        shell: bash
+        env:
+          REQUEST_INPUT: ${{ github.event.inputs.request_path || '' }}
+          EVENT_BEFORE: ${{ github.event.before || '' }}
+        run: |
+          set -euo pipefail
+          if [ -n "$REQUEST_INPUT" ]; then
+            request_path="$REQUEST_INPUT"
+          else
+            request_path="$(git diff --name-only "$EVENT_BEFORE" "$GITHUB_SHA" -- 'requests/account_sync/*.json' | head -n 1 || true)"
+          fi
+          case "$request_path" in
+            requests/account_sync/*.json) ;;
+            *) echo "exactly one canonical account-sync request is required" >&2; exit 1 ;;
+          esac
+          test -s "$request_path"
+          python - "$request_path" <<'PY'
+          import json, sys
+          from pathlib import Path
+          path = Path(sys.argv[1])
+          obj = json.loads(path.read_text(encoding="utf-8"))
+          if str(obj.get("request_type") or "").upper() not in {"STATE_SYNC_ONLY", "ACCOUNT_FACT_REFRESH"}:
+              raise SystemExit("unsupported account-sync request_type")
+          if not isinstance(obj.get("account_fact"), dict):
+              raise SystemExit("account_fact is required")
+          positions = obj["account_fact"].get("positions")
+          if not isinstance(positions, list) or not positions:
+              raise SystemExit("account_fact.positions is required")
+          codes = []
+          for item in positions:
+              if not isinstance(item, dict) or not str(item.get("code") or "").isdigit():
+                  raise SystemExit("every position must be keyed by a security code")
+              codes.append(str(item["code"]))
+          if len(codes) != len(set(codes)):
+              raise SystemExit("duplicate security code in positions")
+          print("validated request:", path)
+          PY
+          echo "request_path=$request_path" >> "$GITHUB_OUTPUT"
+      - name: Apply canonical account fact
+        id: sync
+        shell: bash
+        env:
+          REQUEST_PATH: ${{ steps.request.outputs.request_path }}
+        run: |
+          set -euo pipefail
+          python scripts/process_state_sync_request.py "$REQUEST_PATH"
+      - name: Record account sync readback
+        shell: bash
+        env:
+          REQUEST_PATH: ${{ steps.request.outputs.request_path }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          request_id="$(python - "$REQUEST_PATH" <<'PY'
+          import json, sys
+          from pathlib import Path
+          print(json.loads(Path(sys.argv[1]).read_text(encoding="utf-8")).get("request_id", ""))
+          PY
+          )"
+          test -n "$request_id"
+          python scripts/record_account_sync_maintenance.py \
+            --request-id "$request_id" \
+            --request-path "$REQUEST_PATH" \
+            --owner-outcome success \
+            --run-id "$RUN_ID"
+      - name: Verify account fact by code
+        shell: bash
+        env:
+          REQUEST_PATH: ${{ steps.request.outputs.request_path }}
+        run: |
+          set -euo pipefail
+          python - "$REQUEST_PATH" <<'PY'
+          import json, sys
+          from pathlib import Path
+          request = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          account = json.loads(Path("data/state/account_fact.json").read_text(encoding="utf-8"))
+          by_code = {str(item.get("code")): item for item in account.get("positions", [])}
+          for item in request["account_fact"]["positions"]:
+              code = str(item["code"])
+              actual = by_code.get(code)
+              if actual is None:
+                  raise SystemExit(f"missing account position: {code}")
+              for key in ("name", "quantity", "available_quantity"):
+                  if key in item and actual.get(key) != item[key]:
+                      raise SystemExit(f"position mismatch for {code}: {key}")
+          print("account fact readback passed with code-keyed identity")
+          PY
+      - name: Commit account fact maintenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo "No account fact changes to publish."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/state/account_fact.json data/state/maintenance_health.json data/state/etf_strategy_equity.json ETF当前状态_DASHBOARD.md ETF市场行情档案_2026.md ETF交易复盘与经验库_2026.md events/trades events/reviews requests/account_sync
+          git diff --cached --quiet && exit 0
+          git commit -m "chore: publish account facts through direct maintenance lane"
+          for attempt in 1 2 3; do
+            git fetch origin main
+            if git rebase origin/main && git push origin HEAD:main; then
+              exit 0
+            fi
+            git rebase --abort || true
+          done
+          exit 1
