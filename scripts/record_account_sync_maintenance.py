@@ -81,9 +81,17 @@ def main() -> int:
     def converged():
         if outcome != "success" or not isinstance(supplied, dict):
             return False
-        for key in ("updated_at", "total_asset", "stock_market_value", "cash"):
+        # The ingress timestamp records when the screenshot was captured;
+        # the canonical account fact may use the workflow receipt timestamp for
+        # updated_at. Validate the immutable screenshot timestamp separately and
+        # do not reject a successful projection merely because those clocks differ.
+        for key in ("total_asset", "stock_market_value", "cash"):
             if key in supplied and not same(supplied.get(key), account.get(key)):
                 return False
+        supplied_captured_at = str(supplied.get("account_screenshot_captured_at_beijing") or "").strip()
+        account_captured_at = str(account.get("account_screenshot_captured_at_beijing") or "").strip()
+        if supplied_captured_at and supplied_captured_at != account_captured_at:
+            return False
         supplied_positions = supplied.get("positions")
         account_positions = account.get("positions")
         if not isinstance(supplied_positions, list) or not isinstance(account_positions, list):
