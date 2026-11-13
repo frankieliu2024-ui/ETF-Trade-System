@@ -10,13 +10,14 @@ on:
   push:
     paths:
       - "requests/account_sync/**"
-      - ".github/workflows/account-fact-maintenance.yml"
 
 permissions:
   contents: write
 
 concurrency:
-  group: etf-main-state-writer
+  # Account facts have an independent canonical write set; the final push
+  # still rebases against latest-main before publishing.
+  group: etf-account-fact-writer
   cancel-in-progress: false
 
 jobs:
