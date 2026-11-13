@@ -279,7 +279,7 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
     }
 
 
-def read_pulse_projection(root: Path, kind: str) -> dict:
+def _read_pulse_projection_legacy(root: Path, kind: str) -> dict:
     """Read the bounded latest projection, with a one-release legacy fallback."""
     if kind not in {"DISCOVERY", "HYPERLIQUID"}:
         raise ValueError(f"unsupported pulse kind: {kind}")
@@ -313,3 +313,46 @@ def read_pulse_projection(root: Path, kind: str) -> dict:
             }
             return payload
     return {}
+
+
+def read_pulse_projection(root: Path, kind: str) -> dict:
+    """Read the projection while preserving an explicit read-boundary diagnosis.
+
+    The legacy payload shape remains compatible. Diagnostic keys are observational only.
+    """
+    if kind not in {"DISCOVERY", "HYPERLIQUID"}:
+        raise ValueError(f"unsupported pulse kind: {kind}")
+    stem = "discovery" if kind == "DISCOVERY" else "hyperliquid"
+    state_dir = root / "data" / "state"
+    candidates = (f"{stem}_pulse_latest.json", f"{stem}_pulse_index.json")
+    errors = []
+    valid_source = ""
+    for name in candidates:
+        path = state_dir / name
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except FileNotFoundError:
+            errors.append({"source": name, "status": "MISSING"})
+            continue
+        except OSError as exc:
+            errors.append({"source": name, "status": "READ_ERROR", "error": type(exc).__name__})
+            continue
+        except json.JSONDecodeError:
+            errors.append({"source": name, "status": "PARSE_ERROR"})
+            continue
+        if isinstance(payload, dict):
+            valid_source = name
+            break
+        errors.append({"source": name, "status": "INVALID_SHAPE"})
+    result = _read_pulse_projection_legacy(root, kind)
+    if not isinstance(result, dict):
+        result = {}
+    diagnostic = {
+        "status": "VALID_EMPTY" if valid_source and not result.get("latest") else "READY" if valid_source else "READ_FAILED",
+        "source": valid_source,
+        "errors": errors,
+        "warning_only": not bool(valid_source),
+    }
+    result = dict(result)
+    result["_read_diagnostic"] = diagnostic
+    return result
