@@ -2208,6 +2208,7 @@ def build(root: Path = ROOT, *, force_refresh: bool = False, requested_symbols: 
     fact_pack_started = time.monotonic()
     fact_pack = build_decision_fact_pack(root, request_payload, current, account, decision, market_quote, formal_discovery=formal_discovery, external_driver_context=overseas_context.get("hyperliquid"))
     fact_pack_elapsed = round(time.monotonic() - fact_pack_started, 3)
+    hyperliquid_layer_audit = fact_pack.get("hyperliquid_layer_audit") or summarize_hyperliquid_layers(overseas_context.get("hyperliquid"), read_pulse_projection(ROOT, "HYPERLIQUID"), fact_pack.get("hyperliquid_contribution"))
     latency = build_fast_path_latency(request_payload, current, account, decision, market_quote, generated_at, root)
     bds = _business_decision_source_observation(root, str(request_payload.get("request_id") or "").strip()) if latency.get("may_measure_original_decision_latency") else {
         "status": "NOT_APPLICABLE",
