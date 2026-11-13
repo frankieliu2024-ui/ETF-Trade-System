@@ -84,7 +84,7 @@ permissions:
 # producers in the repository-wide writer lane. Each persistence step below
 # re-reads latest main and retries boundedly before publishing.
 concurrency:
-  group: etf-decision-notification-${{ github.run_id }}
+  group: etf-notification-state-writer
   cancel-in-progress: false
 
 jobs:
