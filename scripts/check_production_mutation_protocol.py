@@ -272,6 +272,8 @@ def _workflow_may_stage(text: str, path: str) -> bool:
 
 def _bounded_current_repair_is_narrow(root: Path, script_path: str) -> bool:
     path = root / script_path
+    if script_path == "sync_formal_files":
+        path = root / "scripts/sync_formal_files.py"
     if not path.exists():
         return False
     text = path.read_text(encoding="utf-8")
