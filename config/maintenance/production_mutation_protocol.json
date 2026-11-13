@@ -356,6 +356,10 @@
         ".github/workflows/self-healing-watchdog.yml": {
           "required_script": "scripts/runtime_self_heal.py",
           "allowed_mutation": "CURRENT.rules_version only when MASTER metadata drift is detected"
+        },
+        ".github/workflows/account-fact-maintenance.yml": {
+          "required_script": "scripts/sync_formal_files.py",
+          "allowed_mutation": "account_fact mirror and close-review pointer only; no market price, snapshot pointer or market phase mutation"
         }
       },
       "rule": "行情价格、时点、快照指针和market phase只能来自canonical snapshot producer；自愈不得重建行情事实。"
