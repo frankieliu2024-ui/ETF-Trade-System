@@ -206,8 +206,9 @@ jobs:
       - name: Validate OpenSSL SM4 runtime dependency
         shell: bash
         run: |
-          sudo apt-get update
-          sudo apt-get install -y openssl
+          set -euo pipefail
+          # ubuntu-latest already provides OpenSSL; dependency installation
+          # is not part of consistency semantics and adds avoidable latency.
           command -v openssl
           openssl version -a
           openssl enc -list | grep -E '(^|[[:space:]])-sm4-ecb([[:space:]]|$)'
