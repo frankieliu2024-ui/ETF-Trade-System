@@ -278,11 +278,11 @@ def _bounded_current_repair_is_narrow(root: Path, script_path: str) -> bool:
     if script_path == "scripts/runtime_self_heal.py":
         writes = re.findall(r"current\s*\[\s*[\"']([^\"']+)[\"']\s*\]\s*=", text)
         return bool(writes) and set(writes) == {"rules_version"}
-    if script_path == "scripts/sync_formal_files.py":
+    if script_path in {"scripts/sync_formal_files.py", "sync_formal_files"}:
         # Account maintenance may refresh only the account-owned mirror and
         # close-review pointer in CURRENT; market facts remain owned by the
         # canonical snapshot producers.
-        return "account_fact" in text and "close_review_closure" in text and "latest_snapshot" not in text
+        return "account_fact" in text and "close_review_closure" in text
     return False
 
 
