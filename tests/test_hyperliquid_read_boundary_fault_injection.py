@@ -100,6 +100,60 @@ class HyperliquidReadBoundaryFaultInjectionTests(unittest.TestCase):
         self.assertTrue(index["latest"].get("observations"))
         self.assertEqual(index["history_storage_mode"], "RECENT_DETAIL_PLUS_COMPACT_SUMMARY")
 
+
+    def test_zero_byte_projection_is_read_failed_not_valid_empty(self):
+        root = self._root()
+        path = root / "data" / "state"
+        path.mkdir(parents=True)
+        (path / "hyperliquid_pulse_latest.json").write_text("", encoding="utf-8")
+        result = read_pulse_projection(root, "HYPERLIQUID")
+        self.assertEqual(result["_read_diagnostic"]["status"], "READ_FAILED")
+        self.assertTrue(result["_read_diagnostic"]["warning_only"])
+
+    def test_large_valid_projection_is_not_misclassified_as_empty(self):
+        root = self._root()
+        path = root / "data" / "state"
+        path.mkdir(parents=True)
+        payload = {
+            "latest": {
+                "identity": "large-valid",
+                "formed_at_beijing": "2026-11-13T09:55:00+08:00",
+                "quality_status": "PASS",
+                "observations": [{"asset": {"name": "BTC"}}],
+                "padding": "x" * 600_000,
+            }
+        }
+        (path / "hyperliquid_pulse_latest.json").write_text(
+            json.dumps(payload), encoding="utf-8"
+        )
+        result = read_pulse_projection(root, "HYPERLIQUID",
+                                       as_of="2026-11-13T10:00:00+08:00")
+        self.assertEqual(result["_read_diagnostic"]["status"], "READY")
+        self.assertEqual(result["_selection"]["selected_identity"], "large-valid")
+
+    def test_after_node_pulse_cannot_satisfy_earlier_formal_node(self):
+        projection = {
+            "latest": {
+                "identity": "10-51",
+                "formed_at_beijing": "2026-11-13T10:51:15+08:00",
+                "quality_status": "PASS",
+                "observations": [{}],
+            },
+            "pulse_sequence": [
+                {
+                    "identity": "10-19",
+                    "formed_at_beijing": "2026-11-13T10:19:24+08:00",
+                    "quality_status": "PASS",
+                    "observations": [{}],
+                }
+            ],
+        }
+        selected = select_legal_pulse(
+            projection, "2026-11-13T10:00:00+08:00"
+        )
+        self.assertEqual(selected["selection_status"], "NO_LEGAL_PULSE_AT_NODE")
+        self.assertEqual(selected["latest"], {})
+
     def test_two_sources_can_carry_different_identities(self):
         external = {"context_id": "external-old"}
         latest = {"context_id": "projection-new"}
