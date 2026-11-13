@@ -278,6 +278,17 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
             "rule": "正式判断只消费具有identity且含实际对象证据的最新合法脉冲；历史摘要只用于审计，不作为事实补齐来源。",
         },
     }
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(index, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return {
+        "status": "UPDATED",
+        "path": str(target),
+        "market_date": market_date,
+        "identity": record["identity"],
+        "record_count": len(records),
+        "latest_path": str(latest_path),
+    }
+
 
 
 def _read_pulse_projection_legacy(root: Path, kind: str) -> dict:
