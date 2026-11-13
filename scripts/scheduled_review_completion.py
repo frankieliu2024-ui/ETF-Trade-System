@@ -256,8 +256,10 @@ def build_trade_review_completion_request(
     coverage = validate_formal_object_coverage(formal_review, account)
     validate_user_visible_content(str(final_content or ""), canonical_closure_confirmed=False)
     effective_entry_mode = str(entry_mode or "").strip().upper()
-    if effective_entry_mode not in {"MANUAL_CONVERSATION", "MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"}:
-        raise ValueError("scheduled trade review completion requires a registered entry_mode")
+    # Platform runtime metadata may be unavailable for a valid frozen review.
+    # Preserve the omission; only an explicitly invalid value is a hard conflict.
+    if effective_entry_mode and effective_entry_mode not in {"MANUAL_CONVERSATION", "MANUAL_SCHEDULED_TASK", "AUTOMATIC_SCHEDULED_TASK"}:
+        raise ValueError("scheduled trade review completion entry_mode is not registered")
     effective_task_run_id = _safe_id(task_run_id or request_id)
     effective_occurrence_id = _safe_id(occurrence_id or effective_task_run_id)
     frozen_content = str(final_content or "")

@@ -2574,11 +2574,23 @@ def record_post_close_review(account: dict, request: dict, *, delivery_only: boo
         ):
             raw_presentation_binding = dict(raw_presentation_binding)
             raw_presentation_binding["full_content"] = candidate_content
+    trade_review_request_type = str(request.get("request_type") or "").strip().upper()
+    trade_review_source = str(request.get("source") or "").strip().upper()
+    trade_review_fact_type = str(request.get("formal_fact_type") or "").strip().upper()
+    trade_review_task_id = str((raw_presentation_binding or {}).get("task_id") or "").strip()
+    trade_review_sources = {"CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR", "CHATGPT_SCHEDULED_TRADE_REVIEW", "CHATGPT_MANUAL_TRADE_REVIEW", "CHATGPT_DIRECT_GITHUB_CONTENTS_WRITER"}
+    # Missing transport metadata is a warning-compatible legacy shape. Explicit
+    # conflicting metadata remains fail-closed and cannot be reclassified.
+    if trade_review_fact_type == "FORMAL_SCHEDULED_TRADE_REVIEW" and trade_review_task_id == "ETF交易复盘":
+        if trade_review_request_type and trade_review_request_type != "SCHEDULED_REVIEW_COMPLETION":
+            raise ValueError("scheduled trade review completion request_type mismatch")
+        if trade_review_source and trade_review_source not in trade_review_sources:
+            raise ValueError("scheduled trade review completion source mismatch")
     is_trade_review_production = (
-        str(request.get("request_type") or "").strip().upper() == "SCHEDULED_REVIEW_COMPLETION"
-        and str(request.get("source") or "").strip().upper() in {"CHATGPT_SCHEDULED_TRADE_REVIEW_ACTOR", "CHATGPT_SCHEDULED_TRADE_REVIEW", "CHATGPT_MANUAL_TRADE_REVIEW", "CHATGPT_DIRECT_GITHUB_CONTENTS_WRITER"}
-        and str(request.get("formal_fact_type") or "").strip().upper() == "FORMAL_SCHEDULED_TRADE_REVIEW"
-        and str((raw_presentation_binding or {}).get("task_id") or "").strip() == "ETF交易复盘"
+        trade_review_request_type in {"", "SCHEDULED_REVIEW_COMPLETION"}
+        and trade_review_source in {"", *trade_review_sources}
+        and trade_review_fact_type == "FORMAL_SCHEDULED_TRADE_REVIEW"
+        and trade_review_task_id == "ETF交易复盘"
     )
     is_formal_decision_production = is_formal_decision_completion(request)
     if is_trade_review_production:
