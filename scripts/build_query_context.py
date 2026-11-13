@@ -863,8 +863,10 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
     universe = read_json(root / CANONICAL_FILES["etf_monitor_universe"], {})
     discovery = formal_discovery or {}
     external_driver = external_driver_context or {}
-    hyperliquid_projection = read_pulse_projection(ROOT, "HYPERLIQUID")
+    node_cutoff = str(request.get("requested_at") or request.get("request_time") or request.get("created_at") or "").strip()
+    hyperliquid_projection = read_pulse_projection(ROOT, "HYPERLIQUID", as_of=node_cutoff or None)
     hyperliquid_latest = hyperliquid_projection.get("latest") or {}
+    hyperliquid_selection_status = str((hyperliquid_projection.get("_selection") or {}).get("selection_status") or "LATEST")
     external_id = str(external_driver.get("context_id") or external_driver.get("generation_identity") or "")
     projection_id = str(hyperliquid_latest.get("context_id") or hyperliquid_latest.get("identity") or "")
     hyperliquid_consumer_context = dict(external_driver)
@@ -880,6 +882,13 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
             "collection_finished_at_utc": hyperliquid_latest.get("formed_at_beijing") or external_driver.get("collection_finished_at_utc") or "",
             "_batch_alignment_warning": "EXTERNAL_CONTEXT_AND_LATEST_PROJECTION_MISMATCH; LATEST_PROJECTION_SELECTED",
         })
+    if hyperliquid_selection_status == "NO_LEGAL_PULSE_AT_NODE":
+        hyperliquid_consumer_context = {
+            "quality_status": "MISSING",
+            "observations": [],
+            "mapping": [],
+            "_batch_alignment_warning": "NO_LEGAL_PULSE_AT_FORMAL_DECISION_NODE",
+        }
     hyperliquid_evidence = _hyperliquid_decision_evidence(hyperliquid_consumer_context, current)
     hyperliquid_observation_time_beijing = str(
         hyperliquid_latest.get("collected_at_beijing")
@@ -888,6 +897,8 @@ def build_decision_fact_pack(root: Path, request: dict, current: dict, account: 
         or ""
     )
     hyperliquid_contribution = build_contribution(context={"latest": hyperliquid_latest, "observations": hyperliquid_consumer_context.get("observations") or [], "mapping": hyperliquid_consumer_context.get("mapping") or [], "generated_at_beijing": hyperliquid_consumer_context.get("collection_finished_at_utc")}, task="FORMAL_DECISION")
+    hyperliquid_contribution["pit_selection_status"] = hyperliquid_selection_status
+    hyperliquid_contribution["pit_node_cutoff"] = node_cutoff or "UNAVAILABLE"
     hyperliquid_layer_audit = summarize_hyperliquid_layers(external_driver, {"latest": hyperliquid_latest}, hyperliquid_contribution)
     hyperliquid_provenance = {
         "context_id": external_driver.get("context_id") or "",
