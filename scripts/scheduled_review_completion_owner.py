@@ -57,7 +57,27 @@ def persist_completion(target: Path) -> tuple[str, dict[str, object]]:
         target.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     binding = payload.get("presentation_binding") if isinstance(payload.get("presentation_binding"), dict) else {}
     report_type = str(payload.get("report_type") or binding.get("report_type") or "").strip().upper()
-    # Optional runtime metadata must not block a frozen Scheduled Review handoff.\n    # Derive only deterministic identity from the canonical request; business正文\n    # and task semantics remain unchanged.\n    if report_type in {"ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW"}:\n        request_id = str(payload.get("request_id") or "").strip()\n        task_name = str(payload.get("task_name") or "").strip()\n        if request_id:\n            payload.setdefault("task_run_id", request_id)\n            payload.setdefault("occurrence_id", request_id)\n            payload.setdefault("report_id", f"{task_name or report_type}:{request_id}")\n        binding = payload.setdefault("presentation_binding", {})\n        if isinstance(binding, dict):\n            binding.setdefault("task_id", task_name)\n            binding.setdefault("task_run_id", payload.get("task_run_id"))\n            binding.setdefault("occurrence_id", payload.get("occurrence_id"))\n            binding.setdefault("report_id", payload.get("report_id"))\n            binding.setdefault("report_type", report_type)\n        target.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\\n", encoding="utf-8")\n        binding = payload.get("presentation_binding") if isinstance(payload.get("presentation_binding"), dict) else {}\n    if report_type == "ETF_FORMAL_DECISION":
+    # Optional runtime metadata must not block a frozen Scheduled Review handoff.
+    # Derive only deterministic identity from the canonical request; business正文
+    # and task semantics remain unchanged.
+    if report_type in {"ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW"}:
+        request_id = str(payload.get("request_id") or "").strip()
+        task_name = str(payload.get("task_name") or "").strip()
+        if request_id:
+            payload.setdefault("task_run_id", request_id)
+            payload.setdefault("occurrence_id", request_id)
+            payload.setdefault("report_id", f"{task_name or report_type}:{request_id}")
+        binding = payload.setdefault("presentation_binding", {})
+        if isinstance(binding, dict):
+            binding.setdefault("task_id", task_name)
+            binding.setdefault("task_run_id", payload.get("task_run_id"))
+            binding.setdefault("occurrence_id", payload.get("occurrence_id"))
+            binding.setdefault("report_id", payload.get("report_id"))
+            binding.setdefault("report_type", report_type)
+        target.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\
+", encoding="utf-8")
+        binding = payload.get("presentation_binding") if isinstance(payload.get("presentation_binding"), dict) else {}
+    if report_type == "ETF_FORMAL_DECISION":
         try:
             from scheduled_review_completion import validate_formal_runtime_completion_contract
         except ModuleNotFoundError:
