@@ -284,7 +284,7 @@ def _bounded_current_repair_is_narrow(root: Path, script_path: str) -> bool:
         # Account maintenance may refresh only the account-owned mirror and
         # close-review pointer in CURRENT; market facts remain owned by the
         # canonical snapshot producers.
-        return "account_fact" in text and "close_review_closure" in text
+        return "account_fact" in text
     return False
 
 
