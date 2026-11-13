@@ -236,6 +236,41 @@ def _completion_trial_decisions(root: Path, executions: list[dict[str, Any]]) ->
     return result
 
 
+def _state_sync_trial_decisions(root: Path, executions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Recover an explicitly recorded Trial from the canonical state-sync ingress.
+
+    This is a read-only recovery for broker-confirmed executions whose formal
+    decision record predates the state-sync ingress or is no longer resolvable.
+    It accepts only an exact ``Trial`` marker on an executed broker-screenshot
+    trade with a non-empty decision attribution.  It never infers a lifecycle
+    from holdings, a symbol, or a current Dashboard row, and it never grants
+    trading authority.
+    """
+    result = []
+    for execution in executions:
+        if str(execution.get("side") or "").upper() != "BUY":
+            continue
+        if str(execution.get("lifecycle") or "").strip() != "Trial":
+            continue
+        if str(execution.get("source") or "").strip() != "CHATGPT_USER_BROKER_SCREENSHOT":
+            continue
+        decision_id = str(execution.get("linked_decision_id") or "").strip()
+        code = str(execution.get("code") or "").strip()
+        event_id = str(execution.get("event_id") or "").strip()
+        if not decision_id or not code or not event_id:
+            continue
+        result.append({
+            "decision_id": decision_id,
+            "candidate_code": code,
+            "candidate_name": execution.get("name"),
+            "hypothesis_id": execution.get("hypothesis_id"),
+            "decision_time_beijing": execution.get("confirmed_at_beijing") or execution.get("executed_at_beijing"),
+            "_linked_execution_id": event_id,
+            "_state_sync_trial": True,
+        })
+    return result
+
+
 def _executions(root: Path) -> list[dict[str, Any]]:
     result = []
     directory = root / "events" / "trades"
@@ -470,7 +505,11 @@ def build_lifecycle_projection(root: Path, as_of_market_date: str | None = None)
     executions = _executions(root)
     trials = []
     seen_opening_events: set[str] = set()
-    for decision in _formal_decisions(root) + _completion_trial_decisions(root, executions):
+    for decision in (
+        _formal_decisions(root)
+        + _completion_trial_decisions(root, executions)
+        + _state_sync_trial_decisions(root, executions)
+    ):
         candidate_code = str(decision.get("candidate_code") or "").strip()
         # A Trial lifecycle starts from an executed BUY only.  A formal
         # decision may also be linked to a SELL (for example a risk-reduction
@@ -487,7 +526,7 @@ def build_lifecycle_projection(root: Path, as_of_market_date: str | None = None)
                 )
             )
         ]
-        if decision.get("_completion_trial"):
+        if decision.get("_completion_trial") or decision.get("_state_sync_trial"):
             linked = [x for x in linked if x.get("event_id") == decision.get("_linked_execution_id")]
         if not linked:
             # A decision alone is not a real position lifecycle.
@@ -507,8 +546,8 @@ def build_lifecycle_projection(root: Path, as_of_market_date: str | None = None)
         mandatory = add_trading_days(start_date, 3, calendar)
         decision_with_due = dict(decision, mandatory_decision_market_date=mandatory.isoformat())
         resolution = ((_completion_followup_resolution(root, decision)
-                       or _completion_explicit_exit(root, decision, executions)) if decision.get("_completion_trial")
-                      else _resolution(root, decision_with_due, as_of))
+                       or _completion_explicit_exit(root, decision, executions))
+                      if decision.get("_completion_trial") else _resolution(root, decision_with_due, as_of))
         resolved = resolution is not None
         trials.append({
             "source_decision_id": decision.get("decision_id"),
