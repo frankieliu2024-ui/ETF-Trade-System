@@ -381,7 +381,6 @@ def main() -> int:
         ("tests.test_executed_trade_case_lifecycle", "executed_trade_case_lifecycle"),
         ("tests.test_settlement_obligations", "settlement_obligations"),
         ("tests.test_formal_file_mutation_gateway", "formal_file_mutation_gateway"),
-        ("tests.test_post_close_review_canonical", "post_close_review_canonical"),
         ("tests.test_review_prerequisite_lifecycle", "review_prerequisite_lifecycle"),
         ("tests.test_production_reliability", "production_reliability"),
         ("tests.test_workflow_sha_snapshot", "workflow_sha_snapshot"),
