@@ -8,6 +8,11 @@ VALID_ACTIONS = {"ADMIT", "RETAIN", "EXIT"}
 MAX_OBSERVATION_ETFS = 12
 
 
+class ObservationUniverseResourceLimitError(ValueError):
+    """Non-core observation projection cannot block canonical account sync."""
+
+
+
 def _code(value: Any) -> str:
     return str(value or "").upper().replace(".SH", "").replace(".SZ", "").strip()
 
@@ -115,7 +120,9 @@ def project_monitor_universe(root: Path, account: dict, decision: dict) -> tuple
 
     projected_observations = set(by_code) - held
     if len(projected_observations) > MAX_OBSERVATION_ETFS:
-        raise ValueError(f"projected observation ETF count exceeds resource protection max {MAX_OBSERVATION_ETFS}")
+        raise ObservationUniverseResourceLimitError(
+            f"projected observation ETF count exceeds resource protection max {MAX_OBSERVATION_ETFS}"
+        )
 
     projected = {
         **universe,
