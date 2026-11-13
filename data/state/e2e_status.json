@@ -1,46 +1,50 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-11-12T20:33:19+08:00",
-  "status": "DEGRADED",
+  "generated_at": "2026-11-13T12:29:51+08:00",
+  "status": "BLOCKED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
   "components": {
     "market": {
       "status": "READY",
       "reason": "latest market snapshot is valid",
-      "snapshot": "data/market/snapshots/2026-11-12_151602.json",
-      "captured_at": "2026-11-12T15:16:02+08:00",
-      "market_phase": "POST_CLOSE_GRACE"
+      "snapshot": "data/market/snapshots/2026-11-13_122842.json",
+      "captured_at": "2026-11-13T12:28:42+08:00",
+      "market_phase": "MIDDAY_BREAK"
     },
     "account": {
-      "status": "READY",
-      "reason": "confirmed account facts remain valid; historical audit deltas are not pending updates",
+      "status": "BLOCKED",
+      "reason": "ACCOUNT_SYNC_NOT_PERFORMED: latest broker screenshot request has not converged into canonical account_fact",
       "updated_at": "2026-11-12T18:01:00+08:00",
       "source": "CHATGPT_USER_BROKER_SCREENSHOT",
       "pending_change_events": [],
       "historical_audit_event_count": 149,
-      "cash": 79614.17,
-      "reserved_cash_for_settlement": 0,
-      "deployable_cash": 79614.17,
-      "settlement_constraint_status": "NONE"
+      "pending_broker_request": {
+        "path": "requests/live_snapshot/20261113_121800_chatgpt_broker_screenshot_account_sync.json",
+        "request_id": "20261113_121800_chatgpt_broker_screenshot_account_sync",
+        "request_time": "2026-11-13T12:18:00+08:00",
+        "has_account_fact": true,
+        "status": "ACCOUNT_SYNC_NOT_PERFORMED"
+      }
     },
     "risk": {
-      "status": "READY",
-      "reason": "formal ETF strategy risk metric is available from a fresh canonical reconstruction",
-      "etf_strategy_risk_pct": -13.4226,
+      "status": "DEGRADED",
+      "reason": "ETF strategy equity reconstruction is stale for the current market date and Dashboard cannot be used as a fallback",
+      "etf_strategy_risk_pct": null,
       "source": "data/state/etf_strategy_equity.json",
+      "stale_reconstruction_risk_pct": -13.4226,
       "source_updated_at": null,
       "reconstruction_as_of_transaction_date": "2026-11-12",
-      "reconstruction_fresh_for_market_date": true,
+      "reconstruction_fresh_for_market_date": false,
       "data_quality": null
     },
     "close_review": {
       "status": "DEGRADED",
       "reason": "close review closure exists but evidence or business completion is not sufficient",
-      "market_date": "2026-11-11",
-      "formal_review_market_date": "2026-11-11",
-      "formal_review_path": "events/reviews/2026-11-11.json",
-      "closure_path": "data/state/close_review_closure_2026-11-11.json",
+      "market_date": "2026-11-12",
+      "formal_review_market_date": "2026-11-12",
+      "formal_review_path": "events/reviews/2026-11-12.json",
+      "closure_path": "data/state/close_review_closure_2026-11-12.json",
       "review_evidence_status": "DEGRADED",
       "business_completion_status": "DEGRADED"
     },
@@ -57,8 +61,8 @@
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 8285045,
-          "sha256": "d34639bb7a59be071e9251716d8b20e3aa393a25b5bb306324fc3d1b72627f4e",
+          "byte_count": 5581663,
+          "sha256": "01fec123b3efb6e6f63ea2a607765c1f64fd1876f3db3bdd055fe35b4e9a4189",
           "parsed_object": true,
           "retry_attempts": 1,
           "retry_required": false
@@ -66,8 +70,8 @@
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 722249,
-          "sha256": "ece23e83c2e1a63bf4f3ea74a81848070068f1b3d7749049b0457f14e815822d",
+          "byte_count": 534257,
+          "sha256": "180520e0006a184a35c8b7b1ca8fae10a85dea5b32ddf46fbb81806db7f0d6ee",
           "parsed_object": true,
           "retry_attempts": 1,
           "retry_required": false
@@ -77,9 +81,9 @@
     },
     "lifecycle": {
       "status": "READY",
-      "reason": "canonical lifecycle projection available; mandatory_due=2",
+      "reason": "canonical lifecycle projection available; mandatory_due=3",
       "active_trial_count": 5,
-      "decision_due_count": 2,
+      "decision_due_count": 3,
       "overdue_count": 2,
       "next_mandatory_node": "2026-10-29",
       "source": "formal decision + executed trade facts"
@@ -87,19 +91,22 @@
     "maintenance": {
       "status": "READY",
       "reason": "maintenance guard passed",
-      "checked_at": "2026-11-12T20:31:25+08:00"
+      "checked_at": "2026-11-13T12:28:43+08:00"
     }
   },
-  "blockers": [],
+  "blockers": [
+    "account"
+  ],
   "degradations": [
+    "risk",
     "close_review"
   ],
   "context_read_contract": {
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 8285045,
-      "sha256": "d34639bb7a59be071e9251716d8b20e3aa393a25b5bb306324fc3d1b72627f4e",
+      "byte_count": 5581663,
+      "sha256": "01fec123b3efb6e6f63ea2a607765c1f64fd1876f3db3bdd055fe35b4e9a4189",
       "parsed_object": true,
       "retry_attempts": 1,
       "retry_required": false
@@ -107,8 +114,8 @@
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 722249,
-      "sha256": "ece23e83c2e1a63bf4f3ea74a81848070068f1b3d7749049b0457f14e815822d",
+      "byte_count": 534257,
+      "sha256": "180520e0006a184a35c8b7b1ca8fae10a85dea5b32ddf46fbb81806db7f0d6ee",
       "parsed_object": true,
       "retry_attempts": 1,
       "retry_required": false
