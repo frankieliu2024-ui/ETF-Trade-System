@@ -625,13 +625,10 @@ jobs:
           task_id = str(payload.get("task_id") or binding.get("task_id") or "").strip()
           task_name = str(payload.get("task_name") or "").strip()
           review_identity = task_id or task_name
-          # A direct scheduled completion is already a sufficient notification
-          # source. Missing presentation_binding is an audit limitation, not a
-          # delivery failure; leave event projection to the independent audit
-          # step and let the exact completion reach the notification center.
-          if report_type == "ETF_FORMAL_DECISION" and (task_id == "ETF正式决策" or task_name == "ETF正式决策") and not payload.get("presentation_binding"):
-              print(json.dumps({"canonical_publication": ""}, ensure_ascii=False))
-              raise SystemExit(0)
+          # Direct Formal Decision completions are valid canonical inputs even
+          # when the legacy presentation_binding envelope is absent. The
+          # validator below and the event writer remain the authoritative gates;
+          # do not convert this audit limitation into an empty event path.
           if (
               report_type not in {"ETF_TRADE_REVIEW", "SCHEDULED_TRADE_REVIEW"}
               or review_identity != "ETF交易复盘"
