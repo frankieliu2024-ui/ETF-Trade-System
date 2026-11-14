@@ -380,8 +380,7 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
         self.assertIn('if [ "$action" = "REBUILD_DERIVED_CONTEXTS" ]; then', persist)
         self.assertIn('elif [ "$action" = "SYNC_RULES_VERSION_METADATA" ]; then', persist)
         self.assertIn("python scripts/build_state_context.py", persist)
-        self.assertIn("python scripts/build_query_context.py", persist)
-        retry_loop = persist.split('for attempt in $(seq 1 "$max_attempts"); do', 1)[1]
+        # query_context is owned by the canonical market-snapshot producers;\n        # watchdog repair must not rebuild or persist it.\n        self.assertNotIn("python scripts/build_query_context.py", persist)\n        retry_loop = persist.split('for attempt in $(seq 1 "$max_attempts"); do', 1)[1]
         self.assertIn("data/state/review_context.json", persist)
         self.assertIn("python scripts/runtime_self_heal.py --repair-safe", persist)
         self.assertIn("Self-healing persistence exhausted bounded latest-main retries; fail closed.", persist)
