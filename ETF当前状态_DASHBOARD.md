@@ -72,9 +72,7 @@
 |酒ETF鹏华（512690）|Trial|有效|2026-11-13|T+0|
 |银行ETF博时（159253）|Trial|有效|2026-11-13|T+0|
 
-当前持仓的事实数量以上方‘当前持仓事实’为准；未被生命周期投影单独列出的持仓，不得据此推断为Trial或Confirm。
-
-<!-- AUTO_STATE_SYNC_END -->
+当前持仓的事实数量以上方‘当前持仓事实’为准；未被生命周期投影单独列出的持仓，不得据此推断为Trial或Confirm。\n\n<!-- AUTO_STATE_SYNC_END -->
 
 <!-- AUTO_TRADE_FACT_CORRECTIONS_START -->
 <!-- AUTO_TRADE_FACT_CORRECTIONS_END -->
