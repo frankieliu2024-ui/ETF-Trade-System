@@ -320,7 +320,6 @@ jobs:
         if: ${{ steps.assess.outputs.action == 'REBUILD_DERIVED_CONTEXTS' }}
         run: |
           python scripts/build_state_context.py
-          python scripts/build_query_context.py
           python scripts/runtime_self_heal.py --assess
 
       - name: Repair deterministic metadata drift
@@ -328,7 +327,6 @@ jobs:
         run: |
           python scripts/runtime_self_heal.py --repair-safe
           python scripts/build_state_context.py
-          python scripts/build_query_context.py
           python scripts/runtime_self_heal.py --assess
 
 
@@ -416,15 +414,13 @@ jobs:
             if [ "$action" = "REBUILD_DERIVED_CONTEXTS" ]; then
               python scripts/build_state_context.py
               if [ "$formal_handoff_active" != "true" ]; then
-                python scripts/build_query_context.py
-              fi
+                    fi
               python scripts/runtime_self_heal.py --assess
             elif [ "$action" = "SYNC_RULES_VERSION_METADATA" ]; then
               python scripts/runtime_self_heal.py --repair-safe
               python scripts/build_state_context.py
               if [ "$formal_handoff_active" != "true" ]; then
-                python scripts/build_query_context.py
-              fi
+                    fi
               python scripts/runtime_self_heal.py --assess
             fi
 
@@ -468,11 +464,10 @@ jobs:
             if [ "$action" = "REBUILD_DERIVED_CONTEXTS" ] || [ "$action" = "SYNC_RULES_VERSION_METADATA" ]; then
               git add -A -- data/state/CURRENT.json data/state/decision_context.json data/state/review_context.json data/state/intraday_path_features.json data/state/decision_trigger.json data/state/capital_efficiency_ranking.json
               if [ "$formal_handoff_active" != "true" ]; then
-                git add -A -- data/state/query_context.json
               fi
             elif [ "$action" = "__REGISTERED_DERIVED_CONTEXT_WRITER_CONTRACT__" ]; then
               # Static production-contract marker; unreachable by runtime policy.
-              git add -A -- data/state/CURRENT.json data/state/query_context.json data/state/decision_context.json data/state/review_context.json data/state/intraday_path_features.json data/state/decision_trigger.json data/state/capital_efficiency_ranking.json
+              git add -A -- data/state/CURRENT.json data/state/decision_context.json data/state/review_context.json data/state/intraday_path_features.json data/state/decision_trigger.json data/state/capital_efficiency_ranking.json
             fi
             if git diff --cached --quiet; then
               exit 0
