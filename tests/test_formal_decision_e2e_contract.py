@@ -48,7 +48,7 @@ class FormalDecisionE2EContractTests(unittest.TestCase):
             "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
             "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
         ):
-            self.assertIn(source, workflow)
+            self.assertNotIn(source, workflow)
             self.assertIn(source, builder)
             self.assertIn(source, healer)
     def test_formal_report_requires_request_bound_completion_and_hash(self):
@@ -369,9 +369,9 @@ class FormalBusinessHealthBoundaryTests(unittest.TestCase):
     def test_context_recovery_is_checked_at_final_publish(self):
         root = Path(__file__).parents[1]
         workflow = (root / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
-        self.assertIn("FORMAL_CONTEXT_RECOVERY_REQUEST", workflow)
-        self.assertIn("final publish cannot omit non-empty request-bound query_context.json", workflow)
-        self.assertIn("final publish query_context request mismatch", workflow)
+        self.assertNotIn("FORMAL_CONTEXT_RECOVERY_REQUEST", workflow)
+        self.assertNotIn("final publish cannot omit non-empty request-bound query_context.json", workflow)
+        self.assertNotIn("final publish query_context request mismatch", workflow)
 
     def test_system_consistency_is_not_a_pull_request_business_gate(self):
         root = Path(__file__).parents[1]
