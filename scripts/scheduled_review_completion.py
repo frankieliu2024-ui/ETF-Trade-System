@@ -825,9 +825,15 @@ def select_latest_qualified_formal_discovery(
         return None
     if str(discovery.get("market_date") or "") != str(market_date):
         return None
-    if str(discovery.get("status") or "").upper() not in {"READY", "COMPLETE"}:
+    discovery_state = str(discovery.get("status") or "").upper()
+    if discovery_state not in {"READY", "COMPLETE", "DEGRADED"}:
         return None
-    if str(discovery.get("coverage_status") or "").upper() not in {"COMPLETE", "READY"}:
+    coverage_state = str(discovery.get("coverage_status") or "").upper()
+    # A degraded but request-bound Discovery remains a usable constrained fact.
+    # Missing/partial coverage is disclosed by the state and must not erase the object.
+    if discovery_state != "DEGRADED" and coverage_state not in {"COMPLETE", "READY"}:
+        return None
+    if discovery_state == "DEGRADED" and coverage_state not in {"", "PARTIAL", "DEGRADED", "COMPLETE", "READY"}:
         return None
     try:
         at = datetime.fromisoformat(str(discovery.get("generated_at_beijing") or ""))
@@ -997,8 +1003,9 @@ def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | N
             raise ValueError("Formal Decision completion fact_binding mismatch: " + key)
     if str(snapshot.get("market_date") or "").strip() != expected_binding["market_date"]:
         raise ValueError("Formal Decision completion bound snapshot market_date mismatch")
-    if str(snapshot.get("quality_status") or "").strip().upper() != "PASS":
-        raise ValueError("Formal Decision completion bound snapshot quality is not PASS")
+    snapshot_quality = str(snapshot.get("quality_status") or "").strip().upper()
+    if snapshot_quality not in {"PASS", "DEGRADED"}:
+        raise ValueError("Formal Decision completion bound snapshot quality is not usable")
     return {
         "task_run_id": str(payload["task_run_id"]).strip(),
         "occurrence_id": str(payload["occurrence_id"]).strip(),
