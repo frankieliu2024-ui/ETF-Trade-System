@@ -727,7 +727,16 @@ def main() -> int:
     check("workflow:unified_fixed_pulse", '5,15,25,35,45,55 0-7 * * 1-5' in workflow, "A-share market workflow uses unified fixed pulse cadence")
     check("workflow:valid_snapshot_downstream_gate", "snapshot_result.outputs.snapshot_written == 'true'" in workflow, "downstream contexts require new valid A-share snapshot")
     check("workflow:single_full_recovery_entry", "workflow_dispatch" in workflow and not (ROOT / ".github/workflows/full-snapshot-recovery.yml").exists(), "market-snapshot workflow_dispatch is the only full-state recovery entry")
-    check("workflow:runtime_artifact_staging", "git add -A -- data/market/snapshots data/state" in workflow and "2>/dev/null || true" not in workflow, "runtime staging cannot silently drop a snapshot because an optional path is absent")
+    core_publish_markers = (
+        "git add -- data/market/snapshots data/state/CURRENT.json data/state/runtime_health.json",
+        "git add -- data/market/snapshots data/state/CURRENT.json data/state/runtime_health.json",
+    )
+    check(
+        "workflow:runtime_artifact_staging",
+        any(marker in workflow for marker in core_publish_markers)
+        and "2>/dev/null || true" not in workflow,
+        "runtime staging must explicitly stage the canonical market snapshot and its two core pointers",
+    )
     on_demand_workflow = read_text(".github/workflows/on-demand-market-data.yml")
     check("workflow:on_demand_degraded_only", "run_full_snapshot_recovery.py" not in on_demand_workflow and "data/state/CURRENT.json" not in on_demand_workflow, "single-object on-demand service cannot impersonate production CURRENT")
 
