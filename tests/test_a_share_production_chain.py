@@ -161,7 +161,10 @@ class AShareProductionChainTests(unittest.TestCase):
         self.assertIn("if: ${{ steps.session_gate.outputs.should_capture == 'true' }}", production)
         self.assertNotIn("steps.session_gate.outputs.should_capture != 'true' && github.event_name != 'push'", production)
         self.assertIn("steps.snapshot_result.outputs.snapshot_written", production)
-        self.assertIn("git add -A -- data/market/snapshots data/state", production)
+        self.assertIn(
+            "git add -- data/market/snapshots data/state/CURRENT.json data/state/runtime_health.json",
+            production,
+        )
         self.assertNotIn("run_full_snapshot_recovery.py", on_demand)
         self.assertNotIn("data/state/CURRENT.json", on_demand)
         self.assertFalse((ROOT / ".github/workflows/full-snapshot-recovery.yml").exists())
