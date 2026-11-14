@@ -322,44 +322,23 @@ class ManualRequestBoundedObservabilityTests(unittest.TestCase):
         self.assertEqual(observation["run_started_at_beijing"], "UNKNOWN")
         self.assertEqual(observation["core_snapshot_finished_at_beijing"], "UNKNOWN")
 
-    def test_query_context_step_precedes_full_derived_context_steps(self):
+    def test_market_snapshot_excludes_derived_context_waterfall(self):
         workflow = (ROOT / ".github" / "workflows" / "market-snapshot.yml").read_text(encoding="utf-8")
-        query_pos = workflow.index("- name: Build on-demand query context")
-        e2e_pos = workflow.index("- name: Build E2E usability state")
-        state_pos = workflow.index("- name: Build state context and candidates")
-        review_pos = workflow.index("- name: Build post-market review context")
-        self.assertLess(query_pos, state_pos)
-        self.assertLess(state_pos, e2e_pos)
-        self.assertLess(e2e_pos, review_pos)
+        for step in ("Build on-demand query context", "Build E2E usability state", "Build state context and candidates", "Build post-market review context"):
+            self.assertNotIn(step, workflow)
 
-
-    def test_market_snapshot_workflow_preserves_triggering_request_path_after_reset(self):
+    def test_market_snapshot_has_no_request_ingress_path(self):
         workflow = (ROOT / ".github" / "workflows" / "market-snapshot.yml").read_text(encoding="utf-8")
-        self.assertIn("triggering_request_file=", workflow)
-        self.assertIn("TRIGGERING_REQUEST_FILE=", workflow)
-        self.assertIn('REQUEST_FILE="${TRIGGERING_REQUEST_FILE:-}"', workflow)
-        self.assertIn('python scripts/build_query_context.py --force-refresh --symbols "$REQUEST_SYMBOLS" "${REQUEST_ARGS[@]}"', workflow)
+        self.assertNotIn("TRIGGERING_REQUEST_FILE", workflow)
+        self.assertNotIn("build_query_context.py", workflow)
 
-    def test_formal_completion_stays_on_state_sync_fast_path(self):
+    def test_formal_completion_is_not_a_market_snapshot_responsibility(self):
         workflow = (ROOT / ".github" / "workflows" / "market-snapshot.yml").read_text(encoding="utf-8")
-        self.assertIn('echo "formal_completion=$formal_completion" >> "$GITHUB_OUTPUT"', workflow)
-        self.assertIn('steps.state_sync.outputs.formal_completion != \'true\'', workflow)
+        self.assertNotIn("formal_completion", workflow)
+        self.assertNotIn("state_sync", workflow)
 
-        query_block = workflow.split("- name: Build on-demand query context", 1)[1].split("- name: Build E2E usability state", 1)[0]
-        e2e_block = workflow.split("- name: Build E2E usability state", 1)[1].split("- name: Build state context and candidates", 1)[0]
-        state_block = workflow.split("- name: Build state context and candidates", 1)[1].split("- name: Build post-market review context", 1)[0]
-        review_block = workflow.split("- name: Build post-market review context", 1)[1].split("- name: Commit downstream runtime/data artifacts", 1)[0]
-
-        for block in (query_block, e2e_block, state_block, review_block):
-            self.assertIn("steps.state_sync.outputs.formal_completion != 'true'", block)
-
-    def test_post_request_snapshot_does_not_force_discovery_rescan(self):
+    def test_market_snapshot_does_not_run_request_discovery_rescan(self):
         workflow = (ROOT / ".github" / "workflows" / "market-snapshot.yml").read_text(encoding="utf-8")
-        branch = workflow.split('elif [ "${{ steps.snapshot_result.outputs.snapshot_written }}" = "true" ] && [ "$REQUEST_REQUIRES_REFRESH" = "true" ]; then', 1)[1]
-        branch = branch.split('elif [ "${{ steps.snapshot_result.outputs.snapshot_written }}" = "true" ]; then', 1)[0]
-        self.assertIn('python scripts/build_query_context.py --run-discovery "${REQUEST_ARGS[@]}"', branch)
-        self.assertNotIn('python scripts/build_query_context.py --force-refresh "${REQUEST_ARGS[@]}"', branch)
+        self.assertNotIn("build_query_context.py --run-discovery", workflow)
+        self.assertNotIn("build_query_context.py --force-refresh", workflow)
 
-
-if __name__ == "__main__":
-    unittest.main()

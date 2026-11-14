@@ -22,19 +22,15 @@ def test_decision_ready_only_mode_reuses_enrichment_contracts():
 def test_runtime_workflows_use_existing_canonical_builder_hot_path_mode():
     market_snapshot = _source(".github/workflows/market-snapshot.yml")
     opening_fallback = _source(".github/workflows/opening-auction-current-fallback.yml")
-    assert "python scripts/build_state_context.py --decision-ready-only" in market_snapshot
+    assert "python scripts/build_state_context.py --decision-ready-only" not in market_snapshot
     assert "python scripts/build_state_context.py --decision-ready-only" in opening_fallback
     assert "build_state_context.py --fast" not in market_snapshot
 
 
-def test_manual_close_rebuilds_canonical_decision_context_without_query_refresh():
+def test_market_snapshot_does_not_rebuild_decision_context(self):
     workflow = _source(".github/workflows/market-snapshot.yml")
-    block = workflow[workflow.index("- name: Build state context and candidates"):]
-    condition = block[block.index("if: "):block.index("\n", block.index("if: "))]
-    assert "github.event.inputs.node == 'close'" in condition
-    assert "steps.query_context.outcome == 'skipped'" in condition
-    assert "python scripts/build_state_context.py --decision-ready-only --manual-close-recovery" in block
-
+    assert "Build state context and candidates" not in workflow
+    assert "build_state_context.py --decision-ready-only" not in workflow
 
 def test_manual_close_recovery_does_not_reuse_request_bound_identity_or_pit():
     source = _source("scripts/build_state_context.py")
