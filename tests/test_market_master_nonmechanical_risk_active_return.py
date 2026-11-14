@@ -21,7 +21,7 @@ class MasterNonmechanicalRiskActiveReturnTests(unittest.TestCase):
         self.assertIn('- "ETF规则_MASTER.md"', text)
         self.assertIn("SYNC_RULES_VERSION_METADATA", text)
         self.assertIn("python scripts/build_state_context.py", text)
-        self.assertIn("python scripts/build_query_context.py", text)
+        self.assertNotIn("python scripts/build_query_context.py", text)
 
     def test_fixed_position_anchors_are_removed(self):
         text = MASTER.read_text(encoding="utf-8")
