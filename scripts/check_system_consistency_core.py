@@ -733,7 +733,7 @@ def main() -> int:
 
     overseas_workflow = read_text(".github/workflows/overseas-preopen-pulse.yml")
     check("workflow:overseas_preopen_exists", "build_overseas_context.py" in overseas_workflow, "standalone overseas pre-open pulse wired")
-    check("workflow:us_extended_separate_owner", "build_us_extended_hours_context.py" not in overseas_workflow and "us_extended_hours_context.json" in overseas_workflow and "build_us_extended_hours_context.py" in us_workflow, "US extended-hours context has a separate standalone owner and is not duplicated in APAC pre-open workflow")
+    check("workflow:us_extended_separate_owner", "build_us_extended_hours_context.py" not in overseas_workflow and "us_extended_hours_context.json" in overseas_workflow and "build_us_extended_hours_context.py" in read_text(".github/workflows/us-extended-hours-pulse.yml"), "US extended-hours context has a separate standalone owner and is not duplicated in APAC pre-open workflow")
     check("workflow:overseas_unified_fixed_pulse", '5,15,25,35,45,55 0-7 * * 1-5' in overseas_workflow, "APAC and Hyperliquid workflow uses 08:05-15:55 Beijing pulse cadence")
     check("workflow:overseas_runtime_health", "build_overseas_runtime_health.py" in overseas_workflow and "overseas_runtime_health.json" in overseas_workflow, "overseas runtime health is generated and committed")
     check("workflow:overseas_hithink_runtime", "HITHINK_FINANCE_API_KEY" in overseas_workflow and "@hithink-tech/hithink-finance-cli" in overseas_workflow, "overseas runner installs Hithink CLI and receives secret")
