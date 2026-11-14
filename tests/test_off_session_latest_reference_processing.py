@@ -74,6 +74,8 @@ def test_latest_close_reference_workflow_returns_reference_without_new_capture()
     assert "GITHUB_STEP_SUMMARY" in workflow
     assert "new_snapshot_written" in workflow
     assert "current_mutated" in workflow
+    assert "bound_to_same_snapshot" in workflow
+    assert "existing_same_node_formal_discovery" in workflow
     assert "build_query_context.py --run-discovery" not in workflow
     assert "No new live/close snapshot is fabricated" in workflow
     assert 'reason = "latest_legal_close_reference"' in Path("scripts/runtime_session_gate.py").read_text(encoding="utf-8")
