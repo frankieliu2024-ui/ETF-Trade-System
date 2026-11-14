@@ -247,9 +247,6 @@ def _broad_state_add_without_exclusion(text: str, path: str) -> bool:
         if re.match(r"^git add(?:\s+-A)?(?:\s+--)?\s+data/state(?:\s|$)", s):
             broad = True
             break
-        if "git add -- data/market/snapshots data/state/CURRENT.json data/state/runtime_health.json" in s:
-            broad = True
-            break
     excluded = any(
         token in text
         for token in (
