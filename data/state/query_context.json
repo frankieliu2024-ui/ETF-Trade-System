@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-11-14T04:21:53Z",
-  "generated_at_beijing": "2026-11-14T12:21:53+08:00",
+  "generated_at": "2026-11-14T12:28:37Z",
+  "generated_at_beijing": "2026-11-14T20:28:37+08:00",
   "market_date": "2026-11-13",
   "latest_valid_node": "close",
   "rules_version": "V2.2.34",
@@ -1109,7 +1109,7 @@
     "last_trade_event_id": "broker-trade-20261113-144506-159253-chatgpt",
     "rules_version": "V2.2.34",
     "generated_at": "2026-11-13T13:10:27.937867Z",
-    "account_fact_reference_synced_at": "2026-11-14T00:49:34+08:00",
+    "account_fact_reference_synced_at": "2026-11-14T20:08:33+08:00",
     "account_fact_path": "data/state/account_fact.json",
     "account_fact_updated_at": "2026-11-13T17:21:00+08:00",
     "account_fact_status": "VALID",
@@ -1161,7 +1161,7 @@
       "boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
       "timing": {}
     },
-    "generated_at": "2026-11-14T04:21:27Z",
+    "generated_at": "2026-11-14T12:28:03Z",
     "rules_version": "V2.2.34",
     "market_date": "2026-11-13",
     "latest_node": "close",
@@ -2270,7 +2270,7 @@
       "last_trade_event_id": "broker-trade-20261113-144506-159253-chatgpt",
       "rules_version": "V2.2.34",
       "generated_at": "2026-11-13T13:10:27.937867Z",
-      "account_fact_reference_synced_at": "2026-11-14T00:49:34+08:00",
+      "account_fact_reference_synced_at": "2026-11-14T20:08:33+08:00",
       "account_fact_path": "data/state/account_fact.json",
       "account_fact_updated_at": "2026-11-13T17:21:00+08:00",
       "account_fact_status": "VALID",
@@ -3441,7 +3441,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 8.408,
-      "age_seconds": 76516
+      "age_seconds": 105712
     },
     "freshness_at_context_build": {
       "status": "STALE",
@@ -3458,7 +3458,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 8.408,
-      "age_seconds": 76516
+      "age_seconds": 105712
     },
     "data_quality_summary": {
       "pass_count": 25,
@@ -3563,7 +3563,7 @@
       "account_fact_time": "2026-11-13T17:21:00+08:00",
       "market_snapshot_time": "2026-11-13T15:06:11+08:00",
       "market_phase": "POST_CLOSE_GRACE",
-      "context_generated_time": "2026-11-14T04:21:27Z",
+      "context_generated_time": "2026-11-14T12:28:03Z",
       "latest_formal_decision_time": "2026-09-28T10:42:38+08:00",
       "account_fact_decision_relation": "ACCOUNT_FACT_AFTER_FORMAL_DECISION_REQUIRES_REASSESSMENT",
       "account_fact_requires_formal_reassessment": true,
@@ -3607,8 +3607,8 @@
       "read_only": true
     },
     "market_quote_router": {
-      "generated_at_beijing": "2026-11-14T12:21:27+08:00",
-      "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
+      "generated_at_beijing": "2026-11-14T20:28:03+08:00",
+      "refresh_mode": "CACHED_STATE",
       "refresh_failures": [],
       "decision_freshness": {
         "status": "REFRESH_REQUIRED",
@@ -3616,8 +3616,8 @@
         "captured_at": "2026-11-13T07:06:11+00:00",
         "provider_as_of": "2026-11-13T07:06:06+00:00",
         "effective_as_of": "2026-11-13T07:06:06+00:00",
-        "request_time": "2026-11-14T04:21:27.715848+00:00",
-        "age_seconds": 76521,
+        "request_time": "2026-11-14T12:28:03.543936+00:00",
+        "age_seconds": 105717,
         "post_request": false,
         "preferred_max_age_seconds": 300,
         "fallback_max_age_seconds": 900,
@@ -4720,18 +4720,25 @@
           "security_code": "159056",
           "security_name": "全指器械",
           "lifecycle": "Trial",
-          "lifecycle_status": "ACTIVE_TRIAL",
-          "hypothesis_status": "OPEN",
+          "lifecycle_status": "RESOLVED",
+          "hypothesis_status": "RESOLVED",
           "start_market_date": "2026-10-26",
           "current_market_date": "2026-11-13",
           "current_t_plus": 14,
           "mandatory_decision_market_date": "2026-10-29",
-          "decision_due": true,
-          "overdue": true,
-          "next_lifecycle_node": "TRADE_MANDATORY_LIFECYCLE_NODE:T+3",
-          "resolution": null,
-          "decision_coverage_status": "NO_LATER_FORMAL_COVERAGE",
-          "lifecycle_status_explanation": "尚未找到该Trial在强制节点后的可归属正式决议或完整卖出事实；状态保持开放，逾期只表示应补做正式决议。",
+          "decision_due": false,
+          "overdue": false,
+          "next_lifecycle_node": "RESOLVED",
+          "resolution": {
+            "status": "RESOLVED",
+            "resolution_reason": "CONFIRMED_COMPLETE_SELL",
+            "resolution_event_ids": [
+              "broker-trade-20261113-100951-159056-chatgpt"
+            ],
+            "resolution_time_beijing": "2026-11-13T17:21:00+08:00"
+          },
+          "decision_coverage_status": "RESOLVED_BY_EXECUTION",
+          "lifecycle_status_explanation": "已由可归属的完整卖出事实结案；不自动生成交易动作。",
           "execution_status": "EXECUTED"
         },
         {
@@ -4889,10 +4896,10 @@
           "execution_status": "EXECUTED"
         }
       ],
-      "active_trial_count": 9,
-      "decision_due_count": 3,
-      "overdue_count": 2,
-      "next_mandatory_node": "2026-10-29",
+      "active_trial_count": 8,
+      "decision_due_count": 2,
+      "overdue_count": 1,
+      "next_mandatory_node": "2026-11-10",
       "calendar_path": "config/market/a_share_trading_calendar_2026.json",
       "decision_boundary": "只从正式决策与真实成交事实恢复已建立的Trial生命周期；不从聊天、持仓代码或研究观察节点推导交易动作。",
       "node_semantics": "TRADE_MANDATORY_LIFECYCLE_NODE与RESEARCH/REVIEW_OBSERVATION_NODE分离；T+3只表示必须形成正式决议，不生成订单。",
@@ -4900,7 +4907,7 @@
     },
     "decision_trigger": {
       "schema_version": "1.2",
-      "generated_at": "2026-11-14T09:20:40+08:00",
+      "generated_at": "2026-11-14T12:26:14+08:00",
       "status": "NO_NEW_TRIGGER",
       "trigger_type": "",
       "triggered_at": "",
@@ -4922,7 +4929,7 @@
     },
     "capital_efficiency_ranking": {
       "schema_version": "1.2",
-      "generated_at": "2026-11-14T09:20:40+08:00",
+      "generated_at": "2026-11-14T12:26:14+08:00",
       "as_of": "2026-11-13T15:06:11+08:00",
       "e2e_status": "BLOCKED",
       "risk_zone": "UNKNOWN",
@@ -6145,7 +6152,7 @@
       "read_only": true
     },
     "intraday_path_features": {
-      "generated_at": "2026-11-14T01:20:28Z",
+      "generated_at": "2026-11-14T04:26:05Z",
       "market_date": "2026-11-13",
       "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
       "read_only": true,
@@ -8324,7 +8331,7 @@
       "consumption_boundary": "QUERY_CONTEXT_CONSUMER_ONLY",
       "latency_observability": {
         "candidate_formal_quote_elapsed_seconds": 0.0,
-        "discovery_pipeline_elapsed_seconds": 0.066,
+        "discovery_pipeline_elapsed_seconds": 0.063,
         "reuse_mode": "FRESH_DISCOVERY",
         "measurement_role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE"
       }
@@ -8580,18 +8587,25 @@
         "security_code": "159056",
         "security_name": "全指器械",
         "lifecycle": "Trial",
-        "lifecycle_status": "ACTIVE_TRIAL",
-        "hypothesis_status": "OPEN",
+        "lifecycle_status": "RESOLVED",
+        "hypothesis_status": "RESOLVED",
         "start_market_date": "2026-10-26",
         "current_market_date": "2026-11-13",
         "current_t_plus": 14,
         "mandatory_decision_market_date": "2026-10-29",
-        "decision_due": true,
-        "overdue": true,
-        "next_lifecycle_node": "TRADE_MANDATORY_LIFECYCLE_NODE:T+3",
-        "resolution": null,
-        "decision_coverage_status": "NO_LATER_FORMAL_COVERAGE",
-        "lifecycle_status_explanation": "尚未找到该Trial在强制节点后的可归属正式决议或完整卖出事实；状态保持开放，逾期只表示应补做正式决议。",
+        "decision_due": false,
+        "overdue": false,
+        "next_lifecycle_node": "RESOLVED",
+        "resolution": {
+          "status": "RESOLVED",
+          "resolution_reason": "CONFIRMED_COMPLETE_SELL",
+          "resolution_event_ids": [
+            "broker-trade-20261113-100951-159056-chatgpt"
+          ],
+          "resolution_time_beijing": "2026-11-13T17:21:00+08:00"
+        },
+        "decision_coverage_status": "RESOLVED_BY_EXECUTION",
+        "lifecycle_status_explanation": "已由可归属的完整卖出事实结案；不自动生成交易动作。",
         "execution_status": "EXECUTED"
       },
       {
@@ -8749,10 +8763,10 @@
         "execution_status": "EXECUTED"
       }
     ],
-    "active_trial_count": 9,
-    "decision_due_count": 3,
-    "overdue_count": 2,
-    "next_mandatory_node": "2026-10-29",
+    "active_trial_count": 8,
+    "decision_due_count": 2,
+    "overdue_count": 1,
+    "next_mandatory_node": "2026-11-10",
     "calendar_path": "config/market/a_share_trading_calendar_2026.json",
     "decision_boundary": "只从正式决策与真实成交事实恢复已建立的Trial生命周期；不从聊天、持仓代码或研究观察节点推导交易动作。",
     "node_semantics": "TRADE_MANDATORY_LIFECYCLE_NODE与RESEARCH/REVIEW_OBSERVATION_NODE分离；T+3只表示必须形成正式决议，不生成订单。",
@@ -8820,7 +8834,7 @@
     "account_fact_time": "2026-11-13T17:21:00+08:00",
     "market_snapshot_time": "2026-11-13T15:06:11+08:00",
     "market_phase": "POST_CLOSE_GRACE",
-    "context_generated_time": "2026-11-14T04:21:27Z",
+    "context_generated_time": "2026-11-14T12:28:03Z",
     "latest_formal_decision_time": "2026-09-28T10:42:38+08:00",
     "account_fact_decision_relation": "ACCOUNT_FACT_AFTER_FORMAL_DECISION_REQUIRES_REASSESSMENT",
     "account_fact_requires_formal_reassessment": true,
@@ -8930,7 +8944,7 @@
       "runtime_policy": "config/runtime_policy.json",
       "freshness_at_context_build": {
         "status": "STALE",
-        "age_seconds": 76516,
+        "age_seconds": 105712,
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500
       },
@@ -8949,7 +8963,7 @@
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500,
         "acquisition_seconds": 8.408,
-        "age_seconds": 76516
+        "age_seconds": 105712
       },
       "query_time_rule": "行情获取固定顺序为：查询时立即补采 → 最近一次有效快照 → 明确降级/缺失。最近快照只有在即时补采失败或不可执行时才作为第二顺位；使用前必须按查询时刻重新判断为“时点正常／存在延迟／时点过旧”。",
       "partial_refresh_rule": "逐对象采用最新有效证据：补采成功对象使用新数据，失败对象才回退最近有效快照；不得为了统一时点把成功补采对象整体退回旧快照。",
@@ -8974,8 +8988,8 @@
     }
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-11-14T12:21:27+08:00",
-    "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
+    "generated_at_beijing": "2026-11-14T20:28:03+08:00",
+    "refresh_mode": "CACHED_STATE",
     "refresh_failures": [],
     "decision_freshness": {
       "status": "REFRESH_REQUIRED",
@@ -8983,8 +8997,8 @@
       "captured_at": "2026-11-13T07:06:11+00:00",
       "provider_as_of": "2026-11-13T07:06:06+00:00",
       "effective_as_of": "2026-11-13T07:06:06+00:00",
-      "request_time": "2026-11-14T04:21:27.715848+00:00",
-      "age_seconds": 76521,
+      "request_time": "2026-11-14T12:28:03.543936+00:00",
+      "age_seconds": 105717,
       "post_request": false,
       "preferred_max_age_seconds": 300,
       "fallback_max_age_seconds": 900,
@@ -10159,7 +10173,7 @@
     "consumption_boundary": "QUERY_CONTEXT_CONSUMER_ONLY",
     "latency_observability": {
       "candidate_formal_quote_elapsed_seconds": 0.0,
-      "discovery_pipeline_elapsed_seconds": 0.066,
+      "discovery_pipeline_elapsed_seconds": 0.063,
       "reuse_mode": "FRESH_DISCOVERY",
       "measurement_role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE"
     }
@@ -10173,7 +10187,7 @@
       "kind": "DISCOVERY",
       "identity": "DISCOVERY:2026-11-13:close:data/state/formal_discovery_current.json",
       "context_id": "",
-      "formed_at_beijing": "2026-11-13T15:06:38+08:00",
+      "formed_at_beijing": "2026-11-14T20:27:46+08:00",
       "fact_time_beijing": "close",
       "source_path": "data/state/formal_discovery_current.json",
       "status": "DEGRADED",
@@ -10209,7 +10223,7 @@
             "prev_close": 0.93,
             "return_60d_pct": null,
             "return_ytd_pct": null,
-            "provider_timestamp": 1794553575000
+            "provider_timestamp": 1794557694000
           },
           "information_classes": [
             "NEW_RELATIVE_DIVERGENCE",
@@ -10261,7 +10275,7 @@
             "prev_close": 1.193,
             "return_60d_pct": null,
             "return_ytd_pct": null,
-            "provider_timestamp": 1794553596000
+            "provider_timestamp": 1794557676000
           },
           "information_classes": [
             "NEW_RELATIVE_DIVERGENCE",
@@ -10295,7 +10309,7 @@
             "prev_close": 1.062,
             "return_60d_pct": null,
             "return_ytd_pct": null,
-            "provider_timestamp": 1794553575000
+            "provider_timestamp": 1794557685000
           },
           "information_classes": [
             "NEW_RELATIVE_DIVERGENCE",
@@ -10347,7 +10361,7 @@
             "prev_close": 1.057,
             "return_60d_pct": null,
             "return_ytd_pct": null,
-            "provider_timestamp": 1794553575000
+            "provider_timestamp": 1794557655000
           },
           "information_classes": [
             "NEW_RELATIVE_DIVERGENCE",
@@ -10381,7 +10395,7 @@
             "prev_close": 0.727,
             "return_60d_pct": null,
             "return_ytd_pct": null,
-            "provider_timestamp": 1794553602000
+            "provider_timestamp": 1794557682000
           },
           "information_classes": [
             "NEW_RELATIVE_DIVERGENCE",
@@ -10415,7 +10429,7 @@
             "prev_close": 2.442,
             "return_60d_pct": null,
             "return_ytd_pct": null,
-            "provider_timestamp": 1794553560000
+            "provider_timestamp": 1794557700000
           },
           "information_classes": [
             "NEW_RELATIVE_DIVERGENCE",
@@ -10449,7 +10463,7 @@
             "prev_close": 1.664,
             "return_60d_pct": null,
             "return_ytd_pct": null,
-            "provider_timestamp": 1794553590000
+            "provider_timestamp": 1794557670000
           },
           "information_classes": [
             "NEW_RELATIVE_DIVERGENCE",
@@ -10483,7 +10497,7 @@
             "prev_close": 2.187,
             "return_60d_pct": null,
             "return_ytd_pct": null,
-            "provider_timestamp": 1794553560000
+            "provider_timestamp": 1794557685000
           },
           "information_classes": [
             "NEW_RELATIVE_DIVERGENCE",
@@ -10517,7 +10531,7 @@
             "prev_close": 2.424,
             "return_60d_pct": null,
             "return_ytd_pct": null,
-            "provider_timestamp": 1794553590000
+            "provider_timestamp": 1794557700000
           },
           "information_classes": [
             "NEW_RELATIVE_DIVERGENCE",
@@ -10551,7 +10565,7 @@
             "prev_close": 1.785,
             "return_60d_pct": null,
             "return_ytd_pct": null,
-            "provider_timestamp": 1794553594000
+            "provider_timestamp": 1794557690000
           },
           "information_classes": [
             "NEW_RELATIVE_DIVERGENCE",
@@ -10595,7 +10609,7 @@
             "prev_close": 0.605,
             "return_60d_pct": null,
             "return_ytd_pct": null,
-            "provider_timestamp": 1794553602000
+            "provider_timestamp": 1794557690000
           },
           "information_classes": [
             "NEW_RELATIVE_DIVERGENCE",
@@ -10646,7 +10660,7 @@
             "prev_close": 1.54,
             "return_60d_pct": null,
             "return_ytd_pct": null,
-            "provider_timestamp": 1794553584000
+            "provider_timestamp": 1794557694000
           },
           "information_classes": [
             "NEW_RELATIVE_DIVERGENCE",
@@ -10666,7 +10680,7 @@
     "continuity": {
       "status": "READY",
       "latest_identity": "DISCOVERY:2026-11-13:close:data/state/formal_discovery_current.json",
-      "latest_formed_at_beijing": "2026-11-13T15:06:38+08:00",
+      "latest_formed_at_beijing": "2026-11-14T20:27:46+08:00",
       "latest_observation_count": 0,
       "latest_candidate_count": 12,
       "rule": "正式判断只消费具有identity且含实际对象证据的最新合法脉冲；历史摘要只用于审计，不作为事实补齐来源。"
@@ -11954,7 +11968,7 @@
         "kind": "DISCOVERY",
         "identity": "DISCOVERY:2026-11-13:close:data/state/formal_discovery_current.json",
         "context_id": "",
-        "formed_at_beijing": "2026-11-13T15:06:38+08:00",
+        "formed_at_beijing": "2026-11-14T20:27:46+08:00",
         "fact_time_beijing": "close",
         "source_path": "data/state/formal_discovery_current.json",
         "status": "DEGRADED",
@@ -11990,7 +12004,7 @@
               "prev_close": 0.93,
               "return_60d_pct": null,
               "return_ytd_pct": null,
-              "provider_timestamp": 1794553575000
+              "provider_timestamp": 1794557694000
             },
             "information_classes": [
               "NEW_RELATIVE_DIVERGENCE",
@@ -12042,7 +12056,7 @@
               "prev_close": 1.193,
               "return_60d_pct": null,
               "return_ytd_pct": null,
-              "provider_timestamp": 1794553596000
+              "provider_timestamp": 1794557676000
             },
             "information_classes": [
               "NEW_RELATIVE_DIVERGENCE",
@@ -12076,7 +12090,7 @@
               "prev_close": 1.062,
               "return_60d_pct": null,
               "return_ytd_pct": null,
-              "provider_timestamp": 1794553575000
+              "provider_timestamp": 1794557685000
             },
             "information_classes": [
               "NEW_RELATIVE_DIVERGENCE",
@@ -12128,7 +12142,7 @@
               "prev_close": 1.057,
               "return_60d_pct": null,
               "return_ytd_pct": null,
-              "provider_timestamp": 1794553575000
+              "provider_timestamp": 1794557655000
             },
             "information_classes": [
               "NEW_RELATIVE_DIVERGENCE",
@@ -12162,7 +12176,7 @@
               "prev_close": 0.727,
               "return_60d_pct": null,
               "return_ytd_pct": null,
-              "provider_timestamp": 1794553602000
+              "provider_timestamp": 1794557682000
             },
             "information_classes": [
               "NEW_RELATIVE_DIVERGENCE",
@@ -12196,7 +12210,7 @@
               "prev_close": 2.442,
               "return_60d_pct": null,
               "return_ytd_pct": null,
-              "provider_timestamp": 1794553560000
+              "provider_timestamp": 1794557700000
             },
             "information_classes": [
               "NEW_RELATIVE_DIVERGENCE",
@@ -12230,7 +12244,7 @@
               "prev_close": 1.664,
               "return_60d_pct": null,
               "return_ytd_pct": null,
-              "provider_timestamp": 1794553590000
+              "provider_timestamp": 1794557670000
             },
             "information_classes": [
               "NEW_RELATIVE_DIVERGENCE",
@@ -12264,7 +12278,7 @@
               "prev_close": 2.187,
               "return_60d_pct": null,
               "return_ytd_pct": null,
-              "provider_timestamp": 1794553560000
+              "provider_timestamp": 1794557685000
             },
             "information_classes": [
               "NEW_RELATIVE_DIVERGENCE",
@@ -12298,7 +12312,7 @@
               "prev_close": 2.424,
               "return_60d_pct": null,
               "return_ytd_pct": null,
-              "provider_timestamp": 1794553590000
+              "provider_timestamp": 1794557700000
             },
             "information_classes": [
               "NEW_RELATIVE_DIVERGENCE",
@@ -12332,7 +12346,7 @@
               "prev_close": 1.785,
               "return_60d_pct": null,
               "return_ytd_pct": null,
-              "provider_timestamp": 1794553594000
+              "provider_timestamp": 1794557690000
             },
             "information_classes": [
               "NEW_RELATIVE_DIVERGENCE",
@@ -12376,7 +12390,7 @@
               "prev_close": 0.605,
               "return_60d_pct": null,
               "return_ytd_pct": null,
-              "provider_timestamp": 1794553602000
+              "provider_timestamp": 1794557690000
             },
             "information_classes": [
               "NEW_RELATIVE_DIVERGENCE",
@@ -12427,7 +12441,7 @@
               "prev_close": 1.54,
               "return_60d_pct": null,
               "return_ytd_pct": null,
-              "provider_timestamp": 1794553584000
+              "provider_timestamp": 1794557694000
             },
             "information_classes": [
               "NEW_RELATIVE_DIVERGENCE",
@@ -12449,7 +12463,7 @@
       "market_date": "2026-11-13",
       "count": 4,
       "first_formed_at_beijing": "2026-11-13T09:25:17+08:00",
-      "last_formed_at_beijing": "2026-11-13T15:06:38+08:00",
+      "last_formed_at_beijing": "2026-11-14T20:27:46+08:00",
       "identities": [
         "DISCOVERY:2026-11-13:auction:data/state/formal_discovery_current.json",
         "DISCOVERY:2026-11-13:1130:data/state/formal_discovery_current.json",
@@ -131438,7 +131452,7 @@
       "kind": "DISCOVERY",
       "identity": "DISCOVERY:2026-11-13:close:data/state/formal_discovery_current.json",
       "context_id": "",
-      "formed_at_beijing": "2026-11-13T15:06:38+08:00",
+      "formed_at_beijing": "2026-11-14T20:27:46+08:00",
       "fact_time_beijing": "close",
       "source_path": "data/state/formal_discovery_current.json",
       "status": "DEGRADED",
@@ -131474,7 +131488,7 @@
             "prev_close": 0.93,
             "return_60d_pct": null,
             "return_ytd_pct": null,
-            "provider_timestamp": 1794553575000
+            "provider_timestamp": 1794557694000
           },
           "information_classes": [
             "NEW_RELATIVE_DIVERGENCE",
@@ -131526,7 +131540,7 @@
             "prev_close": 1.193,
             "return_60d_pct": null,
             "return_ytd_pct": null,
-            "provider_timestamp": 1794553596000
+            "provider_timestamp": 1794557676000
           },
           "information_classes": [
             "NEW_RELATIVE_DIVERGENCE",
@@ -131560,7 +131574,7 @@
             "prev_close": 1.062,
             "return_60d_pct": null,
             "return_ytd_pct": null,
-            "provider_timestamp": 1794553575000
+            "provider_timestamp": 1794557685000
           },
           "information_classes": [
             "NEW_RELATIVE_DIVERGENCE",
@@ -131612,7 +131626,7 @@
             "prev_close": 1.057,
             "return_60d_pct": null,
             "return_ytd_pct": null,
-            "provider_timestamp": 1794553575000
+            "provider_timestamp": 1794557655000
           },
           "information_classes": [
             "NEW_RELATIVE_DIVERGENCE",
@@ -131646,7 +131660,7 @@
             "prev_close": 0.727,
             "return_60d_pct": null,
             "return_ytd_pct": null,
-            "provider_timestamp": 1794553602000
+            "provider_timestamp": 1794557682000
           },
           "information_classes": [
             "NEW_RELATIVE_DIVERGENCE",
@@ -131680,7 +131694,7 @@
             "prev_close": 2.442,
             "return_60d_pct": null,
             "return_ytd_pct": null,
-            "provider_timestamp": 1794553560000
+            "provider_timestamp": 1794557700000
           },
           "information_classes": [
             "NEW_RELATIVE_DIVERGENCE",
@@ -131714,7 +131728,7 @@
             "prev_close": 1.664,
             "return_60d_pct": null,
             "return_ytd_pct": null,
-            "provider_timestamp": 1794553590000
+            "provider_timestamp": 1794557670000
           },
           "information_classes": [
             "NEW_RELATIVE_DIVERGENCE",
@@ -131748,7 +131762,7 @@
             "prev_close": 2.187,
             "return_60d_pct": null,
             "return_ytd_pct": null,
-            "provider_timestamp": 1794553560000
+            "provider_timestamp": 1794557685000
           },
           "information_classes": [
             "NEW_RELATIVE_DIVERGENCE",
@@ -131782,7 +131796,7 @@
             "prev_close": 2.424,
             "return_60d_pct": null,
             "return_ytd_pct": null,
-            "provider_timestamp": 1794553590000
+            "provider_timestamp": 1794557700000
           },
           "information_classes": [
             "NEW_RELATIVE_DIVERGENCE",
@@ -131816,7 +131830,7 @@
             "prev_close": 1.785,
             "return_60d_pct": null,
             "return_ytd_pct": null,
-            "provider_timestamp": 1794553594000
+            "provider_timestamp": 1794557690000
           },
           "information_classes": [
             "NEW_RELATIVE_DIVERGENCE",
@@ -131860,7 +131874,7 @@
             "prev_close": 0.605,
             "return_60d_pct": null,
             "return_ytd_pct": null,
-            "provider_timestamp": 1794553602000
+            "provider_timestamp": 1794557690000
           },
           "information_classes": [
             "NEW_RELATIVE_DIVERGENCE",
@@ -131911,7 +131925,7 @@
             "prev_close": 1.54,
             "return_60d_pct": null,
             "return_ytd_pct": null,
-            "provider_timestamp": 1794553584000
+            "provider_timestamp": 1794557694000
           },
           "information_classes": [
             "NEW_RELATIVE_DIVERGENCE",
@@ -135855,8 +135869,8 @@
     "week_end": "2026-11-13",
     "latest_valid_node": "close",
     "starting_total_asset": 170532.56,
-    "ending_total_asset": 169746.87,
-    "observed_total_asset_change": -785.69,
+    "ending_total_asset": 169297.57,
+    "observed_total_asset_change": -1234.99,
     "daily_total_asset_deltas": [
       {
         "event_time": "2026-11-09T15:00:00+08:00",
@@ -135893,9 +135907,15 @@
         "amount_delta": 162.9,
         "reconciliation_status": "RECONCILED_BY_CONFIRMED_TRADE",
         "source": "CHATGPT_USER_BROKER_SCREENSHOT"
+      },
+      {
+        "event_time": "2026-11-13T17:21:00+08:00",
+        "amount_delta": -449.3,
+        "reconciliation_status": "RECONCILED_BY_CONFIRMED_TRADE",
+        "source": "CHATGPT_USER_BROKER_SCREENSHOT"
       }
     ],
-    "confirmed_trade_count": 11,
+    "confirmed_trade_count": 12,
     "confirmed_trades": [
       {
         "trade_event_id": "broker-close-20261110-1633-chatgpt_1_fed2ae55c660f71e",
@@ -136030,7 +136050,7 @@
         "execution_attribution": {
           "status": "READY",
           "decision_id": "FORMAL_COMPLETION:scheduled-formal-decision-20261111T132544+0800-k7m4q9",
-          "resolution": "CANONICAL_COMPLETION_PIT_MATCH"
+          "resolution": "EXPLICIT_FORMAL_COMPLETION_PIT_VALID"
         }
       },
       {
@@ -136066,7 +136086,7 @@
         "execution_attribution": {
           "status": "READY",
           "decision_id": "FORMAL_COMPLETION:scheduled-formal-decision-20261111T142806+0800-r8p3v6",
-          "resolution": "CANONICAL_COMPLETION_PIT_MATCH"
+          "resolution": "EXPLICIT_FORMAL_COMPLETION_PIT_VALID"
         }
       },
       {
@@ -136086,16 +136106,34 @@
           "decision_id": "20260928_104100_chatgpt_formal_decision_decision",
           "resolution": "EXPLICIT_PIT_VALID"
         }
+      },
+      {
+        "trade_event_id": "broker-trade-20261113-144506-159253-chatgpt",
+        "code": "159253",
+        "name": "银行ETF博时",
+        "side": "BUY",
+        "quantity": 4600.0,
+        "price": 1.071,
+        "execution_date": "2026-11-13",
+        "gross_amount": 4926.6,
+        "fee_amount": null,
+        "cash_flow_amount": null,
+        "linked_decision_id": "FORMAL_COMPLETION:scheduled-formal-decision-20261113T143322+0800-r4n8s6",
+        "execution_attribution": {
+          "status": "READY",
+          "decision_id": "FORMAL_COMPLETION:scheduled-formal-decision-20261113T143322+0800-r4n8s6",
+          "resolution": "EXPLICIT_FORMAL_COMPLETION_PIT_VALID"
+        }
       }
     ],
     "confirmed_trade_cash_flow": 0,
     "confirmed_trade_fees": 0,
     "unreconciled_cash_deltas": [],
     "known_components": {
-      "account_total_asset_change": -785.69,
+      "account_total_asset_change": -1234.99,
       "confirmed_trade_cash_flow": 0,
       "confirmed_trade_fees": 0,
-      "daily_account_delta_sum": -785.69
+      "daily_account_delta_sum": -1234.99
     },
     "execution_reconciliation": {
       "statement_scope_status": "COMPLETE_EXECUTED_TRANSACTION_SCOPE",
@@ -136167,11 +136205,11 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 8.408,
-    "age_seconds": 76516
+    "age_seconds": 105712
   },
   "freshness_at_context_build": {
     "status": "STALE",
-    "age_seconds": 76516,
+    "age_seconds": 105712,
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500
   },
@@ -136181,8 +136219,8 @@
     "captured_at": "2026-11-13T07:06:11+00:00",
     "provider_as_of": "2026-11-13T07:06:06+00:00",
     "effective_as_of": "2026-11-13T07:06:06+00:00",
-    "request_time": "2026-11-14T04:21:27.715848+00:00",
-    "age_seconds": 76521,
+    "request_time": "2026-11-14T12:28:03.543936+00:00",
+    "age_seconds": 105717,
     "post_request": false,
     "preferred_max_age_seconds": 300,
     "fallback_max_age_seconds": 900,
@@ -148529,7 +148567,7 @@
       }
     },
     "decision_context": {
-      "generated_at_beijing": "2026-11-14T04:21:27Z",
+      "generated_at_beijing": "2026-11-14T12:28:03Z",
       "source": "scripts/state_manager.py::build_decision_context",
       "analysis_coverage": {
         "indices_total": 3,
@@ -148811,18 +148849,25 @@
             "security_code": "159056",
             "security_name": "全指器械",
             "lifecycle": "Trial",
-            "lifecycle_status": "ACTIVE_TRIAL",
-            "hypothesis_status": "OPEN",
+            "lifecycle_status": "RESOLVED",
+            "hypothesis_status": "RESOLVED",
             "start_market_date": "2026-10-26",
             "current_market_date": "2026-11-13",
             "current_t_plus": 14,
             "mandatory_decision_market_date": "2026-10-29",
-            "decision_due": true,
-            "overdue": true,
-            "next_lifecycle_node": "TRADE_MANDATORY_LIFECYCLE_NODE:T+3",
-            "resolution": null,
-            "decision_coverage_status": "NO_LATER_FORMAL_COVERAGE",
-            "lifecycle_status_explanation": "尚未找到该Trial在强制节点后的可归属正式决议或完整卖出事实；状态保持开放，逾期只表示应补做正式决议。",
+            "decision_due": false,
+            "overdue": false,
+            "next_lifecycle_node": "RESOLVED",
+            "resolution": {
+              "status": "RESOLVED",
+              "resolution_reason": "CONFIRMED_COMPLETE_SELL",
+              "resolution_event_ids": [
+                "broker-trade-20261113-100951-159056-chatgpt"
+              ],
+              "resolution_time_beijing": "2026-11-13T17:21:00+08:00"
+            },
+            "decision_coverage_status": "RESOLVED_BY_EXECUTION",
+            "lifecycle_status_explanation": "已由可归属的完整卖出事实结案；不自动生成交易动作。",
             "execution_status": "EXECUTED"
           },
           {
@@ -148980,10 +149025,10 @@
             "execution_status": "EXECUTED"
           }
         ],
-        "active_trial_count": 9,
-        "decision_due_count": 3,
-        "overdue_count": 2,
-        "next_mandatory_node": "2026-10-29",
+        "active_trial_count": 8,
+        "decision_due_count": 2,
+        "overdue_count": 1,
+        "next_mandatory_node": "2026-11-10",
         "calendar_path": "config/market/a_share_trading_calendar_2026.json",
         "decision_boundary": "只从正式决策与真实成交事实恢复已建立的Trial生命周期；不从聊天、持仓代码或研究观察节点推导交易动作。",
         "node_semantics": "TRADE_MANDATORY_LIFECYCLE_NODE与RESEARCH/REVIEW_OBSERVATION_NODE分离；T+3只表示必须形成正式决议，不生成订单。",
@@ -149007,15 +149052,15 @@
       }
     },
     "market_quote": {
-      "mode": "QUERY_TIME_IMMEDIATE_REFRESH",
+      "mode": "CACHED_STATE",
       "decision_freshness": {
         "status": "REFRESH_REQUIRED",
         "quality_status": "UNKNOWN",
         "captured_at": "2026-11-13T07:06:11+00:00",
         "provider_as_of": "2026-11-13T07:06:06+00:00",
         "effective_as_of": "2026-11-13T07:06:06+00:00",
-        "request_time": "2026-11-14T04:21:27.715848+00:00",
-        "age_seconds": 76521,
+        "request_time": "2026-11-14T12:28:03.543936+00:00",
+        "age_seconds": 105717,
         "post_request": false,
         "preferred_max_age_seconds": 300,
         "fallback_max_age_seconds": 900,
@@ -173587,7 +173632,7 @@
           },
           "market_structure_context": {
             "schema_version": "1.4",
-            "generated_at": "2026-11-14T01:20:39Z",
+            "generated_at": "2026-11-14T04:26:14Z",
             "market_date": "2026-11-13",
             "as_of_beijing": "2026-11-13T15:06:11+08:00",
             "source_snapshot": "data/market/snapshots/2026-11-13_150611.json",
@@ -191573,7 +191618,7 @@
         },
         "market_structure_context": {
           "schema_version": "1.4",
-          "generated_at": "2026-11-14T01:20:39Z",
+          "generated_at": "2026-11-14T04:26:14Z",
           "market_date": "2026-11-13",
           "as_of_beijing": "2026-11-13T15:06:11+08:00",
           "source_snapshot": "data/market/snapshots/2026-11-13_150611.json",
@@ -204145,7 +204190,7 @@
   },
   "freshness_assurance": {
     "status": "REFRESH_REQUIRED",
-    "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
+    "refresh_mode": "CACHED_STATE",
     "decision_request_time": "",
     "decision_request_post_current": false,
     "rule": "freshness assurance precedes full decision-context construction; post-refresh CURRENT is re-read before formal decision context construction."
@@ -204168,10 +204213,10 @@
     "t_new_current": "",
     "t_minimum_legal_inputs_ready": "UNKNOWN",
     "minimum_legal_inputs_ready_at": "UNKNOWN",
-    "t_decision_ready": "2026-11-14T04:21:27Z",
-    "final_answer_identity": "2026-11-14T12:21:53+08:00",
-    "final_analysis_identity": "2026-11-14T12:21:53+08:00",
-    "t_reply_or_output_ready": "2026-11-14T12:21:53+08:00",
+    "t_decision_ready": "2026-11-14T12:28:03Z",
+    "final_answer_identity": "2026-11-14T20:28:36+08:00",
+    "final_analysis_identity": "2026-11-14T20:28:36+08:00",
+    "t_reply_or_output_ready": "2026-11-14T20:28:36+08:00",
     "minimum_legal_inputs_ready_role": "NON_TERMINAL_READINESS_MARKER",
     "minimum_legal_inputs_ready_is_stop_boundary": false,
     "canonical_chain_status": "FORMAL_COMPLETION_PENDING",
@@ -204179,7 +204224,7 @@
     "required_account_persistence_identity": "UNKNOWN",
     "refresh_start_latency": null,
     "refresh_duration": null,
-    "post_current_decision_latency": 76516.0,
+    "post_current_decision_latency": 105712.0,
     "total_fast_path_latency": null,
     "measurement_status": "OBSERVED_FIELDS_ONLY; MISSING_TIMESTAMPS_REMAIN_EXPLICIT",
     "trace_metadata_is_non_authoritative": true,
@@ -204190,10 +204235,10 @@
       "screenshot_decode_started_at",
       "final_answer_delivered_at"
     ],
-    "refresh_mode": "QUERY_TIME_IMMEDIATE_REFRESH",
+    "refresh_mode": "CACHED_STATE",
     "request_bound_at": "UNKNOWN",
     "pit_ready_at": "UNKNOWN",
-    "core_result_at": "2026-11-14T04:21:27Z",
+    "core_result_at": "2026-11-14T12:28:03Z",
     "request_to_core_result_latency": null,
     "request_to_canonical_ingress_latency": null,
     "canonical_ingress_to_decision_latency": null,
@@ -204205,7 +204250,7 @@
       "canonical_ingress_at_beijing": "UNKNOWN",
       "first_qualified_market_fact_as_of_beijing": "2026-11-13T15:06:00+08:00",
       "minimum_legal_inputs_ready_at_beijing": "UNKNOWN",
-      "business_decision_ready_at_beijing": "2026-11-14T04:21:27Z",
+      "business_decision_ready_at_beijing": "2026-11-14T12:28:03Z",
       "business_decision_source": {
         "status": "UNKNOWN",
         "requested_at_beijing": "UNKNOWN",
@@ -204224,16 +204269,16 @@
       "role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE"
     },
     "in_process_stage_durations_seconds": {
-      "freshness_assurance_and_quote_context": 0.07,
-      "discovery_pipeline": 0.066,
-      "decision_context_build": 25.06,
-      "decision_fact_pack_build": 0.281,
-      "query_context_build_total": 25.638
+      "freshness_assurance_and_quote_context": 0.036,
+      "discovery_pipeline": 0.063,
+      "decision_context_build": 33.187,
+      "decision_fact_pack_build": 0.249,
+      "query_context_build_total": 33.672
     },
     "workflow_runtime_observation": {
       "run_started_at_beijing": "UNKNOWN",
       "core_snapshot_finished_at_beijing": "UNKNOWN",
-      "workflow_run_id": "43556122739",
+      "workflow_run_id": "43594859061",
       "runtime_health_workflow_run_id": "43535843969",
       "correlation_status": "RUNTIME_HEALTH_NOT_CURRENT_RUN",
       "role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE"
