@@ -57,7 +57,20 @@ def _load_attribution_correction(root: Path, trade: dict) -> tuple[str, dict, st
         if str(obj.get("correction_type") or "").upper() == "DECISION_ATTRIBUTION" and str(obj.get("trade_event_id") or "") == event_id and str(obj.get("status") or "").upper() in {"APPLIED", "RECONCILED"}:
             matches.append(obj)
     ids = {str(x.get("linked_decision_id") or "") for x in matches} - {""}
-    if not matches: return "", {}, "NO_CANONICAL_CORRECTION"
+    if not matches:
+        # Raw correction ingress is immutable and therefore intentionally does
+        # not gain a derived status field.  Once the canonical correction owner
+        # has applied it, consume the durable receipt as the effective
+        # attribution instead of falling back to heuristic decision matching.
+        receipt = _load(root / "data" / "state" / "trade_fact_correction_receipt.json")
+        receipt_decision_id = str(receipt.get("linked_decision_id") or trade.get("linked_decision_id") or "").strip()
+        if (
+            str(receipt.get("status") or "").upper() in {"APPLIED", "RECONCILED"}
+            and str(receipt.get("trade_event_id") or "") == event_id
+            and receipt_decision_id
+        ):
+            return receipt_decision_id, receipt, "CANONICAL_CORRECTION_RECEIPT"
+        return "", {}, "NO_CANONICAL_CORRECTION"
     if len(matches) != 1 or len(ids) != 1: return "", {}, "CORRECTION_CONFLICT"
     return next(iter(ids)), matches[0], "CANONICAL_CORRECTION"
 
