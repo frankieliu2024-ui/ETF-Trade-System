@@ -303,7 +303,14 @@ def _resolution(root: Path, trial: dict[str, Any], as_of: date) -> dict[str, Any
     closes a specific lot.
     """
     hypothesis = str(trial.get("hypothesis_id") or "")
-    code = str(trial.get("candidate_code") or trial.get("candidate_code") or "").strip()
+    formal = trial.get("formal_decision") or {}
+    if not isinstance(formal, dict):
+        formal = {}
+    code = str(
+        trial.get("candidate_code")
+        or formal.get("candidate_code")
+        or ""
+    ).strip()
     decision_time = parse_time(trial.get("decision_time_beijing"))
     candidates = []
     directory = root / "events" / "decisions"
