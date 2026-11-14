@@ -546,7 +546,11 @@ def build_lifecycle_projection(root: Path, as_of_market_date: str | None = None)
         mandatory = add_trading_days(start_date, 3, calendar)
         decision_with_due = dict(decision, mandatory_decision_market_date=mandatory.isoformat())
         resolution = ((_completion_followup_resolution(root, decision)
-                       or _completion_explicit_exit(root, decision, executions))
+                       or _completion_explicit_exit(root, decision, executions)
+                       # A completion trial can be closed by a later,
+                       # separately linked sell when it is the only opening
+                       # lot. Reuse the canonical attribution guard.
+                       or _resolution(root, decision_with_due, as_of))
                       if decision.get("_completion_trial") else _resolution(root, decision_with_due, as_of))
         resolved = resolution is not None
         trials.append({
