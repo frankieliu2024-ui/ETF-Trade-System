@@ -52,8 +52,56 @@ jobs:
       - name: Check exchange calendar and capture window
         id: session_gate
         run: python scripts/runtime_session_gate.py
+      - name: Resolve latest legal close reference
+        id: latest_reference
+        # Outside the A-share capture window, return the last validated close as a
+        # reference result. This path never fabricates a new live/close snapshot
+        # and never mutates CURRENT or creates a second market-data producer.
+        if: ${{ steps.session_gate.outputs.process_latest_reference == 'true' }}
+        env:
+          REFERENCE_SNAPSHOT: ${{ steps.session_gate.outputs.latest_reference_snapshot }}
+          REFERENCE_MARKET_DATE: ${{ steps.session_gate.outputs.latest_reference_market_date }}
+          REFERENCE_REASON: ${{ steps.session_gate.outputs.latest_reference_reason }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          root = Path.cwd().resolve()
+          relative = os.environ.get("REFERENCE_SNAPSHOT", "").strip()
+          if not relative:
+              raise SystemExit("latest legal close reference path is empty")
+          path = (root / relative).resolve()
+          if not path.is_relative_to(root) or not path.is_file():
+              raise SystemExit(f"latest legal close reference is invalid: {relative}")
+          snapshot = json.loads(path.read_text(encoding="utf-8"))
+          if snapshot.get("market_date") != os.environ.get("REFERENCE_MARKET_DATE"):
+              raise SystemExit("latest legal close reference market date mismatch")
+          if str(snapshot.get("node", "")).lower() != "close":
+              raise SystemExit("latest legal close reference is not a close snapshot")
+          if str(snapshot.get("quality_status", "")).upper() not in {"PASS", "DEGRADED"}:
+              raise SystemExit("latest legal close reference is not usable")
+          rows = snapshot.get("rows")
+          if not isinstance(rows, list) or not rows:
+              raise SystemExit("latest legal close reference has no rows")
+          result = {
+              "mode": "LATEST_LEGAL_CLOSE_REFERENCE",
+              "market_date": snapshot.get("market_date"),
+              "snapshot": relative,
+              "quality_status": str(snapshot.get("quality_status", "")).upper(),
+              "row_count": len(rows),
+              "reason": os.environ.get("REFERENCE_REASON", ""),
+              "current_mutated": False,
+              "new_snapshot_written": False,
+          }
+          print(json.dumps(result, ensure_ascii=False))
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as summary:
+              summary.write("## ETF market snapshot result\n\n")
+              summary.write("本次未执行新的行情采集，已返回最近一次合格收盘行情作为引用。\n\n")
+              summary.write("```json\n" + json.dumps(result, ensure_ascii=False, indent=2) + "\n```\n")
+          PY
       - name: Record skipped runtime health
-        if: ${{ steps.session_gate.outputs.should_capture != 'true' }}
+        if: ${{ steps.session_gate.outputs.should_capture != 'true' && steps.session_gate.outputs.process_latest_reference != 'true' }}
         env:
           SESSION_MARKET_DATE: ${{ steps.session_gate.outputs.market_date }}
           SESSION_MARKET_PHASE: ${{ steps.session_gate.outputs.market_phase }}
