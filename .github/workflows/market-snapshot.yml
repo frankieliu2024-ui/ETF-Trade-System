@@ -113,11 +113,11 @@ jobs:
           health_path.write_text(json.dumps(health, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
           PY
       - uses: actions/setup-node@v7
-        if: ${{ steps.session_gate.outputs.should_capture == 'true' || steps.session_gate.outputs.process_latest_reference == 'true' || (steps.account_sync_route.outputs.account_sync_only != 'true' && steps.session_gate.outputs.request_class != 'BUSINESS_DECISION_SOURCE') }}
+        if: ${{ steps.session_gate.outputs.should_capture == 'true' }}
         with:
           node-version: "22"
       - name: Start optional Hithink fallback CLI bootstrap
-        if: ${{ steps.session_gate.outputs.should_capture == 'true' || steps.session_gate.outputs.process_latest_reference == 'true' || (github.event_name == 'push' && steps.session_gate.outputs.request_class != 'BUSINESS_DECISION_SOURCE') }}
+        if: ${{ steps.session_gate.outputs.should_capture == 'true' }}
         shell: bash
         run: |
           # Tencent is the primary A-share provider. Start the optional
@@ -127,7 +127,7 @@ jobs:
           npm install --global @hithink-tech/hithink-finance-cli >/tmp/hithink-finance-install.log 2>&1 &
           echo "HITHINK_CLI_INSTALL_PID=$!" >> "$GITHUB_ENV"
       - name: Load unified provider concurrency policy
-        if: ${{ steps.session_gate.outputs.should_capture == 'true' || steps.session_gate.outputs.process_latest_reference == 'true' || (github.event_name == 'push' && steps.account_sync_route.outputs.account_sync_only != 'true' && steps.session_gate.outputs.request_class != 'BUSINESS_DECISION_SOURCE') }}
+        if: ${{ steps.session_gate.outputs.should_capture == 'true' }}
         shell: bash
         run: |
           python - <<'PY'
@@ -135,7 +135,7 @@ jobs:
           import os
           from pathlib import Path
           policy = json.loads(Path("config/runtime_policy.json").read_text(encoding="utf-8"))
-          key = "query_provider_max_workers" if os.environ.get("GITHUB_EVENT_NAME") == "push" else "scheduled_provider_max_workers"
+          key = "scheduled_provider_max_workers"
           value = policy.get(key)
           if not isinstance(value, int) or value < 1:
               raise SystemExit(f"invalid {key}={value!r}")
@@ -149,7 +149,7 @@ jobs:
         # Scheduled pulses and user requests share the same phase-aware producer.
         # `scheduled` is resolved by cloud_runner_snapshot.py into auction/live/close
         # from the actual A-share market phase, avoiding generic live labels after close.
-        if: ${{ (steps.session_gate.outputs.should_capture == 'true') && steps.account_sync_route.outputs.account_sync_only != 'true' }}
+        if: ${{ steps.session_gate.outputs.should_capture == 'true' }}
         env:
           NODE_LABEL: ${{ github.event.inputs.node || 'scheduled' }}
           PROBE_ONLY: ${{ github.event.inputs.probe_only || 'false' }}
@@ -169,7 +169,7 @@ jobs:
             python scripts/cloud_runner_snapshot.py --node "$NODE_LABEL"
           fi
       - name: Normalize runtime health observability
-        if: ${{ (steps.capture.outcome == 'success' && steps.session_gate.outputs.should_capture == 'true') && steps.account_sync_route.outputs.account_sync_only != 'true' }}
+        if: ${{ steps.capture.outcome == 'success' && steps.session_gate.outputs.should_capture == 'true' }}
         env:
           EVENT_SCHEDULE: ${{ github.event.schedule || '' }}
           SCHEDULED_SLOT_AT: ${{ steps.session_gate.outputs.scheduled_slot_at }}
@@ -178,7 +178,7 @@ jobs:
           NATURAL_PULSE_IDENTITY: ${{ steps.session_gate.outputs.natural_pulse_identity }}
           NATURAL_PULSE_IDENTITY_STATUS: ${{ steps.session_gate.outputs.natural_pulse_identity_status }}
           NATURAL_PULSE_ELIGIBLE: ${{ steps.session_gate.outputs.natural_pulse_eligible }}
-          ETF_HEALTH_PATH: ${{ github.event_name == 'push' && 'data/state/query_refresh_health.json' || 'data/state/runtime_health.json' }}
+          ETF_HEALTH_PATH: data/state/runtime_health.json
         shell: bash
         run: |
           python - <<'PY'
@@ -220,9 +220,9 @@ jobs:
           PY
       - name: Verify a new valid snapshot was written
         id: snapshot_result
-        if: ${{ (steps.capture.outcome == 'success') && steps.account_sync_route.outputs.account_sync_only != 'true' }}
+        if: ${{ steps.capture.outcome == 'success' }}
         env:
-          ETF_HEALTH_PATH: ${{ github.event_name == 'push' && 'data/state/query_refresh_health.json' || 'data/state/runtime_health.json' }}
+          ETF_HEALTH_PATH: data/state/runtime_health.json
         shell: bash
         run: |
           python - <<'PY'
@@ -243,7 +243,7 @@ jobs:
           print(json.dumps({'snapshot_written': written, 'reason': reason}, ensure_ascii=False))
           PY
       - name: Publish core snapshot and CURRENT immediately
-        if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' && github.ref == 'refs/heads/main' && github.event.inputs.probe_only != 'true') && steps.account_sync_route.outputs.account_sync_only != 'true' }}
+        if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' && github.ref == 'refs/heads/main' && github.event.inputs.probe_only != 'true') }}
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
