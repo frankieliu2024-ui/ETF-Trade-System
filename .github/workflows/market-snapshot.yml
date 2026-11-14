@@ -809,9 +809,11 @@ jobs:
 
       - name: Quick retry failed core objects after initial publish
         id: quick_retry
-        # A user request gets the first publishable PASS/DEGRADED/FAILED result
-        # immediately. Slow repair remains a scheduled, post-publish activity.
-        if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' && github.event_name != 'push') && steps.account_sync_route.outputs.account_sync_only != 'true' }}
+        # A user/manual recovery request gets the first publishable
+        # PASS/DEGRADED/FAILED result immediately. Ordinary scheduled pulses
+        # stop after the initial publish because this repair is post-publish
+        # and would otherwise occupy the shared writer queue.
+        if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' && github.event.inputs.probe_only != 'true' && github.event_name == 'workflow_dispatch') && steps.account_sync_route.outputs.account_sync_only != 'true' }}
         continue-on-error: true
         shell: bash
         run: |
