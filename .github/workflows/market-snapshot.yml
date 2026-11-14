@@ -84,6 +84,16 @@ jobs:
           rows = snapshot.get("rows")
           if not isinstance(rows, list) or not rows:
               raise SystemExit("latest legal close reference has no rows")
+          discovery_path = root / "data" / "state" / "formal_discovery_current.json"
+          discovery = json.loads(discovery_path.read_text(encoding="utf-8")) if discovery_path.is_file() else {}
+          discovery_status = str(discovery.get("status", "")).upper()
+          discovery_bound = bool(
+              discovery
+              and discovery.get("market_date") == snapshot.get("market_date")
+              and str(discovery.get("latest_valid_node", "")).lower() == "close"
+              and discovery.get("latest_snapshot") == relative
+              and discovery_status in {"READY", "PASS", "DEGRADED"}
+          )
           result = {
               "mode": "LATEST_LEGAL_CLOSE_REFERENCE",
               "market_date": snapshot.get("market_date"),
@@ -93,11 +103,18 @@ jobs:
               "reason": os.environ.get("REFERENCE_REASON", ""),
               "current_mutated": False,
               "new_snapshot_written": False,
+              "discovery": {
+                  "status": discovery_status if discovery_bound else "NOT_AVAILABLE",
+                  "bound_to_same_snapshot": discovery_bound,
+                  "candidate_count": discovery.get("candidate_count") if discovery_bound else None,
+                  "generated_at_beijing": discovery.get("generated_at_beijing", "") if discovery_bound else "",
+                  "source": "existing_same_node_formal_discovery" if discovery_bound else "",
+              },
           }
           print(json.dumps(result, ensure_ascii=False))
           with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as summary:
               summary.write("## ETF market snapshot result\n\n")
-              summary.write("本次未执行新的行情采集，已返回最近一次合格收盘行情作为引用。\n\n")
+              summary.write("本次未执行新的行情采集，已返回最近一次合格收盘行情作为引用；Discovery仅复用同节点合法结果，不生成第二份。\n\n")
               summary.write("```json\n" + json.dumps(result, ensure_ascii=False, indent=2) + "\n```\n")
           PY
       - name: Record skipped runtime health
