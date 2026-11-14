@@ -617,7 +617,7 @@ class WatchdogHealthSemanticsTests(unittest.TestCase):
         self.assertIn("def verify_published_snapshot", runner)
         self.assertIn("temp.replace(target)", runner)
         self.assertIn("verify_published_snapshot(target", runner)
-        self.assertIn("group: etf-main-state-writer", snapshot)
+        self.assertIn("group: etf-market-snapshot-${{ github.ref }}", snapshot)
         self.assertIn("cancel-in-progress: false", snapshot)
         self.assertIn("gh workflow run market-snapshot.yml --ref main", watchdog)
         self.assertIn("Canonical snapshot already queued/in progress; no duplicate dispatch.", watchdog)
