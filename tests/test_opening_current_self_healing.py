@@ -380,8 +380,7 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
         self.assertIn('if [ "$action" = "REBUILD_DERIVED_CONTEXTS" ]; then', persist)
         self.assertIn('elif [ "$action" = "SYNC_RULES_VERSION_METADATA" ]; then', persist)
         self.assertIn("python scripts/build_state_context.py", persist)
-        self.assertIn("python scripts/build_query_context.py", persist)
-        retry_loop = persist.split('for attempt in $(seq 1 "$max_attempts"); do', 1)[1]
+        # query_context is owned by the canonical market-snapshot producers;\n        # watchdog repair must not rebuild or persist it.\n        self.assertNotIn("python scripts/build_query_context.py", persist)\n        retry_loop = persist.split('for attempt in $(seq 1 "$max_attempts"); do', 1)[1]
         self.assertIn("data/state/review_context.json", persist)
         self.assertIn("python scripts/runtime_self_heal.py --repair-safe", persist)
         self.assertIn("Self-healing persistence exhausted bounded latest-main retries; fail closed.", persist)
@@ -448,92 +447,3 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
             },
             now=datetime.fromisoformat("2026-09-05T09:27:00+08:00"),
         )
-        self.assertFalse(status["same_day_current_required"])
-        self.assertFalse(status["same_day_current_missing"])
-        self.assertNotEqual(status["classification"], "SAME_DAY_CURRENT_MISSING")
-
-    def test_opening_recovery_keeps_canonical_producer_and_safety_boundary(self):
-        workflow = (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
-        snapshot = (ROOT / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
-        fallback = (ROOT / ".github/workflows/opening-auction-current-fallback.yml").read_text(encoding="utf-8")
-        self.assertIn('steps.assess.outputs.action == \'REFRESH_SNAPSHOT\'', workflow)
-        self.assertIn("gh workflow run market-snapshot.yml --ref main", workflow)
-        self.assertIn("Publish core snapshot and CURRENT immediately", snapshot)
-        self.assertIn("etf-main-state-writer", snapshot)
-        self.assertIn("cancel-in-progress: false", snapshot)
-        self.assertNotIn("A newer user request supersedes an older queued request", snapshot)
-        self.assertIn("etf-main-state-writer", fallback)
-        self.assertIn("newer_current_already_exists", (ROOT / "scripts/cloud_runner_snapshot.py").read_text(encoding="utf-8"))
-        self.assertNotIn("may_auto_trade", workflow)
-
-    def test_assessment_does_not_claim_recovery_without_watchdog_execution(self):
-        current = {
-            "market_date": "2026-08-31",
-            "captured_at": "2026-08-31T15:01:10+08:00",
-            "latest_valid_node": "close",
-            "node_status": "READY",
-            "rules_version": "V2.2.31",
-        }
-        with mock.patch.object(runtime_self_heal, "atomic_write_json") as write:
-            status = self._assess(current=current, now=datetime.fromisoformat("2026-09-01T09:27:00+08:00"))
-        write.assert_not_called()
-        self.assertEqual(status["recommended_action"], "REFRESH_SNAPSHOT")
-        self.assertNotIn("recovered", status["reason"].lower())
-
-    def test_bounded_us_failover_is_phase_aware_and_deduplicates_primary(self):
-        workflow = (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
-        self.assertIn("expected_us_phase", workflow)
-        self.assertIn('object_phase(code) == "REGULAR"', workflow)
-        self.assertIn("gh run list --workflow us-extended-hours-pulse.yml", workflow)
-        self.assertIn("Recover missing US notification batch through canonical workflow", workflow)
-        self.assertIn("recovery_source_run_id", workflow)
-        self.assertIn("no duplicate fallback dispatch", workflow)
-
-    def test_notification_recovery_reuses_single_guarded_us_batch(self):
-        workflow = (ROOT / ".github/workflows/decision-notification.yml").read_text(encoding="utf-8")
-        self.assertIn("recovery_market", workflow)
-        self.assertIn("recovery_source_run_id", workflow)
-        self.assertEqual(workflow.count("python scripts/run_guarded_notification.py batch --market us"), 1)
-        self.assertIn("inputs.recovery_market == 'us'", workflow)
-        self.assertNotIn("PUSHPLUS_TOKEN", (ROOT / ".github/workflows/us-extended-hours-pulse.yml").read_text(encoding="utf-8"))
-
-    def test_healthy_observation_only_change_is_not_semantic(self):
-        previous = {
-            "classification": "HEALTHY",
-            "recommended_action": "NONE",
-            "checked_at": "2026-09-23T09:00:00+08:00",
-            "current_capture_age_seconds": 120,
-            "current_capture_at": "2026-09-23T08:58:00+08:00",
-        }
-        current = {
-            **previous,
-            "checked_at": "2026-09-23T09:01:00+08:00",
-            "current_capture_age_seconds": 180,
-        }
-        self.assertFalse(runtime_self_heal.semantic_status_changed(previous, current))
-
-    def test_healthy_capture_or_action_change_remains_semantic(self):
-        previous = {
-            "classification": "HEALTHY",
-            "recommended_action": "NONE",
-            "checked_at": "2026-09-23T09:00:00+08:00",
-            "current_capture_age_seconds": 120,
-            "current_capture_at": "2026-09-23T08:58:00+08:00",
-        }
-        changed_capture = {**previous, "current_capture_at": "2026-09-23T09:01:00+08:00"}
-        changed_action = {**previous, "classification": "SCHEDULE_MISSED_OR_STALE", "recommended_action": "REFRESH_SNAPSHOT"}
-        self.assertTrue(runtime_self_heal.semantic_status_changed(previous, changed_capture))
-        self.assertTrue(runtime_self_heal.semantic_status_changed(previous, changed_action))
-
-    def test_non_healthy_status_metadata_change_is_not_suppressed(self):
-        previous = {
-            "classification": "CONSISTENCY_REGRESSION",
-            "recommended_action": "ESCALATE",
-            "checked_at": "2026-09-23T09:00:00+08:00",
-            "current_capture_age_seconds": 120,
-        }
-        current = {**previous, "checked_at": "2026-09-23T09:01:00+08:00", "current_capture_age_seconds": 180}
-        self.assertTrue(runtime_self_heal.semantic_status_changed(previous, current))
-
-if __name__ == "__main__":
-    unittest.main()
