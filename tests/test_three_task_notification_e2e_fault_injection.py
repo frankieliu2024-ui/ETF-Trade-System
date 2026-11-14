@@ -48,13 +48,15 @@ class ThreeTaskNotificationE2EFaultInjectionTests(unittest.TestCase):
         self.assertIn("No current shared completion/report binding; fail closed without PushPlus.", workflow)
         self.assertIn("canonical_publication", workflow)
 
-    def test_discovery_is_regenerated_and_bound_to_each_snapshot(self):
+    def test_market_snapshot_is_facts_only_and_does_not_own_discovery(self):
         builder = (ROOT / "scripts/build_weekly_discovery.py").read_text(encoding="utf-8")
         workflow = (ROOT / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
         self.assertIn("source_snapshot_identity", builder)
         self.assertIn("generation_identity", builder)
         self.assertIn("regeneration_required", builder)
-        self.assertIn("must be regenerated and bound to this node snapshot", workflow)
+        self.assertNotIn("build_weekly_discovery.py", workflow)
+        self.assertNotIn("must be regenerated and bound to this node snapshot", workflow)
+        self.assertNotIn("Discovery", workflow)
 
     def test_dispatch_verifies_workflow_run_and_recovers_same_completion(self):
         owner = (ROOT / "scripts/scheduled_review_completion_owner.py").read_text(encoding="utf-8")
