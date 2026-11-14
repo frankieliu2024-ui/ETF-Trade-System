@@ -66,11 +66,15 @@ def test_latest_close_rejects_missing_or_mismatched_snapshot(tmp_path: Path) -> 
     assert latest_legal_close_reference(root, "2026-11-07", calendar)["available"] is False
 
 
-def test_latest_close_reference_workflow_rebuilds_query_context_and_discovery_without_new_capture() -> None:
+def test_latest_close_reference_workflow_returns_reference_without_new_capture() -> None:
     workflow = Path(".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
     assert "process_latest_reference" in workflow
     assert "steps.session_gate.outputs.process_latest_reference == 'true'" in workflow
-    assert "build_query_context.py --run-discovery" in workflow
+    assert "Resolve latest legal close reference" in workflow
+    assert "GITHUB_STEP_SUMMARY" in workflow
+    assert "new_snapshot_written" in workflow
+    assert "current_mutated" in workflow
+    assert "build_query_context.py --run-discovery" not in workflow
     assert "No new live/close snapshot is fabricated" in workflow
     assert 'reason = "latest_legal_close_reference"' in Path("scripts/runtime_session_gate.py").read_text(encoding="utf-8")
 
