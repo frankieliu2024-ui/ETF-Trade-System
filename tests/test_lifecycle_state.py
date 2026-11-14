@@ -154,6 +154,33 @@ class LifecycleStateTests(unittest.TestCase):
         self.assertEqual(item["lifecycle_status"], "RESOLVED")
         self.assertFalse(item["decision_due"])
 
+    def test_nested_formal_candidate_code_can_be_resolved_by_complete_sell(self):
+        write(self.root, "events/reviews/nested-formal.json", {
+            "event_type": "FORMAL_DECISION_REPORT",
+            "decision_id": "nested-159217",
+            "decision_time_beijing": "2026-08-27T09:00:00+08:00",
+            "formal_decision": {
+                "lifecycle": "允许Trial",
+                "candidate_code": "159217",
+                "candidate_name": "港股通创新药ETF",
+                "main_candidate": "159217 Trial评估成立",
+            },
+        })
+        write(self.root, "events/trades/nested-buy.json", {
+            "event_id": "nested-buy", "linked_decision_id": "nested-159217",
+            "execution_status": "EXECUTED", "execution_date": "2026-08-27",
+            "code": "159217", "side": "BUY", "quantity": 4400,
+        })
+        write(self.root, "events/trades/nested-sell.json", {
+            "event_id": "nested-sell", "linked_decision_id": "other-decision",
+            "execution_status": "EXECUTED", "execution_date": "2026-09-02",
+            "confirmed_at_beijing": "2026-09-02T10:00:00+08:00",
+            "code": "159217", "side": "SELL", "quantity": 4400,
+        })
+        item = build_lifecycle_projection(self.root, "2026-09-05")["active_lifecycles"][0]
+        self.assertEqual(item["lifecycle_status"], "RESOLVED")
+        self.assertEqual(item["resolution"]["resolution_reason"], "CONFIRMED_COMPLETE_SELL")
+
     def test_completion_linked_trial_without_hypothesis_is_due_and_overdue(self):
         request_id = "formal-completion-generic-trial"
         write(self.root, f"requests/live_snapshot/{request_id}__scheduled_review_completion.json", {
