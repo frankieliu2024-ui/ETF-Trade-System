@@ -111,9 +111,6 @@ jobs:
               raise SystemExit("Hyperliquid pulse reused the previous generation identity")
           print({"generation_identity": current, "previous": previous or None})
           PY
-      - name: Refresh US extended-hours context
-        if: ${{ steps.pulse_gate.outputs.eligible == 'true' }}
-        run: python scripts/build_us_extended_hours_context.py
       - name: Record overseas pulse runtime health
         if: always()
         env:
