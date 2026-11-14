@@ -250,6 +250,29 @@ class LifecycleStateTests(unittest.TestCase):
         self.assertEqual(item["hypothesis_status"], "CONFIRM_EVALUATION")
         self.assertEqual(item["resolution"]["decision_id"], "completion-followup")
 
+    def test_completion_trial_resolves_from_later_linked_complete_sell(self):
+        request_id = "formal-completion-sell-fallback"
+        write(self.root, f"requests/live_snapshot/{request_id}__scheduled_review_completion.json", {
+            "request_id": request_id, "report_type": "ETF_FORMAL_DECISION",
+            "requested_at_beijing": "2026-10-26T15:20:00+08:00",
+            "final_content": "【机会ETF逐只评估】\n1. 通用试探ETF（159057）：Trial评估成立。",
+        })
+        opening_id = "completion-buy-fallback-159057"
+        write(self.root, "events/trades/completion-buy-fallback-159057.json", {
+            "event_id": opening_id, "code": "159057", "name": "通用试探ETF",
+            "side": "BUY", "execution_status": "EXECUTED", "execution_date": "2026-10-26",
+            "linked_decision_id": f"FORMAL_COMPLETION:{request_id}", "quantity": 100,
+        })
+        write(self.root, "events/trades/completion-sell-fallback-159057.json", {
+            "event_id": "completion-sell-fallback-159057", "code": "159057",
+            "side": "SELL", "execution_status": "EXECUTED", "execution_date": "2026-10-29",
+            "linked_decision_id": "FORMAL_COMPLETION:later-completion", "quantity": 100,
+        })
+        item = build_lifecycle_projection(self.root, "2026-11-03")["active_lifecycles"][0]
+        self.assertEqual(item["lifecycle_status"], "RESOLVED")
+        self.assertEqual(item["resolution"]["resolution_reason"], "CONFIRMED_COMPLETE_SELL")
+        self.assertEqual(item["resolution"]["resolution_event_ids"], ["completion-sell-fallback-159057"])
+
 
     def test_empty_hypothesis_does_not_match_other_decisions(self):
         from scripts.lifecycle_state import _resolution
