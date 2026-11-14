@@ -341,3 +341,37 @@ jobs:
               if [ "$attempt" = "3" ]; then exit 1; fi
             done
           fi
+
+      - name: Generate node-local ETF Discovery from verified A-share pulse
+        id: current_discovery
+        # The canonical Discovery producer is invoked once after a verified A-share pulse.
+        if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' && github.event_name != 'push' && github.event.inputs.probe_only != 'true') }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          discovery_result="$(python scripts/build_weekly_discovery.py)"
+          echo "$discovery_result"
+          python - "$discovery_result" <<'PY'
+          import hashlib, json, sys
+          from pathlib import Path
+          result = json.loads(sys.argv[1])
+          if str(result.get("status") or "").upper() not in {"READY", "PASS", "DEGRADED"}: raise SystemExit("Discovery producer did not publish a usable node result")
+          current = json.loads(Path("data/state/CURRENT.json").read_text(encoding="utf-8"))
+          snapshot = json.loads(Path(str(current.get("latest_snapshot") or "")).read_text(encoding="utf-8"))
+          identity = hashlib.sha256(json.dumps(snapshot, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
+          artifact = json.loads(Path("data/state/formal_discovery_current.json").read_text(encoding="utf-8"))
+          if artifact.get("source_snapshot_identity") != identity: raise SystemExit("Discovery is not bound to the verified A-share snapshot")
+          if artifact.get("market_date") != current.get("market_date"): raise SystemExit("Discovery market_date does not match the A-share snapshot")
+          if str(artifact.get("latest_valid_node") or "").lower() != str(current.get("latest_valid_node") or "").lower(): raise SystemExit("Discovery node does not match the A-share snapshot")
+          PY
+      - name: Publish node-local ETF Discovery
+        if: ${{ steps.current_discovery.outcome == 'success' && github.event_name != 'push' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- data/state/formal_discovery_current.json data/state/discovery_pulse_latest.json data/state/discovery_pulse_index.json
+          if git diff --cached --quiet; then echo "No Discovery projection change."; exit 0; fi
+          git commit -m "data: publish node-local Discovery with verified A-share pulse"
+          git push origin HEAD:main
