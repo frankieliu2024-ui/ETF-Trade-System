@@ -1741,7 +1741,7 @@ jobs:
       - name: Finalize canonical Dashboard projection before publish
         # Keep the final human projection owned by sync_formal_files.py even
         # when an earlier derived-state producer touched the working tree.
-        if: ${{ (always() && github.ref == 'refs/heads/main') && steps.account_sync_route.outputs.account_sync_only != 'true' }}
+        if: ${{ (always() && github.ref == 'refs/heads/main' && github.event.inputs.probe_only != 'true') && steps.account_sync_route.outputs.account_sync_only != 'true' }}
         run: |
           set -euo pipefail
           python - <<'PY'
@@ -1769,7 +1769,7 @@ jobs:
       - name: Commit downstream runtime/data artifacts
         # A failed close-derived refresh must not publish a mixed generation
         # containing fresh market facts alongside stale risk/decision state.
-        if: ${{ (always() && github.ref == 'refs/heads/main' && steps.state_sync.outcome != 'failure' && steps.risk_refresh.outcome != 'failure' && (steps.session_gate.outcome == 'success' || steps.capture.outcome == 'success' || steps.state_sync.outputs.processed == 'true')) && steps.account_sync_route.outputs.account_sync_only != 'true' }}
+        if: ${{ (always() && github.ref == 'refs/heads/main' && github.event.inputs.probe_only != 'true' && steps.state_sync.outcome != 'failure' && steps.risk_refresh.outcome != 'failure' && (steps.session_gate.outcome == 'success' || steps.capture.outcome == 'success' || steps.state_sync.outputs.processed == 'true')) && steps.account_sync_route.outputs.account_sync_only != 'true' }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
