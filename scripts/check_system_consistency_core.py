@@ -380,7 +380,9 @@ def main() -> int:
     test_env["PYTHONPATH"] = os.pathsep.join(filter(None, [str(ROOT / "scripts"), str(ROOT), test_env.get("PYTHONPATH", "")]))
     def run_contract_test(module: str) -> tuple[int, str, float]:
         started = monotonic()
-        if module.startswith("__MARKET_FILE__:"):
+        if module.startswith("__MARKET_METHOD__:"):
+            command = [os.environ.get("PYTHON", "python"), "-m", "unittest", module.split(":", 1)[1]]
+        elif module.startswith("__MARKET_FILE__:"):
             command = [os.environ.get("PYTHON", "python"), "-m", "unittest", module.split(":", 1)[1]]
         elif module.startswith("__MARKET_SHARD__:"):
             modules = module.split(":", 1)[1].split(",")
@@ -402,8 +404,11 @@ def main() -> int:
         return proc.returncode, _test_evidence_summary(proc.stdout + proc.stderr), round(monotonic() - started, 3)
 
     market_files = sorted((ROOT / "tests").glob("test_market*.py"))
-    market_module_names = [f"tests.{path.stem}" for path in market_files]
+    market_module_names = [f"tests.{path.stem}" for path in market_files if path.stem != "test_market_risk_metric_guard"]
     test_modules = [
+        ("__MARKET_METHOD__:tests.test_market_risk_metric_guard.TestMarketRiskMetricGuard.test_live_decision_and_query_context_match_latest_formal_risk", "market_risk_live_decision_query"),
+        ("__MARKET_METHOD__:tests.test_market_risk_metric_guard.TestMarketRiskMetricGuard.test_current_gross_owner_is_available_to_decision_and_e2e_even_with_pending_fee", "market_risk_current_gross_owner"),
+        ("__MARKET_FILE__:tests.test_market_risk_metric_guard", "market_file_test_market_risk_metric_guard"),
         *[(f"__MARKET_FILE__:{module}", f"market_file_{module.rsplit('.', 1)[-1]}") for module in market_module_names],
         ("tests.test_opening_current_self_healing", "opening_current_self_healing"),
         ("tests.test_semantic_latest_main", "semantic_latest_main"),
