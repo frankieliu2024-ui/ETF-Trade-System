@@ -404,7 +404,7 @@ def main() -> int:
     market_files = sorted((ROOT / "tests").glob("test_market*.py"))
     market_module_names = [f"tests.{path.stem}" for path in market_files]
     test_modules = [
-        *[(f"__MARKET_FILE__:{module}", f"market_file_{module.rsplit(".", 1)[-1]}") for module in market_module_names],
+        *[(f"__MARKET_FILE__:{module}", f"market_file_{module.rsplit('.', 1)[-1]}") for module in market_module_names],
         ("tests.test_opening_current_self_healing", "opening_current_self_healing"),
         ("tests.test_semantic_latest_main", "semantic_latest_main"),
         ("tests.test_research_artifact_contract", "research_artifact_contract"),
