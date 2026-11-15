@@ -380,8 +380,13 @@ def main() -> int:
     test_env["PYTHONPATH"] = os.pathsep.join(filter(None, [str(ROOT / "scripts"), str(ROOT), test_env.get("PYTHONPATH", "")]))
     def run_contract_test(module: str) -> tuple[int, str, float]:
         started = monotonic()
+        command = (
+            [os.environ.get("PYTHON", "python"), "-m", "unittest", "discover", "-s", "tests", "-p", "test_market*.py"]
+            if module == "__MARKET_DISCOVERY__"
+            else [os.environ.get("PYTHON", "python"), "-m", "unittest", module]
+        )
         proc = subprocess.run(
-            [os.environ.get("PYTHON", "python"), "-m", "unittest", module],
+            command,
             cwd=ROOT,
             env=test_env,
             capture_output=True,
@@ -393,7 +398,7 @@ def main() -> int:
         return proc.returncode, _test_evidence_summary(proc.stdout + proc.stderr), round(monotonic() - started, 3)
 
     test_modules = [
-        ("tests.test_market_data_and_quote_router", "market_data_and_quote_router"),
+        ("__MARKET_DISCOVERY__", "market_data_and_quote_router"),
         ("tests.test_opening_current_self_healing", "opening_current_self_healing"),
         ("tests.test_semantic_latest_main", "semantic_latest_main"),
         ("tests.test_research_artifact_contract", "research_artifact_contract"),
