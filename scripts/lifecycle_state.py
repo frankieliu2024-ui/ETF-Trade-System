@@ -293,6 +293,8 @@ def _executions(root: Path) -> list[dict[str, Any]]:
     directory = root / "events" / "trades"
     for path in sorted(directory.glob("*.json")) if directory.exists() else []:
         event = _load(path, {})
+        if not _is_production_fact(event):
+            continue
         if str(event.get("execution_status") or "").upper() == "EXECUTED":
             # Attribution corrections are projection inputs, not mutations of
             # the immutable broker trade fact.  Lifecycle must consume the
