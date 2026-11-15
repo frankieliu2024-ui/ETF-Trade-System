@@ -374,7 +374,8 @@ def main() -> int:
             (warnings if warning else errors).append(f"{name}: {detail}")
 
     test_env = os.environ.copy()
-    test_env["ETF_NONPRODUCTION_TEST"] = "1"\n    test_env["PYTHONPATH"] = os.pathsep.join(filter(None, [str(ROOT / "scripts"), str(ROOT), test_env.get("PYTHONPATH", "")]))
+    test_env["ETF_NONPRODUCTION_TEST"] = "1"
+    test_env["PYTHONPATH"] = os.pathsep.join(filter(None, [str(ROOT / "scripts"), str(ROOT), test_env.get("PYTHONPATH", "")]))
     test_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "discover", "-s", "tests", "-p", "test_market*.py"], cwd=ROOT, env=test_env, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
     check("tests:market_data_and_quote_router", test_proc.returncode == 0, (test_proc.stdout + test_proc.stderr)[-20000:])
     opening_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "tests.test_opening_current_self_healing"], cwd=ROOT, env=test_env, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
