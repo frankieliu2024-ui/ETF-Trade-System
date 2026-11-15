@@ -5,6 +5,8 @@ import json
 import os
 import re
 import subprocess
+from concurrent.futures import ThreadPoolExecutor
+from time import monotonic
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 try:
@@ -376,30 +378,44 @@ def main() -> int:
     test_env = os.environ.copy()
     test_env["ETF_NONPRODUCTION_TEST"] = "1"
     test_env["PYTHONPATH"] = os.pathsep.join(filter(None, [str(ROOT / "scripts"), str(ROOT), test_env.get("PYTHONPATH", "")]))
-    test_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "discover", "-s", "tests", "-p", "test_market*.py"], cwd=ROOT, env=test_env, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
-    check("tests:market_data_and_quote_router", test_proc.returncode == 0, _test_evidence_summary(test_proc.stdout + test_proc.stderr))
-    opening_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "tests.test_opening_current_self_healing"], cwd=ROOT, env=test_env, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
-    check("tests:opening_current_self_healing", opening_proc.returncode == 0, _test_evidence_summary(opening_proc.stdout + opening_proc.stderr))
-    semantic_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "tests.test_semantic_latest_main"], cwd=ROOT, env=test_env, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
-    check("tests:semantic_latest_main", semantic_proc.returncode == 0, _test_evidence_summary(semantic_proc.stdout + semantic_proc.stderr))
-    research_contract_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "tests.test_research_artifact_contract"], cwd=ROOT, env=test_env, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
-    check("tests:research_artifact_contract", research_contract_proc.returncode == 0, _test_evidence_summary(research_contract_proc.stdout + research_contract_proc.stderr))
-    historical_stop_gate_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "tests.test_research_historical_stop_gate"], cwd=ROOT, env=test_env, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
-    check("tests:research_historical_stop_gate", historical_stop_gate_proc.returncode == 0, _test_evidence_summary(historical_stop_gate_proc.stdout + historical_stop_gate_proc.stderr))
-    lifecycle_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "tests.test_lifecycle_state"], cwd=ROOT, env=test_env, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
-    check("tests:lifecycle_state", lifecycle_proc.returncode == 0, _test_evidence_summary(lifecycle_proc.stdout + lifecycle_proc.stderr))
-    historical_recovery_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "tests.test_historical_market_fact_recovery"], cwd=ROOT, env=test_env, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
-    check("tests:historical_market_fact_recovery", historical_recovery_proc.returncode == 0, _test_evidence_summary(historical_recovery_proc.stdout + historical_recovery_proc.stderr))
-    for module, label in (
+    def run_contract_test(module: str) -> tuple[int, str, float]:
+        started = monotonic()
+        proc = subprocess.run(
+            [os.environ.get("PYTHON", "python"), "-m", "unittest", module],
+            cwd=ROOT,
+            env=test_env,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+        )
+        return proc.returncode, _test_evidence_summary(proc.stdout + proc.stderr), round(monotonic() - started, 3)
+
+    test_modules = [
+        ("tests.test_market_data_and_quote_router", "market_data_and_quote_router"),
+        ("tests.test_opening_current_self_healing", "opening_current_self_healing"),
+        ("tests.test_semantic_latest_main", "semantic_latest_main"),
+        ("tests.test_research_artifact_contract", "research_artifact_contract"),
+        ("tests.test_research_historical_stop_gate", "research_historical_stop_gate"),
+        ("tests.test_lifecycle_state", "lifecycle_state"),
+        ("tests.test_historical_market_fact_recovery", "historical_market_fact_recovery"),
         ("tests.test_executed_trade_case_lifecycle", "executed_trade_case_lifecycle"),
         ("tests.test_settlement_obligations", "settlement_obligations"),
         ("tests.test_formal_file_mutation_gateway", "formal_file_mutation_gateway"),
         ("tests.test_review_prerequisite_lifecycle", "review_prerequisite_lifecycle"),
         ("tests.test_production_reliability", "production_reliability"),
         ("tests.test_workflow_sha_snapshot", "workflow_sha_snapshot"),
-    ):
-        contract_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", module], cwd=ROOT, env=test_env, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
-        check(f"tests:{label}", contract_proc.returncode == 0, _test_evidence_summary(contract_proc.stdout + contract_proc.stderr))
+    ]
+    # These suites use isolated fixtures and only produce captured evidence.
+    # Run them concurrently; production state validation and persistence remain
+    # strictly after this bounded non-production phase.
+    with ThreadPoolExecutor(max_workers=4, thread_name_prefix="consistency-test") as pool:
+        futures = {pool.submit(run_contract_test, module): label for module, label in test_modules}
+        for future in futures:
+            label = futures[future]
+            returncode, detail, duration = future.result()
+            check(f"tests:{label}", returncode == 0, f"{detail}; duration_seconds={duration}")
 
     compile_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "py_compile", "scripts/rules_version.py", "scripts/market_data_guard.py", "scripts/market_quote_router.py", "scripts/cloud_runner_snapshot.py", "scripts/build_account_stock_market.py", "scripts/build_overseas_context.py", "scripts/build_overseas_runtime_health.py", "scripts/build_low_cost_alpha_evidence.py", "scripts/build_query_context.py", "scripts/state_manager.py", "scripts/process_state_sync_request.py", "scripts/review_prerequisite_lifecycle.py", "scripts/historical_market_fact_recovery.py", "scripts/sync_formal_files.py", "scripts/formal_file_mutation_gateway.py", "scripts/research_artifact_contract.py", "scripts/market_notification_common.py", "scripts/merge_notification_state.py", "scripts/notification_center.py", "scripts/query_market_object.py", "scripts/historical_market_fact_recovery.py", "scripts/review_prerequisite_lifecycle.py"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
     check("tests:runtime_modules_compile", compile_proc.returncode == 0, _test_evidence_summary(compile_proc.stdout + compile_proc.stderr))
