@@ -380,7 +380,9 @@ def main() -> int:
     test_env["PYTHONPATH"] = os.pathsep.join(filter(None, [str(ROOT / "scripts"), str(ROOT), test_env.get("PYTHONPATH", "")]))
     def run_contract_test(module: str) -> tuple[int, str, float]:
         started = monotonic()
-        if module.startswith("__MARKET_SHARD__:"):
+        if module.startswith("__MARKET_FILE__:"):
+            command = [os.environ.get("PYTHON", "python"), "-m", "unittest", module.split(":", 1)[1]]
+        elif module.startswith("__MARKET_SHARD__:"):
             modules = module.split(":", 1)[1].split(",")
             command = [os.environ.get("PYTHON", "python"), "-m", "unittest", *modules]
         elif module == "__MARKET_DISCOVERY__":
@@ -401,13 +403,8 @@ def main() -> int:
 
     market_files = sorted((ROOT / "tests").glob("test_market*.py"))
     market_module_names = [f"tests.{path.stem}" for path in market_files]
-    market_shards = [
-        market_module_names[index::4]
-        for index in range(4)
-        if market_module_names[index::4]
-    ]
     test_modules = [
-        *[(f"__MARKET_SHARD__:{','.join(shard)}", f"market_shard_{index + 1}") for index, shard in enumerate(market_shards)],
+        *[(f"__MARKET_FILE__:{module}", f"market_file_{module.rsplit(".", 1)[-1]}") for module in market_module_names],
         ("tests.test_opening_current_self_healing", "opening_current_self_healing"),
         ("tests.test_semantic_latest_main", "semantic_latest_main"),
         ("tests.test_research_artifact_contract", "research_artifact_contract"),
@@ -424,7 +421,7 @@ def main() -> int:
     # These suites use isolated fixtures and only produce captured evidence.
     # Run them concurrently; production state validation and persistence remain
     # strictly after this bounded non-production phase.
-    with ThreadPoolExecutor(max_workers=4, thread_name_prefix="consistency-test") as pool:
+    with ThreadPoolExecutor(max_workers=8, thread_name_prefix="consistency-test") as pool:
         futures = {pool.submit(run_contract_test, module): label for module, label in test_modules}
         for future in futures:
             label = futures[future]
