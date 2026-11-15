@@ -42,6 +42,18 @@ SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
 FORMAL_FILES = ["ETF规则_MASTER.md", "ETF当前状态_DASHBOARD.md", "ETF交易复盘与经验库_2026.md", "ETF市场行情档案_2026.md"]
 CORE_RUNTIME_FILES = ["data/state/CURRENT.json", "data/state/runtime_health.json", "data/state/overseas_runtime_health.json", "data/state/account_fact.json", "data/state/us_extended_hours_context.json", "config/runtime_policy.json", "config/market/market_monitor_config.json", "config/market/provider_priority.json", "config/market/etf_monitor_universe.json", "config/market/a_share_trading_calendar_2026.json"]
 CRITICAL_TRACKED_FILES = FORMAL_FILES + [DATA_STANDARD, "ETF_SYSTEM_INDEX.md", "scripts/rules_version.py", "scripts/check_system_consistency.py", "scripts/check_system_consistency_core.py", "scripts/semantic_latest_main.py", "tests/test_semantic_latest_main.py", "scripts/runtime_session_gate.py", "scripts/cloud_runner_snapshot.py", "scripts/build_stock_context.py", "scripts/build_account_stock_market.py", "scripts/market_data_guard.py", "tests/test_market_data_guard.py", "scripts/build_overseas_context.py", "scripts/build_us_extended_hours_context.py", "scripts/build_low_cost_alpha_evidence.py", "scripts/build_query_context.py", "scripts/market_quote_router.py", "scripts/sync_formal_files.py", "scripts/formal_file_mutation_gateway.py", "tests/test_formal_file_mutation_gateway.py", "scripts/market_notification_common.py", "scripts/merge_notification_state.py", "scripts/notification_center.py", "tests/test_production_reliability.py", "scripts/query_market_object.py", "config/market/market_quote_router.json", "tests/test_market_quote_router.py", "scripts/review_prerequisite_lifecycle.py", "scripts/historical_market_fact_recovery.py", ".github/workflows/market-snapshot.yml", ".github/workflows/on-demand-market-data.yml", ".github/workflows/overseas-preopen-pulse.yml", ".github/workflows/us-extended-hours-pulse.yml", ".github/workflows/decision-notification.yml", ".github/workflows/system-consistency.yml"] + CORE_RUNTIME_FILES
+
+
+def _test_evidence_summary(output: str) -> str:
+    """Keep unit-test diagnostics non-consumable by production fact readers."""
+    text = str(output or "")
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    summary = [line for line in lines if line.startswith("Ran ") or line == "OK" or line.startswith("FAILED")]
+    if not summary:
+        summary = ["test_process_completed"] if text else ["no_test_output"]
+    return "environment=NON_PRODUCTION; consumable_by_business_tasks=false; " + " ".join(summary[-3:])
+
+
 def request_bound_snapshot_alignment(query_context: dict, decision_context: dict) -> tuple[bool, str]:
     """Allow a newer query projection only when it remains bound to the same request."""
     query_current = query_context.get("current") or {}
@@ -362,6 +374,7 @@ def main() -> int:
             (warnings if warning else errors).append(f"{name}: {detail}")
 
     test_env = os.environ.copy()
+    test_env["ETF_NONPRODUCTION_TEST"] = "1"
     test_env["PYTHONPATH"] = os.pathsep.join(filter(None, [str(ROOT / "scripts"), str(ROOT), test_env.get("PYTHONPATH", "")]))
     test_proc = subprocess.run([os.environ.get("PYTHON", "python"), "-m", "unittest", "discover", "-s", "tests", "-p", "test_market*.py"], cwd=ROOT, env=test_env, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
     check("tests:market_data_and_quote_router", test_proc.returncode == 0, (test_proc.stdout + test_proc.stderr)[-20000:])
