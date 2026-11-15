@@ -62,6 +62,21 @@ def trading_day_offset(start: date, end: date, calendar: dict[str, Any]) -> int 
     return offset
 
 
+
+
+_NON_PRODUCTION_MARKERS = ("TEST", "FIXTURE", "SYNTHETIC", "SIMULATION", "REPLAY")
+
+
+def _is_production_fact(event: dict[str, Any]) -> bool:
+    """Reject explicitly non-production evidence from formal/lifecycle projections."""
+    if event.get("consumable_by_business_tasks") is False:
+        return False
+    if str(event.get("environment") or "").upper() in {"NON_PRODUCTION", "TEST"}:
+        return False
+    source = " ".join(str(event.get(key) or "") for key in ("source", "source_type", "record_type", "event_id")).upper()
+    return not any(marker in source for marker in _NON_PRODUCTION_MARKERS)
+
+
 def _formal_decisions(root: Path) -> list[dict[str, Any]]:
     result = []
     directories = [root / "events" / "decisions", root / "events" / "reviews"]
@@ -71,6 +86,8 @@ def _formal_decisions(root: Path) -> list[dict[str, Any]]:
             paths.extend(sorted(directory.glob("*.json")))
     for path in paths:
         event = _load(path, {})
+        if not _is_production_fact(event):
+            continue
         formal = event.get("formal_decision") or {}
         if not isinstance(formal, dict):
             formal = {}
