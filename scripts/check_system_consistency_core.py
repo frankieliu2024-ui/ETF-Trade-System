@@ -380,11 +380,13 @@ def main() -> int:
     test_env["PYTHONPATH"] = os.pathsep.join(filter(None, [str(ROOT / "scripts"), str(ROOT), test_env.get("PYTHONPATH", "")]))
     def run_contract_test(module: str) -> tuple[int, str, float]:
         started = monotonic()
-        command = (
-            [os.environ.get("PYTHON", "python"), "-m", "unittest", "discover", "-s", "tests", "-p", "test_market*.py"]
-            if module == "__MARKET_DISCOVERY__"
-            else [os.environ.get("PYTHON", "python"), "-m", "unittest", module]
-        )
+        if module.startswith("__MARKET_SHARD__:"):
+            modules = module.split(":", 1)[1].split(",")
+            command = [os.environ.get("PYTHON", "python"), "-m", "unittest", *modules]
+        elif module == "__MARKET_DISCOVERY__":
+            command = [os.environ.get("PYTHON", "python"), "-m", "unittest", "discover", "-s", "tests", "-p", "test_market*.py"]
+        else:
+            command = [os.environ.get("PYTHON", "python"), "-m", "unittest", module]
         proc = subprocess.run(
             command,
             cwd=ROOT,
@@ -397,8 +399,15 @@ def main() -> int:
         )
         return proc.returncode, _test_evidence_summary(proc.stdout + proc.stderr), round(monotonic() - started, 3)
 
+    market_files = sorted((ROOT / "tests").glob("test_market*.py"))
+    market_module_names = [f"tests.{path.stem}" for path in market_files]
+    market_shards = [
+        market_module_names[index::4]
+        for index in range(4)
+        if market_module_names[index::4]
+    ]
     test_modules = [
-        ("__MARKET_DISCOVERY__", "market_data_and_quote_router"),
+        *[(f"__MARKET_SHARD__:{','.join(shard)}", f"market_shard_{index + 1}") for index, shard in enumerate(market_shards)],
         ("tests.test_opening_current_self_healing", "opening_current_self_healing"),
         ("tests.test_semantic_latest_main", "semantic_latest_main"),
         ("tests.test_research_artifact_contract", "research_artifact_contract"),
