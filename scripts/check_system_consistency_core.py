@@ -406,9 +406,16 @@ def main() -> int:
     market_files = sorted((ROOT / "tests").glob("test_market*.py"))
     market_module_names = [f"tests.{path.stem}" for path in market_files if path.stem != "test_market_risk_metric_guard"]
     test_modules = [
+        ("__MARKET_METHOD__:tests.test_market_risk_metric_guard.TestMarketRiskMetricGuard.test_formal_review_overrides_stale_reconstruction", "market_risk_formal_review_override"),
+        ("__MARKET_METHOD__:tests.test_market_risk_metric_guard.TestMarketRiskMetricGuard.test_dashboard_cannot_fallback_when_no_formal_review_exists", "market_risk_dashboard_no_fallback"),
+        ("__MARKET_METHOD__:tests.test_market_risk_metric_guard.TestMarketRiskMetricGuard.test_fresh_reconstruction_is_allowed_without_formal_review", "market_risk_fresh_reconstruction"),
+        ("__MARKET_METHOD__:tests.test_market_risk_metric_guard.TestMarketRiskMetricGuard.test_e2e_risk_ignores_dashboard_when_reconstruction_stale", "market_risk_e2e_stale"),
+        ("__MARKET_METHOD__:tests.test_market_risk_metric_guard.TestMarketRiskMetricGuard.test_e2e_risk_keeps_historical_formal_known_net_as_degraded", "market_risk_historical_degraded"),
+        ("__MARKET_METHOD__:tests.test_market_risk_metric_guard.TestMarketRiskMetricGuard.test_close_review_with_degraded_evidence_is_not_ready", "market_risk_close_degraded"),
+        ("__MARKET_METHOD__:tests.test_market_risk_metric_guard.TestMarketRiskMetricGuard.test_e2e_risk_blocks_when_all_machine_sources_missing", "market_risk_e2e_blocked"),
+        ("__MARKET_METHOD__:tests.test_market_risk_metric_guard.TestMarketRiskMetricGuard.test_new_market_day_without_new_account_fact_keeps_gross_risk_valid", "market_risk_new_market_day"),
         ("__MARKET_METHOD__:tests.test_market_risk_metric_guard.TestMarketRiskMetricGuard.test_live_decision_and_query_context_match_latest_formal_risk", "market_risk_live_decision_query"),
         ("__MARKET_METHOD__:tests.test_market_risk_metric_guard.TestMarketRiskMetricGuard.test_current_gross_owner_is_available_to_decision_and_e2e_even_with_pending_fee", "market_risk_current_gross_owner"),
-        ("__MARKET_FILE__:tests.test_market_risk_metric_guard", "market_file_test_market_risk_metric_guard"),
         *[(f"__MARKET_FILE__:{module}", f"market_file_{module.rsplit('.', 1)[-1]}") for module in market_module_names],
         ("tests.test_opening_current_self_healing", "opening_current_self_healing"),
         ("tests.test_semantic_latest_main", "semantic_latest_main"),
