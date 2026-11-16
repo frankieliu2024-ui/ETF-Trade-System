@@ -337,13 +337,13 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
         self.assertEqual(status["classification"], "REPAIR_COOLDOWN")
 
     def test_watchdog_deduplicates_inflight_market_snapshot_dispatch(self):
-        workflow = (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
+        workflow = (ROOT / ".github/workflows/etf-runtime-self-healing-watchdog.yml").read_text(encoding="utf-8")
         dispatch = workflow.split("- name: Dispatch replacement market snapshot", 1)[1]
         self.assertIn("gh run list --workflow market-snapshot.yml", dispatch)
         self.assertIn('status == "queued" or .status == "in_progress"', dispatch)
 
     def test_successful_healthy_assessment_is_persisted_without_staging_repair_state(self):
-        workflow = (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
+        workflow = (ROOT / ".github/workflows/etf-runtime-self-healing-watchdog.yml").read_text(encoding="utf-8")
         persist = workflow.split("- name: Persist bounded self-healing state and deterministic repairs", 1)[1]
         self.assertIn("always() && steps.assess.outcome == 'success'", persist)
         self.assertIn("git add -A -- data/state/self_healing_status.json", persist)
@@ -360,7 +360,7 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
         )
 
     def test_self_healing_persistence_rebuilds_from_latest_main_without_rebase(self):
-        workflow = (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
+        workflow = (ROOT / ".github/workflows/etf-runtime-self-healing-watchdog.yml").read_text(encoding="utf-8")
         persist = workflow.split("- name: Persist bounded self-healing state and deterministic repairs", 1)[1]
         self.assertIn("git restore --worktree --staged .", persist)
         self.assertIn("git fetch origin main", persist)
@@ -375,7 +375,7 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
         self.assertNotIn("git push --force", persist)
 
     def test_self_healing_persistence_keeps_canonical_rebuilders_for_repair_actions(self):
-        workflow = (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
+        workflow = (ROOT / ".github/workflows/etf-runtime-self-healing-watchdog.yml").read_text(encoding="utf-8")
         persist = workflow.split("- name: Persist bounded self-healing state and deterministic repairs", 1)[1]
         self.assertIn('if [ "$action" = "REBUILD_DERIVED_CONTEXTS" ]; then', persist)
         self.assertIn('elif [ "$action" = "SYNC_RULES_VERSION_METADATA" ]; then', persist)
@@ -386,7 +386,7 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
         self.assertIn("Self-healing persistence exhausted bounded latest-main retries; fail closed.", persist)
 
     def test_event_wake_sources_are_existing_cross_market_workflows(self):
-        workflow = (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
+        workflow = (ROOT / ".github/workflows/etf-runtime-self-healing-watchdog.yml").read_text(encoding="utf-8")
         trigger = workflow.split("  workflow_run:", 1)[1].split("  push:", 1)[0]
         expected = {
             "ETF market snapshot",
@@ -422,13 +422,13 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
                 self.assertEqual(status["classification"], "EXPECTED_PULSE_MISSING")
                 self.assertEqual(status["recommended_action"], "REFRESH_SNAPSHOT")
 
-        workflow = (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
+        workflow = (ROOT / ".github/workflows/etf-runtime-self-healing-watchdog.yml").read_text(encoding="utf-8")
         dispatch = workflow.split("- name: Dispatch replacement market snapshot", 1)[1]
         self.assertEqual(dispatch.count("gh workflow run market-snapshot.yml --ref main"), 1)
         self.assertEqual(dispatch.count("python scripts/runtime_self_heal.py --record-trigger"), 1)
 
     def test_event_wake_preserves_single_dispatch_for_queued_or_in_progress_snapshot(self):
-        workflow = (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
+        workflow = (ROOT / ".github/workflows/etf-runtime-self-healing-watchdog.yml").read_text(encoding="utf-8")
         dispatch = workflow.split("- name: Dispatch replacement market snapshot", 1)[1]
         self.assertIn('active=$(gh run list --workflow market-snapshot.yml --limit 5 --json status', dispatch)
         self.assertIn('select(.status == "queued" or .status == "in_progress")', dispatch)
@@ -452,7 +452,7 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
         self.assertNotEqual(status["classification"], "SAME_DAY_CURRENT_MISSING")
 
     def test_opening_recovery_keeps_canonical_producer_and_safety_boundary(self):
-        workflow = (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
+        workflow = (ROOT / ".github/workflows/etf-runtime-self-healing-watchdog.yml").read_text(encoding="utf-8")
         snapshot = (ROOT / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
         fallback = (ROOT / ".github/workflows/opening-auction-current-fallback.yml").read_text(encoding="utf-8")
         self.assertIn('steps.assess.outputs.action == \'REFRESH_SNAPSHOT\'', workflow)
@@ -480,7 +480,7 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
         self.assertNotIn("recovered", status["reason"].lower())
 
     def test_bounded_us_failover_is_phase_aware_and_deduplicates_primary(self):
-        workflow = (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
+        workflow = (ROOT / ".github/workflows/etf-runtime-self-healing-watchdog.yml").read_text(encoding="utf-8")
         self.assertIn("expected_us_phase", workflow)
         self.assertIn('object_phase(code) == "REGULAR"', workflow)
         self.assertIn("gh run list --workflow us-extended-hours-pulse.yml", workflow)
