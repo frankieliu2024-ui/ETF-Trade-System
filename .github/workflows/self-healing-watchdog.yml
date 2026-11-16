@@ -24,27 +24,14 @@ on:
       - ".github/workflows/us-extended-hours-pulse.yml"
       - ".github/workflows/overseas-preopen-pulse.yml"
   schedule:
-    # Beijing 08:07-09:07: cover APAC open before the A-share watchdog starts.
-    - cron: "7,27,47 0 * * 1-5"
-    - cron: "7 1 * * 1-5"
-    # Beijing 09:19-09:59: redundant watchdog offset from production snapshot cron.
-    - cron: "19,29,39,49,59 1 * * 1-5"
-    # Beijing 10:04-10:54.
-    - cron: "4,14,24,34,44,54 2 * * 1-5"
-    # Beijing 11:04-11:34.
-    - cron: "4,14,24,34 3 * * 1-5"
-    # Beijing 13:04-14:54.
-    - cron: "4,14,24,34,44,54 5-6 * * 1-5"
-    # Beijing 15:04/15:14 close-grace watchdog.
-    - cron: "4,14 7 * * 1-5"
-    # Beijing 15:27-16:27: cover Hong Kong/APAC tail after A-share watchdog ends.
-    - cron: "27,47 7 * * 1-5"
-    - cron: "7,27 8 * * 1-5"
-    # US pre-market/regular/post-market heartbeat guard. The Python gate below
-    # checks America/New_York phase, so these broad UTC schedules are harmless
-    # outside an active US session and automatically handle DST/standard time.
-    - cron: "7,27,47 9-23 * * 1-5"
-    - cron: "7,27,47 0-1 * * 2-6"
+    # One bounded heartbeat every 30 minutes on weekdays. The runtime phase gate
+    # decides whether this tick is relevant; avoid overlapping APAC and US cron
+    # windows in the same workflow, which previously created duplicate runs.
+    - cron: "7,37 * * 1-5"
+    # Cover the final UTC hour of the Friday US session without overlapping the
+    # weekday schedule above. Producer failures still wake this same watchdog
+    # through workflow_run.
+    - cron: "7,37 0-1 * * 6"
 
 permissions:
   contents: write
