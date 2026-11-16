@@ -24,7 +24,7 @@ AUTO_ROLLBACK_ALLOWLIST = {
     "scripts/runtime_self_heal.py",
     "scripts/maintenance_guard.py",
     "scripts/workflow_failure_guard.py",
-    ".github/workflows/self-healing-watchdog.yml",
+    ".github/workflows/etf-runtime-self-healing-watchdog.yml",
     ".github/workflows/etf-system-consistency.yml",
     ".github/workflows/workflow-failure-guard.yml",
 }

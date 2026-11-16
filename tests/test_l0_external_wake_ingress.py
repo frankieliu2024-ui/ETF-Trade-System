@@ -3,7 +3,7 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-WORKFLOW = ROOT / ".github/workflows/self-healing-watchdog.yml"
+WORKFLOW = ROOT / ".github/workflows/etf-runtime-self-healing-watchdog.yml"
 
 
 class L0ExternalWakeIngressTests(unittest.TestCase):
