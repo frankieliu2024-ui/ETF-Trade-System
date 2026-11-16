@@ -194,6 +194,12 @@ jobs:
         run: |
           PYTHONPATH=scripts python -m unittest tests.test_decision_temporal_semantics
 
+      - name: Validate stable workflow registry names
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/check_workflow_registry.py
+
       - name: Run full system consistency check
         shell: bash
         env:
