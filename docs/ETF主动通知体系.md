@@ -177,7 +177,7 @@ PushPlus微信渠道存在平台层展示模板：ETF系统通过API传入的业
 - A股通知workflow：`.github/workflows/decision-notification.yml`
 - 亚太行情与通知workflow：`.github/workflows/overseas-preopen-pulse.yml`
 - 美股行情与通知workflow：`.github/workflows/us-extended-hours-pulse.yml`
-- 跨市场心跳恢复：`.github/workflows/self-healing-watchdog.yml`
+- 跨市场心跳恢复：`.github/workflows/etf-runtime-self-healing-watchdog.yml`
 
 底层workflow可以按市场拆分，但不得形成多套用户通知规则。正式生产通知入口必须经过统一受保护入口；新增独立PushPlus生产入口属于架构变化，必须先在本文登记其资格边界，并同步纳入一致性测试，禁止通过新增workflow绕过统一规则。
 
