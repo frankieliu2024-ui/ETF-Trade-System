@@ -27,8 +27,8 @@ on:
     # One bounded heartbeat every 30 minutes on weekdays. The runtime phase gate
     # decides whether this tick is relevant; avoid overlapping APAC and US cron
     # windows in the same workflow, which previously created duplicate runs.
-    - cron: "7 * * 1-5"
-    - cron: "37 * * 1-5"
+    - cron: "7 * * * 1-5"
+    - cron: "37 * * * 1-5"
     # Cover the final UTC hour of the Friday US session without overlapping the
     # weekday schedule above. Producer failures still wake this same watchdog
     # through workflow_run.
