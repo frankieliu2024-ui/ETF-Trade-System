@@ -21,6 +21,6 @@ def test_market_snapshot_publishers_are_main_branch_only():
 
 def test_other_runtime_publishers_are_main_branch_only():
     fallback = (ROOT / ".github/workflows/opening-auction-current-fallback.yml").read_text(encoding="utf-8")
-    watchdog = (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
+    watchdog = (ROOT / ".github/workflows/etf-runtime-self-healing-watchdog.yml").read_text(encoding="utf-8")
     assert "github.ref == 'refs/heads/main'" in fallback[fallback.index("Publish repaired CURRENT and contexts"):]
     assert "github.ref == 'refs/heads/main'" in watchdog[watchdog.index("Persist bounded self-healing state and deterministic repairs"):]
