@@ -1290,7 +1290,10 @@ jobs:
               *) REVIEW_EVENT_PATH="" ;;
             esac
           fi
-          if [ -n "$SCHEDULED_REVIEW_COMPLETION_PATH" ] && [ -z "$REVIEW_EVENT_PATH" ]; then
+          # An exact completion path is the frozen business payload. Audit/event/report
+          # projections are post-notification metadata and must never replace or
+          # gate this direct same-completion notification route.
+          if [ -n "$SCHEDULED_REVIEW_COMPLETION_PATH" ]; then
             direct_content_flag="--formal"
             direct_content_flag="${direct_content_flag}-content-file"
             python scripts/run_guarded_notification.py center --mode event "$direct_content_flag" "$SCHEDULED_REVIEW_COMPLETION_PATH"

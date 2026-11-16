@@ -345,9 +345,19 @@ def execute_post_handoff(target: Path, *, completion_kind: str = "SCHEDULED_REVI
         submitted = bool(primary.get("submitted"))
         if not submitted and dispatch.get("recovery_attempted"):
             submitted = bool((dispatch.get("recovery") or {}).get("submitted"))
+        recovery = dispatch.get("recovery") or {}
+        selected = recovery if dispatch.get("recovery_attempted") else primary
+        workflow_run_confirmed = selected.get("workflow_run_created") is True
         result["notification_dispatch"] = {
             "attempted": True,
-            "status": "SUBMITTED" if submitted else "FAILED",
+            "status": (
+                "SUBMITTED"
+                if submitted and workflow_run_confirmed
+                else "ACCEPTED_NOT_CONFIRMED"
+                if submitted
+                else "FAILED"
+            ),
+            "workflow_run_confirmed": workflow_run_confirmed,
             **dispatch,
         }
         if not submitted:
@@ -355,8 +365,14 @@ def execute_post_handoff(target: Path, *, completion_kind: str = "SCHEDULED_REVI
             result["failure_stage"] = "notification_dispatch"
             result["failure_reason"] = str(dispatch.get("reason") or "notification dispatch was not submitted")
             return result
-        result["business_notification"] = {"status": "SUBMITTED", "completion_path": relative}
-        # Notification submission is the business handoff boundary.  Audit
+        # A 204 dispatch response is an accepted handoff, not proof that the
+        # Actions run was materialized. Preserve that distinction without
+        # turning the audit gap into a second chain or a business rejection.
+        result["business_notification"] = {
+            "status": "SUBMITTED" if workflow_run_confirmed else "ACCEPTED_NOT_CONFIRMED",
+            "completion_path": relative,
+        }
+        # Notification submission is the business handoff boundary. Audit
         # projections are deliberately reported after it and cannot rewrite a
         # successful business notification as a notification failure.
         result["ok"] = True
