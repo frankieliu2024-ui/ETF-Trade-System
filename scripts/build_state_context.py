@@ -267,19 +267,37 @@ def load_node_local_formal_discovery(root: Path, current: dict) -> dict | None:
     """
     projection = load_json(root / "data" / "state" / "formal_discovery_current.json", {})
     query = load_json(root / "data" / "state" / "query_context.json", {})
-    discovery = projection if projection else (query.get("formal_etf_discovery") or {})
-    if not discovery or str(discovery.get("status") or "").upper() == "NOT_REQUESTED":
-        return None
-    query_current = query.get("current") or {}
-    if str(discovery.get("market_date") or query.get("market_date") or query_current.get("market_date") or "") != str(current.get("market_date") or ""):
-        return None
-    if str(discovery.get("latest_valid_node") or query.get("latest_valid_node") or query_current.get("latest_valid_node") or "") != str(current.get("latest_valid_node") or ""):
-        return None
-    query_snapshot = str(discovery.get("latest_snapshot") or query_current.get("latest_snapshot") or "")
+    query_discovery = query.get("formal_etf_discovery") if isinstance(query, dict) else None
+    sources = [item for item in (projection, query_discovery) if isinstance(item, dict)]
+
+    current_market_date = str(current.get("market_date") or "")
+    current_node = str(current.get("latest_valid_node") or "")
     current_snapshot = str(current.get("latest_snapshot") or "")
-    if query_snapshot and current_snapshot and query_snapshot != current_snapshot:
+    candidates = []
+    for discovery in sources:
+        status = str(discovery.get("status") or "").upper()
+        if status not in {"READY", "PASS", "DEGRADED"}:
+            continue
+        if str(discovery.get("market_date") or "") != current_market_date:
+            continue
+        if str(discovery.get("latest_valid_node") or "").lower() != current_node.lower():
+            continue
+        discovery_snapshot = str(discovery.get("latest_snapshot") or "")
+        if current_snapshot and discovery_snapshot != current_snapshot:
+            continue
+        candidates.append(discovery)
+
+    if not candidates:
         return None
-    return discovery
+
+    # Prefer the exact current-snapshot binding, then the newest generated
+    # artifact. Never let an older query_context copy mask a newer canonical
+    # Discovery projection, and never let a stale projection mask a newer
+    # request-context copy that is already bound to the same snapshot.
+    def generated_at(item: dict) -> str:
+        return str(item.get("generated_at_beijing") or item.get("formed_at_beijing") or "")
+
+    return max(candidates, key=generated_at)
 
 
 def main() -> None:
