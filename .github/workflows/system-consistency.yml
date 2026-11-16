@@ -227,9 +227,16 @@ jobs:
             echo "Consistency report was not produced; cannot persist a current result." >&2
             exit 1
           fi
+          # Evaluate maintenance health against the exact checkout that produced
+          # ETF_CONSISTENCY_REPORT_PATH. Do not re-evaluate it after rebasing onto a
+          # moving main branch: concurrent state commits must not create identity drift.
+          locked_maintenance_health="$RUNNER_TEMP/maintenance_health.locked.json"
+          python scripts/maintenance_guard.py
+          cp data/state/maintenance_health.json "$locked_maintenance_health"
           for attempt in 1 2 3; do
             git fetch --no-tags origin main
             git reset --hard origin/main
+            cp "$locked_maintenance_health" data/state/maintenance_health.json
             python - <<PY
           import json
           import os
@@ -254,9 +261,8 @@ jobs:
           candidate["persisted_at_beijing"] = datetime.now(timezone.utc).astimezone(ZoneInfo("Asia/Shanghai")).isoformat()
           target.write_text(json.dumps(candidate, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
           PY
-            # Refresh maintenance health only after the consistency report has
-            # been generated and the heredoc has completed.
-            python scripts/maintenance_guard.py
+            # Keep the maintenance projection paired with the locked report;
+            # re-running against moving origin/main would compare different contexts.
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add data/state/system_consistency.json data/state/maintenance_health.json
