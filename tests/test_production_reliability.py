@@ -600,7 +600,7 @@ class WatchdogHealthSemanticsTests(unittest.TestCase):
     def test_watchdog_observer_separates_execution_from_observed_health(self):
         root = Path(__file__).resolve().parents[1]
         guard = (root / "scripts/production_health_guard.py").read_text(encoding="utf-8")
-        workflow = (root / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
+        workflow = (root / ".github/workflows/etf-runtime-self-healing-watchdog.yml").read_text(encoding="utf-8")
         self.assertIn("--watchdog-observer", guard)
         self.assertIn('"execution_status"', guard)
         self.assertIn('"observer_mode"', guard)
@@ -612,7 +612,7 @@ class WatchdogHealthSemanticsTests(unittest.TestCase):
     def test_snapshot_publication_is_atomic_and_readback_verified(self):
         root = Path(__file__).resolve().parents[1]
         runner = (root / "scripts/cloud_runner_snapshot.py").read_text(encoding="utf-8")
-        watchdog = (root / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
+        watchdog = (root / ".github/workflows/etf-runtime-self-healing-watchdog.yml").read_text(encoding="utf-8")
         snapshot = (root / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
         self.assertIn("def verify_published_snapshot", runner)
         self.assertIn("temp.replace(target)", runner)
@@ -625,7 +625,7 @@ class WatchdogHealthSemanticsTests(unittest.TestCase):
     def test_watchdog_does_not_turn_observed_health_into_task_blockage(self):
         root = Path(__file__).resolve().parents[1]
         guard = (root / "scripts/production_health_guard.py").read_text(encoding="utf-8")
-        workflow = (root / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
+        workflow = (root / ".github/workflows/etf-runtime-self-healing-watchdog.yml").read_text(encoding="utf-8")
         self.assertIn("Global consistency or maintenance health failure alone does not block a request-bound Formal Decision", guard)
         self.assertIn("The watchdog process fails only when its own assessment", workflow)
 
