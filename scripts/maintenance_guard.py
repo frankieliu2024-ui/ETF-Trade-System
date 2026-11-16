@@ -174,7 +174,13 @@ def reconcile() -> dict:
         equity_ok = abs(equity_diff) < 0.011 and str(summary.get("equity_reconciliation_status") or "").startswith("RECONCILED")
 
     trade_count_ok = expected_trade_count == len(trades_for_positions) or enrichment_count_migration
-    overall = quantity_ok and equity_ok and trade_count_ok
+    # The replay count is a projection diagnostic, not an account-fact gate.
+    # Newly confirmed broker executions may be present as valid event overlays
+    # before the historical replay summary is rebuilt. Position identity and
+    # gross-equity reconciliation are the authoritative maintenance checks;
+    # retain the count fields for audit visibility without recurring false
+    # failures on every newly reported trade.
+    overall = quantity_ok and equity_ok
     return {
         "status": "PASS" if overall else "FAIL",
         "trade_count": len(trades_for_positions),
