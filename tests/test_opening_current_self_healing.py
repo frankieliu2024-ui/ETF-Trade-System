@@ -346,7 +346,7 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
         workflow = (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
         persist = workflow.split("- name: Persist bounded self-healing status", 1)[1]
         self.assertIn("always() && steps.assess.outcome == 'success'", persist)
-        self.assertIn("git add -- data/state/self_healing_status.json", persist)
+        self.assertIn("git add -A -- data/state/self_healing_status.json", persist)
         self.assertIn("status_changed=", persist)
         self.assertNotIn("build_state_context.py", persist)
         self.assertNotIn("repair-safe", persist)
@@ -363,7 +363,7 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
         self.assertIn("python scripts/runtime_self_heal.py --assess", persist)
         self.assertIn('max_attempts=3', persist)
         self.assertIn('if [ "$parent" != "$remote" ]; then', persist)
-        self.assertIn("rebuilding from latest main", persist)
+        self.assertIn("retrying from latest main", persist)
         self.assertNotIn("git pull --rebase origin main", persist)
         self.assertNotIn("git rebase", persist)
         self.assertNotIn("git push --force", persist)
