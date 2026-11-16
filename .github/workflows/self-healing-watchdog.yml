@@ -40,7 +40,7 @@ permissions:
   actions: write
 
 concurrency:
-  # Serialize every main-mutating runtime producer with the canonical state writer lane.
+  # Serialize the watchdog's own status writer with the canonical state writer lane.
   group: etf-main-state-writer
   cancel-in-progress: false
 
@@ -54,7 +54,7 @@ jobs:
         (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion != 'success')
       }}
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
@@ -79,78 +79,6 @@ jobs:
               f.write(f"classification={data.get('classification', 'UNKNOWN')}\n")
           print(f"classification={data.get('classification')} action={data.get('recommended_action')}")
           PY
-
-      - name: Recover interrupted broker account synchronization
-        if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == 'ETF market snapshot' && github.event.workflow_run.conclusion != 'success' }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          source_sha="${{ github.event.workflow_run.head_sha }}"
-          files="$(gh api "repos/$GITHUB_REPOSITORY/commits/$source_sha" --jq '.files[]?.filename' | grep '^requests/live_snapshot/.*\\.json$' || true)"
-          for request_file in $files; do
-            is_broker_sync="$(python - "$request_file" <<'PY'
-          import json, sys
-          from pathlib import Path
-          try:
-              obj=json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
-          except Exception:
-              print('false'); raise SystemExit(0)
-          print('true' if (
-              str(obj.get('request_type') or '').upper() in {'STATE_SYNC_ONLY','ACCOUNT_FACT_REFRESH'}
-              and str(obj.get('formal_fact_type') or '').upper() == 'BROKER_SCREENSHOT_ACCOUNT_FACT'
-              and str(obj.get('interaction_scenario') or '').upper() == 'BROKER_SCREENSHOT_SYNC'
-          ) else 'false')
-          PY
-          )"
-            [ "$is_broker_sync" = "true" ] || continue
-            active="$(gh run list --workflow market-snapshot.yml --limit 20 --json status --jq '[.[] | select(.status == "queued" or .status == "in_progress")] | length')"
-            if [ "$active" != "0" ]; then
-              echo "A market-snapshot run is already active; no duplicate replay."
-              continue
-            fi
-            gh workflow run market-snapshot.yml --ref main -f replay_request="$request_file" -f node=scheduled -f probe_only=false
-            echo "Replayed interrupted broker synchronization through the canonical market-snapshot owner: $request_file"
-          done
-      - name: Reconcile pending broker account synchronization
-        if: ${{ github.event_name == 'schedule' || github.event_name == 'push' }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          request_file="$(python - <<'PY'
-          import json
-          from pathlib import Path
-          candidates=[]
-          for p in Path('requests/live_snapshot').glob('*.json'):
-              try: obj=json.loads(p.read_text(encoding='utf-8'))
-              except Exception: continue
-              if str(obj.get('formal_fact_type') or '').upper() != 'BROKER_SCREENSHOT_ACCOUNT_FACT': continue
-              if str(obj.get('interaction_scenario') or '').upper() != 'BROKER_SCREENSHOT_SYNC': continue
-              fact=obj.get('account_fact') or {}
-              candidates.append((str(fact.get('updated_at') or obj.get('account_updated_at') or ''),str(p)))
-          print(max(candidates)[1] if candidates else '')
-          PY
-          )"
-          [ -n "$request_file" ] || exit 0
-          needs_sync="$(python - "$request_file" <<'PY'
-          import json,sys
-          from datetime import datetime
-          from pathlib import Path
-          def parse(v):
-              try: return datetime.fromisoformat(str(v).replace('Z','+00:00'))
-              except Exception: return datetime.min
-          req=json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
-          cur=json.loads(Path('data/state/account_fact.json').read_text(encoding='utf-8'))
-          rt=parse((req.get('account_fact') or {}).get('updated_at') or req.get('account_updated_at'))
-          ct=parse(cur.get('updated_at'))
-          legacy_market_date = "market_date" in cur
-          print('true' if rt > ct or legacy_market_date else 'false')
-          PY
-          )"
-          [ "$needs_sync" = "true" ] || exit 0
-          active="$(gh run list --workflow market-snapshot.yml --limit 20 --json status --jq '[.[] | select(.status == "queued" or .status == "in_progress")] | length')"
-          if [ "$active" != "0" ]; then exit 0; fi
-          gh workflow run market-snapshot.yml --ref main -f replay_request="$request_file" -f node=scheduled -f probe_only=false
-          echo "Dispatched pending broker synchronization: $request_file"
 
       - name: Assess dedicated cross-market pulse heartbeats
         id: pulse_guard
@@ -270,54 +198,10 @@ jobs:
           gh workflow run us-extended-hours-pulse.yml --ref main
           echo "Dispatched canonical US pulse because dedicated heartbeat was stale."
 
-      - name: Recover missing US notification batch through canonical workflow
-        if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.name == 'US extended-hours pulse' && github.event.workflow_run.conclusion == 'success' }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          source_run_id="${{ github.event.workflow_run.id }}"
-          source_completed_at="${{ github.event.workflow_run.updated_at }}"
-          sleep 10
-          runs_json="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/decision-notification.yml/runs?per_page=30")"
-          success_count=0
-          while IFS= read -r run_id; do
-            [ -n "$run_id" ] || continue
-            jobs_json="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/jobs?per_page=100")"
-            if echo "$jobs_json" | jq -e '.jobs[].steps[]? | select(.name == "Send US session summary when due" and .conclusion == "success")' >/dev/null; then
-              success_count=1
-              break
-            fi
-          done < <(echo "$runs_json" | jq -r --arg completed "$source_completed_at" '.workflow_runs[] | select(.created_at >= $completed) | .id')
-          if [ "$success_count" = "1" ]; then
-            echo "Primary US notification batch already executed; no fallback dispatch."
-            exit 0
-          fi
-          active="$(echo "$runs_json" | jq '[.workflow_runs[] | select(.status == "queued" or .status == "in_progress")] | length')"
-          if [ "$active" != "0" ]; then
-            echo "US notification consumer is queued/in progress; no duplicate fallback dispatch."
-            exit 0
-          fi
-          gh workflow run decision-notification.yml --ref main -f recovery_market=us -f recovery_source_run_id="$source_run_id"
-          echo "Dispatched canonical US notification batch fallback for pulse $source_run_id."
-
       - name: Run read-only comprehensive production health aggregate
         shell: bash
         run: |
           python scripts/production_health_guard.py --watchdog-observer
-
-      - name: Rebuild derived contexts safely
-        if: ${{ steps.assess.outputs.action == 'REBUILD_DERIVED_CONTEXTS' }}
-        run: |
-          python scripts/build_state_context.py
-          python scripts/runtime_self_heal.py --assess
-
-      - name: Repair deterministic metadata drift
-        if: ${{ steps.assess.outputs.action == 'SYNC_RULES_VERSION_METADATA' }}
-        run: |
-          python scripts/runtime_self_heal.py --repair-safe
-          python scripts/build_state_context.py
-          python scripts/runtime_self_heal.py --assess
-
 
       - name: Dispatch replacement market snapshot
         if: ${{ steps.assess.outputs.action == 'REFRESH_SNAPSHOT' }}
@@ -330,146 +214,64 @@ jobs:
           gh workflow run market-snapshot.yml --ref main -f node=scheduled -f probe_only=false
           python scripts/runtime_self_heal.py --record-trigger
 
-      - name: Persist bounded self-healing state and deterministic repairs
-        # Keep PR validation read-only. Runtime repair is a main-branch owner
-        # operation and must never push a PR worktree to main.
-        # Keep PR validation read-only and persist only a successful assessment on main.
+      - name: Persist bounded self-healing status
+        # The watchdog owns only its bounded health assessment and its own
+        # rebuildable status receipt. Domain facts, derived contexts, metadata,
+        # notifications, and market snapshots remain with their canonical owners.
         if: ${{ github.ref == 'refs/heads/main' && always() && steps.assess.outcome == 'success' }}
-        # The assessment artifact is itself canonical runtime state. Persist it
-        # whenever the calculated status differs from main, including a return
-        # to HEALTHY/NONE, so downstream consistency never consumes stale
-        # self-healing metadata after a successful recovery.
         shell: bash
         run: |
           set -euo pipefail
-          # Drop any rebuildable working-tree changes produced by earlier steps
-          # before synchronizing this persistence attempt to execution-time latest main.
           git restore --worktree --staged .
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # self_healing_status and the optional derived contexts are rebuildable
-          # runtime state. Never rebase a stale locally-computed state commit over
-          # a concurrently advanced main. Re-sync first, rebuild from that exact
-          # main, and use a bounded compare-and-push retry if main moves again.
           max_attempts=3
           for attempt in $(seq 1 "$max_attempts"); do
             git fetch origin main
             git reset --hard origin/main
-
             python scripts/runtime_self_heal.py --assess
-            action="$(python - <<'PY'
-          import json
-          from pathlib import Path
-          data = json.loads(Path('data/state/self_healing_status.json').read_text(encoding='utf-8'))
-          print(data.get('recommended_action', 'NONE'))
-          PY
-            )"
 
-            # A live Formal Decision parent owns the request-bound query
-            # context until its same-request handoff is complete. Watchdog
-            # maintenance must not rebuild global context and overwrite that
-            # large handoff with an empty/unbound projection.
-            formal_handoff_active="$(python - <<'PY'
-          import json
-          from pathlib import Path
-          formal_sources = {
-              "CHATGPT_MANUAL_FORMAL_ANALYSIS",
-              "CHATGPT_MANUAL_SCHEDULED_FORMAL_ANALYSIS",
-              "CHATGPT_SCHEDULED_FORMAL_ANALYSIS",
-          }
-          query = {}
-          query_path = Path("data/state/query_context.json")
-          if query_path.exists() and query_path.stat().st_size:
-              try:
-                  query = json.loads(query_path.read_text(encoding="utf-8"))
-              except Exception:
-                  query = {}
-          bound = str((((query.get("decision_fact_pack") or {}).get("trigger") or {}).get("request_id")) or "").strip()
-          active = False
-          for path in sorted(Path("requests/live_snapshot").glob("*.json")):
-              try:
-                  request = json.loads(path.read_text(encoding="utf-8"))
-              except Exception:
-                  continue
-              source = str(request.get("source") or "").upper()
-              request_type = str(request.get("request_type") or "").upper()
-              request_id = str(request.get("request_id") or "").strip()
-              if request_type == "MARKET_QUOTE_REFRESH" and source in formal_sources and request_id and request_id != bound:
-                  active = True
-          print("true" if active else "false")
-          PY
-            )"
-            if [ "$action" = "REBUILD_DERIVED_CONTEXTS" ]; then
-              python scripts/build_state_context.py
-              python scripts/runtime_self_heal.py --assess
-            elif [ "$action" = "SYNC_RULES_VERSION_METADATA" ]; then
-              python scripts/runtime_self_heal.py --repair-safe
-              python scripts/build_state_context.py
-              python scripts/runtime_self_heal.py --assess
-            fi
-
-            # checked_at and age counters are observations, not state transitions.
-            # Do not turn every watchdog wake into a main commit. Persist the
-            # status only when its stable classification/decision evidence changes.
             status_changed="$(python - <<'PY'
           import json, subprocess
           from pathlib import Path
           def stable(raw):
-              try:
-                  value=json.loads(raw)
-              except Exception:
-                  return None
+              value = json.loads(raw)
               for key in ("checked_at", "current_capture_age_seconds"):
                   value.pop(key, None)
               return value
-          current=stable(Path("data/state/self_healing_status.json").read_text(encoding="utf-8"))
+          current = stable(Path("data/state/self_healing_status.json").read_text(encoding="utf-8"))
           try:
-              previous_raw=subprocess.check_output(
-                  ["git","show","origin/main:data/state/self_healing_status.json"],
-                  text=True, stderr=subprocess.DEVNULL
-              )
-              previous=stable(previous_raw)
+              previous = stable(subprocess.check_output(
+                  ["git", "show", "origin/main:data/state/self_healing_status.json"],
+                  text=True, stderr=subprocess.DEVNULL,
+              ))
           except Exception:
-              previous=None
+              previous = None
           print("true" if current != previous else "false")
           PY
             )"
             if [ "$status_changed" = "true" ]; then
-              git add -A -- data/state/self_healing_status.json
+              git add -- data/state/self_healing_status.json
             else
               git restore --worktree -- data/state/self_healing_status.json
-            fi
-            # Formal request-bound contexts are owned by the canonical market
-            # snapshot producer. A watchdog assessment/recovery/escalation must
-            # never publish its global or empty rebuild over that handoff.
-            # Only the two explicit metadata/derived-context repair actions may
-            # persist these files, and those actions are not selected while an
-            # unfinished Formal parent is present.
-            if [ "$action" = "REBUILD_DERIVED_CONTEXTS" ] || [ "$action" = "SYNC_RULES_VERSION_METADATA" ]; then
-              git add -A -- data/state/CURRENT.json data/state/decision_context.json data/state/review_context.json data/state/intraday_path_features.json data/state/decision_trigger.json data/state/capital_efficiency_ranking.json
-            elif [ "$action" = "__REGISTERED_DERIVED_CONTEXT_WRITER_CONTRACT__" ]; then
-              # Static production-contract marker; unreachable by runtime policy.
-              git add -A -- data/state/CURRENT.json data/state/decision_context.json data/state/review_context.json data/state/intraday_path_features.json data/state/decision_trigger.json data/state/capital_efficiency_ranking.json
             fi
             if git diff --cached --quiet; then
               exit 0
             fi
-
-            git commit -m "ops: record deterministic runtime self-healing"
+            git commit -m "ops: record bounded watchdog health status"
             parent="$(git rev-parse HEAD^)"
             remote="$(git ls-remote origin refs/heads/main | cut -f1)"
             if [ "$parent" != "$remote" ]; then
-              echo "main advanced during self-healing persistence; rebuilding from latest main (attempt $attempt/$max_attempts)."
+              echo "main advanced during watchdog status persistence; retrying from latest main (attempt $attempt/$max_attempts)."
               continue
             fi
             if git push origin HEAD:main; then
               exit 0
             fi
-            echo "main advanced before push; rebuilding from latest main (attempt $attempt/$max_attempts)."
+            echo "main advanced before watchdog status push; retrying from latest main (attempt $attempt/$max_attempts)."
           done
-
-          echo "Self-healing persistence exhausted bounded latest-main retries; fail closed."
+          echo "Watchdog status persistence exhausted bounded latest-main retries; fail closed."
           exit 1
 
       - name: Record persistent or structural escalation
