@@ -22,22 +22,20 @@ def scalar(value: str) -> str:
 
 def read_workflow_name(path: Path) -> str:
     for raw in path.read_text(encoding="utf-8").splitlines():
-        line = raw.strip()
-        if not line or line.startswith("#"):
+        if not raw.strip() or raw.lstrip().startswith("#"):
             continue
-        match = NAME_RE.match(line)
+        # Only column-zero `name:` is the workflow declaration. Do not strip
+        # indentation: job/step names must never satisfy this check.
+        match = NAME_RE.match(raw)
         if match:
             name = scalar(match.group("value"))
             if not name:
                 raise SystemExit(f"{path}: workflow name is empty")
-            if name == path.name or name == path.stem:
-                raise SystemExit(f"{path}: workflow name falls back to file path")
             return name
         # name must be a top-level declaration before the event/job sections.
-        if line.startswith(("on:", "permissions:", "concurrency:", "env:", "jobs:")):
+        if raw.startswith(("on:", "permissions:", "concurrency:", "env:", "jobs:")):
             break
     raise SystemExit(f"{path}: missing top-level workflow name")
-
 
 def referenced_workflow_names(path: Path) -> list[str]:
     lines = path.read_text(encoding="utf-8").splitlines()
