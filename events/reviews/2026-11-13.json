@@ -1,0 +1,31 @@
+{
+  "event_type": "FORMAL_SCHEDULED_TRADE_REVIEW",
+  "source": "CHATGPT_HISTORICAL_CANONICAL_RECONCILIATION",
+  "entry_mode": "MANUAL_CONVERSATION",
+  "market_date": "2026-11-13",
+  "account_updated_at": "2026-11-13T17:21:00+08:00",
+  "request_id": "trade-review-historical-reconciliation-20261113-20261116",
+  "report_id": "etf_trade_review:historical-reconciliation-20261113",
+  "review": {
+    "review_scope": "FULL_DAY",
+    "review_version": "HISTORICAL_EXECUTED_TRADE_RECONCILIATION",
+    "market_date": "2026-11-13",
+    "reviewed_at_beijing": "2026-11-16T11:43:47+08:00",
+    "data_time": {
+      "close_data_status": "DEGRADED_HISTORICAL_RECONCILIATION",
+      "close_data_gap": "本次修复只核对已发布成交事件、事前决策关联和复盘索引，不重新生成或补写2026-11-13收盘行情。"
+    },
+    "case_mapping": {
+      "existing_case_updates": [
+        {"trade_event_id":"broker-trade-20261113-095227-159529-chatgpt","decision_id":"manual-20261013T075913_0800-formal-decision-analysis_decision","case_id":"CASE-20261113-01","security_code":"159529","case_status":"OPEN","mapping_reason":"已发布成交事件与事前决策关联均可回读；补齐历史CASE映射，不重新推断判断质量。"},
+        {"trade_event_id":"broker-trade-20261113-100838-510230-chatgpt","decision_id":"FORMAL_COMPLETION:scheduled-formal-decision-20261111T132544+0800-k7m4q9","case_id":"CASE-20261113-02","security_code":"510230","case_status":"OPEN","mapping_reason":"已发布成交事件与事前正式完成记录均可回读；补齐历史CASE映射，不重新推断判断质量。"},
+        {"trade_event_id":"broker-trade-20261113-111948-512690-chatgpt","decision_id":"20260928_104100_chatgpt_formal_decision_decision","case_id":"CASE-20261113-03","security_code":"512690","case_status":"OPEN","mapping_reason":"已发布成交事件与事前决策关联均可回读；补齐历史CASE映射，不重新推断判断质量。"},
+        {"trade_event_id":"broker-trade-20261113-144506-159253-chatgpt","decision_id":"FORMAL_COMPLETION:scheduled-formal-decision-20261113T143322+0800-r4n8s6","case_id":"CASE-20261113-04","security_code":"159253","case_status":"OPEN","mapping_reason":"已发布成交事件与事前正式完成记录均可回读；补齐历史CASE映射，不重新推断判断质量。"}
+      ],
+      "ineligible_executed_trades": [
+        {"trade_event_id":"broker-trade-20261113-100945-159217-chatgpt","decision_id":"20260921_130350_manual_intraday_decision","security_code":"159217","eligibility":"EXPLICIT_CANONICAL_INELIGIBILITY","reason":"本次为已有Trial的退出成交；当前没有可合法承接该退出的既有CASE，且不为退出事实倒造新的CASE。保留成交、决策关联和退出事实。"},
+        {"trade_event_id":"broker-trade-20261113-100951-159056-chatgpt","decision_id":"FORMAL_COMPLETION:scheduled-formal-decision-20261111T142806+0800-r8p3v6","security_code":"159056","eligibility":"EXPLICIT_CANONICAL_INELIGIBILITY","reason":"本次为已有Trial的退出成交；当前没有可合法承接该退出的既有CASE，且不为退出事实倒造新的CASE。保留成交、决策关联和退出事实。"}
+      ]
+    }
+  }
+}
