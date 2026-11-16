@@ -35,7 +35,7 @@ class WorkflowCostConservationTests(unittest.TestCase):
 
     def test_cost_changes_do_not_touch_market_or_decision_contracts(self):
         self.assertIn('name: ETF market snapshot', (ROOT / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8"))
-        self.assertIn('name: ETF runtime self-healing watchdog', (ROOT / ".github/workflows/etf-runtime-self-healing-watchdog.yml").read_text(encoding="utf-8"))
+        self.assertIn('name: ETF runtime self-healing watchdog', (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8"))
         self.assertIn('name: ETF decision notification', DECISION.read_text(encoding="utf-8"))
         self.assertIn('name: ETF system consistency', CONSISTENCY.read_text(encoding="utf-8"))
 
