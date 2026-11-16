@@ -1,52 +1,57 @@
 {
-  "generated_at": "2026-11-16T05:44:14Z",
+  "generated_at": "2026-11-16T08:41:17Z",
   "market_date": "2026-11-16",
   "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
   "read_only": true,
   "decision_boundary": "只描述离散行情脉冲形成的日内路径几何、成交增量、14:30后已观察路径和相对强弱；结构候选标签不是交易信号，不生成风险许可、机会状态、金额或买卖动作。",
   "label_boundary": "RAPID_RISE/SHARP_DROP/V_RECOVERY/HIGH_ZONE_CONSOLIDATION均为描述性候选标签。必须结合采样覆盖、实际时点、市场阶段及MASTER完整决策链解释。",
   "status": "READY",
-  "snapshot_count": 14,
+  "snapshot_count": 18,
   "first_snapshot": "data/market/snapshots/2026-11-16_093206.json",
-  "latest_snapshot": "data/market/snapshots/2026-11-16_134034.json",
+  "latest_snapshot": "data/market/snapshots/2026-11-16_150454.json",
   "features": [
     {
       "symbol": "000001",
       "asset_class": "A_SHARE_INDEX",
-      "sample_count": 14,
+      "sample_count": 18,
       "first_as_of_beijing": "2026-11-16T09:32:03+08:00",
-      "latest_as_of_beijing": "2026-11-16T13:40:30+08:00",
+      "latest_as_of_beijing": "2026-11-16T15:04:00+08:00",
       "first_price": 3602.79,
-      "latest_price": 3604.17,
-      "path_change_pct": 0.0383,
-      "path_low": 3597.72,
-      "path_low_as_of_beijing": "2026-11-16T09:59:33+08:00",
+      "latest_price": 3602.57,
+      "path_change_pct": -0.0061,
+      "path_low": 3591.98,
+      "path_low_as_of_beijing": "2026-11-16T14:36:45+08:00",
       "path_high": 3620.0,
       "path_high_as_of_beijing": "2026-11-16T11:36:00+08:00",
-      "recovery_from_path_low_pct": 0.1793,
-      "retreat_from_path_high_pct": -0.4373,
-      "latest_day_range_position": 0.3613,
+      "recovery_from_path_low_pct": 0.2948,
+      "retreat_from_path_high_pct": -0.4815,
+      "latest_day_range_position": 0.4378,
       "late_session_context": {
-        "status": "NOT_YET_AVAILABLE",
+        "status": "READY",
         "reference_clock_beijing": "14:30",
-        "move_from_reference_pct": null,
-        "decision_boundary": "14:30前不构造尾盘方向；不得用未来节点或旧交易日替代。"
+        "reference_as_of_beijing": "2026-11-16T14:36:45+08:00",
+        "reference_price": 3591.98,
+        "latest_as_of_beijing": "2026-11-16T15:04:00+08:00",
+        "latest_price": 3602.57,
+        "move_from_reference_pct": 0.2948,
+        "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+        "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
       },
-      "recent_interval_minutes": 9.9,
-      "recent_move_pct": -0.0688,
-      "recent_slope_pct_per_10m": -0.0695,
-      "recent_volume_delta": 1005896500.0,
-      "recent_amount_delta": 16603030000.0,
+      "recent_interval_minutes": 27.25,
+      "recent_move_pct": 0.2948,
+      "recent_slope_pct_per_10m": 0.1082,
+      "recent_volume_delta": 5367083800.0,
+      "recent_amount_delta": 79678460000.0,
       "relative_to_indices": {
         "000001": {
           "latest_relative_change_pct_points": 0.0,
-          "benchmark_change_pct": -0.8304,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "benchmark_change_pct": -0.8744,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:00+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": 2.5866,
-          "benchmark_change_pct": -3.417,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": 3.4972,
+          "benchmark_change_pct": -4.3717,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:21+08:00"
         }
       },
       "sampling": {
@@ -62,40 +67,45 @@
     {
       "symbol": "000688",
       "asset_class": "A_SHARE_INDEX",
-      "sample_count": 14,
+      "sample_count": 18,
       "first_as_of_beijing": "2026-11-16T09:32:03+08:00",
-      "latest_as_of_beijing": "2026-11-16T13:40:33+08:00",
+      "latest_as_of_beijing": "2026-11-16T15:04:00+08:00",
       "first_price": 1251.97,
-      "latest_price": 1221.97,
-      "path_change_pct": -2.3962,
-      "path_low": 1221.97,
-      "path_low_as_of_beijing": "2026-11-16T13:40:33+08:00",
+      "latest_price": 1213.68,
+      "path_change_pct": -3.0584,
+      "path_low": 1204.71,
+      "path_low_as_of_beijing": "2026-11-16T14:36:45+08:00",
       "path_high": 1251.97,
       "path_high_as_of_beijing": "2026-11-16T09:32:03+08:00",
-      "recovery_from_path_low_pct": 0.0,
-      "retreat_from_path_high_pct": -2.3962,
-      "latest_day_range_position": 0.0067,
+      "recovery_from_path_low_pct": 0.7446,
+      "retreat_from_path_high_pct": -3.0584,
+      "latest_day_range_position": 0.1988,
       "late_session_context": {
-        "status": "NOT_YET_AVAILABLE",
+        "status": "READY",
         "reference_clock_beijing": "14:30",
-        "move_from_reference_pct": null,
-        "decision_boundary": "14:30前不构造尾盘方向；不得用未来节点或旧交易日替代。"
+        "reference_as_of_beijing": "2026-11-16T14:36:45+08:00",
+        "reference_price": 1204.71,
+        "latest_as_of_beijing": "2026-11-16T15:04:00+08:00",
+        "latest_price": 1213.68,
+        "move_from_reference_pct": 0.7446,
+        "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+        "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
       },
-      "recent_interval_minutes": 9.9,
-      "recent_move_pct": -0.3433,
-      "recent_slope_pct_per_10m": -0.3468,
-      "recent_volume_delta": 20044800.0,
-      "recent_amount_delta": 1923590000.0,
+      "recent_interval_minutes": 27.25,
+      "recent_move_pct": 0.7446,
+      "recent_slope_pct_per_10m": 0.2732,
+      "recent_volume_delta": 123074900.0,
+      "recent_amount_delta": 9933210000.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": -3.6778,
-          "benchmark_change_pct": -0.8304,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": -4.2816,
+          "benchmark_change_pct": -0.8744,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:00+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": -1.0912,
-          "benchmark_change_pct": -3.417,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": -0.7844,
+          "benchmark_change_pct": -4.3717,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:21+08:00"
         }
       },
       "sampling": {
@@ -111,40 +121,45 @@
     {
       "symbol": "159056",
       "asset_class": "ETF",
-      "sample_count": 14,
+      "sample_count": 18,
       "first_as_of_beijing": "2026-11-16T09:32:00+08:00",
-      "latest_as_of_beijing": "2026-11-16T13:40:24+08:00",
+      "latest_as_of_beijing": "2026-11-16T15:03:54+08:00",
       "first_price": 1.011,
-      "latest_price": 1.016,
-      "path_change_pct": 0.4946,
+      "latest_price": 1.012,
+      "path_change_pct": 0.0989,
       "path_low": 1.009,
       "path_low_as_of_beijing": "2026-11-16T09:59:27+08:00",
       "path_high": 1.019,
       "path_high_as_of_beijing": "2026-11-16T13:30:27+08:00",
-      "recovery_from_path_low_pct": 0.6938,
-      "retreat_from_path_high_pct": -0.2944,
-      "latest_day_range_position": 0.7273,
+      "recovery_from_path_low_pct": 0.2973,
+      "retreat_from_path_high_pct": -0.6869,
+      "latest_day_range_position": 0.3636,
       "late_session_context": {
-        "status": "NOT_YET_AVAILABLE",
+        "status": "READY",
         "reference_clock_beijing": "14:30",
-        "move_from_reference_pct": null,
-        "decision_boundary": "14:30前不构造尾盘方向；不得用未来节点或旧交易日替代。"
+        "reference_as_of_beijing": "2026-11-16T14:36:39+08:00",
+        "reference_price": 1.011,
+        "latest_as_of_beijing": "2026-11-16T15:03:54+08:00",
+        "latest_price": 1.012,
+        "move_from_reference_pct": 0.0989,
+        "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+        "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
       },
-      "recent_interval_minutes": 9.95,
-      "recent_move_pct": -0.2944,
-      "recent_slope_pct_per_10m": -0.2959,
-      "recent_volume_delta": 590800.0,
-      "recent_amount_delta": 600000.0,
+      "recent_interval_minutes": 27.25,
+      "recent_move_pct": 0.0989,
+      "recent_slope_pct_per_10m": 0.0363,
+      "recent_volume_delta": 208600.0,
+      "recent_amount_delta": 210000.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": 0.9289,
-          "benchmark_change_pct": -0.8304,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": 0.5789,
+          "benchmark_change_pct": -0.8744,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:00+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": 3.5156,
-          "benchmark_change_pct": -3.417,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": 4.0761,
+          "benchmark_change_pct": -4.3717,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:21+08:00"
         }
       },
       "sampling": {
@@ -161,40 +176,45 @@
     {
       "symbol": "159217",
       "asset_class": "ETF",
-      "sample_count": 14,
+      "sample_count": 18,
       "first_as_of_beijing": "2026-11-16T09:32:00+08:00",
-      "latest_as_of_beijing": "2026-11-16T13:40:30+08:00",
+      "latest_as_of_beijing": "2026-11-16T15:04:24+08:00",
       "first_price": 1.038,
-      "latest_price": 1.049,
-      "path_change_pct": 1.0597,
+      "latest_price": 1.046,
+      "path_change_pct": 0.7707,
       "path_low": 1.038,
       "path_low_as_of_beijing": "2026-11-16T09:32:00+08:00",
       "path_high": 1.058,
       "path_high_as_of_beijing": "2026-11-16T13:21:45+08:00",
-      "recovery_from_path_low_pct": 1.0597,
-      "retreat_from_path_high_pct": -0.8507,
-      "latest_day_range_position": 0.234,
+      "recovery_from_path_low_pct": 0.7707,
+      "retreat_from_path_high_pct": -1.1342,
+      "latest_day_range_position": 0.1702,
       "late_session_context": {
-        "status": "NOT_YET_AVAILABLE",
+        "status": "READY",
         "reference_clock_beijing": "14:30",
-        "move_from_reference_pct": null,
-        "decision_boundary": "14:30前不构造尾盘方向；不得用未来节点或旧交易日替代。"
+        "reference_as_of_beijing": "2026-11-16T14:36:42+08:00",
+        "reference_price": 1.049,
+        "latest_as_of_beijing": "2026-11-16T15:04:24+08:00",
+        "latest_price": 1.046,
+        "move_from_reference_pct": -0.286,
+        "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+        "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
       },
-      "recent_interval_minutes": 9.95,
-      "recent_move_pct": -0.2852,
-      "recent_slope_pct_per_10m": -0.2866,
-      "recent_volume_delta": 8240500.0,
-      "recent_amount_delta": 8650000.0,
+      "recent_interval_minutes": 27.7,
+      "recent_move_pct": -0.286,
+      "recent_slope_pct_per_10m": -0.1032,
+      "recent_volume_delta": 19096000.0,
+      "recent_amount_delta": 19970000.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": -2.309,
-          "benchmark_change_pct": -0.8304,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": -2.542,
+          "benchmark_change_pct": -0.8744,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:00+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": 0.2776,
-          "benchmark_change_pct": -3.417,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": 0.9552,
+          "benchmark_change_pct": -4.3717,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:21+08:00"
         }
       },
       "sampling": {
@@ -203,17 +223,7 @@
         "max_gap_minutes": 93.8,
         "limitation": "离散脉冲只能重建近实时路径；两次采样之间的瞬时拉升/急跌可能遗漏。日内high/low可证明期间发生过极值，但不能单独确定具体分钟形态。"
       },
-      "structure_candidates": [
-        {
-          "label": "V_RECOVERY_CANDIDATE",
-          "evidence": {
-            "low_as_of_beijing": "2026-11-16T09:32:00+08:00",
-            "recovery_from_path_low_pct": 1.0597,
-            "points_after_low": 13,
-            "latest_range_position": 0.55
-          }
-        }
-      ],
+      "structure_candidates": [],
       "production_source": "DISCRETE_SNAPSHOT_PATH",
       "path_role": "PRODUCTION_STRUCTURE_EVIDENCE_FALLBACK",
       "fallback_reason": "HTTP Error 501: Not Implemented"
@@ -221,40 +231,45 @@
     {
       "symbol": "159253",
       "asset_class": "ETF",
-      "sample_count": 14,
+      "sample_count": 18,
       "first_as_of_beijing": "2026-11-16T09:31:57+08:00",
-      "latest_as_of_beijing": "2026-11-16T13:40:24+08:00",
+      "latest_as_of_beijing": "2026-11-16T15:04:21+08:00",
       "first_price": 1.072,
-      "latest_price": 1.086,
-      "path_change_pct": 1.306,
+      "latest_price": 1.093,
+      "path_change_pct": 1.959,
       "path_low": 1.072,
       "path_low_as_of_beijing": "2026-11-16T09:31:57+08:00",
-      "path_high": 1.086,
-      "path_high_as_of_beijing": "2026-11-16T13:09:18+08:00",
-      "recovery_from_path_low_pct": 1.306,
+      "path_high": 1.093,
+      "path_high_as_of_beijing": "2026-11-16T15:04:21+08:00",
+      "recovery_from_path_low_pct": 1.959,
       "retreat_from_path_high_pct": 0.0,
-      "latest_day_range_position": 0.9444,
+      "latest_day_range_position": 1.0,
       "late_session_context": {
-        "status": "NOT_YET_AVAILABLE",
+        "status": "READY",
         "reference_clock_beijing": "14:30",
-        "move_from_reference_pct": null,
-        "decision_boundary": "14:30前不构造尾盘方向；不得用未来节点或旧交易日替代。"
+        "reference_as_of_beijing": "2026-11-16T14:36:42+08:00",
+        "reference_price": 1.089,
+        "latest_as_of_beijing": "2026-11-16T15:04:21+08:00",
+        "latest_price": 1.093,
+        "move_from_reference_pct": 0.3673,
+        "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+        "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
       },
-      "recent_interval_minutes": 9.85,
-      "recent_move_pct": 0.0,
-      "recent_slope_pct_per_10m": 0.0,
-      "recent_volume_delta": 62000.0,
-      "recent_amount_delta": 70000.0,
+      "recent_interval_minutes": 27.65,
+      "recent_move_pct": 0.3673,
+      "recent_slope_pct_per_10m": 0.1328,
+      "recent_volume_delta": 1574400.0,
+      "recent_amount_delta": 1720000.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": 2.1364,
-          "benchmark_change_pct": -0.8304,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": 2.8334,
+          "benchmark_change_pct": -0.8744,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:00+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": 4.723,
-          "benchmark_change_pct": -3.417,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": 6.3306,
+          "benchmark_change_pct": -4.3717,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:21+08:00"
         }
       },
       "sampling": {
@@ -268,21 +283,9 @@
           "label": "V_RECOVERY_CANDIDATE",
           "evidence": {
             "low_as_of_beijing": "2026-11-16T09:31:57+08:00",
-            "recovery_from_path_low_pct": 1.306,
-            "points_after_low": 13,
+            "recovery_from_path_low_pct": 1.959,
+            "points_after_low": 17,
             "latest_range_position": 1.0
-          }
-        },
-        {
-          "label": "HIGH_ZONE_CONSOLIDATION_CANDIDATE",
-          "evidence": {
-            "tail_points": 3,
-            "tail_spread_pct": 0.1845,
-            "range_positions": [
-              0.8571,
-              1.0,
-              1.0
-            ]
           }
         }
       ],
@@ -293,40 +296,45 @@
     {
       "symbol": "159326",
       "asset_class": "ETF",
-      "sample_count": 14,
+      "sample_count": 18,
       "first_as_of_beijing": "2026-11-16T09:31:57+08:00",
-      "latest_as_of_beijing": "2026-11-16T13:40:27+08:00",
+      "latest_as_of_beijing": "2026-11-16T15:04:39+08:00",
       "first_price": 1.354,
-      "latest_price": 1.367,
-      "path_change_pct": 0.9601,
+      "latest_price": 1.36,
+      "path_change_pct": 0.4431,
       "path_low": 1.35,
       "path_low_as_of_beijing": "2026-11-16T09:59:27+08:00",
       "path_high": 1.379,
       "path_high_as_of_beijing": "2026-11-16T11:19:51+08:00",
-      "recovery_from_path_low_pct": 1.2593,
-      "retreat_from_path_high_pct": -0.8702,
-      "latest_day_range_position": 0.5526,
+      "recovery_from_path_low_pct": 0.7407,
+      "retreat_from_path_high_pct": -1.3778,
+      "latest_day_range_position": 0.3684,
       "late_session_context": {
-        "status": "NOT_YET_AVAILABLE",
+        "status": "READY",
         "reference_clock_beijing": "14:30",
-        "move_from_reference_pct": null,
-        "decision_boundary": "14:30前不构造尾盘方向；不得用未来节点或旧交易日替代。"
+        "reference_as_of_beijing": "2026-11-16T14:36:36+08:00",
+        "reference_price": 1.357,
+        "latest_as_of_beijing": "2026-11-16T15:04:39+08:00",
+        "latest_price": 1.36,
+        "move_from_reference_pct": 0.2211,
+        "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+        "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
       },
-      "recent_interval_minutes": 9.95,
-      "recent_move_pct": -0.1461,
-      "recent_slope_pct_per_10m": -0.1468,
-      "recent_volume_delta": 2475600.0,
-      "recent_amount_delta": 3380000.0,
+      "recent_interval_minutes": 28.05,
+      "recent_move_pct": 0.2211,
+      "recent_slope_pct_per_10m": 0.0788,
+      "recent_volume_delta": 11068300.0,
+      "recent_amount_delta": 15010000.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": 0.466,
-          "benchmark_change_pct": -0.8304,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": -0.0002,
+          "benchmark_change_pct": -0.8744,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:00+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": 3.0526,
-          "benchmark_change_pct": -3.417,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": 3.497,
+          "benchmark_change_pct": -4.3717,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:21+08:00"
         }
       },
       "sampling": {
@@ -344,15 +352,6 @@
             "minutes": 18.15,
             "move_pct": 1.77121771217712
           }
-        },
-        {
-          "label": "V_RECOVERY_CANDIDATE",
-          "evidence": {
-            "low_as_of_beijing": "2026-11-16T09:59:27+08:00",
-            "recovery_from_path_low_pct": 1.2593,
-            "points_after_low": 11,
-            "latest_range_position": 0.5862
-          }
         }
       ],
       "production_source": "DISCRETE_SNAPSHOT_PATH",
@@ -362,40 +361,45 @@
     {
       "symbol": "159529",
       "asset_class": "ETF",
-      "sample_count": 14,
+      "sample_count": 18,
       "first_as_of_beijing": "2026-11-16T09:32:00+08:00",
-      "latest_as_of_beijing": "2026-11-16T13:40:27+08:00",
+      "latest_as_of_beijing": "2026-11-16T15:04:27+08:00",
       "first_price": 1.405,
-      "latest_price": 1.418,
-      "path_change_pct": 0.9253,
+      "latest_price": 1.409,
+      "path_change_pct": 0.2847,
       "path_low": 1.405,
       "path_low_as_of_beijing": "2026-11-16T09:32:00+08:00",
       "path_high": 1.425,
       "path_high_as_of_beijing": "2026-11-16T13:09:15+08:00",
-      "recovery_from_path_low_pct": 0.9253,
-      "retreat_from_path_high_pct": -0.4912,
-      "latest_day_range_position": 0.6667,
+      "recovery_from_path_low_pct": 0.2847,
+      "retreat_from_path_high_pct": -1.1228,
+      "latest_day_range_position": 0.3333,
       "late_session_context": {
-        "status": "NOT_YET_AVAILABLE",
+        "status": "READY",
         "reference_clock_beijing": "14:30",
-        "move_from_reference_pct": null,
-        "decision_boundary": "14:30前不构造尾盘方向；不得用未来节点或旧交易日替代。"
+        "reference_as_of_beijing": "2026-11-16T14:36:42+08:00",
+        "reference_price": 1.413,
+        "latest_as_of_beijing": "2026-11-16T15:04:27+08:00",
+        "latest_price": 1.409,
+        "move_from_reference_pct": -0.2831,
+        "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+        "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
       },
-      "recent_interval_minutes": 9.9,
-      "recent_move_pct": -0.0705,
-      "recent_slope_pct_per_10m": -0.0712,
-      "recent_volume_delta": 8459500.0,
-      "recent_amount_delta": 12000000.0,
+      "recent_interval_minutes": 27.75,
+      "recent_move_pct": -0.2831,
+      "recent_slope_pct_per_10m": -0.102,
+      "recent_volume_delta": 37064700.0,
+      "recent_amount_delta": 52420000.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": 2.3336,
-          "benchmark_change_pct": -0.8304,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": 1.7334,
+          "benchmark_change_pct": -0.8744,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:00+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": 4.9203,
-          "benchmark_change_pct": -3.417,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": 5.2306,
+          "benchmark_change_pct": -4.3717,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:21+08:00"
         }
       },
       "sampling": {
@@ -412,40 +416,45 @@
     {
       "symbol": "159561",
       "asset_class": "ETF",
-      "sample_count": 14,
+      "sample_count": 18,
       "first_as_of_beijing": "2026-11-16T09:31:57+08:00",
-      "latest_as_of_beijing": "2026-11-16T13:40:21+08:00",
+      "latest_as_of_beijing": "2026-11-16T15:03:48+08:00",
       "first_price": 1.33,
-      "latest_price": 1.327,
-      "path_change_pct": -0.2256,
-      "path_low": 1.326,
-      "path_low_as_of_beijing": "2026-11-16T09:45:54+08:00",
+      "latest_price": 1.32,
+      "path_change_pct": -0.7519,
+      "path_low": 1.32,
+      "path_low_as_of_beijing": "2026-11-16T15:03:48+08:00",
       "path_high": 1.33,
       "path_high_as_of_beijing": "2026-11-16T09:31:57+08:00",
-      "recovery_from_path_low_pct": 0.0754,
-      "retreat_from_path_high_pct": -0.2256,
-      "latest_day_range_position": 0.2857,
+      "recovery_from_path_low_pct": 0.0,
+      "retreat_from_path_high_pct": -0.7519,
+      "latest_day_range_position": 0.0,
       "late_session_context": {
-        "status": "NOT_YET_AVAILABLE",
+        "status": "READY",
         "reference_clock_beijing": "14:30",
-        "move_from_reference_pct": null,
-        "decision_boundary": "14:30前不构造尾盘方向；不得用未来节点或旧交易日替代。"
+        "reference_as_of_beijing": "2026-11-16T14:36:36+08:00",
+        "reference_price": 1.321,
+        "latest_as_of_beijing": "2026-11-16T15:03:48+08:00",
+        "latest_price": 1.32,
+        "move_from_reference_pct": -0.0757,
+        "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+        "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
       },
-      "recent_interval_minutes": 9.85,
-      "recent_move_pct": 0.0,
-      "recent_slope_pct_per_10m": 0.0,
-      "recent_volume_delta": 1335600.0,
-      "recent_amount_delta": 1780000.0,
+      "recent_interval_minutes": 27.2,
+      "recent_move_pct": -0.0757,
+      "recent_slope_pct_per_10m": -0.0278,
+      "recent_volume_delta": 8226600.0,
+      "recent_amount_delta": 10860000.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": 0.3057,
-          "benchmark_change_pct": -0.8304,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": -0.175,
+          "benchmark_change_pct": -0.8744,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:00+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": 2.8923,
-          "benchmark_change_pct": -3.417,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": 3.3222,
+          "benchmark_change_pct": -4.3717,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:21+08:00"
         }
       },
       "sampling": {
@@ -462,40 +471,45 @@
     {
       "symbol": "159781",
       "asset_class": "ETF",
-      "sample_count": 14,
+      "sample_count": 18,
       "first_as_of_beijing": "2026-11-16T09:31:57+08:00",
-      "latest_as_of_beijing": "2026-11-16T13:40:24+08:00",
+      "latest_as_of_beijing": "2026-11-16T15:04:15+08:00",
       "first_price": 0.724,
-      "latest_price": 0.706,
-      "path_change_pct": -2.4862,
-      "path_low": 0.706,
-      "path_low_as_of_beijing": "2026-11-16T13:40:24+08:00",
+      "latest_price": 0.7,
+      "path_change_pct": -3.3149,
+      "path_low": 0.696,
+      "path_low_as_of_beijing": "2026-11-16T14:36:36+08:00",
       "path_high": 0.724,
       "path_high_as_of_beijing": "2026-11-16T09:31:57+08:00",
-      "recovery_from_path_low_pct": 0.0,
-      "retreat_from_path_high_pct": -2.4862,
-      "latest_day_range_position": 0.0,
+      "recovery_from_path_low_pct": 0.5747,
+      "retreat_from_path_high_pct": -3.3149,
+      "latest_day_range_position": 0.1667,
       "late_session_context": {
-        "status": "NOT_YET_AVAILABLE",
+        "status": "READY",
         "reference_clock_beijing": "14:30",
-        "move_from_reference_pct": null,
-        "decision_boundary": "14:30前不构造尾盘方向；不得用未来节点或旧交易日替代。"
+        "reference_as_of_beijing": "2026-11-16T14:36:36+08:00",
+        "reference_price": 0.696,
+        "latest_as_of_beijing": "2026-11-16T15:04:15+08:00",
+        "latest_price": 0.7,
+        "move_from_reference_pct": 0.5747,
+        "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+        "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
       },
-      "recent_interval_minutes": 9.9,
-      "recent_move_pct": -0.2825,
-      "recent_slope_pct_per_10m": -0.2853,
-      "recent_volume_delta": 17281800.0,
-      "recent_amount_delta": 12230000.0,
+      "recent_interval_minutes": 27.65,
+      "recent_move_pct": 0.5747,
+      "recent_slope_pct_per_10m": 0.2079,
+      "recent_volume_delta": 102161300.0,
+      "recent_amount_delta": 71240000.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": -4.1494,
-          "benchmark_change_pct": -0.8304,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": -4.9129,
+          "benchmark_change_pct": -0.8744,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:00+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": -1.5628,
-          "benchmark_change_pct": -3.417,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": -1.4157,
+          "benchmark_change_pct": -4.3717,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:21+08:00"
         }
       },
       "sampling": {
@@ -512,40 +526,45 @@
     {
       "symbol": "159941",
       "asset_class": "ETF",
-      "sample_count": 14,
+      "sample_count": 18,
       "first_as_of_beijing": "2026-11-16T09:31:18+08:00",
-      "latest_as_of_beijing": "2026-11-16T13:40:24+08:00",
+      "latest_as_of_beijing": "2026-11-16T15:04:18+08:00",
       "first_price": 1.648,
-      "latest_price": 1.612,
-      "path_change_pct": -2.1845,
-      "path_low": 1.612,
-      "path_low_as_of_beijing": "2026-11-16T13:40:24+08:00",
+      "latest_price": 1.613,
+      "path_change_pct": -2.1238,
+      "path_low": 1.609,
+      "path_low_as_of_beijing": "2026-11-16T13:59:42+08:00",
       "path_high": 1.648,
       "path_high_as_of_beijing": "2026-11-16T09:31:18+08:00",
-      "recovery_from_path_low_pct": 0.0,
-      "retreat_from_path_high_pct": -2.1845,
-      "latest_day_range_position": 0.0,
+      "recovery_from_path_low_pct": 0.2486,
+      "retreat_from_path_high_pct": -2.1238,
+      "latest_day_range_position": 0.3226,
       "late_session_context": {
-        "status": "NOT_YET_AVAILABLE",
+        "status": "READY",
         "reference_clock_beijing": "14:30",
-        "move_from_reference_pct": null,
-        "decision_boundary": "14:30前不构造尾盘方向；不得用未来节点或旧交易日替代。"
+        "reference_as_of_beijing": "2026-11-16T14:36:36+08:00",
+        "reference_price": 1.61,
+        "latest_as_of_beijing": "2026-11-16T15:04:18+08:00",
+        "latest_price": 1.613,
+        "move_from_reference_pct": 0.1863,
+        "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+        "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
       },
-      "recent_interval_minutes": 9.9,
-      "recent_move_pct": -0.1239,
-      "recent_slope_pct_per_10m": -0.1252,
-      "recent_volume_delta": 24967000.0,
-      "recent_amount_delta": 40310000.0,
+      "recent_interval_minutes": 27.7,
+      "recent_move_pct": 0.1863,
+      "recent_slope_pct_per_10m": 0.0673,
+      "recent_volume_delta": 47219100.0,
+      "recent_amount_delta": 76000000.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": -1.3541,
-          "benchmark_change_pct": -0.8304,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": -1.2494,
+          "benchmark_change_pct": -0.8744,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:00+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": 1.2326,
-          "benchmark_change_pct": -3.417,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": 2.2479,
+          "benchmark_change_pct": -4.3717,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:21+08:00"
         }
       },
       "sampling": {
@@ -572,40 +591,45 @@
     {
       "symbol": "159981",
       "asset_class": "ETF",
-      "sample_count": 14,
+      "sample_count": 18,
       "first_as_of_beijing": "2026-11-16T09:31:57+08:00",
-      "latest_as_of_beijing": "2026-11-16T13:40:27+08:00",
+      "latest_as_of_beijing": "2026-11-16T15:04:36+08:00",
       "first_price": 1.79,
-      "latest_price": 1.776,
-      "path_change_pct": -0.7821,
+      "latest_price": 1.783,
+      "path_change_pct": -0.3911,
       "path_low": 1.77,
       "path_low_as_of_beijing": "2026-11-16T10:52:36+08:00",
       "path_high": 1.794,
       "path_high_as_of_beijing": "2026-11-16T09:59:30+08:00",
-      "recovery_from_path_low_pct": 0.339,
-      "retreat_from_path_high_pct": -1.0033,
-      "latest_day_range_position": 0.2903,
+      "recovery_from_path_low_pct": 0.7345,
+      "retreat_from_path_high_pct": -0.6132,
+      "latest_day_range_position": 0.5161,
       "late_session_context": {
-        "status": "NOT_YET_AVAILABLE",
+        "status": "READY",
         "reference_clock_beijing": "14:30",
-        "move_from_reference_pct": null,
-        "decision_boundary": "14:30前不构造尾盘方向；不得用未来节点或旧交易日替代。"
+        "reference_as_of_beijing": "2026-11-16T14:36:39+08:00",
+        "reference_price": 1.785,
+        "latest_as_of_beijing": "2026-11-16T15:04:36+08:00",
+        "latest_price": 1.783,
+        "move_from_reference_pct": -0.112,
+        "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+        "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
       },
-      "recent_interval_minutes": 9.9,
-      "recent_move_pct": -0.2807,
-      "recent_slope_pct_per_10m": -0.2836,
-      "recent_volume_delta": 15701400.0,
-      "recent_amount_delta": 27940000.0,
+      "recent_interval_minutes": 27.95,
+      "recent_move_pct": -0.112,
+      "recent_slope_pct_per_10m": -0.0401,
+      "recent_volume_delta": 32060700.0,
+      "recent_amount_delta": 57260000.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": -1.1563,
-          "benchmark_change_pct": -0.8304,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": -0.726,
+          "benchmark_change_pct": -0.8744,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:00+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": 1.4303,
-          "benchmark_change_pct": -3.417,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": 2.7712,
+          "benchmark_change_pct": -4.3717,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:21+08:00"
         }
       },
       "sampling": {
@@ -622,40 +646,45 @@
     {
       "symbol": "159992",
       "asset_class": "ETF",
-      "sample_count": 14,
+      "sample_count": 18,
       "first_as_of_beijing": "2026-11-16T09:31:57+08:00",
-      "latest_as_of_beijing": "2026-11-16T13:40:27+08:00",
+      "latest_as_of_beijing": "2026-11-16T15:03:48+08:00",
       "first_price": 0.796,
-      "latest_price": 0.797,
-      "path_change_pct": 0.1256,
+      "latest_price": 0.794,
+      "path_change_pct": -0.2513,
       "path_low": 0.794,
       "path_low_as_of_beijing": "2026-11-16T09:59:27+08:00",
       "path_high": 0.801,
       "path_high_as_of_beijing": "2026-11-16T13:21:45+08:00",
-      "recovery_from_path_low_pct": 0.3778,
-      "retreat_from_path_high_pct": -0.4994,
-      "latest_day_range_position": 0.3529,
+      "recovery_from_path_low_pct": 0.0,
+      "retreat_from_path_high_pct": -0.8739,
+      "latest_day_range_position": 0.1765,
       "late_session_context": {
-        "status": "NOT_YET_AVAILABLE",
+        "status": "READY",
         "reference_clock_beijing": "14:30",
-        "move_from_reference_pct": null,
-        "decision_boundary": "14:30前不构造尾盘方向；不得用未来节点或旧交易日替代。"
+        "reference_as_of_beijing": "2026-11-16T14:36:36+08:00",
+        "reference_price": 0.795,
+        "latest_as_of_beijing": "2026-11-16T15:03:48+08:00",
+        "latest_price": 0.794,
+        "move_from_reference_pct": -0.1258,
+        "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+        "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
       },
-      "recent_interval_minutes": 9.95,
-      "recent_move_pct": 0.0,
-      "recent_slope_pct_per_10m": 0.0,
-      "recent_volume_delta": 5709800.0,
-      "recent_amount_delta": 4550000.0,
+      "recent_interval_minutes": 27.2,
+      "recent_move_pct": -0.1258,
+      "recent_slope_pct_per_10m": -0.0462,
+      "recent_volume_delta": 64794700.0,
+      "recent_amount_delta": 51390000.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": -0.531,
-          "benchmark_change_pct": -0.8304,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": -0.8582,
+          "benchmark_change_pct": -0.8744,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:00+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": 2.0556,
-          "benchmark_change_pct": -3.417,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": 2.639,
+          "benchmark_change_pct": -4.3717,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:21+08:00"
         }
       },
       "sampling": {
@@ -672,40 +701,45 @@
     {
       "symbol": "399006",
       "asset_class": "A_SHARE_INDEX",
-      "sample_count": 14,
+      "sample_count": 18,
       "first_as_of_beijing": "2026-11-16T09:32:00+08:00",
-      "latest_as_of_beijing": "2026-11-16T13:40:30+08:00",
+      "latest_as_of_beijing": "2026-11-16T15:04:21+08:00",
       "first_price": 2383.38,
-      "latest_price": 2343.18,
-      "path_change_pct": -1.6867,
-      "path_low": 2343.18,
-      "path_low_as_of_beijing": "2026-11-16T13:40:30+08:00",
+      "latest_price": 2320.02,
+      "path_change_pct": -2.6584,
+      "path_low": 2313.26,
+      "path_low_as_of_beijing": "2026-11-16T14:36:45+08:00",
       "path_high": 2383.38,
       "path_high_as_of_beijing": "2026-11-16T09:32:00+08:00",
-      "recovery_from_path_low_pct": 0.0,
-      "retreat_from_path_high_pct": -1.6867,
-      "latest_day_range_position": 0.0061,
+      "recovery_from_path_low_pct": 0.2922,
+      "retreat_from_path_high_pct": -2.6584,
+      "latest_day_range_position": 0.1245,
       "late_session_context": {
-        "status": "NOT_YET_AVAILABLE",
+        "status": "READY",
         "reference_clock_beijing": "14:30",
-        "move_from_reference_pct": null,
-        "decision_boundary": "14:30前不构造尾盘方向；不得用未来节点或旧交易日替代。"
+        "reference_as_of_beijing": "2026-11-16T14:36:45+08:00",
+        "reference_price": 2313.26,
+        "latest_as_of_beijing": "2026-11-16T15:04:21+08:00",
+        "latest_price": 2320.02,
+        "move_from_reference_pct": 0.2922,
+        "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+        "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
       },
-      "recent_interval_minutes": 9.9,
-      "recent_move_pct": -0.2359,
-      "recent_slope_pct_per_10m": -0.2383,
-      "recent_volume_delta": 321663400.0,
-      "recent_amount_delta": 8182920000.0,
+      "recent_interval_minutes": 27.6,
+      "recent_move_pct": 0.2922,
+      "recent_slope_pct_per_10m": 0.1059,
+      "recent_volume_delta": 1687478400.0,
+      "recent_amount_delta": 40176730000.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": -2.5866,
-          "benchmark_change_pct": -0.8304,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": -3.4972,
+          "benchmark_change_pct": -0.8744,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:00+08:00"
         },
         "399006": {
           "latest_relative_change_pct_points": 0.0,
-          "benchmark_change_pct": -3.417,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "benchmark_change_pct": -4.3717,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:21+08:00"
         }
       },
       "sampling": {
@@ -721,40 +755,45 @@
     {
       "symbol": "510230",
       "asset_class": "ETF",
-      "sample_count": 14,
+      "sample_count": 18,
       "first_as_of_beijing": "2026-11-16T09:32:01+08:00",
-      "latest_as_of_beijing": "2026-11-16T13:40:28+08:00",
+      "latest_as_of_beijing": "2026-11-16T15:04:43+08:00",
       "first_price": 1.366,
-      "latest_price": 1.381,
-      "path_change_pct": 1.0981,
+      "latest_price": 1.389,
+      "path_change_pct": 1.6837,
       "path_low": 1.366,
       "path_low_as_of_beijing": "2026-11-16T09:32:01+08:00",
-      "path_high": 1.381,
-      "path_high_as_of_beijing": "2026-11-16T13:30:34+08:00",
-      "recovery_from_path_low_pct": 1.0981,
+      "path_high": 1.389,
+      "path_high_as_of_beijing": "2026-11-16T15:04:43+08:00",
+      "recovery_from_path_low_pct": 1.6837,
       "retreat_from_path_high_pct": 0.0,
-      "latest_day_range_position": 0.9655,
+      "latest_day_range_position": 0.973,
       "late_session_context": {
-        "status": "NOT_YET_AVAILABLE",
+        "status": "READY",
         "reference_clock_beijing": "14:30",
-        "move_from_reference_pct": null,
-        "decision_boundary": "14:30前不构造尾盘方向；不得用未来节点或旧交易日替代。"
+        "reference_as_of_beijing": "2026-11-16T14:36:43+08:00",
+        "reference_price": 1.385,
+        "latest_as_of_beijing": "2026-11-16T15:04:43+08:00",
+        "latest_price": 1.389,
+        "move_from_reference_pct": 0.2888,
+        "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+        "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
       },
-      "recent_interval_minutes": 9.9,
-      "recent_move_pct": 0.0,
-      "recent_slope_pct_per_10m": 0.0,
-      "recent_volume_delta": 311200.0,
-      "recent_amount_delta": 430000.0,
+      "recent_interval_minutes": 28.0,
+      "recent_move_pct": 0.2888,
+      "recent_slope_pct_per_10m": 0.1031,
+      "recent_volume_delta": 8350300.0,
+      "recent_amount_delta": 11580000.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": 2.0767,
-          "benchmark_change_pct": -0.8304,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": 2.7073,
+          "benchmark_change_pct": -0.8744,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:00+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": 4.6634,
-          "benchmark_change_pct": -3.417,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": 6.2045,
+          "benchmark_change_pct": -4.3717,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:21+08:00"
         }
       },
       "sampling": {
@@ -768,21 +807,9 @@
           "label": "V_RECOVERY_CANDIDATE",
           "evidence": {
             "low_as_of_beijing": "2026-11-16T09:32:01+08:00",
-            "recovery_from_path_low_pct": 1.0981,
-            "points_after_low": 13,
+            "recovery_from_path_low_pct": 1.6837,
+            "points_after_low": 17,
             "latest_range_position": 1.0
-          }
-        },
-        {
-          "label": "HIGH_ZONE_CONSOLIDATION_CANDIDATE",
-          "evidence": {
-            "tail_points": 3,
-            "tail_spread_pct": 0.2177,
-            "range_positions": [
-              0.8,
-              1.0,
-              1.0
-            ]
           }
         }
       ],
@@ -793,9 +820,9 @@
     {
       "symbol": "512690",
       "asset_class": "ETF",
-      "sample_count": 14,
+      "sample_count": 18,
       "first_as_of_beijing": "2026-11-16T09:32:01+08:00",
-      "latest_as_of_beijing": "2026-11-16T13:40:31+08:00",
+      "latest_as_of_beijing": "2026-11-16T15:04:46+08:00",
       "first_price": 0.439,
       "latest_price": 0.444,
       "path_change_pct": 1.139,
@@ -807,26 +834,31 @@
       "retreat_from_path_high_pct": 0.0,
       "latest_day_range_position": 0.8,
       "late_session_context": {
-        "status": "NOT_YET_AVAILABLE",
+        "status": "READY",
         "reference_clock_beijing": "14:30",
-        "move_from_reference_pct": null,
-        "decision_boundary": "14:30前不构造尾盘方向；不得用未来节点或旧交易日替代。"
+        "reference_as_of_beijing": "2026-11-16T14:36:43+08:00",
+        "reference_price": 0.444,
+        "latest_as_of_beijing": "2026-11-16T15:04:46+08:00",
+        "latest_price": 0.444,
+        "move_from_reference_pct": 0.0,
+        "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+        "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
       },
-      "recent_interval_minutes": 9.95,
-      "recent_move_pct": 0.2257,
-      "recent_slope_pct_per_10m": 0.2269,
-      "recent_volume_delta": 34253300.0,
-      "recent_amount_delta": 15210000.0,
+      "recent_interval_minutes": 28.05,
+      "recent_move_pct": 0.0,
+      "recent_slope_pct_per_10m": 0.0,
+      "recent_volume_delta": 347991800.0,
+      "recent_amount_delta": 154720000.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": 1.7395,
-          "benchmark_change_pct": -0.8304,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": 1.7835,
+          "benchmark_change_pct": -0.8744,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:00+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": 4.3261,
-          "benchmark_change_pct": -3.417,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": 5.2808,
+          "benchmark_change_pct": -4.3717,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:21+08:00"
         }
       },
       "sampling": {
@@ -841,20 +873,8 @@
           "evidence": {
             "low_as_of_beijing": "2026-11-16T09:32:01+08:00",
             "recovery_from_path_low_pct": 1.139,
-            "points_after_low": 13,
+            "points_after_low": 17,
             "latest_range_position": 1.0
-          }
-        },
-        {
-          "label": "HIGH_ZONE_CONSOLIDATION_CANDIDATE",
-          "evidence": {
-            "tail_points": 3,
-            "tail_spread_pct": 0.2257,
-            "range_positions": [
-              0.8,
-              0.8,
-              1.0
-            ]
           }
         }
       ],
@@ -865,40 +885,45 @@
     {
       "symbol": "513180",
       "asset_class": "ETF",
-      "sample_count": 14,
+      "sample_count": 18,
       "first_as_of_beijing": "2026-11-16T09:31:59+08:00",
-      "latest_as_of_beijing": "2026-11-16T13:40:23+08:00",
+      "latest_as_of_beijing": "2026-11-16T15:04:29+08:00",
       "first_price": 0.479,
-      "latest_price": 0.48,
-      "path_change_pct": 0.2088,
-      "path_low": 0.479,
-      "path_low_as_of_beijing": "2026-11-16T09:31:59+08:00",
+      "latest_price": 0.478,
+      "path_change_pct": -0.2088,
+      "path_low": 0.478,
+      "path_low_as_of_beijing": "2026-11-16T13:59:44+08:00",
       "path_high": 0.482,
       "path_high_as_of_beijing": "2026-11-16T10:41:35+08:00",
-      "recovery_from_path_low_pct": 0.2088,
-      "retreat_from_path_high_pct": -0.4149,
-      "latest_day_range_position": 0.5,
+      "recovery_from_path_low_pct": 0.0,
+      "retreat_from_path_high_pct": -0.8299,
+      "latest_day_range_position": 0.2857,
       "late_session_context": {
-        "status": "NOT_YET_AVAILABLE",
+        "status": "READY",
         "reference_clock_beijing": "14:30",
-        "move_from_reference_pct": null,
-        "decision_boundary": "14:30前不构造尾盘方向；不得用未来节点或旧交易日替代。"
+        "reference_as_of_beijing": "2026-11-16T14:36:35+08:00",
+        "reference_price": 0.478,
+        "latest_as_of_beijing": "2026-11-16T15:04:29+08:00",
+        "latest_price": 0.478,
+        "move_from_reference_pct": 0.0,
+        "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+        "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
       },
-      "recent_interval_minutes": 9.9,
+      "recent_interval_minutes": 27.9,
       "recent_move_pct": 0.0,
       "recent_slope_pct_per_10m": 0.0,
-      "recent_volume_delta": 173150200.0,
-      "recent_amount_delta": 83090000.0,
+      "recent_volume_delta": 417286300.0,
+      "recent_amount_delta": 199170000.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": 1.2488,
-          "benchmark_change_pct": -0.8304,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": 0.8744,
+          "benchmark_change_pct": -0.8744,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:00+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": 3.8354,
-          "benchmark_change_pct": -3.417,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": 4.3717,
+          "benchmark_change_pct": -4.3717,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:21+08:00"
         }
       },
       "sampling": {
@@ -915,40 +940,45 @@
     {
       "symbol": "513350",
       "asset_class": "ETF",
-      "sample_count": 14,
+      "sample_count": 18,
       "first_as_of_beijing": "2026-11-16T09:31:58+08:00",
-      "latest_as_of_beijing": "2026-11-16T13:40:25+08:00",
+      "latest_as_of_beijing": "2026-11-16T15:04:37+08:00",
       "first_price": 1.359,
-      "latest_price": 1.333,
-      "path_change_pct": -1.9132,
+      "latest_price": 1.332,
+      "path_change_pct": -1.9868,
       "path_low": 1.317,
       "path_low_as_of_beijing": "2026-11-16T10:41:37+08:00",
       "path_high": 1.359,
       "path_high_as_of_beijing": "2026-11-16T09:31:58+08:00",
-      "recovery_from_path_low_pct": 1.2149,
-      "retreat_from_path_high_pct": -1.9132,
-      "latest_day_range_position": 0.383,
+      "recovery_from_path_low_pct": 1.139,
+      "retreat_from_path_high_pct": -1.9868,
+      "latest_day_range_position": 0.3617,
       "late_session_context": {
-        "status": "NOT_YET_AVAILABLE",
+        "status": "READY",
         "reference_clock_beijing": "14:30",
-        "move_from_reference_pct": null,
-        "decision_boundary": "14:30前不构造尾盘方向；不得用未来节点或旧交易日替代。"
+        "reference_as_of_beijing": "2026-11-16T14:36:37+08:00",
+        "reference_price": 1.335,
+        "latest_as_of_beijing": "2026-11-16T15:04:37+08:00",
+        "latest_price": 1.332,
+        "move_from_reference_pct": -0.2247,
+        "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+        "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
       },
-      "recent_interval_minutes": 9.9,
-      "recent_move_pct": -0.1498,
-      "recent_slope_pct_per_10m": -0.1513,
-      "recent_volume_delta": 33319100.0,
-      "recent_amount_delta": 44460000.0,
+      "recent_interval_minutes": 28.0,
+      "recent_move_pct": -0.2247,
+      "recent_slope_pct_per_10m": -0.0803,
+      "recent_volume_delta": 181078700.0,
+      "recent_amount_delta": 242530000.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": 0.4567,
-          "benchmark_change_pct": -0.8304,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": 0.426,
+          "benchmark_change_pct": -0.8744,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:00+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": 3.0433,
-          "benchmark_change_pct": -3.417,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": 3.9232,
+          "benchmark_change_pct": -4.3717,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:21+08:00"
         }
       },
       "sampling": {
@@ -975,40 +1005,45 @@
     {
       "symbol": "513520",
       "asset_class": "ETF",
-      "sample_count": 14,
+      "sample_count": 18,
       "first_as_of_beijing": "2026-11-16T09:31:58+08:00",
-      "latest_as_of_beijing": "2026-11-16T13:40:19+08:00",
+      "latest_as_of_beijing": "2026-11-16T15:04:31+08:00",
       "first_price": 2.06,
-      "latest_price": 2.047,
-      "path_change_pct": -0.6311,
-      "path_low": 2.047,
-      "path_low_as_of_beijing": "2026-11-16T13:40:19+08:00",
+      "latest_price": 2.043,
+      "path_change_pct": -0.8252,
+      "path_low": 2.042,
+      "path_low_as_of_beijing": "2026-11-16T14:36:37+08:00",
       "path_high": 2.06,
       "path_high_as_of_beijing": "2026-11-16T09:31:58+08:00",
-      "recovery_from_path_low_pct": 0.0,
-      "retreat_from_path_high_pct": -0.6311,
-      "latest_day_range_position": 0.0417,
+      "recovery_from_path_low_pct": 0.049,
+      "retreat_from_path_high_pct": -0.8252,
+      "latest_day_range_position": 0.1,
       "late_session_context": {
-        "status": "NOT_YET_AVAILABLE",
+        "status": "READY",
         "reference_clock_beijing": "14:30",
-        "move_from_reference_pct": null,
-        "decision_boundary": "14:30前不构造尾盘方向；不得用未来节点或旧交易日替代。"
+        "reference_as_of_beijing": "2026-11-16T14:36:37+08:00",
+        "reference_price": 2.042,
+        "latest_as_of_beijing": "2026-11-16T15:04:31+08:00",
+        "latest_price": 2.043,
+        "move_from_reference_pct": 0.049,
+        "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+        "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
       },
-      "recent_interval_minutes": 9.8,
-      "recent_move_pct": -0.0488,
-      "recent_slope_pct_per_10m": -0.0498,
-      "recent_volume_delta": 2560500.0,
-      "recent_amount_delta": 5240000.0,
+      "recent_interval_minutes": 27.9,
+      "recent_move_pct": 0.049,
+      "recent_slope_pct_per_10m": 0.0176,
+      "recent_volume_delta": 4673000.0,
+      "recent_amount_delta": 9540000.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": -1.227,
-          "benchmark_change_pct": -0.8304,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": -1.3744,
+          "benchmark_change_pct": -0.8744,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:00+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": 1.3596,
-          "benchmark_change_pct": -3.417,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": 2.1229,
+          "benchmark_change_pct": -4.3717,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:21+08:00"
         }
       },
       "sampling": {
@@ -1025,40 +1060,45 @@
     {
       "symbol": "515080",
       "asset_class": "ETF",
-      "sample_count": 14,
+      "sample_count": 18,
       "first_as_of_beijing": "2026-11-16T09:31:57+08:00",
-      "latest_as_of_beijing": "2026-11-16T13:40:27+08:00",
+      "latest_as_of_beijing": "2026-11-16T15:04:18+08:00",
       "first_price": 1.554,
-      "latest_price": 1.571,
-      "path_change_pct": 1.094,
+      "latest_price": 1.576,
+      "path_change_pct": 1.4157,
       "path_low": 1.554,
       "path_low_as_of_beijing": "2026-11-16T09:31:57+08:00",
-      "path_high": 1.571,
-      "path_high_as_of_beijing": "2026-11-16T10:41:36+08:00",
-      "recovery_from_path_low_pct": 1.094,
+      "path_high": 1.576,
+      "path_high_as_of_beijing": "2026-11-16T14:36:39+08:00",
+      "recovery_from_path_low_pct": 1.4157,
       "retreat_from_path_high_pct": 0.0,
-      "latest_day_range_position": 0.9048,
+      "latest_day_range_position": 0.9231,
       "late_session_context": {
-        "status": "NOT_YET_AVAILABLE",
+        "status": "READY",
         "reference_clock_beijing": "14:30",
-        "move_from_reference_pct": null,
-        "decision_boundary": "14:30前不构造尾盘方向；不得用未来节点或旧交易日替代。"
+        "reference_as_of_beijing": "2026-11-16T14:36:39+08:00",
+        "reference_price": 1.576,
+        "latest_as_of_beijing": "2026-11-16T15:04:18+08:00",
+        "latest_price": 1.576,
+        "move_from_reference_pct": 0.0,
+        "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+        "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
       },
-      "recent_interval_minutes": 9.9,
+      "recent_interval_minutes": 27.65,
       "recent_move_pct": 0.0,
       "recent_slope_pct_per_10m": 0.0,
-      "recent_volume_delta": 8641900.0,
-      "recent_amount_delta": 13580000.0,
+      "recent_volume_delta": 32450600.0,
+      "recent_amount_delta": 51140000.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": 1.7296,
-          "benchmark_change_pct": -0.8304,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": 2.0947,
+          "benchmark_change_pct": -0.8744,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:00+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": 4.3162,
-          "benchmark_change_pct": -3.417,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": 5.592,
+          "benchmark_change_pct": -4.3717,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:21+08:00"
         }
       },
       "sampling": {
@@ -1072,8 +1112,8 @@
           "label": "V_RECOVERY_CANDIDATE",
           "evidence": {
             "low_as_of_beijing": "2026-11-16T09:31:57+08:00",
-            "recovery_from_path_low_pct": 1.094,
-            "points_after_low": 13,
+            "recovery_from_path_low_pct": 1.4157,
+            "points_after_low": 17,
             "latest_range_position": 1.0
           }
         },
@@ -1081,9 +1121,9 @@
           "label": "HIGH_ZONE_CONSOLIDATION_CANDIDATE",
           "evidence": {
             "tail_points": 3,
-            "tail_spread_pct": 0.0637,
+            "tail_spread_pct": 0.2545,
             "range_positions": [
-              0.9412,
+              0.8182,
               1.0,
               1.0
             ]
@@ -1097,40 +1137,45 @@
     {
       "symbol": "515220",
       "asset_class": "ETF",
-      "sample_count": 14,
+      "sample_count": 18,
       "first_as_of_beijing": "2026-11-16T09:31:58+08:00",
-      "latest_as_of_beijing": "2026-11-16T13:40:28+08:00",
+      "latest_as_of_beijing": "2026-11-16T15:04:19+08:00",
       "first_price": 1.171,
-      "latest_price": 1.189,
-      "path_change_pct": 1.5371,
+      "latest_price": 1.194,
+      "path_change_pct": 1.9641,
       "path_low": 1.171,
       "path_low_as_of_beijing": "2026-11-16T09:31:58+08:00",
-      "path_high": 1.193,
-      "path_high_as_of_beijing": "2026-11-16T10:31:55+08:00",
-      "recovery_from_path_low_pct": 1.5371,
-      "retreat_from_path_high_pct": -0.3353,
-      "latest_day_range_position": 0.7857,
+      "path_high": 1.194,
+      "path_high_as_of_beijing": "2026-11-16T15:04:19+08:00",
+      "recovery_from_path_low_pct": 1.9641,
+      "retreat_from_path_high_pct": 0.0,
+      "latest_day_range_position": 0.9643,
       "late_session_context": {
-        "status": "NOT_YET_AVAILABLE",
+        "status": "READY",
         "reference_clock_beijing": "14:30",
-        "move_from_reference_pct": null,
-        "decision_boundary": "14:30前不构造尾盘方向；不得用未来节点或旧交易日替代。"
+        "reference_as_of_beijing": "2026-11-16T14:36:37+08:00",
+        "reference_price": 1.193,
+        "latest_as_of_beijing": "2026-11-16T15:04:19+08:00",
+        "latest_price": 1.194,
+        "move_from_reference_pct": 0.0838,
+        "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+        "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
       },
-      "recent_interval_minutes": 9.95,
-      "recent_move_pct": 0.0842,
-      "recent_slope_pct_per_10m": 0.0846,
-      "recent_volume_delta": 11794400.0,
-      "recent_amount_delta": 14020000.0,
+      "recent_interval_minutes": 27.7,
+      "recent_move_pct": 0.0838,
+      "recent_slope_pct_per_10m": 0.0303,
+      "recent_volume_delta": 38853200.0,
+      "recent_amount_delta": 46360000.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": 1.85,
-          "benchmark_change_pct": -0.8304,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": 2.3188,
+          "benchmark_change_pct": -0.8744,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:00+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": 4.4366,
-          "benchmark_change_pct": -3.417,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": 5.816,
+          "benchmark_change_pct": -4.3717,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:21+08:00"
         }
       },
       "sampling": {
@@ -1144,21 +1189,9 @@
           "label": "V_RECOVERY_CANDIDATE",
           "evidence": {
             "low_as_of_beijing": "2026-11-16T09:31:58+08:00",
-            "recovery_from_path_low_pct": 1.5371,
-            "points_after_low": 13,
-            "latest_range_position": 0.8182
-          }
-        },
-        {
-          "label": "HIGH_ZONE_CONSOLIDATION_CANDIDATE",
-          "evidence": {
-            "tail_points": 3,
-            "tail_spread_pct": 0.0842,
-            "range_positions": [
-              0.7727,
-              0.7727,
-              0.8182
-            ]
+            "recovery_from_path_low_pct": 1.9641,
+            "points_after_low": 17,
+            "latest_range_position": 1.0
           }
         }
       ],
@@ -1169,40 +1202,45 @@
     {
       "symbol": "515880",
       "asset_class": "ETF",
-      "sample_count": 14,
+      "sample_count": 18,
       "first_as_of_beijing": "2026-11-16T09:31:57+08:00",
-      "latest_as_of_beijing": "2026-11-16T13:40:24+08:00",
+      "latest_as_of_beijing": "2026-11-16T15:04:39+08:00",
       "first_price": 0.409,
-      "latest_price": 0.391,
-      "path_change_pct": -4.401,
-      "path_low": 0.391,
-      "path_low_as_of_beijing": "2026-11-16T13:30:33+08:00",
+      "latest_price": 0.385,
+      "path_change_pct": -5.868,
+      "path_low": 0.384,
+      "path_low_as_of_beijing": "2026-11-16T14:36:39+08:00",
       "path_high": 0.409,
       "path_high_as_of_beijing": "2026-11-16T09:31:57+08:00",
-      "recovery_from_path_low_pct": 0.0,
-      "retreat_from_path_high_pct": -4.401,
-      "latest_day_range_position": 0.05,
+      "recovery_from_path_low_pct": 0.2604,
+      "retreat_from_path_high_pct": -5.868,
+      "latest_day_range_position": 0.1071,
       "late_session_context": {
-        "status": "NOT_YET_AVAILABLE",
+        "status": "READY",
         "reference_clock_beijing": "14:30",
-        "move_from_reference_pct": null,
-        "decision_boundary": "14:30前不构造尾盘方向；不得用未来节点或旧交易日替代。"
+        "reference_as_of_beijing": "2026-11-16T14:36:39+08:00",
+        "reference_price": 0.384,
+        "latest_as_of_beijing": "2026-11-16T15:04:39+08:00",
+        "latest_price": 0.385,
+        "move_from_reference_pct": 0.2604,
+        "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+        "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
       },
-      "recent_interval_minutes": 9.85,
-      "recent_move_pct": 0.0,
-      "recent_slope_pct_per_10m": 0.0,
-      "recent_volume_delta": 193071400.0,
-      "recent_amount_delta": 75440000.0,
+      "recent_interval_minutes": 28.0,
+      "recent_move_pct": 0.2604,
+      "recent_slope_pct_per_10m": 0.093,
+      "recent_volume_delta": 1122277500.0,
+      "recent_amount_delta": 430000000.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": -5.6289,
-          "benchmark_change_pct": -0.8304,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": -7.0203,
+          "benchmark_change_pct": -0.8744,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:00+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": -3.0423,
-          "benchmark_change_pct": -3.417,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": -3.5231,
+          "benchmark_change_pct": -4.3717,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:21+08:00"
         }
       },
       "sampling": {
@@ -1229,40 +1267,45 @@
     {
       "symbol": "518880",
       "asset_class": "ETF",
-      "sample_count": 14,
+      "sample_count": 18,
       "first_as_of_beijing": "2026-11-16T09:31:58+08:00",
-      "latest_as_of_beijing": "2026-11-16T13:40:25+08:00",
+      "latest_as_of_beijing": "2026-11-16T15:04:28+08:00",
       "first_price": 7.914,
-      "latest_price": 7.896,
-      "path_change_pct": -0.2274,
-      "path_low": 7.896,
-      "path_low_as_of_beijing": "2026-11-16T13:40:25+08:00",
+      "latest_price": 7.852,
+      "path_change_pct": -0.7834,
+      "path_low": 7.833,
+      "path_low_as_of_beijing": "2026-11-16T13:59:46+08:00",
       "path_high": 7.939,
       "path_high_as_of_beijing": "2026-11-16T10:41:34+08:00",
-      "recovery_from_path_low_pct": 0.0,
-      "retreat_from_path_high_pct": -0.5416,
-      "latest_day_range_position": 0.1636,
+      "recovery_from_path_low_pct": 0.2426,
+      "retreat_from_path_high_pct": -1.0959,
+      "latest_day_range_position": 0.2437,
       "late_session_context": {
-        "status": "NOT_YET_AVAILABLE",
+        "status": "READY",
         "reference_clock_beijing": "14:30",
-        "move_from_reference_pct": null,
-        "decision_boundary": "14:30前不构造尾盘方向；不得用未来节点或旧交易日替代。"
+        "reference_as_of_beijing": "2026-11-16T14:36:37+08:00",
+        "reference_price": 7.85,
+        "latest_as_of_beijing": "2026-11-16T15:04:28+08:00",
+        "latest_price": 7.852,
+        "move_from_reference_pct": 0.0255,
+        "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+        "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
       },
-      "recent_interval_minutes": 9.9,
-      "recent_move_pct": -0.0759,
-      "recent_slope_pct_per_10m": -0.0767,
-      "recent_volume_delta": 22005600.0,
-      "recent_amount_delta": 173750000.0,
+      "recent_interval_minutes": 27.85,
+      "recent_move_pct": 0.0255,
+      "recent_slope_pct_per_10m": 0.0091,
+      "recent_volume_delta": 57291700.0,
+      "recent_amount_delta": 449250000.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": 0.1012,
-          "benchmark_change_pct": -0.8304,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": -0.4079,
+          "benchmark_change_pct": -0.8744,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:00+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": 2.6878,
-          "benchmark_change_pct": -3.417,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": 3.0893,
+          "benchmark_change_pct": -4.3717,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:21+08:00"
         }
       },
       "sampling": {
@@ -1274,45 +1317,50 @@
       "structure_candidates": [],
       "production_source": "DISCRETE_SNAPSHOT_PATH",
       "path_role": "PRODUCTION_STRUCTURE_EVIDENCE_FALLBACK",
-      "fallback_reason": "HTTP Error 501: Not Implemented"
+      "fallback_reason": "minute_item_quality_gate_failed"
     },
     {
       "symbol": "588000",
       "asset_class": "ETF",
-      "sample_count": 14,
+      "sample_count": 18,
       "first_as_of_beijing": "2026-11-16T09:31:56+08:00",
-      "latest_as_of_beijing": "2026-11-16T13:40:23+08:00",
+      "latest_as_of_beijing": "2026-11-16T15:04:14+08:00",
       "first_price": 1.324,
-      "latest_price": 1.294,
-      "path_change_pct": -2.2659,
-      "path_low": 1.294,
-      "path_low_as_of_beijing": "2026-11-16T13:40:23+08:00",
+      "latest_price": 1.282,
+      "path_change_pct": -3.1722,
+      "path_low": 1.277,
+      "path_low_as_of_beijing": "2026-11-16T14:36:35+08:00",
       "path_high": 1.324,
       "path_high_as_of_beijing": "2026-11-16T09:31:56+08:00",
-      "recovery_from_path_low_pct": 0.0,
-      "retreat_from_path_high_pct": -2.2659,
-      "latest_day_range_position": 0.0213,
+      "recovery_from_path_low_pct": 0.3915,
+      "retreat_from_path_high_pct": -3.1722,
+      "latest_day_range_position": 0.1714,
       "late_session_context": {
-        "status": "NOT_YET_AVAILABLE",
+        "status": "READY",
         "reference_clock_beijing": "14:30",
-        "move_from_reference_pct": null,
-        "decision_boundary": "14:30前不构造尾盘方向；不得用未来节点或旧交易日替代。"
+        "reference_as_of_beijing": "2026-11-16T14:36:35+08:00",
+        "reference_price": 1.277,
+        "latest_as_of_beijing": "2026-11-16T15:04:14+08:00",
+        "latest_price": 1.282,
+        "move_from_reference_pct": 0.3915,
+        "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+        "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
       },
-      "recent_interval_minutes": 9.95,
-      "recent_move_pct": -0.2313,
-      "recent_slope_pct_per_10m": -0.2325,
-      "recent_volume_delta": 215110700.0,
-      "recent_amount_delta": 278630000.0,
+      "recent_interval_minutes": 27.65,
+      "recent_move_pct": 0.3915,
+      "recent_slope_pct_per_10m": 0.1416,
+      "recent_volume_delta": 853157700.0,
+      "recent_amount_delta": 1089970000.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": -3.6009,
-          "benchmark_change_pct": -0.8304,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": -4.4431,
+          "benchmark_change_pct": -0.8744,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:00+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": -1.0143,
-          "benchmark_change_pct": -3.417,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": -0.9459,
+          "benchmark_change_pct": -4.3717,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:21+08:00"
         }
       },
       "sampling": {
@@ -1329,40 +1377,45 @@
     {
       "symbol": "588200",
       "asset_class": "ETF",
-      "sample_count": 14,
+      "sample_count": 18,
       "first_as_of_beijing": "2026-11-16T09:31:59+08:00",
-      "latest_as_of_beijing": "2026-11-16T13:40:29+08:00",
+      "latest_as_of_beijing": "2026-11-16T15:04:47+08:00",
       "first_price": 0.852,
-      "latest_price": 0.826,
-      "path_change_pct": -3.0516,
-      "path_low": 0.826,
-      "path_low_as_of_beijing": "2026-11-16T13:40:29+08:00",
+      "latest_price": 0.815,
+      "path_change_pct": -4.3427,
+      "path_low": 0.811,
+      "path_low_as_of_beijing": "2026-11-16T14:36:38+08:00",
       "path_high": 0.852,
       "path_high_as_of_beijing": "2026-11-16T09:31:59+08:00",
-      "recovery_from_path_low_pct": 0.0,
-      "retreat_from_path_high_pct": -3.0516,
-      "latest_day_range_position": 0.0256,
+      "recovery_from_path_low_pct": 0.4932,
+      "retreat_from_path_high_pct": -4.3427,
+      "latest_day_range_position": 0.1552,
       "late_session_context": {
-        "status": "NOT_YET_AVAILABLE",
+        "status": "READY",
         "reference_clock_beijing": "14:30",
-        "move_from_reference_pct": null,
-        "decision_boundary": "14:30前不构造尾盘方向；不得用未来节点或旧交易日替代。"
+        "reference_as_of_beijing": "2026-11-16T14:36:38+08:00",
+        "reference_price": 0.811,
+        "latest_as_of_beijing": "2026-11-16T15:04:47+08:00",
+        "latest_price": 0.815,
+        "move_from_reference_pct": 0.4932,
+        "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+        "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
       },
-      "recent_interval_minutes": 9.95,
-      "recent_move_pct": -0.2415,
-      "recent_slope_pct_per_10m": -0.2428,
-      "recent_volume_delta": 67206300.0,
-      "recent_amount_delta": 55550000.0,
+      "recent_interval_minutes": 28.15,
+      "recent_move_pct": 0.4932,
+      "recent_slope_pct_per_10m": 0.1752,
+      "recent_volume_delta": 455310000.0,
+      "recent_amount_delta": 369220000.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": -4.4448,
-          "benchmark_change_pct": -0.8304,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": -5.6623,
+          "benchmark_change_pct": -0.8744,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:00+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": -1.8582,
-          "benchmark_change_pct": -3.417,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": -2.165,
+          "benchmark_change_pct": -4.3717,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:21+08:00"
         }
       },
       "sampling": {
@@ -1389,40 +1442,45 @@
     {
       "symbol": "588450",
       "asset_class": "ETF",
-      "sample_count": 14,
+      "sample_count": 18,
       "first_as_of_beijing": "2026-11-16T09:32:00+08:00",
-      "latest_as_of_beijing": "2026-11-16T13:40:27+08:00",
+      "latest_as_of_beijing": "2026-11-16T15:04:27+08:00",
       "first_price": 1.611,
-      "latest_price": 1.565,
-      "path_change_pct": -2.8554,
-      "path_low": 1.565,
-      "path_low_as_of_beijing": "2026-11-16T13:40:27+08:00",
+      "latest_price": 1.554,
+      "path_change_pct": -3.5382,
+      "path_low": 1.545,
+      "path_low_as_of_beijing": "2026-11-16T14:36:36+08:00",
       "path_high": 1.611,
       "path_high_as_of_beijing": "2026-11-16T09:32:00+08:00",
-      "recovery_from_path_low_pct": 0.0,
-      "retreat_from_path_high_pct": -2.8554,
-      "latest_day_range_position": 0.0,
+      "recovery_from_path_low_pct": 0.5825,
+      "retreat_from_path_high_pct": -3.5382,
+      "latest_day_range_position": 0.165,
       "late_session_context": {
-        "status": "NOT_YET_AVAILABLE",
+        "status": "READY",
         "reference_clock_beijing": "14:30",
-        "move_from_reference_pct": null,
-        "decision_boundary": "14:30前不构造尾盘方向；不得用未来节点或旧交易日替代。"
+        "reference_as_of_beijing": "2026-11-16T14:36:36+08:00",
+        "reference_price": 1.545,
+        "latest_as_of_beijing": "2026-11-16T15:04:27+08:00",
+        "latest_price": 1.554,
+        "move_from_reference_pct": 0.5825,
+        "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+        "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
       },
-      "recent_interval_minutes": 9.9,
-      "recent_move_pct": -0.1913,
-      "recent_slope_pct_per_10m": -0.1933,
-      "recent_volume_delta": 311600.0,
-      "recent_amount_delta": 480000.0,
+      "recent_interval_minutes": 27.85,
+      "recent_move_pct": 0.5825,
+      "recent_slope_pct_per_10m": 0.2092,
+      "recent_volume_delta": 1325400.0,
+      "recent_amount_delta": 2050000.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": -4.7218,
-          "benchmark_change_pct": -0.8304,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": -5.3416,
+          "benchmark_change_pct": -0.8744,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:00+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": -2.1352,
-          "benchmark_change_pct": -3.417,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": -1.8444,
+          "benchmark_change_pct": -4.3717,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:21+08:00"
         }
       },
       "sampling": {
@@ -1449,40 +1507,45 @@
     {
       "symbol": "588710",
       "asset_class": "ETF",
-      "sample_count": 14,
+      "sample_count": 18,
       "first_as_of_beijing": "2026-11-16T09:31:59+08:00",
-      "latest_as_of_beijing": "2026-11-16T13:40:29+08:00",
+      "latest_as_of_beijing": "2026-11-16T15:04:32+08:00",
       "first_price": 0.714,
-      "latest_price": 0.699,
-      "path_change_pct": -2.1008,
-      "path_low": 0.697,
-      "path_low_as_of_beijing": "2026-11-16T10:21:35+08:00",
+      "latest_price": 0.683,
+      "path_change_pct": -4.3417,
+      "path_low": 0.683,
+      "path_low_as_of_beijing": "2026-11-16T15:04:32+08:00",
       "path_high": 0.714,
       "path_high_as_of_beijing": "2026-11-16T09:31:59+08:00",
-      "recovery_from_path_low_pct": 0.2869,
-      "retreat_from_path_high_pct": -2.1008,
-      "latest_day_range_position": 0.1795,
+      "recovery_from_path_low_pct": 0.0,
+      "retreat_from_path_high_pct": -4.3417,
+      "latest_day_range_position": 0.0769,
       "late_session_context": {
-        "status": "NOT_YET_AVAILABLE",
+        "status": "READY",
         "reference_clock_beijing": "14:30",
-        "move_from_reference_pct": null,
-        "decision_boundary": "14:30前不构造尾盘方向；不得用未来节点或旧交易日替代。"
+        "reference_as_of_beijing": "2026-11-16T14:36:41+08:00",
+        "reference_price": 0.684,
+        "latest_as_of_beijing": "2026-11-16T15:04:32+08:00",
+        "latest_price": 0.683,
+        "move_from_reference_pct": -0.1462,
+        "reference_sampling_role": "FIRST_VALID_OBSERVATION_AT_OR_AFTER_14_30",
+        "decision_boundary": "离散快照只描述14:30后已观察到的价格变化；采样间隔不足以证明未采样分钟内的完整形态。"
       },
-      "recent_interval_minutes": 9.9,
-      "recent_move_pct": -0.569,
-      "recent_slope_pct_per_10m": -0.5747,
-      "recent_volume_delta": 31590300.0,
-      "recent_amount_delta": 22120000.0,
+      "recent_interval_minutes": 27.85,
+      "recent_move_pct": -0.1462,
+      "recent_slope_pct_per_10m": -0.0525,
+      "recent_volume_delta": 237058700.0,
+      "recent_amount_delta": 161880000.0,
       "relative_to_indices": {
         "000001": {
-          "latest_relative_change_pct_points": -3.5472,
-          "benchmark_change_pct": -0.8304,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": -5.6919,
+          "benchmark_change_pct": -0.8744,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:00+08:00"
         },
         "399006": {
-          "latest_relative_change_pct_points": -0.9605,
-          "benchmark_change_pct": -3.417,
-          "benchmark_as_of_beijing": "2026-11-16T13:40:30+08:00"
+          "latest_relative_change_pct_points": -2.1947,
+          "benchmark_change_pct": -4.3717,
+          "benchmark_as_of_beijing": "2026-11-16T15:04:21+08:00"
         }
       },
       "sampling": {
@@ -1575,7 +1638,7 @@
       "515080": "HTTP Error 501: Not Implemented",
       "515220": "HTTP Error 501: Not Implemented",
       "515880": "HTTP Error 501: Not Implemented",
-      "518880": "HTTP Error 501: Not Implemented",
+      "518880": "minute_item_quality_gate_failed",
       "588000": "HTTP Error 501: Not Implemented",
       "588200": "HTTP Error 501: Not Implemented",
       "588450": "HTTP Error 501: Not Implemented",
@@ -1586,15 +1649,15 @@
   },
   "minute_validation_evidence": {
     "status": "FAILED",
-    "coverage_ratio": 0.0,
+    "coverage_ratio": 0.0435,
     "formal_gate_pass": false,
     "production_usable_ratio": 0.0,
     "quality_summary": {
       "coverage_pass": false,
       "freshness_pass": false,
-      "continuity_pass": false,
+      "continuity_pass": true,
       "quote_alignment_pass": false,
-      "point_in_time_pass": false,
+      "point_in_time_pass": true,
       "formal_gate_pass": false,
       "production_usable_count": 0,
       "production_usable_ratio": 0.0,
