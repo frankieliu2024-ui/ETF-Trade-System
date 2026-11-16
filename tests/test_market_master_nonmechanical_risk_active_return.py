@@ -19,8 +19,10 @@ class MasterNonmechanicalRiskActiveReturnTests(unittest.TestCase):
     def test_master_change_wakes_rules_version_self_heal(self):
         text = SELF_HEAL_WORKFLOW.read_text(encoding="utf-8")
         self.assertIn('- "ETF规则_MASTER.md"', text)
-        self.assertIn("SYNC_RULES_VERSION_METADATA", text)
-        self.assertIn("python scripts/build_state_context.py", text)
+        self.assertIn("Assess deterministic runtime health", text)
+        self.assertIn("Persist bounded self-healing status", text)
+        self.assertNotIn("SYNC_RULES_VERSION_METADATA", text)
+        self.assertNotIn("python scripts/build_state_context.py", text)
         self.assertNotIn("python scripts/build_query_context.py", text)
 
     def test_fixed_position_anchors_are_removed(self):
