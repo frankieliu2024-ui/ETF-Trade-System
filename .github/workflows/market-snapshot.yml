@@ -371,7 +371,7 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -- data/state/formal_discovery_current.json data/state/discovery_pulse_latest.json data/state/discovery_pulse_index.json
+          git add -- data/state/formal_discovery_current.json data/state/formal_opportunity_current.json data/state/discovery_pulse_latest.json data/state/discovery_pulse_index.json
           if git diff --cached --quiet; then echo "No Discovery projection change."; exit 0; fi
           git commit -m "data: publish node-local Discovery with verified A-share pulse"
           git push origin HEAD:main
