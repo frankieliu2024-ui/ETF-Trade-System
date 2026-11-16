@@ -40,19 +40,25 @@ def read_workflow_name(path: Path) -> str:
 def referenced_workflow_names(path: Path) -> list[str]:
     lines = path.read_text(encoding="utf-8").splitlines()
     refs: list[str] = []
-    in_workflows = False
+    workflows_indent: int | None = None
     for raw in lines:
         line = raw.rstrip()
-        if re.match(r"^\s*workflows:\s*$", line):
-            in_workflows = True
+        if not line.strip():
             continue
-        if in_workflows:
-            if line and not line.startswith((" ", "\t")):
-                in_workflows = False
-                continue
-            match = WORKFLOW_RUN_RE.match(line)
-            if match:
-                refs.append(match.group("value"))
+        indent = len(line) - len(line.lstrip(" \t"))
+        if re.match(r"^\s*workflows:\s*$", line):
+            workflows_indent = indent
+            continue
+        if workflows_indent is None:
+            continue
+        if indent <= workflows_indent:
+            workflows_indent = None
+            continue
+        match = WORKFLOW_RUN_RE.match(line)
+        if match and indent == workflows_indent + 2:
+            refs.append(match.group("value"))
+        elif indent == workflows_indent + 2 and not line.lstrip().startswith("-"):
+            workflows_indent = None
     return refs
 
 
