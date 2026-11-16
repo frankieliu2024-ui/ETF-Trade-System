@@ -31,11 +31,13 @@ except ModuleNotFoundError:
 try:
     from formal_file_mutation_gateway import (
         replace_managed_block as replace_block,
+        upsert_managed_line,
         write_formal_text_if_changed,
     )
 except ModuleNotFoundError:
     from scripts.formal_file_mutation_gateway import (
         replace_managed_block as replace_block,
+        upsert_managed_line,
         write_formal_text_if_changed,
     )
 try:
@@ -53,6 +55,8 @@ START_DASH = "<!-- AUTO_STATE_SYNC_START -->"
 END_DASH = "<!-- AUTO_STATE_SYNC_END -->"
 START_ARCHIVE = "<!-- AUTO_ACCOUNT_FACT_SYNC_START -->"
 END_ARCHIVE = "<!-- AUTO_ACCOUNT_FACT_SYNC_END -->"
+CASE_DETAILS_START = "<!-- AUTO_CASE_DETAILS_START -->"
+CASE_DETAILS_END = "<!-- AUTO_CASE_DETAILS_END -->"
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 
 
@@ -802,6 +806,95 @@ def update_experience(text: str, account: dict) -> tuple[str, int]:
     return text, changed
 
 
+def reconcile_case_detail_projections(root: Path, text: str) -> tuple[str, int]:
+    """Reconcile missing CASE headings from canonical review mappings.
+
+    The review/event files are the source of attribution truth; this function
+    only repairs the human-readable CASE projection.  It is deliberately
+    idempotent and creates no CASE for an ineligible or unmapped execution.
+    """
+    review_dir = root / "events" / "reviews"
+    trade_dir = root / "events" / "trades"
+    if not review_dir.exists() or not trade_dir.exists():
+        return text, 0
+    event_by_id = {}
+    for path in trade_dir.glob("*.json"):
+        try:
+            event = load_json(path)
+        except (OSError, ValueError, TypeError):
+            continue
+        event_id = str(event.get("event_id") or "").strip()
+        if event_id:
+            event_by_id[event_id] = event
+
+    mappings = {}
+    def collect(value):
+        if isinstance(value, dict):
+            event_id = str(value.get("trade_event_id") or "").strip()
+            case_id = str(value.get("case_id") or "").strip()
+            if event_id and case_id and event_id in event_by_id:
+                mappings.setdefault(case_id, (event_id, value))
+            for child in value.values():
+                collect(child)
+        elif isinstance(value, list):
+            for child in value:
+                collect(child)
+
+    for path in sorted(review_dir.glob("*.json")):
+        try:
+            review = load_json(path)
+        except (OSError, ValueError, TypeError):
+            continue
+        collect(review.get("review", {}).get("case_mapping", {}))
+    if not mappings:
+        return text, 0
+
+    existing = set(re.findall(r"^### .*?(CASE-\d{8}-\d{2})", text, re.MULTILINE))
+    missing = [case_id for case_id in sorted(mappings) if case_id not in existing]
+    if not missing:
+        return text, 0
+
+    next_ordinal = max(
+        [int(value) for value in re.findall(r"^### 2\.(\d+) CASE-", text, re.MULTILINE)]
+        or [2]
+    ) + 1
+    updated = text
+    repaired = 0
+    for case_id in missing:
+        event_id, mapping = mappings[case_id]
+        event = event_by_id[event_id]
+        name = str(event.get("name") or event.get("object") or event.get("code") or "成交对象")
+        code = str(event.get("code") or mapping.get("security_code") or "")
+        confirmed = str(event.get("confirmed_at_beijing") or event.get("executed_at_beijing") or "")
+        side = str(event.get("side") or event.get("action") or "")
+        quantity = event.get("quantity")
+        price = event.get("price")
+        heading = f"### 2.{next_ordinal} {case_id}：{name}（{code}）成交闭环登记"
+        entry = "\n".join([
+            heading,
+            "- 背景／生命周期：由已发布成交事件与正式复盘归属映射形成；本条只登记客观归属。",
+            f"- 关键证据：成交事件 {event_id}；成交时间 {confirmed or '未提供'}；归属理由：{mapping.get('mapping_reason') or '已发布映射'}。",
+            f"- 执行：{side}{quantity if quantity is not None else '未提供'}份，成交价{price if price is not None else '未提供'}。",
+            "- 结果：已形成成交与CASE归属的可回读投影；不据此推断事前判断质量。",
+            "- 判断质量：未在本维护步骤重新评价。",
+            "- 执行质量：未在本维护步骤重新评价。",
+            "- 风险收益质量：未在本维护步骤重新评价。",
+            "- 资本使用效率：未在本维护步骤重新评价。",
+            "- 最终结果／反事实：待独立复盘事实提供，不在本步骤推断。",
+            "- 经验：本条为缺失正式投影的幂等补齐；后续复盘可在此CASE下追加事实。",
+        ])
+        if CASE_DETAILS_START not in updated:
+            raise ValueError("canonical CASE detail managed block is missing")
+        updated = upsert_managed_line(
+            updated, CASE_DETAILS_START, CASE_DETAILS_END, case_id, entry,
+            before_heading="## 3. 历史研究与专项回测",
+        )
+        text = updated
+        repaired += 1
+        next_ordinal += 1
+    return text, repaired
+
+
 def build_archive_fact_block(account: dict) -> str:
     trades = account.get("trades") or []
     trade_lines = []
@@ -894,6 +987,7 @@ def sync_formal_files(root: Path = ROOT, account: dict | None = None) -> dict:
 
     existing_experience = experience_path.read_text(encoding="utf-8")
     new_experience, experience_updates = update_experience(existing_experience, account)
+    new_experience, case_projections_repaired = reconcile_case_detail_projections(root, new_experience)
     experience_changed = new_experience != existing_experience
     if experience_changed:
         write_formal_text_if_changed(root, experience_path.name, new_experience)
@@ -905,6 +999,7 @@ def sync_formal_files(root: Path = ROOT, account: dict | None = None) -> dict:
         "archive_changed": archive_changed,
         "experience_changed": experience_changed,
         "experience_fee_rows_updated": experience_updates,
+        "case_projections_repaired": case_projections_repaired,
         "current_account_reference_changed": current_changed,
         "completed_research_archive_changed": research_archive_changed,
     }
