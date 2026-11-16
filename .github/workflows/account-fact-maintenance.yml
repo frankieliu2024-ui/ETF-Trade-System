@@ -108,6 +108,7 @@ jobs:
           REQUEST_PATH: ${{ steps.request.outputs.request_path }}
           RUN_ID: ${{ github.run_id }}
           PROJECTION_OUTCOME: ${{ steps.projection.outcome }}
+          EXECUTION_QUALITY_OUTCOME: ${{ steps.execution_quality.outcome }}
         run: |
           set -euo pipefail
           request_id="$(python - "$REQUEST_PATH" <<'PY'
@@ -122,6 +123,7 @@ jobs:
             --request-path "$REQUEST_PATH" \
             --owner-outcome success \
             --projection-outcome "$PROJECTION_OUTCOME" \
+            --execution-quality-outcome "$EXECUTION_QUALITY_OUTCOME" \
             --run-id "$RUN_ID"
       - name: Verify account fact by code
         shell: bash
