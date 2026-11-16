@@ -14,6 +14,7 @@ def main() -> int:
     parser.add_argument("--request-id", required=True)
     parser.add_argument("--request-path", required=True)
     parser.add_argument("--owner-outcome", required=True)
+    parser.add_argument("--projection-outcome", default="not_run")
     parser.add_argument("--run-id", required=True)
     args = parser.parse_args()
     root = Path(args.root).resolve()
@@ -21,6 +22,7 @@ def main() -> int:
     data = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
     now = datetime.now(SHANGHAI).isoformat(timespec="seconds")
     outcome = str(args.owner_outcome).lower()
+    projection_outcome = str(args.projection_outcome).lower()
     request_path = root / args.request_path
     request = {}
     if request_path.exists():
@@ -117,6 +119,7 @@ def main() -> int:
         "readback_status": "CONFIRMED" if success else "FAILED",
         "canonical_fact_persisted": success,
         "recorded_at_beijing": now,
+        "projection_outcome": projection_outcome,
     }
     # A confirmed account-fact update invalidates any older reconciliation
     # projection. Do not preserve a stale overall PASS while only refreshing
@@ -156,6 +159,7 @@ def main() -> int:
                 data["projection_required"] = []
                 data["projections_rebuilt_at"] = now
             else:
+                data["projection_outcome"] = projection_outcome
                 data["status"] = "MAINTENANCE_INCOMPLETE"
                 data["failure_class"] = "PROJECTION_INCOMPLETE"
                 data["projection_status"] = "ACCOUNT_FACT_UPDATED_REQUIRES_REBUILD"
