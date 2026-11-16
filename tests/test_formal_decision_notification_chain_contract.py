@@ -13,6 +13,18 @@ class FormalDecisionNotificationChainContractTests(unittest.TestCase):
         self.assertIn("def dispatch_notification", owner)
         self.assertIn("scheduled_review_completion_path", owner)
 
+    def test_exact_completion_path_bypasses_projection_gates(self):
+        workflow = (ROOT / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
+        direct = workflow.index('if [ -n "$SCHEDULED_REVIEW_COMPLETION_PATH" ]; then')
+        report_branch = workflow.index('elif [ -n "$REPORT_DELIVERY_PATH" ]', direct)
+        self.assertLess(direct, report_branch)
+        self.assertIn("Audit/event/report projections are post-notification metadata", workflow)
+
+    def test_dispatch_acceptance_without_run_is_not_reported_as_confirmed(self):
+        owner = (ROOT / "scripts" / "scheduled_review_completion_owner.py").read_text(encoding="utf-8")
+        self.assertIn('"ACCEPTED_NOT_CONFIRMED"', owner)
+        self.assertIn('"workflow_run_confirmed": workflow_run_confirmed', owner)
+
     def test_completion_push_classifies_scheduled_review_by_contract(self):
         workflow = (ROOT / ".github" / "workflows" / "decision-notification.yml").read_text(encoding="utf-8")
         self.assertIn('payload.get("report_type") or binding.get("report_type")', workflow)
