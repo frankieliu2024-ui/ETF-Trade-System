@@ -180,7 +180,7 @@ class FormalParentSelfHealingTests(unittest.TestCase):
         self.assertIn("process_state_sync_request.py", workflow)
 
     def test_watchdog_does_not_replay_legacy_formal_parent(self):
-        workflow = Path(".github/workflows/etf-runtime-self-healing-watchdog.yml").read_text(encoding="utf-8")
+        workflow = Path(".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
         self.assertNotIn("REPLAY_FORMAL_REQUEST", workflow)
         self.assertNotIn("formal_context_recovery_request=", workflow)
         source = Path("scripts/runtime_self_heal.py").read_text(encoding="utf-8")
