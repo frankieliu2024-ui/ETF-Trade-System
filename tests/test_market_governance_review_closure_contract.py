@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import unittest
 from pathlib import Path
 
 
@@ -9,13 +10,14 @@ DOC = ROOT / "docs/生产变更与并发写入协议_V1.0.md"
 CFG = ROOT / "config/maintenance/production_mutation_protocol.json"
 
 
-def test_governance_review_closure_is_ssot_driven_and_thin() -> None:
+class GovernanceReviewClosureContractTests(unittest.TestCase):
+  def test_governance_review_closure_is_ssot_driven_and_thin(self) -> None:
     doc = DOC.read_text(encoding="utf-8")
     cfg = json.loads(CFG.read_text(encoding="utf-8"))
     contract = cfg["change_admission"]["review_closure_contract"]
 
-    assert "生产变更与并发写入协议 V1.8" in doc
-    assert cfg["normative_contract"]["version"] == "V1.8"
+    assert "生产变更与并发写入协议 V1.10" in doc
+    assert cfg["normative_contract"]["version"] == "V1.10"
 
     assert contract["forbid_chat_or_task_prompt_as_only_source"] is True
     assert contract["reclassify_against_latest_main"] is True
@@ -33,7 +35,7 @@ def test_governance_review_closure_is_ssot_driven_and_thin() -> None:
         assert marker in doc
 
 
-def test_governance_review_closure_does_not_create_new_admission_state() -> None:
+  def test_governance_review_closure_does_not_create_new_admission_state(self) -> None:
     cfg = json.loads(CFG.read_text(encoding="utf-8"))
     assert cfg["change_admission"]["decision_outcomes"] == [
         "EXECUTE_NOW",
