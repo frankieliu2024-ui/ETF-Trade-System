@@ -15,6 +15,7 @@ def main() -> int:
     parser.add_argument("--request-path", required=True)
     parser.add_argument("--owner-outcome", required=True)
     parser.add_argument("--projection-outcome", default="not_run")
+    parser.add_argument("--execution-quality-outcome", default="not_run")
     parser.add_argument("--run-id", required=True)
     args = parser.parse_args()
     root = Path(args.root).resolve()
@@ -23,6 +24,7 @@ def main() -> int:
     now = datetime.now(SHANGHAI).isoformat(timespec="seconds")
     outcome = str(args.owner_outcome).lower()
     projection_outcome = str(args.projection_outcome).lower()
+    execution_quality_outcome = str(args.execution_quality_outcome).lower()
     request_path = root / args.request_path
     request = {}
     if request_path.exists():
@@ -120,6 +122,7 @@ def main() -> int:
         "canonical_fact_persisted": success,
         "recorded_at_beijing": now,
         "projection_outcome": projection_outcome,
+        "execution_quality_outcome": execution_quality_outcome,
     }
     # A confirmed account-fact update invalidates any older reconciliation
     # projection. Do not preserve a stale overall PASS while only refreshing
