@@ -24,7 +24,7 @@ AUTO_ROLLBACK_ALLOWLIST = {
     "scripts/runtime_self_heal.py",
     "scripts/maintenance_guard.py",
     "scripts/workflow_failure_guard.py",
-    ".github/workflows/etf-runtime-self-healing-watchdog.yml",
+    ".github/workflows/self-healing-watchdog.yml",
     ".github/workflows/etf-system-consistency.yml",
     ".github/workflows/workflow-failure-guard.yml",
 }
@@ -141,11 +141,10 @@ def main() -> int:
         or commit_message.lower().startswith("state:")
     )
 
-    retry_eligible = (
-        supported
-        and run_attempt == 1
-        and classification == "WORKFLOW_TRANSIENT_OR_PERSISTENCE_FAILURE"
-    )
+    # Failed consistency/maintenance runs are diagnostic-only. Do not immediately
+    # rerun the same failed jobs: a second attempt cannot repair deterministic
+    # failures and creates misleading duplicate runs.
+    retry_eligible = False
 
     rollback_eligible = (
         supported
@@ -158,7 +157,7 @@ def main() -> int:
 
     if retry_eligible:
         recommended_action = "RERUN_FAILED_JOBS_ONCE"
-        reason = "failure is classified as transient/persistence and this is the first attempt"
+        reason = "automatic rerun is disabled; record the failure for diagnosis and human review"
     elif rollback_eligible:
         recommended_action = "AUTO_REVERT_HEAD_MAINTENANCE_COMMIT"
         reason = "deterministic regression is confined to the strict maintenance allowlist and failed SHA is still main HEAD"
