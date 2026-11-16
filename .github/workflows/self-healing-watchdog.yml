@@ -237,6 +237,7 @@ jobs:
           from pathlib import Path
           def stable(raw):
               value = json.loads(raw)
+              # checked_at and age counters are observations, not state transitions.
               for key in ("checked_at", "current_capture_age_seconds"):
                   value.pop(key, None)
               return value
@@ -252,7 +253,7 @@ jobs:
           PY
             )"
             if [ "$status_changed" = "true" ]; then
-              git add -- data/state/self_healing_status.json
+              git add -A -- data/state/self_healing_status.json
             else
               git restore --worktree -- data/state/self_healing_status.json
             fi
