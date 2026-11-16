@@ -12,6 +12,21 @@ class ProviderPolicyConsumerContractTests(unittest.TestCase):
         self.assertIn("resolve_object_policy", cloud)
         self.assertIn("resolve_object_policy", legacy)
 
+    def test_identity_defaults_cover_new_a_share_etf_stock_and_index(self):
+        from scripts.provider_policy import resolve_provider_policy
+        config = {"object_fallback_policy": {}, "asset_type_provider_defaults": {
+            "CN:ETF": {"primary": "tencent_qq", "fallback": ["hithink_finance", "eastmoney_push2"], "direct_only": True},
+            "CN:STOCK": {"primary": "tencent_qq", "fallback": ["hithink_finance", "eastmoney_push2"], "direct_only": True},
+            "CN:INDEX": {"primary": "tencent_qq", "fallback": ["hithink_finance"], "direct_only": True},
+        }}
+        self.assertEqual(resolve_provider_policy(config, "159265.SZ", asset_class="ETF", code="159265")["primary"], "tencent_qq")
+        self.assertEqual(resolve_provider_policy(config, "300124.SZ", asset_class="STOCK", code="300124")["primary"], "tencent_qq")
+        self.assertEqual(resolve_provider_policy(config, "000688.SH", asset_class="INDEX", code="000688")["primary"], "tencent_qq")
+
+    def test_unknown_overseas_identity_does_not_guess_provider(self):
+        from scripts.provider_policy import resolve_provider_policy
+        self.assertIsNone(resolve_provider_policy({"object_fallback_policy": {}}, "XYZ", asset_class="STOCK", market="US"))
+
     def test_future_a_share_etf_policy_is_resolved_without_static_entry(self):
         from scripts.provider_policy import resolve_object_policy
 
