@@ -353,10 +353,6 @@
         ".github/workflows/opening-auction-current-fallback.yml"
       ],
       "bounded_repair_writers": {
-        ".github/workflows/self-healing-watchdog.yml": {
-          "required_script": "scripts/runtime_self_heal.py",
-          "allowed_mutation": "CURRENT.rules_version only when MASTER metadata drift is detected"
-        },
         ".github/workflows/account-fact-maintenance.yml": {
           "required_script": "sync_formal_files",
           "allowed_mutation": "account_fact mirror and close-review pointer only; no market price, snapshot pointer or market phase mutation"
@@ -377,10 +373,9 @@
       "state_class": "DERIVED_REBUILDABLE_STATE",
       "canonical_builder": "scripts/build_state_context.py",
       "allowed_writers": [
-        ".github/workflows/opening-auction-current-fallback.yml",
-        ".github/workflows/self-healing-watchdog.yml"
+        ".github/workflows/opening-auction-current-fallback.yml"
       ],
-      "rule": "允许多个受控入口触发，但所有持久化版本必须由同一个canonical builder从当时最新正式事实重建，不允许workflow手工拼接。"
+      "rule": "只允许既有canonical context owner持久化；看门狗不得重建或提交派生上下文。"
     },
     "data/state/query_context.json": {
       "state_class": "DERIVED_REBUILDABLE_STATE",
@@ -394,19 +389,17 @@
       "state_class": "DERIVED_REBUILDABLE_STATE",
       "canonical_builder": "scripts/build_state_context.py",
       "allowed_writers": [
-        ".github/workflows/opening-auction-current-fallback.yml",
-        ".github/workflows/self-healing-watchdog.yml"
+        ".github/workflows/opening-auction-current-fallback.yml"
       ],
-      "rule": "重评触发状态必须由现有Phase4 builder经build_state_context从最新正式事实重建；self-healing调用build_state_context时必须与decision_context同批持久化，禁止保留旧schema或旧规则语义。"
+      "rule": "重评触发状态由现有Phase4 builder经canonical owner重建；看门狗只观察运行健康并记录自身状态。"
     },
     "data/state/capital_efficiency_ranking.json": {
       "state_class": "DERIVED_REBUILDABLE_STATE",
       "canonical_builder": "scripts/build_state_context.py",
       "allowed_writers": [
-        ".github/workflows/opening-auction-current-fallback.yml",
-        ".github/workflows/self-healing-watchdog.yml"
+        ".github/workflows/opening-auction-current-fallback.yml"
       ],
-      "rule": "该文件只枚举完整资本比较全集和数据/执行约束，不生成综合分数或机器主候选；self-healing调用build_state_context时必须与decision_context同批持久化。"
+      "rule": "该文件只由既有canonical context owner生成；看门狗不得生成、重建或提交资本比较派生状态。"
     }
   },
   "fact_precedence": [

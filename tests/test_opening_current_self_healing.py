@@ -344,24 +344,18 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
 
     def test_successful_healthy_assessment_is_persisted_without_staging_repair_state(self):
         workflow = (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
-        persist = workflow.split("- name: Persist bounded self-healing state and deterministic repairs", 1)[1]
+        persist = workflow.split("- name: Persist bounded self-healing status", 1)[1]
         self.assertIn("always() && steps.assess.outcome == 'success'", persist)
-        self.assertIn("git add -A -- data/state/self_healing_status.json", persist)
-        self.assertIn("checked_at and age counters are observations", persist)
+        self.assertIn("git add -- data/state/self_healing_status.json", persist)
         self.assertIn("status_changed=", persist)
-        # Derived Formal Decision contexts are protected from broad watchdog
-        # writes. Only the two explicit repair actions may stage them.
-        self.assertIn('if [ "$action" = "REBUILD_DERIVED_CONTEXTS" ] || [ "$action" = "SYNC_RULES_VERSION_METADATA" ]; then', persist)
-        self.assertIn('elif [ "$action" = "__REGISTERED_DERIVED_CONTEXT_WRITER_CONTRACT__" ]; then', persist)
-        self.assertNotIn('if [ "$action" != "NONE" ]; then', persist)
-        self.assertLess(
-            persist.index("git add -A -- data/state/self_healing_status.json"),
-            persist.index('if [ "$action" = "REBUILD_DERIVED_CONTEXTS" ] || [ "$action" = "SYNC_RULES_VERSION_METADATA" ]; then'),
-        )
+        self.assertNotIn("build_state_context.py", persist)
+        self.assertNotIn("repair-safe", persist)
+        for path in ("data/state/CURRENT.json", "data/state/decision_context.json", "data/state/review_context.json", "data/state/intraday_path_features.json", "data/state/decision_trigger.json", "data/state/capital_efficiency_ranking.json"):
+            self.assertNotIn(path, persist)
 
     def test_self_healing_persistence_rebuilds_from_latest_main_without_rebase(self):
         workflow = (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
-        persist = workflow.split("- name: Persist bounded self-healing state and deterministic repairs", 1)[1]
+        persist = workflow.split("- name: Persist bounded self-healing status", 1)[1]
         self.assertIn("git restore --worktree --staged .", persist)
         self.assertIn("git fetch origin main", persist)
         self.assertIn("git reset --hard origin/main", persist)
@@ -374,16 +368,14 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
         self.assertNotIn("git rebase", persist)
         self.assertNotIn("git push --force", persist)
 
-    def test_self_healing_persistence_keeps_canonical_rebuilders_for_repair_actions(self):
+    def test_self_healing_persistence_keeps_only_watchdog_status_writer(self):
         workflow = (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
-        persist = workflow.split("- name: Persist bounded self-healing state and deterministic repairs", 1)[1]
-        self.assertIn('if [ "$action" = "REBUILD_DERIVED_CONTEXTS" ]; then', persist)
-        self.assertIn('elif [ "$action" = "SYNC_RULES_VERSION_METADATA" ]; then', persist)
-        self.assertIn("python scripts/build_state_context.py", persist)
-        # query_context is owned by the canonical market-snapshot producers;\n        # watchdog repair must not rebuild or persist it.\n        self.assertNotIn("python scripts/build_query_context.py", persist)\n        retry_loop = persist.split('for attempt in $(seq 1 "$max_attempts"); do', 1)[1]
-        self.assertIn("data/state/review_context.json", persist)
-        self.assertIn("python scripts/runtime_self_heal.py --repair-safe", persist)
-        self.assertIn("Self-healing persistence exhausted bounded latest-main retries; fail closed.", persist)
+        persist = workflow.split("- name: Persist bounded self-healing status", 1)[1]
+        self.assertNotIn("REBUILD_DERIVED_CONTEXTS", persist)
+        self.assertNotIn("SYNC_RULES_VERSION_METADATA", persist)
+        self.assertNotIn("python scripts/build_state_context.py", persist)
+        self.assertNotIn("python scripts/runtime_self_heal.py --repair-safe", persist)
+        self.assertIn("Watchdog status persistence exhausted bounded latest-main retries; fail closed.", persist)
 
     def test_event_wake_sources_are_existing_cross_market_workflows(self):
         workflow = (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
@@ -484,9 +476,9 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
         self.assertIn("expected_us_phase", workflow)
         self.assertIn('object_phase(code) == "REGULAR"', workflow)
         self.assertIn("gh run list --workflow us-extended-hours-pulse.yml", workflow)
-        self.assertIn("Recover missing US notification batch through canonical workflow", workflow)
-        self.assertIn("recovery_source_run_id", workflow)
-        self.assertIn("no duplicate fallback dispatch", workflow)
+        self.assertNotIn("Recover missing US notification batch through canonical workflow", workflow)
+        self.assertNotIn("recovery_source_run_id", workflow)
+        self.assertIn("no duplicate dispatch", workflow)
 
     def test_notification_recovery_reuses_single_guarded_us_batch(self):
         workflow = (ROOT / ".github/workflows/decision-notification.yml").read_text(encoding="utf-8")
