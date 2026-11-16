@@ -613,7 +613,7 @@ def run(root: Path = ROOT) -> dict:
             "direct main writer does not force-push main",
         )
 
-    self_heal_workflow_rel = ".github/workflows/etf-runtime-self-healing-watchdog.yml"
+    self_heal_workflow_rel = ".github/workflows/self-healing-watchdog.yml"
     failure_guard_workflow_rel = ".github/workflows/workflow-failure-guard.yml"
     self_heal_script_rel = "scripts/runtime_self_heal.py"
     failure_guard_script_rel = "scripts/workflow_failure_guard.py"
