@@ -1,16 +1,16 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-11-14T20:33:57+08:00",
+  "generated_at": "2026-11-16T09:29:53+08:00",
   "status": "BLOCKED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
   "components": {
     "market": {
-      "status": "READY",
-      "reason": "latest market snapshot is valid",
-      "snapshot": "data/market/snapshots/2026-11-13_150611.json",
-      "captured_at": "2026-11-13T15:06:11+08:00",
-      "market_phase": "POST_CLOSE_GRACE"
+      "status": "DEGRADED",
+      "reason": "market data quality=DEGRADED, node=DEGRADED",
+      "snapshot": "data/market/snapshots/2026-11-16_092428.json",
+      "captured_at": "2026-11-16T09:24:28+08:00",
+      "market_phase": "OPENING_CALL_AUCTION"
     },
     "account": {
       "status": "READY",
@@ -49,8 +49,8 @@
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 8960690,
-          "sha256": "4738cfaf03becf29a0e4a1b5daa14e0998de19734a1ec14ee4c305a93573f899",
+          "byte_count": 6223338,
+          "sha256": "03002d83b04aa4a3636283511a6e6be78725baee0f55e75c236f0143758c6f32",
           "parsed_object": true,
           "retry_attempts": 1,
           "retry_required": false
@@ -58,8 +58,8 @@
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 781486,
-          "sha256": "fa77354d279893eab2c5d642776c9ae8dc85df75dee8831e74ca10bf0b192b4b",
+          "byte_count": 327064,
+          "sha256": "096a97114304fe6989b2d1916f2d1a0e83294d11f55190c1834c66a5f52c9460",
           "parsed_object": true,
           "retry_attempts": 1,
           "retry_required": false
@@ -70,30 +70,31 @@
     "lifecycle": {
       "status": "READY",
       "reason": "canonical lifecycle projection available; mandatory_due=2",
-      "active_trial_count": 8,
+      "active_trial_count": 7,
       "decision_due_count": 2,
       "overdue_count": 1,
-      "next_mandatory_node": "2026-11-10",
+      "next_mandatory_node": "2026-11-13",
       "source": "formal decision + executed trade facts"
     },
     "maintenance": {
       "status": "READY",
       "reason": "maintenance guard passed",
-      "checked_at": "2026-11-14T20:13:21+08:00"
+      "checked_at": "2026-11-16T09:13:32+08:00"
     }
   },
   "blockers": [
     "decision_context"
   ],
   "degradations": [
+    "market",
     "risk"
   ],
   "context_read_contract": {
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 8960690,
-      "sha256": "4738cfaf03becf29a0e4a1b5daa14e0998de19734a1ec14ee4c305a93573f899",
+      "byte_count": 6223338,
+      "sha256": "03002d83b04aa4a3636283511a6e6be78725baee0f55e75c236f0143758c6f32",
       "parsed_object": true,
       "retry_attempts": 1,
       "retry_required": false
@@ -101,8 +102,8 @@
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 781486,
-      "sha256": "fa77354d279893eab2c5d642776c9ae8dc85df75dee8831e74ca10bf0b192b4b",
+      "byte_count": 327064,
+      "sha256": "096a97114304fe6989b2d1916f2d1a0e83294d11f55190c1834c66a5f52c9460",
       "parsed_object": true,
       "retry_attempts": 1,
       "retry_required": false
