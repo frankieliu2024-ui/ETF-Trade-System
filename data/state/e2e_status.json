@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-11-17T16:12:19+08:00",
+  "generated_at": "2026-11-17T16:24:08+08:00",
   "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -51,8 +51,8 @@
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 8103432,
-          "sha256": "0f224b1d7893dd0f76850c01c797536b53c3e6764b80c100271a7a1b228cb882",
+          "byte_count": 8103423,
+          "sha256": "4074f8db8e4c375db22b19a6364837bbdaa59ec722da091f510529199ba7412c",
           "parsed_object": true,
           "retry_attempts": 1,
           "retry_required": false
@@ -60,8 +60,8 @@
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 816479,
-          "sha256": "6a98218165ae8cf055f08e905bc528a563f7ed4fd16158e3f36e7b7c2c9bf2ba",
+          "byte_count": 811206,
+          "sha256": "d091010e616ba3b0fabe17369084fc9d4f08681cff7bb4b10622aa5d888cc127",
           "parsed_object": true,
           "retry_attempts": 1,
           "retry_required": false
@@ -79,21 +79,22 @@
       "source": "formal decision + executed trade facts"
     },
     "maintenance": {
-      "status": "READY",
-      "reason": "maintenance guard passed",
-      "checked_at": "2026-11-17T13:42:12+08:00"
+      "status": "DEGRADED",
+      "reason": "maintenance-only block; formal analysis capability remains separately evaluated",
+      "checked_at": "2026-11-17T16:17:37+08:00"
     }
   },
   "blockers": [],
   "degradations": [
-    "risk"
+    "risk",
+    "maintenance"
   ],
   "context_read_contract": {
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 8103432,
-      "sha256": "0f224b1d7893dd0f76850c01c797536b53c3e6764b80c100271a7a1b228cb882",
+      "byte_count": 8103423,
+      "sha256": "4074f8db8e4c375db22b19a6364837bbdaa59ec722da091f510529199ba7412c",
       "parsed_object": true,
       "retry_attempts": 1,
       "retry_required": false
@@ -101,8 +102,8 @@
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 816479,
-      "sha256": "6a98218165ae8cf055f08e905bc528a563f7ed4fd16158e3f36e7b7c2c9bf2ba",
+      "byte_count": 811206,
+      "sha256": "d091010e616ba3b0fabe17369084fc9d4f08681cff7bb4b10622aa5d888cc127",
       "parsed_object": true,
       "retry_attempts": 1,
       "retry_required": false

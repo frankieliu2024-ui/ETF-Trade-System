@@ -7,12 +7,12 @@
     "snapshot_commit": "6de26e3d81a2b0b3428382de339b6b0742736546",
     "boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
     "timing": {
-      "state_builder_started_at": "2026-11-17T08:08:29Z",
+      "state_builder_started_at": "2026-11-17T08:21:00Z",
       "current_published_at": "2026-11-17T15:17:00+08:00",
-      "market_regime_ready_at": "2026-11-17T08:08:38Z",
-      "market_structure_ready_at": "2026-11-17T08:08:39Z",
-      "full_state_context_observation_at": "2026-11-17T08:08:39Z",
-      "decision_context_written_at": "2026-11-17T08:11:35Z"
+      "market_regime_ready_at": "2026-11-17T08:21:08Z",
+      "market_structure_ready_at": "2026-11-17T08:21:09Z",
+      "full_state_context_observation_at": "2026-11-17T08:21:10Z",
+      "decision_context_written_at": "2026-11-17T08:23:31Z"
     },
     "trigger": {
       "request_id": "",
@@ -25,7 +25,7 @@
       "market_date": "2026-11-17"
     }
   },
-  "generated_at": "2026-11-17T08:08:39Z",
+  "generated_at": "2026-11-17T08:21:10Z",
   "rules_version": "V2.2.34",
   "market_date": "2026-11-17",
   "latest_node": "close",
@@ -2439,7 +2439,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 9.44,
-    "age_seconds": 3099
+    "age_seconds": 3850
   },
   "freshness_at_context_build": {
     "status": "STALE",
@@ -2456,7 +2456,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 9.44,
-    "age_seconds": 3099
+    "age_seconds": 3850
   },
   "data_quality_summary": {
     "pass_count": 27,
@@ -2560,7 +2560,7 @@
     "account_fact_time": "2026-11-16T17:38:45+08:00",
     "market_snapshot_time": "2026-11-17T15:17:00+08:00",
     "market_phase": "POST_CLOSE_GRACE",
-    "context_generated_time": "2026-11-17T08:08:39Z",
+    "context_generated_time": "2026-11-17T08:21:10Z",
     "latest_formal_decision_time": "2026-09-29T09:04:12+08:00",
     "account_fact_decision_relation": "ACCOUNT_FACT_AFTER_FORMAL_DECISION_REQUIRES_REASSESSMENT",
     "account_fact_requires_formal_reassessment": true,
@@ -2603,7 +2603,7 @@
     "read_only": true
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-11-17T16:08:39+08:00",
+    "generated_at_beijing": "2026-11-17T16:21:10+08:00",
     "refresh_mode": "CACHED_STATE",
     "refresh_failures": [],
     "decision_freshness": {
@@ -2612,8 +2612,8 @@
       "captured_at": "2026-11-17T07:17:00+00:00",
       "provider_as_of": "2026-11-17T07:16:54+00:00",
       "effective_as_of": "2026-11-17T07:16:54+00:00",
-      "request_time": "2026-11-17T08:08:39.894021+00:00",
-      "age_seconds": 3105,
+      "request_time": "2026-11-17T08:21:10.388660+00:00",
+      "age_seconds": 3856,
       "post_request": false,
       "preferred_max_age_seconds": 300,
       "fallback_max_age_seconds": 900,
@@ -3476,8 +3476,8 @@
         "market_status_cn": "港股收盘",
         "data_nature_cn": "最近正式收盘行情",
         "source": "yahoo_chart_api",
-        "freshness": "DEGRADED",
-        "freshness_cn": "存在延迟",
+        "freshness": "STALE",
+        "freshness_cn": "时点过旧",
         "quality_status": "PASS",
         "quality_status_cn": "数据可用",
         "direct_quote": true,
@@ -3984,7 +3984,7 @@
   },
   "decision_trigger": {
     "schema_version": "1.2",
-    "generated_at": "2026-11-17T16:08:39+08:00",
+    "generated_at": "2026-11-17T16:21:09+08:00",
     "status": "NO_NEW_TRIGGER",
     "trigger_type": "",
     "triggered_at": "",
@@ -3992,7 +3992,7 @@
     "previous_decision_id": "FORMAL-20260929-090323__decision_090727",
     "evidence_change": "",
     "evidence_time": "2026-11-17T15:17:00+08:00",
-    "e2e_status": "BLOCKED",
+    "e2e_status": "DEGRADED",
     "requires_formal_reassessment": false,
     "pending_trigger": false,
     "idempotency_key": "",
@@ -4014,9 +4014,9 @@
   },
   "capital_efficiency_ranking": {
     "schema_version": "1.2",
-    "generated_at": "2026-11-17T16:08:39+08:00",
+    "generated_at": "2026-11-17T16:21:09+08:00",
     "as_of": "2026-11-17T15:17:00+08:00",
-    "e2e_status": "BLOCKED",
+    "e2e_status": "DEGRADED",
     "risk_zone": "UNKNOWN",
     "risk_zone_semantics": "REVIEW_CONTEXT_ONLY_NOT_TRADING_PERMISSION",
     "enhanced_risk_review_required": false,
@@ -4033,9 +4033,7 @@
         "eligibility": "COMPARISON_AVAILABLE",
         "data_availability": "READY",
         "reason": "等待价值与风险缓冲属于合法资本用途；是否优于其他用途由MASTER完整判断决定。",
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "不自动成为唯一主候选或0元结论"
       },
@@ -4057,9 +4055,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4081,9 +4077,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4105,9 +4099,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4129,9 +4121,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4153,9 +4143,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4177,9 +4165,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4201,9 +4187,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4225,9 +4209,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4249,9 +4231,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4273,9 +4253,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4297,9 +4275,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4321,9 +4297,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4345,9 +4319,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4369,9 +4341,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4393,9 +4363,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4417,9 +4385,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4441,9 +4407,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4465,9 +4429,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4489,9 +4451,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4513,9 +4473,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4537,9 +4495,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4561,9 +4517,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4585,9 +4539,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4609,9 +4561,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4625,9 +4575,7 @@
         "quantity": 200,
         "market_value": 10592,
         "releasable_capital_role": "CURRENT_CAPITAL_CAN_BE_EVALUATED_FOR_RELEASE",
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "旧仓卖出与新机会买入必须分别通过各自MASTER完整决策链。"
       },
@@ -4641,9 +4589,7 @@
         "quantity": 300,
         "market_value": 7788,
         "releasable_capital_role": "CURRENT_CAPITAL_CAN_BE_EVALUATED_FOR_RELEASE",
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "旧仓卖出与新机会买入必须分别通过各自MASTER完整决策链。"
       }
@@ -4656,9 +4602,7 @@
         "eligibility": "COMPARISON_AVAILABLE",
         "data_availability": "READY",
         "reason": "等待价值与风险缓冲属于合法资本用途；是否优于其他用途由MASTER完整判断决定。",
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "不自动成为唯一主候选或0元结论"
       },
@@ -4680,9 +4624,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4704,9 +4646,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4728,9 +4668,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4752,9 +4690,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4776,9 +4712,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4800,9 +4734,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4824,9 +4756,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4848,9 +4778,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4872,9 +4800,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4896,9 +4822,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4920,9 +4844,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4944,9 +4866,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4968,9 +4888,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -4992,9 +4910,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -5016,9 +4932,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -5040,9 +4954,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -5064,9 +4976,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -5088,9 +4998,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -5112,9 +5020,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -5136,9 +5042,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -5160,9 +5064,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -5184,9 +5086,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -5208,9 +5108,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -5232,9 +5130,7 @@
           "风险收益",
           "资本占用效率"
         ],
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "数据不可用只限制基于该证据形成动作，不允许对象从正式扫描框架静默消失。"
       },
@@ -5248,9 +5144,7 @@
         "quantity": 200,
         "market_value": 10592,
         "releasable_capital_role": "CURRENT_CAPITAL_CAN_BE_EVALUATED_FOR_RELEASE",
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "旧仓卖出与新机会买入必须分别通过各自MASTER完整决策链。"
       },
@@ -5264,17 +5158,13 @@
         "quantity": 300,
         "market_value": 7788,
         "releasable_capital_role": "CURRENT_CAPITAL_CAN_BE_EVALUATED_FOR_RELEASE",
-        "execution_constraints": [
-          "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-        ],
+        "execution_constraints": [],
         "risk_review_context": [],
         "action_boundary": "旧仓卖出与新机会买入必须分别通过各自MASTER完整决策链。"
       }
     ],
     "excluded_candidates": [],
-    "execution_constraints": [
-      "E2E_BLOCKED_FORMAL_AMOUNT_OR_SHARE_DECISION_REQUIRES_MISSING_CRITICAL_FACT"
-    ],
+    "execution_constraints": [],
     "key_reason": "机器层已枚举完整资本比较全集；候选选择、风险许可、金额和份额仍由MASTER正式判断。数据或执行限制只标记可用范围，不把分析状态改写为未准备好。",
     "previous_top_candidate": null,
     "order_semantics": "LEGAL_CAPITAL_UNIVERSE_ONLY_NOT_RANKING",
@@ -5301,7 +5191,7 @@
     "read_only": true
   },
   "intraday_path_features": {
-    "generated_at": "2026-11-17T08:08:29Z",
+    "generated_at": "2026-11-17T08:21:00Z",
     "market_date": "2026-11-17",
     "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
     "read_only": true,
@@ -7725,7 +7615,7 @@
     },
     "market_structure_context": {
       "schema_version": "1.4",
-      "generated_at": "2026-11-17T08:08:38Z",
+      "generated_at": "2026-11-17T08:21:09Z",
       "market_date": "2026-11-17",
       "as_of_beijing": "2026-11-17T15:17:00+08:00",
       "source_snapshot": "data/market/snapshots/2026-11-17_151700.json",
