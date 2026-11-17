@@ -137,8 +137,10 @@ def valid_json(path: Path) -> bool:
 def derived_context_identity_drift(current: dict, review_context: dict) -> bool:
     """Detect stale review projection, not an absent pre-close review."""
     if not isinstance(review_context, dict) or not review_context:
-        return False
+        return str(current.get("latest_valid_node") or "").lower() in {"close", "1500"}
     review_current = review_context.get("current") or {}
+    if not review_current:
+        return str(current.get("latest_valid_node") or "").lower() in {"close", "1500"}
     for key in ("market_date", "latest_valid_node", "latest_snapshot", "snapshot_commit"):
         current_value = str(current.get(key) or "")
         review_value = str(review_current.get(key) or "")
@@ -434,7 +436,10 @@ def assess(now: datetime | None = None) -> dict:
     formal_replay_path, formal_replay_parent_id = None, None
     formal_handoff_path, formal_handoff_parent_id, formal_handoff_missing = formal_parent_handoff_gap(allow_manual=True)
     review_ver = str(review_context.get("rules_version") or "")
-    review_identity_drift = derived_context_identity_drift(current, review_context)
+    review_identity_drift = (
+        str(current.get("market_date") or "") == now.date().isoformat()
+        and derived_context_identity_drift(current, review_context)
+    )
     discovery_drift = discovery_identity_drift(current, discovery)
 
     classification = "HEALTHY"
