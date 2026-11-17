@@ -118,6 +118,31 @@ jobs:
           # a second business or notification chain.
           python scripts/build_state_context.py
 
+      - name: Rebuild E2E status after risk projection
+        id: e2e
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Consume the freshly rebuilt same-day risk and account facts.
+          # E2E is diagnostic/object-scoped and never gates the three ETF task chains.
+          python scripts/build_e2e_status.py
+
+      - name: Sync Dashboard after derived projections
+        id: dashboard
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Reuse the canonical factual Dashboard owner after strategy risk and E2E
+          # are current; do not invoke the account-sync owner a second time.
+          python - <<'PY'
+          from pathlib import Path
+          from scripts.sync_formal_files import sync_dashboard_projection
+          root = Path.cwd()
+          sync_dashboard_projection(root)
+          PY
+
       - name: Record account sync readback
         shell: bash
         env:
