@@ -37,6 +37,12 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
             "data/state/review_context.json": {"rules_version": "V2.2.31", "current": review_current or {}},
             "data/state/self_healing_status.json": {},
         }
+        values["data/state/formal_discovery_current.json"] = {
+            "status": "READY",
+            "market_date": current.get("market_date", ""),
+            "latest_snapshot": current.get("latest_snapshot", ""),
+            "latest_valid_node": current.get("latest_valid_node", ""),
+        }
 
         def fake_load(path: Path, default=None):
             normalized = path.as_posix()
@@ -68,6 +74,12 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
             "data/state/decision_context.json": {},
             "data/state/review_context.json": {"rules_version": "V2.2.31"},
             "data/state/self_healing_status.json": {},
+        }
+        values["data/state/formal_discovery_current.json"] = {
+            "status": "READY",
+            "market_date": values["data/state/CURRENT.json"].get("market_date", ""),
+            "latest_snapshot": values["data/state/CURRENT.json"].get("latest_snapshot", ""),
+            "latest_valid_node": values["data/state/CURRENT.json"].get("latest_valid_node", ""),
         }
 
         def fake_load(path: Path, default=None):
@@ -243,6 +255,8 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
                     return {"status": "PASS"}
                 if str(path).endswith("self_healing_status.json"):
                     return {"snapshot_refresh_attempts": ["2026-09-01T10:00:00+08:00", "2026-09-01T10:10:00+08:00"]}
+                if str(path).endswith("formal_discovery_current.json"):
+                    return {"status": "READY", "market_date": current["market_date"], "latest_snapshot": current.get("latest_snapshot", ""), "latest_valid_node": current["latest_valid_node"]}
                 return {}
             load.side_effect = fake_load
             with mock.patch.object(runtime_self_heal, "master_version", return_value="V2.2.31"):
@@ -268,6 +282,7 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
             "data/state/query_context.json": {},
             "data/state/decision_context.json": {},
             "data/state/self_healing_status.json": {"classification": "PERSISTENT_RUNTIME_FAILURE", "recommended_action": "ESCALATE"},
+            "data/state/formal_discovery_current.json": {"status": "READY", "market_date": current["market_date"], "latest_snapshot": current.get("latest_snapshot", ""), "latest_valid_node": current["latest_valid_node"]},
         }
         def fake_load(path: Path, default=None):
             for key, value in values.items():
@@ -330,6 +345,8 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
                     return {"status": "PASS"}
                 if str(path).endswith("self_healing_status.json"):
                     return {"last_snapshot_refresh_trigger_at": "2026-09-01T10:20:00+08:00"}
+                if str(path).endswith("formal_discovery_current.json"):
+                    return {"status": "READY", "market_date": current["market_date"], "latest_snapshot": current.get("latest_snapshot", ""), "latest_valid_node": current["latest_valid_node"]}
                 return {}
             load.side_effect = fake_load
             with mock.patch.object(runtime_self_heal, "master_version", return_value="V2.2.31"):
@@ -449,7 +466,7 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
         fallback = (ROOT / ".github/workflows/opening-auction-current-fallback.yml").read_text(encoding="utf-8")
         self.assertIn('steps.assess.outputs.action == \'REFRESH_SNAPSHOT\'', workflow)
         self.assertIn("gh workflow run market-snapshot.yml --ref main", workflow)
-        self.assertIn("Publish core snapshot and CURRENT immediately", snapshot)
+        self.assertIn("Publish complete A-share snapshot batch", snapshot)
         self.assertIn("group: etf-market-snapshot-${{ github.ref }}", snapshot)
         self.assertIn("cancel-in-progress: false", snapshot)
         self.assertNotIn("A newer user request supersedes an older queued request", snapshot)
