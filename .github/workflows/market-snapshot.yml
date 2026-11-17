@@ -400,7 +400,7 @@ jobs:
               raise SystemExit("e2e_status.json is empty after derived projection rebuild")
           PY
       - name: Publish node-local ETF Discovery
-        if: ${{ steps.current_discovery.outcome == 'success' && github.event_name != 'push' }}
+        if: ${{ always() && steps.current_discovery.outcome == 'success' && github.event_name != 'push' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -410,11 +410,7 @@ jobs:
             data/state/formal_discovery_current.json \
             data/state/formal_opportunity_current.json \
             data/state/discovery_pulse_latest.json \
-            data/state/discovery_pulse_index.json \
-            data/state/decision_context.json \
-            data/state/dashboard_update_candidate.json \
-            data/state/e2e_status.json \
-            ETF当前状态_DASHBOARD.md
+            data/state/discovery_pulse_index.json
           if git diff --cached --quiet; then echo "No Discovery projection change."; exit 0; fi
           mkdir -p /tmp/etf-discovery-publish
           git diff --cached --name-only -z > /tmp/etf-discovery-files
@@ -433,12 +429,45 @@ jobs:
               data/state/formal_discovery_current.json \
               data/state/formal_opportunity_current.json \
               data/state/discovery_pulse_latest.json \
-              data/state/discovery_pulse_index.json \
+              data/state/discovery_pulse_index.json
+            git commit -m "data: publish node-local Discovery with verified A-share pulse"
+            if git push origin HEAD:main; then
+              break
+            fi
+            if [ "$attempt" = "3" ]; then exit 1; fi
+          done
+      - name: Publish derived decision projections
+        if: ${{ steps.derived_projection.outcome == 'success' && github.event_name != 'push' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- \
+            data/state/decision_context.json \
+            data/state/dashboard_update_candidate.json \
+            data/state/e2e_status.json \
+            ETF当前状态_DASHBOARD.md
+          if git diff --cached --quiet; then echo "No derived projection change."; exit 0; fi
+          mkdir -p /tmp/etf-derived-publish
+          git diff --cached --name-only -z > /tmp/etf-derived-files
+          while IFS= read -r -d '' file; do
+            mkdir -p "/tmp/etf-derived-publish/$(dirname "$file")"
+            cp "$file" "/tmp/etf-derived-publish/$file"
+          done < /tmp/etf-derived-files
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git reset --hard origin/main
+            while IFS= read -r -d '' file; do
+              mkdir -p "$(dirname "$file")"
+              cp "/tmp/etf-derived-publish/$file" "$file"
+            done < /tmp/etf-derived-files
+            git add -- \
               data/state/decision_context.json \
               data/state/dashboard_update_candidate.json \
               data/state/e2e_status.json \
               ETF当前状态_DASHBOARD.md
-            git commit -m "data: publish node-local Discovery with verified A-share pulse"
+            git commit -m "data: publish derived projections from verified Discovery"
             if git push origin HEAD:main; then
               break
             fi

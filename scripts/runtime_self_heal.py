@@ -20,6 +20,7 @@ CONSISTENCY_PATH = ROOT / "data" / "state" / "system_consistency.json"
 QUERY_CONTEXT_PATH = ROOT / "data" / "state" / "query_context.json"
 DECISION_CONTEXT_PATH = ROOT / "data" / "state" / "decision_context.json"
 REVIEW_CONTEXT_PATH = ROOT / "data" / "state" / "review_context.json"
+DISCOVERY_PATH = ROOT / "data" / "state" / "formal_discovery_current.json"
 E2E_STATUS_PATH = ROOT / "data" / "state" / "e2e_status.json"
 MASTER_PATH = ROOT / "ETF规则_MASTER.md"
 STATUS_PATH = ROOT / "data" / "state" / "self_healing_status.json"
@@ -142,6 +143,18 @@ def derived_context_identity_drift(current: dict, review_context: dict) -> bool:
         if current_value and review_value and current_value != review_value:
             return True
     return False
+
+
+def discovery_identity_drift(current: dict, discovery: dict) -> bool:
+    """Require the canonical Discovery projection to follow CURRENT."""
+    if not isinstance(discovery, dict):
+        return True
+    if str(discovery.get("status") or "").upper() not in {"READY", "PASS", "DEGRADED"}:
+        return True
+    for key in ("market_date", "latest_snapshot"):
+        if str(current.get(key) or "") != str(discovery.get(key) or ""):
+            return True
+    return str(current.get("latest_valid_node") or "").lower() != str(discovery.get("latest_valid_node") or "").lower()
 
 
 def latest_unfinished_formal_parent(*, allow_manual: bool = True) -> tuple[str | None, str | None]:
@@ -410,6 +423,7 @@ def assess(now: datetime | None = None) -> dict:
     master_ver = master_version()
     current_ver = str(current.get("rules_version") or "")
     review_context = load_json(REVIEW_CONTEXT_PATH, {}) or {}
+    discovery = load_json(DISCOVERY_PATH, {}) or {}
     # Automatic watchdog recovery must never let an unfinished manual request
     # occupy the global formal gate for a later scheduled occurrence. Manual
     # requests remain recoverable only through their explicit manual path.
@@ -419,6 +433,7 @@ def assess(now: datetime | None = None) -> dict:
     formal_handoff_path, formal_handoff_parent_id, formal_handoff_missing = formal_parent_handoff_gap(allow_manual=True)
     review_ver = str(review_context.get("rules_version") or "")
     review_identity_drift = derived_context_identity_drift(current, review_context)
+    discovery_drift = discovery_identity_drift(current, discovery)
 
     classification = "HEALTHY"
     action = "NONE"
@@ -428,6 +443,8 @@ def assess(now: datetime | None = None) -> dict:
         classification, action, reason = "RULES_VERSION_METADATA_INVALID", "ESCALATE", "MASTER current release metadata cannot be parsed safely"
     elif not current_ver or master_ver != current_ver:
         classification, action, reason = "RULES_VERSION_METADATA_DRIFT", "SYNC_RULES_VERSION_METADATA", f"MASTER={master_ver}, CURRENT={current_ver}"
+    elif discovery_drift:
+        classification, action, reason = "DISCOVERY_IDENTITY_DRIFT", "REFRESH_SNAPSHOT", "canonical Discovery does not match CURRENT market snapshot"
     elif review_ver and review_ver != master_ver:
         classification, action, reason = "DERIVED_CONTEXT_RULES_VERSION_DRIFT", "REBUILD_DERIVED_CONTEXTS", f"MASTER={master_ver}, REVIEW_CONTEXT={review_ver}"
     elif review_identity_drift:
@@ -495,6 +512,7 @@ def assess(now: datetime | None = None) -> dict:
         "current_rules_version": current_ver or None,
         "review_context_rules_version": review_ver or None,
         "review_context_identity_drift": review_identity_drift,
+        "discovery_identity_drift": discovery_drift,
         "formal_replay_request": formal_replay_path,
         "formal_replay_parent_id": formal_replay_parent_id,
         "formal_handoff_parent_id": formal_handoff_parent_id,
