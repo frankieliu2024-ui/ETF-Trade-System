@@ -278,6 +278,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -- \
+            data/state/query_context.json \
             data/state/decision_context.json \
             data/state/review_context.json \
             data/state/dashboard_update_candidate.json \
@@ -301,6 +302,7 @@ jobs:
               cp "/tmp/etf-watchdog-derived-publish/$file" "$file"
             done < /tmp/etf-watchdog-derived-files
             git add -- \
+              data/state/query_context.json \
               data/state/decision_context.json \
               data/state/dashboard_update_candidate.json \
               data/state/e2e_status.json \
