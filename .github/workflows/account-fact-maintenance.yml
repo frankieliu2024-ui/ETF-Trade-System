@@ -101,6 +101,11 @@ jobs:
           # is not part of that owner, then run the single final health guard
           # after readback.
           python scripts/rebuild_etf_strategy_equity.py --output data/state/etf_strategy_equity.json
+          # Rebuild E2E, Dashboard and dependent derived context only after
+          # the canonical strategy equity projection has been refreshed.
+          # This remains the same account-maintenance owner and does not add
+          # a second business or notification chain.
+          python scripts/build_state_context.py
 
       - name: Record account sync readback
         shell: bash
