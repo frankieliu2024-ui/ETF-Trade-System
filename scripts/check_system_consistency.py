@@ -328,13 +328,21 @@ def _validate_formal_risk_precedence(report: dict) -> None:
     e2e_risk = e2e_component.get("etf_strategy_risk_pct")
     dashboard_risk = float(match.group(1)) if match else None
     mismatches = []
-    if dashboard_risk is None or abs(dashboard_risk - formal_risk) > 0.03:
-        mismatches.append(f"dashboard={dashboard_risk}")
+    # When current-date risk is unavailable, Dashboard must suppress the old
+    # numeric value.  That is a controlled degraded projection, not a
+    # precedence violation.  A numeric mismatch remains hard only when the
+    # current E2E component is consumable.
+    e2e_state = str(e2e_component.get("status") or "").upper()
+    dashboard_unavailable = bool(re.search(r"当前canonical策略权益状态缺失|风险.*(?:STALE|UNAVAILABLE|不可用)", dashboard, re.I))
+    if e2e_state not in {"DEGRADED", "UNAVAILABLE", "MISSING"}:
+        if dashboard_risk is None or abs(dashboard_risk - formal_risk) > 0.03:
+            mismatches.append(f"dashboard={dashboard_risk}")
+    elif dashboard_risk is not None and not dashboard_unavailable:
+        mismatches.append(f"dashboard_stale_value={dashboard_risk}")
     # A missing E2E risk value is a valid degraded state when the
     # current-date risk reconstruction is unavailable.  It must not be
     # promoted to a hard consistency failure, while a READY component with
     # no value remains a contract violation.
-    e2e_state = str(e2e_component.get("status") or "").upper()
     try:
         if e2e_risk is None:
             if e2e_state not in {"DEGRADED", "UNAVAILABLE", "MISSING"}:
