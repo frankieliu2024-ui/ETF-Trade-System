@@ -19,7 +19,6 @@ except ModuleNotFoundError:
 
 from confirmed_trade_facts import (
     canonical_etf_trade_facts,
-    recover_canonical_etf_trade_facts,
     effective_confirmed_fee_fact,
     latest_formal_review_confirmed_fees,
     trade_signature,
@@ -53,7 +52,8 @@ def read_json(path: Path, default=None):
 def write_json(path: Path, obj: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + ".tmp")
-    tmp.write_text(json.dumps(obj, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    tmp.write_text(json.dumps(obj, ensure_ascii=False, indent=2) + "
+", encoding="utf-8")
     tmp.replace(path)
 
 
@@ -92,20 +92,11 @@ def reconcile() -> dict:
     trades = equity.get("trades") or []
     series = equity.get("series") or []
     canonical_replay = str(equity.get("schema_version") or "").startswith("1.0-canonical-replay") and bool(series)
-    expected_trade_count = int(summary.get("trade_fact_count") or summary.get("trade_count") or 0)
-
     enrichment_only_count = sum(
         1 for t in trades
         if str(t.get("replay_semantics") or "").upper() == "FACT_ENRICHMENT_ONLY"
     )
     trades_for_positions = canonical_etf_trade_facts(ROOT, trades)
-    enrichment_count_migration = bool(
-        expected_trade_count
-        and expected_trade_count - len(trades_for_positions) == enrichment_only_count
-        and enrichment_only_count > 0
-    )
-    if expected_trade_count and len(trades_for_positions) < expected_trade_count and not enrichment_count_migration:
-        trades_for_positions = recover_canonical_etf_trade_facts(ROOT, trades, expected_trade_count)
     reconstructed_signatures = {
         trade_signature(t) for t in trades
         if str(t.get("replay_semantics") or "").upper() != "FACT_ENRICHMENT_ONLY"
@@ -173,21 +164,13 @@ def reconcile() -> dict:
         row_diff = None
         equity_ok = abs(equity_diff) < 0.011 and str(summary.get("equity_reconciliation_status") or "").startswith("RECONCILED")
 
-    trade_count_ok = expected_trade_count == len(trades_for_positions) or enrichment_count_migration
-    # The replay count is a projection diagnostic, not an account-fact gate.
-    # Newly confirmed broker executions may be present as valid event overlays
-    # before the historical replay summary is rebuilt. Position identity and
-    # gross-equity reconciliation are the authoritative maintenance checks;
-    # retain the count fields for audit visibility without recurring false
-    # failures on every newly reported trade.
+    # Trade count is derived from canonical trade facts for observability only.
+    # A separately declared summary count is not maintained or used as a gate.
     overall = quantity_ok and equity_ok
     return {
         "status": "PASS" if overall else "FAIL",
         "trade_count": len(trades_for_positions),
-        "trade_count_matches_summary": trade_count_ok,
-        "declared_trade_count": expected_trade_count,
         "fact_enrichment_only_count": enrichment_only_count,
-        "trade_count_migration": "FACT_ENRICHMENT_ONLY_EXACT_DELTA" if enrichment_count_migration else None,
         "executed_trade_event_overlay_count": len(overlay_events),
         "position_ledger_basis": position_basis,
         "position_reconciliation": {"status": "PASS" if quantity_ok else "FAIL", "checks": quantity_checks},
