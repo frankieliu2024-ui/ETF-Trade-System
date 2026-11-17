@@ -287,5 +287,29 @@ class TestMarketRiskMetricGuard(unittest.TestCase):
         self.assertTrue(equity["summary"].get("pending_fees_do_not_block_gross"))
 
 
+    def test_live_risk_context_contract(self):
+        """Build the live risk/query context once for the consistency gate."""
+        formal_risk, formal_source = latest_formal_review_risk(REPO_ROOT)
+        from scripts.state_manager import build_decision_context
+        from scripts.build_query_context import build as build_query
+
+        decision = build_decision_context(REPO_ROOT)
+        query = build_query(REPO_ROOT)
+        decision_metric = decision.get("etf_strategy_risk_metrics") or {}
+        query_metric = (query.get("decision_context") or {}).get("etf_strategy_risk_metrics") or {}
+        equity = read_json(REPO_ROOT / "data" / "state" / "etf_strategy_equity.json")
+        gross = float(equity["summary"]["current_strategy_return_pct_gross"])
+
+        self.assertIsNotNone(decision_metric.get("etf_strategy_risk_pct"))
+        self.assertIsNotNone(query_metric.get("etf_strategy_risk_pct"))
+        self.assertAlmostEqual(float(decision_metric["etf_strategy_risk_pct"]), formal_risk, delta=0.01)
+        self.assertAlmostEqual(float(query_metric["etf_strategy_risk_pct"]), formal_risk, delta=0.01)
+        self.assertAlmostEqual(float(decision_metric["etf_strategy_risk_pct"]), gross, delta=0.01)
+        self.assertEqual(decision_metric.get("risk_source"), formal_source)
+        self.assertEqual(query_metric.get("risk_source"), formal_source)
+        self.assertEqual(decision_metric.get("risk_source"), "data/state/etf_strategy_equity.json")
+        self.assertTrue(equity["summary"].get("pending_fees_do_not_block_gross"))
+
+
 if __name__ == "__main__":
     unittest.main()
