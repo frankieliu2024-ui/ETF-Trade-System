@@ -214,6 +214,79 @@ jobs:
           gh workflow run market-snapshot.yml --ref main -f node=scheduled -f probe_only=false
           python scripts/runtime_self_heal.py --record-trigger
 
+      - name: Repair stale A-share derived projections through canonical producers
+        if: ${{ steps.assess.outputs.action == 'REBUILD_DERIVED_CONTEXTS' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The watchdog is only a recovery trigger. The existing canonical
+          # producers remain the sole writers for A-share derived state; this
+          # does not rebuild overseas/US/account/lifecycle facts and does not
+          # create a second task, completion, event, report, or notification.
+          python scripts/build_state_context.py --decision-ready-only
+          python scripts/build_e2e_status.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          current = json.loads(Path("data/state/CURRENT.json").read_text(encoding="utf-8"))
+          discovery = json.loads(Path("data/state/formal_discovery_current.json").read_text(encoding="utf-8"))
+          decision = json.loads(Path("data/state/decision_context.json").read_text(encoding="utf-8"))
+          batch = decision.get("discovery_opportunity_batch_consistency") or {}
+          for key in ("market_date", "latest_snapshot"):
+              if discovery.get(key) != current.get(key):
+                  raise SystemExit(f"derived Discovery {key} mismatch")
+          if str(discovery.get("latest_valid_node") or "").lower() != str(current.get("latest_valid_node") or "").lower():
+              raise SystemExit("derived Discovery latest_valid_node mismatch")
+          if str(batch.get("status") or "").upper() != "ALIGNED":
+              raise SystemExit(f"derived Discovery batch is not ALIGNED: {batch}")
+          e2e = json.loads(Path("data/state/e2e_status.json").read_text(encoding="utf-8"))
+          if not e2e:
+              raise SystemExit("e2e_status.json is empty after derived recovery")
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- \
+            data/state/decision_context.json \
+            data/state/dashboard_update_candidate.json \
+            data/state/e2e_status.json \
+            ETF当前状态_DASHBOARD.md
+          if git diff --cached --quiet; then
+            echo "No A-share derived projection change."
+            exit 0
+          fi
+          mkdir -p /tmp/etf-watchdog-derived-publish
+          git diff --cached --name-only -z > /tmp/etf-watchdog-derived-files
+          while IFS= read -r -d '' file; do
+            mkdir -p "/tmp/etf-watchdog-derived-publish/$(dirname "$file")"
+            cp "$file" "/tmp/etf-watchdog-derived-publish/$file"
+          done < /tmp/etf-watchdog-derived-files
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git reset --hard origin/main
+            while IFS= read -r -d '' file; do
+              mkdir -p "$(dirname "$file")"
+              cp "/tmp/etf-watchdog-derived-publish/$file" "$file"
+            done < /tmp/etf-watchdog-derived-files
+            git add -- \
+              data/state/decision_context.json \
+              data/state/dashboard_update_candidate.json \
+              data/state/e2e_status.json \
+              ETF当前状态_DASHBOARD.md
+            if git diff --cached --quiet; then
+              echo "Derived projection already current after rebase."
+              exit 0
+            fi
+            git commit -m "ops: repair stale A-share derived projections"
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            if [ "$attempt" = "3" ]; then
+              echo "A-share derived projection recovery exhausted bounded retries."
+              exit 1
+            fi
+          done
+
       - name: Persist bounded self-healing status
         # The watchdog owns only its bounded health assessment and its own
         # rebuildable status receipt. Domain facts, derived contexts, metadata,
