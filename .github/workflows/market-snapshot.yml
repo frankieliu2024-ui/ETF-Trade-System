@@ -381,7 +381,7 @@ jobs:
           current = json.loads(Path("data/state/CURRENT.json").read_text(encoding="utf-8"))
           discovery = json.loads(Path("data/state/formal_discovery_current.json").read_text(encoding="utf-8"))
           decision = json.loads(Path("data/state/decision_context.json").read_text(encoding="utf-8"))
-          batch = decision.get("batch_consistency") or {}
+          batch = decision.get("discovery_opportunity_batch_consistency") or {}
           expected = {
               "market_date": current.get("market_date"),
               "latest_valid_node": current.get("latest_valid_node"),
