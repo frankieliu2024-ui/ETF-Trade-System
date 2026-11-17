@@ -3,7 +3,7 @@
   "read_only_research": true,
   "trade_accounting": "FIFO",
   "replay_start": "2026-07-13",
-  "replay_cutoff": "2026-11-12",
+  "replay_cutoff": "2026-11-17",
   "input_source_identity": {
     "trade_owner": "confirmed_trade_facts.canonical_etf_trade_facts",
     "price_owner": "events/research/daily_features",
@@ -1197,25 +1197,57 @@
       "execution_attribution": {
         "status": "NO_LINKED_DECISION"
       }
+    },
+    {
+      "event_id": "broker-trade-20261116-133417-159265-chatgpt",
+      "idempotency_key": "159265|BUY|6100|0.815|2026-11-16T13:34:17+08:00",
+      "confirmed_at_beijing": "2026-11-16T17:38:45+08:00",
+      "executed_at_beijing": "2026-11-16T13:34:17+08:00",
+      "account_confirmed_at_beijing": null,
+      "execution_date": "2026-11-16",
+      "confirmation_date": "2026-11-16",
+      "notification_id": null,
+      "name": "港股消费ETF鹏华",
+      "code": "159265",
+      "side": "BUY",
+      "quantity": 6100,
+      "price": 0.815,
+      "amount": 4971.5,
+      "lifecycle": "Trial",
+      "source": "CHATGPT_USER_BROKER_SCREENSHOT",
+      "source_confidence": null,
+      "linked_decision_id": "FORMAL-20260929-090323__decision_090727",
+      "hypothesis_id": null,
+      "execution_status": "EXECUTED",
+      "execution_attribution": {
+        "status": "READY",
+        "decision_id": "FORMAL-20260929-090323__decision_090727",
+        "resolution": "EXPLICIT_PIT_VALID"
+      }
     }
   ],
   "summary": {
     "starting_etf_strategy_capital": 200000.0,
-    "current_gross_strategy_equity": 173154.7,
-    "current_strategy_return_pct_gross": -13.4226,
-    "current_cumulative_pnl_gross": -26845.3,
-    "max_drawdown_amount": -27448.3,
-    "max_drawdown_pct": -13.7241,
-    "gross_realized_pnl": -26668.4,
+    "current_gross_strategy_equity": 171037.8,
+    "current_strategy_return_pct_gross": -14.4811,
+    "current_cumulative_pnl_gross": -28962.2,
+    "max_drawdown_amount": -28962.2,
+    "max_drawdown_pct": -14.4811,
+    "gross_realized_pnl": -26458.5,
     "confirmed_fees_separate": 237.23,
     "known_fees": 237.23,
-    "pending_fee_count": 9,
-    "fee_status": "9 RECORDED TRADE FEE(S) PENDING_OR_NOT_YET_DISPLAYED",
+    "pending_fee_count": 10,
+    "fee_status": "10 RECORDED TRADE FEE(S) PENDING_OR_NOT_YET_DISPLAYED",
     "pending_fees_do_not_block_gross": true,
-    "trade_fact_count": 54,
-    "price_date_count": 693,
-    "coverage_status": "DEGRADED_PENDING_LATEST_VALUATION",
-    "pending_latest_valuation": true
+    "trade_fact_count": 55,
+    "price_date_count": 692,
+    "coverage_status": "CURRENT_ACCOUNT_SNAPSHOT_WITH_HISTORICAL_REPLAY_WARNING",
+    "pending_latest_valuation": false,
+    "current_valuation_market_date": "2026-11-17",
+    "current_valuation_source": "account_fact + current_valid_market_snapshot",
+    "historical_replay_status": "WARNING_HISTORICAL_DATE_ALIGNED_GAP",
+    "historical_replay_cutoff": "2026-11-12",
+    "historical_replay_error": "missing date-aligned close for held ETF 159253 on 2026-11-13"
   },
   "series": [
     {
@@ -11162,6 +11194,89 @@
         }
       },
       "quality_status": "COMPLETE"
+    },
+    {
+      "date": "2026-11-17",
+      "cash": 86814.7,
+      "market_value": 84223.1,
+      "strategy_equity_gross": 171037.8,
+      "realized_pnl_gross": -26458.5,
+      "drawdown_amount": -28962.2,
+      "drawdown_pct": -14.4811,
+      "positions": {
+        "159941": {
+          "quantity": 12200.0,
+          "close": 1.594,
+          "market_value": 19446.8,
+          "cost_basis": 19837.2
+        },
+        "159981": {
+          "quantity": 8500.0,
+          "close": 1.745,
+          "market_value": 14832.5,
+          "cost_basis": 14824.0
+        },
+        "159992": {
+          "quantity": 17200.0,
+          "close": 0.786,
+          "market_value": 13519.2,
+          "cost_basis": 14929.6
+        },
+        "159253": {
+          "quantity": 4600.0,
+          "close": 1.094,
+          "market_value": 5032.4,
+          "cost_basis": 4931.2
+        },
+        "159265": {
+          "quantity": 6100.0,
+          "close": 0.822,
+          "market_value": 5014.2,
+          "cost_basis": 4977.6
+        },
+        "510230": {
+          "quantity": 3600.0,
+          "close": 1.391,
+          "market_value": 5007.6,
+          "cost_basis": 4874.4
+        },
+        "512690": {
+          "quantity": 11300.0,
+          "close": 0.446,
+          "market_value": 5039.8,
+          "cost_basis": 4972.0
+        },
+        "159529": {
+          "quantity": 3500.0,
+          "close": 1.382,
+          "market_value": 4837.0,
+          "cost_basis": 4896.5
+        },
+        "588200": {
+          "quantity": 5800.0,
+          "close": 0.822,
+          "market_value": 4767.6,
+          "cost_basis": 4999.6
+        },
+        "588710": {
+          "quantity": 6400.0,
+          "close": 0.711,
+          "market_value": 4550.4,
+          "cost_basis": 4979.2
+        },
+        "588450": {
+          "quantity": 1400.0,
+          "close": 1.554,
+          "market_value": 2175.6,
+          "cost_basis": 2373.0
+        }
+      },
+      "quality_status": "CURRENT_ACCOUNT_SNAPSHOT",
+      "valuation_source": "account_fact + current_valid_market_snapshot"
     }
-  ]
+  ],
+  "as_of_transaction_date": "2026-11-17",
+  "current_valuation_status": "PASS",
+  "current_valuation_market_date": "2026-11-17",
+  "current_valuation_snapshot": "data/market/snapshots/2026-11-17_151700.json"
 }
