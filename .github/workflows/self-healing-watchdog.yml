@@ -24,11 +24,11 @@ on:
       - ".github/workflows/us-extended-hours-pulse.yml"
       - ".github/workflows/overseas-preopen-pulse.yml"
   schedule:
-    # One bounded heartbeat every 30 minutes on weekdays. The runtime phase gate
-    # decides whether this tick is relevant; avoid overlapping APAC and US cron
-    # windows in the same workflow, which previously created duplicate runs.
-    - cron: "7 * * * 1-5"
-    - cron: "37 * * * 1-5"
+    # Match the canonical ten-minute market pulse during A-share active windows.
+    # Outside that window retain a bounded 30-minute cross-market heartbeat.
+    - cron: "7,17,27,37,47,57 1-7 * * 1-5" # Beijing 09:07-15:57 Mon-Fri
+    - cron: "7,37 0 * * 1-5"
+    - cron: "7,37 8-23 * * 1-5"
     # Cover the final UTC hour of the Friday US session without overlapping the
     # weekday schedule above. Producer failures still wake this same watchdog
     # through workflow_run.
