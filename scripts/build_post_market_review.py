@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from pathlib import Path
 
 try:
@@ -255,6 +256,9 @@ def build(root: Path = ROOT) -> dict:
 def main() -> None:
     result = build(ROOT)
     atomic_json_write(ROOT / "data" / "state" / "review_context.json", result["review"])
+    context_only = "--context-only" in sys.argv[1:]
+    if context_only:
+        return
     if result["event"]["market_close"]:
         atomic_json_write(ROOT / "post_market_review" / "post_market_review_event.json", result["event"])
         # Reconcile the canonical CURRENT pointer after the close-review producer
