@@ -237,8 +237,18 @@ jobs:
           # ETF_CONSISTENCY_REPORT_PATH. Do not re-evaluate it after rebasing onto a
           # moving main branch: concurrent state commits must not create identity drift.
           locked_maintenance_health="$RUNNER_TEMP/maintenance_health.locked.json"
+          set +e
           python scripts/maintenance_guard.py
+          maintenance_guard_status=$?
+          set -e
           cp data/state/maintenance_health.json "$locked_maintenance_health"
+          if [[ ! -s "$locked_maintenance_health" ]]; then
+            echo "Maintenance health was not produced; cannot persist the consistency result." >&2
+            exit 1
+          fi
+          if [[ "$maintenance_guard_status" -ne 0 ]]; then
+            echo "Maintenance guard reported status $maintenance_guard_status; persisting the report before the job remains failed." >&2
+          fi
           # State-only maintenance commits can race with snapshot/account/runtime
           # writers. Keep the bounded retry in this existing persistence owner;
           # do not create another consistency or publication chain.

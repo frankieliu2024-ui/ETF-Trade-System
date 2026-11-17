@@ -68,6 +68,7 @@ class RuntimeRecoveryConsistencyGateTests(unittest.TestCase):
             "market_date": "2026-09-10",
             "captured_at": "2026-09-10T10:15:00+08:00",
             "latest_valid_node": "1015",
+            "latest_snapshot": "data/market/snapshots/2026-09-10_101500.json",
             "node_status": "READY",
             "rules_version": "V2.2.31",
         }
@@ -84,6 +85,13 @@ class RuntimeRecoveryConsistencyGateTests(unittest.TestCase):
                 return {"status": "PASS"}
             if text.endswith("system_consistency.json"):
                 return consistency
+            if text.endswith("formal_discovery_current.json"):
+                return {
+                    "status": "READY",
+                    "market_date": current["market_date"],
+                    "latest_snapshot": "data/market/snapshots/2026-09-10_101500.json",
+                    "latest_valid_node": current["latest_valid_node"],
+                }
             if text.endswith("self_healing_status.json"):
                 return {}
             if text.endswith("query_context.json") or text.endswith("decision_context.json"):

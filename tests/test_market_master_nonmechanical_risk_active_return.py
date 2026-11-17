@@ -22,8 +22,8 @@ class MasterNonmechanicalRiskActiveReturnTests(unittest.TestCase):
         self.assertIn("Assess deterministic runtime health", text)
         self.assertIn("Persist bounded self-healing status", text)
         self.assertNotIn("SYNC_RULES_VERSION_METADATA", text)
-        self.assertNotIn("python scripts/build_state_context.py", text)
-        self.assertNotIn("python scripts/build_query_context.py", text)
+        self.assertIn("python scripts/build_query_context.py --run-discovery", text)
+        self.assertIn("python scripts/build_state_context.py --decision-ready-only", text)
 
     def test_fixed_position_anchors_are_removed(self):
         text = MASTER.read_text(encoding="utf-8")
