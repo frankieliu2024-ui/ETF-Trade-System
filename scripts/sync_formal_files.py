@@ -717,6 +717,16 @@ def build_dashboard_block(account: dict, equity: dict, existing: str, root: Path
     total_asset = float(account.get("total_asset") or 0)
     exposure = float(account.get("stock_market_value") or 0) / total_asset * 100 if total_asset else 0
     risk = canonical_risk(equity, latest_formal_risk())
+    # E2E is the canonical consumer-safety signal: a stale or unavailable
+    # reconstruction must never be rendered as a current user-visible risk.
+    e2e_path = root / "data/state/e2e_status.json"
+    if e2e_path.exists():
+        try:
+            e2e_risk = (load_json(e2e_path).get("components") or {}).get("risk") or {}
+            if str(e2e_risk.get("fact_status") or "").upper() in {"STALE", "UNAVAILABLE"}:
+                risk = None
+        except (OSError, json.JSONDecodeError, TypeError):
+            risk = None
     risk_identity = canonical_risk_identity(equity)
     risk_cutoff = risk_identity["replay_cutoff"] or "UNKNOWN"
     risk_source = risk_identity["source"]
