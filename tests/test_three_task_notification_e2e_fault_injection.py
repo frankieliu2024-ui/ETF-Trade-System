@@ -57,7 +57,10 @@ class ThreeTaskNotificationE2EFaultInjectionTests(unittest.TestCase):
         self.assertIn("build_weekly_discovery.py", workflow)
         self.assertIn("Generate node-local ETF Discovery from verified A-share pulse", workflow)
         self.assertIn("source_snapshot_identity", workflow)
-        self.assertIn("Publish node-local ETF Discovery", workflow)
+        self.assertIn("Publish complete A-share snapshot batch", workflow)
+        self.assertIn('git commit -m "data: publish complete A-share snapshot batch"', workflow)
+        self.assertIn("data/state/formal_discovery_current.json", workflow)
+        self.assertIn("data/state/CURRENT.json", workflow)
         self.assertIn("github.event_name != 'push'", workflow)
 
     def test_dispatch_verifies_workflow_run_and_recovers_same_completion(self):
