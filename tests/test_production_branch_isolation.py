@@ -9,7 +9,7 @@ def test_market_snapshot_publishers_are_main_branch_only():
     for marker in (
         "Canonicalize legacy formal request ingress",
         "Apply confirmed trade fact corrections",
-        "Publish core snapshot and CURRENT immediately",
+        "Publish complete A-share snapshot batch",
         "Project Formal Decision completion through market snapshot owner",
         "Record broker account sync maintenance receipt",
         "Commit downstream runtime/data artifacts",
