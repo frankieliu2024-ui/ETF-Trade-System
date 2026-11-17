@@ -1,19 +1,19 @@
 {
   "schema_version": "1.0",
   "layer": "CURRENT_PULSE_DISCOVERY",
-  "status": "READY",
+  "status": "DEGRADED",
   "market_date": "2026-11-17",
   "latest_valid_node": "live",
-  "latest_snapshot": "data/market/snapshots/2026-11-17_140750.json",
-  "generated_at_beijing": "2026-11-17T14:08:11+08:00",
+  "latest_snapshot": "data/market/snapshots/2026-11-17_142436.json",
+  "generated_at_beijing": "2026-11-17T14:25:10+08:00",
   "formation_rule": "EVERY_VERIFIED_A_SHARE_PULSE",
-  "generation_identity": "DISCOVERY:2026-11-17:live:24c1df3de0fa7615e09607ad666ca8c5c18e911304009f39d36442d397736313:2026-11-17T14:08:11+08:00",
-  "source_snapshot_identity": "24c1df3de0fa7615e09607ad666ca8c5c18e911304009f39d36442d397736313",
-  "source_snapshot_as_of_beijing": "2026-11-17T14:07:50+08:00",
+  "generation_identity": "DISCOVERY:2026-11-17:live:09565ba148ae3f6194869eed56f1fd754c60b4d2b081cbd222633161f33cb7be:2026-11-17T14:25:10+08:00",
+  "source_snapshot_identity": "09565ba148ae3f6194869eed56f1fd754c60b4d2b081cbd222633161f33cb7be",
+  "source_snapshot_as_of_beijing": "2026-11-17T14:24:36+08:00",
   "node_evidence_binding": {
-    "binding_id": "2026-11-17:live:24c1df3de0fa7615e09607ad666ca8c5c18e911304009f39d36442d397736313",
-    "a_share_snapshot_identity": "24c1df3de0fa7615e09607ad666ca8c5c18e911304009f39d36442d397736313",
-    "a_share_snapshot_as_of_beijing": "2026-11-17T14:07:50+08:00",
+    "binding_id": "2026-11-17:live:09565ba148ae3f6194869eed56f1fd754c60b4d2b081cbd222633161f33cb7be",
+    "a_share_snapshot_identity": "09565ba148ae3f6194869eed56f1fd754c60b4d2b081cbd222633161f33cb7be",
+    "a_share_snapshot_as_of_beijing": "2026-11-17T14:24:36+08:00",
     "hyperliquid_collection_time_beijing": "2026-11-17T14:01:12+08:00",
     "hyperliquid_context_id": "hl-0d8b0a5e24f562f3",
     "hyperliquid_quality_status": "PASS",
@@ -21,7 +21,7 @@
   },
   "regeneration_required": true,
   "source": "EASTMONEY_PRIMARY_HITHINK_SECONDARY_UNIVERSE_PLUS_VERIFIED_NODE_OVERLAY_AND_BOUNDED_HISTORY_REPAIR",
-  "coverage_status": "COMPLETE",
+  "coverage_status": "PARTIAL",
   "candidate_count": 9,
   "required_history_end_date": "2026-11-16",
   "empty_reason": "",
@@ -29,34 +29,41 @@
   "discovery_delta_identity": null,
   "discovery": {
     "schema_version": "1.0",
-    "status": "READY",
-    "generated_at_beijing": "2026-11-17T14:07:53+08:00",
+    "status": "DEGRADED",
+    "generated_at_beijing": "2026-11-17T14:24:39+08:00",
     "market_date": "2026-11-17",
     "required_history_end_date": "2026-11-16",
     "source": "EASTMONEY_PRIMARY_HITHINK_SECONDARY_UNIVERSE_PLUS_VERIFIED_NODE_OVERLAY_AND_BOUNDED_HISTORY_REPAIR",
     "broad_source_reconciliation": {
-      "universe_mode": "EASTMONEY_PRIMARY",
+      "requested_identity_count": 1790,
+      "tencent_quote_count": 1790,
+      "tencent_failed_batch_count": 0,
+      "tencent_failures": [],
+      "tencent_hydration_batch_count": 30,
+      "tencent_hydration_workers": 6,
+      "universe_mode": "HITHINK_TENCENT_SECONDARY_FALLBACK",
       "primary_source": "EASTMONEY_PUSH2_ETF_CROSS_SECTION",
-      "eastmoney_count": 1668,
-      "hithink_identity_count": 0,
-      "eastmoney_error": null,
+      "eastmoney_count": 0,
+      "hithink_identity_count": 1790,
+      "eastmoney_error": "<urlopen error _ssl.c:1001: The handshake operation timed out>",
       "hithink_error": null,
-      "fallback_used": false,
-      "fallback_source": null,
-      "reconciled_count": 1668,
+      "fallback_used": true,
+      "fallback_source": "HITHINK_ETF_MASTER_PLUS_TENCENT",
+      "reconciled_count": 1790,
       "source_elapsed_seconds": {
-        "eastmoney": 10.601
+        "eastmoney": 15.799,
+        "hithink": 4.289
       },
-      "source_join_elapsed_seconds": 10.601,
-      "supplemental_hydration_elapsed_seconds": 0.0,
+      "source_join_elapsed_seconds": 20.088,
+      "supplemental_hydration_elapsed_seconds": 4.403,
       "verified_spot_overlay_count": 24
     },
     "source_role": "DISCOVERY_ONLY; formal trade decision remains MASTER-owned",
-    "broad_universe_count": 1668,
+    "broad_universe_count": 1790,
     "managed_identity_count": 24,
     "held_identity_count": 11,
     "managed_excluded_count": 0,
-    "history_prefilter_count": 83,
+    "history_prefilter_count": 66,
     "candidate_count": 9,
     "history_success_budget": 12,
     "history_attempt_cap": 36,
@@ -66,15 +73,15 @@
     "history_reused_count": 0,
     "history_repair_attempted_count": 12,
     "history_failure_count": 0,
-    "history_elapsed_seconds": 7.522,
+    "history_elapsed_seconds": 6.772,
     "empty_reason": "",
     "latency_observability": {
-      "broad_acquisition_elapsed_seconds": 10.601,
-      "prefilter_elapsed_seconds": 0.003,
-      "history_validation_elapsed_seconds": 7.522,
+      "broad_acquisition_elapsed_seconds": 24.491,
+      "prefilter_elapsed_seconds": 0.006,
+      "history_validation_elapsed_seconds": 6.772,
       "measurement_role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE"
     },
-    "coverage_status": "COMPLETE",
+    "coverage_status": "PARTIAL",
     "history_failures": [],
     "candidates": [
       {
@@ -117,23 +124,23 @@
         "information_classes": [
           "NEW_RELATIVE_DIVERGENCE",
           "STRUCTURAL_CHANGE",
-          "PERSISTENT_STRUCTURE"
+          "SHORT_HISTORY_CURRENT_CHANGE"
         ],
         "external_driver_evidence": [],
         "discovery_spot": {
-          "price": 0.8,
-          "change_pct": 1.52,
-          "amount": 21914503.4,
-          "amplitude_pct": 2.79,
-          "turnover_pct": 35.13,
-          "volume_ratio": 5.07,
+          "price": 0.799,
+          "change_pct": 1.3959390862944066,
+          "amount": 23570000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
           "high": 0.804,
           "low": 0.782,
           "open": 0.79,
           "prev_close": 0.788,
-          "return_60d_pct": 0.13,
-          "return_ytd_pct": -13.7,
-          "provider_timestamp": 1794895668
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1794896694000
         },
         "historical_context": {
           "status": "READY",
@@ -201,23 +208,23 @@
         "information_classes": [
           "NEW_RELATIVE_DIVERGENCE",
           "STRUCTURAL_CHANGE",
-          "PERSISTENT_STRUCTURE"
+          "SHORT_HISTORY_CURRENT_CHANGE"
         ],
         "external_driver_evidence": [],
         "discovery_spot": {
-          "price": 0.823,
-          "change_pct": 1.479654747225645,
-          "amount": 19890000.0,
-          "amplitude_pct": 2.47,
-          "turnover_pct": 13.77,
-          "volume_ratio": 2.33,
+          "price": 0.822,
+          "change_pct": 1.3563501849568338,
+          "amount": 20570000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
           "high": 0.826,
           "low": 0.806,
           "open": 0.811,
           "prev_close": 0.811,
-          "return_60d_pct": 0.37,
-          "return_ytd_pct": -13.73,
-          "provider_timestamp": 1794895668
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1794896694000
         },
         "historical_context": {
           "status": "READY",
@@ -248,9 +255,9 @@
         "history_source": "HITHINK_FINANCE_HISTORY_BOUNDED_REPAIR"
       },
       {
-        "code": "159315",
-        "name": "黄金股ETF工银",
-        "display_name": "黄金股ETF工银（159315）",
+        "code": "159321",
+        "name": "黄金股ETF华安",
+        "display_name": "黄金股ETF华安（159321）",
         "category": "OBSERVATION_EVALUATION_INPUT",
         "eligibility": "OBSERVATION_FULL_EVALUATION",
         "management_identity": null,
@@ -268,37 +275,38 @@
             "state": "TREND_CHANGE",
             "evidence": {
               "direction": "STRENGTHENING",
-              "return_10": 0.021127,
-              "return_40": -0.248272,
-              "short_vs_long_normalized_gap": 0.083195
+              "return_10": 0.019295,
+              "return_40": -0.250925,
+              "short_vs_long_normalized_gap": 0.082026
             }
           }
         ],
         "information_classes": [
           "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE"
+          "STRUCTURAL_CHANGE",
+          "SHORT_HISTORY_CURRENT_CHANGE"
         ],
         "external_driver_evidence": [],
         "discovery_spot": {
-          "price": 1.318,
-          "change_pct": 1.0,
-          "amount": 17492864.775,
-          "amplitude_pct": 4.83,
-          "turnover_pct": 6.35,
-          "volume_ratio": 1.58,
-          "high": 1.339,
-          "low": 1.276,
-          "open": 1.305,
-          "prev_close": 1.305,
-          "return_60d_pct": -22.15,
-          "return_ytd_pct": -21.27,
-          "provider_timestamp": 1794895668
+          "price": 1.227,
+          "change_pct": 0.9876543209876631,
+          "amount": 57040000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
+          "high": 1.25,
+          "low": 1.188,
+          "open": 1.208,
+          "prev_close": 1.215,
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1794896697000
         },
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-16",
           "sample_count": 90,
-          "avg_amount_20": 18740470.14
+          "avg_amount_20": 50997022.65
         },
         "comparison_basis": [
           "历史趋势/状态变化",
@@ -323,9 +331,9 @@
         "history_source": "HITHINK_FINANCE_HISTORY_BOUNDED_REPAIR"
       },
       {
-        "code": "159581",
-        "name": "红利ETF万家",
-        "display_name": "红利ETF万家（159581）",
+        "code": "159327",
+        "name": "半导体设备ETF万家",
+        "display_name": "半导体设备ETF万家（159327）",
         "category": "OBSERVATION_EVALUATION_INPUT",
         "eligibility": "OBSERVATION_FULL_EVALUATION",
         "management_identity": null,
@@ -337,51 +345,44 @@
         "trade_signal": null,
         "decision_output_generated": false,
         "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
-        "entered_states": [
-          "PERSISTENT_TREND"
-        ],
+        "entered_states": [],
         "surfaced_states": [
           {
-            "state": "PERSISTENT_TREND",
+            "state": "TREND_CHANGE",
             "evidence": {
-              "window_returns": {
-                "5": 0.001885,
-                "20": -0.00932,
-                "40": 0.001885,
-                "60": 0.018199
-              },
-              "positive_windows": [
-                40,
-                60
-              ],
-              "max_drawdown_60": 0.050645
+              "direction": "STRENGTHENING",
+              "return_10": 0.06443,
+              "return_40": -0.243321,
+              "short_vs_long_normalized_gap": 0.12526
             }
           }
         ],
         "information_classes": [
-          "PERSISTENT_STRUCTURE"
+          "NEW_RELATIVE_DIVERGENCE",
+          "STRUCTURAL_CHANGE",
+          "SHORT_HISTORY_CURRENT_CHANGE"
         ],
         "external_driver_evidence": [],
         "discovery_spot": {
-          "price": 1.059,
-          "change_pct": -0.38,
-          "amount": 17625715.8,
-          "amplitude_pct": 0.94,
-          "turnover_pct": 1.38,
-          "volume_ratio": 0.81,
-          "high": 1.062,
-          "low": 1.052,
-          "open": 1.062,
-          "prev_close": 1.063,
-          "return_60d_pct": 1.53,
-          "return_ytd_pct": 4.44,
-          "provider_timestamp": 1794895671
+          "price": 0.819,
+          "change_pct": 3.2786885245901454,
+          "amount": 251990000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
+          "high": 0.848,
+          "low": 0.783,
+          "open": 0.783,
+          "prev_close": 0.793,
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1794896697000
         },
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-16",
           "sample_count": 90,
-          "avg_amount_20": 28487876.25
+          "avg_amount_20": 196303058.45
         },
         "comparison_basis": [
           "历史趋势/状态变化",
@@ -434,23 +435,24 @@
         ],
         "information_classes": [
           "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE"
+          "STRUCTURAL_CHANGE",
+          "SHORT_HISTORY_CURRENT_CHANGE"
         ],
         "external_driver_evidence": [],
         "discovery_spot": {
-          "price": 0.563,
-          "change_pct": 2.55,
-          "amount": 148663795.0,
-          "amplitude_pct": 7.1,
-          "turnover_pct": 19.37,
-          "volume_ratio": 1.44,
+          "price": 0.564,
+          "change_pct": 2.7322404371584508,
+          "amount": 151860000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
           "high": 0.582,
           "low": 0.543,
           "open": 0.543,
           "prev_close": 0.549,
-          "return_60d_pct": -32.17,
-          "return_ytd_pct": 25.67,
-          "provider_timestamp": 1794895671
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1794896697000
         },
         "historical_context": {
           "status": "READY",
@@ -534,23 +536,23 @@
         "information_classes": [
           "NEW_RELATIVE_DIVERGENCE",
           "STRUCTURAL_CHANGE",
-          "PERSISTENT_STRUCTURE"
+          "SHORT_HISTORY_CURRENT_CHANGE"
         ],
         "external_driver_evidence": [],
         "discovery_spot": {
           "price": 0.909,
-          "change_pct": 1.0,
-          "amount": 21946278.3,
-          "amplitude_pct": 2.44,
-          "turnover_pct": 4.83,
-          "volume_ratio": 1.89,
+          "change_pct": 1.0000000000000009,
+          "amount": 22160000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
           "high": 0.911,
           "low": 0.889,
           "open": 0.9,
           "prev_close": 0.9,
-          "return_60d_pct": 0.44,
-          "return_ytd_pct": -8.18,
-          "provider_timestamp": 1794895665
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1794896697000
         },
         "historical_context": {
           "status": "READY",
@@ -581,9 +583,9 @@
         "history_source": "HITHINK_FINANCE_HISTORY_BOUNDED_REPAIR"
       },
       {
-        "code": "515170",
-        "name": "食品饮料ETF华夏",
-        "display_name": "食品饮料ETF华夏（515170）",
+        "code": "511130",
+        "name": "30年国债ETF博时",
+        "display_name": "30年国债ETF博时（511130）",
         "category": "OBSERVATION_EVALUATION_INPUT",
         "eligibility": "OBSERVATION_FULL_EVALUATION",
         "management_identity": null,
@@ -595,61 +597,51 @@
         "trade_signal": null,
         "decision_output_generated": false,
         "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
-        "entered_states": [
-          "RECOVERY_BREAKOUT"
-        ],
+        "entered_states": [],
         "surfaced_states": [
           {
             "state": "PERSISTENT_TREND",
             "evidence": {
               "window_returns": {
-                "5": 0.002053,
-                "20": 0.051724,
-                "40": 0.070175,
-                "60": 0.020921
+                "5": -0.02017,
+                "20": -0.008185,
+                "40": 0.007931,
+                "60": 0.003673
               },
               "positive_windows": [
-                20,
                 40,
                 60
               ],
-              "max_drawdown_60": 0.058577
-            }
-          },
-          {
-            "state": "RECOVERY_BREAKOUT",
-            "evidence": {
-              "prior_drawdown": 0.087221,
-              "recovery_fraction": 0.883721,
-              "distance_to_prior_high": -0.010142
+              "max_drawdown_60": 0.02017
             }
           }
         ],
         "information_classes": [
+          "NEW_RELATIVE_DIVERGENCE",
           "STRUCTURAL_CHANGE",
-          "PERSISTENT_STRUCTURE"
+          "SHORT_HISTORY_CURRENT_CHANGE"
         ],
         "external_driver_evidence": [],
         "discovery_spot": {
-          "price": 0.489,
-          "change_pct": 0.2,
-          "amount": 65549226.0,
-          "amplitude_pct": 1.43,
-          "turnover_pct": 1.63,
-          "volume_ratio": 0.86,
-          "high": 0.49,
-          "low": 0.483,
-          "open": 0.487,
-          "prev_close": 0.488,
-          "return_60d_pct": 3.82,
-          "return_ytd_pct": -10.77,
-          "provider_timestamp": 1794895675
+          "price": 110.308,
+          "change_pct": 0.9222323879231498,
+          "amount": 4648180000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
+          "high": 110.381,
+          "low": 109.665,
+          "open": 109.836,
+          "prev_close": 109.3,
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1794896696000
         },
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-16",
           "sample_count": 90,
-          "avg_amount_20": 94782283.45
+          "avg_amount_20": 3737156830.0
         },
         "comparison_basis": [
           "历史趋势/状态变化",
@@ -674,9 +666,9 @@
         "history_source": "HITHINK_FINANCE_HISTORY_BOUNDED_REPAIR"
       },
       {
-        "code": "515300",
-        "name": "300红利低波ETF嘉实",
-        "display_name": "300红利低波ETF嘉实（515300）",
+        "code": "588170",
+        "name": "科创半导体ETF华夏",
+        "display_name": "科创半导体ETF华夏（588170）",
         "category": "OBSERVATION_EVALUATION_INPUT",
         "eligibility": "OBSERVATION_FULL_EVALUATION",
         "management_identity": null,
@@ -691,48 +683,41 @@
         "entered_states": [],
         "surfaced_states": [
           {
-            "state": "PERSISTENT_TREND",
+            "state": "TREND_CHANGE",
             "evidence": {
-              "window_returns": {
-                "5": 0.018759,
-                "20": 0.028405,
-                "40": 0.069697,
-                "60": 0.098833
-              },
-              "positive_windows": [
-                20,
-                40,
-                60
-              ],
-              "max_drawdown_60": 0.026948
+              "direction": "STRENGTHENING",
+              "return_10": 0.072934,
+              "return_40": -0.260335,
+              "short_vs_long_normalized_gap": 0.138017
             }
           }
         ],
         "information_classes": [
+          "NEW_RELATIVE_DIVERGENCE",
           "STRUCTURAL_CHANGE",
-          "PERSISTENT_STRUCTURE"
+          "SHORT_HISTORY_CURRENT_CHANGE"
         ],
         "external_driver_evidence": [],
         "discovery_spot": {
-          "price": 1.417,
-          "change_pct": 0.35,
-          "amount": 270258135.0,
-          "amplitude_pct": 1.77,
-          "turnover_pct": 6.34,
-          "volume_ratio": 1.51,
-          "high": 1.427,
-          "low": 1.402,
-          "open": 1.412,
-          "prev_close": 1.412,
-          "return_60d_pct": 10.79,
-          "return_ytd_pct": 9.25,
-          "provider_timestamp": 1794895673
+          "price": 0.681,
+          "change_pct": 2.8700906344410804,
+          "amount": 9621370000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
+          "high": 0.707,
+          "low": 0.656,
+          "open": 0.656,
+          "prev_close": 0.662,
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1794896701000
         },
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-16",
           "sample_count": 90,
-          "avg_amount_20": 193075720.85
+          "avg_amount_20": 6875343895.0
         },
         "comparison_basis": [
           "历史趋势/状态变化",
@@ -757,12 +742,12 @@
         "history_source": "HITHINK_FINANCE_HISTORY_BOUNDED_REPAIR"
       },
       {
-        "code": "517180",
-        "name": "中国国企ETF南方",
-        "display_name": "中国国企ETF南方（517180）",
+        "code": "588710",
+        "name": "科创半导体设备ETF华泰柏瑞",
+        "display_name": "科创半导体设备ETF华泰柏瑞（588710）",
         "category": "OBSERVATION_EVALUATION_INPUT",
         "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "management_identity": null,
+        "management_identity": "MANAGED",
         "auto_promote_to_observation": false,
         "default_recommendation": "BUY",
         "recommendation_status": "BUY_UNLESS_DISPROVED",
@@ -770,50 +755,45 @@
         "trial_confirm_permission": false,
         "trade_signal": null,
         "decision_output_generated": false,
-        "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
+        "discovery_semantic": "NODE_LOCAL_ALL_MARKET_OPPORTUNITY_SIGNAL_FOR_EXISTING_MANAGED_ETF",
         "entered_states": [],
         "surfaced_states": [
           {
-            "state": "PERSISTENT_TREND",
+            "state": "TREND_CHANGE",
             "evidence": {
-              "window_returns": {
-                "5": -0.002535,
-                "20": -0.014402,
-                "40": 0.042384,
-                "60": 0.058507
-              },
-              "positive_windows": [
-                40,
-                60
-              ],
-              "max_drawdown_60": 0.054635
+              "direction": "STRENGTHENING",
+              "return_10": 0.067187,
+              "return_40": -0.262419,
+              "short_vs_long_normalized_gap": 0.132792
             }
           }
         ],
         "information_classes": [
-          "PERSISTENT_STRUCTURE"
+          "NEW_RELATIVE_DIVERGENCE",
+          "STRUCTURAL_CHANGE",
+          "SHORT_HISTORY_CURRENT_CHANGE"
         ],
         "external_driver_evidence": [],
         "discovery_spot": {
-          "price": 1.569,
-          "change_pct": -0.32,
-          "amount": 34936991.0,
-          "amplitude_pct": 3.11,
-          "turnover_pct": 19.87,
-          "volume_ratio": 2.16,
-          "high": 1.579,
-          "low": 1.53,
-          "open": 1.579,
-          "prev_close": 1.574,
-          "return_60d_pct": 5.51,
-          "return_ytd_pct": 4.18,
-          "provider_timestamp": 1794895677
+          "price": 0.703,
+          "change_pct": 2.9282576866764165,
+          "amount": 2070520000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
+          "high": 0.74,
+          "low": 0.676,
+          "open": 0.676,
+          "prev_close": 0.683,
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1794896698000
         },
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-16",
           "sample_count": 90,
-          "avg_amount_20": 23799327.1
+          "avg_amount_20": 1432095881.0
         },
         "comparison_basis": [
           "历史趋势/状态变化",
@@ -824,13 +804,13 @@
         ],
         "decision_boundary": "默认按买入建议起点进入正式判断；只有明确反证才降级或否决。该建议不自动产生Trial/Confirm、金额或交易动作。",
         "management_review": {
-          "object_role": "NEW_DISCOVERY",
+          "object_role": "HOLDING",
           "direct_conclusion_required": true,
           "conclusion_status": "PENDING_MASTER_DECISION",
           "allowed_conclusions": [
-            "RETAIN_DISCOVERY",
-            "REJECT_NEW_DEPLOYMENT",
-            "TRIAL_ELIGIBILITY_REVIEW"
+            "CONTINUE_HOLDING",
+            "REDUCE_REVIEW",
+            "EXIT_REVIEW"
           ],
           "decision_owner": "MASTER_FORMAL_DECISION",
           "decision_boundary": "Discovery supplies object-level evidence and the required conclusion set; only MASTER Formal Decision confirms the final hold, reduce, exit, observation or Trial/Confirm action."
@@ -973,10 +953,7 @@
             "588200",
             "588450",
             "588710",
-            "159327",
-            "159582",
-            "159599",
-            "513310"
+            "159582"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
           "observation_as_of": "2026-11-17T14:01:10+08:00",
@@ -1167,10 +1144,7 @@
             "588200",
             "588450",
             "588710",
-            "159327",
-            "159582",
-            "159599",
-            "513310"
+            "159582"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
           "observation_as_of": "2026-11-17T14:01:10+08:00",
@@ -1269,10 +1243,7 @@
             "588200",
             "588450",
             "588710",
-            "159327",
-            "159582",
-            "159599",
-            "513310"
+            "159582"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
           "observation_as_of": "2026-11-17T14:01:10+08:00",
@@ -1367,7 +1338,8 @@
             "513180",
             "159217",
             "159265",
-            "159245"
+            "159245",
+            "517180"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
           "observation_as_of": "2026-11-17T14:01:10+08:00",
@@ -1552,7 +1524,7 @@
           "family": "KOREA_EQUITY",
           "mapped_assets": [
             "513180",
-            "520620"
+            "159699"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
           "observation_as_of": "2026-11-17T14:01:10+08:00",
@@ -2024,10 +1996,7 @@
             "588200",
             "588450",
             "588710",
-            "159327",
-            "159582",
-            "159599",
-            "513310"
+            "159582"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
           "observation_as_of": "2026-11-17T14:01:10+08:00",
@@ -2121,9 +2090,7 @@
           "mapped_assets": [
             "513180",
             "588710",
-            "159327",
-            "159582",
-            "513310"
+            "159582"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
           "observation_as_of": "2026-11-17T14:01:10+08:00",
@@ -2217,9 +2184,7 @@
           "mapped_assets": [
             "515880",
             "588710",
-            "159327",
-            "159582",
-            "513310"
+            "159582"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
           "observation_as_of": "2026-11-17T14:01:10+08:00",
@@ -2410,10 +2375,7 @@
             "588200",
             "588450",
             "588710",
-            "159327",
-            "159582",
-            "159599",
-            "513310"
+            "159582"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
           "observation_as_of": "2026-11-17T14:01:10+08:00",
@@ -2512,10 +2474,7 @@
             "588200",
             "588450",
             "588710",
-            "159327",
-            "159582",
-            "159599",
-            "513310"
+            "159582"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
           "observation_as_of": "2026-11-17T14:01:10+08:00",
@@ -2614,10 +2573,7 @@
             "588200",
             "588450",
             "588710",
-            "159327",
-            "159582",
-            "159599",
-            "513310"
+            "159582"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
           "observation_as_of": "2026-11-17T14:01:10+08:00",
@@ -2716,10 +2672,7 @@
             "588200",
             "588450",
             "588710",
-            "159327",
-            "159582",
-            "159599",
-            "513310"
+            "159582"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
           "observation_as_of": "2026-11-17T14:01:10+08:00",
@@ -2906,9 +2859,7 @@
           "mapped_assets": [
             "515880",
             "588710",
-            "159327",
-            "159582",
-            "513310"
+            "159582"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
           "observation_as_of": "2026-11-17T14:01:11+08:00",
@@ -3007,10 +2958,7 @@
             "588200",
             "588450",
             "588710",
-            "159327",
-            "159582",
-            "159599",
-            "513310"
+            "159582"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
           "observation_as_of": "2026-11-17T14:01:12+08:00",
@@ -3195,7 +3143,7 @@
           "family": "KOREA_EQUITY",
           "mapped_assets": [
             "513180",
-            "520620"
+            "159699"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
           "observation_as_of": "2026-11-17T14:01:12+08:00",
@@ -3293,10 +3241,7 @@
             "588200",
             "588450",
             "588710",
-            "159327",
-            "159582",
-            "159599",
-            "513310"
+            "159582"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
           "observation_as_of": "2026-11-17T14:01:12+08:00",
@@ -3382,7 +3327,7 @@
           "notification_use": "若相对前一脉冲发生可比且足以改变ETF关注重点的变化，可进入主动通知候选"
         }
       ],
-      "etf_contribution_count": 27,
+      "etf_contribution_count": 25,
       "etf_contributions": [
         {
           "ashare_code": "159941",
@@ -3525,49 +3470,7 @@
           "source_observation_as_of": "2026-11-17T14:01:10+08:00"
         },
         {
-          "ashare_code": "159327",
-          "hyperliquid_object_ids": [
-            "xyz:NVDA"
-          ],
-          "mapping_status": "MAPPED",
-          "cross_market_relation": "EXTERNAL_DIRECTION_AVAILABLE; A_SHARE_TRANSMISSION_REQUIRES_A_SHARE_FACT",
-          "decision_effect": "TIMING_FILTER",
-          "priority_effect": "方向支持成立但当前不直接追涨；将该ETF列入下一节点优先复核",
-          "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
-          "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
-          "source_context_id": "hl-0d8b0a5e24f562f3",
-          "source_observation_as_of": "2026-11-17T14:01:10+08:00"
-        },
-        {
           "ashare_code": "159582",
-          "hyperliquid_object_ids": [
-            "xyz:NVDA"
-          ],
-          "mapping_status": "MAPPED",
-          "cross_market_relation": "EXTERNAL_DIRECTION_AVAILABLE; A_SHARE_TRANSMISSION_REQUIRES_A_SHARE_FACT",
-          "decision_effect": "TIMING_FILTER",
-          "priority_effect": "方向支持成立但当前不直接追涨；将该ETF列入下一节点优先复核",
-          "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
-          "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
-          "source_context_id": "hl-0d8b0a5e24f562f3",
-          "source_observation_as_of": "2026-11-17T14:01:10+08:00"
-        },
-        {
-          "ashare_code": "159599",
-          "hyperliquid_object_ids": [
-            "xyz:NVDA"
-          ],
-          "mapping_status": "MAPPED",
-          "cross_market_relation": "EXTERNAL_DIRECTION_AVAILABLE; A_SHARE_TRANSMISSION_REQUIRES_A_SHARE_FACT",
-          "decision_effect": "TIMING_FILTER",
-          "priority_effect": "方向支持成立但当前不直接追涨；将该ETF列入下一节点优先复核",
-          "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
-          "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
-          "source_context_id": "hl-0d8b0a5e24f562f3",
-          "source_observation_as_of": "2026-11-17T14:01:10+08:00"
-        },
-        {
-          "ashare_code": "513310",
           "hyperliquid_object_ids": [
             "xyz:NVDA"
           ],
@@ -3665,7 +3568,21 @@
           "source_observation_as_of": "2026-11-17T14:01:10+08:00"
         },
         {
-          "ashare_code": "520620",
+          "ashare_code": "517180",
+          "hyperliquid_object_ids": [
+            "xyz:BABA"
+          ],
+          "mapping_status": "MAPPED",
+          "cross_market_relation": "EXTERNAL_DIRECTION_AVAILABLE; A_SHARE_TRANSMISSION_REQUIRES_A_SHARE_FACT",
+          "decision_effect": "TIMING_FILTER",
+          "priority_effect": "方向支持成立但当前不直接追涨；将该ETF列入下一节点优先复核",
+          "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
+          "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
+          "source_context_id": "hl-0d8b0a5e24f562f3",
+          "source_observation_as_of": "2026-11-17T14:01:10+08:00"
+        },
+        {
+          "ashare_code": "159699",
           "hyperliquid_object_ids": [
             "xyz:EWY"
           ],
@@ -3794,7 +3711,7 @@
       "validation": {
         "status": "PASS",
         "object_count": 26,
-        "etf_row_count": 27
+        "etf_row_count": 25
       }
     }
   },
