@@ -217,17 +217,21 @@ def fetch_tencent_many(stocks: list[dict]) -> dict[str, dict]:
         symbol = thscode(code)
         quote = quotes.get(symbol)
         if not quote:
-            raise RuntimeError(f"Tencent returned no exact item for {symbol}")
-        candidate = {
+            result[code] = {"code": code, "name": stock.get("name", ""), "thscode": symbol, "quality_status": "FAILED", "error": f"Tencent returned no exact item for {symbol}"}
+            continue
+        try:
+            candidate = {
             "code": code, "name": quote.get("name") or stock.get("name", ""), "thscode": symbol,
             "open": quote.get("open_price"), "high": quote.get("high_price"), "low": quote.get("low_price"), "close": quote.get("last_price"), "prev_close": quote.get("prev_price"),
             "change_pct": quote.get("price_change_ratio_pct"), "volume": quote.get("volume"), "amount": quote.get("turnover"), "provider_timestamp_ms": quote.get("provider_timestamp_ms"), "as_of_beijing": as_beijing(quote.get("provider_timestamp_ms")),
             "market_phase": market_phase(quote.get("provider_timestamp_ms")), "provider": "tencent_qq", "provider_primary": "tencent_qq", "provider_used": "tencent_qq", "fallback_used": False, "fallback_reason": "", "provider_timestamp_field": "Tencent field 30", "quality_status": "PASS", "quantity": stock.get("quantity"), "market_value_from_account": stock.get("market_value"),
         }
-        ok, reason = validate_market_row(candidate, code, expected_name=candidate["name"], market_date=datetime.now(SHANGHAI).date().isoformat(), now=datetime.now(timezone.utc), runtime_policy=quote_runtime_policy(quote.get("provider_timestamp_ms")), allow_auction_partial=False)
-        if not ok:
-            raise RuntimeError(f"Tencent {code} quality guard: {reason}")
-        result[code] = candidate
+            ok, reason = validate_market_row(candidate, code, expected_name=candidate["name"], market_date=datetime.now(SHANGHAI).date().isoformat(), now=datetime.now(timezone.utc), runtime_policy=quote_runtime_policy(quote.get("provider_timestamp_ms")), allow_auction_partial=False)
+            if not ok:
+                raise RuntimeError(f"Tencent {code} quality guard: {reason}")
+            result[code] = candidate
+        except Exception as exc:
+            result[code] = {"code": code, "name": stock.get("name", ""), "thscode": symbol, "quality_status": "FAILED", "error": str(exc)[-800:]}
     return result
 
 def build() -> dict:
