@@ -618,6 +618,13 @@ def _extend_capital_comparison_with_discovery(base: dict[str, Any], formal_disco
         })
     return {
         **base,
+        # Preserve the exact Discovery batch identity for downstream
+        # decision-context alignment. This is a projection of the canonical
+        # Discovery producer, not a second opportunity producer.
+        "source_discovery_generated_at_beijing": str(discovery.get("generated_at_beijing") or ""),
+        "source_discovery_latest_snapshot": str(discovery.get("latest_snapshot") or ""),
+        "source_discovery_market_date": str(discovery.get("market_date") or ""),
+        "source_discovery_latest_valid_node": str(discovery.get("latest_valid_node") or ""),
         "formal_discovery_included": False,
         "formal_discovery_candidate_count": len(eligibility_inputs),
         "formal_discovery_ingress_status": "ELIGIBILITY_ONLY",

@@ -54,13 +54,33 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
         "candidate_count": payload.get("candidate_count") if kind == "DISCOVERY" else None,
         "observation_count": payload.get("observation_count") if kind == "HYPERLIQUID" else None,
         "latest_snapshot": str(payload.get("latest_snapshot") or ""),
+        # Discovery is bound to the exact A-share snapshot by the canonical
+        # producer. Preserve that binding in the history projection instead of
+        # leaving the generic pulse fields blank.
+        "source_snapshot_identity": str(payload.get("source_snapshot_identity") or ""),
+        "source_snapshot_as_of_beijing": str(payload.get("source_snapshot_as_of_beijing") or ""),
+        "node_evidence_binding": payload.get("node_evidence_binding") if kind == "DISCOVERY" else None,
         "observation_time_basis": str(payload.get("observation_time_basis") or payload.get("time_basis") or ""),
         "mapping": payload.get("mapping") if kind == "HYPERLIQUID" else None,
         "etf_bindings": payload.get("etf_bindings") if kind == "HYPERLIQUID" else None,
         "binding_candidates": payload.get("binding_candidates") if kind == "HYPERLIQUID" else None,
-        "binding_status": str(payload.get("binding_status") or "") if kind == "HYPERLIQUID" else "",
-        "binding_generated_at_beijing": str(payload.get("binding_generated_at_beijing") or "") if kind == "HYPERLIQUID" else "",
-        "binding_source_discovery_generated_at_beijing": str(payload.get("binding_source_discovery_generated_at_beijing") or "") if kind == "HYPERLIQUID" else "",
+        "binding_status": (
+            str(payload.get("binding_status") or "")
+            if kind == "HYPERLIQUID"
+            else "BOUND_TO_SAME_A_SHARE_SNAPSHOT"
+            if payload.get("source_snapshot_identity") and payload.get("node_evidence_binding")
+            else "UNBOUND"
+        ),
+        "binding_generated_at_beijing": (
+            str(payload.get("binding_generated_at_beijing") or "")
+            if kind == "HYPERLIQUID"
+            else str(payload.get("generated_at_beijing") or occurred_at or "")
+        ),
+        "binding_source_discovery_generated_at_beijing": (
+            str(payload.get("binding_source_discovery_generated_at_beijing") or "")
+            if kind == "HYPERLIQUID"
+            else str(payload.get("generated_at_beijing") or occurred_at or "")
+        ),
     }
     if kind == "DISCOVERY":
         record["candidates"] = [
@@ -247,7 +267,9 @@ def append_pulse_history(root: Path, *, kind: str, payload: dict, path: str, ide
                 "kind", "identity", "context_id", "formed_at_beijing",
                 "fact_time_beijing", "source_path", "status", "quality_status",
                 "coverage_status", "candidate_count", "observation_count",
-                "latest_snapshot", "observation_time_basis", "binding_status",
+                "latest_snapshot", "source_snapshot_identity",
+                "source_snapshot_as_of_beijing", "observation_time_basis",
+                "binding_status",
             )
         }
 
