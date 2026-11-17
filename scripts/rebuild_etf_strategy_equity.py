@@ -246,16 +246,92 @@ def replay(root: Path = ROOT, *, price_dir: Path | None = None, cutoff: str | No
     return {"schema_version": "1.0-canonical-replay-candidate", "read_only_research": True, "trade_accounting": "FIFO", "replay_start": "2026-07-13", "replay_cutoff": current["date"], "input_source_identity": {"trade_owner": "confirmed_trade_facts.canonical_etf_trade_facts", "price_owner": "events/research/daily_features", "price_semantics": "date-aligned daily close / EOD-equivalent"}, "trades": facts, "summary": {"starting_etf_strategy_capital": STARTING_CAPITAL, "current_gross_strategy_equity": current["strategy_equity_gross"], "current_strategy_return_pct_gross": round((current["strategy_equity_gross"] / STARTING_CAPITAL - 1) * 100, 4), "current_cumulative_pnl_gross": round(current["strategy_equity_gross"] - STARTING_CAPITAL, 2), "max_drawdown_amount": min(x["drawdown_amount"] for x in rows), "max_drawdown_pct": min(x["drawdown_pct"] for x in rows), "gross_realized_pnl": round(realized, 2), "confirmed_fees_separate": round(fee_total, 2), "known_fees": round(fee_total, 2), "pending_fee_count": pending_fee_count, "fee_status": fee_status, "pending_fees_do_not_block_gross": True, "trade_fact_count": len(facts), "price_date_count": len(dates), "coverage_status": "DEGRADED_PENDING_LATEST_VALUATION" if pending_latest_valuation else "COMPLETE", "pending_latest_valuation": pending_latest_valuation}, "series": rows}
 
 
+def _current_account_valuation(root: Path, base: dict) -> dict:
+    """Extend the canonical replay with a current-date account valuation.
+
+    Historical daily replay and current valuation are different contracts:
+    an old date-aligned gap must remain visible, but it must not prevent today's
+    risk from being marked using today's confirmed account fact and valid market
+    snapshot. This remains inside the existing canonical equity owner.
+    """
+    account = json.loads((root / "data" / "state" / "account_fact.json").read_text(encoding="utf-8"))
+    current = json.loads((root / "data" / "state" / "CURRENT.json").read_text(encoding="utf-8"))
+    market_date = str(current.get("market_date") or account.get("last_confirmed_market_date") or "")
+    snapshot_name = str(current.get("latest_snapshot") or "")
+    snapshot_path = root / "data" / "market" / "snapshots" / Path(snapshot_name).name
+    if not market_date or not snapshot_path.exists():
+        raise ValueError("current account valuation requires a current valid market snapshot")
+    snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+    if str(snapshot.get("market_date") or "") != market_date or str(snapshot.get("quality_status") or "").upper() != "PASS":
+        raise ValueError("current account valuation requires a PASS snapshot for the current market date")
+    snapshot_rows = {str(row.get("symbol") or "").strip(): row for row in (snapshot.get("rows") or []) if isinstance(row, dict) and str(row.get("quality_status") or "PASS").upper() == "PASS"}
+    universe = json.loads((root / "config" / "market" / "etf_monitor_universe.json").read_text(encoding="utf-8"))
+    etf_codes = {str(item.get("code") or "").strip() for item in (universe.get("objects") or []) if isinstance(item, dict) and item.get("code")}
+    held = {}
+    for position in account.get("positions") or []:
+        code = str(position.get("code") or "").strip()
+        if code not in etf_codes or float(position.get("quantity") or 0) <= 0:
+            continue
+        row = snapshot_rows.get(code)
+        if row is None or row.get("close") is None:
+            raise ValueError(f"current valid snapshot has no held ETF close for {code}")
+        quantity = float(position.get("quantity") or 0)
+        close = _f(row.get("close"), f"{market_date}/{code}/close")
+        held[code] = {"quantity": round(quantity, 6), "close": close, "market_value": round(quantity * close, 2), "cost_basis": round(quantity * float(position.get("cost") or 0), 2)}
+    if not held:
+        raise ValueError("current account valuation has no held ETF positions")
+    base_row = (base.get("series") or [])[-1]
+    cash = float(base_row.get("cash") or 0)
+    base_cutoff = str(base.get("replay_cutoff") or base_row.get("date") or "")
+    for trade in base.get("trades") or []:
+        stamp = _stamp(trade)
+        if stamp[:10] <= base_cutoff or stamp[:10] > market_date or str(trade.get("code") or "").strip() not in etf_codes:
+            continue
+        gross = float(trade.get("quantity") or 0) * float(trade.get("price") or 0)
+        fee = confirmed_fee_amount(trade)
+        if str(trade.get("side") or trade.get("action") or "").upper() == "BUY":
+            cash -= gross + fee
+        elif str(trade.get("side") or trade.get("action") or "").upper() == "SELL":
+            cash += gross - fee
+    market_value = round(sum(item["market_value"] for item in held.values()), 2)
+    equity = round(cash + market_value, 2)
+    previous_high = max((float(row.get("strategy_equity_gross") or 0) for row in (base.get("series") or [])), default=STARTING_CAPITAL)
+    high = max(previous_high, equity)
+    row = {"date": market_date, "cash": round(cash, 2), "market_value": market_value, "strategy_equity_gross": equity, "realized_pnl_gross": base_row.get("realized_pnl_gross", 0), "drawdown_amount": round(equity - high, 2), "drawdown_pct": round((equity / high - 1) * 100, 4) if high else 0, "positions": held, "quality_status": "CURRENT_ACCOUNT_SNAPSHOT", "valuation_source": "account_fact + current_valid_market_snapshot"}
+    result = dict(base)
+    result["replay_cutoff"] = market_date
+    result["as_of_transaction_date"] = market_date
+    result["series"] = list(base.get("series") or []) + [row]
+    summary = dict(base.get("summary") or {})
+    summary.update({"current_gross_strategy_equity": equity, "current_strategy_return_pct_gross": round((equity / STARTING_CAPITAL - 1) * 100, 4), "current_cumulative_pnl_gross": round(equity - STARTING_CAPITAL, 2), "max_drawdown_amount": min(float(x.get("drawdown_amount") or 0) for x in result["series"]), "max_drawdown_pct": min(float(x.get("drawdown_pct") or 0) for x in result["series"]), "coverage_status": "CURRENT_ACCOUNT_SNAPSHOT_WITH_HISTORICAL_REPLAY_WARNING", "pending_latest_valuation": False, "current_valuation_market_date": market_date, "current_valuation_source": "account_fact + current_valid_market_snapshot", "historical_replay_status": "WARNING_HISTORICAL_DATE_ALIGNED_GAP", "historical_replay_cutoff": base_cutoff})
+    result["summary"] = summary
+    result["current_valuation_status"] = "PASS"
+    result["current_valuation_market_date"] = market_date
+    result["current_valuation_snapshot"] = snapshot_name
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--price-dir", type=Path)
     parser.add_argument("--cutoff")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    result = replay(ROOT, price_dir=args.price_dir, cutoff=args.cutoff)
+    historical_error = ""
+    try:
+        result = replay(ROOT, price_dir=args.price_dir, cutoff=args.cutoff)
+    except ValueError as exc:
+        historical_error = str(exc)
+        if "missing date-aligned close" not in historical_error:
+            raise
+        state = json.loads((ROOT / "data" / "state" / "etf_strategy_equity.json").read_text(encoding="utf-8"))
+        base_cutoff = str(state.get("replay_cutoff") or (state.get("series") or [{}])[-1].get("date") or "")
+        base = replay(ROOT, price_dir=args.price_dir, cutoff=base_cutoff)
+        result = _current_account_valuation(ROOT, base)
+        result["summary"]["historical_replay_error"] = historical_error
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps({"status": "PASS", "cutoff": result["replay_cutoff"], "equity": result["summary"]["current_gross_strategy_equity"], "return_pct": result["summary"]["current_strategy_return_pct_gross"]}))
+    print(json.dumps({"status": "PASS", "cutoff": result["replay_cutoff"], "equity": result["summary"]["current_gross_strategy_equity"], "return_pct": result["summary"]["current_strategy_return_pct_gross"], "current_valuation_status": result.get("current_valuation_status", "HISTORICAL_REPLAY")}))
 
 
 if __name__ == "__main__":
