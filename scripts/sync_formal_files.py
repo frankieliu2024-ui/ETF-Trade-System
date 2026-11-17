@@ -611,6 +611,18 @@ def normalize_dashboard_projection(text: str, root: Path = ROOT, account: dict |
         if not in_corrections:
             cleaned.append(line)
     lines = cleaned
+    # Remove legacy risk provenance labels from the persisted Dashboard projection.
+    # The canonical risk metric remains available without a stale as-of label.
+    lines = [
+        line for line in lines
+        if not line.startswith("> ETF策略风险as-of：")
+        and not line.startswith("> ETF策略风险来源：")
+    ]
+    lines = [
+        re.sub(r"（Gross；as-of [^）]+）", "（Gross）", line)
+        if "|ETF策略风险率|" in line else line
+        for line in lines
+    ]
     # The same-day decision index is the sole decision view. Remove legacy
     # latest-decision blocks that may have been persisted before the renderer
     # was narrowed to the index; otherwise normalization would preserve them.
