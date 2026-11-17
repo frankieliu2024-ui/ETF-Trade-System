@@ -135,7 +135,9 @@ def valid_json(path: Path) -> bool:
 
 
 def derived_context_identity_drift(current: dict, review_context: dict) -> bool:
-    """Detect a valid-but-stale review projection, not just malformed JSON."""
+    """Detect stale review projection, not an absent pre-close review."""
+    if not isinstance(review_context, dict) or not review_context:
+        return False
     review_current = review_context.get("current") or {}
     for key in ("market_date", "latest_valid_node", "latest_snapshot", "snapshot_commit"):
         current_value = str(current.get(key) or "")
