@@ -1,27 +1,27 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-11-16T09:29:53+08:00",
+  "generated_at": "2026-11-17T14:30:23+08:00",
   "status": "BLOCKED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
   "components": {
     "market": {
-      "status": "DEGRADED",
-      "reason": "market data quality=DEGRADED, node=DEGRADED",
-      "snapshot": "data/market/snapshots/2026-11-16_092428.json",
-      "captured_at": "2026-11-16T09:24:28+08:00",
-      "market_phase": "OPENING_CALL_AUCTION"
+      "status": "READY",
+      "reason": "latest market snapshot is valid",
+      "snapshot": "data/market/snapshots/2026-11-17_140750.json",
+      "captured_at": "2026-11-17T14:07:50+08:00",
+      "market_phase": "CONTINUOUS_AFTERNOON"
     },
     "account": {
       "status": "READY",
       "reason": "confirmed account facts remain valid; historical audit deltas are not pending updates",
-      "updated_at": "2026-11-13T17:21:00+08:00",
+      "updated_at": "2026-11-16T17:38:45+08:00",
       "source": "CHATGPT_USER_BROKER_SCREENSHOT",
       "pending_change_events": [],
-      "historical_audit_event_count": 159,
-      "cash": 69528.47,
+      "historical_audit_event_count": 162,
+      "cash": 64551.97,
       "reserved_cash_for_settlement": 0,
-      "deployable_cash": 69528.47,
+      "deployable_cash": 64551.97,
       "settlement_constraint_status": "NONE"
     },
     "risk": {
@@ -58,8 +58,8 @@
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 327064,
-          "sha256": "096a97114304fe6989b2d1916f2d1a0e83294d11f55190c1834c66a5f52c9460",
+          "byte_count": 823751,
+          "sha256": "227aa298069a993baab6cfa1646ef5e2d1e5f760edffbe8fe34b166f6484a51f",
           "parsed_object": true,
           "retry_attempts": 1,
           "retry_required": false
@@ -69,24 +69,23 @@
     },
     "lifecycle": {
       "status": "READY",
-      "reason": "canonical lifecycle projection available; mandatory_due=2",
-      "active_trial_count": 7,
-      "decision_due_count": 2,
-      "overdue_count": 1,
+      "reason": "canonical lifecycle projection available; mandatory_due=3",
+      "active_trial_count": 8,
+      "decision_due_count": 3,
+      "overdue_count": 2,
       "next_mandatory_node": "2026-11-13",
       "source": "formal decision + executed trade facts"
     },
     "maintenance": {
       "status": "READY",
       "reason": "maintenance guard passed",
-      "checked_at": "2026-11-16T09:13:32+08:00"
+      "checked_at": "2026-11-17T13:42:12+08:00"
     }
   },
   "blockers": [
     "decision_context"
   ],
   "degradations": [
-    "market",
     "risk"
   ],
   "context_read_contract": {
@@ -102,8 +101,8 @@
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 327064,
-      "sha256": "096a97114304fe6989b2d1916f2d1a0e83294d11f55190c1834c66a5f52c9460",
+      "byte_count": 823751,
+      "sha256": "227aa298069a993baab6cfa1646ef5e2d1e5f760edffbe8fe34b166f6484a51f",
       "parsed_object": true,
       "retry_attempts": 1,
       "retry_required": false
