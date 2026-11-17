@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-11-17T17:22:24+08:00",
+  "generated_at": "2026-11-17T17:47:14+08:00",
   "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -26,6 +26,7 @@
     },
     "risk": {
       "status": "DEGRADED",
+      "fact_status": "STALE",
       "reason": "ETF strategy equity reconstruction is stale for the current market date and Dashboard cannot be used as a fallback",
       "etf_strategy_risk_pct": null,
       "source": "data/state/etf_strategy_equity.json",
@@ -51,8 +52,8 @@
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 13345796,
-          "sha256": "f98941eae3dc76ba3be406109dfe6cf627932e70f7c66489e4cf5f38a1743e52",
+          "byte_count": 13345784,
+          "sha256": "d051c06dc3c6848750e3ce53be74c4641769094f37a120721ef565f0c8c5de52",
           "parsed_object": true,
           "retry_attempts": 1,
           "retry_required": false
@@ -60,8 +61,8 @@
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 811293,
-          "sha256": "f5f5e49e24d4a11172b9ce966f0575b5eed62e466c9b7b84df459bf3a3f91cba",
+          "byte_count": 811292,
+          "sha256": "896e46db23209f6124a4fccd059fc3ff4609fcf54010a85e00c2f9960d6484b6",
           "parsed_object": true,
           "retry_attempts": 1,
           "retry_required": false
@@ -88,12 +89,25 @@
   "degradations": [
     "risk"
   ],
+  "task_continuation": {
+    "status": "CONTINUE",
+    "formal_tasks_blocked": false,
+    "completion_event_report_notification_blocked": false,
+    "reason": "E2E degradation is diagnostic and object-scoped; it does not gate the three ETF task chains"
+  },
+  "business_fact_consumption": {
+    "status": "RESTRICTED",
+    "restricted_components": [
+      "risk"
+    ],
+    "reason": "affected facts require explicit caveat or object-level restriction"
+  },
   "context_read_contract": {
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 13345796,
-      "sha256": "f98941eae3dc76ba3be406109dfe6cf627932e70f7c66489e4cf5f38a1743e52",
+      "byte_count": 13345784,
+      "sha256": "d051c06dc3c6848750e3ce53be74c4641769094f37a120721ef565f0c8c5de52",
       "parsed_object": true,
       "retry_attempts": 1,
       "retry_required": false
@@ -101,8 +115,8 @@
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 811293,
-      "sha256": "f5f5e49e24d4a11172b9ce966f0575b5eed62e466c9b7b84df459bf3a3f91cba",
+      "byte_count": 811292,
+      "sha256": "896e46db23209f6124a4fccd059fc3ff4609fcf54010a85e00c2f9960d6484b6",
       "parsed_object": true,
       "retry_attempts": 1,
       "retry_required": false
