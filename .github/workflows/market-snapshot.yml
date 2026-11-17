@@ -373,5 +373,23 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -- data/state/formal_discovery_current.json data/state/formal_opportunity_current.json data/state/discovery_pulse_latest.json data/state/discovery_pulse_index.json
           if git diff --cached --quiet; then echo "No Discovery projection change."; exit 0; fi
-          git commit -m "data: publish node-local Discovery with verified A-share pulse"
-          git push origin HEAD:main
+          mkdir -p /tmp/etf-discovery-publish
+          git diff --cached --name-only -z > /tmp/etf-discovery-files
+          while IFS= read -r -d '' file; do
+            mkdir -p "/tmp/etf-discovery-publish/$(dirname "$file")"
+            cp "$file" "/tmp/etf-discovery-publish/$file"
+          done < /tmp/etf-discovery-files
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git reset --hard origin/main
+            while IFS= read -r -d '' file; do
+              mkdir -p "$(dirname "$file")"
+              cp "/tmp/etf-discovery-publish/$file" "$file"
+            done < /tmp/etf-discovery-files
+            git add -- data/state/formal_discovery_current.json data/state/formal_opportunity_current.json data/state/discovery_pulse_latest.json data/state/discovery_pulse_index.json
+            git commit -m "data: publish node-local Discovery with verified A-share pulse"
+            if git push origin HEAD:main; then
+              break
+            fi
+            if [ "$attempt" = "3" ]; then exit 1; fi
+          done
