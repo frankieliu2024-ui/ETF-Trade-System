@@ -364,6 +364,41 @@ jobs:
           if artifact.get("market_date") != current.get("market_date"): raise SystemExit("Discovery market_date does not match the A-share snapshot")
           if str(artifact.get("latest_valid_node") or "").lower() != str(current.get("latest_valid_node") or "").lower(): raise SystemExit("Discovery node does not match the A-share snapshot")
           PY
+      - name: Rebuild derived decision context and E2E status from same Discovery
+        id: derived_projection
+        # This is the existing canonical derived-state owner. It runs only after
+        # the verified snapshot and node-local Discovery exist, so downstream
+        # projections consume the same market-date/node/snapshot batch.
+        if: ${{ steps.current_discovery.outcome == 'success' && github.event_name != 'push' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/build_state_context.py --decision-ready-only
+          python scripts/build_e2e_status.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          current = json.loads(Path("data/state/CURRENT.json").read_text(encoding="utf-8"))
+          discovery = json.loads(Path("data/state/formal_discovery_current.json").read_text(encoding="utf-8"))
+          decision = json.loads(Path("data/state/decision_context.json").read_text(encoding="utf-8"))
+          batch = decision.get("batch_consistency") or {}
+          expected = {
+              "market_date": current.get("market_date"),
+              "latest_valid_node": current.get("latest_valid_node"),
+              "latest_snapshot": current.get("latest_snapshot"),
+          }
+          for key, value in expected.items():
+              if key == "latest_valid_node":
+                  if str(discovery.get(key) or "").lower() != str(value or "").lower():
+                      raise SystemExit(f"derived Discovery node mismatch: {discovery.get(key)!r} != {value!r}")
+              elif discovery.get(key) != value:
+                  raise SystemExit(f"derived Discovery {key} mismatch: {discovery.get(key)!r} != {value!r}")
+          if str(batch.get("status") or "").upper() != "ALIGNED":
+              raise SystemExit(f"decision_context batch consistency is not ALIGNED: {batch}")
+          e2e = json.loads(Path("data/state/e2e_status.json").read_text(encoding="utf-8"))
+          if not e2e:
+              raise SystemExit("e2e_status.json is empty after derived projection rebuild")
+          PY
       - name: Publish node-local ETF Discovery
         if: ${{ steps.current_discovery.outcome == 'success' && github.event_name != 'push' }}
         shell: bash
@@ -371,7 +406,15 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -- data/state/formal_discovery_current.json data/state/formal_opportunity_current.json data/state/discovery_pulse_latest.json data/state/discovery_pulse_index.json
+          git add -- \
+            data/state/formal_discovery_current.json \
+            data/state/formal_opportunity_current.json \
+            data/state/discovery_pulse_latest.json \
+            data/state/discovery_pulse_index.json \
+            data/state/decision_context.json \
+            data/state/dashboard_update_candidate.json \
+            data/state/e2e_status.json \
+            ETF当前状态_DASHBOARD.md
           if git diff --cached --quiet; then echo "No Discovery projection change."; exit 0; fi
           mkdir -p /tmp/etf-discovery-publish
           git diff --cached --name-only -z > /tmp/etf-discovery-files
@@ -386,7 +429,15 @@ jobs:
               mkdir -p "$(dirname "$file")"
               cp "/tmp/etf-discovery-publish/$file" "$file"
             done < /tmp/etf-discovery-files
-            git add -- data/state/formal_discovery_current.json data/state/formal_opportunity_current.json data/state/discovery_pulse_latest.json data/state/discovery_pulse_index.json
+            git add -- \
+              data/state/formal_discovery_current.json \
+              data/state/formal_opportunity_current.json \
+              data/state/discovery_pulse_latest.json \
+              data/state/discovery_pulse_index.json \
+              data/state/decision_context.json \
+              data/state/dashboard_update_candidate.json \
+              data/state/e2e_status.json \
+              ETF当前状态_DASHBOARD.md
             git commit -m "data: publish node-local Discovery with verified A-share pulse"
             if git push origin HEAD:main; then
               break
