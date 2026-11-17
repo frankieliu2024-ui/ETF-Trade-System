@@ -49,8 +49,9 @@ class DashboardRiskProjectionTests(unittest.TestCase):
             block = build_dashboard_block(account, equity, "", root)
         self.assertIn("账户事实更新时间：2026-09-14T16:43:00+08:00", block)
         self.assertIn("账户事实来源：BROKER_SCREENSHOT", block)
-        self.assertIn("ETF策略风险as-of：2026-09-15", block)
-        self.assertIn("ETF策略风险率|约-10.3852%（Gross；as-of 2026-09-15）", block)
+        self.assertNotIn("ETF策略风险as-of", block)
+        self.assertNotIn("ETF策略风险来源", block)
+        self.assertIn("ETF策略风险率|约-10.3852%（Gross）", block)
 
     def test_formal_risk_identity_is_canonical_equity_identity(self):
         identity = canonical_risk_identity({
