@@ -44,6 +44,15 @@ STOCK_FALLBACK_CODES = load_stock_fallback_codes()
 SHANGHAI = timezone(timedelta(hours=8), name="Asia/Shanghai")
 
 
+def quote_runtime_policy(provider_timestamp_ms: object) -> dict:
+    """Use intraday freshness only during the session; accept same-day official close after close."""
+    now_dt = datetime.now(SHANGHAI)
+    provider_dt = datetime.fromtimestamp(float(provider_timestamp_ms) / 1000, tz=SHANGHAI) if provider_timestamp_ms not in (None, "") else now_dt
+    after_close = now_dt.time() >= datetime.strptime("15:15", "%H:%M").time()
+    same_day_close = after_close and provider_dt.date() == now_dt.date()
+    return {"degraded_max_age_seconds": 86400 if same_day_close else 1500}
+
+
 def thscode(code: str) -> str:
     code = code.strip()
     if code.startswith(("60", "68", "51", "56", "58")):
@@ -109,7 +118,7 @@ def fetch_eastmoney_stock(stock: dict) -> dict:
         "volume_raw": data.get("f47"), "volume_unit_raw": "hand", "volume_unit": "share", "amount_unit": "CNY",
         "quality_status": "PASS", "quantity": stock.get("quantity"), "market_value_from_account": stock.get("market_value"),
     }
-    ok, reason = validate_market_row(candidate, code, expected_name=str(data.get("f58") or stock.get("name") or ""), market_date=now_dt.date().isoformat(), now=now_dt.astimezone(timezone.utc), runtime_policy={"degraded_max_age_seconds": 1500}, allow_auction_partial=False)
+    ok, reason = validate_market_row(candidate, code, expected_name=str(data.get("f58") or stock.get("name") or ""), market_date=now_dt.date().isoformat(), now=now_dt.astimezone(timezone.utc), runtime_policy=quote_runtime_policy(provider_ts), allow_auction_partial=False)
     if not ok:
         raise RuntimeError(f"{code} quality guard: {reason}")
     return candidate
@@ -208,17 +217,21 @@ def fetch_tencent_many(stocks: list[dict]) -> dict[str, dict]:
         symbol = thscode(code)
         quote = quotes.get(symbol)
         if not quote:
-            raise RuntimeError(f"Tencent returned no exact item for {symbol}")
-        candidate = {
+            result[code] = {"code": code, "name": stock.get("name", ""), "thscode": symbol, "quality_status": "FAILED", "error": f"Tencent returned no exact item for {symbol}"}
+            continue
+        try:
+            candidate = {
             "code": code, "name": quote.get("name") or stock.get("name", ""), "thscode": symbol,
             "open": quote.get("open_price"), "high": quote.get("high_price"), "low": quote.get("low_price"), "close": quote.get("last_price"), "prev_close": quote.get("prev_price"),
             "change_pct": quote.get("price_change_ratio_pct"), "volume": quote.get("volume"), "amount": quote.get("turnover"), "provider_timestamp_ms": quote.get("provider_timestamp_ms"), "as_of_beijing": as_beijing(quote.get("provider_timestamp_ms")),
             "market_phase": market_phase(quote.get("provider_timestamp_ms")), "provider": "tencent_qq", "provider_primary": "tencent_qq", "provider_used": "tencent_qq", "fallback_used": False, "fallback_reason": "", "provider_timestamp_field": "Tencent field 30", "quality_status": "PASS", "quantity": stock.get("quantity"), "market_value_from_account": stock.get("market_value"),
         }
-        ok, reason = validate_market_row(candidate, code, expected_name=candidate["name"], market_date=datetime.now(SHANGHAI).date().isoformat(), now=datetime.now(timezone.utc), runtime_policy={"degraded_max_age_seconds": 1500}, allow_auction_partial=False)
-        if not ok:
-            raise RuntimeError(f"Tencent {code} quality guard: {reason}")
-        result[code] = candidate
+            ok, reason = validate_market_row(candidate, code, expected_name=candidate["name"], market_date=datetime.now(SHANGHAI).date().isoformat(), now=datetime.now(timezone.utc), runtime_policy=quote_runtime_policy(quote.get("provider_timestamp_ms")), allow_auction_partial=False)
+            if not ok:
+                raise RuntimeError(f"Tencent {code} quality guard: {reason}")
+            result[code] = candidate
+        except Exception as exc:
+            result[code] = {"code": code, "name": stock.get("name", ""), "thscode": symbol, "quality_status": "FAILED", "error": str(exc)[-800:]}
     return result
 
 def build() -> dict:
