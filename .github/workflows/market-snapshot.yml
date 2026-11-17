@@ -307,40 +307,17 @@ jobs:
               f.write(f"reason={reason}\n")
           print(json.dumps({'snapshot_written': written, 'reason': reason}, ensure_ascii=False))
           PY
-      - name: Publish core snapshot and CURRENT immediately
+      - name: Stage verified core snapshot and CURRENT
         if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' && github.ref == 'refs/heads/main' && github.event.inputs.probe_only != 'true') }}
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # Consistency is persisted by its own workflow; excluding it prevents a
-          # concurrent audit write from conflicting with the market-data commit.
-          # Only market facts and the canonical market CURRENT pointer belong here.
-          # Account, decision, Dashboard, notification and audit projections have
-          # separate owners and must never be swept into this commit.
+          # Keep verified A-share facts staged in this workspace. The core
+          # snapshot, same-batch Discovery, and A-share derived projections are
+          # published together below, so main never exposes a new CURRENT with
+          # an older Discovery projection between producer commits.
           git add -- data/market/snapshots data/state/CURRENT.json data/state/runtime_health.json
-          if ! git diff --cached --quiet; then
-            mkdir -p /tmp/etf-core-publish
-            git diff --cached --name-only -z > /tmp/etf-core-files
-            while IFS= read -r -d '' file; do
-              mkdir -p "/tmp/etf-core-publish/$(dirname "$file")"
-              cp "$file" "/tmp/etf-core-publish/$file"
-            done < /tmp/etf-core-files
-            for attempt in 1 2 3; do
-              git fetch origin main
-              git reset --hard origin/main
-              while IFS= read -r -d '' file; do
-                mkdir -p "$(dirname "$file")"
-                cp "/tmp/etf-core-publish/$file" "$file"
-              done < /tmp/etf-core-files
-              git add -- data/market/snapshots data/state/CURRENT.json data/state/runtime_health.json
-              git commit -m "data: publish core market snapshot"
-              if git push origin HEAD:main; then
-                break
-              fi
-              if [ "$attempt" = "3" ]; then exit 1; fi
-            done
-          fi
 
       - name: Generate node-local ETF Discovery from verified A-share pulse
         id: current_discovery
@@ -399,75 +376,59 @@ jobs:
           if not e2e:
               raise SystemExit("e2e_status.json is empty after derived projection rebuild")
           PY
-      - name: Publish node-local ETF Discovery
-        if: ${{ always() && steps.current_discovery.outcome == 'success' && github.event_name != 'push' }}
+      - name: Publish complete A-share snapshot batch
+        if: ${{ steps.derived_projection.outcome == 'success' && github.event_name != 'push' && steps.snapshot_result.outputs.snapshot_written == 'true' && github.ref == 'refs/heads/main' && github.event.inputs.probe_only != 'true' }}
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # A single commit closes the A-share publication unit. Consistency
+          # must never observe a new CURRENT without its same-batch Discovery
+          # and derived projections. Unrelated domain state remains excluded.
           git add -- \
+            data/market/snapshots \
+            data/state/CURRENT.json \
+            data/state/runtime_health.json \
             data/state/formal_discovery_current.json \
             data/state/formal_opportunity_current.json \
             data/state/discovery_pulse_latest.json \
-            data/state/discovery_pulse_index.json
-          if git diff --cached --quiet; then echo "No Discovery projection change."; exit 0; fi
-          mkdir -p /tmp/etf-discovery-publish
-          git diff --cached --name-only -z > /tmp/etf-discovery-files
-          while IFS= read -r -d '' file; do
-            mkdir -p "/tmp/etf-discovery-publish/$(dirname "$file")"
-            cp "$file" "/tmp/etf-discovery-publish/$file"
-          done < /tmp/etf-discovery-files
-          for attempt in 1 2 3; do
-            git fetch origin main
-            git reset --hard origin/main
-            while IFS= read -r -d '' file; do
-              mkdir -p "$(dirname "$file")"
-              cp "/tmp/etf-discovery-publish/$file" "$file"
-            done < /tmp/etf-discovery-files
-            git add -- \
-              data/state/formal_discovery_current.json \
-              data/state/formal_opportunity_current.json \
-              data/state/discovery_pulse_latest.json \
-              data/state/discovery_pulse_index.json
-            git commit -m "data: publish node-local Discovery with verified A-share pulse"
-            if git push origin HEAD:main; then
-              break
-            fi
-            if [ "$attempt" = "3" ]; then exit 1; fi
-          done
-      - name: Publish derived decision projections
-        if: ${{ steps.derived_projection.outcome == 'success' && github.event_name != 'push' }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -- \
+            data/state/discovery_pulse_index.json \
             data/state/decision_context.json \
             data/state/dashboard_update_candidate.json \
             data/state/e2e_status.json \
             ETF当前状态_DASHBOARD.md
-          if git diff --cached --quiet; then echo "No derived projection change."; exit 0; fi
-          mkdir -p /tmp/etf-derived-publish
-          git diff --cached --name-only -z > /tmp/etf-derived-files
+          if git diff --cached --quiet; then echo "No complete A-share snapshot batch change."; exit 0; fi
+          mkdir -p /tmp/etf-a-share-batch-publish
+          git diff --cached --name-only -z > /tmp/etf-a-share-batch-files
           while IFS= read -r -d '' file; do
-            mkdir -p "/tmp/etf-derived-publish/$(dirname "$file")"
-            cp "$file" "/tmp/etf-derived-publish/$file"
-          done < /tmp/etf-derived-files
+            mkdir -p "/tmp/etf-a-share-batch-publish/$(dirname "$file")"
+            cp "$file" "/tmp/etf-a-share-batch-publish/$file"
+          done < /tmp/etf-a-share-batch-files
           for attempt in 1 2 3; do
             git fetch origin main
             git reset --hard origin/main
             while IFS= read -r -d '' file; do
               mkdir -p "$(dirname "$file")"
-              cp "/tmp/etf-derived-publish/$file" "$file"
-            done < /tmp/etf-derived-files
+              cp "/tmp/etf-a-share-batch-publish/$file" "$file"
+            done < /tmp/etf-a-share-batch-files
             git add -- \
+              data/market/snapshots \
+              data/state/CURRENT.json \
+              data/state/runtime_health.json \
+              data/state/formal_discovery_current.json \
+              data/state/formal_opportunity_current.json \
+              data/state/discovery_pulse_latest.json \
+              data/state/discovery_pulse_index.json \
               data/state/decision_context.json \
               data/state/dashboard_update_candidate.json \
               data/state/e2e_status.json \
               ETF当前状态_DASHBOARD.md
-            git commit -m "data: publish derived projections from verified Discovery"
+            if git diff --cached --quiet; then
+              echo "A-share snapshot batch already current after rebase."
+              exit 0
+            fi
+            git commit -m "data: publish complete A-share snapshot batch"
             if git push origin HEAD:main; then
               break
             fi
