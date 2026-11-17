@@ -98,6 +98,21 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
         self.assertEqual(status["recommended_action"], "REBUILD_DERIVED_CONTEXTS")
         self.assertEqual(status["review_context_rules_version"], "V2.2.31")
 
+    def test_missing_review_context_before_verified_close_is_not_false_drift(self):
+        status = self._assess(
+            current={
+                "market_date": "2026-11-17",
+                "captured_at": "2026-11-17T14:59:29+08:00",
+                "latest_valid_node": "live",
+                "latest_snapshot": "data/market/snapshots/2026-11-17_145929.json",
+                "node_status": "READY",
+                "rules_version": "V2.2.31",
+            },
+            now=datetime.fromisoformat("2026-11-17T15:18:01+08:00"),
+        )
+        self.assertNotEqual(status["classification"], "DISCOVERY_IDENTITY_DRIFT")
+        self.assertNotEqual(status["recommended_action"], "REBUILD_DERIVED_CONTEXTS")
+
     def test_review_context_identity_drift_rebuilds_existing_derived_contexts(self):
         status = self._assess(
             current={

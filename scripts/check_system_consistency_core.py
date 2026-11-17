@@ -817,7 +817,19 @@ def main() -> int:
     check("rules_release:current", current.get("rules_version") == master_version, f"MASTER={master_version} CURRENT={current.get('rules_version')}")
     check("rules_release:decision_context", decision_context.get("rules_version") == master_version, f"decision={decision_context.get('rules_version')} MASTER={master_version}")
     check("rules_release:query_context", query_context.get("rules_version") == master_version and (query_context.get("decision_context") or {}).get("rules_version") == master_version, f"query={query_context.get('rules_version')} nested={(query_context.get('decision_context') or {}).get('rules_version')}")
-    check("rules_release:review_context", review_context.get("rules_version") == master_version, f"review={review_context.get('rules_version')} MASTER={master_version}")
+    current_snapshot = read_json("data/market/snapshots/" + str(current.get("latest_snapshot") or "").rsplit("/", 1)[-1]) if current.get("latest_snapshot") else {}
+    verified_close_current = (
+        str(current.get("latest_valid_node") or "").lower() in {"close", "1500"}
+        and str(current_snapshot.get("node") or "").lower() in {"close", "1500"}
+        and str(current_snapshot.get("planned_time") or "") == "15:00"
+        and str(current_snapshot.get("quality_status") or "").upper() == "PASS"
+    )
+    check(
+        "rules_release:review_context",
+        review_context.get("rules_version") == master_version,
+        f"review={review_context.get('rules_version')} MASTER={master_version}",
+        warning=not verified_close_current,
+    )
     check("rules_release:self_healing_master", self_healing_status.get("master_rules_version") == master_version, f"self_healing_master={self_healing_status.get('master_rules_version')} MASTER={master_version}")
     check("rules_release:self_healing_current", self_healing_status.get("current_rules_version") == current.get("rules_version"), f"self_healing_current={self_healing_status.get('current_rules_version')} CURRENT={current.get('rules_version')}")
     if master_version and current.get("rules_version") != master_version:

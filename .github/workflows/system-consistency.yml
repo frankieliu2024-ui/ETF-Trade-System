@@ -239,7 +239,10 @@ jobs:
           locked_maintenance_health="$RUNNER_TEMP/maintenance_health.locked.json"
           python scripts/maintenance_guard.py
           cp data/state/maintenance_health.json "$locked_maintenance_health"
-          for attempt in 1 2 3; do
+          # State-only maintenance commits can race with snapshot/account/runtime
+          # writers. Keep the bounded retry in this existing persistence owner;
+          # do not create another consistency or publication chain.
+          for attempt in 1 2 3 4 5 6; do
             git fetch --no-tags origin main
             git reset --hard origin/main
             cp "$locked_maintenance_health" data/state/maintenance_health.json
