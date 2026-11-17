@@ -109,7 +109,15 @@ def main() -> int:
         return True
 
     success = converged()
+    # The projection owner may have returned a non-zero outcome while an old
+    # equity file happens to look date-aligned. Never turn that technical
+    # failure into a PASS: the current risk fact must be rebuilt and read back
+    # by this same maintenance run.
+    projection_ok = projection_outcome not in {"failure", "failed", "cancelled", "timed_out"}
     failure_class = "" if success else ("OWNER_REJECTED" if outcome != "success" else "ACCOUNT_FACT_READBACK_MISMATCH")
+    if success and not projection_ok:
+        success = False
+        failure_class = "PROJECTION_INCOMPLETE"
     data["checked_at"] = now
     data["account_sync"] = {
         "request_id": args.request_id,
@@ -123,7 +131,18 @@ def main() -> int:
         "recorded_at_beijing": now,
         "projection_outcome": projection_outcome,
         "execution_quality_outcome": execution_quality_outcome,
+        "lifecycle_owner": "scripts/lifecycle_state.py",
+        "lifecycle_readback_required": True,
     }
+    if not success:
+        data["status"] = "MAINTENANCE_INCOMPLETE"
+        data["failure_class"] = failure_class or "PROJECTION_INCOMPLETE"
+        data["projection_status"] = "ACCOUNT_FACT_UPDATED_REQUIRES_REBUILD"
+        data["reconciliation_stale"] = True
+        data["reconciliation_stale_reason"] = (
+            "account fact or required projection owner did not complete and read back in the same run"
+        )
+        data["projection_required"] = ["strategy_equity", "risk", "lifecycle", "dashboard", "reconciliation"]
     # A confirmed account-fact update invalidates any older reconciliation
     # projection. Do not preserve a stale overall PASS while only refreshing
     # the account_sync receipt; downstream maintenance must rebuild all
@@ -147,11 +166,36 @@ def main() -> int:
                 dashboard_text = dashboard_path.read_text(encoding="utf-8")
             except OSError:
                 dashboard_text = ""
+            lifecycle = {}
+            try:
+                from lifecycle_state import build_lifecycle_projection
+            except ModuleNotFoundError:
+                from scripts.lifecycle_state import build_lifecycle_projection
+            try:
+                lifecycle = build_lifecycle_projection(root)
+            except Exception:
+                lifecycle = {}
+            current_state_path = root / "data/state/CURRENT.json"
+            current_state = {}
+            if current_state_path.exists():
+                try:
+                    current_state = json.loads(current_state_path.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError):
+                    current_state = {}
+            lifecycle_readback_ok = (
+                not current_state
+                or (
+                    str(lifecycle.get("status") or "").upper() == "READY"
+                    and str(lifecycle.get("as_of_market_date") or "") == str(current_state.get("market_date") or "")
+                )
+            )
+            data["account_sync"]["lifecycle_readback_status"] = "CONFIRMED" if lifecycle_readback_ok else "FAILED"
             projections_fresh = (
                 replay_cutoff >= account_date
                 and current_account_updated_at in dashboard_text
                 and str((equity.get("summary") or {}).get("coverage_status") or "").upper()
                 not in {"", "DEGRADED_PENDING_LATEST_VALUATION"}
+                and lifecycle_readback_ok
             )
             if projections_fresh:
                 data["status"] = "PASS"

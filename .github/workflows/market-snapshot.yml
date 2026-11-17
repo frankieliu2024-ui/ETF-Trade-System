@@ -350,6 +350,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # Reuse the canonical ETF strategy-equity producer after the
+          # verified market batch. This is a projection refresh, not a second
+          # risk producer; account maintenance keeps the same owner as well.
+          # A failed reconstruction remains explicitly unavailable in E2E and
+          # must never be represented by the previous value as current.
+          python scripts/rebuild_etf_strategy_equity.py --output data/state/etf_strategy_equity.json || true
           python scripts/build_state_context.py --decision-ready-only
           python scripts/build_e2e_status.py
           python - <<'PY'
@@ -397,6 +403,7 @@ jobs:
             data/state/decision_context.json \
             data/state/dashboard_update_candidate.json \
             data/state/e2e_status.json \
+            data/state/etf_strategy_equity.json \
             ETF当前状态_DASHBOARD.md
           if git diff --cached --quiet; then echo "No complete A-share snapshot batch change."; exit 0; fi
           mkdir -p /tmp/etf-a-share-batch-publish

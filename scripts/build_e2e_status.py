@@ -388,6 +388,7 @@ def risk_component(equity: dict, current: dict, risk_evidence: dict | None = Non
         # current Gross reconstruction. It remains audit context only.
         return {
             "status": "DEGRADED",
+            "fact_status": "UNAVAILABLE",
             "reason": "current Gross reconstruction is unavailable; historical formal risk evidence is audit-only",
             "etf_strategy_risk_pct": None,
             "source": "data/state/etf_strategy_equity.json",
@@ -415,6 +416,7 @@ def risk_component(equity: dict, current: dict, risk_evidence: dict | None = Non
     if reconstruction_pct is not None:
         return {
             "status": "DEGRADED",
+            "fact_status": "STALE",
             "reason": "ETF strategy equity reconstruction is stale for the current market date and Dashboard cannot be used as a fallback",
             "etf_strategy_risk_pct": None,
             "source": "data/state/etf_strategy_equity.json",
@@ -426,6 +428,7 @@ def risk_component(equity: dict, current: dict, risk_evidence: dict | None = Non
         }
     return {
         "status": "BLOCKED",
+        "fact_status": "UNAVAILABLE",
         "reason": "formal ETF strategy risk metric is unavailable and Dashboard is projection-only",
         "etf_strategy_risk_pct": None,
         "source": "",
@@ -1127,6 +1130,26 @@ def main() -> int:
     blockers = [name for name, value in components.items() if value["status"] == "BLOCKED"]
     degradations = [name for name, value in components.items() if value["status"] == "DEGRADED"]
 
+    # Separate task continuation from business-fact consumption. A degraded
+    # risk/lifecycle projection must be visible and must restrict only the
+    # affected fact-dependent decision path; it must not become a global
+    # prerequisite for the three independent ETF task chains.
+    fact_restrictions = []
+    for name in ("risk", "lifecycle"):
+        if components[name]["status"] != "READY":
+            fact_restrictions.append(name)
+    task_continuation = {
+        "status": "CONTINUE",
+        "formal_tasks_blocked": False,
+        "completion_event_report_notification_blocked": False,
+        "reason": "E2E degradation is diagnostic and object-scoped; it does not gate the three ETF task chains",
+    }
+    business_fact_consumption = {
+        "status": "RESTRICTED" if fact_restrictions else "AVAILABLE",
+        "restricted_components": fact_restrictions,
+        "reason": "affected facts require explicit caveat or object-level restriction" if fact_restrictions else "critical business facts are consumable",
+    }
+
     result = {
         "schema_version": "1.1",
         "generated_at": datetime.now(TZ).isoformat(timespec="seconds"),
@@ -1136,6 +1159,8 @@ def main() -> int:
         "components": components,
         "blockers": blockers,
         "degradations": degradations,
+        "task_continuation": task_continuation,
+        "business_fact_consumption": business_fact_consumption,
         "context_read_contract": {
             "query_context": query_read,
             "decision_context": decision_read,
