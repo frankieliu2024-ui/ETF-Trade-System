@@ -223,6 +223,18 @@ jobs:
           # producers remain the sole writers for A-share derived state; this
           # does not rebuild overseas/US/account/lifecycle facts and does not
           # create a second task, completion, event, report, or notification.
+          current_node=$(python - <<'PY'
+          import json
+          from pathlib import Path
+          print(str(json.loads(Path("data/state/CURRENT.json").read_text(encoding="utf-8")).get("latest_valid_node") or "").lower())
+          PY
+          )
+          if [[ "$current_node" == "close" || "$current_node" == "1500" ]]; then
+            # Reuse the canonical post-market producer, but only materialize its
+            # derived context. The watchdog must not create a second review
+            # event, report, completion, or notification chain.
+            python scripts/build_post_market_review.py --context-only
+          fi
           python scripts/build_state_context.py --decision-ready-only
           python scripts/build_e2e_status.py
           python - <<'PY'
@@ -232,6 +244,14 @@ jobs:
           current = json.loads(Path("data/state/CURRENT.json").read_text(encoding="utf-8"))
           discovery = json.loads(Path("data/state/formal_discovery_current.json").read_text(encoding="utf-8"))
           decision = json.loads(Path("data/state/decision_context.json").read_text(encoding="utf-8"))
+          review = json.loads(Path("data/state/review_context.json").read_text(encoding="utf-8"))
+          if not review:
+              raise SystemExit("review_context.json is empty after derived recovery")
+          if review.get("market_date") != current.get("market_date"):
+              raise SystemExit("review_context market_date mismatch")
+          review_current = review.get("current") or {}
+          if review_current.get("latest_snapshot") != current.get("latest_snapshot"):
+              raise SystemExit("review_context latest_snapshot mismatch")
           batch = decision.get("discovery_opportunity_batch_consistency") or {}
           for key in ("market_date", "latest_snapshot"):
               if discovery.get(key) != current.get(key):
@@ -248,6 +268,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -- \
             data/state/decision_context.json \
+            data/state/review_context.json \
             data/state/dashboard_update_candidate.json \
             data/state/e2e_status.json \
             ETF当前状态_DASHBOARD.md

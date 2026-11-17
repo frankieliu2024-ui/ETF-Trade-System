@@ -113,6 +113,21 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
         self.assertNotEqual(status["classification"], "DISCOVERY_IDENTITY_DRIFT")
         self.assertNotEqual(status["recommended_action"], "REBUILD_DERIVED_CONTEXTS")
 
+    def test_missing_review_context_after_close_requires_derived_rebuild(self):
+        status = self._assess(
+            current={
+                "market_date": "2026-11-17",
+                "captured_at": "2026-11-17T15:17:00+08:00",
+                "latest_valid_node": "close",
+                "latest_snapshot": "data/market/snapshots/2026-11-17_151700.json",
+                "node_status": "READY",
+                "rules_version": "V2.2.31",
+            },
+            now=datetime.fromisoformat("2026-11-17T15:31:06+08:00"),
+        )
+        self.assertEqual(status["classification"], "DERIVED_CONTEXT_IDENTITY_DRIFT")
+        self.assertEqual(status["recommended_action"], "REBUILD_DERIVED_CONTEXTS")
+
     def test_review_context_identity_drift_rebuilds_existing_derived_contexts(self):
         status = self._assess(
             current={
@@ -297,6 +312,7 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
             "data/state/query_context.json": {},
             "data/state/decision_context.json": {},
             "data/state/self_healing_status.json": {"classification": "PERSISTENT_RUNTIME_FAILURE", "recommended_action": "ESCALATE"},
+            "data/state/review_context.json": {"rules_version": "V2.2.31", "current": current},
             "data/state/formal_discovery_current.json": {"status": "READY", "market_date": current["market_date"], "latest_snapshot": current.get("latest_snapshot", ""), "latest_valid_node": current["latest_valid_node"]},
         }
         def fake_load(path: Path, default=None):
