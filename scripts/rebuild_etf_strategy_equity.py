@@ -324,11 +324,32 @@ def main():
         historical_error = str(exc)
         if "missing date-aligned close" not in historical_error:
             raise
+        # Historical date-aligned coverage gaps must not prevent today's
+        # confirmed account valuation. Retry the same canonical replay only
+        # on progressively earlier eligible dates, so the base remains a
+        # genuinely successful historical prefix rather than retrying the
+        # original failing cutoff. Never infer a missing close from a trade.
         state = json.loads((ROOT / "data" / "state" / "etf_strategy_equity.json").read_text(encoding="utf-8"))
-        base_cutoff = str(state.get("replay_cutoff") or (state.get("series") or [{}])[-1].get("date") or "")
-        base = replay(ROOT, price_dir=args.price_dir, cutoff=base_cutoff)
+        missing_date = historical_error.rsplit(" on ", 1)[-1].strip()
+        candidate_dates = sorted(_load_prices(ROOT, args.price_dir).keys())
+        candidate_dates = [day for day in candidate_dates if day < missing_date]
+        if not candidate_dates:
+            raise ValueError("no successful historical replay prefix before missing date") from exc
+        base = None
+        prefix_error = historical_error
+        for base_cutoff in reversed(candidate_dates):
+            try:
+                base = replay(ROOT, price_dir=args.price_dir, cutoff=base_cutoff)
+                break
+            except ValueError as prefix_exc:
+                prefix_error = str(prefix_exc)
+                if "missing date-aligned close" not in prefix_error:
+                    raise
+        if base is None:
+            raise ValueError("no successful historical replay prefix before missing date") from exc
         result = _current_account_valuation(ROOT, base)
         result["summary"]["historical_replay_error"] = historical_error
+        result["summary"]["historical_replay_prefix_error"] = prefix_error
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({"status": "PASS", "cutoff": result["replay_cutoff"], "equity": result["summary"]["current_gross_strategy_equity"], "return_pct": result["summary"]["current_strategy_return_pct_gross"], "current_valuation_status": result.get("current_valuation_status", "HISTORICAL_REPLAY")}))
