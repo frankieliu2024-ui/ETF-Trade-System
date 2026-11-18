@@ -29,7 +29,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          fetch-depth: 0
+          # Account maintenance only needs the pushed commit and its parent.
+          # Avoid fetching the repository's full branch graph on every run.
+          fetch-depth: 2
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
@@ -38,13 +40,12 @@ jobs:
         shell: bash
         env:
           REQUEST_INPUT: ${{ github.event.inputs.request_path || '' }}
-          EVENT_BEFORE: ${{ github.event.before || '' }}
         run: |
           set -euo pipefail
           if [ -n "$REQUEST_INPUT" ]; then
             request_path="$REQUEST_INPUT"
           else
-            request_path="$(git diff --name-only "$EVENT_BEFORE" "$GITHUB_SHA" -- 'requests/account_sync/*.json' | head -n 1 || true)"
+            request_path="$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'requests/account_sync/*.json' | head -n 1 || true)"
           fi
           case "$request_path" in
             requests/account_sync/*.json) ;;
@@ -128,14 +129,18 @@ jobs:
           # E2E is diagnostic/object-scoped and never gates the three ETF task chains.
           python scripts/build_e2e_status.py
 
-      - name: Sync Dashboard after derived projections
+      - name: Sync Dashboard after successful derived projections
         id: dashboard
+        if: steps.projection.outcome == 'success'
         continue-on-error: true
         shell: bash
         run: |
           set -euo pipefail
-          # Reuse the canonical factual Dashboard owner after strategy risk and E2E
-          # are current; do not invoke the account-sync owner a second time.
+          # process_state_sync_request.py already renders the account-fact Dashboard.
+          # Refresh it only when the complete derived projection succeeded; when
+          # risk reconstruction is unavailable, publish the account facts and the
+          # explicit degraded health instead of spending the remaining job budget
+          # on a duplicate projection.
           python - <<'PY'
           from pathlib import Path
           from scripts.sync_formal_files import sync_dashboard_projection
