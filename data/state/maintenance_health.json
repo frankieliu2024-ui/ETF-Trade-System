@@ -1,21 +1,28 @@
 {
   "schema_version": "1.1",
-  "checked_at": "2026-11-18T14:39:12+08:00",
+  "checked_at": "2026-11-18T16:03:31+08:00",
   "mode": "DETERMINISTIC_MAINTENANCE_GUARD",
   "status": "FAIL",
   "system_consistency_status": "WARNING",
   "self_healing_classification": "DERIVED_CONTEXT_IDENTITY_DRIFT",
   "runtime_health_status": "PASS",
-  "current_snapshot": "data/market/snapshots/2026-11-18_142403.json",
+  "current_snapshot": "data/market/snapshots/2026-11-18_145944.json",
   "reconciliation": {
     "status": "FAIL",
-    "trade_count": 55,
+    "trade_count": 59,
     "fact_enrichment_only_count": 0,
-    "executed_trade_event_overlay_count": 0,
+    "executed_trade_event_overlay_count": 4,
     "position_ledger_basis": "CANONICAL_REPLAY_FINAL_COMPLETE_POSITION_IDENTITY",
     "position_reconciliation": {
-      "status": "PASS",
+      "status": "FAIL",
       "checks": [
+        {
+          "code": "159248",
+          "ledger_quantity": 0.0,
+          "account_quantity": 3700.0,
+          "difference": 3700.0,
+          "status": "FAIL"
+        },
         {
           "code": "159253",
           "ledger_quantity": 4600.0,
@@ -29,6 +36,13 @@
           "account_quantity": 6100.0,
           "difference": 0.0,
           "status": "PASS"
+        },
+        {
+          "code": "159307",
+          "ledger_quantity": 0.0,
+          "account_quantity": 4600.0,
+          "difference": 4600.0,
+          "status": "FAIL"
         },
         {
           "code": "159529",
@@ -75,16 +89,16 @@
         {
           "code": "588200",
           "ledger_quantity": 5800.0,
-          "account_quantity": 5800.0,
-          "difference": 0.0,
-          "status": "PASS"
+          "account_quantity": 0.0,
+          "difference": -5800.0,
+          "status": "FAIL"
         },
         {
           "code": "588450",
           "ledger_quantity": 1400.0,
-          "account_quantity": 1400.0,
-          "difference": 0.0,
-          "status": "PASS"
+          "account_quantity": 0.0,
+          "difference": -1400.0,
+          "status": "FAIL"
         },
         {
           "code": "588710",
@@ -102,7 +116,7 @@
       "auxiliary_reconstructed_confirmed_fee_sum": 237.23,
       "auxiliary_summary_known_fees": 237.23,
       "auxiliary_difference": 0.0,
-      "executed_event_overlay_count": 0,
+      "executed_event_overlay_count": 4,
       "executed_event_confirmed_fee_sum": 0.0,
       "effective_confirmed_fee_sum": 237.23,
       "formal_review_confirmed_fees": null,
