@@ -1304,7 +1304,16 @@ def _validate_cross_object_account_closure(report: dict, *, include_discovery: b
 
     if include_discovery:
         discovery = _read_json("data/state/formal_discovery_current.json")
-        candidates = discovery.get("candidates") if isinstance(discovery.get("candidates"), list) else []
+        # Canonical Discovery may be wrapped under `discovery`; normalize the
+        # read here without rewriting the producer's persisted shape.
+        nested_discovery = discovery.get("discovery") if isinstance(discovery.get("discovery"), dict) else {}
+        candidates = (
+            discovery.get("candidates")
+            if isinstance(discovery.get("candidates"), list)
+            else nested_discovery.get("candidates")
+            if isinstance(nested_discovery.get("candidates"), list)
+            else []
+        )
         declared_count = discovery.get("candidate_count")
         if declared_count is not None and int(declared_count) != len(candidates):
             errors.append(f"current_discovery:candidate_count_mismatch:declared={declared_count}:actual={len(candidates)}")
