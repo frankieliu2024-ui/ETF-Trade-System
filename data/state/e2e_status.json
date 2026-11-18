@@ -1,12 +1,12 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-11-18T20:28:41+08:00",
+  "generated_at": "2026-11-18T20:41:04+08:00",
   "projection_identity": {
     "account_updated_at": "2026-11-18T15:01:00+08:00",
     "risk_as_of_transaction_date": "2026-11-18",
     "market_snapshot": "data/market/snapshots/2026-11-18_145944.json"
   },
-  "status": "READY",
+  "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
   "components": {
@@ -55,8 +55,8 @@
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 13576056,
-          "sha256": "53b9d4d542322cabe160112fbb880866997dd93d1820211152e0a18c6d390201",
+          "byte_count": 13576053,
+          "sha256": "ca1eb97d6d653a92518d6738095879aaceed4bc1df32078858ed2ebd237073fb",
           "parsed_object": true,
           "retry_attempts": 1,
           "retry_required": false
@@ -65,7 +65,7 @@
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
           "byte_count": 821996,
-          "sha256": "f70fd649464bb2c9264fa7c5c490a74d3ee7eb37f2a21c68a8fab7dea9e31621",
+          "sha256": "8eb90ef8b9d207bec3b01c328a7453cb3c11032c273393a92a936769ca4e9ceb",
           "parsed_object": true,
           "retry_attempts": 1,
           "retry_required": false
@@ -83,13 +83,15 @@
       "source": "formal decision + executed trade facts"
     },
     "maintenance": {
-      "status": "READY",
-      "reason": "maintenance guard passed",
-      "checked_at": "2026-11-18T19:36:53+08:00"
+      "status": "DEGRADED",
+      "reason": "maintenance-only block; formal analysis capability remains separately evaluated",
+      "checked_at": "2026-11-18T20:32:27+08:00"
     }
   },
   "blockers": [],
-  "degradations": [],
+  "degradations": [
+    "maintenance"
+  ],
   "task_continuation": {
     "status": "CONTINUE",
     "formal_tasks_blocked": false,
@@ -105,8 +107,8 @@
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 13576056,
-      "sha256": "53b9d4d542322cabe160112fbb880866997dd93d1820211152e0a18c6d390201",
+      "byte_count": 13576053,
+      "sha256": "ca1eb97d6d653a92518d6738095879aaceed4bc1df32078858ed2ebd237073fb",
       "parsed_object": true,
       "retry_attempts": 1,
       "retry_required": false
@@ -115,7 +117,7 @@
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
       "byte_count": 821996,
-      "sha256": "f70fd649464bb2c9264fa7c5c490a74d3ee7eb37f2a21c68a8fab7dea9e31621",
+      "sha256": "8eb90ef8b9d207bec3b01c328a7453cb3c11032c273393a92a936769ca4e9ceb",
       "parsed_object": true,
       "retry_attempts": 1,
       "retry_required": false
