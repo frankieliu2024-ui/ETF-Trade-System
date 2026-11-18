@@ -1349,10 +1349,18 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Run the canonical system consistency validator.")
     parser.add_argument("--report-path", default=os.environ.get("ETF_CONSISTENCY_REPORT_PATH", str(REPORT)))
     parser.add_argument("--no-persist", action="store_true", help="write the report only to the supplied ephemeral path")
+    parser.add_argument("--scope", choices=("full", "account-fast"), default="full", help="run the full audit or the bounded account-derived closure audit")
     args = parser.parse_args()
     REPORT = Path(args.report_path).resolve()
     os.environ["ETF_CONSISTENCY_REPORT_PATH"] = str(REPORT)
     consistency_core.REPORT = REPORT
+    if args.scope == "account-fast":
+        report = {"status": "PASS", "errors": [], "warnings": [], "checks": []}
+        _validate_cross_object_account_closure(report)
+        REPORT.parent.mkdir(parents=True, exist_ok=True)
+        REPORT.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\\n", encoding="utf-8")
+        print(json.dumps({"scope": args.scope, "status": report.get("status"), "hard_error_count": len(report.get("errors") or []), "warning_count": len(report.get("warnings") or []), "errors": report.get("errors") or []}, ensure_ascii=False))
+        return 1 if report.get("errors") else 0
     core_main()
     report = json.loads(REPORT.read_text(encoding="utf-8"))
     _normalize_async_context_freshness(report)
