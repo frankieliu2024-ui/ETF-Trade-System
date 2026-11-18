@@ -1249,7 +1249,7 @@ def _validate_semantic_formal_structure(report: dict) -> None:
     _recount(report)
 
 
-def _validate_cross_object_account_closure(report: dict) -> None:
+def _validate_cross_object_account_closure(report: dict, *, include_discovery: bool = True) -> None:
     """Validate semantic closure across the current account batch.
 
     File-level checks can all pass while a newly confirmed BUY is absent from
@@ -1302,11 +1302,12 @@ def _validate_cross_object_account_closure(report: dict) -> None:
         errors.append("current_account:confirmed_buy_missing_lifecycle:" + ",".join(sorted(set(missing_lifecycle))))
     details.append(f"account_batch={account_batch or 'MISSING'} same_day_etf_buys={len(same_day_buys)} active_lifecycle_codes={sorted(lifecycle_codes)} invalid_lifecycle={invalid_lifecycle}")
 
-    discovery = _read_json("data/state/formal_discovery_current.json")
-    candidates = discovery.get("candidates") if isinstance(discovery.get("candidates"), list) else []
-    declared_count = discovery.get("candidate_count")
-    if declared_count is not None and int(declared_count) != len(candidates):
-        errors.append(f"current_discovery:candidate_count_mismatch:declared={declared_count}:actual={len(candidates)}")
+    if include_discovery:
+        discovery = _read_json("data/state/formal_discovery_current.json")
+        candidates = discovery.get("candidates") if isinstance(discovery.get("candidates"), list) else []
+        declared_count = discovery.get("candidate_count")
+        if declared_count is not None and int(declared_count) != len(candidates):
+            errors.append(f"current_discovery:candidate_count_mismatch:declared={declared_count}:actual={len(candidates)}")
 
     try:
         from decision_trade_link import resolve_link
@@ -1356,7 +1357,7 @@ def main() -> int:
     consistency_core.REPORT = REPORT
     if args.scope == "account-fast":
         report = {"status": "PASS", "errors": [], "warnings": [], "checks": []}
-        _validate_cross_object_account_closure(report)
+        _validate_cross_object_account_closure(report, include_discovery=False)
         REPORT.parent.mkdir(parents=True, exist_ok=True)
         REPORT.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\\n", encoding="utf-8")
         print(json.dumps({"scope": args.scope, "status": report.get("status"), "hard_error_count": len(report.get("errors") or []), "warning_count": len(report.get("warnings") or []), "errors": report.get("errors") or []}, ensure_ascii=False))
