@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Validate GitHub workflow registry structure before merge.
 
-This intentionally avoids a new runtime dependency.  GitHub remains the final
-YAML parser, while this guard catches the failure class that previously reached
-main: malformed shell heredocs embedded in YAML block scalars.
+This intentionally avoids a new runtime dependency. GitHub remains the final
+YAML parser, while this guard catches malformed workflow structure before merge.
 """
 from __future__ import annotations
 
@@ -14,6 +13,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW_DIR = ROOT / ".github" / "workflows"
 HEREDOC_START = re.compile(r'''<<-?(['"]?)([A-Za-z_][A-Za-z0-9_]*)\1''')
+KEY_LINE = re.compile(r"^( *)([A-Za-z_][A-Za-z0-9_-]*):(?:\\s|$)")
+EXPECTED_WORKFLOW_NAMES = {
+    ".github/workflows/system-consistency.yml": "ETF System Consistency",
+}
 
 
 def leading_spaces(line: str) -> int:
@@ -25,12 +28,34 @@ def validate_workflow(path: Path) -> list[str]:
     lines = path.read_text(encoding="utf-8").splitlines()
     if not lines:
         return [f"{path}: empty workflow"]
+    relative = path.relative_to(ROOT).as_posix()
+    if relative in EXPECTED_WORKFLOW_NAMES:
+        expected = EXPECTED_WORKFLOW_NAMES[relative]
+        first_name = next((line.strip()[5:].strip().strip('"') for line in lines[:10]
+                           if line.startswith("name:")), None)
+        if first_name != expected:
+            errors.append(
+                f"{path}: workflow display name must remain {expected!r}, got {first_name!r}"
+            )
     if not any(line.startswith("name:") for line in lines[:10]):
         errors.append(f"{path}: missing top-level name")
     if not any(re.match(r"^on\s*:", line) for line in lines[:30]):
         errors.append(f"{path}: missing top-level on")
     if not any(re.match(r"^jobs\s*:", line) for line in lines):
         errors.append(f"{path}: missing top-level jobs")
+
+    previous_key: tuple[int, str, int] | None = None
+    for number, line in enumerate(lines, 1):
+        key = KEY_LINE.match(line)
+        if key:
+            indent, name = len(key.group(1)), key.group(2)
+            if previous_key and previous_key[:2] == (indent, name):
+                errors.append(
+                    f"{path}:{number}: duplicate adjacent key {name!r} at indentation {indent}"
+                )
+            previous_key = (indent, name, number)
+        elif line.strip() and not line.lstrip().startswith("#"):
+            previous_key = None
 
     active: tuple[str, int, int, int] | None = None
     for number, line in enumerate(lines, 1):
