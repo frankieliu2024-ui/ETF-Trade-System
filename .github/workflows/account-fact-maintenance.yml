@@ -23,7 +23,9 @@ concurrency:
 jobs:
   account-fact-maintenance:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # Fast account-derived lane; historical replay, discovery and research
+    # remain asynchronous in their existing owners.
+    timeout-minutes: 8
     env:
       ETF_SYSTEM_ROOT: ${{ github.workspace }}
     steps:
@@ -93,13 +95,6 @@ jobs:
           python scripts/build_stock_context.py
           python scripts/build_account_stock_market.py
 
-      - name: Rebuild execution-quality projection
-        id: execution_quality
-        continue-on-error: true
-        shell: bash
-        run: |
-          set -euo pipefail
-          python scripts/build_execution_quality.py
       - name: Rebuild required account projection
         id: projection
         continue-on-error: true
@@ -113,11 +108,6 @@ jobs:
           # is not part of that owner, then run the single final health guard
           # after readback.
           python scripts/rebuild_etf_strategy_equity.py --output data/state/etf_strategy_equity.json
-          # Rebuild E2E, Dashboard and dependent derived context only after
-          # the canonical strategy equity projection has been refreshed.
-          # This remains the same account-maintenance owner and does not add
-          # a second business or notification chain.
-          python scripts/build_state_context.py --decision-ready-only
 
       - name: Rebuild E2E status after risk projection
         id: e2e
@@ -155,7 +145,7 @@ jobs:
           RUN_ID: ${{ github.run_id }}
           OWNER_OUTCOME: ${{ (steps.sync.outcome == 'success' && steps.projection.outcome == 'success') && 'success' || 'failure' }}
           PROJECTION_OUTCOME: ${{ steps.projection.outcome }}
-          EXECUTION_QUALITY_OUTCOME: ${{ steps.execution_quality.outcome }}
+          EXECUTION_QUALITY_OUTCOME: skipped_fast_account_lane
           STOCK_MARKET_OUTCOME: ${{ steps.stock_market.outcome }}
         run: |
           set -euo pipefail
