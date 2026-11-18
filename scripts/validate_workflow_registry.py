@@ -15,7 +15,7 @@ WORKFLOW_DIR = ROOT / ".github" / "workflows"
 HEREDOC_START = re.compile(r'''<<-?(['"]?)([A-Za-z_][A-Za-z0-9_]*)\1''')
 KEY_LINE = re.compile(r"^( *)([A-Za-z_][A-Za-z0-9_-]*):(?:\s|$)")
 EXPECTED_WORKFLOW_NAMES = {
-    ".github/workflows/system-consistency.yml": "ETF System Consistency",
+    ".github/workflows/system-consistency.yml": "ETF system consistency",
 }
 
 
