@@ -14,3 +14,319 @@ on:
         description: "Optional read-only Issue #687 Eastmoney broad attribution probe (true/false)"
         required: false
         default: "false"
+  # Read-only precheck for changes that can redefine consistency semantics.
+  # It reuses the same production checks before merge, but never executes
+  # mutation requests or persists generated state back to main.
+  push:
+    branches: [main]
+    paths:
+      - "ETF规则_MASTER.md"
+      - "ETF当前状态_DASHBOARD.md"
+      - "ETF交易复盘与经验库_2026.md"
+      - "ETF市场行情档案_2026.md"
+      - "ETF与市场监测数据接口使用规范.md"
+      - "ETF_SYSTEM_INDEX.md"
+      - "config/market/**"
+      - "config/research/llm_research_adapter.json"
+      - "config/runtime_policy.json"
+      - "scripts/**"
+      - "tests/test_market*.py"
+      - "tests/test_query_time_market_refresh.py"
+      - ".github/workflows/**"
+      - "tests/test_executed_trade_case_lifecycle.py"
+      - "tests/test_settlement_obligations.py"
+      - "tests/test_formal_file_mutation_gateway.py"
+      - "tests/test_production_reliability.py"
+      - "tests/test_dashboard_risk_projection.py"
+      - "scripts/market_notification_common.py"
+      - "scripts/merge_notification_state.py"
+      - ".github/workflows/decision-notification.yml"
+      - "requests/research_backfill/*.json"
+      - "requests/trade_fact_correction/*.json"
+      - "data/state/account_fact.json"
+      # Projection changes must re-run the canonical consistency gate.
+      - "data/state/execution_quality.json"
+      # Canonical runtime state changes must re-run the global consistency gate;
+      # otherwise a repaired producer can land without any post-merge acceptance.
+      - "data/state/CURRENT.json"
+      - "data/state/runtime_health.json"
+      # Runtime health files are owned by their canonical producer/watchdog
+      # chains and are not source facts for full-system validation. Abnormal
+      # A-share runtime is handled by the self-healing watchdog; overseas pulse
+      # failures are routed through the shared workflow failure guard.
+      # Rebuildable query/decision/market-delta, stock-monitoring and current
+      # research-summary states are deliberately not full-consistency push
+      # triggers. Their canonical producers own local quality checks; the
+      # account/source/config/formal/research inputs still trigger this gate.
+      - "data/state/research_master_candidates.json"
+      - "data/state/historical_backfill_status.json"
+      - "data/state/historical_position_research.json"
+      - "data/state/etf_strategy_equity.json"
+      - "events/research/daily_features/**"
+      - "data/market/audit/research_backfill/**"
+      - "research/reports/**"
+      # Keep main-side reachability aligned with acceptance_scope.py for
+      # formal facts, requests, normative docs, and contract tests.
+      - "docs/**"
+      - "events/**"
+      - "requests/**"
+      - "tests/**"
+  schedule:
+    # Pre-market readiness fallback. The dedicated overseas pulse remains the
+    # primary collector; these runs prevent a missed/delayed GitHub schedule
+    # from leaving formal overseas_context on the previous Beijing date.
+    - cron: "50 23 * * 0-4"   # Beijing 07:50 Mon-Fri
+    - cron: "20,50 0 * * 1-5" # Beijing 08:20 / 08:50 Mon-Fri
+
+permissions:
+  contents: write
+
+concurrency:
+  # PR prechecks remain independently cancellable. Manual system-consistency
+  # validations use a dedicated group so a production writer cannot cancel them
+  # after one second while they are waiting for the shared main-state writer.
+  # The persistence step retains its bounded fetch/reset/push retry for the
+  # short commit race with other main writers.
+  group: ${{ github.ref == 'refs/heads/main' && 'etf-main-state-writer' || (github.event_name == 'workflow_dispatch' && format('etf-system-consistency-manual-{0}', github.run_id) || format('etf-system-consistency-pr-{0}', github.event.pull_request.number)) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  scope:
+    runs-on: ubuntu-latest
+    outputs:
+      full_required: ${{ steps.scope.outputs.full_required }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
+      - name: Classify acceptance scope
+        id: scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" != "push" ]; then
+            echo "full_required=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          full_required=false
+          while IFS= read -r path; do
+            [ -z "$path" ] && continue
+            case "$path" in
+              data/state/account_fact.json|data/state/CURRENT.json|data/state/etf_strategy_equity.json|data/state/stock_context.json|data/state/stock_market_context.json|data/state/maintenance_health.json|data/state/e2e_status.json|data/state/execution_quality.json|events/trades/*|events/reviews/*|requests/account_sync/*|requests/report_delivery/*|config/market/etf_monitor_universe.json|ETF当前状态_DASHBOARD.md|ETF市场行情档案_2026.md|ETF交易复盘与经验库_2026.md) ;;
+              *) full_required=true ;;
+            esac
+          done < <(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" --)
+          echo "full_required=$full_required" >> "$GITHUB_OUTPUT"
+
+  consistency:
+    needs: scope
+    if: ${{ needs.scope.outputs.full_required == 'true' || github.event_name != 'push' }}
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      HITHINK_FINANCE_API_KEY: ${{ secrets.HITHINK_FINANCE_API_KEY }}
+      ETF_SYSTEM_ROOT: ${{ github.workspace }}
+      ETF_CONSISTENCY_REPORT_PATH: ${{ github.workspace }}/system_consistency.json
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Run read-only ETF system readiness preflight
+        id: system_readiness_preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          python scripts/run_system_readiness_preflight.py --json > system_readiness_preflight.json
+          preflight_status=$?
+          set -e
+          test -s system_readiness_preflight.json
+          cat system_readiness_preflight.json
+          if [[ $preflight_status -ne 0 ]]; then exit "$preflight_status"; fi
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          result = json.loads(Path("system_readiness_preflight.json").read_text(encoding="utf-8"))
+          assert result.get("read_only") is True
+          assert result.get("production_notification_sent") is False
+          print("system readiness preflight:", result.get("status"))
+          PY
+
+      - name: Run bounded LLM adapter contract tests
+        shell: bash
+        run: |
+          PYTHONPATH=scripts python -m unittest \
+            tests.test_issue_687_business_e2e_closure.BusinessE2EClosureContractTests.test_historical_replay_discovery_eligibility_uses_request_bound_context \
+            tests.test_issue_687_business_e2e_closure.BusinessE2EClosureContractTests.test_historical_replay_discovery_eligibility_fails_closed_without_matching_provenance
+          python - <<'PY'
+          import json
+          import os
+          import tempfile
+          from pathlib import Path
+          from scripts.llm_research_adapter import build_review_input, critique_review
+
+          with tempfile.TemporaryDirectory() as td:
+              cfg = Path(td) / "adapter.json"
+              cfg.write_text(json.dumps({
+                  "enabled": False,
+                  "daily_call_limit": 20,
+                  "daily_budget_usd": 0.50,
+                  "secret_env": "CI_LLM_KEY"
+              }), encoding="utf-8")
+              result = critique_review({"market_date": "2026-09-11"}, config_path=cfg)
+              assert result["status"] == "SKIPPED"
+              assert result["uncertainties"] == ["adapter_disabled"]
+
+              safe = build_review_input({
+                  "market_date": "2026-09-11",
+                  "daily_market_summary": {"latest_valid_node": "1500"},
+                  "account_fact": {"cash": 1},
+                  "trade_action": "BUY"
+              })
+              assert "account_fact" not in safe
+              assert "trade_action" not in safe
+          print("bounded LLM adapter contract: PASS")
+          PY
+      - name: Validate semantic latest-main freshness
+        if: github.event_name == 'pull_request'
+        shell: bash
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git fetch --no-tags origin main
+          python scripts/semantic_latest_main.py \
+            --base "${PR_BASE_SHA}" \
+            --head "$(git rev-parse origin/main)"
+      - name: Compile changed Python production files
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin "${{ github.base_ref }}"
+          mapfile -t changed_py < <(git diff --name-only "origin/${{ github.base_ref }}...HEAD" -- 'scripts/*.py' 'scripts/**/*.py')
+          if (( ${#changed_py[@]} )); then
+            printf '%s\n' "${changed_py[@]}"
+            python -m py_compile "${changed_py[@]}"
+          else
+            echo "No changed production Python files."
+          fi
+      - name: Run legacy production boundary contract tests
+        shell: bash
+        run: |
+          PYTHONPATH=scripts python -m unittest tests.test_legacy_production_boundaries
+      - name: Run decision attribution hard-gate regression tests
+        shell: bash
+        run: |
+          PYTHONPATH=scripts python -m unittest tests.test_decision_temporal_semantics
+
+      - name: Validate stable workflow registry names
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/check_workflow_registry.py
+
+      - name: Run full system consistency check
+        shell: bash
+        env:
+          ETF_CONSISTENCY_REPORT_PATH: ${{ github.workspace }}/system_consistency.json
+        run: |
+          set -euo pipefail
+          python scripts/check_system_consistency.py
+          test -s "$ETF_CONSISTENCY_REPORT_PATH"
+
+      - name: Validate OpenSSL SM4 runtime dependency
+        shell: bash
+        run: |
+          set -euo pipefail
+          # ubuntu-latest already provides OpenSSL; dependency installation
+          # is not part of consistency semantics and adds avoidable latency.
+          command -v openssl
+          openssl version -a
+          openssl enc -list | grep -E '(^|[[:space:]])-sm4-ecb([[:space:]]|$)'
+      - name: Record post-close/global health as informational
+        if: ${{ github.event_name == 'pull_request' }}
+        shell: bash
+        run: |
+          echo "post-close and global health checks remain informational for ordinary PR CI"
+          echo "they do not gate the Formal Decision business-chain contract"
+      - name: Persist current consistency report
+        if: ${{ always() && github.ref == 'refs/heads/main' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! -s "$ETF_CONSISTENCY_REPORT_PATH" ]]; then
+            echo "Consistency report was not produced; cannot persist a current result." >&2
+            exit 1
+          fi
+          # Evaluate maintenance health against the exact checkout that produced
+          # ETF_CONSISTENCY_REPORT_PATH. Do not re-evaluate it after rebasing onto a
+          # moving main branch: concurrent state commits must not create identity drift.
+          locked_maintenance_health="$RUNNER_TEMP/maintenance_health.locked.json"
+          set +e
+          python scripts/maintenance_guard.py
+          maintenance_guard_status=$?
+          set -e
+          cp data/state/maintenance_health.json "$locked_maintenance_health"
+          if [[ ! -s "$locked_maintenance_health" ]]; then
+            echo "Maintenance health was not produced; cannot persist the consistency result." >&2
+            exit 1
+          fi
+          if [[ "$maintenance_guard_status" -ne 0 ]]; then
+            echo "Maintenance guard reported status $maintenance_guard_status; persisting the report before the job remains failed." >&2
+          fi
+          # State-only maintenance commits can race with snapshot/account/runtime
+          # writers. Keep the bounded retry in this existing persistence owner;
+          # do not create another consistency or publication chain.
+          for attempt in 1 2 3 4 5 6; do
+            git fetch --no-tags origin main
+            git reset --hard origin/main
+            cp "$locked_maintenance_health" data/state/maintenance_health.json
+            python - <<PY
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          from zoneinfo import ZoneInfo
+
+          generated = Path(os.environ["ETF_CONSISTENCY_REPORT_PATH"])
+          target = Path("data/state/system_consistency.json")
+          candidate = json.loads(generated.read_text(encoding="utf-8"))
+          existing = json.loads(target.read_text(encoding="utf-8")) if target.exists() else None
+
+          def semantic(value):
+              if not isinstance(value, dict):
+                  return value
+              return {k: semantic(v) for k, v in value.items() if k not in {"persisted_at_beijing", "persisted_state_commit"}}
+
+          if existing is not None and semantic(existing) == semantic(candidate):
+              print("Consistency report unchanged semantically; no state commit required.")
+              raise SystemExit(0)
+
+          candidate["persisted_at_beijing"] = datetime.now(timezone.utc).astimezone(ZoneInfo("Asia/Shanghai")).isoformat()
+          target.write_text(json.dumps(candidate, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          PY
+            # Keep the maintenance projection paired with the locked report;
+            # re-running against moving origin/main would compare different contexts.
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add data/state/system_consistency.json data/state/maintenance_health.json
+            if git diff --cached --quiet; then exit 0; fi
+            git commit -m "state: persist current system consistency report"
+            if git push origin HEAD:main; then exit 0; fi
+            git reset --hard origin/main
+          done
+          exit 1
+      - name: Upload pure consistency report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: system-consistency-${{ github.run_id }}
+          path: |
+            ${{ github.workspace }}/system_consistency.json
+            ${{ github.workspace }}/system_readiness_preflight.json
+          if-no-files-found: error
+
