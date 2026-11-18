@@ -119,31 +119,6 @@ jobs:
           # E2E is diagnostic/object-scoped and never gates the three ETF task chains.
           python scripts/build_e2e_status.py
 
-      - name: Record account sync readback
-        shell: bash
-        env:
-          REQUEST_PATH: ${{ steps.request.outputs.request_path }}
-          RUN_ID: ${{ github.run_id }}
-          OWNER_OUTCOME: ${{ (steps.sync.outcome == 'success' && steps.projection.outcome == 'success' && steps.fast_consistency.outcome == 'success') && 'success' || 'failure' }}
-          PROJECTION_OUTCOME: ${{ steps.projection.outcome }}
-          EXECUTION_QUALITY_OUTCOME: skipped_fast_account_lane
-          STOCK_MARKET_OUTCOME: ${{ steps.stock_market.outcome }}
-        run: |
-          set -euo pipefail
-          request_id="$(python - "$REQUEST_PATH" <<'PY'
-          import json, sys
-          from pathlib import Path
-          print(json.loads(Path(sys.argv[1]).read_text(encoding="utf-8")).get("request_id", ""))
-          PY
-          )"
-          test -n "$request_id"
-          python scripts/record_account_sync_maintenance.py \
-            --request-id "$request_id" \
-            --request-path "$REQUEST_PATH" \
-            --owner-outcome "$OWNER_OUTCOME" \
-            --projection-outcome "$PROJECTION_OUTCOME" \
-            --execution-quality-outcome "$EXECUTION_QUALITY_OUTCOME" \
-            --run-id "$RUN_ID"
       - name: Verify account fact by code
         shell: bash
         env:
@@ -178,6 +153,31 @@ jobs:
             --report-path "$ETF_CONSISTENCY_REPORT_PATH"
           test -s "$ETF_CONSISTENCY_REPORT_PATH"
 
+      - name: Record account sync readback
+        shell: bash
+        env:
+          REQUEST_PATH: ${{ steps.request.outputs.request_path }}
+          RUN_ID: ${{ github.run_id }}
+          OWNER_OUTCOME: ${{ (steps.sync.outcome == 'success' && steps.projection.outcome == 'success' && steps.fast_consistency.outcome == 'success') && 'success' || 'failure' }}
+          PROJECTION_OUTCOME: ${{ steps.projection.outcome }}
+          EXECUTION_QUALITY_OUTCOME: skipped_fast_account_lane
+          STOCK_MARKET_OUTCOME: ${{ steps.stock_market.outcome }}
+        run: |
+          set -euo pipefail
+          request_id="$(python - "$REQUEST_PATH" <<'PY'
+          import json, sys
+          from pathlib import Path
+          print(json.loads(Path(sys.argv[1]).read_text(encoding="utf-8")).get("request_id", ""))
+          PY
+          )"
+          test -n "$request_id"
+          python scripts/record_account_sync_maintenance.py \
+            --request-id "$request_id" \
+            --request-path "$REQUEST_PATH" \
+            --owner-outcome "$OWNER_OUTCOME" \
+            --projection-outcome "$PROJECTION_OUTCOME" \
+            --execution-quality-outcome "$EXECUTION_QUALITY_OUTCOME" \
+            --run-id "$RUN_ID"
       - name: Finalize maintenance health after account readback
         continue-on-error: true
         shell: bash
