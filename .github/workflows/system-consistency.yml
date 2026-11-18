@@ -120,8 +120,7 @@ jobs:
 
   consistency:
     needs: scope
-    if: ${{ needs.scope.outputs.full_required == 'true' || github.event_name != 'push' }}
-    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ (needs.scope.outputs.full_required == 'true' || github.event_name != 'push') && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success') }}
     runs-on: ubuntu-latest
     timeout-minutes: 12
     env:
