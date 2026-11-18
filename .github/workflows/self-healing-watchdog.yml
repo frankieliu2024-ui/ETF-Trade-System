@@ -2,6 +2,15 @@ name: "ETF runtime self-healing watchdog"
 
 on:
   workflow_dispatch:
+    inputs:
+      scope:
+        description: "fast runs bounded runtime recovery; full also runs the comprehensive health aggregate"
+        required: false
+        default: fast
+        type: choice
+        options:
+          - fast
+          - full
   # External wake-only ingress for #385. The comment carries no market data;
   # it only awakens this existing canonical watchdog when the marker matches.
   issue_comment:
@@ -60,6 +69,7 @@ jobs:
     timeout-minutes: 10
     env:
       GH_TOKEN: ${{ github.token }}
+      WATCHDOG_SCOPE: ${{ github.event.inputs.scope || 'fast' }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -202,6 +212,7 @@ jobs:
           echo "Dispatched canonical US pulse because dedicated heartbeat was stale."
 
       - name: Run read-only comprehensive production health aggregate
+        if: ${{ env.WATCHDOG_SCOPE == 'full' }}
         shell: bash
         run: |
           python scripts/production_health_guard.py --watchdog-observer
