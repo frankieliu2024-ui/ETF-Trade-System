@@ -27,7 +27,7 @@ def build() -> dict:
         market_date = str(current.get("market_date") or "")
     except Exception:
         market_date = ""
-    ready_codes, fallback_codes = [], []
+    ready_codes, quote_only_codes, fallback_codes = [], [], []
     for code, row in (base.get("objects") or {}).items():
         if row.get("quality_status") != "PASS":
             row["minute_path_context"] = {
@@ -41,18 +41,24 @@ def build() -> dict:
         row["minute_path_context"] = feature
         if feature.get("production_usable") is True:
             ready_codes.append(str(code))
+        elif feature.get("status") == "NOT_APPLICABLE" and feature.get("quote_layer_status") == "PASS":
+            # Opening auction has a valid direct quote but no eligible minute bucket yet.
+            # Keep the quote consumable and do not classify this as an object fallback.
+            quote_only_codes.append(str(code))
         else:
             fallback_codes.append(str(code))
     base["minute_path_integration"] = {
-        "status": "READY" if ready_codes and not fallback_codes else ("EMPTY" if not base.get("objects") else "DEGRADED_WITH_OBJECT_FALLBACK"),
+        "status": "READY" if (ready_codes or quote_only_codes) and not fallback_codes else ("EMPTY" if not base.get("objects") else "DEGRADED_WITH_OBJECT_FALLBACK"),
         "target_count": len(base.get("objects") or {}),
         "ready_count": len(ready_codes),
         "ready_codes": ready_codes,
+        "quote_only_count": len(quote_only_codes),
+        "quote_only_codes": quote_only_codes,
         "fallback_codes": fallback_codes,
         "primary_source": "tencent_qq minute/query",
         "formal_latest_price_source_unchanged": True,
         "stock_volume_normalization": "Tencent minute cumulative volume is hand for validated A-share stocks; production recent volume delta is normalized x100 to shares.",
-        "decision_boundary": "个股分钟只增强第三层日内路径与成交参与，不独立产生ETF或个股交易动作。",
+        "decision_boundary": "直接个股行情与分钟增强路径分层：集合竞价阶段直接行情可消费，分钟路径未适用不构成对象行情失败；连续竞价分钟失败仍只回退该对象，不阻断其他对象。",
     }
     return base
 
