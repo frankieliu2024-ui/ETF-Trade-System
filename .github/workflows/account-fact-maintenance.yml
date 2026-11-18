@@ -181,6 +181,8 @@ jobs:
       - name: Finalize maintenance health after account readback
         continue-on-error: true
         shell: bash
+        env:
+          ETF_CONSISTENCY_REPORT_PATH: ${{ runner.temp }}/account-fast-consistency.json
         run: |
           set -euo pipefail
           # Record account sync readback may mark projections stale before the
