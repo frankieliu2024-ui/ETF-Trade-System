@@ -535,6 +535,8 @@ def build_lifecycle_projection(root: Path, as_of_market_date: str | None = None)
         for item in (account.get("positions") or [])
         if str(item.get("code") or "").strip()
     }
+    account_positions = account.get("positions")
+    account_positions_present = isinstance(account_positions, list) and bool(account_positions)
     trials = []
     seen_opening_events: set[str] = set()
     for decision in (
@@ -568,7 +570,10 @@ def build_lifecycle_projection(root: Path, as_of_market_date: str | None = None)
         # Lifecycle is an ETF-strategy projection, not a generic trade ledger.
         # Stock/base-position trades stay in account facts and never enter
         # the ETF Trial/Confirm projection.
-        if str(current_position.get("asset_type") or "").upper() not in {"ETF", "ETF_FUND"}:
+        # Production account projections provide the asset-type boundary.
+        # Isolated unit fixtures exercise decision/trade facts without account
+        # positions; missing fixture state must not look like a non-ETF position.
+        if account_positions_present and str(current_position.get("asset_type") or "").upper() not in {"ETF", "ETF_FUND"}:
             continue
         opening_event_id = str(execution.get("event_id") or "")
         if opening_event_id and opening_event_id in seen_opening_events:
