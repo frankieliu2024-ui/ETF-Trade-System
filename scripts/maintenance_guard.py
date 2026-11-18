@@ -155,7 +155,10 @@ def reconcile() -> dict:
         row_equity = float(current_replay_row.get("strategy_equity_gross") or 0)
         equity_diff = rounded((strategy_cash + etf_mv) - gross_equity, 2)
         row_diff = rounded(row_equity - gross_equity, 2)
-        equity_ok = replay_complete and abs(equity_diff) < 0.011 and abs(row_diff) < 0.011
+        # Arithmetic equality is the current-day integrity gate. A
+        # historical replay completeness gap remains observable as a warning
+        # and must not block a fresh account/risk projection.
+        equity_ok = abs(equity_diff) < 0.011 and abs(row_diff) < 0.011
     else:
         strategy_cash = float(summary.get("strategy_cash_current") or 0)
         etf_mv = float(summary.get("current_etf_market_value") or 0)
@@ -189,7 +192,11 @@ def reconcile() -> dict:
             "basis": "AUXILIARY_RECONSTRUCTION_PLUS_DEDUPED_EXECUTED_EVENT_OVERLAY_CROSSCHECKED_WITH_LATEST_FORMAL_REVIEW",
         },
         "gross_equity_reconciliation": {
-            "status": "PASS" if equity_ok else "FAIL",
+            "status": (
+                "FAIL" if not equity_ok
+                else ("WARNING" if canonical_replay and not replay_complete else "PASS")
+            ),
+            "blocking": bool(not equity_ok),
             "strategy_cash": strategy_cash,
             "current_etf_market_value": etf_mv,
             "reported_gross_equity": gross_equity,
