@@ -1150,9 +1150,22 @@ def main() -> int:
         "reason": "affected facts require explicit caveat or object-level restriction" if fact_restrictions else "critical business facts are consumable",
     }
 
+    generated_at = datetime.now(TZ).isoformat(timespec="seconds")
+    # e2e_status.json has several legitimate rebuild callers (account
+    # maintenance, market snapshot recovery, and the watchdog). A caller
+    # that checked out an older main state must never overwrite a newer
+    # account/risk projection after its bounded rebase.
+    projection_identity = {
+        "account_updated_at": str(data["account"].get("updated_at") or ""),
+        "risk_as_of_transaction_date": str(
+            components["risk"].get("reconstruction_as_of_transaction_date") or ""
+        ),
+        "market_snapshot": str(components["market"].get("snapshot") or ""),
+    }
     result = {
         "schema_version": "1.1",
-        "generated_at": datetime.now(TZ).isoformat(timespec="seconds"),
+        "generated_at": generated_at,
+        "projection_identity": projection_identity,
         "status": overall,
         "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
         "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
@@ -1168,6 +1181,25 @@ def main() -> int:
         },
         "safety_boundary": "This state does not create or modify risk permission, Trial/Confirm rules, amounts, sell rules, or execution authority."
     }
+    existing = read_json(OUT)
+    def identity_rank(document: dict) -> tuple[str, str, str]:
+        identity = document.get("projection_identity") or {}
+        components = document.get("components") or {}
+        account = components.get("account") or {}
+        risk = components.get("risk") or {}
+        market = components.get("market") or {}
+        return (
+            str(identity.get("account_updated_at") or account.get("updated_at") or ""),
+            str(identity.get("risk_as_of_transaction_date") or risk.get("reconstruction_as_of_transaction_date") or ""),
+            str(identity.get("market_snapshot") or market.get("snapshot") or ""),
+        )
+    if isinstance(existing, dict) and identity_rank(existing) > identity_rank(result):
+        print(json.dumps({
+            "status": "SKIPPED_STALE_PROJECTION",
+            "existing_identity": identity_rank(existing),
+            "candidate_identity": identity_rank(result),
+        }, ensure_ascii=False))
+        return 0
     write_json(OUT, result)
     print(json.dumps(result, ensure_ascii=False))
     return 0
