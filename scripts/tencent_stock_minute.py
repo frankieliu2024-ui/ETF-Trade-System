@@ -59,6 +59,22 @@ def build_stock_minute_feature(root: Path, stock_row: dict, market_date: str, ma
     try:
         feature = fetch_one(code, name, thscode, market_date, formal_row, quote, requirements)
     except Exception as exc:
+        phase = str(market_phase or stock_row.get("market_phase") or "")
+        if phase in {"OPENING_CALL_AUCTION", "OPENING_AUCTION"} and "point-in-time eligible minute points" in str(exc):
+            # A valid opening-auction quote may precede the first continuous
+            # minute bucket. That is a minute-path boundary, not a quote failure.
+            return {
+                "symbol": code,
+                "name": name,
+                "thscode": thscode,
+                "asset_class": "A_SHARE_STOCK",
+                "status": "NOT_APPLICABLE",
+                "production_usable": False,
+                "production_selection_reason": "opening_auction_minute_not_applicable",
+                "quote_layer_status": "PASS",
+                "minute_layer_status": "NOT_APPLICABLE",
+                "decision_boundary": "集合竞价阶段直接个股行情可消费；连续竞价分钟路径尚未适用，不得把无分钟桶误报为个股实时行情失败。",
+            }
         return {
             "symbol": code,
             "name": name,
@@ -68,7 +84,9 @@ def build_stock_minute_feature(root: Path, stock_row: dict, market_date: str, ma
             "production_usable": False,
             "production_selection_reason": "minute_fetch_exception",
             "error": str(exc)[-500:],
-            "decision_boundary": "个股分钟失败只回退该对象现有quote/日内OHLC，不阻断A股指数、ETF或其他个股。",
+            "quote_layer_status": "PASS",
+            "minute_layer_status": "FAILED",
+            "decision_boundary": "连续竞价分钟失败只回退该对象现有quote/日内OHLC，不阻断A股指数、ETF或其他个股。",
         }
     feature["asset_class"] = "A_SHARE_STOCK"
     raw_volume_delta = _f(feature.get("recent_volume_delta"))
