@@ -3945,21 +3945,20 @@ def _request_trade_events(request: dict) -> list[dict]:
     """
     explicit: list[dict] = []
     plural = request.get("trade_events")
-    if isinstance(plural, list) and plural and all(isinstance(item, dict) for item in plural):
+    if isinstance(plural, list) and all(isinstance(item, dict) for item in plural):
         explicit.extend(plural)
-    elif "trade_events" in request:
-        return []
     singular = request.get("trade_event")
     if isinstance(singular, dict):
         explicit.append(singular)
 
     account_fact = request.get("account_fact")
     statement_trades = account_fact.get("trades") if isinstance(account_fact, dict) else None
-    # Broker screenshot envelopes historically used confirmed_trades for
-    # executed rows while the account-fact schema uses trades. Both are
-    # explicit broker evidence; normalize them into the same canonical
-    # execution-event path and let the existing idempotency key suppress
-    # duplicates on replay.
+    # Broker screenshot envelopes may carry executed rows at the request root
+    # as ``trades`` while account_fact contains only positions.
+    # Both are explicit broker evidence; never infer a trade from balances.
+    root_trades = request.get("trades")
+    if isinstance(root_trades, list) and root_trades:
+        statement_trades = list(statement_trades or []) + list(root_trades)
     confirmed_trades = account_fact.get("confirmed_trades") if isinstance(account_fact, dict) else None
     if isinstance(confirmed_trades, list) and confirmed_trades:
         statement_trades = list(statement_trades or []) + list(confirmed_trades)
