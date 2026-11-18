@@ -15,7 +15,7 @@ from zoneinfo import ZoneInfo
 from pathlib import Path
 
 try:
-    from query_time_market_refresh_legacy import _eastmoney_etf, _policy
+    from query_time_market_refresh import _explicit_etf_session_reference, _policy
     from confirmed_trade_facts import (
         canonical_etf_trade_facts,
         recover_canonical_etf_trade_facts,
@@ -24,7 +24,7 @@ try:
         experience_etf_trade_index_facts,
     )
 except ModuleNotFoundError:
-    from scripts.query_time_market_refresh_legacy import _eastmoney_etf, _policy
+    from scripts.query_time_market_refresh import _explicit_etf_session_reference, _policy
     from scripts.confirmed_trade_facts import (
         canonical_etf_trade_facts,
         recover_canonical_etf_trade_facts,
@@ -284,9 +284,9 @@ def _current_account_valuation(root: Path, base: dict) -> dict:
             # price or from a stale prior snapshot.
             now = datetime.now(ZoneInfo("Asia/Shanghai"))
             thscode = f"{code}.SH" if code.startswith(("5", "6")) else f"{code}.SZ"
-            quote = _eastmoney_etf(code, thscode, now, _policy(root))
+            quote = _explicit_etf_session_reference(code, root, now)
             if str(quote.get("quality_status") or "").upper() != "PASS" or quote.get("latest_price") is None:
-                raise ValueError(f"current held ETF quote is not fresh and valid for {code}")
+                raise ValueError(f"current held ETF quote is not a valid completed-session reference for {code}")
             row = {"close": quote["latest_price"], "quality_status": "PASS"}
             quote_source = "current_held_object_direct_provider_refresh"
         quantity = float(position.get("quantity") or 0)
