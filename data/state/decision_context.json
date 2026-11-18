@@ -7,12 +7,12 @@
     "snapshot_commit": "7e191e23e402a38f5a7937d6c5bf11ed040c7b5e",
     "boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
     "timing": {
-      "state_builder_started_at": "2026-11-18T14:20:15Z",
+      "state_builder_started_at": "2026-11-18T14:41:13Z",
       "current_published_at": "2026-11-18T14:59:44+08:00",
-      "market_regime_ready_at": "2026-11-18T14:20:23Z",
-      "market_structure_ready_at": "2026-11-18T14:20:24Z",
-      "full_state_context_observation_at": "2026-11-18T14:20:25Z",
-      "decision_context_written_at": "2026-11-18T14:23:01Z"
+      "market_regime_ready_at": "2026-11-18T14:41:23Z",
+      "market_structure_ready_at": "2026-11-18T14:41:25Z",
+      "full_state_context_observation_at": "2026-11-18T14:41:25Z",
+      "decision_context_written_at": "2026-11-18T14:45:43Z"
     },
     "trigger": {
       "request_id": "",
@@ -25,7 +25,7 @@
       "market_date": "2026-11-18"
     }
   },
-  "generated_at": "2026-11-18T14:20:25Z",
+  "generated_at": "2026-11-18T14:41:26Z",
   "rules_version": "V2.2.34",
   "market_date": "2026-11-18",
   "latest_node": "live",
@@ -1204,7 +1204,7 @@
     "last_trade_event_id": "broker-trade-20261118-144755-601899-200-chatgpt",
     "rules_version": "V2.2.34",
     "generated_at": "2026-11-18T07:52:55.437683Z",
-    "account_fact_reference_synced_at": "2026-11-18T17:04:26+08:00",
+    "account_fact_reference_synced_at": "2026-11-18T22:12:32+08:00",
     "account_fact_path": "data/state/account_fact.json",
     "account_fact_updated_at": "2026-11-18T15:01:00+08:00",
     "account_fact_status": "VALID",
@@ -2461,7 +2461,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 10.308,
-    "age_seconds": 26441
+    "age_seconds": 27702
   },
   "freshness_at_context_build": {
     "status": "STALE",
@@ -2478,7 +2478,7 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 10.308,
-    "age_seconds": 26441
+    "age_seconds": 27702
   },
   "data_quality_summary": {
     "pass_count": 27,
@@ -2585,7 +2585,7 @@
     "account_fact_time": "2026-11-18T15:01:00+08:00",
     "market_snapshot_time": "2026-11-18T14:59:44+08:00",
     "market_phase": "CLOSING_CALL_AUCTION",
-    "context_generated_time": "2026-11-18T14:20:25Z",
+    "context_generated_time": "2026-11-18T14:41:26Z",
     "latest_formal_decision_time": "2026-09-29T09:04:12+08:00",
     "account_fact_decision_relation": "ACCOUNT_FACT_AFTER_FORMAL_DECISION_REQUIRES_REASSESSMENT",
     "account_fact_requires_formal_reassessment": true,
@@ -2628,7 +2628,7 @@
     "read_only": true
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-11-18T22:20:25+08:00",
+    "generated_at_beijing": "2026-11-18T22:41:26+08:00",
     "refresh_mode": "CACHED_STATE",
     "refresh_failures": [],
     "decision_freshness": {
@@ -2637,8 +2637,8 @@
       "captured_at": "2026-11-18T06:59:44+00:00",
       "provider_as_of": "2026-11-18T06:59:38+00:00",
       "effective_as_of": "2026-11-18T06:59:38+00:00",
-      "request_time": "2026-11-18T14:20:25.271664+00:00",
-      "age_seconds": 26447,
+      "request_time": "2026-11-18T14:41:26.210806+00:00",
+      "age_seconds": 27708,
       "post_request": false,
       "preferred_max_age_seconds": 300,
       "fallback_max_age_seconds": 900,
@@ -3355,9 +3355,9 @@
       {
         "market": "US",
         "market_name": "美国",
-        "symbol": "NDX",
+        "symbol": "^NDX",
         "name": "纳斯达克100指数",
-        "latest_price": 662.16,
+        "latest_price": 27001.78515625,
         "open": null,
         "high": null,
         "low": null,
@@ -3365,25 +3365,25 @@
         "volume": null,
         "amount": null,
         "turnover": null,
-        "data_time_beijing": "2026-11-18T22:01:38+08:00",
+        "data_time_beijing": "2026-11-18T05:00:00+08:00",
         "data_time_local": "",
-        "market_phase": "PRE_MARKET",
-        "market_status_cn": "美股盘前",
-        "data_nature_cn": "盘前行情（附最近正式收盘基准）",
+        "market_phase": "REGULAR",
+        "market_status_cn": "美股交易中",
+        "data_nature_cn": "实时交易行情",
         "source": "yahoo_chart_api",
-        "freshness": "DEGRADED",
-        "freshness_cn": "存在延迟",
-        "quality_status": "FRESH",
-        "quality_status_cn": "状态待确认",
-        "direct_quote": false,
-        "route_rule": "返回扩展时段行情，并保留最近正式收盘作为基准"
+        "freshness": "STALE",
+        "freshness_cn": "时点过旧",
+        "quality_status": "PASS",
+        "quality_status_cn": "数据可用",
+        "direct_quote": true,
+        "route_rule": "返回正式现金盘最新实时行情"
       },
       {
         "market": "US",
         "market_name": "美国",
-        "symbol": "SOX",
+        "symbol": "^SOX",
         "name": "费城半导体指数",
-        "latest_price": 144.23,
+        "latest_price": 9642.8779296875,
         "open": null,
         "high": null,
         "low": null,
@@ -3391,18 +3391,18 @@
         "volume": null,
         "amount": null,
         "turnover": null,
-        "data_time_beijing": "2026-11-18T22:01:36+08:00",
+        "data_time_beijing": "2026-11-18T05:00:00+08:00",
         "data_time_local": "",
-        "market_phase": "PRE_MARKET",
-        "market_status_cn": "美股盘前",
-        "data_nature_cn": "盘前行情（附最近正式收盘基准）",
+        "market_phase": "REGULAR",
+        "market_status_cn": "美股交易中",
+        "data_nature_cn": "实时交易行情",
         "source": "yahoo_chart_api",
-        "freshness": "DEGRADED",
-        "freshness_cn": "存在延迟",
-        "quality_status": "FRESH",
-        "quality_status_cn": "状态待确认",
-        "direct_quote": false,
-        "route_rule": "返回扩展时段行情，并保留最近正式收盘作为基准"
+        "freshness": "STALE",
+        "freshness_cn": "时点过旧",
+        "quality_status": "PASS",
+        "quality_status_cn": "数据可用",
+        "direct_quote": true,
+        "route_rule": "返回正式现金盘最新实时行情"
       },
       {
         "market": "JP",
@@ -3523,8 +3523,8 @@
         "market_status_cn": "台股收盘"
       },
       "US": {
-        "phase": "PRE_MARKET",
-        "market_status_cn": "美股盘前"
+        "phase": "REGULAR",
+        "market_status_cn": "美股交易中"
       },
       "JP": {
         "phase": "OFF_SESSION",
@@ -3869,10 +3869,10 @@
   },
   "decision_trigger": {
     "schema_version": "1.2",
-    "generated_at": "2026-11-18T22:20:24+08:00",
+    "generated_at": "2026-11-18T22:41:25+08:00",
     "status": "TRIGGERED",
     "trigger_type": "RISK_BOUNDARY_CROSSED",
-    "triggered_at": "2026-11-18T22:20:24+08:00",
+    "triggered_at": "2026-11-18T22:41:25+08:00",
     "applicable_object": "",
     "previous_decision_id": "FORMAL_COMPLETION:scheduled-formal-decision-20261118T143239+0800",
     "evidence_change": "UNKNOWN→RISK_CONTROL; review intensity changed only, formal permission must be re-decided by MASTER",
@@ -3900,7 +3900,7 @@
   },
   "capital_efficiency_ranking": {
     "schema_version": "1.2",
-    "generated_at": "2026-11-18T22:20:24+08:00",
+    "generated_at": "2026-11-18T22:41:25+08:00",
     "as_of": "2026-11-18T14:59:44+08:00",
     "e2e_status": "DEGRADED",
     "risk_zone": "RISK_CONTROL",
@@ -5322,7 +5322,7 @@
     "read_only": true
   },
   "intraday_path_features": {
-    "generated_at": "2026-11-18T14:20:15Z",
+    "generated_at": "2026-11-18T14:41:13Z",
     "market_date": "2026-11-18",
     "mode": "OBJECTIVE_INTRADAY_PATH_FEATURES",
     "read_only": true,
@@ -7796,7 +7796,7 @@
     },
     "market_structure_context": {
       "schema_version": "1.4",
-      "generated_at": "2026-11-18T14:20:24Z",
+      "generated_at": "2026-11-18T14:41:24Z",
       "market_date": "2026-11-18",
       "as_of_beijing": "2026-11-18T14:59:44+08:00",
       "source_snapshot": "data/market/snapshots/2026-11-18_145944.json",
