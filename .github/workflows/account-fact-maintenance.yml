@@ -153,6 +153,7 @@ jobs:
         env:
           REQUEST_PATH: ${{ steps.request.outputs.request_path }}
           RUN_ID: ${{ github.run_id }}
+          OWNER_OUTCOME: ${{ (steps.sync.outcome == 'success' && steps.projection.outcome == 'success') && 'success' || 'failure' }}
           PROJECTION_OUTCOME: ${{ steps.projection.outcome }}
           EXECUTION_QUALITY_OUTCOME: ${{ steps.execution_quality.outcome }}
           STOCK_MARKET_OUTCOME: ${{ steps.stock_market.outcome }}
@@ -168,7 +169,7 @@ jobs:
           python scripts/record_account_sync_maintenance.py \
             --request-id "$request_id" \
             --request-path "$REQUEST_PATH" \
-            --owner-outcome success \
+            --owner-outcome "$OWNER_OUTCOME" \
             --projection-outcome "$PROJECTION_OUTCOME" \
             --execution-quality-outcome "$EXECUTION_QUALITY_OUTCOME" \
             --run-id "$RUN_ID"
@@ -244,4 +245,12 @@ jobs:
             fi
             git rebase --abort || true
           done
+          exit 1
+
+      - name: Fail maintenance when required projection failed
+        if: steps.projection.outcome != 'success'
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "account fact was published, but required risk/dashboard projection failed" >&2
           exit 1
