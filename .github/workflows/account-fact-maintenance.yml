@@ -143,7 +143,7 @@ jobs:
         env:
           REQUEST_PATH: ${{ steps.request.outputs.request_path }}
           RUN_ID: ${{ github.run_id }}
-          OWNER_OUTCOME: ${{ (steps.sync.outcome == 'success' && steps.projection.outcome == 'success') && 'success' || 'failure' }}
+          OWNER_OUTCOME: ${{ (steps.sync.outcome == 'success' && steps.projection.outcome == 'success' && steps.fast_consistency.outcome == 'success') && 'success' || 'failure' }}
           PROJECTION_OUTCOME: ${{ steps.projection.outcome }}
           EXECUTION_QUALITY_OUTCOME: skipped_fast_account_lane
           STOCK_MARKET_OUTCOME: ${{ steps.stock_market.outcome }}
@@ -185,6 +185,18 @@ jobs:
                       raise SystemExit(f"position mismatch for {code}: {key}")
           print("account fact readback passed with code-keyed identity")
           PY
+      - name: Run fast account consistency acceptance
+        id: fast_consistency
+        shell: bash
+        env:
+          ETF_CONSISTENCY_REPORT_PATH: ${{ runner.temp }}/account-fast-consistency.json
+        run: |
+          set -euo pipefail
+          python scripts/check_system_consistency.py \
+            --scope account-fast \
+            --report-path "$ETF_CONSISTENCY_REPORT_PATH"
+          test -s "$ETF_CONSISTENCY_REPORT_PATH"
+
       - name: Finalize maintenance health after account readback
         continue-on-error: true
         shell: bash
@@ -238,9 +250,9 @@ jobs:
           exit 1
 
       - name: Fail maintenance when required projection failed
-        if: steps.projection.outcome != 'success'
+        if: steps.projection.outcome != 'success' || steps.fast_consistency.outcome != 'success'
         shell: bash
         run: |
           set -euo pipefail
-          echo "account fact was published, but required risk/dashboard projection failed" >&2
+          echo "account fact was published, but fast account consistency acceptance or required risk/dashboard projection failed" >&2
           exit 1
