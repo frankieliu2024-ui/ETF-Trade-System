@@ -10,10 +10,12 @@ import argparse
 import json
 import os
 from collections import defaultdict
-from datetime import date
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
 from pathlib import Path
 
 try:
+    from query_time_market_refresh_legacy import _eastmoney_etf, _policy
     from confirmed_trade_facts import (
         canonical_etf_trade_facts,
         recover_canonical_etf_trade_facts,
@@ -22,6 +24,7 @@ try:
         experience_etf_trade_index_facts,
     )
 except ModuleNotFoundError:
+    from scripts.query_time_market_refresh_legacy import _eastmoney_etf, _policy
     from scripts.confirmed_trade_facts import (
         canonical_etf_trade_facts,
         recover_canonical_etf_trade_facts,
@@ -273,11 +276,22 @@ def _current_account_valuation(root: Path, base: dict) -> dict:
         if code not in etf_codes or float(position.get("quantity") or 0) <= 0:
             continue
         row = snapshot_rows.get(code)
+        quote_source = "current_valid_market_snapshot"
         if row is None or row.get("close") is None:
-            raise ValueError(f"current valid snapshot has no held ETF close for {code}")
+            # A newly acquired ETF may not have been in the scheduled snapshot
+            # universe. Refresh only that held object through the existing
+            # canonical direct-provider chain; never value it from its trade
+            # price or from a stale prior snapshot.
+            now = datetime.now(ZoneInfo("Asia/Shanghai"))
+            thscode = f"{code}.SH" if code.startswith(("5", "6")) else f"{code}.SZ"
+            quote = _eastmoney_etf(code, thscode, now, _policy(root))
+            if str(quote.get("quality_status") or "").upper() != "PASS" or quote.get("latest_price") is None:
+                raise ValueError(f"current held ETF quote is not fresh and valid for {code}")
+            row = {"close": quote["latest_price"], "quality_status": "PASS"}
+            quote_source = "current_held_object_direct_provider_refresh"
         quantity = float(position.get("quantity") or 0)
         close = _f(row.get("close"), f"{market_date}/{code}/close")
-        held[code] = {"quantity": round(quantity, 6), "close": close, "market_value": round(quantity * close, 2), "cost_basis": round(quantity * float(position.get("cost") or 0), 2)}
+        held[code] = {"quantity": round(quantity, 6), "close": close, "market_value": round(quantity * close, 2), "cost_basis": round(quantity * float(position.get("cost") or 0), 2), "quote_source": quote_source}
     if not held:
         raise ValueError("current account valuation has no held ETF positions")
     base_row = (base.get("series") or [])[-1]
