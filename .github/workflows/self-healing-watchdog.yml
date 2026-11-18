@@ -40,9 +40,11 @@ permissions:
   actions: write
 
 concurrency:
-  # The watchdog is a coordinator. It must not occupy the canonical domain-writer lane
-  # while dispatching or observing market/account producers.
-  group: etf-watchdog-coordinator
+  # The watchdog reads CURRENT and publishes derived projections. It therefore
+  # shares the repository-wide writer lane with snapshot, account, fallback, and
+  # pulse producers so the read/rebuild/validate sequence cannot straddle a
+  # canonical main-state publication.
+  group: etf-main-state-writer
   cancel-in-progress: false
 
 jobs:
