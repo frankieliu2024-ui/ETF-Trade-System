@@ -529,6 +529,12 @@ def build_lifecycle_projection(root: Path, as_of_market_date: str | None = None)
     except ValueError:
         as_of = datetime.now(SHANGHAI).date()
     executions = _executions(root)
+    account = _load(root / "data" / "state" / "account_fact.json", {})
+    position_by_code = {
+        str(item.get("code") or "").strip(): item
+        for item in (account.get("positions") or [])
+        if str(item.get("code") or "").strip()
+    }
     trials = []
     seen_opening_events: set[str] = set()
     for decision in (
@@ -558,6 +564,12 @@ def build_lifecycle_projection(root: Path, as_of_market_date: str | None = None)
             # A decision alone is not a real position lifecycle.
             continue
         execution = min(linked, key=lambda x: str(x.get("execution_date") or x.get("confirmed_at_beijing") or ""))
+        current_position = position_by_code.get(str(execution.get("code") or candidate_code).strip(), {})
+        # Lifecycle is an ETF-strategy projection, not a generic trade ledger.
+        # Stock/base-position trades stay in account facts and never enter
+        # the ETF Trial/Confirm projection.
+        if str(current_position.get("asset_type") or "").upper() not in {"ETF", "ETF_FUND"}:
+            continue
         opening_event_id = str(execution.get("event_id") or "")
         if opening_event_id and opening_event_id in seen_opening_events:
             continue
@@ -578,6 +590,13 @@ def build_lifecycle_projection(root: Path, as_of_market_date: str | None = None)
                        # lot. Reuse the canonical attribution guard.
                        or _resolution(root, decision_with_due, as_of))
                       if decision.get("_completion_trial") else _resolution(root, decision_with_due, as_of))
+        current_quantity = float(current_position.get("quantity") or 0)
+        if current_quantity <= 0 and resolution is None:
+            resolution = {
+                "status": "RESOLVED",
+                "resolution_reason": "CURRENT_POSITION_ZERO",
+                "resolution_event_ids": [],
+            }
         resolved = resolution is not None
         trials.append({
             "source_decision_id": decision.get("decision_id"),

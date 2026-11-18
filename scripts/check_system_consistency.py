@@ -1267,7 +1267,24 @@ def _validate_cross_object_account_closure(report: dict) -> None:
     except ModuleNotFoundError:
         from scripts.lifecycle_state import build_lifecycle_projection
     projection = build_lifecycle_projection(ROOT, account_date or None)
-    lifecycle_codes = {str(x.get("security_code") or "") for x in (projection.get("active_lifecycles") or [])}
+    positions = {
+        str(item.get("code") or "").strip(): item
+        for item in (account.get("positions") or [])
+        if str(item.get("code") or "").strip()
+    }
+    lifecycle_items = projection.get("active_lifecycles") or []
+    active_lifecycle_items = [x for x in lifecycle_items if str(x.get("lifecycle_status") or "") == "ACTIVE_TRIAL"]
+    lifecycle_codes = {str(x.get("security_code") or "") for x in active_lifecycle_items}
+    invalid_lifecycle = []
+    for item in active_lifecycle_items:
+        code = str(item.get("security_code") or "").strip()
+        position = positions.get(code, {})
+        if str(position.get("asset_type") or "").upper() not in {"ETF", "ETF_FUND"}:
+            invalid_lifecycle.append(f"{code}:NON_ETF")
+        elif float(position.get("quantity") or 0) <= 0:
+            invalid_lifecycle.append(f"{code}:ZERO_QUANTITY")
+    if invalid_lifecycle:
+        errors.append("current_account:invalid_active_lifecycle:" + ",".join(sorted(invalid_lifecycle)))
 
     trade_dir = ROOT / "events" / "trades"
     same_day_buys = []
@@ -1276,12 +1293,20 @@ def _validate_cross_object_account_closure(report: dict) -> None:
             event = _read_json(str(path.relative_to(ROOT)))
             event_date = str(event.get("execution_date") or event.get("confirmed_at_beijing") or "")[:10]
             side = str(event.get("side") or event.get("action") or "").upper()
-            if event_date == account_date and side in {"BUY", "B", "买", "买入"}:
+            code = str(event.get("code") or event.get("security_code") or "").strip()
+            position = positions.get(code, {})
+            if event_date == account_date and side in {"BUY", "B", "买", "买入"} and str(position.get("asset_type") or "").upper() in {"ETF", "ETF_FUND"}:
                 same_day_buys.append((path, event))
     missing_lifecycle = [str(event.get("code") or event.get("security_code") or "") for _, event in same_day_buys if str(event.get("code") or event.get("security_code") or "") not in lifecycle_codes]
     if missing_lifecycle:
         errors.append("current_account:confirmed_buy_missing_lifecycle:" + ",".join(sorted(set(missing_lifecycle))))
-    details.append(f"account_batch={account_batch or 'MISSING'} same_day_buys={len(same_day_buys)} lifecycle_codes={sorted(lifecycle_codes)}")
+    details.append(f"account_batch={account_batch or 'MISSING'} same_day_etf_buys={len(same_day_buys)} active_lifecycle_codes={sorted(lifecycle_codes)} invalid_lifecycle={invalid_lifecycle}")
+
+    discovery = _read_json("data/state/formal_discovery_current.json")
+    candidates = discovery.get("candidates") if isinstance(discovery.get("candidates"), list) else []
+    declared_count = discovery.get("candidate_count")
+    if declared_count is not None and int(declared_count) != len(candidates):
+        errors.append(f"current_discovery:candidate_count_mismatch:declared={declared_count}:actual={len(candidates)}")
 
     try:
         from decision_trade_link import resolve_link
