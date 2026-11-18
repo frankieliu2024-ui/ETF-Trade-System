@@ -226,18 +226,13 @@ jobs:
           # producers remain the sole writers for A-share derived state; this
           # does not rebuild overseas/US/account/lifecycle facts and does not
           # create a second task, completion, event, report, or notification.
-          current_node=$(python - <<'PY'
-          import json
-          from pathlib import Path
-          print(str(json.loads(Path("data/state/CURRENT.json").read_text(encoding="utf-8")).get("latest_valid_node") or "").lower())
-          PY
-          )
-          if [[ "$current_node" == "close" || "$current_node" == "1500" ]]; then
-            # Reuse the canonical post-market producer, but only materialize its
-            # derived context. The watchdog must not create a second review
-            # event, report, completion, or notification chain.
-            python scripts/build_post_market_review.py --context-only
-          fi
+          # Reuse the canonical post-market producer at every valid market
+          # node. review_context is an identity-bound derived projection, not
+          # a close-only artifact; restricting its rebuild to close/1500 leaves
+          # live/1130 CURRENT updates permanently stale and makes the existing
+          # identity gate fail. Context-only mode creates no review event,
+          # report, completion, or notification chain.
+          python scripts/build_post_market_review.py --context-only
           # Rebuild the existing query projection before decision_context.
           # This is derived-state recovery only; it creates no request,
           # completion, event, report, or notification.
