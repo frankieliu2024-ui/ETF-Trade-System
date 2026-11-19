@@ -31,6 +31,7 @@ MAX_HISTORY_ATTEMPT_MULTIPLIER = 3
 MAX_HISTORY_FETCH_WORKERS = 2
 MAX_TENCENT_HYDRATION_WORKERS = 6
 MIN_HISTORY = 65
+MIN_BROAD_ETF_UNIVERSE_COUNT = 100
 RELATIVE_DIVERGENCE_PCT = 1.5
 SHORT_HISTORY_MIN = 20
 
@@ -89,6 +90,16 @@ def fetch_broad_etf_spot() -> list[dict[str, Any]]:
     first_rows, total = fetch_page(1)
     if not first_rows:
         return []
+    # A non-empty but implausibly small cross-section is usually a truncated
+    # provider response, not a valid all-market ETF universe.  Accepting it
+    # would turn a transport/provider defect into a false low-candidate
+    # Discovery (for example, three rows becoming the whole market).  Fail
+    # closed so the reconciled source path can use its explicit fallback and
+    # preserve the degraded/incomplete distinction.
+    if total and total < MIN_BROAD_ETF_UNIVERSE_COUNT:
+        raise RuntimeError(
+            f"Eastmoney ETF pagination total implausibly small: {total}"
+        )
     page_count = max(1, min(50, (total + 99) // 100)) if total else 1
     if page_count == 1:
         return first_rows
@@ -1160,3 +1171,4 @@ def discover_formal_candidates(
         "decision_boundary": "发现对象是本节点临时正式评估输入，不是第三种ETF身份；不得自动写观察池、生成Trial/Confirm或交易动作。只有在广域获取、预筛选和所需历史验证均完成时，candidate_count=0才表示合法空集合；empty_reason存在或coverage_status不是COMPLETE时，必须按发现未完成/降级处理。",
         "hyperliquid_contribution": hyperliquid_contribution,
     }
+
