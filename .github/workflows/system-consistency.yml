@@ -113,13 +113,20 @@ jobs:
             exit 0
           fi
           full_required=false
+          # Compare against the push event's previous main tip. Using
+          # git diff-tree on a merge commit without an explicit parent can
+          # yield no paths, incorrectly skipping the full acceptance job.
+          diff_base="${{ github.event.before }}"
+          if [ -z "$diff_base" ] || [ "$diff_base" = "0000000000000000000000000000000000000000" ]; then
+            diff_base="$(git rev-parse "$GITHUB_SHA^1")"
+          fi
           while IFS= read -r path; do
             [ -z "$path" ] && continue
             case "$path" in
               data/state/account_fact.json|data/state/CURRENT.json|data/state/etf_strategy_equity.json|data/state/stock_context.json|data/state/stock_market_context.json|data/state/maintenance_health.json|data/state/e2e_status.json|data/state/execution_quality.json|events/trades/*|events/reviews/*|requests/account_sync/*|requests/report_delivery/*|config/market/etf_monitor_universe.json|ETF当前状态_DASHBOARD.md|ETF市场行情档案_2026.md|ETF交易复盘与经验库_2026.md) ;;
               *) full_required=true ;;
             esac
-          done < <(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" --)
+          done < <(git diff --name-only "$diff_base" "$GITHUB_SHA" --)
           echo "full_required=$full_required" >> "$GITHUB_OUTPUT"
 
   consistency:
