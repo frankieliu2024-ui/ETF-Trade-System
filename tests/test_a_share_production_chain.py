@@ -87,7 +87,7 @@ class AShareProductionChainTests(unittest.TestCase):
         self.assertTrue(all(item["as_of_beijing"].endswith("+08:00") for item in result.values()))
 
     def test_shared_slot_contract_uses_one_unified_apac_pulse(self):
-        pulse = resolve_scheduled_pulse("0,10,20,30,40,50 0-8 * * 1-5", datetime.fromisoformat("2026-09-08T14:05:00+08:00"))
+        pulse = resolve_scheduled_pulse("5,15,25,35,45,55 0-7 * * 1-5", datetime.fromisoformat("2026-09-08T14:05:00+08:00"))
         self.assertEqual(pulse["latest_candidate_slot_at"], "2026-09-08T14:05:00+08:00")
         self.assertEqual(pulse["schedule_delay_class"], "ON_TIME")
         self.assertTrue(pulse["eligible"])
@@ -97,7 +97,7 @@ class AShareProductionChainTests(unittest.TestCase):
         self.assertIn("group: etf-overseas-preopen-pulse", workflow)
 
     def test_shared_slot_contract_accepts_delayed_unified_apac_pulse(self):
-        pulse = resolve_scheduled_pulse("0,10,20,30,40,50 0-8 * * 1-5", datetime.fromisoformat("2026-09-08T16:05:00+08:00"))
+        pulse = resolve_scheduled_pulse("5,15,25,35,45,55 0-7 * * 1-5", datetime.fromisoformat("2026-09-08T16:05:00+08:00"))
         self.assertEqual(pulse["schedule_delay_class"], "ON_TIME")
         self.assertTrue(pulse["eligible"])
 
@@ -230,7 +230,7 @@ class AShareProductionChainTests(unittest.TestCase):
 
     def test_apac_schedule_run_id_verifies_one_natural_pulse_occurrence(self):
         result = resolve_scheduled_pulse(
-            "0,10,20,30,40,50 0-8 * * 1-5",
+            "5,15,25,35,45,55 0-7 * * 1-5",
             datetime.fromisoformat("2026-09-08T14:05:00+08:00"),
             occurrence_id="42315314045",
         )
