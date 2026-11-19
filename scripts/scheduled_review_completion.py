@@ -803,7 +803,20 @@ def main() -> int:
         args.occurrence_id,
         args.entry_mode,
     )
-    print(json.dumps({"ok": True, "request": str(target.relative_to(ROOT)).replace("\\", "/")}, ensure_ascii=False))
+    # A direct completion write is not a complete Scheduled Review handoff.
+    # The production entry must continue, in the same invocation, through the
+    # shared owner so the exact completion path is explicitly dispatched to
+    # the canonical notification workflow.  Projection/audit failures remain
+    # post-notification and are reported by the owner without rewriting the
+    # frozen body.
+    from scheduled_review_completion_owner import execute_post_handoff
+
+    handoff = execute_post_handoff(target)
+    print(json.dumps({
+        "ok": bool(handoff.get("ok")),
+        "request": str(target.relative_to(ROOT)).replace("\\", "/"),
+        "handoff": handoff,
+    }, ensure_ascii=False))
     return 0
 
 
@@ -1249,3 +1262,4 @@ def build_formal_runtime_completion_request(
         },
     }
     return payload
+
