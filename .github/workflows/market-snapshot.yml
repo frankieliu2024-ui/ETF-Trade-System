@@ -307,6 +307,18 @@ jobs:
               f.write(f"reason={reason}\n")
           print(json.dumps({'snapshot_written': written, 'reason': reason}, ensure_ascii=False))
           PY
+      - name: Refresh held-stock market projection from this snapshot run
+        id: held_stock_market
+        if: ${{ steps.snapshot_result.outputs.snapshot_written == 'true' && github.event_name != 'push' && github.event.inputs.probe_only != 'true' }}
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The market snapshot is the only existing A-share pulse owner.
+          # Refresh the already-existing held-stock projection in the same run
+          # so CURRENT and account-stock market facts share one capture cycle.
+          python scripts/build_stock_context.py
+          python scripts/build_account_stock_market.py
       - name: Stage verified core snapshot and CURRENT
         if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' && github.ref == 'refs/heads/main' && github.event.inputs.probe_only != 'true') }}
         shell: bash
@@ -403,6 +415,8 @@ jobs:
             data/state/decision_context.json \
             data/state/dashboard_update_candidate.json \
             data/state/e2e_status.json \
+            data/state/stock_context.json \
+            data/state/stock_market_context.json \
             data/state/etf_strategy_equity.json \
             ETF当前状态_DASHBOARD.md
           if git diff --cached --quiet; then echo "No complete A-share snapshot batch change."; exit 0; fi
