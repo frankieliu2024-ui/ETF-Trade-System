@@ -1,21 +1,21 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-11-18T23:44:39+08:00",
+  "generated_at": "2026-11-19T09:23:22+08:00",
   "projection_identity": {
     "account_updated_at": "2026-11-18T15:01:00+08:00",
     "risk_as_of_transaction_date": "2026-11-18",
-    "market_snapshot": "data/market/snapshots/2026-11-18_145944.json"
+    "market_snapshot": "data/market/snapshots/2026-11-19_091748.json"
   },
   "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
   "components": {
     "market": {
-      "status": "READY",
-      "reason": "latest market snapshot is valid",
-      "snapshot": "data/market/snapshots/2026-11-18_145944.json",
-      "captured_at": "2026-11-18T14:59:44+08:00",
-      "market_phase": "CLOSING_CALL_AUCTION"
+      "status": "DEGRADED",
+      "reason": "market data quality=DEGRADED, node=DEGRADED",
+      "snapshot": "data/market/snapshots/2026-11-19_091748.json",
+      "captured_at": "2026-11-19T09:17:48+08:00",
+      "market_phase": "OPENING_CALL_AUCTION"
     },
     "account": {
       "status": "READY",
@@ -30,13 +30,15 @@
       "settlement_constraint_status": "NONE"
     },
     "risk": {
-      "status": "READY",
-      "reason": "formal ETF strategy risk metric is available from a fresh canonical reconstruction",
-      "etf_strategy_risk_pct": -14.6323,
+      "status": "DEGRADED",
+      "fact_status": "STALE",
+      "reason": "ETF strategy equity reconstruction is stale for the current market date and Dashboard cannot be used as a fallback",
+      "etf_strategy_risk_pct": null,
       "source": "data/state/etf_strategy_equity.json",
+      "stale_reconstruction_risk_pct": -14.6323,
       "source_updated_at": null,
       "reconstruction_as_of_transaction_date": "2026-11-18",
-      "reconstruction_fresh_for_market_date": true,
+      "reconstruction_fresh_for_market_date": false,
       "data_quality": null
     },
     "close_review": {
@@ -64,8 +66,8 @@
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 821903,
-          "sha256": "baa9942a894e5feae8808d98a4fa62e7b73742db7ded3727bdd00afcbf4dffb7",
+          "byte_count": 488466,
+          "sha256": "1c7e62f38ae0636c0f95e86e5f105ad055778919fa03f8f30675c096c8af7121",
           "parsed_object": true,
           "retry_attempts": 1,
           "retry_required": false
@@ -75,21 +77,23 @@
     },
     "lifecycle": {
       "status": "READY",
-      "reason": "canonical lifecycle projection available; mandatory_due=5",
+      "reason": "canonical lifecycle projection available; mandatory_due=6",
       "active_trial_count": 8,
-      "decision_due_count": 5,
-      "overdue_count": 1,
+      "decision_due_count": 6,
+      "overdue_count": 5,
       "next_mandatory_node": "2026-11-17",
       "source": "formal decision + executed trade facts"
     },
     "maintenance": {
       "status": "DEGRADED",
       "reason": "maintenance-only block; formal analysis capability remains separately evaluated",
-      "checked_at": "2026-11-18T22:53:46+08:00"
+      "checked_at": "2026-11-19T09:08:52+08:00"
     }
   },
   "blockers": [],
   "degradations": [
+    "market",
+    "risk",
     "maintenance"
   ],
   "task_continuation": {
@@ -99,9 +103,11 @@
     "reason": "E2E degradation is diagnostic and object-scoped; it does not gate the three ETF task chains"
   },
   "business_fact_consumption": {
-    "status": "AVAILABLE",
-    "restricted_components": [],
-    "reason": "critical business facts are consumable"
+    "status": "RESTRICTED",
+    "restricted_components": [
+      "risk"
+    ],
+    "reason": "affected facts require explicit caveat or object-level restriction"
   },
   "context_read_contract": {
     "query_context": {
@@ -116,8 +122,8 @@
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 821903,
-      "sha256": "baa9942a894e5feae8808d98a4fa62e7b73742db7ded3727bdd00afcbf4dffb7",
+      "byte_count": 488466,
+      "sha256": "1c7e62f38ae0636c0f95e86e5f105ad055778919fa03f8f30675c096c8af7121",
       "parsed_object": true,
       "retry_attempts": 1,
       "retry_required": false
