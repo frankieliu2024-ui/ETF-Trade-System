@@ -646,6 +646,41 @@ def _canonical_case_mappings() -> dict[str, list[dict]]:
             trade_date = str(trade.get("confirmed_at_beijing") or trade.get("executed_at_beijing") or "")[:10]
             if trade_event_id and str(trade.get("code") or "") == code and trade_date and trade_date <= review_date:
                 add(trade_event_id, str(trade.get("linked_decision_id") or ""), case_id, code, str(review.get("case_mode") or ""), "canonical review case owner")
+
+    # A formal-file transaction row can already carry an authoritative CASE
+    # marker before the review event is materialized. Consume it only when it
+    # is bound to the immutable TRADE_EVENT row; never infer a CASE from a
+    # security code or a decision ID alone.
+    experience_path = ROOT / "ETF交易复盘与经验库_2026.md"
+    if experience_path.exists():
+        try:
+            experience = experience_path.read_text(encoding="utf-8")
+        except OSError:
+            experience = ""
+        for line in experience.splitlines():
+            marker = re.search(r"<!--\s*TRADE_EVENT:([^\s>]+)\s*-->", line)
+            case_ids = CASE_ID_PATTERN.findall(line)
+            if not marker or len(case_ids) != 1:
+                continue
+            code_match = re.search(r"\|\s*(\d{6})\s*\|", line)
+            if not code_match:
+                continue
+            trade_event_id = marker.group(1)
+            trade_path = ROOT / "events" / "trades" / (trade_event_id + ".json")
+            if not trade_path.exists():
+                continue
+            try:
+                trade = json.loads(trade_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                continue
+            add(
+                trade_event_id,
+                str(trade.get("linked_decision_id") or ""),
+                case_ids[0],
+                code_match.group(1),
+                "PROJECTED_FORMAL_CASE",
+                "formal experience transaction index",
+            )
     return mappings
 
 
