@@ -225,7 +225,7 @@ def main() -> int:
     ok = bool(dispatch.get("submitted")) and bool(workflow_run.get("verified")) and bool(projection.get("verified"))
     print(args.final_content)
     print(json.dumps({
-        "ok": True,
+        "ok": ok,
         "task_handoff_status": "CONFIRMED" if ok else "PENDING",
         "user_visible_content": args.final_content,
         "completion_path": completion_path,
