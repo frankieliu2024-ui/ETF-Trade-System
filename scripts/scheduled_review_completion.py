@@ -1212,7 +1212,7 @@ def validate_formal_hyperliquid_time_binding(fact_summary: dict | None, final_co
         if not a_share_time or a_share_time in valid_hyper_times:
             continue
         minute_prefix = a_share_time[:16]
-        pattern = r"(?:Hyperliquid.{0,100}(20\\d\\d-\\d\\d-\\d\\d[T ]\\d\\d:\\d\\d(?::\\d\\d)?).{0,100}(?:观测|采集|可见|observation)|(?:观测|采集|可见|observation).{0,100}(20\\d\\d-\\d\\d-\\d\\d[T ]\\d\\d:\\d\\d(?::\\d\\d)?).{0,100}Hyperliquid)"
+        pattern = r"(?:Hyperliquid.{0,100}(20\d\d-\d\d-\d\d[T ]\d\d:\d\d(?::\d\d)?).{0,100}(?:观测|采集|可见|observation)|(?:观测|采集|可见|observation).{0,100}(20\d\d-\d\d-\d\d[T ]\d\d:\d\d(?::\d\d)?).{0,100}Hyperliquid)"
         for match in re.finditer(pattern, content, re.IGNORECASE | re.DOTALL):
             candidate = match.group(1) or match.group(2) or ""
             if candidate.startswith(minute_prefix):
@@ -1251,7 +1251,8 @@ def build_formal_runtime_completion_request(
     validate_formal_decision_presentation_timestamp(content, requested_at)
     frozen_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
     decision_id = f"ETF_FORMAL_DECISION:{task_run_id}"
-    evidence_audit = build_formal_evidence_consumption_audit(fact_summary, content)\n    validate_formal_hyperliquid_time_binding(fact_summary, content)
+    evidence_audit = build_formal_evidence_consumption_audit(fact_summary, content)
+    validate_formal_hyperliquid_time_binding(fact_summary, content)
     # Evidence-consumption completeness is an audit result, not a delivery gate.
     # A frozen, uniquely identified FINAL_CONTENT must still reach the existing
     # original-body notification path when optional audit projections are
