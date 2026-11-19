@@ -16,6 +16,11 @@ from scripts.trade_event_temporal_semantics import normalize_trade_event_tempora
 
 
 class TradeFactCorrectionContractTests(unittest.TestCase):
+    def test_trade_correction_does_not_persist_account_fact(self):
+        source = (Path(__file__).resolve().parents[1] / "scripts" / "apply_trade_fact_correction.py").read_text(encoding="utf-8")
+        self.assertNotIn('write_json(STATE / "account_fact.json"', source)
+        self.assertIn('"persisted": False', source)
+
     def test_execution_date_is_derived_from_execution_timestamp(self):
         event = normalize_trade_event_temporal_fields({
             "executed_at_beijing": "2026-11-13T09:30:00+08:00",
