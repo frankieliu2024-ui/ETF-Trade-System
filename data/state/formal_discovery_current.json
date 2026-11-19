@@ -1,63 +1,70 @@
 {
   "schema_version": "1.0",
   "layer": "CURRENT_PULSE_DISCOVERY",
-  "status": "READY",
+  "status": "DEGRADED",
   "market_date": "2026-11-19",
   "latest_valid_node": "live",
-  "latest_snapshot": "data/market/snapshots/2026-11-19_132811.json",
-  "generated_at_beijing": "2026-11-19T13:28:24+08:00",
+  "latest_snapshot": "data/market/snapshots/2026-11-19_133519.json",
+  "generated_at_beijing": "2026-11-19T13:35:42+08:00",
   "formation_rule": "EVERY_VERIFIED_A_SHARE_PULSE",
-  "generation_identity": "DISCOVERY:2026-11-19:live:e77470a352fc2c8eff4e333444741c6e3b23c614220f81f9f48de3e1dd44cd3f:2026-11-19T13:28:24+08:00",
-  "source_snapshot_identity": "e77470a352fc2c8eff4e333444741c6e3b23c614220f81f9f48de3e1dd44cd3f",
-  "source_snapshot_as_of_beijing": "2026-11-19T13:28:11+08:00",
+  "generation_identity": "DISCOVERY:2026-11-19:live:257f222cca5c23af43c338d4a9aa429d02756b4ca51a2e6a604b600cb928e022:2026-11-19T13:35:42+08:00",
+  "source_snapshot_identity": "257f222cca5c23af43c338d4a9aa429d02756b4ca51a2e6a604b600cb928e022",
+  "source_snapshot_as_of_beijing": "2026-11-19T13:35:19+08:00",
   "node_evidence_binding": {
-    "binding_id": "2026-11-19:live:e77470a352fc2c8eff4e333444741c6e3b23c614220f81f9f48de3e1dd44cd3f",
-    "a_share_snapshot_identity": "e77470a352fc2c8eff4e333444741c6e3b23c614220f81f9f48de3e1dd44cd3f",
-    "a_share_snapshot_as_of_beijing": "2026-11-19T13:28:11+08:00",
-    "hyperliquid_collection_time_beijing": "2026-11-19T13:16:19+08:00",
-    "hyperliquid_context_id": "hl-a9dd503be02de175",
+    "binding_id": "2026-11-19:live:257f222cca5c23af43c338d4a9aa429d02756b4ca51a2e6a604b600cb928e022",
+    "a_share_snapshot_identity": "257f222cca5c23af43c338d4a9aa429d02756b4ca51a2e6a604b600cb928e022",
+    "a_share_snapshot_as_of_beijing": "2026-11-19T13:35:19+08:00",
+    "hyperliquid_collection_time_beijing": "2026-11-19T13:30:58+08:00",
+    "hyperliquid_context_id": "hl-9b52b5eaf1ceb5c0",
     "hyperliquid_quality_status": "PASS",
     "hyperliquid_observation_count": 26
   },
   "regeneration_required": true,
   "source": "EASTMONEY_PRIMARY_HITHINK_SECONDARY_UNIVERSE_PLUS_VERIFIED_NODE_OVERLAY_AND_BOUNDED_HISTORY_REPAIR",
-  "coverage_status": "COMPLETE",
-  "candidate_count": 9,
+  "coverage_status": "PARTIAL",
+  "candidate_count": 5,
   "required_history_end_date": "2026-11-18",
   "empty_reason": "",
   "universe_identity": null,
   "discovery_delta_identity": null,
   "discovery": {
     "schema_version": "1.0",
-    "status": "READY",
-    "generated_at_beijing": "2026-11-19T13:28:12+08:00",
+    "status": "DEGRADED",
+    "generated_at_beijing": "2026-11-19T13:35:19+08:00",
     "market_date": "2026-11-19",
     "required_history_end_date": "2026-11-18",
     "source": "EASTMONEY_PRIMARY_HITHINK_SECONDARY_UNIVERSE_PLUS_VERIFIED_NODE_OVERLAY_AND_BOUNDED_HISTORY_REPAIR",
     "broad_source_reconciliation": {
-      "universe_mode": "EASTMONEY_PRIMARY",
+      "requested_identity_count": 1793,
+      "tencent_quote_count": 1793,
+      "tencent_failed_batch_count": 0,
+      "tencent_failures": [],
+      "tencent_hydration_batch_count": 30,
+      "tencent_hydration_workers": 6,
+      "universe_mode": "HITHINK_TENCENT_SECONDARY_FALLBACK",
       "primary_source": "EASTMONEY_PUSH2_ETF_CROSS_SECTION",
-      "eastmoney_count": 1669,
-      "hithink_identity_count": 0,
-      "eastmoney_error": null,
+      "eastmoney_count": 0,
+      "hithink_identity_count": 1793,
+      "eastmoney_error": "HTTP Error 502: Bad Gateway",
       "hithink_error": null,
-      "fallback_used": false,
-      "fallback_source": null,
-      "reconciled_count": 1669,
+      "fallback_used": true,
+      "fallback_source": "HITHINK_ETF_MASTER_PLUS_TENCENT",
+      "reconciled_count": 1793,
       "source_elapsed_seconds": {
-        "eastmoney": 5.737
+        "eastmoney": 5.939,
+        "hithink": 5.233
       },
-      "source_join_elapsed_seconds": 5.737,
-      "supplemental_hydration_elapsed_seconds": 0.0,
+      "source_join_elapsed_seconds": 11.172,
+      "supplemental_hydration_elapsed_seconds": 4.473,
       "verified_spot_overlay_count": 26
     },
     "source_role": "DISCOVERY_ONLY; formal trade decision remains MASTER-owned",
-    "broad_universe_count": 1669,
+    "broad_universe_count": 1793,
     "managed_identity_count": 26,
     "held_identity_count": 11,
     "managed_excluded_count": 0,
-    "history_prefilter_count": 92,
-    "candidate_count": 9,
+    "history_prefilter_count": 45,
+    "candidate_count": 5,
     "history_success_budget": 12,
     "history_attempt_cap": 36,
     "history_fetch_workers": 2,
@@ -66,100 +73,17 @@
     "history_reused_count": 0,
     "history_repair_attempted_count": 12,
     "history_failure_count": 0,
-    "history_elapsed_seconds": 6.714,
+    "history_elapsed_seconds": 6.809,
     "empty_reason": "",
     "latency_observability": {
-      "broad_acquisition_elapsed_seconds": 5.737,
+      "broad_acquisition_elapsed_seconds": 15.645,
       "prefilter_elapsed_seconds": 0.005,
-      "history_validation_elapsed_seconds": 6.714,
+      "history_validation_elapsed_seconds": 6.809,
       "measurement_role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE"
     },
-    "coverage_status": "COMPLETE",
+    "coverage_status": "PARTIAL",
     "history_failures": [],
     "candidates": [
-      {
-        "code": "159263",
-        "name": "价值ETF易方达",
-        "display_name": "价值ETF易方达（159263）",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "management_identity": null,
-        "auto_promote_to_observation": false,
-        "default_recommendation": "BUY",
-        "recommendation_status": "BUY_UNLESS_DISPROVED",
-        "recommendation_boundary": "人工确认前的积极建议；不自动下单、不授予Trial/Confirm、不改变交易权限",
-        "trial_confirm_permission": false,
-        "trade_signal": null,
-        "decision_output_generated": false,
-        "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
-        "entered_states": [],
-        "surfaced_states": [
-          {
-            "state": "PERSISTENT_TREND",
-            "evidence": {
-              "window_returns": {
-                "5": 0.02307,
-                "20": 0.034081,
-                "40": 0.010517,
-                "60": 0.010517
-              },
-              "positive_windows": [
-                20,
-                40,
-                60
-              ],
-              "max_drawdown_60": 0.058974
-            }
-          }
-        ],
-        "information_classes": [
-          "STRUCTURAL_CHANGE",
-          "PERSISTENT_STRUCTURE"
-        ],
-        "external_driver_evidence": [],
-        "discovery_spot": {
-          "price": 1.155,
-          "change_pct": 0.17,
-          "amount": 241318181.7,
-          "amplitude_pct": 0.87,
-          "turnover_pct": 2.69,
-          "volume_ratio": 1.19,
-          "high": 1.158,
-          "low": 1.148,
-          "open": 1.152,
-          "prev_close": 1.153,
-          "return_60d_pct": 0.43,
-          "return_ytd_pct": 4.81,
-          "provider_timestamp": 1795066089
-        },
-        "historical_context": {
-          "status": "READY",
-          "as_of": "2026-11-18",
-          "sample_count": 90,
-          "avg_amount_20": 338518252.0
-        },
-        "comparison_basis": [
-          "历史趋势/状态变化",
-          "当前相对结构",
-          "成交与可执行性",
-          "风险收益",
-          "资本效率"
-        ],
-        "decision_boundary": "默认按买入建议起点进入正式判断；只有明确反证才降级或否决。该建议不自动产生Trial/Confirm、金额或交易动作。",
-        "management_review": {
-          "object_role": "NEW_DISCOVERY",
-          "direct_conclusion_required": true,
-          "conclusion_status": "PENDING_MASTER_DECISION",
-          "allowed_conclusions": [
-            "RETAIN_DISCOVERY",
-            "REJECT_NEW_DEPLOYMENT",
-            "TRIAL_ELIGIBILITY_REVIEW"
-          ],
-          "decision_owner": "MASTER_FORMAL_DECISION",
-          "decision_boundary": "Discovery supplies object-level evidence and the required conclusion set; only MASTER Formal Decision confirms the final hold, reduce, exit, observation or Trial/Confirm action."
-        },
-        "history_source": "HITHINK_FINANCE_HISTORY_BOUNDED_REPAIR"
-      },
       {
         "code": "159327",
         "name": "半导体设备ETF万家",
@@ -189,23 +113,24 @@
         ],
         "information_classes": [
           "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE"
+          "STRUCTURAL_CHANGE",
+          "SHORT_HISTORY_CURRENT_CHANGE"
         ],
         "external_driver_evidence": [],
         "discovery_spot": {
-          "price": 0.863,
-          "change_pct": 2.49,
-          "amount": 202794801.4,
-          "amplitude_pct": 5.58,
-          "turnover_pct": 10.44,
-          "volume_ratio": 1.38,
+          "price": 0.859,
+          "change_pct": 2.0190023752969077,
+          "amount": 206630000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
           "high": 0.877,
           "low": 0.83,
           "open": 0.832,
           "prev_close": 0.842,
-          "return_60d_pct": -26.86,
-          "return_ytd_pct": 41.01,
-          "provider_timestamp": 1795066092
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1795066527000
         },
         "historical_context": {
           "status": "READY",
@@ -229,6 +154,89 @@
             "RETAIN_DISCOVERY",
             "REJECT_NEW_DEPLOYMENT",
             "TRIAL_ELIGIBILITY_REVIEW"
+          ],
+          "decision_owner": "MASTER_FORMAL_DECISION",
+          "decision_boundary": "Discovery supplies object-level evidence and the required conclusion set; only MASTER Formal Decision confirms the final hold, reduce, exit, observation or Trial/Confirm action."
+        },
+        "history_source": "HITHINK_FINANCE_HISTORY_BOUNDED_REPAIR"
+      },
+      {
+        "code": "159529",
+        "name": "标普消费ETF景顺",
+        "display_name": "标普消费ETF景顺（159529）",
+        "category": "OBSERVATION_EVALUATION_INPUT",
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "management_identity": "MANAGED",
+        "auto_promote_to_observation": false,
+        "default_recommendation": "BUY",
+        "recommendation_status": "BUY_UNLESS_DISPROVED",
+        "recommendation_boundary": "人工确认前的积极建议；不自动下单、不授予Trial/Confirm、不改变交易权限",
+        "trial_confirm_permission": false,
+        "trade_signal": null,
+        "decision_output_generated": false,
+        "discovery_semantic": "NODE_LOCAL_ALL_MARKET_OPPORTUNITY_SIGNAL_FOR_EXISTING_MANAGED_ETF",
+        "entered_states": [],
+        "surfaced_states": [
+          {
+            "state": "PERSISTENT_TREND",
+            "evidence": {
+              "window_returns": {
+                "5": -0.018678,
+                "20": -0.005098,
+                "40": 0.091926,
+                "60": 0.04835
+              },
+              "positive_windows": [
+                40,
+                60
+              ],
+              "max_drawdown_60": 0.053747
+            }
+          }
+        ],
+        "information_classes": [
+          "NEW_RELATIVE_DIVERGENCE",
+          "STRUCTURAL_CHANGE",
+          "SHORT_HISTORY_CURRENT_CHANGE"
+        ],
+        "external_driver_evidence": [],
+        "discovery_spot": {
+          "price": 1.382,
+          "change_pct": 1.1713030746705488,
+          "amount": 313980000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
+          "high": 1.39,
+          "low": 1.377,
+          "open": 1.38,
+          "prev_close": 1.366,
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1795066530000
+        },
+        "historical_context": {
+          "status": "READY",
+          "as_of": "2026-11-18",
+          "sample_count": 90,
+          "avg_amount_20": 544940767.0
+        },
+        "comparison_basis": [
+          "历史趋势/状态变化",
+          "当前相对结构",
+          "成交与可执行性",
+          "风险收益",
+          "资本效率"
+        ],
+        "decision_boundary": "默认按买入建议起点进入正式判断；只有明确反证才降级或否决。该建议不自动产生Trial/Confirm、金额或交易动作。",
+        "management_review": {
+          "object_role": "HOLDING",
+          "direct_conclusion_required": true,
+          "conclusion_status": "PENDING_MASTER_DECISION",
+          "allowed_conclusions": [
+            "CONTINUE_HOLDING",
+            "REDUCE_REVIEW",
+            "EXIT_REVIEW"
           ],
           "decision_owner": "MASTER_FORMAL_DECISION",
           "decision_boundary": "Discovery supplies object-level evidence and the required conclusion set; only MASTER Formal Decision confirms the final hold, reduce, exit, observation or Trial/Confirm action."
@@ -267,355 +275,25 @@
         ],
         "external_driver_evidence": [],
         "discovery_spot": {
-          "price": 1.795,
-          "change_pct": 0.56,
-          "amount": 38372970.2,
-          "amplitude_pct": 4.37,
-          "turnover_pct": 8.34,
-          "volume_ratio": 1.25,
+          "price": 1.787,
+          "change_pct": 0.11204481792717047,
+          "amount": 38600000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
           "high": 1.814,
           "low": 1.736,
           "open": 1.77,
           "prev_close": 1.785,
-          "return_60d_pct": -26.64,
-          "return_ytd_pct": 0.39,
-          "provider_timestamp": 1795066092
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1795066530000
         },
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-18",
           "sample_count": 90,
           "avg_amount_20": 43808098.0
-        },
-        "comparison_basis": [
-          "历史趋势/状态变化",
-          "当前相对结构",
-          "成交与可执行性",
-          "风险收益",
-          "资本效率"
-        ],
-        "decision_boundary": "默认按买入建议起点进入正式判断；只有明确反证才降级或否决。该建议不自动产生Trial/Confirm、金额或交易动作。",
-        "management_review": {
-          "object_role": "NEW_DISCOVERY",
-          "direct_conclusion_required": true,
-          "conclusion_status": "PENDING_MASTER_DECISION",
-          "allowed_conclusions": [
-            "RETAIN_DISCOVERY",
-            "REJECT_NEW_DEPLOYMENT",
-            "TRIAL_ELIGIBILITY_REVIEW"
-          ],
-          "decision_owner": "MASTER_FORMAL_DECISION",
-          "decision_boundary": "Discovery supplies object-level evidence and the required conclusion set; only MASTER Formal Decision confirms the final hold, reduce, exit, observation or Trial/Confirm action."
-        },
-        "history_source": "HITHINK_FINANCE_HISTORY_BOUNDED_REPAIR"
-      },
-      {
-        "code": "510230",
-        "name": "金融ETF国泰",
-        "display_name": "金融ETF国泰（510230）",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "management_identity": "MANAGED",
-        "auto_promote_to_observation": false,
-        "default_recommendation": "BUY",
-        "recommendation_status": "BUY_UNLESS_DISPROVED",
-        "recommendation_boundary": "人工确认前的积极建议；不自动下单、不授予Trial/Confirm、不改变交易权限",
-        "trial_confirm_permission": false,
-        "trade_signal": null,
-        "decision_output_generated": false,
-        "discovery_semantic": "NODE_LOCAL_ALL_MARKET_OPPORTUNITY_SIGNAL_FOR_EXISTING_MANAGED_ETF",
-        "entered_states": [],
-        "surfaced_states": [
-          {
-            "state": "PERSISTENT_TREND",
-            "evidence": {
-              "window_returns": {
-                "5": 0.023634,
-                "20": 0.044461,
-                "40": 0.03976,
-                "60": 0.075252
-              },
-              "positive_windows": [
-                20,
-                40,
-                60
-              ],
-              "max_drawdown_60": 0.040234
-            }
-          }
-        ],
-        "information_classes": [
-          "PERSISTENT_STRUCTURE"
-        ],
-        "external_driver_evidence": [],
-        "discovery_spot": {
-          "price": 1.386,
-          "change_pct": 0.0,
-          "amount": 70520000.0,
-          "amplitude_pct": 0.94,
-          "turnover_pct": 9.14,
-          "volume_ratio": 1.17,
-          "high": 1.395,
-          "low": 1.382,
-          "open": 1.391,
-          "prev_close": 1.386,
-          "return_60d_pct": 6.7,
-          "return_ytd_pct": -2.19,
-          "provider_timestamp": 1795066092
-        },
-        "historical_context": {
-          "status": "READY",
-          "as_of": "2026-11-18",
-          "sample_count": 90,
-          "avg_amount_20": 116063473.6
-        },
-        "comparison_basis": [
-          "历史趋势/状态变化",
-          "当前相对结构",
-          "成交与可执行性",
-          "风险收益",
-          "资本效率"
-        ],
-        "decision_boundary": "默认按买入建议起点进入正式判断；只有明确反证才降级或否决。该建议不自动产生Trial/Confirm、金额或交易动作。",
-        "management_review": {
-          "object_role": "HOLDING",
-          "direct_conclusion_required": true,
-          "conclusion_status": "PENDING_MASTER_DECISION",
-          "allowed_conclusions": [
-            "CONTINUE_HOLDING",
-            "REDUCE_REVIEW",
-            "EXIT_REVIEW"
-          ],
-          "decision_owner": "MASTER_FORMAL_DECISION",
-          "decision_boundary": "Discovery supplies object-level evidence and the required conclusion set; only MASTER Formal Decision confirms the final hold, reduce, exit, observation or Trial/Confirm action."
-        },
-        "history_source": "HITHINK_FINANCE_HISTORY_BOUNDED_REPAIR"
-      },
-      {
-        "code": "515170",
-        "name": "食品饮料ETF华夏",
-        "display_name": "食品饮料ETF华夏（515170）",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "management_identity": null,
-        "auto_promote_to_observation": false,
-        "default_recommendation": "BUY",
-        "recommendation_status": "BUY_UNLESS_DISPROVED",
-        "recommendation_boundary": "人工确认前的积极建议；不自动下单、不授予Trial/Confirm、不改变交易权限",
-        "trial_confirm_permission": false,
-        "trade_signal": null,
-        "decision_output_generated": false,
-        "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
-        "entered_states": [],
-        "surfaced_states": [
-          {
-            "state": "PERSISTENT_TREND",
-            "evidence": {
-              "window_returns": {
-                "5": 0.023158,
-                "20": 0.065789,
-                "40": 0.068132,
-                "60": 0.029661
-              },
-              "positive_windows": [
-                20,
-                40,
-                60
-              ],
-              "max_drawdown_60": 0.050633
-            }
-          },
-          {
-            "state": "RECOVERY_BREAKOUT",
-            "evidence": {
-              "prior_drawdown": 0.087221,
-              "recovery_fraction": 0.837209,
-              "distance_to_prior_high": -0.014199
-            }
-          }
-        ],
-        "information_classes": [
-          "STRUCTURAL_CHANGE",
-          "PERSISTENT_STRUCTURE"
-        ],
-        "external_driver_evidence": [],
-        "discovery_spot": {
-          "price": 0.489,
-          "change_pct": 0.62,
-          "amount": 53732501.0,
-          "amplitude_pct": 1.44,
-          "turnover_pct": 1.34,
-          "volume_ratio": 0.92,
-          "high": 0.491,
-          "low": 0.484,
-          "open": 0.488,
-          "prev_close": 0.486,
-          "return_60d_pct": 5.16,
-          "return_ytd_pct": -10.77,
-          "provider_timestamp": 1795066093
-        },
-        "historical_context": {
-          "status": "READY",
-          "as_of": "2026-11-18",
-          "sample_count": 90,
-          "avg_amount_20": 96726112.7
-        },
-        "comparison_basis": [
-          "历史趋势/状态变化",
-          "当前相对结构",
-          "成交与可执行性",
-          "风险收益",
-          "资本效率"
-        ],
-        "decision_boundary": "默认按买入建议起点进入正式判断；只有明确反证才降级或否决。该建议不自动产生Trial/Confirm、金额或交易动作。",
-        "management_review": {
-          "object_role": "NEW_DISCOVERY",
-          "direct_conclusion_required": true,
-          "conclusion_status": "PENDING_MASTER_DECISION",
-          "allowed_conclusions": [
-            "RETAIN_DISCOVERY",
-            "REJECT_NEW_DEPLOYMENT",
-            "TRIAL_ELIGIBILITY_REVIEW"
-          ],
-          "decision_owner": "MASTER_FORMAL_DECISION",
-          "decision_boundary": "Discovery supplies object-level evidence and the required conclusion set; only MASTER Formal Decision confirms the final hold, reduce, exit, observation or Trial/Confirm action."
-        },
-        "history_source": "HITHINK_FINANCE_HISTORY_BOUNDED_REPAIR"
-      },
-      {
-        "code": "516350",
-        "name": "芯片ETF易方达",
-        "display_name": "芯片ETF易方达（516350）",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "management_identity": null,
-        "auto_promote_to_observation": false,
-        "default_recommendation": "BUY",
-        "recommendation_status": "BUY_UNLESS_DISPROVED",
-        "recommendation_boundary": "人工确认前的积极建议；不自动下单、不授予Trial/Confirm、不改变交易权限",
-        "trial_confirm_permission": false,
-        "trade_signal": null,
-        "decision_output_generated": false,
-        "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
-        "entered_states": [],
-        "surfaced_states": [
-          {
-            "state": "TREND_CHANGE",
-            "evidence": {
-              "direction": "STRENGTHENING",
-              "return_10": 0.007365,
-              "return_40": -0.189065,
-              "short_vs_long_normalized_gap": 0.054631
-            }
-          }
-        ],
-        "information_classes": [
-          "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE"
-        ],
-        "external_driver_evidence": [],
-        "discovery_spot": {
-          "price": 1.245,
-          "change_pct": 1.14,
-          "amount": 131861294.0,
-          "amplitude_pct": 4.63,
-          "turnover_pct": 7.66,
-          "volume_ratio": 1.34,
-          "high": 1.261,
-          "low": 1.204,
-          "open": 1.22,
-          "prev_close": 1.231,
-          "return_60d_pct": -24.5,
-          "return_ytd_pct": 4.18,
-          "provider_timestamp": 1795066094
-        },
-        "historical_context": {
-          "status": "READY",
-          "as_of": "2026-11-18",
-          "sample_count": 90,
-          "avg_amount_20": 138289245.7
-        },
-        "comparison_basis": [
-          "历史趋势/状态变化",
-          "当前相对结构",
-          "成交与可执行性",
-          "风险收益",
-          "资本效率"
-        ],
-        "decision_boundary": "默认按买入建议起点进入正式判断；只有明确反证才降级或否决。该建议不自动产生Trial/Confirm、金额或交易动作。",
-        "management_review": {
-          "object_role": "NEW_DISCOVERY",
-          "direct_conclusion_required": true,
-          "conclusion_status": "PENDING_MASTER_DECISION",
-          "allowed_conclusions": [
-            "RETAIN_DISCOVERY",
-            "REJECT_NEW_DEPLOYMENT",
-            "TRIAL_ELIGIBILITY_REVIEW"
-          ],
-          "decision_owner": "MASTER_FORMAL_DECISION",
-          "decision_boundary": "Discovery supplies object-level evidence and the required conclusion set; only MASTER Formal Decision confirms the final hold, reduce, exit, observation or Trial/Confirm action."
-        },
-        "history_source": "HITHINK_FINANCE_HISTORY_BOUNDED_REPAIR"
-      },
-      {
-        "code": "561680",
-        "name": "A500红利低波ETF平安",
-        "display_name": "A500红利低波ETF平安（561680）",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "management_identity": null,
-        "auto_promote_to_observation": false,
-        "default_recommendation": "BUY",
-        "recommendation_status": "BUY_UNLESS_DISPROVED",
-        "recommendation_boundary": "人工确认前的积极建议；不自动下单、不授予Trial/Confirm、不改变交易权限",
-        "trial_confirm_permission": false,
-        "trade_signal": null,
-        "decision_output_generated": false,
-        "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
-        "entered_states": [],
-        "surfaced_states": [
-          {
-            "state": "PERSISTENT_TREND",
-            "evidence": {
-              "window_returns": {
-                "5": 0.035611,
-                "20": 0.047712,
-                "40": 0.071713,
-                "60": 0.094608
-              },
-              "positive_windows": [
-                20,
-                40,
-                60
-              ],
-              "max_drawdown_60": 0.026769
-            }
-          }
-        ],
-        "information_classes": [
-          "PERSISTENT_STRUCTURE"
-        ],
-        "external_driver_evidence": [],
-        "discovery_spot": {
-          "price": 1.075,
-          "change_pct": -0.09,
-          "amount": 17313325.0,
-          "amplitude_pct": 0.56,
-          "turnover_pct": 5.65,
-          "volume_ratio": 3.02,
-          "high": 1.078,
-          "low": 1.072,
-          "open": 1.076,
-          "prev_close": 1.076,
-          "return_60d_pct": 8.26,
-          "return_ytd_pct": 7.07,
-          "provider_timestamp": 1795066094
-        },
-        "historical_context": {
-          "status": "READY",
-          "as_of": "2026-11-18",
-          "sample_count": 90,
-          "avg_amount_20": 9630869.22
         },
         "comparison_basis": [
           "历史趋势/状态变化",
@@ -668,23 +346,24 @@
         ],
         "information_classes": [
           "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE"
+          "STRUCTURAL_CHANGE",
+          "SHORT_HISTORY_CURRENT_CHANGE"
         ],
         "external_driver_evidence": [],
         "discovery_spot": {
-          "price": 0.715,
-          "change_pct": 2.58,
-          "amount": 6949590034.0,
-          "amplitude_pct": 5.45,
-          "turnover_pct": 15.27,
-          "volume_ratio": 1.1,
+          "price": 0.712,
+          "change_pct": 2.152080344332852,
+          "amount": 7131110000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
           "high": 0.727,
           "low": 0.689,
           "open": 0.692,
           "prev_close": 0.697,
-          "return_60d_pct": -30.04,
-          "return_ytd_pct": 42.43,
-          "provider_timestamp": 1795066092
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1795066533000
         },
         "historical_context": {
           "status": "READY",
@@ -715,9 +394,9 @@
         "history_source": "HITHINK_FINANCE_HISTORY_BOUNDED_REPAIR"
       },
       {
-        "code": "588450",
-        "name": "科创50增强ETF招商",
-        "display_name": "科创50增强ETF招商（588450）",
+        "code": "588710",
+        "name": "科创半导体设备ETF华泰柏瑞",
+        "display_name": "科创半导体设备ETF华泰柏瑞（588710）",
         "category": "OBSERVATION_EVALUATION_INPUT",
         "eligibility": "OBSERVATION_FULL_EVALUATION",
         "management_identity": "MANAGED",
@@ -730,32 +409,43 @@
         "decision_output_generated": false,
         "discovery_semantic": "NODE_LOCAL_ALL_MARKET_OPPORTUNITY_SIGNAL_FOR_EXISTING_MANAGED_ETF",
         "entered_states": [],
-        "surfaced_states": [],
+        "surfaced_states": [
+          {
+            "state": "TREND_CHANGE",
+            "evidence": {
+              "direction": "STRENGTHENING",
+              "return_10": 0.016878,
+              "return_40": -0.241343,
+              "short_vs_long_normalized_gap": 0.077213
+            }
+          }
+        ],
         "information_classes": [
           "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE"
+          "STRUCTURAL_CHANGE",
+          "SHORT_HISTORY_CURRENT_CHANGE"
         ],
         "external_driver_evidence": [],
         "discovery_spot": {
-          "price": 1.608,
-          "change_pct": 1.132075471698113,
-          "amount": 11730000.0,
-          "amplitude_pct": 4.28,
-          "turnover_pct": 6.33,
-          "volume_ratio": 0.81,
-          "high": 1.623,
-          "low": 1.555,
-          "open": 1.59,
-          "prev_close": 1.59,
-          "return_60d_pct": -26.27,
-          "return_ytd_pct": -7.32,
-          "provider_timestamp": 1795066093
+          "price": 0.739,
+          "change_pct": 2.2130013831258566,
+          "amount": 1429090000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
+          "high": 0.755,
+          "low": 0.714,
+          "open": 0.714,
+          "prev_close": 0.723,
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1795066530000
         },
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-18",
           "sample_count": 90,
-          "avg_amount_20": 20033487.97
+          "avg_amount_20": 1546889817.5
         },
         "comparison_basis": [
           "历史趋势/状态变化",
@@ -766,13 +456,13 @@
         ],
         "decision_boundary": "默认按买入建议起点进入正式判断；只有明确反证才降级或否决。该建议不自动产生Trial/Confirm、金额或交易动作。",
         "management_review": {
-          "object_role": "MANAGED_MONITORING",
+          "object_role": "HOLDING",
           "direct_conclusion_required": true,
           "conclusion_status": "PENDING_MASTER_DECISION",
           "allowed_conclusions": [
-            "RETAIN_OBSERVATION",
-            "REMOVE_OBSERVATION",
-            "OPPORTUNITY_REVIEW"
+            "CONTINUE_HOLDING",
+            "REDUCE_REVIEW",
+            "EXIT_REVIEW"
           ],
           "decision_owner": "MASTER_FORMAL_DECISION",
           "decision_boundary": "Discovery supplies object-level evidence and the required conclusion set; only MASTER Formal Decision confirms the final hold, reduce, exit, observation or Trial/Confirm action."
@@ -800,7 +490,7 @@
       "task": "DISCOVERY",
       "node": "",
       "phase": "A_SHARE_ACTIVE_WINDOW",
-      "as_of_beijing": "2026-11-19T13:16:19+08:00",
+      "as_of_beijing": "2026-11-19T13:30:58+08:00",
       "pulse_sequence": [],
       "pulse_sequence_summary": {},
       "mapped_object_count": 26,
@@ -820,7 +510,7 @@
             "515080"
           ],
           "mapping_reason": "CONFIGURED_DIRECT_OR_ECONOMIC_FAMILY_BINDING",
-          "observation_as_of": "2026-11-19T13:16:17+08:00",
+          "observation_as_of": "2026-11-19T13:30:56+08:00",
           "evidence_status": "READY",
           "consumption_status": "CONSUMED",
           "direction_signal": "UP",
@@ -835,30 +525,30 @@
           "signal_fields": {
             "direction": "UP",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "0.9807%",
-            "funding": "0.0000212133",
-            "open_interest": "10072.0836",
-            "premium": "0.0006393628",
+            "price_change_pct": "0.9645%",
+            "funding": "0.0000220636",
+            "open_interest": "10122.1596",
+            "premium": "0.0008380459",
             "crowding": "",
-            "mark_px": "27389.0",
+            "mark_px": "27427.0",
             "mid_px": "",
-            "prev_day_px": "27123.0",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "27165.0",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": 2.071000000000001e-07,
-              "open_interest": 67.33239999999932,
-              "premium": 7.317340000000008e-05,
-              "mark_px": -3.0
+              "funding": 8.50300000000001e-07,
+              "open_interest": 50.07600000000093,
+              "premium": 0.0001986831,
+              "mark_px": 38.0
             },
             "pulse_delta_pct": {
-              "funding": 0.00985899401129191,
-              "open_interest": 0.0067300424222442755,
-              "premium": 0.129238378535522,
-              "mark_px": -0.00010952102803738318
+              "funding": 0.040083343939886815,
+              "open_interest": 0.00497176175146133,
+              "premium": 0.3107517359471023,
+              "mark_px": 0.0013874183066194458
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -868,30 +558,30 @@
           "evidence_summary": {
             "direction": "UP",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "0.9807%",
-            "funding": "0.0000212133",
-            "open_interest": "10072.0836",
-            "premium": "0.0006393628",
+            "price_change_pct": "0.9645%",
+            "funding": "0.0000220636",
+            "open_interest": "10122.1596",
+            "premium": "0.0008380459",
             "crowding": "",
-            "mark_px": "27389.0",
+            "mark_px": "27427.0",
             "mid_px": "",
-            "prev_day_px": "27123.0",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "27165.0",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": 2.071000000000001e-07,
-              "open_interest": 67.33239999999932,
-              "premium": 7.317340000000008e-05,
-              "mark_px": -3.0
+              "funding": 8.50300000000001e-07,
+              "open_interest": 50.07600000000093,
+              "premium": 0.0001986831,
+              "mark_px": 38.0
             },
             "pulse_delta_pct": {
-              "funding": 0.00985899401129191,
-              "open_interest": 0.0067300424222442755,
-              "premium": 0.129238378535522,
-              "mark_px": -0.00010952102803738318
+              "funding": 0.040083343939886815,
+              "open_interest": 0.00497176175146133,
+              "premium": 0.3107517359471023,
+              "mark_px": 0.0013874183066194458
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -917,11 +607,11 @@
             "588710",
             "159327",
             "159665",
-            "516640",
+            "516350",
             "588170"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
-          "observation_as_of": "2026-11-19T13:16:17+08:00",
+          "observation_as_of": "2026-11-19T13:30:56+08:00",
           "evidence_status": "READY",
           "consumption_status": "CONSUMED",
           "direction_signal": "DOWN",
@@ -936,30 +626,30 @@
           "signal_fields": {
             "direction": "DOWN",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "-3.6113%",
-            "funding": "0.0000076328",
-            "open_interest": "2741270.6600000006",
-            "premium": "0.0005269745",
+            "price_change_pct": "-3.4432%",
+            "funding": "0.0000129638",
+            "open_interest": "2741381.8360000001",
+            "premium": "0.0007721627",
             "crowding": "",
-            "mark_px": "151.87",
+            "mark_px": "152.27",
             "mid_px": "",
-            "prev_day_px": "157.56",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "157.7",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": 1.3827999999999989e-06,
-              "open_interest": 1660.324000001885,
-              "premium": -3.208889999999998e-05,
-              "mark_px": -0.22999999999998977
+              "funding": 5.331e-06,
+              "open_interest": 111.17599999951199,
+              "premium": 0.0002451882,
+              "mark_px": 0.4000000000000057
             },
             "pulse_delta_pct": {
-              "funding": 0.2212479999999998,
-              "open_interest": 0.0006060438516325869,
-              "premium": -0.05739760463661184,
-              "mark_px": -0.001512163050624522
+              "funding": 0.6984330782936801,
+              "open_interest": 4.055637468483756e-05,
+              "premium": 0.4652752647424116,
+              "mark_px": 0.0026338315664713617
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -969,30 +659,30 @@
           "evidence_summary": {
             "direction": "DOWN",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "-3.6113%",
-            "funding": "0.0000076328",
-            "open_interest": "2741270.6600000006",
-            "premium": "0.0005269745",
+            "price_change_pct": "-3.4432%",
+            "funding": "0.0000129638",
+            "open_interest": "2741381.8360000001",
+            "premium": "0.0007721627",
             "crowding": "",
-            "mark_px": "151.87",
+            "mark_px": "152.27",
             "mid_px": "",
-            "prev_day_px": "157.56",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "157.7",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": 1.3827999999999989e-06,
-              "open_interest": 1660.324000001885,
-              "premium": -3.208889999999998e-05,
-              "mark_px": -0.22999999999998977
+              "funding": 5.331e-06,
+              "open_interest": 111.17599999951199,
+              "premium": 0.0002451882,
+              "mark_px": 0.4000000000000057
             },
             "pulse_delta_pct": {
-              "funding": 0.2212479999999998,
-              "open_interest": 0.0006060438516325869,
-              "premium": -0.05739760463661184,
-              "mark_px": -0.001512163050624522
+              "funding": 0.6984330782936801,
+              "open_interest": 4.055637468483756e-05,
+              "premium": 0.4652752647424116,
+              "mark_px": 0.0026338315664713617
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -1013,7 +703,7 @@
             "518880"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
-          "observation_as_of": "2026-11-19T13:16:17+08:00",
+          "observation_as_of": "2026-11-19T13:30:56+08:00",
           "evidence_status": "READY",
           "consumption_status": "CONSUMED",
           "direction_signal": "DOWN",
@@ -1028,30 +718,30 @@
           "signal_fields": {
             "direction": "DOWN",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "-1.4866%",
-            "funding": "0.0000107334",
-            "open_interest": "66555.6002",
-            "premium": "0.0003888025",
+            "price_change_pct": "-1.5298%",
+            "funding": "0.0000094087",
+            "open_interest": "66562.716",
+            "premium": "0.0008977142",
             "crowding": "",
-            "mark_px": "3730.9",
+            "mark_px": "3733.4",
             "mid_px": "",
-            "prev_day_px": "3787.2",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "3791.4",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": 9.758e-07,
-              "open_interest": -1.0470000000059372,
-              "premium": -2.7606699999999974e-05,
-              "mark_px": 7.099999999999909
+              "funding": -1.3246999999999994e-06,
+              "open_interest": 7.115799999999581,
+              "premium": 0.0005089117,
+              "mark_px": 2.5
             },
             "pulse_delta_pct": {
-              "funding": 0.10000409936869722,
-              "open_interest": -1.5730960678649346e-05,
-              "premium": -0.06629704627083162,
-              "mark_px": 0.0019066544927224633
+              "funding": -0.12341848808392489,
+              "open_interest": 0.00010691512026961754,
+              "premium": 1.3089208531323746,
+              "mark_px": 0.0006700796054571283
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -1061,30 +751,30 @@
           "evidence_summary": {
             "direction": "DOWN",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "-1.4866%",
-            "funding": "0.0000107334",
-            "open_interest": "66555.6002",
-            "premium": "0.0003888025",
+            "price_change_pct": "-1.5298%",
+            "funding": "0.0000094087",
+            "open_interest": "66562.716",
+            "premium": "0.0008977142",
             "crowding": "",
-            "mark_px": "3730.9",
+            "mark_px": "3733.4",
             "mid_px": "",
-            "prev_day_px": "3787.2",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "3791.4",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": 9.758e-07,
-              "open_interest": -1.0470000000059372,
-              "premium": -2.7606699999999974e-05,
-              "mark_px": 7.099999999999909
+              "funding": -1.3246999999999994e-06,
+              "open_interest": 7.115799999999581,
+              "premium": 0.0005089117,
+              "mark_px": 2.5
             },
             "pulse_delta_pct": {
-              "funding": 0.10000409936869722,
-              "open_interest": -1.5730960678649346e-05,
-              "premium": -0.06629704627083162,
-              "mark_px": 0.0019066544927224633
+              "funding": -0.12341848808392489,
+              "open_interest": 0.00010691512026961754,
+              "premium": 1.3089208531323746,
+              "mark_px": 0.0006700796054571283
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -1110,11 +800,11 @@
             "588710",
             "159327",
             "159665",
-            "516640",
+            "516350",
             "588170"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
-          "observation_as_of": "2026-11-19T13:16:17+08:00",
+          "observation_as_of": "2026-11-19T13:30:56+08:00",
           "evidence_status": "READY",
           "consumption_status": "CONSUMED",
           "direction_signal": "UP",
@@ -1129,30 +819,30 @@
           "signal_fields": {
             "direction": "UP",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "4.5501%",
+            "price_change_pct": "4.5914%",
             "funding": "0.00000625",
-            "open_interest": "55892.208",
-            "premium": "0.0001028191",
+            "open_interest": "55779.72",
+            "premium": "0.0003461431",
             "crowding": "",
-            "mark_px": "534.92",
+            "mark_px": "537.38",
             "mid_px": "",
-            "prev_day_px": "511.64",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "513.79",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
               "funding": 0.0,
-              "open_interest": 17.765999999995984,
-              "premium": -9.614959999999999e-05,
-              "mark_px": -0.3300000000000409
+              "open_interest": -112.48799999999756,
+              "premium": 0.000243324,
+              "mark_px": 2.4600000000000364
             },
             "pulse_delta_pct": {
               "funding": 0.0,
-              "open_interest": 0.00031796290690466283,
-              "premium": -0.48323982616361266,
-              "mark_px": -0.0006165343297525286
+              "open_interest": -0.002012588230545438,
+              "premium": 2.366525285671631,
+              "mark_px": 0.004598818514918187
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -1162,30 +852,30 @@
           "evidence_summary": {
             "direction": "UP",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "4.5501%",
+            "price_change_pct": "4.5914%",
             "funding": "0.00000625",
-            "open_interest": "55892.208",
-            "premium": "0.0001028191",
+            "open_interest": "55779.72",
+            "premium": "0.0003461431",
             "crowding": "",
-            "mark_px": "534.92",
+            "mark_px": "537.38",
             "mid_px": "",
-            "prev_day_px": "511.64",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "513.79",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
               "funding": 0.0,
-              "open_interest": 17.765999999995984,
-              "premium": -9.614959999999999e-05,
-              "mark_px": -0.3300000000000409
+              "open_interest": -112.48799999999756,
+              "premium": 0.000243324,
+              "mark_px": 2.4600000000000364
             },
             "pulse_delta_pct": {
               "funding": 0.0,
-              "open_interest": 0.00031796290690466283,
-              "premium": -0.48323982616361266,
-              "mark_px": -0.0006165343297525286
+              "open_interest": -0.002012588230545438,
+              "premium": 2.366525285671631,
+              "mark_px": 0.004598818514918187
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -1212,11 +902,11 @@
             "588710",
             "159327",
             "159665",
-            "516640",
+            "516350",
             "588170"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
-          "observation_as_of": "2026-11-19T13:16:17+08:00",
+          "observation_as_of": "2026-11-19T13:30:56+08:00",
           "evidence_status": "READY",
           "consumption_status": "CONSUMED",
           "direction_signal": "DOWN",
@@ -1231,30 +921,30 @@
           "signal_fields": {
             "direction": "DOWN",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "-3.5888%",
-            "funding": "0.0000089779",
-            "open_interest": "114530.648",
-            "premium": "0.0010971548",
+            "price_change_pct": "-3.4015%",
+            "funding": "0.000008892",
+            "open_interest": "114700.468",
+            "premium": "0.0010009738",
             "crowding": "",
-            "mark_px": "787.12",
+            "mark_px": "791.2",
             "mid_px": "",
-            "prev_day_px": "816.42",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "819.06",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": 2.727899999999999e-06,
-              "open_interest": -25.177999999999884,
-              "premium": 0.0005392029,
-              "mark_px": 0.9600000000000364
+              "funding": -8.589999999999862e-08,
+              "open_interest": 169.81999999999243,
+              "premium": -9.618100000000009e-05,
+              "mark_px": 4.080000000000041
             },
             "pulse_delta_pct": {
-              "funding": 0.4364639999999998,
-              "open_interest": -0.00021978803592232737,
-              "premium": 0.9663967449523875,
-              "mark_px": 0.0012211254706421548
+              "funding": -0.009567939050334557,
+              "open_interest": 0.0014827472206390766,
+              "premium": -0.08766401969895232,
+              "mark_px": 0.005183453603008488
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -1264,30 +954,30 @@
           "evidence_summary": {
             "direction": "DOWN",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "-3.5888%",
-            "funding": "0.0000089779",
-            "open_interest": "114530.648",
-            "premium": "0.0010971548",
+            "price_change_pct": "-3.4015%",
+            "funding": "0.000008892",
+            "open_interest": "114700.468",
+            "premium": "0.0010009738",
             "crowding": "",
-            "mark_px": "787.12",
+            "mark_px": "791.2",
             "mid_px": "",
-            "prev_day_px": "816.42",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "819.06",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": 2.727899999999999e-06,
-              "open_interest": -25.177999999999884,
-              "premium": 0.0005392029,
-              "mark_px": 0.9600000000000364
+              "funding": -8.589999999999862e-08,
+              "open_interest": 169.81999999999243,
+              "premium": -9.618100000000009e-05,
+              "mark_px": 4.080000000000041
             },
             "pulse_delta_pct": {
-              "funding": 0.4364639999999998,
-              "open_interest": -0.00021978803592232737,
-              "premium": 0.9663967449523875,
-              "mark_px": 0.0012211254706421548
+              "funding": -0.009567939050334557,
+              "open_interest": 0.0014827472206390766,
+              "premium": -0.08766401969895232,
+              "mark_px": 0.005183453603008488
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -1310,13 +1000,13 @@
             "159265"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
-          "observation_as_of": "2026-11-19T13:16:17+08:00",
+          "observation_as_of": "2026-11-19T13:30:56+08:00",
           "evidence_status": "READY",
           "consumption_status": "CONSUMED",
           "direction_signal": "DOWN",
           "direction_signal_reason": "MARK_VS_PREV_DAY",
           "positioning_signal": "SINGLE_PULSE_ONLY",
-          "pricing_signal": "PREMIUM_ABOVE_REFERENCE",
+          "pricing_signal": "DISCOUNT_BELOW_REFERENCE",
           "crowding_signal": "INSUFFICIENT_HISTORY",
           "cross_market_relation": "UNDETERMINED：缺少A股同步事实",
           "decision_effect": "TIMING_FILTER",
@@ -1325,67 +1015,67 @@
           "signal_fields": {
             "direction": "DOWN",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "-5.3326%",
+            "price_change_pct": "-5.0457%",
             "funding": "0.00000625",
-            "open_interest": "97443.73",
-            "premium": "0.0001760777",
+            "open_interest": "97450.002",
+            "premium": "-0.0000849515",
             "crowding": "",
-            "mark_px": "82.354",
+            "mark_px": "82.407",
             "mid_px": "",
-            "prev_day_px": "86.993",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "86.786",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
               "funding": 0.0,
-              "open_interest": -388.72000000000116,
-              "premium": -8.573429999999998e-05,
-              "mark_px": 0.23199999999999932
+              "open_interest": 6.271999999997206,
+              "premium": -0.00026102920000000004,
+              "mark_px": 0.05299999999999727
             },
             "pulse_delta_pct": {
               "funding": 0.0,
-              "open_interest": -0.0039733237795843935,
-              "premium": -0.3274651276488472,
-              "mark_px": 0.0028250651469764413
+              "open_interest": 6.436535218835739e-05,
+              "premium": -1.4824659795079105,
+              "mark_px": 0.0006435631541879844
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
-            "pricing_signal": "PREMIUM_ABOVE_REFERENCE",
+            "pricing_signal": "DISCOUNT_BELOW_REFERENCE",
             "crowding_signal": "INSUFFICIENT_HISTORY"
           },
           "evidence_summary": {
             "direction": "DOWN",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "-5.3326%",
+            "price_change_pct": "-5.0457%",
             "funding": "0.00000625",
-            "open_interest": "97443.73",
-            "premium": "0.0001760777",
+            "open_interest": "97450.002",
+            "premium": "-0.0000849515",
             "crowding": "",
-            "mark_px": "82.354",
+            "mark_px": "82.407",
             "mid_px": "",
-            "prev_day_px": "86.993",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "86.786",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
               "funding": 0.0,
-              "open_interest": -388.72000000000116,
-              "premium": -8.573429999999998e-05,
-              "mark_px": 0.23199999999999932
+              "open_interest": 6.271999999997206,
+              "premium": -0.00026102920000000004,
+              "mark_px": 0.05299999999999727
             },
             "pulse_delta_pct": {
               "funding": 0.0,
-              "open_interest": -0.0039733237795843935,
-              "premium": -0.3274651276488472,
-              "mark_px": 0.0028250651469764413
+              "open_interest": 6.436535218835739e-05,
+              "premium": -1.4824659795079105,
+              "mark_px": 0.0006435631541879844
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
-            "pricing_signal": "PREMIUM_ABOVE_REFERENCE",
+            "pricing_signal": "DISCOUNT_BELOW_REFERENCE",
             "crowding_signal": "INSUFFICIENT_HISTORY"
           },
           "decision_use": "已映射对象用于方向确认、跨市场背离、入场时机过滤或拥挤风险识别；不独立授予交易权限",
@@ -1402,13 +1092,13 @@
             "159326"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
-          "observation_as_of": "2026-11-19T13:16:17+08:00",
+          "observation_as_of": "2026-11-19T13:30:56+08:00",
           "evidence_status": "READY",
           "consumption_status": "CONSUMED",
           "direction_signal": "DOWN",
           "direction_signal_reason": "MARK_VS_PREV_DAY",
           "positioning_signal": "SINGLE_PULSE_ONLY",
-          "pricing_signal": "DISCOUNT_BELOW_REFERENCE",
+          "pricing_signal": "PREMIUM_ABOVE_REFERENCE",
           "crowding_signal": "INSUFFICIENT_HISTORY",
           "cross_market_relation": "UNDETERMINED：缺少A股同步事实",
           "decision_effect": "TIMING_FILTER",
@@ -1417,67 +1107,67 @@
           "signal_fields": {
             "direction": "DOWN",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "-3.6455%",
-            "funding": "-0.0000240307",
-            "open_interest": "1497856.1200000001",
-            "premium": "-0.0006591157",
+            "price_change_pct": "-3.4224%",
+            "funding": "-0.0000221861",
+            "open_interest": "1500686.3800000006",
+            "premium": "0.0004666436",
             "crowding": "",
-            "mark_px": "5.762",
+            "mark_px": "5.7821",
             "mid_px": "",
-            "prev_day_px": "5.98",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "5.987",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": 5.729999999999994e-07,
-              "open_interest": -333.05999999982305,
-              "premium": -0.000164049,
-              "mark_px": 0.00709999999999944
+              "funding": 1.8445999999999992e-06,
+              "open_interest": 2830.260000000475,
+              "premium": 0.0011257593,
+              "mark_px": 0.02010000000000023
             },
             "pulse_delta_pct": {
-              "funding": 0.02328918008267047,
-              "open_interest": -0.00022230837363264303,
-              "premium": -0.3313674702822872,
-              "mark_px": 0.0012337312551042486
+              "funding": 0.07676014431539652,
+              "open_interest": 0.0018895406322474249,
+              "premium": 1.7079843493335085,
+              "mark_px": 0.0034883720930232957
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "NEGATIVE_FUNDING_SHORTS_PAY",
-            "pricing_signal": "DISCOUNT_BELOW_REFERENCE",
+            "pricing_signal": "PREMIUM_ABOVE_REFERENCE",
             "crowding_signal": "INSUFFICIENT_HISTORY"
           },
           "evidence_summary": {
             "direction": "DOWN",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "-3.6455%",
-            "funding": "-0.0000240307",
-            "open_interest": "1497856.1200000001",
-            "premium": "-0.0006591157",
+            "price_change_pct": "-3.4224%",
+            "funding": "-0.0000221861",
+            "open_interest": "1500686.3800000006",
+            "premium": "0.0004666436",
             "crowding": "",
-            "mark_px": "5.762",
+            "mark_px": "5.7821",
             "mid_px": "",
-            "prev_day_px": "5.98",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "5.987",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": 5.729999999999994e-07,
-              "open_interest": -333.05999999982305,
-              "premium": -0.000164049,
-              "mark_px": 0.00709999999999944
+              "funding": 1.8445999999999992e-06,
+              "open_interest": 2830.260000000475,
+              "premium": 0.0011257593,
+              "mark_px": 0.02010000000000023
             },
             "pulse_delta_pct": {
-              "funding": 0.02328918008267047,
-              "open_interest": -0.00022230837363264303,
-              "premium": -0.3313674702822872,
-              "mark_px": 0.0012337312551042486
+              "funding": 0.07676014431539652,
+              "open_interest": 0.0018895406322474249,
+              "premium": 1.7079843493335085,
+              "mark_px": 0.0034883720930232957
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "NEGATIVE_FUNDING_SHORTS_PAY",
-            "pricing_signal": "DISCOUNT_BELOW_REFERENCE",
+            "pricing_signal": "PREMIUM_ABOVE_REFERENCE",
             "crowding_signal": "INSUFFICIENT_HISTORY"
           },
           "decision_use": "已映射对象用于方向确认、跨市场背离、入场时机过滤或拥挤风险识别；不独立授予交易权限",
@@ -1494,7 +1184,7 @@
             "513180"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
-          "observation_as_of": "2026-11-19T13:16:17+08:00",
+          "observation_as_of": "2026-11-19T13:30:56+08:00",
           "evidence_status": "READY",
           "consumption_status": "CONSUMED",
           "direction_signal": "UP",
@@ -1509,30 +1199,30 @@
           "signal_fields": {
             "direction": "UP",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "0.4431%",
+            "price_change_pct": "0.6157%",
             "funding": "0.00000625",
-            "open_interest": "63461.106",
-            "premium": "0.0004014757",
+            "open_interest": "63365.66",
+            "premium": "0.0005328725",
             "crowding": "",
-            "mark_px": "138.29",
+            "mark_px": "138.91",
             "mid_px": "",
-            "prev_day_px": "137.68",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "138.06",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
               "funding": 0.0,
-              "open_interest": 262.9499999999971,
-              "premium": -0.00028122909999999995,
-              "mark_px": -0.18999999999999773
+              "open_interest": -95.44599999999627,
+              "premium": 0.00013139680000000004,
+              "mark_px": 0.6200000000000045
             },
             "pulse_delta_pct": {
               "funding": 0.0,
-              "open_interest": 0.004160722664123255,
-              "premium": -0.41193367909526923,
-              "mark_px": -0.0013720392836510523
+              "open_interest": -0.0015040078248872038,
+              "premium": 0.3272845654170353,
+              "mark_px": 0.004483332128136558
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -1542,30 +1232,30 @@
           "evidence_summary": {
             "direction": "UP",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "0.4431%",
+            "price_change_pct": "0.6157%",
             "funding": "0.00000625",
-            "open_interest": "63461.106",
-            "premium": "0.0004014757",
+            "open_interest": "63365.66",
+            "premium": "0.0005328725",
             "crowding": "",
-            "mark_px": "138.29",
+            "mark_px": "138.91",
             "mid_px": "",
-            "prev_day_px": "137.68",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "138.06",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
               "funding": 0.0,
-              "open_interest": 262.9499999999971,
-              "premium": -0.00028122909999999995,
-              "mark_px": -0.18999999999999773
+              "open_interest": -95.44599999999627,
+              "premium": 0.00013139680000000004,
+              "mark_px": 0.6200000000000045
             },
             "pulse_delta_pct": {
               "funding": 0.0,
-              "open_interest": 0.004160722664123255,
-              "premium": -0.41193367909526923,
-              "mark_px": -0.0013720392836510523
+              "open_interest": -0.0015040078248872038,
+              "premium": 0.3272845654170353,
+              "mark_px": 0.004483332128136558
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -1586,7 +1276,7 @@
             "513520"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
-          "observation_as_of": "2026-11-19T13:16:17+08:00",
+          "observation_as_of": "2026-11-19T13:30:56+08:00",
           "evidence_status": "READY",
           "consumption_status": "CONSUMED",
           "direction_signal": "DOWN",
@@ -1601,30 +1291,30 @@
           "signal_fields": {
             "direction": "DOWN",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "-0.2911%",
+            "price_change_pct": "-0.3462%",
             "funding": "0.00000625",
-            "open_interest": "14920.612",
-            "premium": "0.0001860035",
+            "open_interest": "14888.18",
+            "premium": "0.0023311207",
             "crowding": "",
-            "mark_px": "88.721",
+            "mark_px": "88.653",
             "mid_px": "",
-            "prev_day_px": "88.98",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "88.961",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": -3.40212e-05,
-              "open_interest": -43.10400000000118,
-              "premium": -0.0007616285,
-              "mark_px": -0.006000000000000227
+              "funding": 0.0,
+              "open_interest": -32.43199999999888,
+              "premium": 0.0021451172000000003,
+              "mark_px": -0.06799999999999784
             },
             "pulse_delta_pct": {
-              "funding": -0.8448022408073262,
-              "open_interest": -0.0028805679017164707,
-              "premium": -0.8037175823526432,
-              "mark_px": -6.762315867774439e-05
+              "funding": 0.0,
+              "open_interest": -0.0021736373816301155,
+              "premium": 11.532671159413669,
+              "mark_px": -0.00076644762795728
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -1634,30 +1324,30 @@
           "evidence_summary": {
             "direction": "DOWN",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "-0.2911%",
+            "price_change_pct": "-0.3462%",
             "funding": "0.00000625",
-            "open_interest": "14920.612",
-            "premium": "0.0001860035",
+            "open_interest": "14888.18",
+            "premium": "0.0023311207",
             "crowding": "",
-            "mark_px": "88.721",
+            "mark_px": "88.653",
             "mid_px": "",
-            "prev_day_px": "88.98",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "88.961",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": -3.40212e-05,
-              "open_interest": -43.10400000000118,
-              "premium": -0.0007616285,
-              "mark_px": -0.006000000000000227
+              "funding": 0.0,
+              "open_interest": -32.43199999999888,
+              "premium": 0.0021451172000000003,
+              "mark_px": -0.06799999999999784
             },
             "pulse_delta_pct": {
-              "funding": -0.8448022408073262,
-              "open_interest": -0.0028805679017164707,
-              "premium": -0.8037175823526432,
-              "mark_px": -6.762315867774439e-05
+              "funding": 0.0,
+              "open_interest": -0.0021736373816301155,
+              "premium": 11.532671159413669,
+              "mark_px": -0.00076644762795728
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -1680,7 +1370,7 @@
             "159981"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
-          "observation_as_of": "2026-11-19T13:16:17+08:00",
+          "observation_as_of": "2026-11-19T13:30:56+08:00",
           "evidence_status": "READY",
           "consumption_status": "CONSUMED",
           "direction_signal": "DOWN",
@@ -1695,30 +1385,30 @@
           "signal_fields": {
             "direction": "DOWN",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "-0.6253%",
+            "price_change_pct": "-0.7853%",
             "funding": "0.00000625",
-            "open_interest": "3056981.6000000001",
-            "premium": "-0.0000503835",
+            "open_interest": "3053672.8599999999",
+            "premium": "-0.0000279893",
             "crowding": "",
-            "mark_px": "89.311",
+            "mark_px": "89.319",
             "mid_px": "",
-            "prev_day_px": "89.873",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "90.026",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
               "funding": 0.0,
-              "open_interest": -3718.7199999992736,
-              "premium": 0.00012758829999999998,
-              "mark_px": -0.027999999999991587
+              "open_interest": -3308.7400000002235,
+              "premium": 2.2394200000000003e-05,
+              "mark_px": 0.007999999999995566
             },
             "pulse_delta_pct": {
               "funding": 0.0,
-              "open_interest": -0.0012149899079303766,
-              "premium": 0.7169017788211389,
-              "mark_px": -0.0003134129551482733
+              "open_interest": -0.0010823552225503168,
+              "premium": 0.44447487768813204,
+              "mark_px": 8.957463246403651e-05
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -1728,30 +1418,30 @@
           "evidence_summary": {
             "direction": "DOWN",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "-0.6253%",
+            "price_change_pct": "-0.7853%",
             "funding": "0.00000625",
-            "open_interest": "3056981.6000000001",
-            "premium": "-0.0000503835",
+            "open_interest": "3053672.8599999999",
+            "premium": "-0.0000279893",
             "crowding": "",
-            "mark_px": "89.311",
+            "mark_px": "89.319",
             "mid_px": "",
-            "prev_day_px": "89.873",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "90.026",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
               "funding": 0.0,
-              "open_interest": -3718.7199999992736,
-              "premium": 0.00012758829999999998,
-              "mark_px": -0.027999999999991587
+              "open_interest": -3308.7400000002235,
+              "premium": 2.2394200000000003e-05,
+              "mark_px": 0.007999999999995566
             },
             "pulse_delta_pct": {
               "funding": 0.0,
-              "open_interest": -0.0012149899079303766,
-              "premium": 0.7169017788211389,
-              "mark_px": -0.0003134129551482733
+              "open_interest": -0.0010823552225503168,
+              "premium": 0.44447487768813204,
+              "mark_px": 8.957463246403651e-05
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -1773,7 +1463,7 @@
             "159529"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
-          "observation_as_of": "2026-11-19T13:16:17+08:00",
+          "observation_as_of": "2026-11-19T13:30:56+08:00",
           "evidence_status": "READY",
           "consumption_status": "CONSUMED",
           "direction_signal": "UP",
@@ -1788,30 +1478,30 @@
           "signal_fields": {
             "direction": "UP",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "0.1481%",
-            "funding": "0.0000150506",
-            "open_interest": "62214.046",
-            "premium": "0.0005261336",
+            "price_change_pct": "0.1657%",
+            "funding": "0.0000156067",
+            "open_interest": "62222.33",
+            "premium": "0.0005766778",
             "crowding": "",
-            "mark_px": "7370.0",
+            "mark_px": "7373.9",
             "mid_px": "",
-            "prev_day_px": "7359.1",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "7361.7",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": 2.1101000000000003e-06,
-              "open_interest": 354.2079999999987,
-              "premium": -1.0186799999999975e-05,
-              "mark_px": 1.199999999999818
+              "funding": 5.561000000000013e-07,
+              "open_interest": 8.28399999999965,
+              "premium": 5.054419999999998e-05,
+              "mark_px": 3.899999999999636
             },
             "pulse_delta_pct": {
-              "funding": 0.163061705498242,
-              "open_interest": 0.005725976844620878,
-              "premium": -0.01899387008213742,
-              "mark_px": 0.00016284876777763246
+              "funding": 0.03694869307535921,
+              "open_interest": 0.0001331532110931935,
+              "premium": 0.09606723463394085,
+              "mark_px": 0.000529172320217047
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -1821,30 +1511,30 @@
           "evidence_summary": {
             "direction": "UP",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "0.1481%",
-            "funding": "0.0000150506",
-            "open_interest": "62214.046",
-            "premium": "0.0005261336",
+            "price_change_pct": "0.1657%",
+            "funding": "0.0000156067",
+            "open_interest": "62222.33",
+            "premium": "0.0005766778",
             "crowding": "",
-            "mark_px": "7370.0",
+            "mark_px": "7373.9",
             "mid_px": "",
-            "prev_day_px": "7359.1",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "7361.7",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": 2.1101000000000003e-06,
-              "open_interest": 354.2079999999987,
-              "premium": -1.0186799999999975e-05,
-              "mark_px": 1.199999999999818
+              "funding": 5.561000000000013e-07,
+              "open_interest": 8.28399999999965,
+              "premium": 5.054419999999998e-05,
+              "mark_px": 3.899999999999636
             },
             "pulse_delta_pct": {
-              "funding": 0.163061705498242,
-              "open_interest": 0.005725976844620878,
-              "premium": -0.01899387008213742,
-              "mark_px": 0.00016284876777763246
+              "funding": 0.03694869307535921,
+              "open_interest": 0.0001331532110931935,
+              "premium": 0.09606723463394085,
+              "mark_px": 0.000529172320217047
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -1867,7 +1557,7 @@
             "159981"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
-          "observation_as_of": "2026-11-19T13:16:17+08:00",
+          "observation_as_of": "2026-11-19T13:30:56+08:00",
           "evidence_status": "READY",
           "consumption_status": "CONSUMED",
           "direction_signal": "DOWN",
@@ -1882,30 +1572,30 @@
           "signal_fields": {
             "direction": "DOWN",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "-2.6608%",
-            "funding": "0.0000270065",
+            "price_change_pct": "-2.6006%",
+            "funding": "0.0000358977",
             "open_interest": "18363.18",
-            "premium": "0.0013340396",
+            "premium": "0.0008241042",
             "crowding": "",
-            "mark_px": "61.423",
+            "mark_px": "61.461",
             "mid_px": "",
             "prev_day_px": "63.102",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": 2.07565e-05,
-              "open_interest": -1.9000000000014552,
-              "premium": 0.0010653975,
-              "mark_px": -0.012999999999998124
+              "funding": 8.8912e-06,
+              "open_interest": 0.0,
+              "premium": -0.0005099353999999999,
+              "mark_px": 0.0379999999999967
             },
             "pulse_delta_pct": {
-              "funding": 3.32104,
-              "open_interest": -0.00010345721336370193,
-              "premium": 3.9658620149261785,
-              "mark_px": -0.0002116023178592051
+              "funding": 0.32922444596671174,
+              "open_interest": 0.0,
+              "premium": -0.38224907266620867,
+              "mark_px": 0.0006186607622551276
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -1915,30 +1605,30 @@
           "evidence_summary": {
             "direction": "DOWN",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "-2.6608%",
-            "funding": "0.0000270065",
+            "price_change_pct": "-2.6006%",
+            "funding": "0.0000358977",
             "open_interest": "18363.18",
-            "premium": "0.0013340396",
+            "premium": "0.0008241042",
             "crowding": "",
-            "mark_px": "61.423",
+            "mark_px": "61.461",
             "mid_px": "",
             "prev_day_px": "63.102",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": 2.07565e-05,
-              "open_interest": -1.9000000000014552,
-              "premium": 0.0010653975,
-              "mark_px": -0.012999999999998124
+              "funding": 8.8912e-06,
+              "open_interest": 0.0,
+              "premium": -0.0005099353999999999,
+              "mark_px": 0.0379999999999967
             },
             "pulse_delta_pct": {
-              "funding": 3.32104,
-              "open_interest": -0.00010345721336370193,
-              "premium": 3.9658620149261785,
-              "mark_px": -0.0002116023178592051
+              "funding": 0.32922444596671174,
+              "open_interest": 0.0,
+              "premium": -0.38224907266620867,
+              "mark_px": 0.0006186607622551276
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -1965,14 +1655,14 @@
             "588710",
             "159327",
             "159665",
-            "516640",
+            "516350",
             "588170"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
-          "observation_as_of": "2026-11-19T13:16:17+08:00",
+          "observation_as_of": "2026-11-19T13:30:56+08:00",
           "evidence_status": "READY",
           "consumption_status": "CONSUMED",
-          "direction_signal": "FLAT",
+          "direction_signal": "UP",
           "direction_signal_reason": "MARK_VS_PREV_DAY",
           "positioning_signal": "SINGLE_PULSE_ONLY",
           "pricing_signal": "PREMIUM_ABOVE_REFERENCE",
@@ -1982,32 +1672,32 @@
           "priority_effect": "方向支持成立但当前不直接追涨；将该ETF列入下一节点优先复核",
           "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
           "signal_fields": {
-            "direction": "FLAT",
+            "direction": "UP",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "0.0402%",
-            "funding": "0.00000625",
-            "open_interest": "1817466.9999999998",
-            "premium": "0.000351236",
+            "price_change_pct": "0.0975%",
+            "funding": "0.0000128112",
+            "open_interest": "1822472.3999999994",
+            "premium": "0.0013368737",
             "crowding": "",
-            "mark_px": "39.856",
+            "mark_px": "40.047",
             "mid_px": "",
-            "prev_day_px": "39.84",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "40.008",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": -1.4388299999999999e-05,
-              "open_interest": 1825.799999999581,
-              "premium": -0.0008889194999999999,
-              "mark_px": -0.04099999999999682
+              "funding": 6.5612e-06,
+              "open_interest": 5005.399999999674,
+              "premium": 0.0009856377,
+              "mark_px": 0.1909999999999954
             },
             "pulse_delta_pct": {
-              "funding": -0.6971649796737135,
-              "open_interest": 0.0010055951583383218,
-              "premium": -0.7167806779069238,
-              "mark_px": -0.0010276461889364317
+              "funding": 1.0497919999999998,
+              "open_interest": 0.00275405275584078,
+              "premium": 2.806197827102005,
+              "mark_px": 0.004792252107587199
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -2015,32 +1705,32 @@
             "crowding_signal": "INSUFFICIENT_HISTORY"
           },
           "evidence_summary": {
-            "direction": "FLAT",
+            "direction": "UP",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "0.0402%",
-            "funding": "0.00000625",
-            "open_interest": "1817466.9999999998",
-            "premium": "0.000351236",
+            "price_change_pct": "0.0975%",
+            "funding": "0.0000128112",
+            "open_interest": "1822472.3999999994",
+            "premium": "0.0013368737",
             "crowding": "",
-            "mark_px": "39.856",
+            "mark_px": "40.047",
             "mid_px": "",
-            "prev_day_px": "39.84",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "40.008",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": -1.4388299999999999e-05,
-              "open_interest": 1825.799999999581,
-              "premium": -0.0008889194999999999,
-              "mark_px": -0.04099999999999682
+              "funding": 6.5612e-06,
+              "open_interest": 5005.399999999674,
+              "premium": 0.0009856377,
+              "mark_px": 0.1909999999999954
             },
             "pulse_delta_pct": {
-              "funding": -0.6971649796737135,
-              "open_interest": 0.0010055951583383218,
-              "premium": -0.7167806779069238,
-              "mark_px": -0.0010276461889364317
+              "funding": 1.0497919999999998,
+              "open_interest": 0.00275405275584078,
+              "premium": 2.806197827102005,
+              "mark_px": 0.004792252107587199
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -2065,13 +1755,13 @@
             "588170"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
-          "observation_as_of": "2026-11-19T13:16:17+08:00",
+          "observation_as_of": "2026-11-19T13:30:56+08:00",
           "evidence_status": "READY",
           "consumption_status": "CONSUMED",
           "direction_signal": "DOWN",
           "direction_signal_reason": "MARK_VS_PREV_DAY",
           "positioning_signal": "SINGLE_PULSE_ONLY",
-          "pricing_signal": "DISCOUNT_BELOW_REFERENCE",
+          "pricing_signal": "PREMIUM_ABOVE_REFERENCE",
           "crowding_signal": "INSUFFICIENT_HISTORY",
           "cross_market_relation": "UNDETERMINED：缺少A股同步事实",
           "decision_effect": "TIMING_FILTER",
@@ -2080,67 +1770,67 @@
           "signal_fields": {
             "direction": "DOWN",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "-4.6771%",
-            "funding": "0.00000625",
+            "price_change_pct": "-4.3318%",
+            "funding": "0.0000134382",
             "open_interest": "12472.8",
-            "premium": "-0.0004223556",
+            "premium": "0.0030883988",
             "crowding": "",
-            "mark_px": "85.476",
+            "mark_px": "85.646",
             "mid_px": "",
-            "prev_day_px": "89.67",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "89.524",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": 0.0,
+              "funding": 7.188199999999999e-06,
               "open_interest": 0.0,
-              "premium": -0.00024122570000000002,
-              "mark_px": -0.3739999999999952
+              "premium": 0.0035107543999999997,
+              "mark_px": 0.1700000000000017
             },
             "pulse_delta_pct": {
-              "funding": 0.0,
+              "funding": 1.1501119999999998,
               "open_interest": 0.0,
-              "premium": -1.3317828806839733,
-              "mark_px": -0.004356435643564301
+              "premium": 8.31231881381471,
+              "mark_px": 0.001988862370723966
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
-            "pricing_signal": "DISCOUNT_BELOW_REFERENCE",
+            "pricing_signal": "PREMIUM_ABOVE_REFERENCE",
             "crowding_signal": "INSUFFICIENT_HISTORY"
           },
           "evidence_summary": {
             "direction": "DOWN",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "-4.6771%",
-            "funding": "0.00000625",
+            "price_change_pct": "-4.3318%",
+            "funding": "0.0000134382",
             "open_interest": "12472.8",
-            "premium": "-0.0004223556",
+            "premium": "0.0030883988",
             "crowding": "",
-            "mark_px": "85.476",
+            "mark_px": "85.646",
             "mid_px": "",
-            "prev_day_px": "89.67",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "89.524",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": 0.0,
+              "funding": 7.188199999999999e-06,
               "open_interest": 0.0,
-              "premium": -0.00024122570000000002,
-              "mark_px": -0.3739999999999952
+              "premium": 0.0035107543999999997,
+              "mark_px": 0.1700000000000017
             },
             "pulse_delta_pct": {
-              "funding": 0.0,
+              "funding": 1.1501119999999998,
               "open_interest": 0.0,
-              "premium": -1.3317828806839733,
-              "mark_px": -0.004356435643564301
+              "premium": 8.31231881381471,
+              "mark_px": 0.001988862370723966
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
-            "pricing_signal": "DISCOUNT_BELOW_REFERENCE",
+            "pricing_signal": "PREMIUM_ABOVE_REFERENCE",
             "crowding_signal": "INSUFFICIENT_HISTORY"
           },
           "decision_use": "已映射对象用于方向确认、跨市场背离、入场时机过滤或拥挤风险识别；不独立授予交易权限",
@@ -2161,7 +1851,7 @@
             "588170"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
-          "observation_as_of": "2026-11-19T13:16:17+08:00",
+          "observation_as_of": "2026-11-19T13:30:56+08:00",
           "evidence_status": "READY",
           "consumption_status": "CONSUMED",
           "direction_signal": "UP",
@@ -2176,66 +1866,66 @@
           "signal_fields": {
             "direction": "UP",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "3.4034%",
-            "funding": "-0.0000004581",
-            "open_interest": "13441.02",
-            "premium": "-0.0005077797",
+            "price_change_pct": "3.4393%",
+            "funding": "0.0000030706",
+            "open_interest": "13441.54",
+            "premium": "-0.0001858985",
             "crowding": "",
-            "mark_px": "357.3",
+            "mark_px": "358.2",
             "mid_px": "",
-            "prev_day_px": "345.54",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "346.29",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": 7.0586000000000005e-06,
-              "open_interest": 0.0,
-              "premium": -0.0004259547,
-              "mark_px": -0.060000000000002274
+              "funding": 3.5286999999999998e-06,
+              "open_interest": 0.5200000000004366,
+              "premium": 0.0003218812,
+              "mark_px": 0.8999999999999773
             },
             "pulse_delta_pct": {
-              "funding": 0.939055702635465,
-              "open_interest": 0.0,
-              "premium": -5.205679193400551,
-              "mark_px": -0.00016789791806582233
+              "funding": 7.702903296223531,
+              "open_interest": 3.868754008255598e-05,
+              "premium": 0.6338993071207849,
+              "mark_px": 0.002518891687657367
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
-            "funding_signal": "NEGATIVE_FUNDING_SHORTS_PAY",
+            "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
             "pricing_signal": "DISCOUNT_BELOW_REFERENCE",
             "crowding_signal": "INSUFFICIENT_HISTORY"
           },
           "evidence_summary": {
             "direction": "UP",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "3.4034%",
-            "funding": "-0.0000004581",
-            "open_interest": "13441.02",
-            "premium": "-0.0005077797",
+            "price_change_pct": "3.4393%",
+            "funding": "0.0000030706",
+            "open_interest": "13441.54",
+            "premium": "-0.0001858985",
             "crowding": "",
-            "mark_px": "357.3",
+            "mark_px": "358.2",
             "mid_px": "",
-            "prev_day_px": "345.54",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "346.29",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": 7.0586000000000005e-06,
-              "open_interest": 0.0,
-              "premium": -0.0004259547,
-              "mark_px": -0.060000000000002274
+              "funding": 3.5286999999999998e-06,
+              "open_interest": 0.5200000000004366,
+              "premium": 0.0003218812,
+              "mark_px": 0.8999999999999773
             },
             "pulse_delta_pct": {
-              "funding": 0.939055702635465,
-              "open_interest": 0.0,
-              "premium": -5.205679193400551,
-              "mark_px": -0.00016789791806582233
+              "funding": 7.702903296223531,
+              "open_interest": 3.868754008255598e-05,
+              "premium": 0.6338993071207849,
+              "mark_px": 0.002518891687657367
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
-            "funding_signal": "NEGATIVE_FUNDING_SHORTS_PAY",
+            "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
             "pricing_signal": "DISCOUNT_BELOW_REFERENCE",
             "crowding_signal": "INSUFFICIENT_HISTORY"
           },
@@ -2253,7 +1943,7 @@
             "515880"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
-          "observation_as_of": "2026-11-19T13:16:17+08:00",
+          "observation_as_of": "2026-11-19T13:30:56+08:00",
           "evidence_status": "READY",
           "consumption_status": "CONSUMED",
           "direction_signal": "DOWN",
@@ -2268,30 +1958,30 @@
           "signal_fields": {
             "direction": "DOWN",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "-3.8540%",
-            "funding": "0.0000455617",
-            "open_interest": "423282.38",
-            "premium": "0.0009474749",
+            "price_change_pct": "-3.7887%",
+            "funding": "0.0000515305",
+            "open_interest": "425094.92",
+            "premium": "0.0023893158",
             "crowding": "",
-            "mark_px": "108.77",
+            "mark_px": "109.45",
             "mid_px": "",
-            "prev_day_px": "113.13",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "113.76",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": 3.428600000000003e-06,
-              "open_interest": 9613.5799999999,
-              "premium": -0.0002570726,
-              "mark_px": 0.03999999999999204
+              "funding": 5.968799999999996e-06,
+              "open_interest": 1812.539999999979,
+              "premium": 0.0014418409,
+              "mark_px": 0.6800000000000068
             },
             "pulse_delta_pct": {
-              "funding": 0.08137545065518567,
-              "open_interest": 0.02323979956912365,
-              "premium": -0.21341839985554742,
-              "mark_px": 0.0003678837487353264
+              "funding": 0.13100476935671837,
+              "open_interest": 0.004282105954894647,
+              "premium": 1.5217721334887078,
+              "mark_px": 0.006251723820906563
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -2301,30 +1991,30 @@
           "evidence_summary": {
             "direction": "DOWN",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "-3.8540%",
-            "funding": "0.0000455617",
-            "open_interest": "423282.38",
-            "premium": "0.0009474749",
+            "price_change_pct": "-3.7887%",
+            "funding": "0.0000515305",
+            "open_interest": "425094.92",
+            "premium": "0.0023893158",
             "crowding": "",
-            "mark_px": "108.77",
+            "mark_px": "109.45",
             "mid_px": "",
-            "prev_day_px": "113.13",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "113.76",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": 3.428600000000003e-06,
-              "open_interest": 9613.5799999999,
-              "premium": -0.0002570726,
-              "mark_px": 0.03999999999999204
+              "funding": 5.968799999999996e-06,
+              "open_interest": 1812.539999999979,
+              "premium": 0.0014418409,
+              "mark_px": 0.6800000000000068
             },
             "pulse_delta_pct": {
-              "funding": 0.08137545065518567,
-              "open_interest": 0.02323979956912365,
-              "premium": -0.21341839985554742,
-              "mark_px": 0.0003678837487353264
+              "funding": 0.13100476935671837,
+              "open_interest": 0.004282105954894647,
+              "premium": 1.5217721334887078,
+              "mark_px": 0.006251723820906563
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -2351,17 +2041,17 @@
             "588710",
             "159327",
             "159665",
-            "516640",
+            "516350",
             "588170"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
-          "observation_as_of": "2026-11-19T13:16:17+08:00",
+          "observation_as_of": "2026-11-19T13:30:56+08:00",
           "evidence_status": "READY",
           "consumption_status": "CONSUMED",
           "direction_signal": "DOWN",
           "direction_signal_reason": "MARK_VS_PREV_DAY",
           "positioning_signal": "SINGLE_PULSE_ONLY",
-          "pricing_signal": "DISCOUNT_BELOW_REFERENCE",
+          "pricing_signal": "PREMIUM_ABOVE_REFERENCE",
           "crowding_signal": "INSUFFICIENT_HISTORY",
           "cross_market_relation": "UNDETERMINED：缺少A股同步事实",
           "decision_effect": "TIMING_FILTER",
@@ -2370,67 +2060,67 @@
           "signal_fields": {
             "direction": "DOWN",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "-0.6885%",
+            "price_change_pct": "-0.6663%",
             "funding": "0.00000625",
-            "open_interest": "5567.746",
-            "premium": "-0.0002519054",
+            "open_interest": "5563.272",
+            "premium": "0.0007290636",
             "crowding": "",
-            "mark_px": "464.46",
+            "mark_px": "465.17",
             "mid_px": "",
-            "prev_day_px": "467.68",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "468.29",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": 2.46937e-05,
-              "open_interest": -0.5640000000003056,
-              "premium": 6.01709e-05,
-              "mark_px": -0.17000000000001592
+              "funding": 0.0,
+              "open_interest": -4.47400000000016,
+              "premium": 0.000980969,
+              "mark_px": 0.7100000000000364
             },
             "pulse_delta_pct": {
-              "funding": 1.338869098933511,
-              "open_interest": -0.0001012874642396536,
-              "premium": 0.19280829720167791,
-              "mark_px": -0.000365882530185343
+              "funding": 0.0,
+              "open_interest": -0.0008035567714475768,
+              "premium": 3.8941959957984227,
+              "mark_px": 0.001528656934935272
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
-            "pricing_signal": "DISCOUNT_BELOW_REFERENCE",
+            "pricing_signal": "PREMIUM_ABOVE_REFERENCE",
             "crowding_signal": "INSUFFICIENT_HISTORY"
           },
           "evidence_summary": {
             "direction": "DOWN",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "-0.6885%",
+            "price_change_pct": "-0.6663%",
             "funding": "0.00000625",
-            "open_interest": "5567.746",
-            "premium": "-0.0002519054",
+            "open_interest": "5563.272",
+            "premium": "0.0007290636",
             "crowding": "",
-            "mark_px": "464.46",
+            "mark_px": "465.17",
             "mid_px": "",
-            "prev_day_px": "467.68",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "468.29",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": 2.46937e-05,
-              "open_interest": -0.5640000000003056,
-              "premium": 6.01709e-05,
-              "mark_px": -0.17000000000001592
+              "funding": 0.0,
+              "open_interest": -4.47400000000016,
+              "premium": 0.000980969,
+              "mark_px": 0.7100000000000364
             },
             "pulse_delta_pct": {
-              "funding": 1.338869098933511,
-              "open_interest": -0.0001012874642396536,
-              "premium": 0.19280829720167791,
-              "mark_px": -0.000365882530185343
+              "funding": 0.0,
+              "open_interest": -0.0008035567714475768,
+              "premium": 3.8941959957984227,
+              "mark_px": 0.001528656934935272
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
-            "pricing_signal": "DISCOUNT_BELOW_REFERENCE",
+            "pricing_signal": "PREMIUM_ABOVE_REFERENCE",
             "crowding_signal": "INSUFFICIENT_HISTORY"
           },
           "decision_use": "已映射对象用于方向确认、跨市场背离、入场时机过滤或拥挤风险识别；不独立授予交易权限",
@@ -2453,11 +2143,11 @@
             "588710",
             "159327",
             "159665",
-            "516640",
+            "516350",
             "588170"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
-          "observation_as_of": "2026-11-19T13:16:17+08:00",
+          "observation_as_of": "2026-11-19T13:30:56+08:00",
           "evidence_status": "READY",
           "consumption_status": "CONSUMED",
           "direction_signal": "DOWN",
@@ -2472,30 +2162,30 @@
           "signal_fields": {
             "direction": "DOWN",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "-0.7654%",
-            "funding": "-0.0007873026",
-            "open_interest": "74145.74",
-            "premium": "-0.0142004408",
+            "price_change_pct": "-2.2605%",
+            "funding": "-0.0008201938",
+            "open_interest": "74652.16",
+            "premium": "-0.0128397362",
             "crowding": "",
-            "mark_px": "32.281",
+            "mark_px": "32.342",
             "mid_px": "",
-            "prev_day_px": "32.53",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "33.09",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": -6.82282e-05,
-              "open_interest": -84.5,
-              "premium": -0.0031168485,
-              "mark_px": 0.0049999999999954525
+              "funding": -3.289120000000002e-05,
+              "open_interest": 506.41999999999825,
+              "premium": 0.0013607046000000001,
+              "mark_px": 0.06099999999999994
             },
             "pulse_delta_pct": {
-              "funding": -0.09488336672811602,
-              "open_interest": -0.001138350084817185,
-              "premium": -0.2812128428794697,
-              "mark_px": 0.00015491386788931257
+              "funding": -0.04177707529481043,
+              "open_interest": 0.006830061983331723,
+              "premium": 0.09582129309676078,
+              "mark_px": 0.0018896564542610187
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "NEGATIVE_FUNDING_SHORTS_PAY",
@@ -2505,30 +2195,30 @@
           "evidence_summary": {
             "direction": "DOWN",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "-0.7654%",
-            "funding": "-0.0007873026",
-            "open_interest": "74145.74",
-            "premium": "-0.0142004408",
+            "price_change_pct": "-2.2605%",
+            "funding": "-0.0008201938",
+            "open_interest": "74652.16",
+            "premium": "-0.0128397362",
             "crowding": "",
-            "mark_px": "32.281",
+            "mark_px": "32.342",
             "mid_px": "",
-            "prev_day_px": "32.53",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "33.09",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": -6.82282e-05,
-              "open_interest": -84.5,
-              "premium": -0.0031168485,
-              "mark_px": 0.0049999999999954525
+              "funding": -3.289120000000002e-05,
+              "open_interest": 506.41999999999825,
+              "premium": 0.0013607046000000001,
+              "mark_px": 0.06099999999999994
             },
             "pulse_delta_pct": {
-              "funding": -0.09488336672811602,
-              "open_interest": -0.001138350084817185,
-              "premium": -0.2812128428794697,
-              "mark_px": 0.00015491386788931257
+              "funding": -0.04177707529481043,
+              "open_interest": 0.006830061983331723,
+              "premium": 0.09582129309676078,
+              "mark_px": 0.0018896564542610187
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "NEGATIVE_FUNDING_SHORTS_PAY",
@@ -2555,11 +2245,11 @@
             "588710",
             "159327",
             "159665",
-            "516640",
+            "516350",
             "588170"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
-          "observation_as_of": "2026-11-19T13:16:17+08:00",
+          "observation_as_of": "2026-11-19T13:30:56+08:00",
           "evidence_status": "READY",
           "consumption_status": "CONSUMED",
           "direction_signal": "UP",
@@ -2574,30 +2264,30 @@
           "signal_fields": {
             "direction": "UP",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "2.3457%",
+            "price_change_pct": "0.4884%",
             "funding": "0.00000625",
-            "open_interest": "4116215.3999999999",
-            "premium": "0.0000389057",
+            "open_interest": "4110886.3999999999",
+            "premium": "0.0002315061",
             "crowding": "",
-            "mark_px": "5.6547",
+            "mark_px": "5.637",
             "mid_px": "",
-            "prev_day_px": "5.5251",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "5.6096",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
               "funding": 0.0,
-              "open_interest": -9145.199999999255,
-              "premium": -0.0023855466,
-              "mark_px": 0.019199999999999662
+              "open_interest": -5329.0,
+              "premium": 0.0001926004,
+              "mark_px": -0.017700000000000493
             },
             "pulse_delta_pct": {
               "funding": 0.0,
-              "open_interest": -0.002216824391060325,
-              "premium": -0.9839527880173184,
-              "mark_px": 0.003406973649188122
+              "open_interest": -0.0012946358443729645,
+              "premium": 4.950441709055485,
+              "mark_px": -0.0031301395299486254
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -2607,30 +2297,30 @@
           "evidence_summary": {
             "direction": "UP",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "2.3457%",
+            "price_change_pct": "0.4884%",
             "funding": "0.00000625",
-            "open_interest": "4116215.3999999999",
-            "premium": "0.0000389057",
+            "open_interest": "4110886.3999999999",
+            "premium": "0.0002315061",
             "crowding": "",
-            "mark_px": "5.6547",
+            "mark_px": "5.637",
             "mid_px": "",
-            "prev_day_px": "5.5251",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "5.6096",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
               "funding": 0.0,
-              "open_interest": -9145.199999999255,
-              "premium": -0.0023855466,
-              "mark_px": 0.019199999999999662
+              "open_interest": -5329.0,
+              "premium": 0.0001926004,
+              "mark_px": -0.017700000000000493
             },
             "pulse_delta_pct": {
               "funding": 0.0,
-              "open_interest": -0.002216824391060325,
-              "premium": -0.9839527880173184,
-              "mark_px": 0.003406973649188122
+              "open_interest": -0.0012946358443729645,
+              "premium": 4.950441709055485,
+              "mark_px": -0.0031301395299486254
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -2657,11 +2347,11 @@
             "588710",
             "159327",
             "159665",
-            "516640",
+            "516350",
             "588170"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
-          "observation_as_of": "2026-11-19T13:16:17+08:00",
+          "observation_as_of": "2026-11-19T13:30:56+08:00",
           "evidence_status": "READY",
           "consumption_status": "CONSUMED",
           "direction_signal": "DOWN",
@@ -2676,30 +2366,30 @@
           "signal_fields": {
             "direction": "DOWN",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "-0.4944%",
-            "funding": "0.0000317623",
-            "open_interest": "732608.28",
-            "premium": "0.0003722255",
+            "price_change_pct": "-0.3972%",
+            "funding": "0.0000364815",
+            "open_interest": "751550.6399999999",
+            "premium": "0.0016043614",
             "crowding": "",
-            "mark_px": "50.92",
+            "mark_px": "51.404",
             "mid_px": "",
-            "prev_day_px": "51.173",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "51.609",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": 2.29376e-05,
-              "open_interest": 117013.91999999993,
-              "premium": -0.0006085513,
-              "mark_px": -0.08899999999999864
+              "funding": 4.7192000000000005e-06,
+              "open_interest": 18942.35999999987,
+              "premium": 0.0012321359,
+              "mark_px": 0.48400000000000176
             },
             "pulse_delta_pct": {
-              "funding": 2.5992498328555076,
-              "open_interest": 0.1900828331175742,
-              "premium": -0.6204788897942937,
-              "mark_px": -0.0017447901350741758
+              "funding": 0.14857866086523963,
+              "open_interest": 0.025856055025749735,
+              "premium": 3.310186701340988,
+              "mark_px": 0.009505106048703884
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -2709,30 +2399,30 @@
           "evidence_summary": {
             "direction": "DOWN",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "-0.4944%",
-            "funding": "0.0000317623",
-            "open_interest": "732608.28",
-            "premium": "0.0003722255",
+            "price_change_pct": "-0.3972%",
+            "funding": "0.0000364815",
+            "open_interest": "751550.6399999999",
+            "premium": "0.0016043614",
             "crowding": "",
-            "mark_px": "50.92",
+            "mark_px": "51.404",
             "mid_px": "",
-            "prev_day_px": "51.173",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "prev_day_px": "51.609",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": 2.29376e-05,
-              "open_interest": 117013.91999999993,
-              "premium": -0.0006085513,
-              "mark_px": -0.08899999999999864
+              "funding": 4.7192000000000005e-06,
+              "open_interest": 18942.35999999987,
+              "premium": 0.0012321359,
+              "mark_px": 0.48400000000000176
             },
             "pulse_delta_pct": {
-              "funding": 2.5992498328555076,
-              "open_interest": 0.1900828331175742,
-              "premium": -0.6204788897942937,
-              "mark_px": -0.0017447901350741758
+              "funding": 0.14857866086523963,
+              "open_interest": 0.025856055025749735,
+              "premium": 3.310186701340988,
+              "mark_px": 0.009505106048703884
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -2754,7 +2444,7 @@
             "159217"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
-          "observation_as_of": "2026-11-19T13:16:17+08:00",
+          "observation_as_of": "2026-11-19T13:30:56+08:00",
           "evidence_status": "READY",
           "consumption_status": "CONSUMED",
           "direction_signal": "UP",
@@ -2769,30 +2459,30 @@
           "signal_fields": {
             "direction": "UP",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "0.1100%",
-            "funding": "0.0001352459",
+            "price_change_pct": "0.1788%",
+            "funding": "0.0000489707",
             "open_interest": "775.08",
-            "premium": "0.0019517483",
+            "premium": "0.0004977345",
             "crowding": "",
-            "mark_px": "145.56",
+            "mark_px": "145.66",
             "mid_px": "",
             "prev_day_px": "145.4",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": -5.174300000000009e-06,
+              "funding": -8.627519999999998e-05,
               "open_interest": 0.0,
-              "premium": -0.0006893585000000001,
-              "mark_px": -0.060000000000002274
+              "premium": -0.0014540138,
+              "mark_px": 0.09999999999999432
             },
             "pulse_delta_pct": {
-              "funding": -0.03684868701226753,
+              "funding": -0.6379136077322861,
               "open_interest": 0.0,
-              "premium": -0.2610112169640395,
-              "mark_px": -0.0004120313143799085
+              "premium": -0.7449801800775233,
+              "mark_px": 0.0006870019236053471
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -2802,30 +2492,30 @@
           "evidence_summary": {
             "direction": "UP",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "0.1100%",
-            "funding": "0.0001352459",
+            "price_change_pct": "0.1788%",
+            "funding": "0.0000489707",
             "open_interest": "775.08",
-            "premium": "0.0019517483",
+            "premium": "0.0004977345",
             "crowding": "",
-            "mark_px": "145.56",
+            "mark_px": "145.66",
             "mid_px": "",
             "prev_day_px": "145.4",
-            "previous_pulse_as_of": "2026-11-19T13:02:22+08:00",
+            "previous_pulse_as_of": "2026-11-19T13:16:17+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": -5.174300000000009e-06,
+              "funding": -8.627519999999998e-05,
               "open_interest": 0.0,
-              "premium": -0.0006893585000000001,
-              "mark_px": -0.060000000000002274
+              "premium": -0.0014540138,
+              "mark_px": 0.09999999999999432
             },
             "pulse_delta_pct": {
-              "funding": -0.03684868701226753,
+              "funding": -0.6379136077322861,
               "open_interest": 0.0,
-              "premium": -0.2610112169640395,
-              "mark_px": -0.0004120313143799085
+              "premium": -0.7449801800775233,
+              "mark_px": 0.0006870019236053471
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -2850,7 +2540,7 @@
             "588170"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
-          "observation_as_of": "2026-11-19T13:16:19+08:00",
+          "observation_as_of": "2026-11-19T13:30:57+08:00",
           "evidence_status": "READY",
           "consumption_status": "CONSUMED",
           "direction_signal": "DOWN",
@@ -2865,30 +2555,30 @@
           "signal_fields": {
             "direction": "DOWN",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "-1.7215%",
+            "price_change_pct": "-1.1021%",
             "funding": "0.0000075",
             "open_interest": "3552.12",
-            "premium": "-0.0004170528",
+            "premium": "-0.0007383957",
             "crowding": "",
-            "mark_px": "215.8",
+            "mark_px": "217.16",
             "mid_px": "",
             "prev_day_px": "219.58",
-            "previous_pulse_as_of": "2026-11-19T13:02:23+08:00",
+            "previous_pulse_as_of": "2026-11-19T13:16:19+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 836,
+            "comparison_age_seconds": 878,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": 2.4397000000000005e-06,
+              "funding": 0.0,
               "open_interest": 0.0,
-              "premium": -0.0004402009,
-              "mark_px": -0.19999999999998863
+              "premium": -0.0003213429,
+              "mark_px": 1.3599999999999852
             },
             "pulse_delta_pct": {
-              "funding": 0.48212556567792436,
+              "funding": 0.0,
               "open_interest": 0.0,
-              "premium": -19.016718434774344,
-              "mark_px": -0.0009259259259258733
+              "premium": -0.7705089139792372,
+              "mark_px": 0.006302131603336354
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -2898,30 +2588,30 @@
           "evidence_summary": {
             "direction": "DOWN",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "-1.7215%",
+            "price_change_pct": "-1.1021%",
             "funding": "0.0000075",
             "open_interest": "3552.12",
-            "premium": "-0.0004170528",
+            "premium": "-0.0007383957",
             "crowding": "",
-            "mark_px": "215.8",
+            "mark_px": "217.16",
             "mid_px": "",
             "prev_day_px": "219.58",
-            "previous_pulse_as_of": "2026-11-19T13:02:23+08:00",
+            "previous_pulse_as_of": "2026-11-19T13:16:19+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 836,
+            "comparison_age_seconds": 878,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": 2.4397000000000005e-06,
+              "funding": 0.0,
               "open_interest": 0.0,
-              "premium": -0.0004402009,
-              "mark_px": -0.19999999999998863
+              "premium": -0.0003213429,
+              "mark_px": 1.3599999999999852
             },
             "pulse_delta_pct": {
-              "funding": 0.48212556567792436,
+              "funding": 0.0,
               "open_interest": 0.0,
-              "premium": -19.016718434774344,
-              "mark_px": -0.0009259259259258733
+              "premium": -0.7705089139792372,
+              "mark_px": 0.006302131603336354
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -2948,11 +2638,11 @@
             "588710",
             "159327",
             "159665",
-            "516640",
+            "516350",
             "588170"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
-          "observation_as_of": "2026-11-19T13:16:19+08:00",
+          "observation_as_of": "2026-11-19T13:30:58+08:00",
           "evidence_status": "READY",
           "consumption_status": "CONSUMED",
           "direction_signal": "DOWN",
@@ -2967,30 +2657,30 @@
           "signal_fields": {
             "direction": "DOWN",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "-3.6716%",
-            "funding": "0.00000625",
-            "open_interest": "3940.235",
-            "premium": "0.0018382587",
+            "price_change_pct": "-3.5032%",
+            "funding": "0.0000142754",
+            "open_interest": "3931.084",
+            "premium": "0.0008535984",
             "crowding": "",
-            "mark_px": "786.81",
+            "mark_px": "790.28",
             "mid_px": "",
-            "prev_day_px": "816.8",
-            "previous_pulse_as_of": "2026-11-19T13:02:24+08:00",
+            "prev_day_px": "818.97",
+            "previous_pulse_as_of": "2026-11-19T13:16:19+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": 0.0,
-              "open_interest": -11.022599999999784,
-              "premium": 0.0010238332,
-              "mark_px": 0.06999999999993634
+              "funding": 8.0254e-06,
+              "open_interest": -9.151000000000295,
+              "premium": -0.0009846603,
+              "mark_px": 3.4700000000000273
             },
             "pulse_delta_pct": {
-              "funding": 0.0,
-              "open_interest": -0.0027896434795847743,
-              "premium": 1.2571232113925708,
-              "mark_px": 8.89747565904064e-05
+              "funding": 1.2840639999999999,
+              "open_interest": -0.002322450310704893,
+              "premium": -0.5356483828962703,
+              "mark_px": 0.0044102133933224385
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -3000,30 +2690,30 @@
           "evidence_summary": {
             "direction": "DOWN",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "-3.6716%",
-            "funding": "0.00000625",
-            "open_interest": "3940.235",
-            "premium": "0.0018382587",
+            "price_change_pct": "-3.5032%",
+            "funding": "0.0000142754",
+            "open_interest": "3931.084",
+            "premium": "0.0008535984",
             "crowding": "",
-            "mark_px": "786.81",
+            "mark_px": "790.28",
             "mid_px": "",
-            "prev_day_px": "816.8",
-            "previous_pulse_as_of": "2026-11-19T13:02:24+08:00",
+            "prev_day_px": "818.97",
+            "previous_pulse_as_of": "2026-11-19T13:16:19+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": 0.0,
-              "open_interest": -11.022599999999784,
-              "premium": 0.0010238332,
-              "mark_px": 0.06999999999993634
+              "funding": 8.0254e-06,
+              "open_interest": -9.151000000000295,
+              "premium": -0.0009846603,
+              "mark_px": 3.4700000000000273
             },
             "pulse_delta_pct": {
-              "funding": 0.0,
-              "open_interest": -0.0027896434795847743,
-              "premium": 1.2571232113925708,
-              "mark_px": 8.89747565904064e-05
+              "funding": 1.2840639999999999,
+              "open_interest": -0.002322450310704893,
+              "premium": -0.5356483828962703,
+              "mark_px": 0.0044102133933224385
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -3044,7 +2734,7 @@
             "515880"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
-          "observation_as_of": "2026-11-19T13:16:19+08:00",
+          "observation_as_of": "2026-11-19T13:30:58+08:00",
           "evidence_status": "READY",
           "consumption_status": "CONSUMED",
           "direction_signal": "DOWN",
@@ -3059,30 +2749,30 @@
           "signal_fields": {
             "direction": "DOWN",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "-3.7401%",
-            "funding": "0.0000319327",
-            "open_interest": "45247.42",
-            "premium": "0.0005755793",
+            "price_change_pct": "-3.8069%",
+            "funding": "0.0000414816",
+            "open_interest": "45248.78",
+            "premium": "0.0018987747",
             "crowding": "",
-            "mark_px": "108.87",
+            "mark_px": "109.41",
             "mid_px": "",
-            "prev_day_px": "113.1",
-            "previous_pulse_as_of": "2026-11-19T13:02:24+08:00",
+            "prev_day_px": "113.74",
+            "previous_pulse_as_of": "2026-11-19T13:16:19+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": 2.56827e-05,
-              "open_interest": -13.240000000005239,
-              "premium": -0.0007120415,
-              "mark_px": 0.18000000000000682
+              "funding": 9.5489e-06,
+              "open_interest": 1.360000000000582,
+              "premium": 0.0013231954,
+              "mark_px": 0.539999999999992
             },
             "pulse_delta_pct": {
-              "funding": 4.1092319999999996,
-              "open_interest": -0.0002925277713582886,
-              "premium": -0.5529900573212237,
-              "mark_px": 0.0016560861164781197
+              "funding": 0.2990320267312191,
+              "open_interest": 3.005696236383383e-05,
+              "premium": 2.298893306274218,
+              "mark_px": 0.00496004408928072
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -3092,30 +2782,30 @@
           "evidence_summary": {
             "direction": "DOWN",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "-3.7401%",
-            "funding": "0.0000319327",
-            "open_interest": "45247.42",
-            "premium": "0.0005755793",
+            "price_change_pct": "-3.8069%",
+            "funding": "0.0000414816",
+            "open_interest": "45248.78",
+            "premium": "0.0018987747",
             "crowding": "",
-            "mark_px": "108.87",
+            "mark_px": "109.41",
             "mid_px": "",
-            "prev_day_px": "113.1",
-            "previous_pulse_as_of": "2026-11-19T13:02:24+08:00",
+            "prev_day_px": "113.74",
+            "previous_pulse_as_of": "2026-11-19T13:16:19+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": 2.56827e-05,
-              "open_interest": -13.240000000005239,
-              "premium": -0.0007120415,
-              "mark_px": 0.18000000000000682
+              "funding": 9.5489e-06,
+              "open_interest": 1.360000000000582,
+              "premium": 0.0013231954,
+              "mark_px": 0.539999999999992
             },
             "pulse_delta_pct": {
-              "funding": 4.1092319999999996,
-              "open_interest": -0.0002925277713582886,
-              "premium": -0.5529900573212237,
-              "mark_px": 0.0016560861164781197
+              "funding": 0.2990320267312191,
+              "open_interest": 3.005696236383383e-05,
+              "premium": 2.298893306274218,
+              "mark_px": 0.00496004408928072
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -3136,7 +2826,7 @@
             "513180"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
-          "observation_as_of": "2026-11-19T13:16:19+08:00",
+          "observation_as_of": "2026-11-19T13:30:58+08:00",
           "evidence_status": "READY",
           "consumption_status": "CONSUMED",
           "direction_signal": "UP",
@@ -3151,30 +2841,30 @@
           "signal_fields": {
             "direction": "UP",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "0.3481%",
-            "funding": "0.0000303805",
-            "open_interest": "1931.92",
-            "premium": "0.0005941704",
+            "price_change_pct": "0.2744%",
+            "funding": "0.0000351172",
+            "open_interest": "1932.32",
+            "premium": "0.0009770943",
             "crowding": "",
-            "mark_px": "138.37",
+            "mark_px": "138.84",
             "mid_px": "",
-            "prev_day_px": "137.89",
-            "previous_pulse_as_of": "2026-11-19T13:02:24+08:00",
+            "prev_day_px": "138.46",
+            "previous_pulse_as_of": "2026-11-19T13:16:19+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": 1.1036800000000002e-05,
-              "open_interest": -0.5199999999999818,
-              "premium": -0.0005024919000000001,
-              "mark_px": -0.1699999999999875
+              "funding": 4.736700000000002e-06,
+              "open_interest": 0.3999999999998636,
+              "premium": 0.00038292390000000006,
+              "mark_px": 0.46999999999999886
             },
             "pulse_delta_pct": {
-              "funding": 0.5705630256879503,
-              "open_interest": -0.0002690898553124453,
-              "premium": -0.45820112536010404,
-              "mark_px": -0.0012270824310667498
+              "funding": 0.15591250966903117,
+              "open_interest": 0.00020704791088650853,
+              "premium": 0.6444681525703738,
+              "mark_px": 0.003396690033966892
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -3184,30 +2874,30 @@
           "evidence_summary": {
             "direction": "UP",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "0.3481%",
-            "funding": "0.0000303805",
-            "open_interest": "1931.92",
-            "premium": "0.0005941704",
+            "price_change_pct": "0.2744%",
+            "funding": "0.0000351172",
+            "open_interest": "1932.32",
+            "premium": "0.0009770943",
             "crowding": "",
-            "mark_px": "138.37",
+            "mark_px": "138.84",
             "mid_px": "",
-            "prev_day_px": "137.89",
-            "previous_pulse_as_of": "2026-11-19T13:02:24+08:00",
+            "prev_day_px": "138.46",
+            "previous_pulse_as_of": "2026-11-19T13:16:19+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": 1.1036800000000002e-05,
-              "open_interest": -0.5199999999999818,
-              "premium": -0.0005024919000000001,
-              "mark_px": -0.1699999999999875
+              "funding": 4.736700000000002e-06,
+              "open_interest": 0.3999999999998636,
+              "premium": 0.00038292390000000006,
+              "mark_px": 0.46999999999999886
             },
             "pulse_delta_pct": {
-              "funding": 0.5705630256879503,
-              "open_interest": -0.0002690898553124453,
-              "premium": -0.45820112536010404,
-              "mark_px": -0.0012270824310667498
+              "funding": 0.15591250966903117,
+              "open_interest": 0.00020704791088650853,
+              "premium": 0.6444681525703738,
+              "mark_px": 0.003396690033966892
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -3233,11 +2923,11 @@
             "588710",
             "159327",
             "159665",
-            "516640",
+            "516350",
             "588170"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
-          "observation_as_of": "2026-11-19T13:16:19+08:00",
+          "observation_as_of": "2026-11-19T13:30:58+08:00",
           "evidence_status": "READY",
           "consumption_status": "CONSUMED",
           "direction_signal": "DOWN",
@@ -3252,30 +2942,30 @@
           "signal_fields": {
             "direction": "DOWN",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "-3.5986%",
-            "funding": "0.0000268055",
-            "open_interest": "54712.872",
-            "premium": "0.0008432148",
+            "price_change_pct": "-3.5436%",
+            "funding": "0.0000287312",
+            "open_interest": "54880.96",
+            "premium": "0.0008444503",
             "crowding": "",
-            "mark_px": "151.89",
+            "mark_px": "152.16",
             "mid_px": "",
-            "prev_day_px": "157.56",
-            "previous_pulse_as_of": "2026-11-19T13:02:24+08:00",
+            "prev_day_px": "157.75",
+            "previous_pulse_as_of": "2026-11-19T13:16:19+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": 1.7950999999999991e-06,
-              "open_interest": -97.8379999999961,
-              "premium": -6.444110000000008e-05,
-              "mark_px": -0.22000000000002728
+              "funding": 1.925700000000001e-06,
+              "open_interest": 168.0879999999961,
+              "premium": 1.2354999999999918e-06,
+              "mark_px": 0.27000000000001023
             },
             "pulse_delta_pct": {
-              "funding": 0.07177414195694587,
-              "open_interest": -0.0017850161036044982,
-              "premium": -0.0709972799163208,
-              "mark_px": -0.00144632174084562
+              "funding": 0.07183973438286922,
+              "open_interest": 0.003072183818096701,
+              "premium": 0.0014652257052414068,
+              "mark_px": 0.0017776022121272648
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -3285,30 +2975,30 @@
           "evidence_summary": {
             "direction": "DOWN",
             "direction_source": "MARK_VS_PREV_DAY",
-            "price_change_pct": "-3.5986%",
-            "funding": "0.0000268055",
-            "open_interest": "54712.872",
-            "premium": "0.0008432148",
+            "price_change_pct": "-3.5436%",
+            "funding": "0.0000287312",
+            "open_interest": "54880.96",
+            "premium": "0.0008444503",
             "crowding": "",
-            "mark_px": "151.89",
+            "mark_px": "152.16",
             "mid_px": "",
-            "prev_day_px": "157.56",
-            "previous_pulse_as_of": "2026-11-19T13:02:24+08:00",
+            "prev_day_px": "157.75",
+            "previous_pulse_as_of": "2026-11-19T13:16:19+08:00",
             "pulse_comparison_status": "COMPARABLE",
             "comparison_reason": "",
-            "comparison_age_seconds": 835,
+            "comparison_age_seconds": 879,
             "comparison_horizon": "INTRADAY_10M",
             "pulse_delta": {
-              "funding": 1.7950999999999991e-06,
-              "open_interest": -97.8379999999961,
-              "premium": -6.444110000000008e-05,
-              "mark_px": -0.22000000000002728
+              "funding": 1.925700000000001e-06,
+              "open_interest": 168.0879999999961,
+              "premium": 1.2354999999999918e-06,
+              "mark_px": 0.27000000000001023
             },
             "pulse_delta_pct": {
-              "funding": 0.07177414195694587,
-              "open_interest": -0.0017850161036044982,
-              "premium": -0.0709972799163208,
-              "mark_px": -0.00144632174084562
+              "funding": 0.07183973438286922,
+              "open_interest": 0.003072183818096701,
+              "premium": 0.0014652257052414068,
+              "mark_px": 0.0017776022121272648
             },
             "positioning_signal": "SINGLE_PULSE_ONLY",
             "funding_signal": "POSITIVE_FUNDING_LONGS_PAY",
@@ -3333,8 +3023,8 @@
           "priority_effect": "方向支持成立但当前不直接追涨；将该ETF列入下一节点优先复核",
           "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
           "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
-          "source_context_id": "hl-a9dd503be02de175",
-          "source_observation_as_of": "2026-11-19T13:16:17+08:00"
+          "source_context_id": "hl-9b52b5eaf1ceb5c0",
+          "source_observation_as_of": "2026-11-19T13:30:56+08:00"
         },
         {
           "ashare_code": "588000",
@@ -3347,8 +3037,8 @@
           "priority_effect": "方向支持成立但当前不直接追涨；将该ETF列入下一节点优先复核",
           "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
           "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
-          "source_context_id": "hl-a9dd503be02de175",
-          "source_observation_as_of": "2026-11-19T13:16:17+08:00"
+          "source_context_id": "hl-9b52b5eaf1ceb5c0",
+          "source_observation_as_of": "2026-11-19T13:30:56+08:00"
         },
         {
           "ashare_code": "159781",
@@ -3361,8 +3051,8 @@
           "priority_effect": "方向支持成立但当前不直接追涨；将该ETF列入下一节点优先复核",
           "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
           "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
-          "source_context_id": "hl-a9dd503be02de175",
-          "source_observation_as_of": "2026-11-19T13:16:17+08:00"
+          "source_context_id": "hl-9b52b5eaf1ceb5c0",
+          "source_observation_as_of": "2026-11-19T13:30:56+08:00"
         },
         {
           "ashare_code": "513180",
@@ -3375,8 +3065,8 @@
           "priority_effect": "方向支持成立但当前不直接追涨；将该ETF列入下一节点优先复核",
           "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
           "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
-          "source_context_id": "hl-a9dd503be02de175",
-          "source_observation_as_of": "2026-11-19T13:16:17+08:00"
+          "source_context_id": "hl-9b52b5eaf1ceb5c0",
+          "source_observation_as_of": "2026-11-19T13:30:56+08:00"
         },
         {
           "ashare_code": "159561",
@@ -3389,8 +3079,8 @@
           "priority_effect": "方向支持成立但当前不直接追涨；将该ETF列入下一节点优先复核",
           "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
           "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
-          "source_context_id": "hl-a9dd503be02de175",
-          "source_observation_as_of": "2026-11-19T13:16:17+08:00"
+          "source_context_id": "hl-9b52b5eaf1ceb5c0",
+          "source_observation_as_of": "2026-11-19T13:30:56+08:00"
         },
         {
           "ashare_code": "515080",
@@ -3403,8 +3093,8 @@
           "priority_effect": "方向支持成立但当前不直接追涨；将该ETF列入下一节点优先复核",
           "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
           "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
-          "source_context_id": "hl-a9dd503be02de175",
-          "source_observation_as_of": "2026-11-19T13:16:17+08:00"
+          "source_context_id": "hl-9b52b5eaf1ceb5c0",
+          "source_observation_as_of": "2026-11-19T13:30:56+08:00"
         },
         {
           "ashare_code": "515880",
@@ -3417,8 +3107,8 @@
           "priority_effect": "方向支持成立但当前不直接追涨；将该ETF列入下一节点优先复核",
           "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
           "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
-          "source_context_id": "hl-a9dd503be02de175",
-          "source_observation_as_of": "2026-11-19T13:16:17+08:00"
+          "source_context_id": "hl-9b52b5eaf1ceb5c0",
+          "source_observation_as_of": "2026-11-19T13:30:56+08:00"
         },
         {
           "ashare_code": "588200",
@@ -3431,8 +3121,8 @@
           "priority_effect": "方向支持成立但当前不直接追涨；将该ETF列入下一节点优先复核",
           "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
           "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
-          "source_context_id": "hl-a9dd503be02de175",
-          "source_observation_as_of": "2026-11-19T13:16:17+08:00"
+          "source_context_id": "hl-9b52b5eaf1ceb5c0",
+          "source_observation_as_of": "2026-11-19T13:30:56+08:00"
         },
         {
           "ashare_code": "588450",
@@ -3445,8 +3135,8 @@
           "priority_effect": "方向支持成立但当前不直接追涨；将该ETF列入下一节点优先复核",
           "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
           "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
-          "source_context_id": "hl-a9dd503be02de175",
-          "source_observation_as_of": "2026-11-19T13:16:17+08:00"
+          "source_context_id": "hl-9b52b5eaf1ceb5c0",
+          "source_observation_as_of": "2026-11-19T13:30:56+08:00"
         },
         {
           "ashare_code": "588710",
@@ -3459,8 +3149,8 @@
           "priority_effect": "方向支持成立但当前不直接追涨；将该ETF列入下一节点优先复核",
           "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
           "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
-          "source_context_id": "hl-a9dd503be02de175",
-          "source_observation_as_of": "2026-11-19T13:16:17+08:00"
+          "source_context_id": "hl-9b52b5eaf1ceb5c0",
+          "source_observation_as_of": "2026-11-19T13:30:56+08:00"
         },
         {
           "ashare_code": "159327",
@@ -3473,8 +3163,8 @@
           "priority_effect": "方向支持成立但当前不直接追涨；将该ETF列入下一节点优先复核",
           "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
           "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
-          "source_context_id": "hl-a9dd503be02de175",
-          "source_observation_as_of": "2026-11-19T13:16:17+08:00"
+          "source_context_id": "hl-9b52b5eaf1ceb5c0",
+          "source_observation_as_of": "2026-11-19T13:30:56+08:00"
         },
         {
           "ashare_code": "159665",
@@ -3487,11 +3177,11 @@
           "priority_effect": "方向支持成立但当前不直接追涨；将该ETF列入下一节点优先复核",
           "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
           "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
-          "source_context_id": "hl-a9dd503be02de175",
-          "source_observation_as_of": "2026-11-19T13:16:17+08:00"
+          "source_context_id": "hl-9b52b5eaf1ceb5c0",
+          "source_observation_as_of": "2026-11-19T13:30:56+08:00"
         },
         {
-          "ashare_code": "516640",
+          "ashare_code": "516350",
           "hyperliquid_object_ids": [
             "xyz:NVDA"
           ],
@@ -3501,8 +3191,8 @@
           "priority_effect": "方向支持成立但当前不直接追涨；将该ETF列入下一节点优先复核",
           "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
           "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
-          "source_context_id": "hl-a9dd503be02de175",
-          "source_observation_as_of": "2026-11-19T13:16:17+08:00"
+          "source_context_id": "hl-9b52b5eaf1ceb5c0",
+          "source_observation_as_of": "2026-11-19T13:30:56+08:00"
         },
         {
           "ashare_code": "588170",
@@ -3515,8 +3205,8 @@
           "priority_effect": "方向支持成立但当前不直接追涨；将该ETF列入下一节点优先复核",
           "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
           "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
-          "source_context_id": "hl-a9dd503be02de175",
-          "source_observation_as_of": "2026-11-19T13:16:17+08:00"
+          "source_context_id": "hl-9b52b5eaf1ceb5c0",
+          "source_observation_as_of": "2026-11-19T13:30:56+08:00"
         },
         {
           "ashare_code": "518880",
@@ -3529,8 +3219,8 @@
           "priority_effect": "方向支持成立但当前不直接追涨；将该ETF列入下一节点优先复核",
           "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
           "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
-          "source_context_id": "hl-a9dd503be02de175",
-          "source_observation_as_of": "2026-11-19T13:16:17+08:00"
+          "source_context_id": "hl-9b52b5eaf1ceb5c0",
+          "source_observation_as_of": "2026-11-19T13:30:56+08:00"
         },
         {
           "ashare_code": "159326",
@@ -3543,8 +3233,8 @@
           "priority_effect": "方向支持成立但当前不直接追涨；将该ETF列入下一节点优先复核",
           "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
           "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
-          "source_context_id": "hl-a9dd503be02de175",
-          "source_observation_as_of": "2026-11-19T13:16:17+08:00"
+          "source_context_id": "hl-9b52b5eaf1ceb5c0",
+          "source_observation_as_of": "2026-11-19T13:30:56+08:00"
         },
         {
           "ashare_code": "159217",
@@ -3557,8 +3247,8 @@
           "priority_effect": "方向支持成立但当前不直接追涨；将该ETF列入下一节点优先复核",
           "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
           "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
-          "source_context_id": "hl-a9dd503be02de175",
-          "source_observation_as_of": "2026-11-19T13:16:17+08:00"
+          "source_context_id": "hl-9b52b5eaf1ceb5c0",
+          "source_observation_as_of": "2026-11-19T13:30:56+08:00"
         },
         {
           "ashare_code": "159265",
@@ -3571,8 +3261,8 @@
           "priority_effect": "方向支持成立但当前不直接追涨；将该ETF列入下一节点优先复核",
           "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
           "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
-          "source_context_id": "hl-a9dd503be02de175",
-          "source_observation_as_of": "2026-11-19T13:16:17+08:00"
+          "source_context_id": "hl-9b52b5eaf1ceb5c0",
+          "source_observation_as_of": "2026-11-19T13:30:56+08:00"
         },
         {
           "ashare_code": "513520",
@@ -3585,8 +3275,8 @@
           "priority_effect": "方向支持成立但当前不直接追涨；将该ETF列入下一节点优先复核",
           "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
           "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
-          "source_context_id": "hl-a9dd503be02de175",
-          "source_observation_as_of": "2026-11-19T13:16:17+08:00"
+          "source_context_id": "hl-9b52b5eaf1ceb5c0",
+          "source_observation_as_of": "2026-11-19T13:30:56+08:00"
         },
         {
           "ashare_code": "515220",
@@ -3599,8 +3289,8 @@
           "priority_effect": "方向支持成立但当前不直接追涨；将该ETF列入下一节点优先复核",
           "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
           "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
-          "source_context_id": "hl-a9dd503be02de175",
-          "source_observation_as_of": "2026-11-19T13:16:17+08:00"
+          "source_context_id": "hl-9b52b5eaf1ceb5c0",
+          "source_observation_as_of": "2026-11-19T13:30:56+08:00"
         },
         {
           "ashare_code": "513350",
@@ -3613,8 +3303,8 @@
           "priority_effect": "方向支持成立但当前不直接追涨；将该ETF列入下一节点优先复核",
           "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
           "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
-          "source_context_id": "hl-a9dd503be02de175",
-          "source_observation_as_of": "2026-11-19T13:16:17+08:00"
+          "source_context_id": "hl-9b52b5eaf1ceb5c0",
+          "source_observation_as_of": "2026-11-19T13:30:56+08:00"
         },
         {
           "ashare_code": "159981",
@@ -3627,8 +3317,8 @@
           "priority_effect": "方向支持成立但当前不直接追涨；将该ETF列入下一节点优先复核",
           "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
           "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
-          "source_context_id": "hl-a9dd503be02de175",
-          "source_observation_as_of": "2026-11-19T13:16:17+08:00"
+          "source_context_id": "hl-9b52b5eaf1ceb5c0",
+          "source_observation_as_of": "2026-11-19T13:30:56+08:00"
         },
         {
           "ashare_code": "159529",
@@ -3641,8 +3331,8 @@
           "priority_effect": "方向支持成立但当前不直接追涨；将该ETF列入下一节点优先复核",
           "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
           "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
-          "source_context_id": "hl-a9dd503be02de175",
-          "source_observation_as_of": "2026-11-19T13:16:17+08:00"
+          "source_context_id": "hl-9b52b5eaf1ceb5c0",
+          "source_observation_as_of": "2026-11-19T13:30:56+08:00"
         },
         {
           "ashare_code": "159992",
@@ -3655,8 +3345,8 @@
           "priority_effect": "方向支持成立但当前不直接追涨；将该ETF列入下一节点优先复核",
           "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
           "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
-          "source_context_id": "hl-a9dd503be02de175",
-          "source_observation_as_of": "2026-11-19T13:16:17+08:00"
+          "source_context_id": "hl-9b52b5eaf1ceb5c0",
+          "source_observation_as_of": "2026-11-19T13:30:56+08:00"
         }
       ],
       "live_signal_count": 26,
