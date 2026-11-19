@@ -424,5 +424,17 @@ class DiscoveryRuntimeCoverageTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "pagination total changed"):
                 discovery.fetch_broad_etf_spot()
 
+    def test_eastmoney_broad_fails_closed_if_provider_returns_implausibly_small_universe(self):
+        def fake_request(url, params, timeout=12):
+            return {"data": {"total": 3, "diff": [
+                {"f12": "510001", "f13": 1, "f14": "partial-1"},
+                {"f12": "510002", "f13": 1, "f14": "partial-2"},
+                {"f12": "510003", "f13": 1, "f14": "partial-3"},
+            ]}}
+        with mock.patch.object(discovery, "_request_json", side_effect=fake_request):
+            with self.assertRaisesRegex(RuntimeError, "implausibly small"):
+                discovery.fetch_broad_etf_spot()
+
 if __name__ == "__main__":
     unittest.main()
+
