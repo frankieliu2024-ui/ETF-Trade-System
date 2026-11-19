@@ -1,21 +1,21 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-11-19T09:35:35+08:00",
+  "generated_at": "2026-11-19T09:48:07+08:00",
   "projection_identity": {
     "account_updated_at": "2026-11-18T15:01:00+08:00",
-    "risk_as_of_transaction_date": "2026-11-18",
-    "market_snapshot": "data/market/snapshots/2026-11-19_091748.json"
+    "risk_as_of_transaction_date": "2026-11-19",
+    "market_snapshot": "data/market/snapshots/2026-11-19_094308.json"
   },
   "status": "BLOCKED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
   "components": {
     "market": {
-      "status": "DEGRADED",
-      "reason": "market data quality=DEGRADED, node=DEGRADED",
-      "snapshot": "data/market/snapshots/2026-11-19_091748.json",
-      "captured_at": "2026-11-19T09:17:48+08:00",
-      "market_phase": "OPENING_CALL_AUCTION"
+      "status": "READY",
+      "reason": "latest market snapshot is valid",
+      "snapshot": "data/market/snapshots/2026-11-19_094308.json",
+      "captured_at": "2026-11-19T09:43:08+08:00",
+      "market_phase": "CONTINUOUS_MORNING"
     },
     "account": {
       "status": "READY",
@@ -30,15 +30,13 @@
       "settlement_constraint_status": "NONE"
     },
     "risk": {
-      "status": "DEGRADED",
-      "fact_status": "STALE",
-      "reason": "ETF strategy equity reconstruction is stale for the current market date and Dashboard cannot be used as a fallback",
-      "etf_strategy_risk_pct": null,
+      "status": "READY",
+      "reason": "formal ETF strategy risk metric is available from a fresh canonical reconstruction",
+      "etf_strategy_risk_pct": -14.6211,
       "source": "data/state/etf_strategy_equity.json",
-      "stale_reconstruction_risk_pct": -14.6323,
       "source_updated_at": null,
-      "reconstruction_as_of_transaction_date": "2026-11-18",
-      "reconstruction_fresh_for_market_date": false,
+      "reconstruction_as_of_transaction_date": "2026-11-19",
+      "reconstruction_fresh_for_market_date": true,
       "data_quality": null
     },
     "close_review": {
@@ -64,8 +62,8 @@
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 480573,
-          "sha256": "bc41cc7f45d947848fc53b792a44873e4eb8fb6c6815d608a75db09a94ba9c2b",
+          "byte_count": 791527,
+          "sha256": "de952c72391ffc7bb276d12c48331e338c00368c2c18cd6fa27b8b0cb7171a2b",
           "parsed_object": true,
           "retry_attempts": 1,
           "retry_required": false
@@ -92,8 +90,6 @@
     "decision_context"
   ],
   "degradations": [
-    "market",
-    "risk",
     "maintenance"
   ],
   "task_continuation": {
@@ -103,11 +99,9 @@
     "reason": "E2E degradation is diagnostic and object-scoped; it does not gate the three ETF task chains"
   },
   "business_fact_consumption": {
-    "status": "RESTRICTED",
-    "restricted_components": [
-      "risk"
-    ],
-    "reason": "affected facts require explicit caveat or object-level restriction"
+    "status": "AVAILABLE",
+    "restricted_components": [],
+    "reason": "critical business facts are consumable"
   },
   "context_read_contract": {
     "query_context": {
@@ -122,8 +116,8 @@
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 480573,
-      "sha256": "bc41cc7f45d947848fc53b792a44873e4eb8fb6c6815d608a75db09a94ba9c2b",
+      "byte_count": 791527,
+      "sha256": "de952c72391ffc7bb276d12c48331e338c00368c2c18cd6fa27b8b0cb7171a2b",
       "parsed_object": true,
       "retry_attempts": 1,
       "retry_required": false
