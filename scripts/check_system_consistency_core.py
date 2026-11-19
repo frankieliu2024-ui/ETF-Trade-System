@@ -737,10 +737,8 @@ def main() -> int:
     check(
         "scheduled_target_cadence_600s",
         runtime.get("target_cadence_seconds") == 600
-        and all(
-            a_share_market_pulse in read_text(".github/workflows/market-snapshot.yml")
+        and a_share_market_pulse in read_text(".github/workflows/market-snapshot.yml")
         and us_market_pulse in read_text(".github/workflows/us-extended-hours-pulse.yml")
-        )
         and apac_hyperliquid_pulse in read_text(".github/workflows/overseas-preopen-pulse.yml")
         and all(x in read_text(".github/workflows/overseas-preopen-pulse.yml") for x in boundary_pulses)
         and not any(x in read_text(".github/workflows/market-snapshot.yml") for x in boundary_pulses),
