@@ -1183,6 +1183,42 @@ def build_formal_evidence_consumption_audit(fact_summary: dict | None, final_con
         "enforcement": "AUDIT_ONLY; incomplete evidence is reported locally and never converted into a trade block",
     }
 
+def validate_formal_hyperliquid_time_binding(fact_summary: dict | None, final_content: str) -> None:
+    """Reject prose that presents an A-share fact time as Hyperliquid time."""
+    facts = fact_summary if isinstance(fact_summary, dict) else {}
+    hyper = facts.get("hyperliquid_external_driver_context") or facts.get("hyperliquid") or {}
+    if not isinstance(hyper, dict):
+        return
+    a_share_times = set()
+    binding = facts.get("fact_binding") if isinstance(facts.get("fact_binding"), dict) else {}
+    for source in (facts, binding):
+        for key in ("captured_at_beijing", "a_share_fact_as_of_beijing", "market_snapshot_as_of_beijing"):
+            value = str(source.get(key) or "").strip()
+            if value:
+                a_share_times.add(value)
+    valid_hyper_times = set()
+    for item in hyper.get("observations") or []:
+        if isinstance(item, dict):
+            for key in ("observation_as_of", "collected_at_beijing"):
+                value = str(item.get(key) or "").strip()
+                if value:
+                    valid_hyper_times.add(value)
+    for key in ("as_of_beijing", "latest_observation_collected_at_beijing", "formed_at_beijing", "fact_time_beijing"):
+        value = str(hyper.get(key) or "").strip()
+        if value:
+            valid_hyper_times.add(value)
+    content = str(final_content or "")
+    for a_share_time in a_share_times:
+        if not a_share_time or a_share_time in valid_hyper_times:
+            continue
+        minute_prefix = a_share_time[:16]
+        pattern = r"(?:Hyperliquid.{0,100}(20\d\d-\d\d-\d\d[T ]\d\d:\d\d(?::\d\d)?).{0,100}(?:观测|采集|可见|observation)|(?:观测|采集|可见|observation).{0,100}(20\d\d-\d\d-\d\d[T ]\d\d:\d\d(?::\d\d)?).{0,100}Hyperliquid)"
+        for match in re.finditer(pattern, content, re.IGNORECASE | re.DOTALL):
+            candidate = match.group(1) or match.group(2) or ""
+            if candidate.startswith(minute_prefix):
+                raise ValueError("Formal Decision Hyperliquid observation time is bound to an A-share fact time")
+
+
 def build_formal_runtime_completion_request(
     *,
     run_identity: dict,
@@ -1216,6 +1252,7 @@ def build_formal_runtime_completion_request(
     frozen_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
     decision_id = f"ETF_FORMAL_DECISION:{task_run_id}"
     evidence_audit = build_formal_evidence_consumption_audit(fact_summary, content)
+    validate_formal_hyperliquid_time_binding(fact_summary, content)
     # Evidence-consumption completeness is an audit result, not a delivery gate.
     # A frozen, uniquely identified FINAL_CONTENT must still reach the existing
     # original-body notification path when optional audit projections are
