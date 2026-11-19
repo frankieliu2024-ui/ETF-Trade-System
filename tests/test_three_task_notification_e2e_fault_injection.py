@@ -70,18 +70,23 @@ class ThreeTaskNotificationE2EFaultInjectionTests(unittest.TestCase):
         self.assertIn("same-completion recovery", owner)
         self.assertIn("force_resend=True", owner)
 
-    def test_formal_and_system_pushes_are_persistence_only_trade_review_unchanged(self):
+    def test_formal_and_scheduled_review_pushes_are_persistence_only(self):
         workflow = (ROOT / ".github/workflows/decision-notification.yml").read_text(encoding="utf-8")
         self.assertIn('semantic_name = task_name or {', workflow)
         self.assertIn('print("SYSTEM_REVIEW" if semantic_name == "ETF系统复核" else "TRADE_REVIEW")', workflow)
         self.assertIn('echo "formal_completion=true"', workflow)
-        self.assertIn('echo "scheduled_review_completion=true"', workflow)
-        self.assertIn('echo "scheduled_review_completion_path=$completion_path"', workflow)
         self.assertIn("steps.push_kind.outputs.formal_completion == 'true'", workflow)
+        self.assertIn('SYSTEM_REVIEW)', workflow)
         self.assertIn('TRADE_REVIEW)', workflow)
-        self.assertIn('echo "scheduled_review_completion=true"', workflow)
+        self.assertIn('echo "scheduled_review_completion=false"', workflow)
+        self.assertIn('echo "scheduled_review_completion_path="', workflow)
         self.assertIn("explicit", workflow)
         self.assertIn("scheduled_review_completion_path", workflow)
+        trade_start = workflow.index("TRADE_REVIEW)")
+        trade_end = workflow.index(";;", trade_start)
+        trade_branch = workflow[trade_start:trade_end]
+        self.assertIn('echo "scheduled_review_completion=false"', trade_branch)
+        self.assertNotIn('echo "scheduled_review_completion=true"', trade_branch)
 
     def test_task_identity_and_report_type_are_not_crossed(self):
         expected = {
