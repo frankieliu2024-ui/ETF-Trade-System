@@ -1177,13 +1177,6 @@ jobs:
           binding = payload.get("presentation_binding") or {}
           report_type = str(payload.get("report_type") or binding.get("report_type") or "").strip().upper()
           task_id = str(payload.get("task_id") or binding.get("task_id") or "").strip()
-          legacy_formal = (
-              task_id == "ETF正式决策"
-              and str(payload.get("decision_path") or "").strip().upper() == "FORMAL"
-              and str(payload.get("interaction_scenario") or "").strip().upper() == "FORMAL_DECISION"
-          )
-          if legacy_formal:
-              raise SystemExit("legacy Formal Decision recovery projection is audit-only and cannot enter the production event path")
           if report_type == "ETF_FORMAL_DECISION":
               if not report_type:
                   payload["report_type"] = "ETF_FORMAL_DECISION"
