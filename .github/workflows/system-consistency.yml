@@ -87,7 +87,11 @@ concurrency:
   # after one second while they are waiting for the shared main-state writer.
   # The persistence step retains its bounded fetch/reset/push retry for the
   # short commit race with other main writers.
-  group: ${{ github.ref == 'refs/heads/main' && 'etf-main-state-writer' || (github.event_name == 'workflow_dispatch' && format('etf-system-consistency-manual-{0}', github.run_id) || format('etf-system-consistency-pr-{0}', github.event.pull_request.number)) }}
+  # Consistency is a read-first acceptance lane. Keep it separate from
+  # account/market/notification production writers so a pending writer cannot
+  # cancel the acceptance before scope or consistency starts. The existing
+  # persistence step retains its bounded latest-main retry for the final report.
+  group: ${{ github.ref == 'refs/heads/main' && 'etf-system-consistency-main' || (github.event_name == 'workflow_dispatch' && format('etf-system-consistency-manual-{0}', github.run_id) || format('etf-system-consistency-pr-{0}', github.event.pull_request.number)) }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
