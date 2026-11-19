@@ -1,21 +1,21 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-11-19T11:21:32+08:00",
+  "generated_at": "2026-11-19T11:36:57+08:00",
   "projection_identity": {
     "account_updated_at": "2026-11-18T15:01:00+08:00",
     "risk_as_of_transaction_date": "2026-11-19",
-    "market_snapshot": "data/market/snapshots/2026-11-19_111715.json"
+    "market_snapshot": "data/market/snapshots/2026-11-19_113110.json"
   },
-  "status": "DEGRADED",
+  "status": "BLOCKED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
   "components": {
     "market": {
       "status": "READY",
       "reason": "latest market snapshot is valid",
-      "snapshot": "data/market/snapshots/2026-11-19_111715.json",
-      "captured_at": "2026-11-19T11:17:15+08:00",
-      "market_phase": "CONTINUOUS_MORNING"
+      "snapshot": "data/market/snapshots/2026-11-19_113110.json",
+      "captured_at": "2026-11-19T11:31:10+08:00",
+      "market_phase": "MIDDAY_BREAK"
     },
     "account": {
       "status": "READY",
@@ -32,7 +32,7 @@
     "risk": {
       "status": "READY",
       "reason": "formal ETF strategy risk metric is available from a fresh canonical reconstruction",
-      "etf_strategy_risk_pct": -14.9186,
+      "etf_strategy_risk_pct": -14.7589,
       "source": "data/state/etf_strategy_equity.json",
       "source_updated_at": null,
       "reconstruction_as_of_transaction_date": "2026-11-19",
@@ -44,19 +44,17 @@
       "reason": "no formal close review is currently required"
     },
     "decision_context": {
-      "status": "READY",
-      "reason": "current-main fixed facts are directly consumable; no request-bound Formal Decision context is applicable",
-      "query_context": true,
+      "status": "BLOCKED",
+      "reason": "canonical request-bound query context is empty, invalid, or missing a consumable fact pack",
+      "query_context": false,
       "decision_context": true,
-      "request_bound": false,
       "formal_reply_gate": null,
-      "direct_current_main": true,
       "context_read_contract": {
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 6693923,
-          "sha256": "b6e2049bcca06d95789b04a4ac7483ab932b74c0242ca91ccee861b68dd92ea4",
+          "byte_count": 6640882,
+          "sha256": "34e2816520e6fecd1efb4595d45bac64e77b628b787d00d43a9e4a0101328adf",
           "parsed_object": true,
           "retry_attempts": 1,
           "retry_required": false
@@ -64,8 +62,8 @@
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 841227,
-          "sha256": "128e7e88b3a962cdd09c60aaddab8b9f37aef8c15231f594d09d3b8ff0e42919",
+          "byte_count": 845126,
+          "sha256": "cc6b603b47cc9770ffc47eb14d03578fd54373691b033c0fb6cbe51edc0d62f7",
           "parsed_object": true,
           "retry_attempts": 1,
           "retry_required": false
@@ -88,7 +86,9 @@
       "checked_at": "2026-11-19T11:09:26+08:00"
     }
   },
-  "blockers": [],
+  "blockers": [
+    "decision_context"
+  ],
   "degradations": [
     "maintenance"
   ],
@@ -107,8 +107,8 @@
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 6693923,
-      "sha256": "b6e2049bcca06d95789b04a4ac7483ab932b74c0242ca91ccee861b68dd92ea4",
+      "byte_count": 6640882,
+      "sha256": "34e2816520e6fecd1efb4595d45bac64e77b628b787d00d43a9e4a0101328adf",
       "parsed_object": true,
       "retry_attempts": 1,
       "retry_required": false
@@ -116,8 +116,8 @@
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 841227,
-      "sha256": "128e7e88b3a962cdd09c60aaddab8b9f37aef8c15231f594d09d3b8ff0e42919",
+      "byte_count": 845126,
+      "sha256": "cc6b603b47cc9770ffc47eb14d03578fd54373691b033c0fb6cbe51edc0d62f7",
       "parsed_object": true,
       "retry_attempts": 1,
       "retry_required": false
