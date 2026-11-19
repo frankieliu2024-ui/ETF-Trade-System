@@ -864,7 +864,10 @@ def _validate_historical_trade_case_mapping(report: dict) -> None:
                 if str(event.get("execution_status") or "").upper() == "SUPERSEDED":
                     continue
                 event_code = str(event.get("code") or "")
-                event_stamp = str(event.get("confirmed_at_beijing") or event.get("executed_at_beijing") or event.get("event_id") or "")
+                # Historical trade rows are keyed by execution day.  A later
+                # broker screenshot confirmation must never hide an existing
+                # executed event from the date-aligned CASE check.
+                event_stamp = str(event.get("execution_date") or event.get("executed_at_beijing") or event.get("confirmed_at_beijing") or event.get("event_id") or "")
                 if event_code == code and event_stamp[:10] == dt[:10] and event_stamp[:10] >= HISTORICAL_TRADE_EVENT_EFFECTIVE_DATE:
                     event_ids.append(str(event.get("event_id") or path.stem))
         index_case_ids = _explicit_index_case_ids(_remark)
