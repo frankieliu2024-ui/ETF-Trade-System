@@ -228,12 +228,11 @@ jobs:
                 echo "scheduled_review_completion_path=" >> "$GITHUB_OUTPUT"
                 ;;
               TRADE_REVIEW)
-                # A Scheduled Review completion is itself the canonical handoff
-                # after the task freezes FINAL_CONTENT. Consume this exact
-                # completion once through the existing event/report/notification
-                # owner; do not require a second browser dispatch.
-                echo "scheduled_review_completion=true" >> "$GITHUB_OUTPUT"
-                echo "scheduled_review_completion_path=$completion_path" >> "$GITHUB_OUTPUT"
+                # A repository push is only persistence, never the Trade Review
+                # handoff. Trade Review must enter through the explicit
+                # workflow_dispatch path with the exact completion path.
+                echo "scheduled_review_completion=false" >> "$GITHUB_OUTPUT"
+                echo "scheduled_review_completion_path=" >> "$GITHUB_OUTPUT"
                 ;;
               *)
                 echo "Unknown completion contract in $completion_path; fail closed." >&2
