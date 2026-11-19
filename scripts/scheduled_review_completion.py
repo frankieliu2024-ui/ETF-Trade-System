@@ -887,6 +887,10 @@ def validate_formal_runtime_completion_contract(payload: dict, *, root: Path | N
     task_name = str(payload.get("task_name") or binding.get("task_name") or "").strip()
     platform_task_id = str(payload.get("task_id") or "").strip()
     bound_task_id = str(binding.get("task_id") or "").strip()
+    # Preserve compatibility with legacy Formal Decision completions that
+    # recorded the business task name in task_id but predate task_name.
+    if not task_name and platform_task_id == "ETF正式决策":
+        task_name = "ETF正式决策"
     if task_name != "ETF正式决策":
         raise ValueError("Formal Decision completion task identity mismatch")
     if not platform_task_id:
