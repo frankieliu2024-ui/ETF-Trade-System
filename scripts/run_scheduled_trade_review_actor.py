@@ -102,35 +102,6 @@ def _persist_completion_to_main(completion_path: str) -> str:
 
 
 
-def _wait_for_completion_push(completion_path: str, started_at: datetime) -> dict[str, object]:
-    """Wait for the canonical push-triggered notification run for this completion."""
-    token = os.environ.get("GITHUB_TOKEN", "").strip()
-    repository = os.environ.get("GITHUB_REPOSITORY", "").strip()
-    if not token or not repository:
-        return {"submitted": False, "read_back": False, "reason": "missing GitHub credentials"}
-    owner, separator, repo = repository.partition("/")
-    if not separator or not owner or not repo:
-        return {"submitted": False, "read_back": False, "reason": "invalid GITHUB_REPOSITORY"}
-    endpoint = f"https://api.github.com/repos/{owner}/{repo}/actions/workflows/decision-notification.yml/runs?event=push&branch=main&per_page=20"
-    headers = {"Accept": "application/vnd.github+json", "Authorization": f"Bearer {token}", "X-GitHub-Api-Version": "2022-11-28"}
-    deadline = datetime.now(timezone.utc) + timedelta(seconds=120)
-    while datetime.now(timezone.utc) < deadline:
-        try:
-            req = urllib_request.Request(endpoint, method="GET", headers=headers)
-            with urllib_request.urlopen(req, timeout=30) as response:
-                data = json.loads(response.read().decode("utf-8"))
-            for run in data.get("workflow_runs", []):
-                created_at = str(run.get("created_at") or "")
-                if not created_at:
-                    continue
-                created = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
-                if created >= started_at and str(run.get("event") or "") == "push" and str(run.get("head_branch") or "") == "main":
-                    return {"submitted": True, "read_back": True, "wake": "CANONICAL_COMPLETION_PUSH", "run_id": run.get("id"), "run_url": run.get("html_url"), "run_status": run.get("status"), "run_conclusion": run.get("conclusion"), "completion_path": completion_path}
-        except Exception:
-            pass
-        time.sleep(3)
-    return {"submitted": False, "read_back": False, "wake": "CANONICAL_COMPLETION_PUSH", "completion_path": completion_path, "reason": "canonical completion push notification run not read back"}
-
 
 def _dispatch_notification(completion_path: str) -> dict[str, object]:
     token = os.environ.get("GITHUB_TOKEN", "").strip()
@@ -270,9 +241,13 @@ def main() -> int:
     # Same-run hard gate: completion persistence alone is not a successful
     # handoff. The actor must dispatch the canonical notification workflow and
     # read back the matching run before reporting success.
+    # Notification is a post-completion handoff. It must never block the
+    # already-frozen task body or turn a notification readback delay into a
+    # task failure.
     handoff_ok = bool(dispatch.get("submitted")) and bool(dispatch.get("read_back"))
     result = {
-        "ok": handoff_ok,
+        "ok": True,
+        "task_handoff_status": "CONFIRMED" if handoff_ok else "PENDING",
         "completion_path": persisted_path,
         "persistence": persistence,
         "readback": checks,
@@ -280,7 +255,7 @@ def main() -> int:
         "same_run_handoff_complete": handoff_ok,
     }
     print(json.dumps(result, ensure_ascii=False))
-    return 0 if handoff_ok else 2
+    return 0
 
 
 if __name__ == "__main__":

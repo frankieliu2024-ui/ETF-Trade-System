@@ -595,8 +595,11 @@ def build_lifecycle_projection(root: Path, as_of_market_date: str | None = None)
                        # lot. Reuse the canonical attribution guard.
                        or _resolution(root, decision_with_due, as_of))
                       if decision.get("_completion_trial") else _resolution(root, decision_with_due, as_of))
+        # An absent account position snapshot is not proof that the position is zero.
+        # Only an explicitly present production position row with quantity <= 0
+        # may resolve a lifecycle through CURRENT_POSITION_ZERO.
         current_quantity = float(current_position.get("quantity") or 0)
-        if current_quantity <= 0 and resolution is None:
+        if account_positions_present and current_position and current_quantity <= 0 and resolution is None:
             resolution = {
                 "status": "RESOLVED",
                 "resolution_reason": "CURRENT_POSITION_ZERO",
