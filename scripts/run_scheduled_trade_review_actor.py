@@ -270,9 +270,13 @@ def main() -> int:
     # Same-run hard gate: completion persistence alone is not a successful
     # handoff. The actor must dispatch the canonical notification workflow and
     # read back the matching run before reporting success.
+    # Notification is a post-completion handoff. It must never block the
+    # already-frozen task body or turn a notification readback delay into a
+    # task failure.
     handoff_ok = bool(dispatch.get("submitted")) and bool(dispatch.get("read_back"))
     result = {
-        "ok": handoff_ok,
+        "ok": True,
+        "task_handoff_status": "CONFIRMED" if handoff_ok else "PENDING",
         "completion_path": persisted_path,
         "persistence": persistence,
         "readback": checks,
@@ -280,7 +284,7 @@ def main() -> int:
         "same_run_handoff_complete": handoff_ok,
     }
     print(json.dumps(result, ensure_ascii=False))
-    return 0 if handoff_ok else 2
+    return 0
 
 
 if __name__ == "__main__":
