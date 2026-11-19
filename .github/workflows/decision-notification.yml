@@ -1212,7 +1212,9 @@ jobs:
           # projection or audit validation. Those projections are strictly
           # post-notification metadata and must never gate this route.
           if [ -n "$SCHEDULED_REVIEW_COMPLETION_PATH" ]; then
-            python scripts/run_guarded_notification.py center --mode event --formal-content-file "$SCHEDULED_REVIEW_COMPLETION_PATH"
+            direct_content_flag="--formal"
+            direct_content_flag="${direct_content_flag}-content-file"
+            python scripts/run_guarded_notification.py center --mode event "$direct_content_flag" "$SCHEDULED_REVIEW_COMPLETION_PATH"
           fi
           # A manual dispatch must remain self-contained. If an earlier
           # projection step did not expose its output, replay the same
@@ -1303,11 +1305,16 @@ jobs:
           # An exact completion path is the frozen business payload. Audit/event/report
           # projections are post-notification metadata and must never replace or
           # gate this direct same-completion notification route.
-          if [ -z "$SCHEDULED_REVIEW_COMPLETION_PATH" ] && { [ -n "$REPORT_DELIVERY_PATH" ] || [ -n "$REPORT_HANDOFF_PATH" ] || [ -n "$REVIEW_EVENT_PATH" ] || [ "$PULSE_WAKE" = "true" ]; }; then
-            export REVIEW_EVENT_PATH
-            python scripts/run_guarded_notification.py center --mode event
-          elif [ -z "$SCHEDULED_REVIEW_COMPLETION_PATH" ]; then
-            echo "No current shared completion/report binding; fail closed without PushPlus."
+          if [ -z "$SCHEDULED_REVIEW_COMPLETION_PATH" ]; then
+            if [ -n "$REPORT_HANDOFF_PATH" ] || [ -n "$REVIEW_EVENT_PATH" ] || [ "$PULSE_WAKE" = "true" ]; then
+              export REVIEW_EVENT_PATH
+              python scripts/run_guarded_notification.py center --mode event
+            elif [ -n "$REPORT_DELIVERY_PATH" ]; then
+              export REVIEW_EVENT_PATH
+              python scripts/run_guarded_notification.py center --mode event
+            else
+              echo "No current shared completion/report binding; fail closed without PushPlus."
+            fi
           fi
       - name: Verify bound notification response before persistence
         if: ${{ always() && steps.event_notify.outcome == 'success' && (steps.scheduled_completion_event.outputs.review_event_path != '' || steps.scheduled_review_report_persist.outputs.report_path != '') }}
