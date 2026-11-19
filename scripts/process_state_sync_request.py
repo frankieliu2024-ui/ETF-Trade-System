@@ -31,6 +31,10 @@ from observation_etf_management import (
     persist_monitor_universe,
     validate_observation_management,
 )
+try:
+    from trade_event_temporal_semantics import normalize_trade_event_temporal_fields
+except ModuleNotFoundError:
+    from scripts.trade_event_temporal_semantics import normalize_trade_event_temporal_fields
 
 
 def _persist_formal_opportunity_projection(root: Path, source: dict) -> None:
@@ -5282,8 +5286,9 @@ def main() -> int:
                 requested_confirmed_at = str(trade.get("confirmed_at_beijing") or request.get("requested_at_beijing") or trade.get("executed_at") or "").strip()
                 if requested_confirmed_at and str(event.get("confirmed_at_beijing") or "") != requested_confirmed_at:
                     event["confirmed_at_beijing"] = requested_confirmed_at
-                    event["execution_date"] = trade.get("market_date") or requested_confirmed_at[:10]
-                    event["confirmation_date"] = trade.get("market_date") or requested_confirmed_at[:10]
+                    event["confirmation_date"] = trade.get("confirmation_date") or requested_confirmed_at[:10]
+                    if trade.get("execution_date"):
+                        event["execution_date"] = trade["execution_date"]
                     event["idempotency_key"] = _trade_idempotency_key(trade, requested_confirmed_at)
                     changed = True
                 # Idempotent fee/account replays must also converge stale linkage and
@@ -5311,6 +5316,7 @@ def main() -> int:
                     event["hypothesis_id"] = refreshed_hypothesis
                     changed = True
                 if changed:
+                    normalize_trade_event_temporal_fields(event)
                     atomic_json_write(ROOT / "events" / "trades" / f"{event_id}.json", event)
             else:
                 event_id = _trade_event_id(request, trade, idempotency_key, trade_index, len(trades))
@@ -5318,6 +5324,7 @@ def main() -> int:
                 linked_decision_id = resolve_trade_linked_decision_id(link_trade, decision_id)
                 attribution = execution_attribution(link_trade, linked_decision_id)
                 event = {"event_id": event_id, "idempotency_key": idempotency_key, "confirmed_at_beijing": confirmed_at, "executed_at_beijing": trade.get("executed_at_beijing") or trade.get("executed_at") or trade.get("trade_time_beijing") or trade.get("trade_time") or confirmed_at, "account_confirmed_at_beijing": trade.get("account_confirmed_at_beijing"), "execution_date": trade.get("execution_date") or str(confirmed_at)[:10], "confirmation_date": trade.get("confirmation_date") or str(confirmed_at)[:10], "notification_id": trade.get("notification_id"), "name": trade.get("name"), "code": trade.get("code"), "side": trade.get("side"), "quantity": trade.get("quantity"), "price": trade.get("price"), "amount": trade.get("amount"), "lifecycle": trade.get("lifecycle"), "source": trade.get("source", account.get("source")), "source_confidence": trade.get("source_confidence"), "linked_decision_id": linked_decision_id or None, "hypothesis_id": trade.get("hypothesis_id") or attribution.get("hypothesis_id") or None, "execution_status": "EXECUTED", "execution_attribution": attribution}
+                normalize_trade_event_temporal_fields(event)
                 event_path = ROOT / "events" / "trades" / f"{event_id}.json"
                 event_path.parent.mkdir(parents=True, exist_ok=True)
                 atomic_json_write(event_path, event)
@@ -5430,3 +5437,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
