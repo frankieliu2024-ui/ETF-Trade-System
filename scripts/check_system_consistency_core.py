@@ -730,20 +730,21 @@ def main() -> int:
     check("global_quote_router_exists", "build_market_quote_context" in router_module, "global quote router implementation exists")
     check("query_time_refresh_entry_exists", (ROOT / "scripts/query_time_market_refresh.py").exists() and "refresh_market_quotes" in refresh_module, "query-time refresh facade exists")
     check("query_time_refresh_can_bypass_stale_cache", "force_refresh" in query and "QUERY_TIME_IMMEDIATE_REFRESH" in router_module and "_query_refresh_needed" in router_module, "stale cache can trigger provider refresh")
-    legacy_market_pulse = '5,15,25,35,45,55'
+    a_share_market_pulse = '0,10,20,30,40,50'
+    us_market_pulse = '5,15,25,35,45,55'
     apac_hyperliquid_pulse = '5,15,25,35,45,55'
     boundary_pulses = ('55 23 * * 0-4', '5 8 * * 1-5')
     check(
         "scheduled_target_cadence_600s",
         runtime.get("target_cadence_seconds") == 600
         and all(
-            legacy_market_pulse in read_text(path)
-            for path in (".github/workflows/market-snapshot.yml", ".github/workflows/us-extended-hours-pulse.yml")
+            a_share_market_pulse in read_text(".github/workflows/market-snapshot.yml")
+        and us_market_pulse in read_text(".github/workflows/us-extended-hours-pulse.yml")
         )
         and apac_hyperliquid_pulse in read_text(".github/workflows/overseas-preopen-pulse.yml")
         and all(x in read_text(".github/workflows/overseas-preopen-pulse.yml") for x in boundary_pulses)
-        and all(x in read_text(".github/workflows/market-snapshot.yml") for x in boundary_pulses),
-        "all scheduled market workflows use ten-minute cadence; APAC and Hyperliquid window includes Beijing 07:55-16:05 boundary pulses",
+        and not any(x in read_text(".github/workflows/market-snapshot.yml") for x in boundary_pulses),
+        "A-share uses Beijing 08:00-16:00 ten-minute pulses; APAC/Hyperliquid retains its 07:55-16:05 boundary pulses",
     )
 
     overseas_builder = read_text("scripts/build_overseas_context.py")
@@ -775,7 +776,7 @@ def main() -> int:
     check("workflow:no_full_consistency_preflight", "check_system_consistency.py" not in workflow, "high-frequency market workflow does not run full consistency before provider capture")
     check("workflow:concurrency_policy_loader", "Load unified provider concurrency policy" in workflow and "runtime_policy.json" in workflow and "HITHINK_MAX_WORKERS" in workflow, "workflow loads scheduled/query concurrency from runtime policy")
     check("workflow:session_gate", "runtime_session_gate.py" in workflow and "session_gate.outputs.should_capture" in workflow, "exchange calendar/session gate wired")
-    check("workflow:unified_fixed_pulse", '5,15,25,35,45,55 0-7 * * 1-5' in workflow, "A-share market workflow uses unified fixed pulse cadence")
+    check("workflow:unified_fixed_pulse", '0,10,20,30,40,50 0-8 * * 1-5' in workflow, "A-share market workflow uses Beijing 08:00-16:00 fixed pulse cadence")
     check("workflow:valid_snapshot_downstream_gate", "snapshot_result.outputs.snapshot_written == 'true'" in workflow, "downstream contexts require new valid A-share snapshot")
     check("workflow:single_full_recovery_entry", "workflow_dispatch" in workflow and not (ROOT / ".github/workflows/full-snapshot-recovery.yml").exists(), "market-snapshot workflow_dispatch is the only full-state recovery entry")
     core_publish_markers = (

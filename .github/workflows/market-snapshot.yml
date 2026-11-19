@@ -17,11 +17,9 @@ on:
         required: true
         default: "false"
   schedule:
-    # Unified ten-minute pulse clock with Beijing boundary coverage 07:55-16:05.
-    # Boundary pulses are phase-gated and are not automatically A-share continuous-session facts.
-    - cron: "55 23 * * 0-4" # Beijing 07:55 Mon-Fri
-    - cron: "5,15,25,35,45,55 0-7 * * 1-5" # Beijing 08:05-15:55 Mon-Fri
-    - cron: "5 8 * * 1-5" # Beijing 16:05 Mon-Fri
+    # Unified ten-minute pulse clock with Beijing coverage 08:00-16:00.
+    # The 15:00 node remains the authoritative A-share close fact; other nodes are phase-gated.
+    - cron: "0,10,20,30,40,50 0-8 * * 1-5" # Beijing 08:00-16:00 Mon-Fri
 
 permissions:
   contents: write
