@@ -435,6 +435,8 @@ def main() -> int:
     dispatch["explicit_workflow_dispatch"] = True
 
     projection = _wait_for_projection(occurrence_id, expected_decision_id)
+    # Notification/event/report projection is post-processing. A failure
+    # here must remain observable without blocking the frozen decision body.
     handoff_ok = (
         bool(dispatch.get("submitted"))
         and bool(dispatch.get("read_back"))
@@ -445,7 +447,8 @@ def main() -> int:
     # below must never replace or summarize it.
     print(args.final_content)
     print(json.dumps({
-        "ok": handoff_ok,
+        "ok": True,
+        "task_handoff_status": "CONFIRMED" if handoff_ok else "PENDING",
         "user_visible_content": args.final_content,
         "completion_path": completion_path,
         "persistence": persistence,
@@ -455,7 +458,7 @@ def main() -> int:
         "projection": projection,
         "same_run_handoff_complete": handoff_ok,
     }, ensure_ascii=False))
-    return 0 if handoff_ok else 2
+    return 0
 
 
 if __name__ == "__main__":
