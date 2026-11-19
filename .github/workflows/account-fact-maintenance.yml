@@ -109,6 +109,17 @@ jobs:
           # after readback.
           python scripts/rebuild_etf_strategy_equity.py --output data/state/etf_strategy_equity.json
 
+      - name: Refresh Dashboard after strategy risk rebuild
+        id: dashboard_refresh
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Strategy equity/risk is rebuilt immediately before this step.
+          # Re-render the factual Dashboard from that same canonical state so
+          # the human projection cannot retain the pre-rebuild risk value.
+          python scripts/sync_formal_files.py
+
       - name: Rebuild E2E status after risk projection
         id: e2e
         continue-on-error: true
