@@ -12,9 +12,25 @@ from scripts import check_system_consistency_core as core
 from scripts import apply_trade_fact_correction as correction
 from scripts import confirmed_trade_facts
 from scripts import process_state_sync_request as sync
+from scripts.trade_event_temporal_semantics import normalize_trade_event_temporal_fields
 
 
 class TradeFactCorrectionContractTests(unittest.TestCase):
+    def test_execution_date_is_derived_from_execution_timestamp(self):
+        event = normalize_trade_event_temporal_fields({
+            "executed_at_beijing": "2026-11-13T09:30:00+08:00",
+            "confirmed_at_beijing": "2026-11-19T09:00:00+08:00",
+            "execution_date": "2026-11-13",
+        })
+        self.assertEqual(event["execution_date"], "2026-11-13")
+        self.assertEqual(event["confirmation_date"], "2026-11-19")
+
+    def test_execution_date_mismatch_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, "execution_date_mismatch"):
+            normalize_trade_event_temporal_fields({
+                "executed_at_beijing": "2026-11-13T09:30:00+08:00",
+                "execution_date": "2026-11-19",
+            })
     def test_owned_event_mutation_is_allowed_but_unrelated_trade_is_not(self):
         dirty = [
             " M events/trades/known-event.json",
@@ -302,3 +318,4 @@ class TradeFactCorrectionContractTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
