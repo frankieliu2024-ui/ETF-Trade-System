@@ -10,6 +10,10 @@ import re
 from check_production_mutation_protocol import run as run_mutation_protocol
 import check_system_consistency_core as consistency_core
 from check_system_consistency_core import main as core_main
+try:
+    from trade_event_temporal_semantics import normalize_trade_event_temporal_fields
+except ModuleNotFoundError:
+    from scripts.trade_event_temporal_semantics import normalize_trade_event_temporal_fields
 
 ROOT = Path(__file__).resolve().parents[1]
 REPORT = ROOT / "data" / "state" / "system_consistency.json"
@@ -737,6 +741,10 @@ def _validate_trade_event_formal_sync(report: dict) -> None:
         if not event_id:
             continue
         checked += 1
+        try:
+            normalize_trade_event_temporal_fields(dict(event))
+        except ValueError as exc:
+            errors.append(f"{event_id}:temporal_semantics:{exc}")
         if f"{event_id}｜" not in archive:
             errors.append(f"{event_id}:archive")
         confirmed = str(event.get("confirmed_at_beijing") or "")[:10]
@@ -1433,5 +1441,6 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
 
 

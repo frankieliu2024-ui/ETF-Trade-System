@@ -10,6 +10,10 @@ from typing import Any
 from formal_file_mutation_gateway import upsert_formal_line
 from process_state_sync_request import sync_experience_transaction_index
 from confirmed_trade_facts import canonical_etf_fee_projection, trade_signature
+try:
+    from trade_event_temporal_semantics import normalize_trade_event_temporal_fields
+except ModuleNotFoundError:
+    from scripts.trade_event_temporal_semantics import normalize_trade_event_temporal_fields
 
 ROOT = Path(os.environ.get("ETF_SYSTEM_ROOT", Path(__file__).resolve().parents[1])).resolve()
 STATE = ROOT / "data" / "state"
@@ -21,6 +25,52 @@ ARCHIVE_START = "<!-- AUTO_TRADE_FACT_CORRECTIONS_START -->"
 ARCHIVE_END = "<!-- AUTO_TRADE_FACT_CORRECTIONS_END -->"
 EXPERIENCE_START = "<!-- AUTO_TRADE_FACT_CORRECTIONS_START -->"
 EXPERIENCE_END = "<!-- AUTO_TRADE_FACT_CORRECTIONS_END -->"
+
+
+def _apply_execution_metadata_correction(req: dict) -> int:
+    """Repair only timestamps on an existing event; never touch account facts or economics."""
+    event_id = str(req.get("trade_event_id") or "").strip()
+    changes = req.get("changes")
+    allowed = {"execution_date", "confirmation_date", "account_confirmed_at_beijing"}
+    if not event_id or not isinstance(changes, dict) or not changes:
+        raise RuntimeError("execution metadata correction requires trade_event_id and changes")
+    unknown = set(changes) - allowed
+    if unknown:
+        raise RuntimeError("execution metadata correction contains forbidden fields: " + ",".join(sorted(unknown)))
+    event_path = ROOT / "events" / "trades" / f"{event_id}.json"
+    event = read_json(event_path, {}) or {}
+    if not event:
+        raise RuntimeError("existing trade event not found; correction cannot create a trade")
+    before = dict(event)
+    event.update(changes)
+    normalize_trade_event_temporal_fields(event)
+    economic = ("code", "side", "quantity", "price", "amount", "gross_amount", "net_cash_effect", "cash_flow_amount")
+    for key in economic:
+        if event.get(key) != before.get(key):
+            raise RuntimeError(f"execution metadata correction changed economic field: {key}")
+    if event == before:
+        status = "RECONCILED"
+    else:
+        write_json(event_path, event)
+        try:
+            from build_execution_quality import build as build_execution_quality
+        except ModuleNotFoundError:
+            from scripts.build_execution_quality import build as build_execution_quality
+        from state_manager import atomic_json_write
+        atomic_json_write(STATE / "execution_quality.json", build_execution_quality(ROOT))
+        status = "APPLIED"
+    receipt = {
+        "status": status,
+        "correction_type": "EXECUTION_METADATA_CORRECTION",
+        "trade_event_id": event_id,
+        "changed_fields": sorted(k for k in changes if before.get(k) != event.get(k)),
+        "account_fact_updated": False,
+        "economic_fields_updated": False,
+        "safety_boundary": "Only repairs execution/confirmation metadata on an existing trade event; account facts and economics remain untouched.",
+    }
+    write_json(STATE / "trade_fact_correction_receipt.json", receipt)
+    print(json.dumps(receipt, ensure_ascii=False))
+    return 0
 
 
 def reconcile_account_cash_projection(event: dict, fee: float, request: dict, stamp: str) -> dict:
@@ -303,6 +353,8 @@ def main() -> int:
     if ROOT not in request_path.parents or not request_path.exists():
         raise RuntimeError("invalid correction request path")
     req = read_json(request_path, {}) or {}
+    if str(req.get("correction_type") or "").upper() == "EXECUTION_METADATA_CORRECTION":
+        return _apply_execution_metadata_correction(req)
     if str(req.get("correction_type") or "").upper() == "DECISION_ATTRIBUTION":
         return _apply_attribution_request(req)
     event_id = str(req.get("trade_event_id") or "").strip()
@@ -415,4 +467,5 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
 
