@@ -4,6 +4,7 @@ from pathlib import Path
 OWNER = Path("scripts/scheduled_review_completion_owner.py").read_text(encoding="utf-8")
 WORKFLOW = Path(".github/workflows/decision-notification.yml").read_text(encoding="utf-8")
 INDEX = Path("ETF_SYSTEM_INDEX.md").read_text(encoding="utf-8")
+COMPLETION = Path("scripts/scheduled_review_completion.py").read_text(encoding="utf-8")
 
 
 def test_recovery_reuses_same_completion_and_explicitly_forces_resend():
@@ -26,3 +27,10 @@ def test_three_tasks_use_one_completion_owner_and_one_notification_workflow():
 def test_delivery_states_are_not_collapsed_into_user_receipt():
     assert "completion写入、completion回读、正式事件、REPORT、notification、服务商投递和用户收到必须分别核验" in INDEX
     assert "不得把completion写入、事件形成、通知workflow提交、服务商投递或历史通知表述为用户已收到" in INDEX
+
+
+def test_direct_completion_entry_continues_to_same_run_notification_handoff():
+    assert "from scheduled_review_completion_owner import execute_post_handoff" in COMPLETION
+    assert "handoff = execute_post_handoff(target)" in COMPLETION
+    assert '"handoff": handoff' in COMPLETION
+
