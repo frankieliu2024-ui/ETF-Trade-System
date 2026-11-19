@@ -34,3 +34,9 @@ def test_direct_completion_entry_continues_to_same_run_notification_handoff():
     assert "handoff = execute_post_handoff(target)" in COMPLETION
     assert '"handoff": handoff' in COMPLETION
 
+
+
+def test_formal_completion_push_wake_reaches_direct_sender():
+    workflow = Path(".github/workflows/decision-notification.yml").read_text(encoding="utf-8")
+    assert "steps.push_kind.outputs.formal_completion == \'true\'" in workflow
+    assert "steps.push_kind.outputs.scheduled_review_completion_path" in workflow
