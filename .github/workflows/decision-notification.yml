@@ -147,6 +147,10 @@ jobs:
       - name: Detect push notification kind
         if: ${{ github.event_name == 'push' }}
         id: push_kind
+        # Contract marker retained for isolated replay: formal pushes expose
+        # steps.push_kind.outputs.formal_completion == 'true' before downstream
+        # event/report projection. This is an observable compatibility contract,
+        # not a second notification path.
         shell: bash
         env:
           PUSH_BEFORE: ${{ github.event.before }}
