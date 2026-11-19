@@ -131,12 +131,12 @@ def reconcile_account_cash_projection(event: dict, fee: float, request: dict, st
         if row.get("reconciliation_note") != note:
             row["reconciliation_note"] = note
             row_changed = True
-    if row_changed:
-        account["fee_fact_updated_at"] = stamp
-        account["fee_fact_source"] = str(request.get("source") or "BROKER_SCREENSHOT_CONFIRMED")
-        write_json(STATE / "account_fact.json", account)
+    # Account facts are owned exclusively by the account-sync ingress.  A trade
+    # correction may calculate this reconciliation, but must not persist it.
+    # Return the proposed annotation for the account owner to consume later.
     return {
-        "status": "UPDATED" if row_changed else "ALREADY_ANNOTATED",
+        "status": "DEFERRED_TO_ACCOUNT_OWNER" if row_changed else "ALREADY_ANNOTATED",
+        "persisted": False,
         "observed_delta": observed,
         "expected_delta": expected,
         "unreconciled_delta": round(observed - expected, 2) if observed is not None else None,
@@ -154,11 +154,9 @@ def persist_statement_scope(request: dict, stamp: str) -> dict:
     merged.update(scope)
     merged["updated_at_beijing"] = stamp
     changed = account.get("broker_statement_reconciliation") != merged
-    if changed:
-        account["broker_statement_reconciliation"] = merged
-        write_json(STATE / "account_fact.json", account)
     return {
-        "status": "UPDATED" if changed else "ALREADY_ANNOTATED",
+        "status": "DEFERRED_TO_ACCOUNT_OWNER" if changed else "ALREADY_ANNOTATED",
+        "persisted": False,
         "statement_scope_status": merged.get("statement_scope_status"),
         "executed_transaction_scope_status": merged.get("executed_transaction_scope_status"),
         "unmatched_executed_transaction_entry_count": merged.get("unmatched_executed_transaction_entry_count"),
@@ -448,7 +446,7 @@ def main() -> int:
         "dashboard_updated": True,
         "archive_updated": True,
         "experience_updated": True,
-        "account_fact_updated": account_cash_projection.get("status") == "UPDATED",
+        "account_fact_updated": False,
         "account_cash_projection": account_cash_projection,
         "statement_scope_projection": statement_scope_projection,
         "master_updated": False,
