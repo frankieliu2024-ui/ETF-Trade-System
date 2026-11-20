@@ -1,4 +1,4 @@
-from scripts.hyperliquid_user_explanation import explain_for_notification
+from scripts.hyperliquid_user_explanation import _delta_explanation, _direction_effect_text, explain_for_notification
 
 
 def test_notification_does_not_rebuild_mapping_from_family():
@@ -24,3 +24,20 @@ def test_notification_resolves_a_share_index_family_mapping():
     assert "XYZ100" in text
     assert "159781" in text or "科创创业ETF" in text
     assert "结论为" in text
+
+
+def test_down_direction_does_not_use_upward_chasing_language():
+    assert _direction_effect_text("DOWN", "TIMING_FILTER") == "方向偏弱，但当前不直接追随下跌，等待下一合法脉冲确认"
+
+
+def test_open_interest_explanation_does_not_claim_long_or_short_direction():
+    text = _delta_explanation({"funding": 0.0, "open_interest": 43.9802, "premium": -0.0002}, "DOWN")
+    assert "未结束的市场押注增加" in text
+    assert "不能判断新增的是多头还是空头" in text
+    assert "价格一定" not in text
+
+
+def test_open_interest_decrease_is_explained_as_position_exit():
+    text = _delta_explanation({"funding": 0.0, "open_interest": -31519.7580, "premium": -0.0005}, "DOWN")
+    assert "未结束押注退出" in text
+    assert "不能判断是多头退出还是空头平仓" in text
