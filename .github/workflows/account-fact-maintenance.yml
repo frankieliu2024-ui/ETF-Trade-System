@@ -179,6 +179,7 @@ jobs:
             --execution-quality-outcome "$EXECUTION_QUALITY_OUTCOME" \
             --run-id "$RUN_ID"
       - name: Finalize maintenance health after account readback
+        id: maintenance_guard
         continue-on-error: true
         shell: bash
         env:
@@ -232,11 +233,11 @@ jobs:
           done
           exit 1
 
-      - name: Fail maintenance when required projection failed
-        if: steps.projection.outcome != 'success' || steps.fast_consistency.outcome != 'success'
+      - name: Fail maintenance when required projection or global guard failed
+        if: steps.projection.outcome != 'success' || steps.fast_consistency.outcome != 'success' || steps.maintenance_guard.outcome != 'success'
         shell: bash
         run: |
           set -euo pipefail
-          echo "account fact was published, but fast account consistency acceptance or required risk/dashboard projection failed" >&2
+          echo "account fact was published, but a required account projection, fast account consistency acceptance, or the global maintenance guard failed" >&2
           exit 1
 
