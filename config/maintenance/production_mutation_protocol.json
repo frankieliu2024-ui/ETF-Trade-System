@@ -323,8 +323,7 @@
     {
       "family_id": "A_SHARE_CORE_SNAPSHOT",
       "members": [
-        ".github/workflows/market-snapshot.yml",
-        ".github/workflows/opening-auction-current-fallback.yml"
+        ".github/workflows/market-snapshot.yml"
       ],
       "required_concurrency_token": "etf-market-snapshot-pulse",
       "reason": "两条链使用同一A股核心producer并可能写CURRENT/runtime及快照，必须共享行情核心producer专用串行队列；其他状态写入不得取消行情脉冲。 "
