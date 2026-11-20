@@ -156,6 +156,67 @@ def _format_delta(value: Any) -> str:
     return "不可比" if n is None else f"{n:+.4f}"
 
 
+def _delta_explanation(delta: dict[str, Any], direction: str) -> str:
+    """Turn raw ten-minute deltas into a plain-language, non-directional explanation."""
+    funding = _number(delta.get("funding"))
+    open_interest = _number(delta.get("open_interest"))
+    premium = _number(delta.get("premium"))
+    parts = []
+    if funding is None:
+        parts.append("资金费率变化不可比")
+    elif abs(funding) < 0.00005:
+        parts.append("资金费率基本不变，多空持仓成本没有明显变化")
+    elif funding > 0:
+        parts.append("资金费率上升，做多一侧相对更急，但这不等于价格一定上涨")
+    else:
+        parts.append("资金费率下降，做空一侧相对更急，但这不等于价格一定下跌")
+    if open_interest is None:
+        parts.append("未平仓量变化不可比")
+    elif open_interest > 0:
+        parts.append(
+            f"未平仓量增加{open_interest:+.4f}，表示未结束的市场押注增加；"
+            "仅凭该指标不能判断新增的是多头还是空头"
+        )
+    elif open_interest < 0:
+        parts.append(
+            f"未平仓量减少{abs(open_interest):.4f}，表示部分未结束押注退出；"
+            "仅凭该指标不能判断是多头退出还是空头平仓"
+        )
+    else:
+        parts.append("未平仓量基本不变，未见明显新增或退出押注")
+    if premium is None:
+        parts.append("溢价变化不可比")
+    elif abs(premium) < 0.00005:
+        parts.append("溢价基本不变，外部价格相对参考价没有明显变化")
+    elif premium > 0:
+        parts.append(f"溢价上升{premium:+.4f}，外部价格相对参考价更贵，情绪升温但也可能增加追涨风险")
+    else:
+        parts.append(f"溢价下降{abs(premium):.4f}，外部价格相对参考价更便宜，价格优势减弱")
+    return "；".join(parts)
+
+
+def _direction_effect_text(direction: str, effect: str) -> str:
+    if effect == "TIMING_FILTER":
+        if direction == "UP":
+            return "方向偏强，但当前不直接追涨，等待下一合法脉冲确认"
+        if direction == "DOWN":
+            return "方向偏弱，但当前不直接追随下跌，等待下一合法脉冲确认"
+        return "方向暂不明确，当前不形成方向性动作"
+    if effect in {"SUPPORT", "CONFIRMATORY"}:
+        if direction == "UP":
+            return "方向偏强，对相关ETF形成方向支持"
+        if direction == "DOWN":
+            return "方向偏弱，对相关ETF形成防守/风险支持"
+        return "方向暂不明确，支持结论有限"
+    if effect in {"CONTRADICT", "CONTRADICTION"}:
+        return "方向与当前判断相反，形成压制或背离"
+    return {
+        "CROWDING_RISK": "方向信号伴随拥挤风险",
+        "NO_DIRECT_MAPPING": "没有直接映射，不能形成方向结论",
+        "INSUFFICIENT": "当前证据不足，不改变优先级",
+    }.get(effect, "当前无法形成方向结论")
+
+
 def explain_for_notification(*, text: str, target: str = "") -> str:
     """Render the global contribution package without rebuilding mappings."""
     rows = _latest_binding_rows(f"{text} {target}")
@@ -167,16 +228,7 @@ def explain_for_notification(*, text: str, target: str = "") -> str:
         target_text = "、".join(labels[:4]) if labels else "固定映射对象"
         direction = str(row.get("direction_signal") or "UNDETERMINED")
         effect = str(row.get("decision_effect") or "INSUFFICIENT")
-        effect_text = {
-            "SUPPORT": "支持",
-            "CONFIRMATORY": "支持/确认",
-            "CONTRADICT": "矛盾/压制",
-            "CONTRADICTION": "矛盾/压制",
-            "TIMING_FILTER": "方向支持但当前不直接追涨",
-            "CROWDING_RISK": "拥挤风险",
-            "NO_DIRECT_MAPPING": "无直接映射",
-            "INSUFFICIENT": "本次不改变优先级，等待下一合法可比脉冲",
-        }.get(effect, "当前无法判断")
+        effect_text = _direction_effect_text(direction, effect)
         signal = row.get("signal_fields") if isinstance(row.get("signal_fields"), dict) else {}
         comparison = str(signal.get("pulse_comparison_status") or row.get("pulse_comparison_status") or "NOT_COMPARABLE")
         priority = row.get("priority_effect") or "当前不改变该ETF排序；等待下一合法可比脉冲"
@@ -184,7 +236,12 @@ def explain_for_notification(*, text: str, target: str = "") -> str:
         detail = f"{row.get('object_id') or row.get('asset')} → {target_text}；方向{direction}，结论为{effect_text}；{priority}；升级条件：{trigger}"
         if comparison == "COMPARABLE":
             delta = signal.get("pulse_delta") if isinstance(signal.get("pulse_delta"), dict) else {}
-            detail += f"；10分钟变化：资金费率{_format_delta(delta.get('funding'))}、未平仓量{_format_delta(delta.get('open_interest'))}、溢价{_format_delta(delta.get('premium'))}"
+            detail += (
+                f"；过去10分钟变化：资金费率{_format_delta(delta.get('funding'))}、"
+                f"未平仓量{_format_delta(delta.get('open_interest'))}、"
+                f"溢价{_format_delta(delta.get('premium'))}。"
+                f"通俗解释：{_delta_explanation(delta, direction)}"
+            )
         else:
             reason = signal.get("comparison_reason") or "缺少前一合法脉冲比较基准"
             detail += f"；本次不升级优先级：{reason}"
