@@ -15,13 +15,6 @@ on:
   # it only awakens this existing canonical watchdog when the marker matches.
   issue_comment:
     types: [created]
-  # Existing producer completions are event-driven wake opportunities for the
-  # same watchdog. They do not add a producer, state store, or recovery path.
-  workflow_run:
-    workflows:
-      - "ETF market snapshot"
-      - "ETF opening-auction CURRENT fallback"
-    types: [completed]
   push:
     branches: [main]
     paths:
@@ -49,11 +42,9 @@ permissions:
   actions: write
 
 concurrency:
-  # The watchdog reads CURRENT and publishes derived projections. It therefore
-  # shares the repository-wide writer lane with snapshot, account, fallback, and
-  # pulse producers so the read/rebuild/validate sequence cannot straddle a
-  # canonical main-state publication.
-  group: etf-main-state-writer
+  # Watchdog checks are bounded maintenance work and must not occupy or
+  # supersede the canonical market/account writer lanes.
+  group: etf-watchdog-state-writer
   cancel-in-progress: false
 
 jobs:
