@@ -58,16 +58,15 @@ def persist_completion(target: Path) -> tuple[str, dict[str, object]]:
     binding = payload.get("presentation_binding") if isinstance(payload.get("presentation_binding"), dict) else {}
     task_name = str(payload.get("task_name") or payload.get("task_id") or "").strip()
     report_type = str(payload.get("report_type") or binding.get("report_type") or "").strip().upper()
-    # System Review may arrive with a degraded envelope from the scheduled
-    # runtime. Classify it from its own task identity and deterministically
-    # complete only its local handoff metadata; never reject the frozen body.
+    # Only the System Review path may classify and complete a degraded local
+    # envelope. Trade Review keeps its existing handoff behavior unchanged.
     system_review = payload.get("system_review")
     if not report_type and (task_name == "ETF系统复核" or isinstance(system_review, dict)
                             or str(payload.get("formal_fact_type") or "").upper() == "FORMAL_SCHEDULED_SYSTEM_REVIEW"):
         report_type = "ETF_SYSTEM_REVIEW"
-    if report_type in {"ETF_TRADE_REVIEW", "ETF_SYSTEM_REVIEW"}:
+    if report_type == "ETF_SYSTEM_REVIEW":
         request_id = str(payload.get("request_id") or "").strip()
-        local_task_id = task_name or ("ETF系统复核" if report_type == "ETF_SYSTEM_REVIEW" else "ETF交易复盘")
+        local_task_id = "ETF系统复核"
         if request_id:
             payload.setdefault("task_id", local_task_id)
             payload.setdefault("task_name", local_task_id)
@@ -85,6 +84,22 @@ def persist_completion(target: Path) -> tuple[str, dict[str, object]]:
             binding.setdefault("report_type", report_type)
             binding.setdefault("full_content", payload.get("final_content"))
             binding.setdefault("content_hash", payload.get("content_hash"))
+        target.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        binding = payload.get("presentation_binding") if isinstance(payload.get("presentation_binding"), dict) else {}
+    if report_type == "ETF_TRADE_REVIEW":
+        request_id = str(payload.get("request_id") or "").strip()
+        task_name = str(payload.get("task_name") or "").strip()
+        if request_id:
+            payload.setdefault("task_run_id", request_id)
+            payload.setdefault("occurrence_id", request_id)
+            payload.setdefault("report_id", f"{task_name or report_type}:{request_id}")
+        binding = payload.setdefault("presentation_binding", {})
+        if isinstance(binding, dict):
+            binding.setdefault("task_id", task_name)
+            binding.setdefault("task_run_id", payload.get("task_run_id"))
+            binding.setdefault("occurrence_id", payload.get("occurrence_id"))
+            binding.setdefault("report_id", payload.get("report_id"))
+            binding.setdefault("report_type", report_type)
         target.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         binding = payload.get("presentation_binding") if isinstance(payload.get("presentation_binding"), dict) else {}
     if report_type == "ETF_FORMAL_DECISION":
