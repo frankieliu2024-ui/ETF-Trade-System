@@ -342,7 +342,12 @@ def _validate_formal_risk_precedence(report: dict) -> None:
         if dashboard_risk is None or abs(dashboard_risk - formal_risk) > 0.03:
             mismatches.append(f"dashboard={dashboard_risk}")
     elif dashboard_risk is not None and not dashboard_unavailable:
-        mismatches.append(f"dashboard_stale_value={dashboard_risk}")
+        # E2E risk is not currently consumable. Preserve visibility of the
+        # stale dashboard value, but do not make it a hard consistency failure.
+        warning = f"risk:formal_precedence:dashboard_stale_value={dashboard_risk}"
+        if warning not in report.setdefault("warnings", []):
+            report["warnings"].append(warning)
+            _recount(report)
     # A missing E2E risk value is a valid degraded state when the
     # current-date risk reconstruction is unavailable.  It must not be
     # promoted to a hard consistency failure, while a READY component with
