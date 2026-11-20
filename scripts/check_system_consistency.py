@@ -1435,7 +1435,6 @@ def main() -> int:
     _validate_historical_trade_case_mapping(report)
     _validate_formal_completion_decision_readback(report)
     _validate_semantic_formal_structure(report)
-    _validate_weekly_projection_contract(report)
     _validate_execution_quality_projection(report)
     _validate_current_formal_decision_projection(report)
     _validate_readme_front_door(report)

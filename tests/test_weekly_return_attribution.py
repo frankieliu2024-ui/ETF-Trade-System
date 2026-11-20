@@ -15,14 +15,12 @@ def _position(code, quantity, market_value, asset_class="ETF", name=""):
 
 
 class StrictWeeklyReturnAttributionTests(unittest.TestCase):
-    def test_account_maintenance_refreshes_weekly_attribution_after_canonical_fact(self):
+    def test_weekly_attribution_is_not_on_account_or_global_acceptance_path(self):
         workflow = (Path(__file__).parents[1] / ".github" / "workflows" / "account-fact-maintenance.yml").read_text(encoding="utf-8")
-        self.assertIn("python scripts/build_weekly_return_attribution.py", workflow)
-        self.assertLess(
-            workflow.index("python scripts/build_weekly_return_attribution.py"),
-            workflow.index("- name: Verify account fact by code"),
-        )
-        self.assertIn("steps.weekly_attribution.outcome != 'success'", workflow)
+        consistency = (Path(__file__).parents[1] / "scripts" / "check_system_consistency.py").read_text(encoding="utf-8")
+        self.assertNotIn("python scripts/build_weekly_return_attribution.py", workflow)
+        self.assertNotIn("steps.weekly_attribution.outcome", workflow)
+        self.assertNotIn("_validate_weekly_projection_contract(report)", consistency)
 
     def test_attribution_only_runs_on_last_legal_day_of_week(self):
         self.assertFalse(is_last_legal_day_of_week("2026-11-02", set()))
