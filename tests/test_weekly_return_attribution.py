@@ -1,4 +1,5 @@
 import unittest
+from pathlib import Path
 
 from scripts.build_weekly_return_attribution import _strict_decomposition, is_last_legal_day_of_week
 
@@ -14,6 +15,15 @@ def _position(code, quantity, market_value, asset_class="ETF", name=""):
 
 
 class StrictWeeklyReturnAttributionTests(unittest.TestCase):
+    def test_account_maintenance_refreshes_weekly_attribution_after_canonical_fact(self):
+        workflow = (Path(__file__).parents[1] / ".github" / "workflows" / "account-fact-maintenance.yml").read_text(encoding="utf-8")
+        self.assertIn("python scripts/build_weekly_return_attribution.py", workflow)
+        self.assertLess(
+            workflow.index("python scripts/build_weekly_return_attribution.py"),
+            workflow.index("- name: Verify account fact by code"),
+        )
+        self.assertIn("steps.weekly_attribution.outcome != 'success'", workflow)
+
     def test_attribution_only_runs_on_last_legal_day_of_week(self):
         self.assertFalse(is_last_legal_day_of_week("2026-11-02", set()))
         self.assertTrue(is_last_legal_day_of_week("2026-11-06", set()))
