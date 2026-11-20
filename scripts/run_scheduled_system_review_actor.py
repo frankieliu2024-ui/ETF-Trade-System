@@ -216,9 +216,21 @@ def main() -> int:
 
     completion_path, persistence = persist_completion(target)
     dispatch_started_at = datetime.now(timezone.utc)
-    dispatch = dispatch_notification(completion_path)
-    workflow_run = _readback_notification_run(completion_path, dispatch_started_at)
-    projection = _wait_for_system_projection(persisted)
+    # Consistency/audit and notification readback are post-freeze observations.
+    # They must never erase or block the already persisted completion. Preserve
+    # every failure as structured evidence and continue the same handoff.
+    try:
+        dispatch = dispatch_notification(completion_path)
+    except Exception as exc:
+        dispatch = {"submitted": False, "status": "FAILED", "reason": type(exc).__name__ + ": " + str(exc)}
+    try:
+        workflow_run = _readback_notification_run(completion_path, dispatch_started_at)
+    except Exception as exc:
+        workflow_run = {"verified": False, "reason": type(exc).__name__ + ": " + str(exc)}
+    try:
+        projection = _wait_for_system_projection(persisted)
+    except Exception as exc:
+        projection = {"verified": False, "reason": type(exc).__name__ + ": " + str(exc)}
     # Dispatch acceptance is not a workflow-run readback. Verify downstream projections separately.
     # Notification/event/report projection is post-processing. A failure
     # here must remain observable without blocking the frozen review body.
