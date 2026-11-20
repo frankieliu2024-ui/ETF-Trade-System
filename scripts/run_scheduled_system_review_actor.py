@@ -157,6 +157,30 @@ def _readback_notification_run(completion_path: str, submitted_after: datetime) 
     return {"verified": False, "reason": "matching notification workflow run not read back"}
 
 
+def _run_required_consistency_acceptance() -> dict[str, object]:
+    """Dispatch this occurrence's dedicated consistency workflow before handoff.
+
+    Failure is evidence, not a gate: the call is mandatory, but its result must
+    not suppress the already-frozen System Review completion.
+    """
+    token = (os.environ.get("ETF_GITHUB_PAT") or os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN") or "").strip()
+    repository = os.environ.get("GITHUB_REPOSITORY", "frankieliu2024-ui/ETF-Trade-System")
+    if not token or "/" not in repository:
+        return {"called": False, "status": "NOT_STARTED", "reason": "GitHub dispatch credentials unavailable"}
+    endpoint = f"https://api.github.com/repos/{repository}/actions/workflows/system-consistency.yml/dispatches"
+    headers = {"Accept": "application/vnd.github+json", "Authorization": "Bearer " + token, "X-GitHub-Api-Version": "2022-11-28", "Content-Type": "application/json"}
+    try:
+        with urllib_request.urlopen(
+            urllib_request.Request(endpoint, data=json.dumps({"ref": "main"}).encode("utf-8"), headers=headers, method="POST"),
+            timeout=20,
+        ) as response:
+            if response.status not in {200, 201, 202, 204}:
+                return {"called": True, "status": "UNAVAILABLE", "http_status": response.status}
+        return {"called": True, "status": "START_REQUESTED", "workflow": ".github/workflows/system-consistency.yml", "ref": "main"}
+    except Exception as exc:
+        return {"called": True, "status": "UNAVAILABLE", "reason": type(exc).__name__ + ": " + str(exc)}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--final-content", required=True)
@@ -182,6 +206,11 @@ def main() -> int:
     review = json.loads(Path(args.review_json).read_text(encoding="utf-8"))
     if not isinstance(review, dict) or review.get("task_id") != "ETF系统复核" or review.get("market_date") != args.market_date:
         raise ValueError("system review input identity or market_date mismatch")
+    # Mandatory per-occurrence acceptance invocation.  The result is retained
+    # as evidence and never converted into PASS or used to block handoff.
+    consistency_acceptance = _run_required_consistency_acceptance()
+    review = dict(review)
+    review["consistency_acceptance"] = consistency_acceptance
     payload = build_system_review_completion_request(
         review,
         args.request_id or task_run_id,
@@ -216,9 +245,21 @@ def main() -> int:
 
     completion_path, persistence = persist_completion(target)
     dispatch_started_at = datetime.now(timezone.utc)
-    dispatch = dispatch_notification(completion_path)
-    workflow_run = _readback_notification_run(completion_path, dispatch_started_at)
-    projection = _wait_for_system_projection(persisted)
+    # Consistency/audit and notification readback are post-freeze observations.
+    # They must never erase or block the already persisted completion. Preserve
+    # every failure as structured evidence and continue the same handoff.
+    try:
+        dispatch = dispatch_notification(completion_path)
+    except Exception as exc:
+        dispatch = {"submitted": False, "status": "FAILED", "reason": type(exc).__name__ + ": " + str(exc)}
+    try:
+        workflow_run = _readback_notification_run(completion_path, dispatch_started_at)
+    except Exception as exc:
+        workflow_run = {"verified": False, "reason": type(exc).__name__ + ": " + str(exc)}
+    try:
+        projection = _wait_for_system_projection(persisted)
+    except Exception as exc:
+        projection = {"verified": False, "reason": type(exc).__name__ + ": " + str(exc)}
     # Dispatch acceptance is not a workflow-run readback. Verify downstream projections separately.
     # Notification/event/report projection is post-processing. A failure
     # here must remain observable without blocking the frozen review body.
