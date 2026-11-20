@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "checked_at": "2026-11-20T09:49:28+08:00",
+  "checked_at": "2026-11-20T10:25:58+08:00",
   "mode": "DETERMINISTIC_RUNTIME_SELF_HEALING",
   "enabled": true,
   "classification": "DERIVED_CONTEXT_IDENTITY_DRIFT",
@@ -10,17 +10,19 @@
   "watch_window_active": true,
   "same_day_current_required": true,
   "same_day_current_missing": false,
-  "current_capture_at": "2026-11-20T09:36:10+08:00",
-  "current_capture_age_seconds": 798,
-  "expected_pulse_at": null,
-  "expected_pulse_missing": false,
+  "current_capture_at": "2026-11-20T10:08:55+08:00",
+  "current_capture_age_seconds": 1023,
+  "expected_pulse_at": "2026-11-20T10:19:00+08:00",
+  "expected_pulse_missing": true,
   "runtime_health_status": "PASS",
-  "system_consistency_status": "PASS",
+  "system_consistency_status": "FAIL",
   "market_recovery_consistency_gate": {
-    "global_status": "PASS",
-    "blocks_market_recovery": false,
-    "classification": "NO_GLOBAL_HARD_FAIL",
-    "errors": []
+    "global_status": "FAIL",
+    "blocks_market_recovery": true,
+    "classification": "GLOBAL_FAIL_BLOCKS_MARKET_RECOVERY_FAIL_SAFE",
+    "errors": [
+      "risk:formal_precedence:dashboard_stale_value=-14.5869"
+    ]
   },
   "master_rules_version": "V2.2.34",
   "current_rules_version": "V2.2.34",
