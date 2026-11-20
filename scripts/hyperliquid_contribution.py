@@ -243,13 +243,20 @@ def build_contribution(*, context: dict | None, node: str = "", task: str = "") 
             return "DOWN", "MARK_VS_PREV_DAY", f"{change:.4%}"
         return "FLAT", "MARK_VS_PREV_DAY", f"{change:.4%}"
 
-    def _priority_effect(effect_name: str) -> str:
+    def _priority_effect(effect_name: str, direction: str = "") -> str:
+        if effect_name == "TIMING_FILTER":
+            if direction == "UP":
+                return "方向偏强但当前不直接追涨；将该ETF列入下一节点优先复核"
+            if direction == "DOWN":
+                return "方向偏弱但当前不直接追随下跌；将该ETF列入下一节点优先复核"
+            return "方向暂不明确；将该ETF列入下一节点优先复核"
+        if effect_name == "CROWDING_RISK" and direction == "DOWN":
+            return "方向偏弱且存在拥挤风险；降低即时追随优先级，等待拥挤缓解或A股承接确认"
         return {
             "SUPPORT": "提高对应ETF的外部确认优先级；若A股同步上涨且承接正常，进入更高配置优先级比较",
             "CONFIRMATORY": "提高对应ETF的配置与持有优先级；外部与A股已形成相互确认",
             "CONTRADICT": "降低对应ETF的新增与持有优先级；若A股同步走弱，进入减持或释放比较",
             "CROWDING_RISK": "降低即时追涨优先级；保留方向支持，但先等待拥挤缓解或A股承接确认",
-            "TIMING_FILTER": "方向支持成立但当前不直接追涨；将该ETF列入下一节点优先复核",
             "NO_DIRECT_MAPPING": "不改变该ETF排序；仅作为所属族群背景",
             "NO_INCREMENTAL_VALUE": "本次不改变该ETF排序；外部证据未增加有效边际信息",
             "INSUFFICIENT": "当前不改变该ETF排序；等待下一合法可比脉冲",
@@ -337,7 +344,7 @@ def build_contribution(*, context: dict | None, node: str = "", task: str = "") 
             "crowding_signal": current_signal.get("crowding_signal") or "UNDETERMINED",
             "cross_market_relation": item.get("cross_market_relation") or "UNDETERMINED：缺少A股同步事实",
             "decision_effect": current_effect,
-            "priority_effect": _priority_effect(current_effect),
+            "priority_effect": _priority_effect(current_effect, current_signal.get("direction") or ""),
             "next_trigger": _next_trigger(current_effect),
             "signal_fields": current_signal,
             "evidence_summary": item.get("evidence_summary") or current_signal,
@@ -377,7 +384,7 @@ def build_contribution(*, context: dict | None, node: str = "", task: str = "") 
                 "mapping_status": "MAPPED",
                 "cross_market_relation": relation,
                 "decision_effect": obj.get("decision_effect") or "TIMING_FILTER",
-                "priority_effect": obj.get("priority_effect") or _priority_effect(str(obj.get("decision_effect") or "INSUFFICIENT")),
+                "priority_effect": obj.get("priority_effect") or _priority_effect(str(obj.get("decision_effect") or "INSUFFICIENT"), str(direction or "")),
                 "next_trigger": obj.get("next_trigger") or _next_trigger(str(obj.get("decision_effect") or "INSUFFICIENT")),
                 "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
                 "source_context_id": context.get("context_id") or latest.get("context_id") or "",
