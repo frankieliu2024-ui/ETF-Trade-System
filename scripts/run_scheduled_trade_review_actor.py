@@ -236,7 +236,14 @@ def main() -> int:
     canonical_path = persisted_path
     # Passive push wakes are not completion proof. Explicit workflow dispatch
     # is the primary handoff path for this completion.
-    dispatch = _dispatch_notification(canonical_path)
+    # Notification/acceptance transport is post-completion. Injected
+    # connection failures must remain evidence and must not end the review run.
+    try:
+        dispatch = _dispatch_notification(canonical_path)
+    except Exception as exc:
+        dispatch = {"submitted": False, "read_back": False, "status": "FAILED",
+                    "reason": type(exc).__name__ + ": " + str(exc),
+                    "completion_path": canonical_path}
     dispatch["explicit_workflow_dispatch"] = True
     # Same-run hard gate: completion persistence alone is not a successful
     # handoff. The actor must dispatch the canonical notification workflow and
