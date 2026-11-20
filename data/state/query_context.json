@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-11-20T01:44:51Z",
-  "generated_at_beijing": "2026-11-20T09:44:51+08:00",
+  "generated_at": "2026-11-20T01:51:29Z",
+  "generated_at_beijing": "2026-11-20T09:51:29+08:00",
   "market_date": "2026-11-20",
   "latest_valid_node": "live",
   "rules_version": "V2.2.34",
@@ -1264,7 +1264,7 @@
       "boundary": "MINIMUM_DECISION_CONTEXT_READY_NOT_ESTABLISHED",
       "timing": {}
     },
-    "generated_at": "2026-11-20T01:43:59Z",
+    "generated_at": "2026-11-20T01:50:47Z",
     "rules_version": "V2.2.34",
     "market_date": "2026-11-20",
     "latest_node": "live",
@@ -3819,7 +3819,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 10.105,
-      "age_seconds": 469
+      "age_seconds": 877
     },
     "freshness_at_context_build": {
       "status": "FRESH",
@@ -3836,7 +3836,7 @@
       "fresh_max_age_seconds": 900,
       "degraded_max_age_seconds": 1500,
       "acquisition_seconds": 10.105,
-      "age_seconds": 469
+      "age_seconds": 877
     },
     "data_quality_summary": {
       "pass_count": 29,
@@ -3940,7 +3940,7 @@
       "account_fact_time": "2026-11-19T15:49:00+08:00",
       "market_snapshot_time": "2026-11-20T09:36:10+08:00",
       "market_phase": "CONTINUOUS_MORNING",
-      "context_generated_time": "2026-11-20T01:43:59Z",
+      "context_generated_time": "2026-11-20T01:50:47Z",
       "latest_formal_decision_time": "2026-09-28T10:42:38+08:00",
       "account_fact_decision_relation": "ACCOUNT_FACT_AFTER_FORMAL_DECISION_REQUIRES_REASSESSMENT",
       "account_fact_requires_formal_reassessment": true,
@@ -3984,7 +3984,7 @@
       "read_only": true
     },
     "market_quote_router": {
-      "generated_at_beijing": "2026-11-20T09:43:59+08:00",
+      "generated_at_beijing": "2026-11-20T09:50:46+08:00",
       "refresh_mode": "CACHED_STATE",
       "refresh_failures": [],
       "decision_freshness": {
@@ -3993,8 +3993,8 @@
         "captured_at": "2026-11-20T01:36:10+00:00",
         "provider_as_of": "2026-11-20T01:36:06+00:00",
         "effective_as_of": "2026-11-20T01:36:06+00:00",
-        "request_time": "2026-11-20T01:43:59.175132+00:00",
-        "age_seconds": 473,
+        "request_time": "2026-11-20T01:50:46.977977+00:00",
+        "age_seconds": 880,
         "post_request": false,
         "preferred_max_age_seconds": 300,
         "fallback_max_age_seconds": 900,
@@ -4363,8 +4363,8 @@
           "market_status_cn": "A股交易中",
           "data_nature_cn": "实时交易行情",
           "source": "tencent_qq",
-          "freshness": "FRESH",
-          "freshness_cn": "时点正常",
+          "freshness": "DEGRADED",
+          "freshness_cn": "存在延迟",
           "quality_status": "PASS",
           "quality_status_cn": "数据可用",
           "direct_quote": true,
@@ -11352,7 +11352,7 @@
       },
       "latency_observability": {
         "candidate_formal_quote_elapsed_seconds": 0.0,
-        "discovery_pipeline_elapsed_seconds": 0.06,
+        "discovery_pipeline_elapsed_seconds": 0.048,
         "reuse_mode": "SAME_MARKET_NODE_LEGAL_DISCOVERY_EVIDENCE_REUSE",
         "measurement_role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE"
       }
@@ -11691,7 +11691,7 @@
     "account_fact_time": "2026-11-19T15:49:00+08:00",
     "market_snapshot_time": "2026-11-20T09:36:10+08:00",
     "market_phase": "CONTINUOUS_MORNING",
-    "context_generated_time": "2026-11-20T01:43:59Z",
+    "context_generated_time": "2026-11-20T01:50:47Z",
     "latest_formal_decision_time": "2026-09-28T10:42:38+08:00",
     "account_fact_decision_relation": "ACCOUNT_FACT_AFTER_FORMAL_DECISION_REQUIRES_REASSESSMENT",
     "account_fact_requires_formal_reassessment": true,
@@ -11801,7 +11801,7 @@
       "runtime_policy": "config/runtime_policy.json",
       "freshness_at_context_build": {
         "status": "FRESH",
-        "age_seconds": 469,
+        "age_seconds": 877,
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500
       },
@@ -11820,7 +11820,7 @@
         "fresh_max_age_seconds": 900,
         "degraded_max_age_seconds": 1500,
         "acquisition_seconds": 10.105,
-        "age_seconds": 469
+        "age_seconds": 877
       },
       "query_time_rule": "行情获取固定顺序为：查询时立即补采 → 最近一次有效快照 → 明确降级/缺失。最近快照只有在即时补采失败或不可执行时才作为第二顺位；使用前必须按查询时刻重新判断为“时点正常／存在延迟／时点过旧”。",
       "partial_refresh_rule": "逐对象采用最新有效证据：补采成功对象使用新数据，失败对象才回退最近有效快照；不得为了统一时点把成功补采对象整体退回旧快照。",
@@ -11845,7 +11845,7 @@
     }
   },
   "market_quote_router": {
-    "generated_at_beijing": "2026-11-20T09:43:59+08:00",
+    "generated_at_beijing": "2026-11-20T09:50:46+08:00",
     "refresh_mode": "CACHED_STATE",
     "refresh_failures": [],
     "decision_freshness": {
@@ -11854,8 +11854,8 @@
       "captured_at": "2026-11-20T01:36:10+00:00",
       "provider_as_of": "2026-11-20T01:36:06+00:00",
       "effective_as_of": "2026-11-20T01:36:06+00:00",
-      "request_time": "2026-11-20T01:43:59.175132+00:00",
-      "age_seconds": 473,
+      "request_time": "2026-11-20T01:50:46.977977+00:00",
+      "age_seconds": 880,
       "post_request": false,
       "preferred_max_age_seconds": 300,
       "fallback_max_age_seconds": 900,
@@ -12224,8 +12224,8 @@
         "market_status_cn": "A股交易中",
         "data_nature_cn": "实时交易行情",
         "source": "tencent_qq",
-        "freshness": "FRESH",
-        "freshness_cn": "时点正常",
+        "freshness": "DEGRADED",
+        "freshness_cn": "存在延迟",
         "quality_status": "PASS",
         "quality_status_cn": "数据可用",
         "direct_quote": true,
@@ -16966,7 +16966,7 @@
     },
     "latency_observability": {
       "candidate_formal_quote_elapsed_seconds": 0.0,
-      "discovery_pipeline_elapsed_seconds": 0.06,
+      "discovery_pipeline_elapsed_seconds": 0.048,
       "reuse_mode": "SAME_MARKET_NODE_LEGAL_DISCOVERY_EVIDENCE_REUSE",
       "measurement_role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE"
     }
@@ -76338,11 +76338,11 @@
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500,
     "acquisition_seconds": 10.105,
-    "age_seconds": 469
+    "age_seconds": 877
   },
   "freshness_at_context_build": {
     "status": "FRESH",
-    "age_seconds": 469,
+    "age_seconds": 877,
     "fresh_max_age_seconds": 900,
     "degraded_max_age_seconds": 1500
   },
@@ -76352,8 +76352,8 @@
     "captured_at": "2026-11-20T01:36:10+00:00",
     "provider_as_of": "2026-11-20T01:36:06+00:00",
     "effective_as_of": "2026-11-20T01:36:06+00:00",
-    "request_time": "2026-11-20T01:43:59.175132+00:00",
-    "age_seconds": 473,
+    "request_time": "2026-11-20T01:50:46.977977+00:00",
+    "age_seconds": 880,
     "post_request": false,
     "preferred_max_age_seconds": 300,
     "fallback_max_age_seconds": 900,
@@ -88866,7 +88866,7 @@
       }
     },
     "decision_context": {
-      "generated_at_beijing": "2026-11-20T01:43:59Z",
+      "generated_at_beijing": "2026-11-20T01:50:47Z",
       "source": "scripts/state_manager.py::build_decision_context",
       "analysis_coverage": {
         "indices_total": 3,
@@ -89194,8 +89194,8 @@
         "captured_at": "2026-11-20T01:36:10+00:00",
         "provider_as_of": "2026-11-20T01:36:06+00:00",
         "effective_as_of": "2026-11-20T01:36:06+00:00",
-        "request_time": "2026-11-20T01:43:59.175132+00:00",
-        "age_seconds": 473,
+        "request_time": "2026-11-20T01:50:46.977977+00:00",
+        "age_seconds": 880,
         "post_request": false,
         "preferred_max_age_seconds": 300,
         "fallback_max_age_seconds": 900,
@@ -139615,10 +139615,10 @@
     "t_new_current": "",
     "t_minimum_legal_inputs_ready": "UNKNOWN",
     "minimum_legal_inputs_ready_at": "UNKNOWN",
-    "t_decision_ready": "2026-11-20T01:43:59Z",
-    "final_answer_identity": "2026-11-20T09:44:51+08:00",
-    "final_analysis_identity": "2026-11-20T09:44:51+08:00",
-    "t_reply_or_output_ready": "2026-11-20T09:44:51+08:00",
+    "t_decision_ready": "2026-11-20T01:50:47Z",
+    "final_answer_identity": "2026-11-20T09:51:29+08:00",
+    "final_analysis_identity": "2026-11-20T09:51:29+08:00",
+    "t_reply_or_output_ready": "2026-11-20T09:51:29+08:00",
     "minimum_legal_inputs_ready_role": "NON_TERMINAL_READINESS_MARKER",
     "minimum_legal_inputs_ready_is_stop_boundary": false,
     "canonical_chain_status": "FORMAL_COMPLETION_PENDING",
@@ -139626,7 +139626,7 @@
     "required_account_persistence_identity": "UNKNOWN",
     "refresh_start_latency": null,
     "refresh_duration": null,
-    "post_current_decision_latency": 469.0,
+    "post_current_decision_latency": 877.0,
     "total_fast_path_latency": null,
     "measurement_status": "OBSERVED_FIELDS_ONLY; MISSING_TIMESTAMPS_REMAIN_EXPLICIT",
     "trace_metadata_is_non_authoritative": true,
@@ -139640,7 +139640,7 @@
     "refresh_mode": "CACHED_STATE",
     "request_bound_at": "UNKNOWN",
     "pit_ready_at": "UNKNOWN",
-    "core_result_at": "2026-11-20T01:43:59Z",
+    "core_result_at": "2026-11-20T01:50:47Z",
     "request_to_core_result_latency": null,
     "request_to_canonical_ingress_latency": null,
     "canonical_ingress_to_decision_latency": null,
@@ -139652,7 +139652,7 @@
       "canonical_ingress_at_beijing": "UNKNOWN",
       "first_qualified_market_fact_as_of_beijing": "2026-11-20T09:36:06+08:00",
       "minimum_legal_inputs_ready_at_beijing": "UNKNOWN",
-      "business_decision_ready_at_beijing": "2026-11-20T01:43:59Z",
+      "business_decision_ready_at_beijing": "2026-11-20T01:50:47Z",
       "business_decision_source": {
         "status": "UNKNOWN",
         "requested_at_beijing": "UNKNOWN",
@@ -139671,16 +139671,16 @@
       "role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE"
     },
     "in_process_stage_durations_seconds": {
-      "freshness_assurance_and_quote_context": 0.009,
-      "discovery_pipeline": 0.06,
-      "decision_context_build": 51.734,
-      "decision_fact_pack_build": 0.349,
-      "query_context_build_total": 52.273
+      "freshness_assurance_and_quote_context": 0.007,
+      "discovery_pipeline": 0.048,
+      "decision_context_build": 42.103,
+      "decision_fact_pack_build": 0.276,
+      "query_context_build_total": 42.534
     },
     "workflow_runtime_observation": {
       "run_started_at_beijing": "UNKNOWN",
       "core_snapshot_finished_at_beijing": "UNKNOWN",
-      "workflow_run_id": "44655569273",
+      "workflow_run_id": "44656139628",
       "runtime_health_workflow_run_id": "44654670829",
       "correlation_status": "RUNTIME_HEALTH_NOT_CURRENT_RUN",
       "role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE"
