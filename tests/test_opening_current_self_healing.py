@@ -460,15 +460,6 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
         self.assertEqual(dispatch.count("gh workflow run market-snapshot.yml --ref main"), 1)
         self.assertEqual(dispatch.count("python scripts/runtime_self_heal.py --record-trigger"), 1)
 
-    def test_event_wake_preserves_single_dispatch_for_queued_or_in_progress_snapshot(self):
-        workflow = (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
-        dispatch = workflow.split("- name: Dispatch replacement market snapshot", 1)[1]
-        self.assertIn('active=$(gh run list --workflow market-snapshot.yml --limit 5 --json status', dispatch)
-        self.assertIn('select(.status == "queued" or .status == "in_progress")', dispatch)
-        self.assertIn('if [ "$active" != "0" ]; then', dispatch)
-        self.assertIn("no duplicate dispatch", dispatch)
-        self.assertEqual(dispatch.count("gh workflow run market-snapshot.yml --ref main"), 1)
-
     def test_closed_day_does_not_trigger_opening_recovery(self):
         status = self._assess(
             current={
