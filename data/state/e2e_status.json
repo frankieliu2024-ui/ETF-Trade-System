@@ -1,20 +1,20 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-11-20T09:40:22+08:00",
+  "generated_at": "2026-11-20T10:01:31+08:00",
   "projection_identity": {
     "account_updated_at": "2026-11-19T15:49:00+08:00",
     "risk_as_of_transaction_date": "2026-11-20",
-    "market_snapshot": "data/market/snapshots/2026-11-20_093610.json"
+    "market_snapshot": "data/market/snapshots/2026-11-20_095637.json"
   },
-  "status": "BLOCKED",
+  "status": "READY",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
   "components": {
     "market": {
       "status": "READY",
       "reason": "latest market snapshot is valid",
-      "snapshot": "data/market/snapshots/2026-11-20_093610.json",
-      "captured_at": "2026-11-20T09:36:10+08:00",
+      "snapshot": "data/market/snapshots/2026-11-20_095637.json",
+      "captured_at": "2026-11-20T09:56:37+08:00",
       "market_phase": "CONTINUOUS_MORNING"
     },
     "account": {
@@ -32,7 +32,7 @@
     "risk": {
       "status": "READY",
       "reason": "formal ETF strategy risk metric is available from a fresh canonical reconstruction",
-      "etf_strategy_risk_pct": -14.9936,
+      "etf_strategy_risk_pct": -15.0147,
       "source": "data/state/etf_strategy_equity.json",
       "source_updated_at": null,
       "reconstruction_as_of_transaction_date": "2026-11-20",
@@ -44,17 +44,19 @@
       "reason": "no formal close review is currently required"
     },
     "decision_context": {
-      "status": "BLOCKED",
-      "reason": "canonical request-bound query context is empty, invalid, or missing a consumable fact pack",
-      "query_context": false,
+      "status": "READY",
+      "reason": "current-main fixed facts are directly consumable; no request-bound Formal Decision context is applicable",
+      "query_context": true,
       "decision_context": true,
+      "request_bound": false,
       "formal_reply_gate": null,
+      "direct_current_main": true,
       "context_read_contract": {
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 5424236,
-          "sha256": "7de0f5ae3f4cad7ceb6e9e37ce8b3df92bdf682b57d91a47bbc39b7cb35187b0",
+          "byte_count": 6013973,
+          "sha256": "6cce632ad4cf8812c48a31c34c22f5fc1d9096769e61eab9e98c527c65f22de1",
           "parsed_object": true,
           "retry_attempts": 1,
           "retry_required": false
@@ -62,8 +64,8 @@
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 827514,
-          "sha256": "1f1e63277873e322f437eea08694f21ad1507374f37b2453a5f242d65b26c2a9",
+          "byte_count": 860102,
+          "sha256": "a8b1bc1d2a5732e1f18c5efa54e0a817474627159d8f837216301ad9991e7df0",
           "parsed_object": true,
           "retry_attempts": 1,
           "retry_required": false
@@ -86,9 +88,7 @@
       "checked_at": "2026-11-20T09:20:45+08:00"
     }
   },
-  "blockers": [
-    "decision_context"
-  ],
+  "blockers": [],
   "degradations": [],
   "task_continuation": {
     "status": "CONTINUE",
@@ -105,8 +105,8 @@
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 5424236,
-      "sha256": "7de0f5ae3f4cad7ceb6e9e37ce8b3df92bdf682b57d91a47bbc39b7cb35187b0",
+      "byte_count": 6013973,
+      "sha256": "6cce632ad4cf8812c48a31c34c22f5fc1d9096769e61eab9e98c527c65f22de1",
       "parsed_object": true,
       "retry_attempts": 1,
       "retry_required": false
@@ -114,8 +114,8 @@
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 827514,
-      "sha256": "1f1e63277873e322f437eea08694f21ad1507374f37b2453a5f242d65b26c2a9",
+      "byte_count": 860102,
+      "sha256": "a8b1bc1d2a5732e1f18c5efa54e0a817474627159d8f837216301ad9991e7df0",
       "parsed_object": true,
       "retry_attempts": 1,
       "retry_required": false
