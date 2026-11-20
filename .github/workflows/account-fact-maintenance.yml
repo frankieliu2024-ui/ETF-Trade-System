@@ -119,6 +119,16 @@ jobs:
           # the human projection cannot retain the pre-rebuild risk value.
           python scripts/sync_formal_files.py
 
+      - name: Refresh weekly return attribution for verified close
+        id: weekly_attribution
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Refresh the existing attribution owner after canonical account
+          # facts and the close projection are available.
+          python scripts/build_weekly_return_attribution.py
+
       - name: Verify account fact by code
         shell: bash
         env:
@@ -234,7 +244,7 @@ jobs:
           exit 1
 
       - name: Fail maintenance when required projection or global guard failed
-        if: steps.projection.outcome != 'success' || steps.fast_consistency.outcome != 'success' || steps.maintenance_guard.outcome != 'success'
+        if: steps.projection.outcome != 'success' || steps.weekly_attribution.outcome != 'success' || steps.fast_consistency.outcome != 'success' || steps.maintenance_guard.outcome != 'success'
         shell: bash
         run: |
           set -euo pipefail
