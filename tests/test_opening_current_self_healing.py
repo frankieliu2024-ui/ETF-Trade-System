@@ -427,15 +427,8 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
 
     def test_event_wake_sources_are_existing_cross_market_workflows(self):
         workflow = (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
-        trigger = workflow.split("  workflow_run:", 1)[1].split("  push:", 1)[0]
-        expected = {
-            "ETF market snapshot",
-            "ETF opening-auction CURRENT fallback",
-        }
-        self.assertEqual(
-            set(line.strip().removeprefix("- ").strip('"') for line in trigger.splitlines() if line.strip().startswith('- "')),
-            expected,
-        )
+        self.assertNotIn("  workflow_run:", workflow)
+        self.assertIn('    - cron: "7,37 1-7 * * 1-5"', workflow)
         self.assertIn("types: [completed]", trigger)
         assess = workflow.split("- name: Assess deterministic runtime health", 1)[1]
         self.assertTrue(assess.index("python scripts/runtime_self_heal.py --assess") < assess.index("- name: Assess dedicated cross-market pulse heartbeats"))
@@ -494,14 +487,12 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
     def test_opening_recovery_keeps_canonical_producer_and_safety_boundary(self):
         workflow = (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
         snapshot = (ROOT / ".github/workflows/market-snapshot.yml").read_text(encoding="utf-8")
-        fallback = (ROOT / ".github/workflows/opening-auction-current-fallback.yml").read_text(encoding="utf-8")
         self.assertIn('steps.assess.outputs.action == \'REFRESH_SNAPSHOT\'', workflow)
         self.assertIn("gh workflow run market-snapshot.yml --ref main", workflow)
         self.assertIn("Publish complete A-share snapshot batch", snapshot)
-        self.assertIn("group: etf-main-state-writer", snapshot)
+        self.assertIn("group: etf-market-snapshot-pulse", snapshot)
         self.assertIn("cancel-in-progress: false", snapshot)
         self.assertNotIn("A newer user request supersedes an older queued request", snapshot)
-        self.assertIn("group: etf-main-state-writer", fallback)
         self.assertIn("newer_current_already_exists", (ROOT / "scripts/cloud_runner_snapshot.py").read_text(encoding="utf-8"))
         self.assertNotIn("may_auto_trade", workflow)
 
