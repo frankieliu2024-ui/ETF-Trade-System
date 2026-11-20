@@ -429,7 +429,6 @@ class OpeningCurrentSelfHealingTests(unittest.TestCase):
         workflow = (ROOT / ".github/workflows/self-healing-watchdog.yml").read_text(encoding="utf-8")
         self.assertNotIn("  workflow_run:", workflow)
         self.assertIn('    - cron: "7,37 1-7 * * 1-5"', workflow)
-        self.assertIn("types: [completed]", trigger)
         assess = workflow.split("- name: Assess deterministic runtime health", 1)[1]
         self.assertTrue(assess.index("python scripts/runtime_self_heal.py --assess") < assess.index("- name: Assess dedicated cross-market pulse heartbeats"))
         self.assertNotIn("if: ${{ github.event_name == 'workflow_run' }}", assess.split("- name: Assess dedicated cross-market pulse heartbeats", 1)[0])
