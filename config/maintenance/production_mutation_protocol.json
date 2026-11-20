@@ -323,11 +323,10 @@
     {
       "family_id": "A_SHARE_CORE_SNAPSHOT",
       "members": [
-        ".github/workflows/market-snapshot.yml",
-        ".github/workflows/opening-auction-current-fallback.yml"
+        ".github/workflows/market-snapshot.yml"
       ],
-      "required_concurrency_token": "etf-main-state-writer",
-      "reason": "两条链使用同一A股核心producer并可能写CURRENT/runtime及快照，必须共享串行队列。"
+      "required_concurrency_token": "etf-market-snapshot-pulse",
+      "reason": "两条链使用同一A股核心producer并可能写CURRENT/runtime及快照，必须共享行情核心producer专用串行队列；其他状态写入不得取消行情脉冲。 "
     }
   ],
   "nonproduction_validation_workflows": {
@@ -349,8 +348,7 @@
       "state_class": "CANONICAL_MARKET_STATE",
       "canonical_builder": "scripts/cloud_runner_snapshot.py",
       "canonical_writers": [
-        ".github/workflows/market-snapshot.yml",
-        ".github/workflows/opening-auction-current-fallback.yml"
+        ".github/workflows/market-snapshot.yml"
       ],
       "bounded_repair_writers": {
         ".github/workflows/account-fact-maintenance.yml": {
@@ -364,41 +362,32 @@
       "state_class": "CANONICAL_A_SHARE_RUNTIME_HEALTH",
       "canonical_builder": "scripts/cloud_runner_snapshot.py",
       "canonical_writers": [
-        ".github/workflows/market-snapshot.yml",
-        ".github/workflows/opening-auction-current-fallback.yml"
+        ".github/workflows/market-snapshot.yml"
       ],
       "rule": "A股runtime health随canonical snapshot producer生成；海外、通知、研究和一致性workflow不得持久化该文件。"
     },
     "data/state/decision_context.json": {
       "state_class": "DERIVED_REBUILDABLE_STATE",
       "canonical_builder": "scripts/build_state_context.py",
-      "allowed_writers": [
-        ".github/workflows/opening-auction-current-fallback.yml"
-      ],
+      "allowed_writers": [],
       "rule": "只允许既有canonical context owner持久化；看门狗不得重建或提交派生上下文。"
     },
     "data/state/query_context.json": {
       "state_class": "DERIVED_REBUILDABLE_STATE",
       "canonical_builder": "scripts/build_query_context.py",
-      "allowed_writers": [
-        ".github/workflows/opening-auction-current-fallback.yml"
-      ],
+      "allowed_writers": [],
       "rule": "允许A股核心入口重建，但所有持久化版本必须调用同一个canonical builder；海外scheduled pulse只发布海外市场事实与runtime health，正式请求按需从这些事实重建query_context；self-healing-watchdog只可读取query_context识别Formal handoff，不得调用builder或提交query_context；system-consistency只可临时重建用于审计，不应把query_context作为自身owned state提交。"
     },
     "data/state/decision_trigger.json": {
       "state_class": "DERIVED_REBUILDABLE_STATE",
       "canonical_builder": "scripts/build_state_context.py",
-      "allowed_writers": [
-        ".github/workflows/opening-auction-current-fallback.yml"
-      ],
+      "allowed_writers": [],
       "rule": "重评触发状态由现有Phase4 builder经canonical owner重建；看门狗只观察运行健康并记录自身状态。"
     },
     "data/state/capital_efficiency_ranking.json": {
       "state_class": "DERIVED_REBUILDABLE_STATE",
       "canonical_builder": "scripts/build_state_context.py",
-      "allowed_writers": [
-        ".github/workflows/opening-auction-current-fallback.yml"
-      ],
+      "allowed_writers": [],
       "rule": "该文件只由既有canonical context owner生成；看门狗不得生成、重建或提交资本比较派生状态。"
     }
   },

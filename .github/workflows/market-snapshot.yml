@@ -25,7 +25,10 @@ permissions:
   contents: write
 
 concurrency:
-  group: etf-main-state-writer
+  # Reserve a dedicated lane for the canonical A-share pulse. Other state
+  # writers must not cancel or supersede a scheduled market capture.
+  # Publication remains guarded by the existing canonical mutation checks.
+  group: etf-market-snapshot-pulse
   cancel-in-progress: false
 
 jobs:
