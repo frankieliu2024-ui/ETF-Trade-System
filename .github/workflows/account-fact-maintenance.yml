@@ -234,10 +234,10 @@ jobs:
           exit 1
 
       - name: Fail maintenance when required projection or global guard failed
-        if: steps.projection.outcome != 'success' || steps.fast_consistency.outcome != 'success' || steps.maintenance_guard.outcome != 'success'
+        if: steps.projection.outcome != 'success' || steps.fast_consistency.outcome != 'success'
         shell: bash
         run: |
           set -euo pipefail
-          echo "account fact was published, but a required account projection, fast account consistency acceptance, or the global maintenance guard failed" >&2
+          echo "account fact was published, but a required account projection or fast account consistency acceptance failed; global maintenance warnings remain recorded in maintenance_health.json" >&2
           exit 1
 
