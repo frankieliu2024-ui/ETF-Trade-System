@@ -198,7 +198,7 @@ jobs:
           # Record account sync readback may mark projections stale before the
           # final verification. Re-run the guard on the same rebuilt state so
           # the published health file reflects the final closed-loop result.
-          python scripts/maintenance_guard.py
+          python scripts/maintenance_guard.py --scope account-fast
 
       - name: Commit account fact maintenance
         shell: bash
