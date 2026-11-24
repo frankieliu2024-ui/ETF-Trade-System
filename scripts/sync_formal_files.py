@@ -363,7 +363,7 @@ def _formal_decision_index_records(root: Path, market_date: str) -> list[dict]:
             if (
                 path.parent.name == "live_snapshot"
                 and path.name.endswith("__scheduled_review_completion.json")
-                and str(event.get("task_id") or "").strip() == "ETF正式决策"
+                and str(event.get("task_id") or event.get("task_name") or "").strip() == "ETF正式决策"
             ):
                 event = dict(event)
                 event["event_type"] = "FORMAL_DECISION_REPORT"
