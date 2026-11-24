@@ -497,10 +497,12 @@ def render_lifecycle_projection(root: Path, account: dict) -> str:
     projection = build_lifecycle_projection(root, str(account.get("updated_at") or "")[:10] or None)
     items = projection.get("active_lifecycles") or []
     active_trials = [item for item in items if item.get("lifecycle_status") == "ACTIVE_TRIAL"]
+    due_trials = [item for item in active_trials if item.get("decision_due") or item.get("overdue")]
+    valid_trials = [item for item in active_trials if item not in due_trials]
     lines = ["### 当前有效生命周期", "", "仅展示由正式决策与真实成交事实共同确认的只读生命周期投影；不产生交易权限或订单。", ""]
     lines += [
-        f"- 有效Trial：{len(active_trials)}个",
-        f"- 到期/逾期待正式决议：{sum(1 for item in active_trials if item.get('decision_due') or item.get('overdue'))}个",
+        f"- 有效Trial：{len(valid_trials)}个",
+        f"- 到期/逾期待正式决议：{len(due_trials)}个",
         "- 有效Confirm：当前投影未发现由正式决策与真实成交共同确认的有效Confirm。",
     ]
     lines += ["", "|对象|生命周期|状态|形成日期|当前T+|", "|-|-|-|-:|-:|"]
