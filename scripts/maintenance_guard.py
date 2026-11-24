@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import argparse
 from collections import defaultdict
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
@@ -217,6 +218,10 @@ def reconcile() -> dict:
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description="Evaluate maintenance health.")
+    parser.add_argument("--scope", choices=("full", "account-fast"), default="full")
+    args = parser.parse_args()
+    account_fast_scope = args.scope == "account-fast"
     now = datetime.now(TZ).isoformat(timespec="seconds")
     consistency = read_json(consistency_path(), {}) or {}
     persisted_self_heal = read_json(SELF_HEAL, {}) or {}
@@ -236,12 +241,20 @@ def main() -> int:
     consistency_generated = str(consistency.get("generated_at") or "")
     stale_escalation = bool(self_heal_checked and consistency_generated and self_heal_checked < consistency_generated)
     self_heal_ok = self_heal_class not in {"CONSISTENCY_REGRESSION", "PERSISTENT_RUNTIME_FAILURE"} or stale_escalation
-    overall_ok = consistency_ok and rec["status"] == "PASS" and self_heal_ok
+    # The account-fast lane validates only the canonical account-derived chain.
+    # Review-context freshness and full-system consistency remain diagnostics for
+    # their own owners and must not block a confirmed account projection.
+    if account_fast_scope:
+        overall_ok = rec["status"] == "PASS"
+    else:
+        overall_ok = consistency_ok and rec["status"] == "PASS" and self_heal_ok
 
     health = {
         "schema_version": "1.1",
         "checked_at": now,
         "mode": "DETERMINISTIC_MAINTENANCE_GUARD",
+        "scope": "ACCOUNT_FAST" if account_fast_scope else "FULL",
+        "global_health_status": "NOT_EVALUATED" if account_fast_scope else ("PASS" if overall_ok else "FAIL"),
         "status": "PASS" if overall_ok else "FAIL",
         "system_consistency_status": consistency.get("status", "UNKNOWN"),
         "self_healing_classification": self_heal_class,
