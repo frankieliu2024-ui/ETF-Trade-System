@@ -220,9 +220,9 @@ jobs:
               # only this derived file while we were running, keep this run's
               # freshly rebuilt health projection and continue the publish.
               conflicted="$(git diff --name-only --diff-filter=U)"
-              if [ "$conflicted" = "data/state/maintenance_health.json" ]; then
-                git checkout --theirs -- data/state/maintenance_health.json
-                git add data/state/maintenance_health.json
+              if [ "$conflicted" = "data/state/maintenance_health.json" ] || [ "$conflicted" = "ETF当前状态_DASHBOARD.md" ]; then
+                git checkout --theirs -- $conflicted
+                git add $conflicted
                 GIT_EDITOR=true git -c core.editor=true rebase --continue
                 if git push origin HEAD:main; then
                   exit 0
