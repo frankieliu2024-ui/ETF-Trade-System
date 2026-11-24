@@ -38,6 +38,7 @@ def consistency_path() -> Path:
 SELF_HEAL = STATE / "self_healing_status.json"
 RUNTIME_HEALTH = STATE / "runtime_health.json"
 CURRENT = STATE / "CURRENT.json"
+UNIVERSE = ROOT / "config" / "market" / "etf_monitor_universe.json"
 MAINTENANCE = STATE / "maintenance_health.json"
 DIAGNOSTIC = STATE / "maintenance_diagnostic.json"
 
@@ -120,10 +121,18 @@ def reconcile() -> dict:
         )
 
     account_qty: dict[str, float] = {}
-    etf_codes = active_account_asset_codes(ROOT, account)["etf"]
+    universe = read_json(UNIVERSE, {}) or {}
+    universe_codes = {
+        str(item.get("code") or "").strip()
+        for item in (universe.get("objects") or [])
+        if str(item.get("code") or "").strip()
+    }
+    # Reconcile against the complete ETF identity universe, not only currently
+    # active holdings. Zero-quantity rows are retained so a completed exit is
+    # checked explicitly instead of disappearing from the reconciliation set.
     for p in account.get("positions") or []:
-        code = str(p.get("code") or "")
-        if code in etf_codes:
+        code = str(p.get("code") or "").strip()
+        if code in universe_codes or code in ledger_qty:
             account_qty[code] = float(p.get("quantity") or 0)
 
     all_codes = sorted(set(ledger_qty) | set(account_qty))
