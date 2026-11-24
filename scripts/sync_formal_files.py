@@ -129,12 +129,34 @@ def _structured_decision_from_report(event: dict) -> dict:
     ):
         candidate = "无新的主候选；现金优先"
 
-    amount = match((r"建议新增部署\s*([^，。；\n]+)",))
+    amount = match((
+        r"建议新增部署\s*([^，。；\n]+)",
+        r"建议部署金额\s*([^，。；\n]+)",
+        r"新增部署金额\s*([^，。；\n]+)",
+    ))
     release = match((r"实际释放\s*([^，。；\n]+)",))
     amount_action = "；".join(part for part in (
         f"新增部署{amount}" if amount else "",
         f"实际释放{release}" if release else "",
     ) if part)
+
+    # Some frozen Formal Decision bodies intentionally expose the decision
+    # only as numbered human-readable actions rather than as structured JSON.
+    # Parse those explicit statements; never infer an action from holdings,
+    # price, time or an execution result.
+    action_section = section("最终管理动作") or section("当前正式判断")
+    explicit_actions = re.findall(r"^\s*\d+[.)]\s*(.+)$", action_section, flags=re.MULTILINE)
+    explicit_actions = [
+        item.strip().rstrip("。；")
+        for item in explicit_actions
+        if any(token in item for token in ("建议", "卖出", "买入", "部署", "Trial", "Confirm"))
+    ]
+    if not candidate and explicit_actions:
+        candidate = "；".join(explicit_actions[:4])
+    if not risk and content:
+        trial_state = "Trial继续" if re.search(r"Trial[^。\n]{0,30}继续", content) else ""
+        confirm_state = "Confirm不升级" if re.search(r"不升级Confirm|没有Confirm持仓", content) else ""
+        risk = "；".join(part for part in (trial_state, confirm_state) if part)
 
     reason = match((
         r"^\s*[-*]?\s*(?:最大风险或0元主因|0元主因|决定性原因)[：:]\s*([^。\n]+)",
@@ -481,6 +503,12 @@ def render_same_day_formal_decision_index(root: Path, account: dict) -> str:
             if str(trade.get("trade_time") or "")[:10] == market_date
             and str(trade.get("security_code") or trade.get("code") or "")
             and str(trade.get("security_code") or trade.get("code") or "") in decision_text
+        ]
+        same_day_object += [
+            event for event in canonical_trade_events
+            if str(event.get("execution_date") or event.get("confirmed_at_beijing") or "")[:10] == market_date
+            and str(event.get("code") or event.get("security_code") or "")
+            and str(event.get("code") or event.get("security_code") or "") in decision_text
         ]
         if linked:
             execution = "已关联成交"
