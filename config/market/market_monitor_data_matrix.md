@@ -8,12 +8,13 @@
 | 创业板指（399006.SZ） | 正式指数层 | hithink-finance | 无 | ACTIVE；A股本地时点 |
 | 纳斯达克100指数（NDX） | 正式指数层 | Yahoo chart API | 无 | ACTIVE；A股交易时段通常是上一美股交易时段参考 |
 | 费城半导体指数（SOX） | 正式指数层 | Yahoo chart API | SOXQ | ACTIVE；直接指数优先，SOXQ仅备用代理 |
+| VIX（芝加哥期权交易所波动率指数） | 正式指数层 | Yahoo chart API | 无 | ACTIVE_WITH_QUALITY_GATE；数据质量不足时标记DEGRADED但不静默遗漏 |
 | 日经225指数（N225） | 正式指数层 | Yahoo chart API | 日经ETF（513520） | ACTIVE；按日本市场同日盘中/已收盘时点解释 |
 | 韩国综合指数（KOSPI） | 正式指数层 | Yahoo chart API | 无 | ACTIVE；按韩国市场同日盘中/已收盘时点解释 |
 | 台湾加权指数（TWII） | 正式指数层 | Yahoo chart API | 无 | ACTIVE；质量不足时DEGRADED但不静默遗漏 |
 | 恒生科技指数（HSTECH） | 正式指数层 | hithink-finance HS2083优先 | Yahoo `^HSTECH` / 恒生科技ETF（513180）代理 | ACTIVE_WITH_FALLBACK；A股15:00不等于恒生科技当日收盘 |
 | 标普500指数（SPX） | 保留适配能力 | Yahoo chart API | 无 | 非默认监测 |
-| VIX | 保留适配能力 | Yahoo chart API | 无 | 非默认监测 |
+| VIX | 正式指数层 | Yahoo chart API | 无 | ACTIVE_WITH_QUALITY_GATE；作为固定风险状态指数监测，不单独生成ETF动作 |
 | KOSDAQ | 条件辅助 | Yahoo chart API | 无 | 非默认监测 |
 | 黄金上游 | 黄金ETF条件背景 | Yahoo/其他可靠源 | 黄金ETF（518880） | 条件调用；质量门控 |
 | DXY | 条件辅助 | Yahoo/其他可靠源 | 无 | 条件调用；质量门控 |

@@ -11,6 +11,10 @@ class MarketMonitorTests(unittest.TestCase):
     assert set(config["classes"]) == {"A", "B", "C"}
     assert config["guardrails"]["no_trade_rules"] is True
     assert config["guardrails"]["no_trade_actions"] is True
+    assert "VIX" in config["formal_index_layer"]["required_objects"]
+    assert "VIX" in config["monitoring_layers"]["index_monitor"]["required_objects"]
+    assert "VIX" not in config["monitoring_layers"]["index_monitor"]["conditional_objects"]
+    assert any(item.get("id") == "VIX" and item.get("status") == "ACTIVE_WITH_QUALITY_GATE" for item in config["classes"]["A"]["objects"])
 
   def test_matrix_covers_requested_objects_and_no_trade_language(self):
     matrix = (ROOT / "config" / "market" / "market_monitor_data_matrix.md").read_text(encoding="utf-8")
