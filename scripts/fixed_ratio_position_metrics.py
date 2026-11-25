@@ -111,6 +111,9 @@ def refresh_fixed_ratio_metrics(root: Path, account: dict) -> dict:
                 "high_water_at": now,
                 "last_quantity": quantity,
                 "updated_at": now,
+                "coverage_status": coverage_status,
+                "coverage_as_of": coverage_as_of,
+                "coverage_quality": coverage_quality,
                 "seen_trade_event_ids": sorted(seen_trade_ids),
             }
         else:
