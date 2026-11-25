@@ -362,11 +362,11 @@ def main():
     parser.add_argument("--current-only", action="store_true")
     args = parser.parse_args()
     historical_error = ""
-        if args.current_only:
-            result = refresh_current_account_valuation_only(ROOT)
-        else:
-            try:
-                result = replay(ROOT, price_dir=args.price_dir, cutoff=args.cutoff)
+    if args.current_only:
+        result = refresh_current_account_valuation_only(ROOT)
+    else:
+        try:
+            result = replay(ROOT, price_dir=args.price_dir, cutoff=args.cutoff)
         except ValueError as exc:
             historical_error = str(exc)
             if "missing date-aligned close" not in historical_error:
