@@ -10,7 +10,7 @@ class ObservationIdentityProjectionContractTests(unittest.TestCase):
         self.assertEqual(roles["159941"], "HOLDING")
         self.assertEqual(roles["159981"], "HOLDING")
         self.assertNotIn("159529", roles)
-        self.assertNotIn("159992", roles)
+        self.assertEqual(roles["159992"], "OBSERVATION")
         self.assertEqual(roles["588000"], "OBSERVATION")
 
     def test_projection_and_dashboard_require_explicit_observation_role(self):
