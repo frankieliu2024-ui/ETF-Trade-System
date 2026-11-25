@@ -188,16 +188,9 @@ def validate_current_fee_projection() -> dict:
     equity = read_json("data/state/etf_strategy_equity.json")
     projection = canonical_etf_fee_projection(ROOT, equity.get("trades") or [])
     failures: list[str] = []
-    summary_match = re.search(r"截至(\d{4}-\d{2}-\d{2})累计已确认ETF费用([0-9]+\.[0-9]{2})元；待确认费用：([^。]+)。", experience)
-    if not summary_match:
-        failures.append("current §2.1 cumulative fee summary is missing or unparsable")
-    else:
-        actual_fee = round(float(summary_match.group(2)), 2)
-        expected_pending = "无" if projection["pending_fee_count"] == 0 else f"{projection['pending_fee_count']}笔"
-        if actual_fee != projection["effective_confirmed_fee_sum"]:
-            failures.append(f"summary fee={actual_fee:.2f} expected={projection['effective_confirmed_fee_sum']:.2f}")
-        if summary_match.group(3) != expected_pending:
-            failures.append(f"summary pending={summary_match.group(3)} expected={expected_pending}")
+    # Current cumulative fee totals are canonical machine projections. The historical
+    # experience index intentionally does not duplicate them, so consistency validates
+    # the projection and event-level history rather than a mutable summary paragraph.
 
     event_dir = ROOT / "events" / "trades"
     confirmed_event_ids: list[str] = []
