@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 MASTER = ROOT / "ETF规则_MASTER.md"
 MONITOR_CONFIG = ROOT / "config" / "market" / "market_monitor_config.json"
-EXPECTED_INDICES = {"000001.SH", "399006.SZ", "000688.SH", "NDX", "SOX", "N225", "KOSPI", "TWII", "HSTECH"}
+EXPECTED_INDICES = {"000001.SH", "399006.SZ", "000688.SH", "NDX", "SOX", "VIX", "N225", "KOSPI", "TWII", "HSTECH"}
 
 
 def _master_index_section(text: str) -> str:
