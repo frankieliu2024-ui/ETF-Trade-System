@@ -1,9 +1,9 @@
 {
   "schema_version": "2.2",
-  "updated_at": "2026-11-25T08:01:32+08:00",
+  "updated_at": "2026-11-25T08:39:33+08:00",
   "last_status": "SENT",
   "last_type": "MARKET_VALUE_ALERT",
-  "last_title": "【市场异动】韩国综合指数（KOSPI）出现极端波动 -3.89%",
+  "last_title": "【市场异动】日经225指数（N225）出现极端波动 -2.64%",
   "notifications": [
     {
       "notification_id": "notification_99bd612c926cd2a6fe2b",
@@ -77380,7 +77380,8 @@
           "KOSPI"
         ],
         "source_fact_ids": [
-          "2026-11-25:KOSPI:2026-11-25T08:00:25+08:00"
+          "2026-11-25:KOSPI:2026-11-25T08:00:25+08:00",
+          "2026-11-25|KOSPI|APAC_OPEN_SIGNAL|DOWN"
         ],
         "session_node": "OPEN_SIGNAL",
         "lead_code": "KOSPI",
@@ -77391,7 +77392,12 @@
         "a_share_as_of_beijing": "",
         "continuous_state_transition": "INITIAL",
         "continuous_state_contract": "OBJECT_LEVEL_PREVIOUS_CURRENT_TRANSITION",
-        "event_family_id": "ASIA:2026-11-25:OPEN_SIGNAL:KOSPI:APAC_OPEN_SIGNAL:DOWN:"
+        "event_family_id": "ASIA:2026-11-25:OPEN_SIGNAL:KOSPI:APAC_OPEN_SIGNAL:DOWN:",
+        "event_tags": [
+          "APAC_OPEN_SIGNAL"
+        ],
+        "aggregation_status": "MERGED_SAME_OBJECT_CONTINUOUS_FACT",
+        "family_peak_magnitude_pct": 4.768049732023172
       },
       "response": {
         "http_status": 200,
@@ -77449,27 +77455,59 @@
         "pushplus_message": "执行成功"
       },
       "last_attempted_at": "2026-11-25T08:01:32+08:00"
-    }
-  ],
-  "recent": [
+    },
     {
-      "key": "market-value:a-share:2026-11-18:588200:UP:EXTREME:2026-11-18T13:44:43+08:00",
-      "type": "MARKET_VALUE_ALERT",
-      "title": "【市场异动】科创芯片ETF嘉实（588200）出现极端波动 +3.28%",
-      "content": "### 核心结论\n- **事件类型**：极端波动\n- **对象/结构**：科创芯片ETF嘉实（588200）\n- **当日涨跌**：+3.28%\n\n**判断**：当前幅度已进入通知层的非常规区间，可能实质改变风险偏好、风险收益或资本比较。\n\n**Hyperliquid**：- xyz:XYZ100 → 纳指ETF（159941）、科创50ETF（588000）、科创创业ETF（159781）、恒生科技ETF（513180）；方向DOWN，结论为方向支持但当前不直接追涨；方向支持成立但当前不直接追涨；将该ETF列入下一节点优先复核；升级条件：下一合法脉冲确认方向延续，并核对A股承接；10分钟变化：资金费率+0.0000、未平仓量-43.8872、溢价-0.0001。\n- xyz:NVDA → 科创50ETF（588000）、科创创业ETF（159781）、通信ETF（515880）、科创芯片ETF嘉实（588200）；方向UP，结论为拥挤风险；降低即时追涨优先级；保留方向支持，但先等待拥挤缓解或A股承接确认；升级条件：拥挤度回落且A股承接保持时，恢复配置评估；10分钟变化：资金费率+0.0000、未平仓量+867.3620、溢价+0.0000。\n- xyz:AMD → 科创50ETF（588000）、科创创业ETF（159781）、通信ETF（515880）、科创芯片ETF嘉实（588200）；方向UP，结论为拥挤风险；降低即时追涨优先级；保留方向支持，但先等待拥挤缓解或A股承接确认；升级条件：拥挤度回落且A股承接保持时，恢复配置评估；10分钟变化：资金费率+0.0000、未平仓量+34.3820、溢价-0.0002。\n\n### 对ETF系统的影响\n科创芯片ETF嘉实（588200）是当前持仓ETF。本次异动直接影响其持仓风险收益和资本占用效率，应与其他持仓/观察ETF重新比较，而不是只看绝对涨跌。\n\n### 当前动作\n**先复核持仓假设和边际资本效率；没有正式卖出动作或独立新机会通过完整链时，不机械交易。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-11-18 13:44:43\n- **Hyperliquid行情时点（北京时间）**：2026-11-18 13:41:00。\n- **边界**：本通知识别注意力事件，不属于MASTER交易规则；阈值已适度放宽，重复控制依赖事件合并和升级识别，而不是靠高门槛压制消息。\n",
-      "source": "market_delta+CURRENT+stock_market_context",
+      "notification_id": "notification_208a794806e916e461a0",
+      "event_type": "MARKET_VALUE_ALERT",
+      "notification_channel": "INTERRUPT",
+      "delivery_mode": "COMPACT",
+      "source_event_id": "market-value:asia:2026-11-25:N225:DOWN:EXTREME:2026-11-25T08:38:35+08:00",
+      "request_id": "",
+      "parent_request_id": "",
+      "report_id": "",
+      "content_hash": "",
+      "related_decision_id": "",
+      "security_code": "N225",
+      "security_name": "日经225指数",
       "user_severity": "需要关注",
-      "user_action": "刷新ETF正式判断，核对事件是否改变机会、持仓风险收益或下一节点准备",
-      "status": "SENT",
-      "attempted_at": "2026-11-18T13:49:39+08:00",
+      "user_action": "纳入最近A股决策节点重新验证，不机械交易",
+      "lifecycle_status": "SENT",
+      "created_at": "2026-11-25T08:39:32+08:00",
+      "sent_at": "2026-11-25T08:39:33+08:00",
+      "confirmed_at": null,
+      "archived_at": null,
+      "expires_at": "2026-11-27T08:39:32+08:00",
+      "title": "【市场异动】日经225指数（N225）出现极端波动 -2.64%",
+      "content": "### 核心结论\n- **事件类型**：极端波动\n- **对象/结构**：日经225指数（N225）\n- **较前收**：-2.64%\n\n**判断**：当前幅度已进入通知层的非常规区间，可能实质改变风险偏好、风险收益或资本比较。\n\n**Hyperliquid**：- xyz:EWJ → 日经ETF（513520）；方向DOWN，结论为方向偏弱，但当前不直接追随下跌，等待下一合法脉冲确认；方向偏弱但当前不直接追随下跌；将该ETF列入下一节点优先复核；升级条件：下一合法脉冲确认方向延续，并核对A股承接；过去10分钟变化：资金费率+0.0000、未平仓量+0.0000、溢价+0.0001。通俗解释：资金费率基本不变，多空持仓成本没有明显变化；未平仓量基本不变，未见明显新增或退出押注；溢价上升+0.0001，外部价格相对参考价更贵，情绪升温但也可能增加追涨风险。\n\n### 对ETF系统的影响\n日经225指数（N225）属于海外/区域结构证据。先看A股本地价格是否接受、减弱或背离，再复核日经ETF（513520）的自身反馈、当前主候选和边际资本效率；若海外与A股背离，以A股自身反馈为主。\n\n### 当前动作\n**把该信号纳入最近A股正式节点复核，不因单一海外/区域对象机械调整A股仓位。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-11-25 08:38:35\n- **Hyperliquid行情时点（北京时间）**：2026-11-25 08:38:49。\n- **边界**：市场归属只用于数据时点和传导解释，不决定通知资格。门槛已适度放宽；同一事实依靠去重和升级识别控制重复。\n",
+      "source": "data/state/overseas_context.json",
+      "confirmation_context": {
+        "market": "ASIA",
+        "market_date": "2026-11-25",
+        "direction": "DOWN",
+        "event_category": "EXTREME",
+        "fact_family": "",
+        "object_codes": [
+          "N225"
+        ],
+        "phase_metric_change_pct": -2.6425607937163087,
+        "sudden_change_pct": null,
+        "event_magnitude_pct": 2.6425607937163087,
+        "market_as_of_beijing": "2026-11-25T08:38:35+08:00",
+        "source_fact_id": "2026-11-25:N225:EXTREME:DOWN:2026-11-25T08:38:35+08:00",
+        "session": "SESSION",
+        "continuous_state_transition": "INITIAL",
+        "continuous_state_contract": "OBJECT_LEVEL_PREVIOUS_CURRENT_TRANSITION",
+        "event_family_id": "ASIA:2026-11-25:SESSION:N225:EXTREME:DOWN:"
+      },
       "response": {
         "http_status": 200,
         "pushplus_code": 200,
         "pushplus_message": "执行成功"
       },
-      "notification_id": "notification_964bd8a80f5692455ef9",
-      "lifecycle_status": "SENT"
-    },
+      "last_attempted_at": "2026-11-25T08:39:33+08:00"
+    }
+  ],
+  "recent": [
     {
       "key": "market-value:a-share:2026-11-18:588450:UP:EXTREME:2026-11-18T13:52:31+08:00",
       "type": "MARKET_VALUE_ALERT",
@@ -81049,6 +81087,24 @@
         "pushplus_message": "执行成功"
       },
       "notification_id": "notification_fea428d4b8f4c08f04f0",
+      "lifecycle_status": "SENT"
+    },
+    {
+      "key": "market-value:asia:2026-11-25:N225:DOWN:EXTREME:2026-11-25T08:38:35+08:00",
+      "type": "MARKET_VALUE_ALERT",
+      "title": "【市场异动】日经225指数（N225）出现极端波动 -2.64%",
+      "content": "### 核心结论\n- **事件类型**：极端波动\n- **对象/结构**：日经225指数（N225）\n- **较前收**：-2.64%\n\n**判断**：当前幅度已进入通知层的非常规区间，可能实质改变风险偏好、风险收益或资本比较。\n\n**Hyperliquid**：- xyz:EWJ → 日经ETF（513520）；方向DOWN，结论为方向偏弱，但当前不直接追随下跌，等待下一合法脉冲确认；方向偏弱但当前不直接追随下跌；将该ETF列入下一节点优先复核；升级条件：下一合法脉冲确认方向延续，并核对A股承接；过去10分钟变化：资金费率+0.0000、未平仓量+0.0000、溢价+0.0001。通俗解释：资金费率基本不变，多空持仓成本没有明显变化；未平仓量基本不变，未见明显新增或退出押注；溢价上升+0.0001，外部价格相对参考价更贵，情绪升温但也可能增加追涨风险。\n\n### 对ETF系统的影响\n日经225指数（N225）属于海外/区域结构证据。先看A股本地价格是否接受、减弱或背离，再复核日经ETF（513520）的自身反馈、当前主候选和边际资本效率；若海外与A股背离，以A股自身反馈为主。\n\n### 当前动作\n**把该信号纳入最近A股正式节点复核，不因单一海外/区域对象机械调整A股仓位。**\n\n### 数据与边界\n- **行情时点（北京时间）**：2026-11-25 08:38:35\n- **Hyperliquid行情时点（北京时间）**：2026-11-25 08:38:49。\n- **边界**：市场归属只用于数据时点和传导解释，不决定通知资格。门槛已适度放宽；同一事实依靠去重和升级识别控制重复。\n",
+      "source": "data/state/overseas_context.json",
+      "user_severity": "需要关注",
+      "user_action": "纳入最近A股决策节点重新验证，不机械交易",
+      "status": "SENT",
+      "attempted_at": "2026-11-25T08:39:33+08:00",
+      "response": {
+        "http_status": 200,
+        "pushplus_code": 200,
+        "pushplus_message": "执行成功"
+      },
+      "notification_id": "notification_208a794806e916e461a0",
       "lifecycle_status": "SENT"
     }
   ],
