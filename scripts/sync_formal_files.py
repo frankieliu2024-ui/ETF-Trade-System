@@ -758,11 +758,12 @@ def fixed_ratio_metrics(position: dict, record: dict | None = None) -> tuple[str
         highest_pct = max(0.0, current_pct)
     highest_pct = max(highest_pct, current_pct if record is None else highest_pct)
     drawdown = highest_pct - current_pct
+    coverage = str(record.get("coverage_status") or "行情覆盖状态未确认") if isinstance(record, dict) else "行情覆盖状态未确认"
     return (
         f"{current_pct:+.2f}%",
         f"{highest_pct:+.2f}%",
         f"{drawdown:.2f}%",
-        "今日收盘事实",
+        coverage,
     )
 
 
