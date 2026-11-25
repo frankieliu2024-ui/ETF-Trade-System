@@ -26,12 +26,12 @@ except ModuleNotFoundError:
     from scripts.confirmed_trade_facts import effective_confirmed_fee_fact
 try:
     from build_stock_context import active_account_asset_codes, normalize_code, position_metric
+except ModuleNotFoundError:
+    from scripts.build_stock_context import active_account_asset_codes, normalize_code, position_metric
 try:
     from fixed_ratio_position_metrics import refresh_fixed_ratio_metrics
 except ModuleNotFoundError:
     from scripts.fixed_ratio_position_metrics import refresh_fixed_ratio_metrics
-except ModuleNotFoundError:
-    from scripts.build_stock_context import active_account_asset_codes, normalize_code, position_metric
 try:
     from formal_file_mutation_gateway import (
         replace_managed_block as replace_block,
