@@ -158,7 +158,7 @@ class DashboardProjectionTests(unittest.TestCase):
                 "",
                 root,
             )
-            self.assertIn("|测试ETF（159999）|100|1.234|1.250|+1.30%|+1.30%（临时）|—（历史最高收益率未建立）|临时占位，不确认止盈|125.00元|", rendered)
+            self.assertIn("|测试ETF（159999）|100|1.234|1.250|+1.30%|+1.30%|—|今日收盘事实|125.00元|", rendered)
 
     def test_dashboard_builder_renders_selector_dict_as_markdown(self):
         with tempfile.TemporaryDirectory() as tmp:
