@@ -373,14 +373,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # Reuse the canonical ETF strategy-equity producer after the
-          # verified market batch. This is a projection refresh, not a second
-          # risk producer; account maintenance keeps the same owner as well.
-          # A failed reconstruction remains explicitly unavailable in E2E and
-          # must never be represented by the previous value as current.
-          python scripts/rebuild_etf_strategy_equity.py --output data/state/etf_strategy_equity.json || true
+          # The market pulse consumes the account-owned strategy state.
+          # Full FIFO replay belongs to account-fact maintenance. Refresh only
+          # today's valuation against the new valid snapshot; do not replay
+          # history or rebuild E2E synchronously in the pulse.
+          python scripts/rebuild_etf_strategy_equity.py --output data/state/etf_strategy_equity.json --current-only || true
           python scripts/build_state_context.py --decision-ready-only
-          python scripts/build_e2e_status.py
           python - <<'PY'
           import json
           from pathlib import Path

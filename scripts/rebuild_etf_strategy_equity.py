@@ -325,45 +325,78 @@ def _current_account_valuation(root: Path, base: dict) -> dict:
     return result
 
 
+def refresh_current_account_valuation_only(root: Path = ROOT) -> dict:
+    """Refresh only the current market-date valuation from existing canonical state."""
+    state_path = root / "data" / "state" / "etf_strategy_equity.json"
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    current_path = root / "data" / "state" / "CURRENT.json"
+    current = json.loads(current_path.read_text(encoding="utf-8")) if current_path.exists() else {}
+    current_date = str(current.get("market_date") or state.get("current_valuation_market_date") or state.get("replay_cutoff") or "")
+    if not current_date:
+        raise ValueError("current-only valuation requires a market date")
+    series = list(state.get("series") or [])
+    prior = [row for row in series if str(row.get("date") or "") < current_date]
+    same_day = [row for row in series if str(row.get("date") or "") == current_date]
+    base = dict(state)
+    if prior:
+        base["series"] = prior
+        base["replay_cutoff"] = str(prior[-1].get("date") or "")
+    elif same_day:
+        base["series"] = same_day[:1]
+        base["replay_cutoff"] = current_date
+    else:
+        raise ValueError("current-only valuation has no canonical base row")
+    refreshed = _current_account_valuation(root, base)
+    refreshed["series"] = prior + [refreshed["series"][-1]] if prior else [refreshed["series"][-1]]
+    refreshed["summary"]["historical_replay_status"] = "REUSED_ACCOUNT_MAINTENANCE_STATE"
+    refreshed["summary"]["current_valuation_source"] = "account_fact + current_valid_market_snapshot"
+    state_path.write_text(json.dumps(refreshed, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return refreshed
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--price-dir", type=Path)
     parser.add_argument("--cutoff")
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--current-only", action="store_true")
     args = parser.parse_args()
     historical_error = ""
-    try:
-        result = replay(ROOT, price_dir=args.price_dir, cutoff=args.cutoff)
-    except ValueError as exc:
-        historical_error = str(exc)
-        if "missing date-aligned close" not in historical_error:
-            raise
-        # Historical date-aligned coverage gaps must not prevent today's
-        # confirmed account valuation. Retry the same canonical replay only
-        # on progressively earlier eligible dates, so the base remains a
-        # genuinely successful historical prefix rather than retrying the
-        # original failing cutoff. Never infer a missing close from a trade.
-        state = json.loads((ROOT / "data" / "state" / "etf_strategy_equity.json").read_text(encoding="utf-8"))
-        missing_date = historical_error.rsplit(" on ", 1)[-1].strip()
-        candidate_dates = sorted(_load_prices(ROOT, args.price_dir).keys())
-        candidate_dates = [day for day in candidate_dates if day < missing_date]
-        if not candidate_dates:
-            raise ValueError("no successful historical replay prefix before missing date") from exc
-        base = None
-        prefix_error = historical_error
-        for base_cutoff in reversed(candidate_dates):
-            try:
-                base = replay(ROOT, price_dir=args.price_dir, cutoff=base_cutoff)
-                break
-            except ValueError as prefix_exc:
-                prefix_error = str(prefix_exc)
-                if "missing date-aligned close" not in prefix_error:
-                    raise
-        if base is None:
-            raise ValueError("no successful historical replay prefix before missing date") from exc
-        result = _current_account_valuation(ROOT, base)
-        result["summary"]["historical_replay_error"] = historical_error
-        result["summary"]["historical_replay_prefix_error"] = prefix_error
+    if args.current_only:
+        result = refresh_current_account_valuation_only(ROOT)
+    else:
+        try:
+            result = replay(ROOT, price_dir=args.price_dir, cutoff=args.cutoff)
+        except ValueError as exc:
+            historical_error = str(exc)
+            if "missing date-aligned close" not in historical_error:
+                raise
+            # Historical date-aligned coverage gaps must not prevent today's
+            # confirmed account valuation. Retry the same canonical replay only
+            # on progressively earlier eligible dates, so the base remains a
+            # genuinely successful historical prefix rather than retrying the
+            # original failing cutoff. Never infer a missing close from a trade.
+            state = json.loads((ROOT / "data" / "state" / "etf_strategy_equity.json").read_text(encoding="utf-8"))
+            missing_date = historical_error.rsplit(" on ", 1)[-1].strip()
+            candidate_dates = sorted(_load_prices(ROOT, args.price_dir).keys())
+            candidate_dates = [day for day in candidate_dates if day < missing_date]
+            if not candidate_dates:
+                raise ValueError("no successful historical replay prefix before missing date") from exc
+            base = None
+            prefix_error = historical_error
+            for base_cutoff in reversed(candidate_dates):
+                try:
+                    base = replay(ROOT, price_dir=args.price_dir, cutoff=base_cutoff)
+                    break
+                except ValueError as prefix_exc:
+                    prefix_error = str(prefix_exc)
+                    if "missing date-aligned close" not in prefix_error:
+                        raise
+            if base is None:
+                raise ValueError("no successful historical replay prefix before missing date") from exc
+            result = _current_account_valuation(ROOT, base)
+            result["summary"]["historical_replay_error"] = historical_error
+            result["summary"]["historical_replay_prefix_error"] = prefix_error
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({"status": "PASS", "cutoff": result["replay_cutoff"], "equity": result["summary"]["current_gross_strategy_equity"], "return_pct": result["summary"]["current_strategy_return_pct_gross"], "current_valuation_status": result.get("current_valuation_status", "HISTORICAL_REPLAY")}))
