@@ -108,7 +108,7 @@ def request_bound_snapshot_alignment(query_context: dict, decision_context: dict
     return query_snapshot == decision_snapshot or allowed, detail
 
 
-EXPECTED_INDICES = {"000001.SH", "399006.SZ", "000688.SH", "NDX", "SOX", "N225", "KOSPI", "TWII", "HSTECH"}
+EXPECTED_INDICES = {"000001.SH", "399006.SZ", "000688.SH", "NDX", "SOX", "VIX", "N225", "KOSPI", "TWII", "HSTECH"}
 REQUIRED_PROVIDERS = {"hithink_finance", "yahoo_chart_api", "eastmoney_push2"}
 CORE_A_SHARE_INDEX_CODES = frozenset({"000001.SH", "399006.SZ", "000688.SH"})
 
