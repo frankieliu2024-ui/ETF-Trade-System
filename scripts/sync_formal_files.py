@@ -738,6 +738,28 @@ def preserve_decision_block(existing: str) -> str:
     return block[start:end].strip()
 
 
+def fixed_ratio_metrics(position: dict) -> tuple[str, str, str, str]:
+    """Render non-trading fixed-ratio review fields from current account facts.
+
+    The highest return is a temporary display placeholder until historical
+    high-water coverage is available; it must not confirm a take-profit state.
+    """
+    quantity = int(position.get("quantity") or 0)
+    if quantity <= 0:
+        return ("—", "—", "—", "无当前持仓")
+    cost = float(position.get("cost") or position.get("cost_price") or 0)
+    current = position_metric(position, "current_price", "last_price")
+    if cost <= 0:
+        return ("无法确认", "无法确认", "无法确认", "成本缺失")
+    current_pct = (current - cost) / cost * 100
+    highest_pct = max(0.0, current_pct)
+    current_text = f"{current_pct:+.2f}%"
+    highest_text = f"{highest_pct:+.2f}%（临时）"
+    drawdown_text = "—（历史最高收益率未建立）"
+    coverage_text = "临时占位，不确认止盈"
+    return (current_text, highest_text, drawdown_text, coverage_text)
+
+
 def build_dashboard_block(account: dict, equity: dict, existing: str, root: Path = ROOT) -> str:
     positions = account.get("positions") or []
     membership = active_account_asset_codes(root, account)
@@ -790,12 +812,14 @@ def build_dashboard_block(account: dict, equity: dict, existing: str, root: Path
         f"|累计已知ETF费用（有效事实）|{money(known_fees)}；已执行成交overlay {money(overlay_fees)}；待确认费用状态：{'存在' if pending else '无'}|",
         f"|账户事实内已确认费用记录合计|{money(confirmed_account_fees)}（仅统计account_fact中明确标记CONFIRMED的记录；不代表历史累计ETF费用）|",
         "", "### 当前持仓事实", "",
-        "|标的|数量|成本|现价|市值|浮动盈亏|", "|-|-:|-:|-:|-:|-:|",
+        "|标的|数量|成本|现价|当前收益率|最高收益率|回落幅度|覆盖状态|市值|浮动盈亏|", "|-|-:|-:|-:|-:|-:|-:|-:|-:|-:|",
     ]
     for p in positions:
+        current_return, highest_return, drawdown, coverage = fixed_ratio_metrics(p)
         lines.append(
             f"|{display_name(p)}|{int(p.get('quantity') or 0):,}|"
             f"{float(p.get('cost') or p.get('cost_price') or 0):.3f}|{position_metric(p, 'current_price', 'last_price'):.3f}|"
+            f"{current_return}|{highest_return}|{drawdown}|{coverage}|"
             f"{money(p.get('market_value'))}|{format_position_pnl(p)}|"
         )
     etf_codes = {str(item.get('code')): str(item.get('name') or item.get('code')) for item in (load_json(root / "config/market/etf_monitor_universe.json").get("objects") or []) if item.get('code')}
