@@ -56,6 +56,7 @@ def refresh_fixed_ratio_metrics(root: Path, account: dict) -> dict:
     records = state.setdefault("positions", {})
     now = str(account.get("updated_at") or datetime.now(SHANGHAI).isoformat(timespec="seconds"))
     trades = account.get("trades") or []
+    snapshot_meta = account.get("_market_snapshot") if isinstance(account.get("_market_snapshot"), dict) else {}
     for position in account.get("positions") or []:
         code = str(position.get("code") or "").strip()
         if not code:
@@ -63,6 +64,9 @@ def refresh_fixed_ratio_metrics(root: Path, account: dict) -> dict:
         quantity = int(position.get("quantity") or 0)
         cost = _cost(position)
         price = _price(position)
+        coverage_status = "收盘快照已覆盖" if price is not None else "收盘快照未覆盖"
+        coverage_as_of = str(position.get("_market_snapshot_as_of") or snapshot_meta.get("captured_at_beijing") or "")
+        coverage_quality = str(position.get("_market_snapshot_quality") or snapshot_meta.get("quality_status") or "")
         record = records.get(code) if isinstance(records.get(code), dict) else {}
         seen_trade_ids = set(record.get("seen_trade_event_ids") or [])
         new_buy = False
@@ -86,6 +90,9 @@ def refresh_fixed_ratio_metrics(root: Path, account: dict) -> dict:
                 "lifecycle_status": "CLOSED",
                 "last_quantity": 0,
                 "updated_at": now,
+                "coverage_status": coverage_status,
+                "coverage_as_of": coverage_as_of,
+                "coverage_quality": coverage_quality,
                 "seen_trade_event_ids": sorted(seen_trade_ids),
             })
             records[code] = record
@@ -120,10 +127,13 @@ def refresh_fixed_ratio_metrics(root: Path, account: dict) -> dict:
                 "high_water_return_pct": high_water,
                 "last_quantity": quantity,
                 "updated_at": now,
+                "coverage_status": coverage_status,
+                "coverage_as_of": coverage_as_of,
+                "coverage_quality": coverage_quality,
                 "seen_trade_event_ids": sorted(seen_trade_ids),
             })
         records[code] = record
-    state["schema_version"] = 1
+    state["schema_version"] = 2
     state["updated_at"] = now
     atomic_json_write(root / STATE_PATH, state)
     return records
