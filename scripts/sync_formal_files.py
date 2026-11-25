@@ -758,12 +758,13 @@ def fixed_ratio_metrics(position: dict, record: dict | None = None) -> tuple[str
         highest_pct = max(0.0, current_pct)
     highest_pct = max(highest_pct, current_pct if record is None else highest_pct)
     drawdown = highest_pct - current_pct
-    coverage = str(record.get("coverage_status") or "行情覆盖状态未确认") if isinstance(record, dict) else "行情覆盖状态未确认"
+    coverage_as_of = str(record.get("coverage_as_of") or "").strip() if isinstance(record, dict) else ""
+    snapshot_time = coverage_as_of.replace("T", " ").split("+", 1)[0][:16] if coverage_as_of else "未覆盖"
     return (
         f"{current_pct:+.2f}%",
         f"{highest_pct:+.2f}%",
         f"{drawdown:.2f}%",
-        coverage,
+        snapshot_time,
     )
 
 
@@ -850,7 +851,7 @@ def build_dashboard_block(account: dict, equity: dict, existing: str, root: Path
         f"|累计已知ETF费用（有效事实）|{money(known_fees)}；已执行成交overlay {money(overlay_fees)}；待确认费用状态：{'存在' if pending else '无'}|",
         f"|账户事实内已确认费用记录合计|{money(confirmed_account_fees)}（仅统计account_fact中明确标记CONFIRMED的记录；不代表历史累计ETF费用）|",
         "", "### 当前持仓事实", "",
-        "|标的|数量|成本|现价|当前收益率|最高收益率|回落幅度|覆盖状态|市值|浮动盈亏|", "|-|-:|-:|-:|-:|-:|-:|-:|-:|-:|",
+        "|标的|数量|成本|现价|当前收益率|最高收益率|回落幅度|行情快照时间|市值|浮动盈亏|", "|-|-:|-:|-:|-:|-:|-:|-:|-:|-:|",
     ]
     for p in positions:
         current_return, highest_return, drawdown, coverage = fixed_ratio_metrics(p, fixed_ratio_records.get(str(p.get("code") or "")))
