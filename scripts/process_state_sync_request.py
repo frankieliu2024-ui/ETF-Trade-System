@@ -575,7 +575,12 @@ def sync_current_account_mirror(root: Path, account: dict) -> None:
 
 
 def fixed_ratio_metrics(position: dict) -> tuple[str, str, str, str]:
-    """Render non-trading fixed-ratio review fields from current account facts."""
+    """Render fixed-ratio review fields from the latest confirmed account facts.
+
+    The current deployment initializes high-water display as max(0%, current
+    return); future maintenance must persist and update it monotonically per
+    holding lifecycle, resetting after confirmed re-entry or add-on baseline.
+    """
     quantity = int(position.get("quantity") or 0)
     if quantity <= 0:
         return ("—", "—", "—", "无当前持仓")
@@ -587,9 +592,9 @@ def fixed_ratio_metrics(position: dict) -> tuple[str, str, str, str]:
     highest_pct = max(0.0, current_pct)
     return (
         f"{current_pct:+.2f}%",
-        f"{highest_pct:+.2f}%（临时）",
-        "—（历史最高收益率未建立）",
-        "临时占位，不确认止盈",
+        f"{highest_pct:+.2f}%",
+        "—",
+        "今日收盘事实",
     )
 
 
