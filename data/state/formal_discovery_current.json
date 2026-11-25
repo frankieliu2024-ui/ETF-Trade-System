@@ -1,19 +1,19 @@
 {
   "schema_version": "1.0",
   "layer": "CURRENT_PULSE_DISCOVERY",
-  "status": "READY",
+  "status": "DEGRADED",
   "market_date": "2026-11-25",
   "latest_valid_node": "live",
-  "latest_snapshot": "data/market/snapshots/2026-11-25_094506.json",
-  "generated_at_beijing": "2026-11-25T09:45:23+08:00",
+  "latest_snapshot": "data/market/snapshots/2026-11-25_095419.json",
+  "generated_at_beijing": "2026-11-25T09:55:06+08:00",
   "formation_rule": "EVERY_VERIFIED_A_SHARE_PULSE",
-  "generation_identity": "DISCOVERY:2026-11-25:live:ec61a7a9b3a2cb92273f1b66fab7f6cce0886fd24456ce487d384d923836bff1:2026-11-25T09:45:23+08:00",
-  "source_snapshot_identity": "ec61a7a9b3a2cb92273f1b66fab7f6cce0886fd24456ce487d384d923836bff1",
-  "source_snapshot_as_of_beijing": "2026-11-25T09:45:06+08:00",
+  "generation_identity": "DISCOVERY:2026-11-25:live:683ab093f3e872c4e86d17f8392978cfe2ab292a082f4e1441d40f614ba35da6:2026-11-25T09:55:06+08:00",
+  "source_snapshot_identity": "683ab093f3e872c4e86d17f8392978cfe2ab292a082f4e1441d40f614ba35da6",
+  "source_snapshot_as_of_beijing": "2026-11-25T09:54:19+08:00",
   "node_evidence_binding": {
-    "binding_id": "2026-11-25:live:ec61a7a9b3a2cb92273f1b66fab7f6cce0886fd24456ce487d384d923836bff1",
-    "a_share_snapshot_identity": "ec61a7a9b3a2cb92273f1b66fab7f6cce0886fd24456ce487d384d923836bff1",
-    "a_share_snapshot_as_of_beijing": "2026-11-25T09:45:06+08:00",
+    "binding_id": "2026-11-25:live:683ab093f3e872c4e86d17f8392978cfe2ab292a082f4e1441d40f614ba35da6",
+    "a_share_snapshot_identity": "683ab093f3e872c4e86d17f8392978cfe2ab292a082f4e1441d40f614ba35da6",
+    "a_share_snapshot_as_of_beijing": "2026-11-25T09:54:19+08:00",
     "hyperliquid_collection_time_beijing": "2026-11-25T09:43:39+08:00",
     "hyperliquid_context_id": "hl-280e052a50338c72",
     "hyperliquid_quality_status": "PASS",
@@ -21,61 +21,77 @@
   },
   "regeneration_required": true,
   "source": "EASTMONEY_PRIMARY_HITHINK_SECONDARY_UNIVERSE_PLUS_VERIFIED_NODE_OVERLAY_AND_BOUNDED_HISTORY_REPAIR",
-  "coverage_status": "COMPLETE",
-  "candidate_count": 12,
+  "coverage_status": "PARTIAL",
+  "candidate_count": 11,
   "required_history_end_date": "2026-11-24",
   "empty_reason": "",
   "universe_identity": null,
   "discovery_delta_identity": null,
   "discovery": {
     "schema_version": "1.0",
-    "status": "READY",
-    "generated_at_beijing": "2026-11-25T09:45:09+08:00",
+    "status": "DEGRADED",
+    "generated_at_beijing": "2026-11-25T09:54:22+08:00",
     "market_date": "2026-11-25",
     "required_history_end_date": "2026-11-24",
     "source": "EASTMONEY_PRIMARY_HITHINK_SECONDARY_UNIVERSE_PLUS_VERIFIED_NODE_OVERLAY_AND_BOUNDED_HISTORY_REPAIR",
     "broad_source_reconciliation": {
-      "universe_mode": "EASTMONEY_PRIMARY",
+      "requested_identity_count": 1803,
+      "tencent_quote_count": 1803,
+      "tencent_failed_batch_count": 0,
+      "tencent_failures": [],
+      "tencent_hydration_batch_count": 31,
+      "tencent_hydration_workers": 6,
+      "universe_mode": "HITHINK_TENCENT_SECONDARY_FALLBACK",
       "primary_source": "EASTMONEY_PUSH2_ETF_CROSS_SECTION",
-      "eastmoney_count": 1690,
-      "hithink_identity_count": 0,
-      "eastmoney_error": null,
+      "eastmoney_count": 0,
+      "hithink_identity_count": 1803,
+      "eastmoney_error": "HTTP Error 502: Bad Gateway",
       "hithink_error": null,
-      "fallback_used": false,
-      "fallback_source": null,
-      "reconciled_count": 1690,
+      "fallback_used": true,
+      "fallback_source": "HITHINK_ETF_MASTER_PLUS_TENCENT",
+      "reconciled_count": 1803,
       "source_elapsed_seconds": {
-        "eastmoney": 6.39
+        "eastmoney": 1.062,
+        "hithink": 5.406
       },
-      "source_join_elapsed_seconds": 6.39,
-      "supplemental_hydration_elapsed_seconds": 0.0,
-      "verified_spot_overlay_count": 27
+      "source_join_elapsed_seconds": 6.468,
+      "supplemental_hydration_elapsed_seconds": 5.095,
+      "verified_spot_overlay_count": 28
     },
     "source_role": "DISCOVERY_ONLY; formal trade decision remains MASTER-owned",
-    "broad_universe_count": 1690,
-    "managed_identity_count": 27,
-    "held_identity_count": 10,
+    "broad_universe_count": 1803,
+    "managed_identity_count": 28,
+    "held_identity_count": 11,
     "managed_excluded_count": 0,
-    "history_prefilter_count": 62,
-    "candidate_count": 12,
+    "history_prefilter_count": 60,
+    "candidate_count": 11,
     "history_success_budget": 12,
     "history_attempt_cap": 36,
     "history_fetch_workers": 2,
-    "history_attempted_count": 12,
+    "history_attempted_count": 14,
     "history_succeeded_count": 12,
     "history_reused_count": 0,
     "history_repair_attempted_count": 12,
-    "history_failure_count": 0,
-    "history_elapsed_seconds": 6.801,
+    "history_failure_count": 2,
+    "history_elapsed_seconds": 32.091,
     "empty_reason": "",
     "latency_observability": {
-      "broad_acquisition_elapsed_seconds": 6.39,
-      "prefilter_elapsed_seconds": 0.004,
-      "history_validation_elapsed_seconds": 6.801,
+      "broad_acquisition_elapsed_seconds": 11.563,
+      "prefilter_elapsed_seconds": 0.005,
+      "history_validation_elapsed_seconds": 32.091,
       "measurement_role": "OBSERVABILITY_ONLY_NOT_DECISION_GATE"
     },
-    "coverage_status": "COMPLETE",
-    "history_failures": [],
+    "coverage_status": "PARTIAL",
+    "history_failures": [
+      {
+        "code": "513200",
+        "error": "historical provider chain exhausted; hithink_finance_history:URLError:<urlopen error _ssl.c:1001: The handshake operation timed out> | tencent_qq_history:RuntimeError:Tencent history business failure: code=1 | eastmoney_push2his:RemoteDisconnected:Remote end closed connection without response"
+      },
+      {
+        "code": "513980",
+        "error": "historical provider chain exhausted; hithink_finance_history:URLError:<urlopen error _ssl.c:1001: The handshake operation timed out> | tencent_qq_history:RuntimeError:Tencent history business failure: code=1 | eastmoney_push2his:RemoteDisconnected:Remote end closed connection without response"
+      }
+    ],
     "candidates": [
       {
         "code": "159101",
@@ -96,23 +112,24 @@
         "surfaced_states": [],
         "information_classes": [
           "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE"
+          "STRUCTURAL_CHANGE",
+          "SHORT_HISTORY_CURRENT_CHANGE"
         ],
         "external_driver_evidence": [],
         "discovery_spot": {
           "price": 0.579,
-          "change_pct": 1.22,
-          "amount": 12375664.2,
-          "amplitude_pct": 1.92,
-          "turnover_pct": 0.75,
-          "volume_ratio": 1.68,
+          "change_pct": 1.2237762237762295,
+          "amount": 21240000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
           "high": 0.581,
           "low": 0.57,
           "open": 0.572,
           "prev_close": 0.572,
-          "return_60d_pct": -21.65,
-          "return_ytd_pct": -37.47,
-          "provider_timestamp": 1795571109
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1795571667000
         },
         "historical_context": {
           "status": "READY",
@@ -161,23 +178,24 @@
         "surfaced_states": [],
         "information_classes": [
           "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE"
+          "STRUCTURAL_CHANGE",
+          "SHORT_HISTORY_CURRENT_CHANGE"
         ],
         "external_driver_evidence": [],
         "discovery_spot": {
-          "price": 0.806,
-          "change_pct": 1.51,
-          "amount": 11402560.5,
-          "amplitude_pct": 2.27,
-          "turnover_pct": 10.87,
-          "volume_ratio": 2.53,
+          "price": 0.803,
+          "change_pct": 1.133501259445846,
+          "amount": 17910000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
           "high": 0.815,
           "low": 0.797,
           "open": 0.811,
           "prev_close": 0.794,
-          "return_60d_pct": -16.48,
-          "return_ytd_pct": -10.34,
-          "provider_timestamp": 1795571109
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1795571667000
         },
         "historical_context": {
           "status": "READY",
@@ -208,9 +226,9 @@
         "history_source": "HITHINK_FINANCE_HISTORY_BOUNDED_REPAIR"
       },
       {
-        "code": "159531",
-        "name": "中证2000ETF南方",
-        "display_name": "中证2000ETF南方（159531）",
+        "code": "159202",
+        "name": "恒生互联网ETF万家",
+        "display_name": "恒生互联网ETF万家（159202）",
         "category": "OBSERVATION_EVALUATION_INPUT",
         "eligibility": "OBSERVATION_FULL_EVALUATION",
         "management_identity": null,
@@ -226,29 +244,30 @@
         "surfaced_states": [],
         "information_classes": [
           "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE"
+          "STRUCTURAL_CHANGE",
+          "SHORT_HISTORY_CURRENT_CHANGE"
         ],
         "external_driver_evidence": [],
         "discovery_spot": {
-          "price": 1.159,
-          "change_pct": 0.96,
-          "amount": 69344804.1,
-          "amplitude_pct": 2.53,
-          "turnover_pct": 5.16,
-          "volume_ratio": 3.67,
-          "high": 1.163,
-          "low": 1.134,
-          "open": 1.134,
-          "prev_close": 1.148,
-          "return_60d_pct": -20.07,
-          "return_ytd_pct": -16.92,
-          "provider_timestamp": 1795571109
+          "price": 0.608,
+          "change_pct": 2.184873949579824,
+          "amount": 46270000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
+          "high": 0.61,
+          "low": 0.595,
+          "open": 0.595,
+          "prev_close": 0.595,
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1795571667000
         },
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-24",
           "sample_count": 90,
-          "avg_amount_20": 263993983.5
+          "avg_amount_20": 90342257.95
         },
         "comparison_basis": [
           "历史趋势/状态变化",
@@ -273,9 +292,9 @@
         "history_source": "HITHINK_FINANCE_HISTORY_BOUNDED_REPAIR"
       },
       {
-        "code": "159691",
-        "name": "港股红利ETF工银",
-        "display_name": "港股红利ETF工银（159691）",
+        "code": "159268",
+        "name": "港股通消费ETF汇添富",
+        "display_name": "港股通消费ETF汇添富（159268）",
         "category": "OBSERVATION_EVALUATION_INPUT",
         "eligibility": "OBSERVATION_FULL_EVALUATION",
         "management_identity": null,
@@ -291,29 +310,162 @@
         "surfaced_states": [],
         "information_classes": [
           "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE"
+          "STRUCTURAL_CHANGE",
+          "SHORT_HISTORY_CURRENT_CHANGE"
         ],
         "external_driver_evidence": [],
         "discovery_spot": {
-          "price": 1.121,
-          "change_pct": 1.08,
-          "amount": 31924488.656,
-          "amplitude_pct": 1.17,
-          "turnover_pct": 0.89,
-          "volume_ratio": 3.49,
-          "high": 1.123,
-          "low": 1.11,
-          "open": 1.11,
-          "prev_close": 1.109,
-          "return_60d_pct": -8.71,
-          "return_ytd_pct": -12.08,
-          "provider_timestamp": 1795571109
+          "price": 0.77,
+          "change_pct": 1.7173051519154603,
+          "amount": 10540000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
+          "high": 0.775,
+          "low": 0.757,
+          "open": 0.757,
+          "prev_close": 0.757,
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1795571667000
         },
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-24",
           "sample_count": 90,
-          "avg_amount_20": 169768499.75
+          "avg_amount_20": 54092026.33
+        },
+        "comparison_basis": [
+          "历史趋势/状态变化",
+          "当前相对结构",
+          "成交与可执行性",
+          "风险收益",
+          "资本效率"
+        ],
+        "decision_boundary": "默认按买入建议起点进入正式判断；只有明确反证才降级或否决。该建议不自动产生Trial/Confirm、金额或交易动作。",
+        "management_review": {
+          "object_role": "NEW_DISCOVERY",
+          "direct_conclusion_required": true,
+          "conclusion_status": "PENDING_MASTER_DECISION",
+          "allowed_conclusions": [
+            "RETAIN_DISCOVERY",
+            "REJECT_NEW_DEPLOYMENT",
+            "TRIAL_ELIGIBILITY_REVIEW"
+          ],
+          "decision_owner": "MASTER_FORMAL_DECISION",
+          "decision_boundary": "Discovery supplies object-level evidence and the required conclusion set; only MASTER Formal Decision confirms the final hold, reduce, exit, observation or Trial/Confirm action."
+        },
+        "history_source": "HITHINK_FINANCE_HISTORY_BOUNDED_REPAIR"
+      },
+      {
+        "code": "159507",
+        "name": "通信ETF广发",
+        "display_name": "通信ETF广发（159507）",
+        "category": "OBSERVATION_EVALUATION_INPUT",
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "management_identity": null,
+        "auto_promote_to_observation": false,
+        "default_recommendation": "BUY",
+        "recommendation_status": "BUY_UNLESS_DISPROVED",
+        "recommendation_boundary": "人工确认前的积极建议；不自动下单、不授予Trial/Confirm、不改变交易权限",
+        "trial_confirm_permission": false,
+        "trade_signal": null,
+        "decision_output_generated": false,
+        "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
+        "entered_states": [],
+        "surfaced_states": [],
+        "information_classes": [
+          "NEW_RELATIVE_DIVERGENCE",
+          "STRUCTURAL_CHANGE",
+          "SHORT_HISTORY_CURRENT_CHANGE"
+        ],
+        "external_driver_evidence": [],
+        "discovery_spot": {
+          "price": 0.571,
+          "change_pct": 0.8833922261484162,
+          "amount": 14290000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
+          "high": 0.574,
+          "low": 0.549,
+          "open": 0.549,
+          "prev_close": 0.566,
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1795571667000
+        },
+        "historical_context": {
+          "status": "READY",
+          "as_of": "2026-11-24",
+          "sample_count": 90,
+          "avg_amount_20": 47550343.1
+        },
+        "comparison_basis": [
+          "历史趋势/状态变化",
+          "当前相对结构",
+          "成交与可执行性",
+          "风险收益",
+          "资本效率"
+        ],
+        "decision_boundary": "默认按买入建议起点进入正式判断；只有明确反证才降级或否决。该建议不自动产生Trial/Confirm、金额或交易动作。",
+        "management_review": {
+          "object_role": "NEW_DISCOVERY",
+          "direct_conclusion_required": true,
+          "conclusion_status": "PENDING_MASTER_DECISION",
+          "allowed_conclusions": [
+            "RETAIN_DISCOVERY",
+            "REJECT_NEW_DEPLOYMENT",
+            "TRIAL_ELIGIBILITY_REVIEW"
+          ],
+          "decision_owner": "MASTER_FORMAL_DECISION",
+          "decision_boundary": "Discovery supplies object-level evidence and the required conclusion set; only MASTER Formal Decision confirms the final hold, reduce, exit, observation or Trial/Confirm action."
+        },
+        "history_source": "HITHINK_FINANCE_HISTORY_BOUNDED_REPAIR"
+      },
+      {
+        "code": "159568",
+        "name": "港股互联网ETF博时",
+        "display_name": "港股互联网ETF博时（159568）",
+        "category": "OBSERVATION_EVALUATION_INPUT",
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "management_identity": null,
+        "auto_promote_to_observation": false,
+        "default_recommendation": "BUY",
+        "recommendation_status": "BUY_UNLESS_DISPROVED",
+        "recommendation_boundary": "人工确认前的积极建议；不自动下单、不授予Trial/Confirm、不改变交易权限",
+        "trial_confirm_permission": false,
+        "trade_signal": null,
+        "decision_output_generated": false,
+        "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
+        "entered_states": [],
+        "surfaced_states": [],
+        "information_classes": [
+          "NEW_RELATIVE_DIVERGENCE",
+          "STRUCTURAL_CHANGE",
+          "SHORT_HISTORY_CURRENT_CHANGE"
+        ],
+        "external_driver_evidence": [],
+        "discovery_spot": {
+          "price": 0.894,
+          "change_pct": 2.2883295194507935,
+          "amount": 26290000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
+          "high": 0.9,
+          "low": 0.875,
+          "open": 0.875,
+          "prev_close": 0.874,
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1795571667000
+        },
+        "historical_context": {
+          "status": "READY",
+          "as_of": "2026-11-24",
+          "sample_count": 90,
+          "avg_amount_20": 61444006.85
         },
         "comparison_basis": [
           "历史趋势/状态变化",
@@ -356,23 +508,24 @@
         "surfaced_states": [],
         "information_classes": [
           "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE"
+          "STRUCTURAL_CHANGE",
+          "SHORT_HISTORY_CURRENT_CHANGE"
         ],
         "external_driver_evidence": [],
         "discovery_spot": {
-          "price": 0.79,
-          "change_pct": 1.54,
-          "amount": 10276096.4,
-          "amplitude_pct": 1.8,
-          "turnover_pct": 7.67,
-          "volume_ratio": 4.06,
+          "price": 0.788,
+          "change_pct": 1.285347043701801,
+          "amount": 13560000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
           "high": 0.794,
           "low": 0.78,
           "open": 0.789,
           "prev_close": 0.778,
-          "return_60d_pct": -14.32,
-          "return_ytd_pct": -8.99,
-          "provider_timestamp": 1795571109
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1795571667000
         },
         "historical_context": {
           "status": "READY",
@@ -438,23 +591,24 @@
         ],
         "information_classes": [
           "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE"
+          "STRUCTURAL_CHANGE",
+          "SHORT_HISTORY_CURRENT_CHANGE"
         ],
         "external_driver_evidence": [],
         "discovery_spot": {
-          "price": 0.672,
-          "change_pct": 2.28,
-          "amount": 13487002.0,
-          "amplitude_pct": 1.52,
-          "turnover_pct": 3.61,
-          "volume_ratio": 8.29,
+          "price": 0.669,
+          "change_pct": 1.82648401826484,
+          "amount": 18230000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
           "high": 0.673,
           "low": 0.663,
           "open": 0.665,
           "prev_close": 0.657,
-          "return_60d_pct": -0.74,
-          "return_ytd_pct": -13.96,
-          "provider_timestamp": 1795571109
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1795571667000
         },
         "historical_context": {
           "status": "READY",
@@ -485,345 +639,9 @@
         "history_source": "HITHINK_FINANCE_HISTORY_BOUNDED_REPAIR"
       },
       {
-        "code": "159887",
-        "name": "银行ETF富国",
-        "display_name": "银行ETF富国（159887）",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "management_identity": null,
-        "auto_promote_to_observation": false,
-        "default_recommendation": "BUY",
-        "recommendation_status": "BUY_UNLESS_DISPROVED",
-        "recommendation_boundary": "人工确认前的积极建议；不自动下单、不授予Trial/Confirm、不改变交易权限",
-        "trial_confirm_permission": false,
-        "trade_signal": null,
-        "decision_output_generated": false,
-        "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
-        "entered_states": [],
-        "surfaced_states": [
-          {
-            "state": "PERSISTENT_TREND",
-            "evidence": {
-              "window_returns": {
-                "5": 0.01066,
-                "20": 0.052741,
-                "40": 0.103273,
-                "60": 0.121212
-              },
-              "positive_windows": [
-                20,
-                40,
-                60
-              ],
-              "max_drawdown_60": 0.032011
-            }
-          },
-          {
-            "state": "RECOVERY_BREAKOUT",
-            "evidence": {
-              "prior_drawdown": 0.102699,
-              "recovery_fraction": 0.987179,
-              "distance_to_prior_high": -0.001317
-            }
-          }
-        ],
-        "information_classes": [
-          "PERSISTENT_STRUCTURE"
-        ],
-        "external_driver_evidence": [],
-        "discovery_spot": {
-          "price": 1.505,
-          "change_pct": -0.79,
-          "amount": 19527549.9,
-          "amplitude_pct": 0.66,
-          "turnover_pct": 2.77,
-          "volume_ratio": 2.56,
-          "high": 1.515,
-          "low": 1.505,
-          "open": 1.513,
-          "prev_close": 1.517,
-          "return_60d_pct": 11.98,
-          "return_ytd_pct": 11.9,
-          "provider_timestamp": 1795571109
-        },
-        "historical_context": {
-          "status": "READY",
-          "as_of": "2026-11-24",
-          "sample_count": 90,
-          "avg_amount_20": 111543078.5
-        },
-        "comparison_basis": [
-          "历史趋势/状态变化",
-          "当前相对结构",
-          "成交与可执行性",
-          "风险收益",
-          "资本效率"
-        ],
-        "decision_boundary": "默认按买入建议起点进入正式判断；只有明确反证才降级或否决。该建议不自动产生Trial/Confirm、金额或交易动作。",
-        "management_review": {
-          "object_role": "NEW_DISCOVERY",
-          "direct_conclusion_required": true,
-          "conclusion_status": "PENDING_MASTER_DECISION",
-          "allowed_conclusions": [
-            "RETAIN_DISCOVERY",
-            "REJECT_NEW_DEPLOYMENT",
-            "TRIAL_ELIGIBILITY_REVIEW"
-          ],
-          "decision_owner": "MASTER_FORMAL_DECISION",
-          "decision_boundary": "Discovery supplies object-level evidence and the required conclusion set; only MASTER Formal Decision confirms the final hold, reduce, exit, observation or Trial/Confirm action."
-        },
-        "history_source": "HITHINK_FINANCE_HISTORY_BOUNDED_REPAIR"
-      },
-      {
-        "code": "510230",
-        "name": "金融ETF国泰",
-        "display_name": "金融ETF国泰（510230）",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "management_identity": "MANAGED",
-        "auto_promote_to_observation": false,
-        "default_recommendation": "BUY",
-        "recommendation_status": "BUY_UNLESS_DISPROVED",
-        "recommendation_boundary": "人工确认前的积极建议；不自动下单、不授予Trial/Confirm、不改变交易权限",
-        "trial_confirm_permission": false,
-        "trade_signal": null,
-        "decision_output_generated": false,
-        "discovery_semantic": "NODE_LOCAL_ALL_MARKET_OPPORTUNITY_SIGNAL_FOR_EXISTING_MANAGED_ETF",
-        "entered_states": [],
-        "surfaced_states": [
-          {
-            "state": "PERSISTENT_TREND",
-            "evidence": {
-              "window_returns": {
-                "5": 0.005751,
-                "20": 0.038604,
-                "40": 0.048726,
-                "60": 0.059046
-              },
-              "positive_windows": [
-                20,
-                40,
-                60
-              ],
-              "max_drawdown_60": 0.040234
-            }
-          }
-        ],
-        "information_classes": [
-          "PERSISTENT_STRUCTURE"
-        ],
-        "external_driver_evidence": [],
-        "discovery_spot": {
-          "price": 1.393,
-          "change_pct": -0.42887776983560055,
-          "amount": 10470000.0,
-          "amplitude_pct": 0.57,
-          "turnover_pct": 1.42,
-          "volume_ratio": 1.67,
-          "high": 1.399,
-          "low": 1.391,
-          "open": 1.391,
-          "prev_close": 1.399,
-          "return_60d_pct": 5.69,
-          "return_ytd_pct": -1.76,
-          "provider_timestamp": 1795571113
-        },
-        "historical_context": {
-          "status": "READY",
-          "as_of": "2026-11-24",
-          "sample_count": 90,
-          "avg_amount_20": 110564328.45
-        },
-        "comparison_basis": [
-          "历史趋势/状态变化",
-          "当前相对结构",
-          "成交与可执行性",
-          "风险收益",
-          "资本效率"
-        ],
-        "decision_boundary": "默认按买入建议起点进入正式判断；只有明确反证才降级或否决。该建议不自动产生Trial/Confirm、金额或交易动作。",
-        "management_review": {
-          "object_role": "HOLDING",
-          "direct_conclusion_required": true,
-          "conclusion_status": "PENDING_MASTER_DECISION",
-          "allowed_conclusions": [
-            "CONTINUE_HOLDING",
-            "REDUCE_REVIEW",
-            "EXIT_REVIEW"
-          ],
-          "decision_owner": "MASTER_FORMAL_DECISION",
-          "decision_boundary": "Discovery supplies object-level evidence and the required conclusion set; only MASTER Formal Decision confirms the final hold, reduce, exit, observation or Trial/Confirm action."
-        },
-        "history_source": "HITHINK_FINANCE_HISTORY_BOUNDED_REPAIR"
-      },
-      {
-        "code": "512690",
-        "name": "酒ETF鹏华",
-        "display_name": "酒ETF鹏华（512690）",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "management_identity": "MANAGED",
-        "auto_promote_to_observation": false,
-        "default_recommendation": "BUY",
-        "recommendation_status": "BUY_UNLESS_DISPROVED",
-        "recommendation_boundary": "人工确认前的积极建议；不自动下单、不授予Trial/Confirm、不改变交易权限",
-        "trial_confirm_permission": false,
-        "trade_signal": null,
-        "decision_output_generated": false,
-        "discovery_semantic": "NODE_LOCAL_ALL_MARKET_OPPORTUNITY_SIGNAL_FOR_EXISTING_MANAGED_ETF",
-        "entered_states": [],
-        "surfaced_states": [
-          {
-            "state": "PERSISTENT_TREND",
-            "evidence": {
-              "window_returns": {
-                "5": -0.033632,
-                "20": 0.038554,
-                "40": 0.036058,
-                "60": 0.023753
-              },
-              "positive_windows": [
-                20,
-                40,
-                60
-              ],
-              "max_drawdown_60": 0.069124
-            }
-          }
-        ],
-        "information_classes": [
-          "PERSISTENT_STRUCTURE"
-        ],
-        "external_driver_evidence": [],
-        "discovery_spot": {
-          "price": 0.431,
-          "change_pct": 0.0,
-          "amount": 36190000.0,
-          "amplitude_pct": 0.93,
-          "turnover_pct": 0.28,
-          "volume_ratio": 1.54,
-          "high": 0.432,
-          "low": 0.428,
-          "open": 0.432,
-          "prev_close": 0.431,
-          "return_60d_pct": 1.9,
-          "return_ytd_pct": -19.78,
-          "provider_timestamp": 1795571110
-        },
-        "historical_context": {
-          "status": "READY",
-          "as_of": "2026-11-24",
-          "sample_count": 90,
-          "avg_amount_20": 595922908.0
-        },
-        "comparison_basis": [
-          "历史趋势/状态变化",
-          "当前相对结构",
-          "成交与可执行性",
-          "风险收益",
-          "资本效率"
-        ],
-        "decision_boundary": "默认按买入建议起点进入正式判断；只有明确反证才降级或否决。该建议不自动产生Trial/Confirm、金额或交易动作。",
-        "management_review": {
-          "object_role": "HOLDING",
-          "direct_conclusion_required": true,
-          "conclusion_status": "PENDING_MASTER_DECISION",
-          "allowed_conclusions": [
-            "CONTINUE_HOLDING",
-            "REDUCE_REVIEW",
-            "EXIT_REVIEW"
-          ],
-          "decision_owner": "MASTER_FORMAL_DECISION",
-          "decision_boundary": "Discovery supplies object-level evidence and the required conclusion set; only MASTER Formal Decision confirms the final hold, reduce, exit, observation or Trial/Confirm action."
-        },
-        "history_source": "HITHINK_FINANCE_HISTORY_BOUNDED_REPAIR"
-      },
-      {
-        "code": "513070",
-        "name": "港股通消费ETF易方达",
-        "display_name": "港股通消费ETF易方达（513070）",
-        "category": "OBSERVATION_EVALUATION_INPUT",
-        "eligibility": "OBSERVATION_FULL_EVALUATION",
-        "management_identity": null,
-        "auto_promote_to_observation": false,
-        "default_recommendation": "BUY",
-        "recommendation_status": "BUY_UNLESS_DISPROVED",
-        "recommendation_boundary": "人工确认前的积极建议；不自动下单、不授予Trial/Confirm、不改变交易权限",
-        "trial_confirm_permission": false,
-        "trade_signal": null,
-        "decision_output_generated": false,
-        "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
-        "entered_states": [],
-        "surfaced_states": [
-          {
-            "state": "PERSISTENT_TREND",
-            "evidence": {
-              "window_returns": {
-                "5": -0.046614,
-                "20": 0.079681,
-                "40": 0.057561,
-                "60": -0.034728
-              },
-              "positive_windows": [
-                20,
-                40
-              ],
-              "max_drawdown_60": 0.116548
-            }
-          }
-        ],
-        "information_classes": [
-          "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE"
-        ],
-        "external_driver_evidence": [],
-        "discovery_spot": {
-          "price": 1.105,
-          "change_pct": 1.94,
-          "amount": 31110002.0,
-          "amplitude_pct": 1.57,
-          "turnover_pct": 1.65,
-          "volume_ratio": 2.7,
-          "high": 1.106,
-          "low": 1.089,
-          "open": 1.095,
-          "prev_close": 1.084,
-          "return_60d_pct": -1.07,
-          "return_ytd_pct": -14.54,
-          "provider_timestamp": 1795571109
-        },
-        "historical_context": {
-          "status": "READY",
-          "as_of": "2026-11-24",
-          "sample_count": 90,
-          "avg_amount_20": 192128232.65
-        },
-        "comparison_basis": [
-          "历史趋势/状态变化",
-          "当前相对结构",
-          "成交与可执行性",
-          "风险收益",
-          "资本效率"
-        ],
-        "decision_boundary": "默认按买入建议起点进入正式判断；只有明确反证才降级或否决。该建议不自动产生Trial/Confirm、金额或交易动作。",
-        "management_review": {
-          "object_role": "NEW_DISCOVERY",
-          "direct_conclusion_required": true,
-          "conclusion_status": "PENDING_MASTER_DECISION",
-          "allowed_conclusions": [
-            "RETAIN_DISCOVERY",
-            "REJECT_NEW_DEPLOYMENT",
-            "TRIAL_ELIGIBILITY_REVIEW"
-          ],
-          "decision_owner": "MASTER_FORMAL_DECISION",
-          "decision_boundary": "Discovery supplies object-level evidence and the required conclusion set; only MASTER Formal Decision confirms the final hold, reduce, exit, observation or Trial/Confirm action."
-        },
-        "history_source": "HITHINK_FINANCE_HISTORY_BOUNDED_REPAIR"
-      },
-      {
-        "code": "513200",
-        "name": "港股通医药ETF易方达",
-        "display_name": "港股通医药ETF易方达（513200）",
+        "code": "159740",
+        "name": "恒生科技ETF大成",
+        "display_name": "恒生科技ETF大成（159740）",
         "category": "OBSERVATION_EVALUATION_INPUT",
         "eligibility": "OBSERVATION_FULL_EVALUATION",
         "management_identity": null,
@@ -839,29 +657,30 @@
         "surfaced_states": [],
         "information_classes": [
           "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE"
+          "STRUCTURAL_CHANGE",
+          "SHORT_HISTORY_CURRENT_CHANGE"
         ],
         "external_driver_evidence": [],
         "discovery_spot": {
-          "price": 0.937,
-          "change_pct": 1.63,
-          "amount": 22211875.0,
-          "amplitude_pct": 1.95,
-          "turnover_pct": 2.95,
-          "volume_ratio": 2.5,
-          "high": 0.943,
-          "low": 0.925,
-          "open": 0.936,
-          "prev_close": 0.922,
-          "return_60d_pct": -14.82,
-          "return_ytd_pct": -9.12,
-          "provider_timestamp": 1795571109
+          "price": 0.429,
+          "change_pct": 1.1792452830188704,
+          "amount": 168280000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
+          "high": 0.431,
+          "low": 0.422,
+          "open": 0.424,
+          "prev_close": 0.424,
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1795571667000
         },
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-24",
           "sample_count": 90,
-          "avg_amount_20": 141972988.7
+          "avg_amount_20": 759751290.0
         },
         "comparison_basis": [
           "历史趋势/状态变化",
@@ -886,9 +705,9 @@
         "history_source": "HITHINK_FINANCE_HISTORY_BOUNDED_REPAIR"
       },
       {
-        "code": "515300",
-        "name": "300红利低波ETF嘉实",
-        "display_name": "300红利低波ETF嘉实（515300）",
+        "code": "159750",
+        "name": "港股科技50ETF招商",
+        "display_name": "港股科技50ETF招商（159750）",
         "category": "OBSERVATION_EVALUATION_INPUT",
         "eligibility": "OBSERVATION_FULL_EVALUATION",
         "management_identity": null,
@@ -901,57 +720,99 @@
         "decision_output_generated": false,
         "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
         "entered_states": [],
-        "surfaced_states": [
-          {
-            "state": "PERSISTENT_TREND",
-            "evidence": {
-              "window_returns": {
-                "5": 0.002117,
-                "20": 0.044118,
-                "40": 0.088123,
-                "60": 0.087289
-              },
-              "positive_windows": [
-                20,
-                40,
-                60
-              ],
-              "max_drawdown_60": 0.026948
-            }
-          },
-          {
-            "state": "RECOVERY_BREAKOUT",
-            "evidence": {
-              "prior_drawdown": 0.090719,
-              "recovery_fraction": 0.9,
-              "distance_to_prior_high": -0.009072
-            }
-          }
-        ],
+        "surfaced_states": [],
         "information_classes": [
-          "PERSISTENT_STRUCTURE"
+          "NEW_RELATIVE_DIVERGENCE",
+          "STRUCTURAL_CHANGE",
+          "SHORT_HISTORY_CURRENT_CHANGE"
         ],
         "external_driver_evidence": [],
         "discovery_spot": {
-          "price": 1.412,
-          "change_pct": -0.56,
-          "amount": 10722468.0,
-          "amplitude_pct": 0.63,
-          "turnover_pct": 0.26,
-          "volume_ratio": 1.4,
-          "high": 1.42,
-          "low": 1.411,
-          "open": 1.42,
-          "prev_close": 1.42,
-          "return_60d_pct": 7.95,
-          "return_ytd_pct": 8.87,
-          "provider_timestamp": 1795571109
+          "price": 0.661,
+          "change_pct": 1.3803680981595123,
+          "amount": 13950000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
+          "high": 0.663,
+          "low": 0.65,
+          "open": 0.65,
+          "prev_close": 0.652,
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1795571667000
         },
         "historical_context": {
           "status": "READY",
           "as_of": "2026-11-24",
           "sample_count": 90,
-          "avg_amount_20": 190623571.95
+          "avg_amount_20": 45909829.95
+        },
+        "comparison_basis": [
+          "历史趋势/状态变化",
+          "当前相对结构",
+          "成交与可执行性",
+          "风险收益",
+          "资本效率"
+        ],
+        "decision_boundary": "默认按买入建议起点进入正式判断；只有明确反证才降级或否决。该建议不自动产生Trial/Confirm、金额或交易动作。",
+        "management_review": {
+          "object_role": "NEW_DISCOVERY",
+          "direct_conclusion_required": true,
+          "conclusion_status": "PENDING_MASTER_DECISION",
+          "allowed_conclusions": [
+            "RETAIN_DISCOVERY",
+            "REJECT_NEW_DEPLOYMENT",
+            "TRIAL_ELIGIBILITY_REVIEW"
+          ],
+          "decision_owner": "MASTER_FORMAL_DECISION",
+          "decision_boundary": "Discovery supplies object-level evidence and the required conclusion set; only MASTER Formal Decision confirms the final hold, reduce, exit, observation or Trial/Confirm action."
+        },
+        "history_source": "HITHINK_FINANCE_HISTORY_BOUNDED_REPAIR"
+      },
+      {
+        "code": "159792",
+        "name": "港股通互联网ETF富国",
+        "display_name": "港股通互联网ETF富国（159792）",
+        "category": "OBSERVATION_EVALUATION_INPUT",
+        "eligibility": "OBSERVATION_FULL_EVALUATION",
+        "management_identity": null,
+        "auto_promote_to_observation": false,
+        "default_recommendation": "BUY",
+        "recommendation_status": "BUY_UNLESS_DISPROVED",
+        "recommendation_boundary": "人工确认前的积极建议；不自动下单、不授予Trial/Confirm、不改变交易权限",
+        "trial_confirm_permission": false,
+        "trade_signal": null,
+        "decision_output_generated": false,
+        "discovery_semantic": "NODE_LOCAL_OBSERVATION_EVALUATION_INPUT",
+        "entered_states": [],
+        "surfaced_states": [],
+        "information_classes": [
+          "NEW_RELATIVE_DIVERGENCE",
+          "STRUCTURAL_CHANGE",
+          "SHORT_HISTORY_CURRENT_CHANGE"
+        ],
+        "external_driver_evidence": [],
+        "discovery_spot": {
+          "price": 0.454,
+          "change_pct": 2.2522522522522515,
+          "amount": 566660000.0,
+          "amplitude_pct": null,
+          "turnover_pct": null,
+          "volume_ratio": null,
+          "high": 0.457,
+          "low": 0.444,
+          "open": 0.444,
+          "prev_close": 0.444,
+          "return_60d_pct": null,
+          "return_ytd_pct": null,
+          "provider_timestamp": 1795571667000
+        },
+        "historical_context": {
+          "status": "READY",
+          "as_of": "2026-11-24",
+          "sample_count": 90,
+          "avg_amount_20": 1942217291.5
         },
         "comparison_basis": [
           "历史趋势/状态变化",
@@ -1491,7 +1352,14 @@
           "mapped_assets": [
             "513180",
             "159217",
-            "159265"
+            "159265",
+            "159101",
+            "159105",
+            "159691",
+            "159718",
+            "159735",
+            "513070",
+            "513200"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
           "observation_as_of": "2026-11-25T09:43:37+08:00",
@@ -1675,7 +1543,9 @@
           "asset": "xyz:EWY",
           "family": "KOREA_EQUITY",
           "mapped_assets": [
-            "513180"
+            "513180",
+            "159101",
+            "159105"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
           "observation_as_of": "2026-11-25T09:43:37+08:00",
@@ -2239,7 +2109,9 @@
           "family": "TAIWAN_EQUITY",
           "mapped_assets": [
             "513180",
-            "588710"
+            "588710",
+            "159101",
+            "159105"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
           "observation_as_of": "2026-11-25T09:43:37+08:00",
@@ -2909,7 +2781,10 @@
           "family": "BIOTECH",
           "mapped_assets": [
             "159992",
-            "159217"
+            "159217",
+            "159105",
+            "159718",
+            "513200"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
           "observation_as_of": "2026-11-25T09:43:37+08:00",
@@ -3284,7 +3159,9 @@
           "asset": "io:EWY",
           "family": "KOREA_EQUITY",
           "mapped_assets": [
-            "513180"
+            "513180",
+            "159101",
+            "159105"
           ],
           "mapping_reason": "ECONOMIC_FAMILY_NAME_MARKER_MAPPING",
           "observation_as_of": "2026-11-25T09:43:39+08:00",
@@ -3467,7 +3344,7 @@
           "notification_use": "若相对前一脉冲发生可比且足以改变ETF关注重点的变化，可进入主动通知候选"
         }
       ],
-      "etf_contribution_count": 20,
+      "etf_contribution_count": 27,
       "etf_contributions": [
         {
           "ashare_code": "159941",
@@ -3666,6 +3543,104 @@
           "source_observation_as_of": "2026-11-25T09:43:37+08:00"
         },
         {
+          "ashare_code": "159101",
+          "hyperliquid_object_ids": [
+            "xyz:BABA"
+          ],
+          "mapping_status": "MAPPED",
+          "cross_market_relation": "EXTERNAL_DIRECTION_AVAILABLE; A_SHARE_TRANSMISSION_REQUIRES_A_SHARE_FACT",
+          "decision_effect": "TIMING_FILTER",
+          "priority_effect": "方向偏弱但当前不直接追随下跌；将该ETF列入下一节点优先复核",
+          "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
+          "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
+          "source_context_id": "hl-280e052a50338c72",
+          "source_observation_as_of": "2026-11-25T09:43:37+08:00"
+        },
+        {
+          "ashare_code": "159105",
+          "hyperliquid_object_ids": [
+            "xyz:BABA"
+          ],
+          "mapping_status": "MAPPED",
+          "cross_market_relation": "EXTERNAL_DIRECTION_AVAILABLE; A_SHARE_TRANSMISSION_REQUIRES_A_SHARE_FACT",
+          "decision_effect": "TIMING_FILTER",
+          "priority_effect": "方向偏弱但当前不直接追随下跌；将该ETF列入下一节点优先复核",
+          "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
+          "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
+          "source_context_id": "hl-280e052a50338c72",
+          "source_observation_as_of": "2026-11-25T09:43:37+08:00"
+        },
+        {
+          "ashare_code": "159691",
+          "hyperliquid_object_ids": [
+            "xyz:BABA"
+          ],
+          "mapping_status": "MAPPED",
+          "cross_market_relation": "EXTERNAL_DIRECTION_AVAILABLE; A_SHARE_TRANSMISSION_REQUIRES_A_SHARE_FACT",
+          "decision_effect": "TIMING_FILTER",
+          "priority_effect": "方向偏弱但当前不直接追随下跌；将该ETF列入下一节点优先复核",
+          "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
+          "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
+          "source_context_id": "hl-280e052a50338c72",
+          "source_observation_as_of": "2026-11-25T09:43:37+08:00"
+        },
+        {
+          "ashare_code": "159718",
+          "hyperliquid_object_ids": [
+            "xyz:BABA"
+          ],
+          "mapping_status": "MAPPED",
+          "cross_market_relation": "EXTERNAL_DIRECTION_AVAILABLE; A_SHARE_TRANSMISSION_REQUIRES_A_SHARE_FACT",
+          "decision_effect": "TIMING_FILTER",
+          "priority_effect": "方向偏弱但当前不直接追随下跌；将该ETF列入下一节点优先复核",
+          "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
+          "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
+          "source_context_id": "hl-280e052a50338c72",
+          "source_observation_as_of": "2026-11-25T09:43:37+08:00"
+        },
+        {
+          "ashare_code": "159735",
+          "hyperliquid_object_ids": [
+            "xyz:BABA"
+          ],
+          "mapping_status": "MAPPED",
+          "cross_market_relation": "EXTERNAL_DIRECTION_AVAILABLE; A_SHARE_TRANSMISSION_REQUIRES_A_SHARE_FACT",
+          "decision_effect": "TIMING_FILTER",
+          "priority_effect": "方向偏弱但当前不直接追随下跌；将该ETF列入下一节点优先复核",
+          "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
+          "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
+          "source_context_id": "hl-280e052a50338c72",
+          "source_observation_as_of": "2026-11-25T09:43:37+08:00"
+        },
+        {
+          "ashare_code": "513070",
+          "hyperliquid_object_ids": [
+            "xyz:BABA"
+          ],
+          "mapping_status": "MAPPED",
+          "cross_market_relation": "EXTERNAL_DIRECTION_AVAILABLE; A_SHARE_TRANSMISSION_REQUIRES_A_SHARE_FACT",
+          "decision_effect": "TIMING_FILTER",
+          "priority_effect": "方向偏弱但当前不直接追随下跌；将该ETF列入下一节点优先复核",
+          "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
+          "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
+          "source_context_id": "hl-280e052a50338c72",
+          "source_observation_as_of": "2026-11-25T09:43:37+08:00"
+        },
+        {
+          "ashare_code": "513200",
+          "hyperliquid_object_ids": [
+            "xyz:BABA"
+          ],
+          "mapping_status": "MAPPED",
+          "cross_market_relation": "EXTERNAL_DIRECTION_AVAILABLE; A_SHARE_TRANSMISSION_REQUIRES_A_SHARE_FACT",
+          "decision_effect": "TIMING_FILTER",
+          "priority_effect": "方向偏弱但当前不直接追随下跌；将该ETF列入下一节点优先复核",
+          "next_trigger": "下一合法脉冲确认方向延续，并核对A股承接",
+          "decision_use": "用于外部确认、背离识别和时机/拥挤过滤；不得单独生成交易权限、金额或订单",
+          "source_context_id": "hl-280e052a50338c72",
+          "source_observation_as_of": "2026-11-25T09:43:37+08:00"
+        },
+        {
           "ashare_code": "513520",
           "hyperliquid_object_ids": [
             "xyz:EWJ"
@@ -3781,7 +3756,7 @@
       "validation": {
         "status": "PASS",
         "object_count": 26,
-        "etf_row_count": 20
+        "etf_row_count": 27
       }
     }
   },
