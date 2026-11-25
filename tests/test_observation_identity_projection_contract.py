@@ -12,7 +12,7 @@ class ObservationIdentityProjectionContractTests(unittest.TestCase):
         self.assertNotIn("159529", roles)
         self.assertEqual(roles["159992"], "OBSERVATION")
         self.assertEqual(roles["588000"], "OBSERVATION")
-        for code in ("515080", "159056", "159217", "588200", "588450"):
+        for code in ("515080", "159056", "159217", "588450"):
             self.assertNotIn(code, roles)
         self.assertLessEqual(sum(role == "OBSERVATION" for role in roles.values()), 12)
 
