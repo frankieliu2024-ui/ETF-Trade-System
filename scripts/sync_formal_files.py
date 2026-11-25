@@ -851,15 +851,22 @@ def build_dashboard_block(account: dict, equity: dict, existing: str, root: Path
         f"|累计已知ETF费用（有效事实）|{money(known_fees)}；已执行成交overlay {money(overlay_fees)}；待确认费用状态：{'存在' if pending else '无'}|",
         f"|账户事实内已确认费用记录合计|{money(confirmed_account_fees)}（仅统计account_fact中明确标记CONFIRMED的记录；不代表历史累计ETF费用）|",
         "", "### 当前持仓事实", "",
-        "|标的|数量|成本|现价|当前收益率|最高收益率|回落幅度|行情快照时间|市值|浮动盈亏|", "|-|-:|-:|-:|-:|-:|-:|-:|-:|-:|",
+        "|标的|数量|成本|现价|市值|浮动盈亏|当前收益率|最高收益率|回落幅度|行情快照时间|", "|-|-:|-:|-:|-:|-:|-:|-:|-:|-:|",
     ]
     for p in positions:
-        current_return, highest_return, drawdown, coverage = fixed_ratio_metrics(p, fixed_ratio_records.get(str(p.get("code") or "")))
+        code = str(p.get("code") or "").strip()
+        current_return, highest_return, drawdown, snapshot_time = fixed_ratio_metrics(
+            p, fixed_ratio_records.get(code)
+        )
+        # Keep each column bound to its canonical semantic source.  In
+        # particular, high-water return is never allowed to fall back to
+        # account P&L or any monetary field.
         lines.append(
             f"|{display_name(p)}|{int(p.get('quantity') or 0):,}|"
-            f"{float(p.get('cost') or p.get('cost_price') or 0):.3f}|{position_metric(p, 'current_price', 'last_price'):.3f}|"
-            f"{current_return}|{highest_return}|{drawdown}|{coverage}|"
+            f"{float(p.get('cost') or p.get('cost_price') or 0):.3f}|"
+            f"{position_metric(p, 'current_price', 'last_price'):.3f}|"
             f"{money(p.get('market_value'))}|{format_position_pnl(p)}|"
+            f"{current_return}|{highest_return}|{drawdown}|{snapshot_time}|"
         )
     etf_codes = {str(item.get('code')): str(item.get('name') or item.get('code')) for item in (load_json(root / "config/market/etf_monitor_universe.json").get("objects") or []) if item.get('code')}
     held_codes = membership["etf"]
