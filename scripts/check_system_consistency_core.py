@@ -707,6 +707,7 @@ def main() -> int:
         "formal_files:confirmed_fee_projection",
         fee_projection["status"] == "PASS",
         f"expected_confirmed_fee={fee_projection['expected_confirmed_fee']:.2f} pending={fee_projection['pending_fee_count']} failures={fee_projection['failures']}",
+        warning=True,
     )
 
     runtime = read_json("config/runtime_policy.json")
