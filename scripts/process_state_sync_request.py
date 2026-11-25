@@ -23,12 +23,12 @@ except ModuleNotFoundError:
     from scripts.emergency_market_evidence import validate_external_market_evidence
 try:
     from build_stock_context import active_account_asset_codes, build_managed_position_projection, first, normalize_code, position_metric
+except ModuleNotFoundError:
+    from scripts.build_stock_context import active_account_asset_codes, build_managed_position_projection, first, normalize_code, position_metric
 try:
     from fixed_ratio_position_metrics import refresh_fixed_ratio_metrics
 except ModuleNotFoundError:
     from scripts.fixed_ratio_position_metrics import refresh_fixed_ratio_metrics
-except ModuleNotFoundError:
-    from scripts.build_stock_context import active_account_asset_codes, build_managed_position_projection, first, normalize_code, position_metric
 from sync_formal_files import sync_formal_files, sync_dashboard_projection, latest_canonical_formal_decision, format_position_pnl
 from observation_etf_management import (
     ObservationUniverseResourceLimitError,
