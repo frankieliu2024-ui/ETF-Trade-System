@@ -325,15 +325,48 @@ def _current_account_valuation(root: Path, base: dict) -> dict:
     return result
 
 
+def refresh_current_account_valuation_only(root: Path = ROOT) -> dict:
+    """Refresh only the current market-date valuation from existing canonical state."""
+    state_path = root / "data" / "state" / "etf_strategy_equity.json"
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    current_path = root / "data" / "state" / "CURRENT.json"
+    current = json.loads(current_path.read_text(encoding="utf-8")) if current_path.exists() else {}
+    current_date = str(current.get("market_date") or state.get("current_valuation_market_date") or state.get("replay_cutoff") or "")
+    if not current_date:
+        raise ValueError("current-only valuation requires a market date")
+    series = list(state.get("series") or [])
+    prior = [row for row in series if str(row.get("date") or "") < current_date]
+    same_day = [row for row in series if str(row.get("date") or "") == current_date]
+    base = dict(state)
+    if prior:
+        base["series"] = prior
+        base["replay_cutoff"] = str(prior[-1].get("date") or "")
+    elif same_day:
+        base["series"] = same_day[:1]
+        base["replay_cutoff"] = current_date
+    else:
+        raise ValueError("current-only valuation has no canonical base row")
+    refreshed = _current_account_valuation(root, base)
+    refreshed["series"] = prior + [refreshed["series"][-1]] if prior else [refreshed["series"][-1]]
+    refreshed["summary"]["historical_replay_status"] = "REUSED_ACCOUNT_MAINTENANCE_STATE"
+    refreshed["summary"]["current_valuation_source"] = "account_fact + current_valid_market_snapshot"
+    state_path.write_text(json.dumps(refreshed, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return refreshed
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--price-dir", type=Path)
     parser.add_argument("--cutoff")
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--current-only", action="store_true")
     args = parser.parse_args()
     historical_error = ""
-    try:
-        result = replay(ROOT, price_dir=args.price_dir, cutoff=args.cutoff)
+    if args.current_only:
+        result = refresh_current_account_valuation_only(ROOT)
+    else:
+        try:
+            result = replay(ROOT, price_dir=args.price_dir, cutoff=args.cutoff)
     except ValueError as exc:
         historical_error = str(exc)
         if "missing date-aligned close" not in historical_error:
