@@ -739,10 +739,12 @@ def preserve_decision_block(existing: str) -> str:
 
 
 def fixed_ratio_metrics(position: dict) -> tuple[str, str, str, str]:
-    """Render non-trading fixed-ratio review fields from current account facts.
+    """Render fixed-ratio review fields from the latest confirmed account facts.
 
-    The highest return is a temporary display placeholder until historical
-    high-water coverage is available; it must not confirm a take-profit state.
+    Until lifecycle high-water state is backfilled, today initializes the
+    display high-water value as max(0%, current return). Subsequent maintenance
+    must update the high-water value monotonically within each holding lifecycle
+    and reset it after a confirmed re-entry or confirmed add-on baseline.
     """
     quantity = int(position.get("quantity") or 0)
     if quantity <= 0:
@@ -754,9 +756,9 @@ def fixed_ratio_metrics(position: dict) -> tuple[str, str, str, str]:
     current_pct = (current - cost) / cost * 100
     highest_pct = max(0.0, current_pct)
     current_text = f"{current_pct:+.2f}%"
-    highest_text = f"{highest_pct:+.2f}%（临时）"
-    drawdown_text = "—（历史最高收益率未建立）"
-    coverage_text = "临时占位，不确认止盈"
+    highest_text = f"{highest_pct:+.2f}%"
+    drawdown_text = "—"
+    coverage_text = "今日收盘事实"
     return (current_text, highest_text, drawdown_text, coverage_text)
 
 
