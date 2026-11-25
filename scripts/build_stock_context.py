@@ -88,10 +88,14 @@ def active_account_asset_codes(root: Path | None = None, account: dict | None = 
         code = normalize_code(first(position, "code", "symbol", "security_code", "instrument_code"))
         quantity = numeric(first(position, "quantity", "qty", "position", "shares", "volume"))
         if not code or quantity is None or quantity <= 0: continue
-        if looks_like_other_account_asset(position, code):
+        # Explicit ETF identity in the account fact takes precedence over
+        # name-based convertible-bond heuristics (e.g. 转债ETF).
+        if looks_like_etf(position, code, etf_codes):
+            membership["etf"].add(code)
+        elif looks_like_other_account_asset(position, code):
             membership["other"].add(code)
         else:
-            membership["etf" if looks_like_etf(position, code, etf_codes) else "stocks"].add(code)
+            membership["stocks"].add(code)
     return membership
 
 def position_metric(position: dict, current_key: str, legacy_key: str, default: float = 0.0) -> float:

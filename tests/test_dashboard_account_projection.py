@@ -242,4 +242,17 @@ class DashboardAccountProjectionTests(unittest.TestCase):
   self.assertEqual({x["code"] for x in context["default_stock_layer"]["detected_non_etf_stocks"]}, set())
   self.assertEqual(active_account_asset_codes(self.root,account)["other"], {"127118"})
 
+ def test_explicit_convertible_bond_etf_is_held_etf_not_other(self):
+  account={"status":"VALID","positions":[
+   {"code":"511380","name":"转债ETF","asset_type":"ETF","quantity":400},
+   {"code":"127118","name":"华纬转债","asset_type":"OTHER","security_type":"CONVERTIBLE_BOND","quantity":10},
+  ]}
+  membership=active_account_asset_codes(self.root,account)
+  self.assertEqual(membership["etf"], {"511380"})
+  self.assertEqual(membership["other"], {"127118"})
+  with patch.object(formal_sync,"ROOT",self.root):
+   rendered=formal_sync.build_dashboard_block(account,self.equity,"",self.root)
+  self.assertIn("持仓ETF：转债ETF（511380）",rendered)
+  self.assertIn("账户其他证券：华纬转债（127118）",rendered)
+
 if __name__=="__main__": unittest.main()
