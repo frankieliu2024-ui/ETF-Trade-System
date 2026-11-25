@@ -374,8 +374,10 @@ jobs:
         run: |
           set -euo pipefail
           # The market pulse consumes the account-owned strategy state.
-          # Full FIFO replay belongs to account-fact maintenance; this step
-          # only rebuilds the node-bound market/Discovery decision projection.
+          # Full FIFO replay belongs to account-fact maintenance. Refresh only
+          # today's valuation against the new valid snapshot; do not replay
+          # history or rebuild E2E synchronously in the pulse.
+          python scripts/rebuild_etf_strategy_equity.py --output data/state/etf_strategy_equity.json --current-only || true
           python scripts/build_state_context.py --decision-ready-only
           python - <<'PY'
           import json
