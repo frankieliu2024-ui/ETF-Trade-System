@@ -314,8 +314,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # Only update the canonical fixed-ratio state here. Dashboard is
+          # rendered once later by build_state_context after all projections exist.
           python scripts/refresh_fixed_ratio_from_market_snapshot.py
-          python scripts/sync_formal_files.py
 
       - name: Refresh held-stock market projection from this snapshot run
         id: held_stock_market

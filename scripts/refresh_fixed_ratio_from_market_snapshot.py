@@ -32,11 +32,21 @@ def main() -> None:
         if row and row.get("close") is not None:
             position["current_price"] = row["close"]
             position["last_price"] = row["close"]
+            position["_market_snapshot_as_of"] = row.get("as_of_beijing") or snapshot.get("captured_at_beijing") or snapshot.get("captured_at") or ""
+            position["_market_snapshot_quality"] = row.get("quality_status") or snapshot.get("quality_status") or ""
         positions.append(position)
     market_account = dict(account)
     market_account["positions"] = positions
     market_account["updated_at"] = str(snapshot.get("captured_at_beijing") or snapshot.get("captured_at") or account.get("updated_at") or "")
     market_account["source"] = "CANONICAL_MARKET_SNAPSHOT_FIXED_RATIO_REFRESH"
+    market_account["_market_snapshot"] = {
+        "path": str(current.get("latest_snapshot") or ""),
+        "market_date": snapshot.get("market_date"),
+        "node": snapshot.get("node"),
+        "captured_at_beijing": snapshot.get("captured_at_beijing") or snapshot.get("captured_at") or "",
+        "quality_status": snapshot.get("quality_status") or "",
+        "row_count": len(rows),
+    }
     refresh_fixed_ratio_metrics(root, market_account)
 
 
