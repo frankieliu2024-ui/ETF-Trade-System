@@ -25,6 +25,10 @@ try:
     from build_stock_context import active_account_asset_codes, build_managed_position_projection, first, normalize_code, position_metric
 except ModuleNotFoundError:
     from scripts.build_stock_context import active_account_asset_codes, build_managed_position_projection, first, normalize_code, position_metric
+try:
+    from fixed_ratio_position_metrics import refresh_fixed_ratio_metrics
+except ModuleNotFoundError:
+    from scripts.fixed_ratio_position_metrics import refresh_fixed_ratio_metrics
 from sync_formal_files import sync_formal_files, sync_dashboard_projection, latest_canonical_formal_decision, format_position_pnl
 from observation_etf_management import (
     ObservationUniverseResourceLimitError,
@@ -574,8 +578,32 @@ def sync_current_account_mirror(root: Path, account: dict) -> None:
 
 
 
+def fixed_ratio_metrics(position: dict, record: dict | None = None) -> tuple[str, str, str, str]:
+    quantity = int(position.get("quantity") or 0)
+    if quantity <= 0:
+        return ("—", "—", "—", "无当前持仓")
+    cost = float(position.get("cost") or position.get("cost_price") or 0)
+    current = position_metric(position, "current_price", "last_price")
+    if cost <= 0:
+        return ("无法确认", "无法确认", "无法确认", "成本缺失")
+    current_pct = (current - cost) / cost * 100
+    stored_high = record.get("high_water_return_pct") if isinstance(record, dict) else None
+    try:
+        highest_pct = max(float(stored_high), 0.0)
+    except (TypeError, ValueError):
+        highest_pct = max(0.0, current_pct)
+    highest_pct = max(highest_pct, current_pct if record is None else highest_pct)
+    drawdown = highest_pct - current_pct
+    return (
+        f"{current_pct:+.2f}%",
+        f"{highest_pct:+.2f}%",
+        f"{drawdown:.2f}个百分点",
+        "今日收盘事实",
+    )
+
 def build_dashboard_block(account: dict, decision: dict | None, request: dict) -> str:
     positions = account.get("positions") or []
+    fixed_ratio_records = refresh_fixed_ratio_metrics(root, account)
     membership = active_account_asset_codes(ROOT, account)
     etfs = [p for p in positions if normalize_code(p.get("code")) in membership["etf"]]
     stocks = [p for p in positions if normalize_code(p.get("code")) in membership["stocks"]]
@@ -591,9 +619,10 @@ def build_dashboard_block(account: dict, decision: dict | None, request: dict) -
     total_asset = float(account.get("total_asset") or 0)
     exposure = (float(account.get("stock_market_value") or 0) / total_asset * 100.0) if total_asset else 0.0
     scenario = request.get("interaction_scenario") or "UNSPECIFIED"
-    lines = ["## 云端实时状态（自动同步）", "", f"> 更新时间：{account.get('updated_at','')}  ", f"> 来源：{account.get('source','')}  ", f"> 场景：{scenario}  ", "> 本区块只同步已确认账户事实与ChatGPT已形成的正式决策；自动程序不得自行推导交易权限或下单。", "", "|项目|最新事实|", "|-|-|", f"|总资产|{money(account.get('total_asset'))}|", f"|股票市值|{money(account.get('stock_market_value'))}|", f"|可用资金|{money(account.get('cash'))}|", f"|账户持仓盈亏|{money(account.get('holding_pnl'))}|", f"|当日盈亏|{money(account.get('daily_pnl'))}（{float(account.get('daily_pnl_pct') or 0):+.2f}%）|", f"|账户总风险暴露率|约{exposure:.2f}%|", f"|ETF持仓浮动盈亏|{money(etf_pnl)}|", *(([f"|ETF策略Gross权益|{money(formal_risk_equity)}|"] if formal_risk_equity is not None else [])), f"|ETF策略当前正式风险率|约{risk_rate:.2f}%（Gross canonical；Known-net仅作历史兼容）|", "", "### 当前持仓事实", "", "|标的|数量|成本|现价|市值|浮动盈亏|", "|-|-:|-:|-:|-:|-:|"]
+    lines = ["## 云端实时状态（自动同步）", "", f"> 更新时间：{account.get('updated_at','')}  ", f"> 来源：{account.get('source','')}  ", f"> 场景：{scenario}  ", "> 本区块只同步已确认账户事实与ChatGPT已形成的正式决策；自动程序不得自行推导交易权限或下单。", "", "|项目|最新事实|", "|-|-|", f"|总资产|{money(account.get('total_asset'))}|", f"|股票市值|{money(account.get('stock_market_value'))}|", f"|可用资金|{money(account.get('cash'))}|", f"|账户持仓盈亏|{money(account.get('holding_pnl'))}|", f"|当日盈亏|{money(account.get('daily_pnl'))}（{float(account.get('daily_pnl_pct') or 0):+.2f}%）|", f"|账户总风险暴露率|约{exposure:.2f}%|", f"|ETF持仓浮动盈亏|{money(etf_pnl)}|", *(([f"|ETF策略Gross权益|{money(formal_risk_equity)}|"] if formal_risk_equity is not None else [])), f"|ETF策略当前正式风险率|约{risk_rate:.2f}%（Gross canonical；Known-net仅作历史兼容）|", "", "### 当前持仓事实", "", "|标的|数量|成本|现价|当前收益率|最高收益率|回落幅度|覆盖状态|市值|浮动盈亏|", "|-|-:|-:|-:|-:|-:|-:|-:|-:|-:|"]
     for p in positions:
-        lines.append(f"|{display_name(p)}|{int(p.get('quantity') or 0):,}|{float(p.get('cost') or p.get('cost_price') or 0):.3f}|{position_metric(p, 'current_price', 'last_price'):.3f}|{money(p.get('market_value'))}|{format_position_pnl(p)}|")
+        current_return, highest_return, drawdown, coverage = fixed_ratio_metrics(p, fixed_ratio_records.get(str(p.get("code") or "")))
+        lines.append(f"|{display_name(p)}|{int(p.get('quantity') or 0):,}|{float(p.get('cost') or p.get('cost_price') or 0):.3f}|{position_metric(p, 'current_price', 'last_price'):.3f}|{current_return}|{highest_return}|{drawdown}|{coverage}|{money(p.get('market_value'))}|{format_position_pnl(p)}|")
     universe = load_json(ROOT / "config/market/etf_monitor_universe.json")
     names = {str(item.get('code')): str(item.get('name') or item.get('code')) for item in (universe.get("objects") or []) if item.get('code')}
     observed = [

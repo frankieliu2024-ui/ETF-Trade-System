@@ -29,6 +29,10 @@ try:
 except ModuleNotFoundError:
     from scripts.build_stock_context import active_account_asset_codes, normalize_code, position_metric
 try:
+    from fixed_ratio_position_metrics import refresh_fixed_ratio_metrics
+except ModuleNotFoundError:
+    from scripts.fixed_ratio_position_metrics import refresh_fixed_ratio_metrics
+try:
     from formal_file_mutation_gateway import (
         replace_managed_block as replace_block,
         upsert_managed_line,
@@ -738,8 +742,32 @@ def preserve_decision_block(existing: str) -> str:
     return block[start:end].strip()
 
 
+def fixed_ratio_metrics(position: dict, record: dict | None = None) -> tuple[str, str, str, str]:
+    quantity = int(position.get("quantity") or 0)
+    if quantity <= 0:
+        return ("—", "—", "—", "无当前持仓")
+    cost = float(position.get("cost") or position.get("cost_price") or 0)
+    current = position_metric(position, "current_price", "last_price")
+    if cost <= 0:
+        return ("无法确认", "无法确认", "无法确认", "成本缺失")
+    current_pct = (current - cost) / cost * 100
+    stored_high = record.get("high_water_return_pct") if isinstance(record, dict) else None
+    try:
+        highest_pct = max(float(stored_high), 0.0)
+    except (TypeError, ValueError):
+        highest_pct = max(0.0, current_pct)
+    highest_pct = max(highest_pct, current_pct if record is None else highest_pct)
+    drawdown = highest_pct - current_pct
+    return (
+        f"{current_pct:+.2f}%",
+        f"{highest_pct:+.2f}%",
+        f"{drawdown:.2f}个百分点",
+        "今日收盘事实",
+    )
+
 def build_dashboard_block(account: dict, equity: dict, existing: str, root: Path = ROOT) -> str:
     positions = account.get("positions") or []
+    fixed_ratio_records = refresh_fixed_ratio_metrics(root, account)
     membership = active_account_asset_codes(root, account)
     etfs = [p for p in positions if normalize_code(p.get("code")) in membership["etf"]]
     stocks = [p for p in positions if normalize_code(p.get("code")) in membership["stocks"]]
@@ -790,12 +818,14 @@ def build_dashboard_block(account: dict, equity: dict, existing: str, root: Path
         f"|累计已知ETF费用（有效事实）|{money(known_fees)}；已执行成交overlay {money(overlay_fees)}；待确认费用状态：{'存在' if pending else '无'}|",
         f"|账户事实内已确认费用记录合计|{money(confirmed_account_fees)}（仅统计account_fact中明确标记CONFIRMED的记录；不代表历史累计ETF费用）|",
         "", "### 当前持仓事实", "",
-        "|标的|数量|成本|现价|市值|浮动盈亏|", "|-|-:|-:|-:|-:|-:|",
+        "|标的|数量|成本|现价|当前收益率|最高收益率|回落幅度|覆盖状态|市值|浮动盈亏|", "|-|-:|-:|-:|-:|-:|-:|-:|-:|-:|",
     ]
     for p in positions:
+        current_return, highest_return, drawdown, coverage = fixed_ratio_metrics(p, fixed_ratio_records.get(str(p.get("code") or "")))
         lines.append(
             f"|{display_name(p)}|{int(p.get('quantity') or 0):,}|"
             f"{float(p.get('cost') or p.get('cost_price') or 0):.3f}|{position_metric(p, 'current_price', 'last_price'):.3f}|"
+            f"{current_return}|{highest_return}|{drawdown}|{coverage}|"
             f"{money(p.get('market_value'))}|{format_position_pnl(p)}|"
         )
     etf_codes = {str(item.get('code')): str(item.get('name') or item.get('code')) for item in (load_json(root / "config/market/etf_monitor_universe.json").get("objects") or []) if item.get('code')}
