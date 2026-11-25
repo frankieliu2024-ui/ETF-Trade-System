@@ -597,7 +597,7 @@ def fixed_ratio_metrics(position: dict, record: dict | None = None) -> tuple[str
     return (
         f"{current_pct:+.2f}%",
         f"{highest_pct:+.2f}%",
-        f"{drawdown:.2f}个百分点",
+        f"{drawdown:.2f}%",
         "今日收盘事实",
     )
 
