@@ -798,13 +798,13 @@ def build_dashboard_block(account: dict, equity: dict, existing: str, root: Path
             f"{float(p.get('cost') or p.get('cost_price') or 0):.3f}|{position_metric(p, 'current_price', 'last_price'):.3f}|"
             f"{money(p.get('market_value'))}|{format_position_pnl(p)}|"
         )
-    etf_codes = {str(item.get("code")): str(item.get("name") or item.get("code")) for item in (load_json(root / "config/market/etf_monitor_universe.json").get("objects") or []) if item.get("code")}
+    etf_codes = {str(item.get('code')): str(item.get('name') or item.get('code')) for item in (load_json(root / "config/market/etf_monitor_universe.json").get("objects") or []) if item.get('code')}
     held_codes = membership["etf"]
     observed = [
-        f"{item.get("name") or item.get("code")}（{item.get("code")})"
+        f"{item.get('name') or item.get('code')}（{item.get('code')})"
         for item in (load_json(root / "config/market/etf_monitor_universe.json").get("objects") or [])
         if str(item.get("identity_role") or "").upper() == "OBSERVATION"
-        and str(item.get("code") or "") not in held_codes
+        and str(item.get('code') or "") not in held_codes
     ]
     lines += [
         "", f"持仓ETF：{'、'.join(display_name(p) for p in etfs) or '无'}。",
