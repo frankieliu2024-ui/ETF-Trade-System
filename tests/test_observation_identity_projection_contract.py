@@ -9,7 +9,6 @@ class ObservationIdentityProjectionContractTests(unittest.TestCase):
         roles = {str(item.get("code")): item.get("identity_role") for item in universe["objects"]}
         self.assertEqual(roles["159941"], "HOLDING")
         self.assertEqual(roles["159981"], "HOLDING")
-        self.assertEqual(roles["159529"], None)
         self.assertNotIn("159529", roles)
         self.assertNotIn("159992", roles)
         self.assertEqual(roles["588000"], "OBSERVATION")
