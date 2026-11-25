@@ -15,6 +15,10 @@ def _code(value: Any) -> str:
     return str(value or "").upper().replace(".SH", "").replace(".SZ", "").strip()
 
 
+def _identity_role(item: dict[str, Any]) -> str:
+    return str(item.get("identity_role") or "").upper().strip()
+
+
 def _infer_a_share_thscode(code: str) -> str:
     """Resolve provider identity for a confirmed A-share ETF holding."""
     code = _code(code)
@@ -92,8 +96,9 @@ def project_monitor_universe(root: Path, account: dict, decision: dict) -> tuple
     monitored = set(by_code)
     changes = validate_observation_management(decision, held_codes=held, monitored_codes=monitored)
 
-    # Actual holdings are mandatory continuous-monitor objects. Existing metadata
-    # is preserved; a missing held ETF must already be representable by account facts.
+    # Identity is explicit: holdings and observations share the market-monitor
+    # writer but never share an inferred role.  A zero-quantity holding is not
+    # silently converted into an observation.
     account_positions = {_code(x.get("code")): x for x in (account.get("positions") or [])}
     for code in held:
         if code not in by_code:
@@ -101,8 +106,20 @@ def project_monitor_universe(root: Path, account: dict, decision: dict) -> tuple
             thscode = str(pos.get("thscode") or "").strip() or _infer_a_share_thscode(code)
             if not thscode:
                 raise ValueError(f"held ETF {code} missing resolvable thscode; cannot mutate monitor universe safely")
-            by_code[code] = {"code": code, "name": str(pos.get("name") or code), "thscode": thscode}
+            by_code[code] = {
+                "code": code,
+                "name": str(pos.get("name") or code),
+                "thscode": thscode,
+                "identity_role": "HOLDING",
+            }
+        else:
+            by_code[code]["identity_role"] = "HOLDING"
 
+    explicit_observation_actions = {
+        item["code"]: item["action"]
+        for item in changes
+        if item["action"] in {"ADMIT", "RETAIN"}
+    }
     for item in changes:
         code, action = item["code"], item["action"]
         if action == "ADMIT":
@@ -110,10 +127,27 @@ def project_monitor_universe(root: Path, account: dict, decision: dict) -> tuple
                 "code": code,
                 "name": str(item["name"]).strip(),
                 "thscode": str(item["thscode"]).strip(),
+                "identity_role": "OBSERVATION",
             }
+        elif action == "RETAIN":
+            if code not in by_code:
+                raise ValueError(f"RETAIN requires current continuous-monitor membership: {code}")
+            by_code[code]["identity_role"] = "OBSERVATION"
         elif action == "EXIT":
             if code in held:
                 raise ValueError(f"held ETF cannot exit continuous monitor universe: {code}")
+            by_code.pop(code, None)
+
+    # Remove legacy holding entries after the account confirms quantity zero.
+    # Only an explicit same-node ADMIT/RETAIN may preserve such an object as
+    # an observation.  This is the critical boundary against automatic
+    # holding-to-observation promotion.
+    for code, item in list(by_code.items()):
+        if (
+            code not in held
+            and _identity_role(item) == "HOLDING"
+            and code not in explicit_observation_actions
+        ):
             by_code.pop(code, None)
 
     projected = {
@@ -122,7 +156,6 @@ def project_monitor_universe(root: Path, account: dict, decision: dict) -> tuple
     }
     changed = projected != universe
     return projected, changed
-
 
 def persist_monitor_universe(root: Path, account: dict, decision: dict) -> bool:
     projected, changed = project_monitor_universe(root, account, decision)

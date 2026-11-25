@@ -595,8 +595,13 @@ def build_dashboard_block(account: dict, decision: dict | None, request: dict) -
     for p in positions:
         lines.append(f"|{display_name(p)}|{int(p.get('quantity') or 0):,}|{float(p.get('cost') or p.get('cost_price') or 0):.3f}|{position_metric(p, 'current_price', 'last_price'):.3f}|{money(p.get('market_value'))}|{format_position_pnl(p)}|")
     universe = load_json(ROOT / "config/market/etf_monitor_universe.json")
-    names = {str(item.get("code")): str(item.get("name") or item.get("code")) for item in (universe.get("objects") or []) if item.get("code")}
-    observed = [f"{name}（{code}）" for code, name in names.items() if code not in membership["etf"]]
+    names = {str(item.get('code')): str(item.get('name') or item.get('code')) for item in (universe.get("objects") or []) if item.get('code')}
+    observed = [
+        f"{item.get('name') or item.get('code')}（{item.get('code')})"
+        for item in (universe.get("objects") or [])
+        if str(item.get("identity_role") or "").upper() == "OBSERVATION"
+        and str(item.get('code') or "") not in membership["etf"]
+    ]
     lines += ["", f"持仓ETF：{'、'.join(display_name(p) for p in etfs) or '无'}。", f"账户个股：{'、'.join(display_name(p) for p in stocks) or '无'}。",
         f"账户其他证券：{'、'.join(display_name(p) for p in others) or '无'}。", f"观察ETF：{'、'.join(observed) or '无'}。"]
     if decision:
@@ -834,14 +839,14 @@ def build_state_persistence_projection(snapshot: dict, names: dict[str, str]) ->
     context_time_valid = bool(cutoff and context_as_of and context_as_of <= cutoff)
     delta_time_valid = bool(cutoff and delta_as_of and delta_as_of <= cutoff)
     by_code = {
-        str(item.get("code")): item
+        str(item.get('code')): item
         for item in (context.get("items") or [])
-        if isinstance(item, dict) and item.get("code")
+        if isinstance(item, dict) and item.get('code')
     }
     delta_by_code = {
-        str(item.get("code")): item
+        str(item.get('code')): item
         for item in (delta.get("items") or [])
-        if isinstance(item, dict) and item.get("code")
+        if isinstance(item, dict) and item.get('code')
     }
     projection_items = []
     for code, name in names.items():
@@ -1458,9 +1463,9 @@ def discovery_eligibility_inputs(root: Path, market_date: str = "", context: dic
         return {}
     discovery = context.get("formal_etf_discovery") or context.get("opportunity_inputs") or (context.get("decision_fact_pack") or {}).get("opportunity_inputs") or {}
     return {
-        normalize_code(item.get("code") or ""): item
+        normalize_code(item.get('code') or ""): item
         for item in (discovery.get("candidates") or [])
-        if isinstance(item, dict) and normalize_code(item.get("code") or "")
+        if isinstance(item, dict) and normalize_code(item.get('code') or "")
     }
 
 
@@ -1515,7 +1520,7 @@ def manual_completion_discovery_inputs(request: dict) -> tuple[dict[str, dict] |
     for index, item in enumerate(candidates):
         if not isinstance(item, dict):
             return None, f"manual completion observation eligibility closure candidate[{index}] must be an object"
-        code = normalize_code(item.get("code") or "")
+        code = normalize_code(item.get('code') or "")
         quote_status = str(item.get("formal_quote_status") or "").upper()
         if not code or code in out:
             return None, f"manual completion observation eligibility closure candidate[{index}] has invalid or duplicate code"
@@ -1562,7 +1567,7 @@ def validate_observation_eligibility_reviews(decision: dict, inputs: dict[str, d
 
 def legal_observation_reviews(decision: dict, current_observations: set[str], admitted: set[str]) -> dict[str, str]:
     actions = {
-        normalize_code(item.get("code") or ""): str(item.get("action") or "").upper()
+        normalize_code(item.get('code') or ""): str(item.get("action") or "").upper()
         for item in (decision.get("observation_management") or [])
         if isinstance(item, dict)
     }
@@ -1679,7 +1684,7 @@ def required_etf_opportunity_reviews(root: Path, account: dict, market_date: str
         category = str(item.get("category") or "").upper()
         if category not in {"OBSERVED_ETF", "OBSERVATION_EVALUATION_INPUT"}:
             continue
-        code = normalize_code(item.get("code") or "")
+        code = normalize_code(item.get('code') or "")
         if code:
             required[code] = category
     return required
@@ -2704,9 +2709,9 @@ def record_post_close_review(account: dict, request: dict, *, delivery_only: boo
     review_lifecycle = review.get("holding_actions") or review.get("lifecycle")
     if not review_lifecycle and isinstance(review.get("holdings"), list):
         review_lifecycle = {
-            str(item.get("code") or ""): item.get("action") or item.get("actual_execution") or "HOLD_REVIEW"
+            str(item.get('code') or ""): item.get("action") or item.get("actual_execution") or "HOLD_REVIEW"
             for item in review.get("holdings")
-            if isinstance(item, dict) and str(item.get("code") or "").strip()
+            if isinstance(item, dict) and str(item.get('code') or "").strip()
         }
         review["holding_actions"] = review_lifecycle
     if legacy_full_day_compat and not review_lifecycle:
@@ -2716,9 +2721,9 @@ def record_post_close_review(account: dict, request: dict, *, delivery_only: boo
         # decision and does not alter the frozen review text.
         legacy_positions = build_managed_position_projection(ROOT, account or {}).get("positions", [])
         review_lifecycle = {
-            str(item.get("code") or ""): "HOLD_REVIEW"
+            str(item.get('code') or ""): "HOLD_REVIEW"
             for item in legacy_positions
-            if str(item.get("code") or "").strip()
+            if str(item.get('code') or "").strip()
         }
         review = dict(review)
         review["managed_positions"] = review_lifecycle
@@ -3432,7 +3437,7 @@ def _account_change_events(prior: dict, current: dict, request: dict, trade: dic
     trades = trade if isinstance(trade, list) else ([trade] if isinstance(trade, dict) else [])
     by_code: dict[str, list[dict]] = {}
     for item in trades:
-        by_code.setdefault(str(item.get("code") or ""), []).append(item)
+        by_code.setdefault(str(item.get('code') or ""), []).append(item)
     codes = sorted(set(prior_positions) | set(current_positions))
     event_type = str(request.get("account_change_event_type") or "").strip() or (
         "USER_REPORTED_TRADE" if trades else "BROKER_SCREENSHOT_CHANGE"
