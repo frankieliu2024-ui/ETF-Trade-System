@@ -12,6 +12,9 @@ class ObservationIdentityProjectionContractTests(unittest.TestCase):
         self.assertNotIn("159529", roles)
         self.assertEqual(roles["159992"], "OBSERVATION")
         self.assertEqual(roles["588000"], "OBSERVATION")
+        for code in ("515080", "159056", "159217", "588200", "588450"):
+            self.assertNotIn(code, roles)
+        self.assertLessEqual(sum(role == "OBSERVATION" for role in roles.values()), 12)
 
     def test_projection_and_dashboard_require_explicit_observation_role(self):
         source = Path("scripts/observation_etf_management.py").read_text(encoding="utf-8")
