@@ -26,6 +26,10 @@ except ModuleNotFoundError:
     from scripts.confirmed_trade_facts import effective_confirmed_fee_fact
 try:
     from build_stock_context import active_account_asset_codes, normalize_code, position_metric
+try:
+    from fixed_ratio_position_metrics import refresh_fixed_ratio_metrics
+except ModuleNotFoundError:
+    from scripts.fixed_ratio_position_metrics import refresh_fixed_ratio_metrics
 except ModuleNotFoundError:
     from scripts.build_stock_context import active_account_asset_codes, normalize_code, position_metric
 try:
@@ -738,14 +742,7 @@ def preserve_decision_block(existing: str) -> str:
     return block[start:end].strip()
 
 
-def fixed_ratio_metrics(position: dict) -> tuple[str, str, str, str]:
-    """Render fixed-ratio review fields from the latest confirmed account facts.
-
-    Until lifecycle high-water state is backfilled, today initializes the
-    display high-water value as max(0%, current return). Subsequent maintenance
-    must update the high-water value monotonically within each holding lifecycle
-    and reset it after a confirmed re-entry or confirmed add-on baseline.
-    """
+def fixed_ratio_metrics(position: dict, record: dict | None = None) -> tuple[str, str, str, str]:
     quantity = int(position.get("quantity") or 0)
     if quantity <= 0:
         return ("—", "—", "—", "无当前持仓")
@@ -754,16 +751,23 @@ def fixed_ratio_metrics(position: dict) -> tuple[str, str, str, str]:
     if cost <= 0:
         return ("无法确认", "无法确认", "无法确认", "成本缺失")
     current_pct = (current - cost) / cost * 100
-    highest_pct = max(0.0, current_pct)
-    current_text = f"{current_pct:+.2f}%"
-    highest_text = f"{highest_pct:+.2f}%"
-    drawdown_text = "—"
-    coverage_text = "今日收盘事实"
-    return (current_text, highest_text, drawdown_text, coverage_text)
-
+    stored_high = record.get("high_water_return_pct") if isinstance(record, dict) else None
+    try:
+        highest_pct = max(float(stored_high), 0.0)
+    except (TypeError, ValueError):
+        highest_pct = max(0.0, current_pct)
+    highest_pct = max(highest_pct, current_pct if record is None else highest_pct)
+    drawdown = highest_pct - current_pct
+    return (
+        f"{current_pct:+.2f}%",
+        f"{highest_pct:+.2f}%",
+        f"{drawdown:.2f}个百分点",
+        "今日收盘事实",
+    )
 
 def build_dashboard_block(account: dict, equity: dict, existing: str, root: Path = ROOT) -> str:
     positions = account.get("positions") or []
+    fixed_ratio_records = refresh_fixed_ratio_metrics(root, account)
     membership = active_account_asset_codes(root, account)
     etfs = [p for p in positions if normalize_code(p.get("code")) in membership["etf"]]
     stocks = [p for p in positions if normalize_code(p.get("code")) in membership["stocks"]]
@@ -817,7 +821,7 @@ def build_dashboard_block(account: dict, equity: dict, existing: str, root: Path
         "|标的|数量|成本|现价|当前收益率|最高收益率|回落幅度|覆盖状态|市值|浮动盈亏|", "|-|-:|-:|-:|-:|-:|-:|-:|-:|-:|",
     ]
     for p in positions:
-        current_return, highest_return, drawdown, coverage = fixed_ratio_metrics(p)
+        current_return, highest_return, drawdown, coverage = fixed_ratio_metrics(p, fixed_ratio_records.get(str(p.get("code") or "")))
         lines.append(
             f"|{display_name(p)}|{int(p.get('quantity') or 0):,}|"
             f"{float(p.get('cost') or p.get('cost_price') or 0):.3f}|{position_metric(p, 'current_price', 'last_price'):.3f}|"
