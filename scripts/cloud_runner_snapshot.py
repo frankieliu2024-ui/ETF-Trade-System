@@ -310,7 +310,7 @@ def run_json(cli: str, args: list[str], raw_path: Path) -> dict:
     raise RuntimeError(f"request failed after {RETRY_LIMIT} attempts: {args}; {last_error}")
 
 
-def row(asset_class: str, code: str, thscode: str, item: dict, captured: str, provider_ts: object, market_phase: str, *, provider: str = "hithink-finance", provider_primary: str = "hithink-finance", fallback_used: bool = False, fallback_reason: str = "") -> dict:
+def row(asset_class: str, code: str, thscode: str, item: dict, captured: str, provider_ts: object, market_phase: str, *, provider: str = "hithink_finance", provider_primary: str = "hithink_finance", fallback_used: bool = False, fallback_reason: str = "") -> dict:
     required = ["open_price", "high_price", "low_price", "last_price", "volume", "turnover"]
     missing = [key for key in required if item.get(key) is None]
     auction_partial = (
@@ -425,7 +425,7 @@ def fetch_eastmoney_index(code: str, thscode: str, market_phase: str) -> dict:
     if provider_dt.date() != now_dt.date() or (abs((now_dt - provider_dt).total_seconds()) > max(60, int(POLICY["degraded_max_age_seconds"])) and not _midday_provider_reference_ok(provider_dt, now_dt, market_phase)):
         raise RuntimeError(f"Eastmoney index {code} provider timestamp is stale: {provider_dt.isoformat()}")
     item = {**fields, "price_change_ratio_pct": ((fields["last_price"] / fields["prev_price"]) - 1) * 100 if fields["prev_price"] else None}
-    candidate = row("A_SHARE_INDEX", code, thscode, item, now_dt.isoformat(timespec="seconds"), provider_ts, market_phase, provider="eastmoney_push2", provider_primary="hithink-finance", fallback_used=True, fallback_reason="hithink-finance index snapshot unavailable or invalid; verified direct Eastmoney quote") | {"provider_symbol": f"{'1' if thscode.endswith('.SH') else '0'}.{code}", "provider_timestamp_field": "f86", "volume_raw": data.get("f47"), "volume_unit_raw": "hand", "volume_unit": "share", "amount_raw": data.get("f48"), "amount_unit": "CNY", "provider_name": str(data.get("f58", ""))}
+    candidate = row("A_SHARE_INDEX", code, thscode, item, now_dt.isoformat(timespec="seconds"), provider_ts, market_phase, provider="eastmoney_push2", provider_primary="tencent_qq", fallback_used=True, fallback_reason="hithink-finance index snapshot unavailable or invalid; verified direct Eastmoney quote") | {"provider_symbol": f"{'1' if thscode.endswith('.SH') else '0'}.{code}", "provider_timestamp_field": "f86", "volume_raw": data.get("f47"), "volume_unit_raw": "hand", "volume_unit": "share", "amount_raw": data.get("f48"), "amount_unit": "CNY", "provider_name": str(data.get("f58", ""))}
     ok, reason = validate_market_row(candidate, code, expected_name=candidate.get("provider_name"), market_date=now_dt.date().isoformat(), now=now_dt.astimezone(UTC), runtime_policy=POLICY)
     if not ok:
         raise RuntimeError(f"{code} quality guard: {reason}")
@@ -434,7 +434,7 @@ def fetch_eastmoney_index(code: str, thscode: str, market_phase: str) -> dict:
 
 def failed_index_row(code: str, thscode: str, error: str, market_phase: str) -> dict:
     captured = now_shanghai().isoformat(timespec="seconds")
-    return {"asset_class": "A_SHARE_INDEX", "symbol": code, "thscode": thscode, "open": None, "high": None, "low": None, "close": None, "prev_close": None, "change_pct": None, "volume": None, "amount": None, "provider": "hithink-finance", "provider_primary": "hithink-finance", "provider_used": "hithink-finance", "fallback_used": False, "fallback_reason": "", "provider_timestamp_ms": None, "as_of_beijing": "", "captured_at": captured, "captured_at_beijing": captured, "timezone": "Asia/Shanghai", "market_phase": market_phase, "quality_status": "FAILED", "error": error[-500:], "failure_class": classify_provider_failure(error), "semantic_note": "指数直接行情失败；未使用代理或旧行情补齐。"}
+    return {"asset_class": "A_SHARE_INDEX", "symbol": code, "thscode": thscode, "open": None, "high": None, "low": None, "close": None, "prev_close": None, "change_pct": None, "volume": None, "amount": None, "provider": "hithink_finance", "provider_primary": "tencent_qq", "provider_used": "tencent_qq", "fallback_used": False, "fallback_reason": "", "provider_timestamp_ms": None, "as_of_beijing": "", "captured_at": captured, "captured_at_beijing": captured, "timezone": "Asia/Shanghai", "market_phase": market_phase, "quality_status": "FAILED", "error": error[-500:], "failure_class": classify_provider_failure(error), "semantic_note": "指数直接行情失败；未使用代理或旧行情补齐。"}
 
 
 def fetch_tencent_a_share(asset_class: str, code: str, thscode: str, market_phase: str) -> dict:
@@ -504,7 +504,7 @@ def fetch_etf_market_snapshot(cli: str, run_dir: Path, code: str, thscode: str, 
     if len(exact) != 1:
         raise RuntimeError(f"expected one direct market row for {code}, got {len(exact)}")
     received = now_shanghai()
-    candidate = row("ETF", code, thscode, exact[0], received.isoformat(timespec="seconds"), obj.get("data", {}).get("timestamp"), market_phase, provider="hithink-finance-market", provider_primary="hithink-finance", fallback_used=True, fallback_reason="fund snapshot unsupported; verified direct Hithink market snapshot")
+    candidate = row("ETF", code, thscode, exact[0], received.isoformat(timespec="seconds"), obj.get("data", {}).get("timestamp"), market_phase, provider="hithink_finance", provider_primary="tencent_qq", fallback_used=True, fallback_reason="fund snapshot unsupported; verified direct Hithink market snapshot")
     ok, reason = validate_market_row(candidate, code, market_date=received.date().isoformat(), now=received.astimezone(UTC), runtime_policy=POLICY)
     if not ok:
         raise RuntimeError(f"{code} direct market quality guard: {reason}")
@@ -512,28 +512,28 @@ def fetch_etf_market_snapshot(cli: str, run_dir: Path, code: str, thscode: str, 
 
 
 def fetch_etf_with_fallback(cli: str, run_dir: Path, code: str, thscode: str) -> dict:
+    """Apply the canonical configured ETF chain: Tencent -> Hithink -> Eastmoney.
+
+    Hithink is one provider stage. Do not probe a second Hithink endpoint before
+    advancing to the configured Eastmoney fallback; otherwise the runtime
+    silently changes the configured provider order and inflates pulse latency.
+    """
     tencent_error = None
     try:
         return fetch_tencent_a_share("ETF", code, thscode, a_share_market_phase(now_shanghai()))
     except Exception as error:
         tencent_error = error
-    hithink_fund_error = RuntimeError("hithink-finance fund endpoint not attempted")
+    hithink_error = RuntimeError("hithink_finance fallback not attempted")
     try:
         return fetch_etf(cli, run_dir, code, thscode)
     except Exception as error:
-        hithink_fund_error = error
-    hithink_market_error = RuntimeError("hithink-finance market endpoint not attempted")
-    try:
-        return fetch_etf_market_snapshot(cli, run_dir, code, thscode, a_share_market_phase(now_shanghai()))
-    except Exception as error:
-        hithink_market_error = error
+        hithink_error = error
     if code in EASTMONEY_FALLBACK_ETFS:
         try:
             return fetch_eastmoney_etf(code, thscode, a_share_market_phase(now_shanghai()))
         except Exception as fallback_error:
-            raise RuntimeError(f"Tencent primary failed: {tencent_error}; Hithink fund fallback failed: {hithink_fund_error}; Hithink market fallback failed: {hithink_market_error}; Eastmoney fallback failed: {fallback_error}") from fallback_error
-    raise RuntimeError(f"Tencent primary failed: {tencent_error}; Hithink fund fallback failed: {hithink_fund_error}; Hithink market fallback failed: {hithink_market_error}")
-
+            raise RuntimeError(f"Provider chain Tencent primary failed: {tencent_error}; Hithink fallback failed: {hithink_error}; Eastmoney fallback failed: {fallback_error}") from fallback_error
+    raise RuntimeError(f"Provider chain Tencent primary failed: {tencent_error}; Hithink fallback failed: {hithink_error}")
 
 def fetch_etf(cli: str, run_dir: Path, code: str, thscode: str) -> dict:
     cli = cli or cli_path()
@@ -551,7 +551,7 @@ def fetch_etf(cli: str, run_dir: Path, code: str, thscode: str) -> dict:
 
 def failed_etf_row(code: str, thscode: str, error: str, market_phase: str) -> dict:
     captured = now_shanghai().isoformat(timespec="seconds")
-    return {"asset_class": "ETF", "symbol": code, "thscode": thscode, "open": None, "high": None, "low": None, "close": None, "prev_close": None, "change_pct": None, "volume": None, "amount": None, "provider": "hithink-finance", "provider_primary": "hithink-finance", "provider_used": "hithink-finance", "fallback_used": False, "fallback_reason": "", "provider_timestamp_ms": None, "as_of_beijing": "", "captured_at": captured, "captured_at_beijing": captured, "timezone": "Asia/Shanghai", "market_phase": market_phase, "quality_status": "FAILED", "error": error[-500:], "failure_class": classify_provider_failure(error), "semantic_note": "该对象provider请求失败；未使用旧行情、代理或伪造OHLC补齐。"}
+    return {"asset_class": "ETF", "symbol": code, "thscode": thscode, "open": None, "high": None, "low": None, "close": None, "prev_close": None, "change_pct": None, "volume": None, "amount": None, "provider": "hithink_finance", "provider_primary": "tencent_qq", "provider_used": "tencent_qq", "fallback_used": False, "fallback_reason": "", "provider_timestamp_ms": None, "as_of_beijing": "", "captured_at": captured, "captured_at_beijing": captured, "timezone": "Asia/Shanghai", "market_phase": market_phase, "quality_status": "FAILED", "error": error[-500:], "failure_class": classify_provider_failure(error), "semantic_note": "该对象provider请求失败；未使用旧行情、代理或伪造OHLC补齐。"}
 
 
 def is_newer_than_current(captured_dt: datetime) -> bool:
