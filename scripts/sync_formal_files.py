@@ -765,9 +765,40 @@ def fixed_ratio_metrics(position: dict, record: dict | None = None) -> tuple[str
         "今日收盘事实",
     )
 
+
+def overlay_latest_market_prices(root: Path, positions: list[dict]) -> list[dict]:
+    """Overlay prices from the latest valid snapshot without changing account facts."""
+    current_path = root / "data/state/CURRENT.json"
+    if not current_path.exists():
+        return positions
+    try:
+        current = load_json(current_path)
+        snapshot_path = root / str(current.get("latest_snapshot") or "")
+        snapshot = load_json(snapshot_path)
+        if str(snapshot.get("quality_status") or "").upper() not in {"PASS", "DEGRADED"}:
+            return positions
+        rows = {
+            str(row.get("symbol") or "").strip(): row
+            for row in (snapshot.get("rows") or [])
+            if isinstance(row, dict)
+        }
+        result = []
+        for position in positions:
+            item = dict(position)
+            row = rows.get(str(item.get("code") or "").strip())
+            if row and row.get("close") is not None:
+                item["current_price"] = row["close"]
+                item["last_price"] = row["close"]
+                item["_market_snapshot_as_of"] = row.get("as_of_beijing") or snapshot.get("captured_at_beijing") or ""
+                item["_market_snapshot_quality"] = row.get("quality_status") or snapshot.get("quality_status") or ""
+            result.append(item)
+        return result
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        return positions
+
 def build_dashboard_block(account: dict, equity: dict, existing: str, root: Path = ROOT) -> str:
-    positions = account.get("positions") or []
-    fixed_ratio_records = refresh_fixed_ratio_metrics(root, account)
+    positions = overlay_latest_market_prices(root, account.get("positions") or [])
+    fixed_ratio_records = refresh_fixed_ratio_metrics(root, {**account, "positions": positions, "source": "CANONICAL_MARKET_SNAPSHOT_FIXED_RATIO_REFRESH"})
     membership = active_account_asset_codes(root, account)
     etfs = [p for p in positions if normalize_code(p.get("code")) in membership["etf"]]
     stocks = [p for p in positions if normalize_code(p.get("code")) in membership["stocks"]]
