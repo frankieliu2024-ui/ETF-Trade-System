@@ -1,441 +1,427 @@
 {
-  "generated_at": "2026-11-26T06:22:52Z",
-  "generated_at_beijing": "2026-11-26T14:22:52+08:00",
+  "generated_at": "2026-11-26T06:30:01Z",
+  "generated_at_beijing": "2026-11-26T14:30:01+08:00",
   "repository": {
-    "head_sha": "5eb5fcd804af77fa971b30c80f5a79e0807fd7d1",
-    "github_sha": "5eb5fcd804af77fa971b30c80f5a79e0807fd7d1",
-    "github_run_id": "45766515042",
+    "head_sha": "69f6da4e2a5900353fcc36b56833e55669937391",
+    "github_sha": "69f6da4e2a5900353fcc36b56833e55669937391",
+    "github_run_id": "45768240214",
     "github_ref": "refs/heads/main"
   },
   "commit_audit": {
-    "checked_commit": "5eb5fcd804af77fa971b30c80f5a79e0807fd7d1",
-    "workflow_sha": "5eb5fcd804af77fa971b30c80f5a79e0807fd7d1",
+    "checked_commit": "69f6da4e2a5900353fcc36b56833e55669937391",
+    "workflow_sha": "69f6da4e2a5900353fcc36b56833e55669937391",
     "persisted_state_commit": "",
     "persisted_state_commit_note": "由后续状态提交持久化；不递归追踪报告文件自身的最终SHA。"
   },
   "semantic_freshness": {
-    "base": "c476331349dfc7195da962622625e008e62a0a2b",
-    "head": "5eb5fcd804af77fa971b30c80f5a79e0807fd7d1",
+    "base": "5eb5fcd804af77fa971b30c80f5a79e0807fd7d1",
+    "head": "69f6da4e2a5900353fcc36b56833e55669937391",
     "changed_paths": [
       "ETF当前状态_DASHBOARD.md",
-      "data/market/snapshots/2026-11-26_133804.json",
-      "data/market/snapshots/2026-11-26_134507.json",
-      "data/market/snapshots/2026-11-26_135409.json",
+      "data/market/snapshots/2026-11-26_141055.json",
       "data/state/CURRENT.json",
       "data/state/dashboard_update_candidate.json",
       "data/state/decision_context.json",
       "data/state/discovery_pulse_index.json",
       "data/state/discovery_pulse_latest.json",
-      "data/state/e2e_status.json",
       "data/state/fixed_ratio_position_metrics.json",
       "data/state/formal_discovery_current.json",
       "data/state/formal_opportunity_current.json",
       "data/state/hyperliquid_pulse_index.json",
       "data/state/hyperliquid_pulse_latest.json",
       "data/state/maintenance_health.json",
-      "data/state/notification_center.json",
       "data/state/overseas_context.json",
       "data/state/overseas_context_previous.json",
       "data/state/overseas_runtime_health.json",
-      "data/state/query_context.json",
       "data/state/runtime_health.json",
-      "data/state/self_healing_status.json",
       "data/state/system_consistency.json",
-      "scripts/sync_formal_files.py",
-      "tests/test_dashboard_projection.py"
+      "requests/live_snapshot/scheduled-formal-decision-20261126T142514+0800__scheduled_review_completion.json"
     ],
     "categories": {
-      "STABLE_PRODUCTION_CHANGE": [
-        "scripts/sync_formal_files.py",
-        "tests/test_dashboard_projection.py"
-      ],
+      "STABLE_PRODUCTION_CHANGE": [],
       "DYNAMIC_RUNTIME_FACT": [
-        "data/market/snapshots/2026-11-26_133804.json",
-        "data/market/snapshots/2026-11-26_134507.json",
-        "data/market/snapshots/2026-11-26_135409.json",
+        "data/market/snapshots/2026-11-26_141055.json",
         "data/state/CURRENT.json",
         "data/state/dashboard_update_candidate.json",
         "data/state/decision_context.json",
         "data/state/discovery_pulse_index.json",
         "data/state/discovery_pulse_latest.json",
-        "data/state/e2e_status.json",
         "data/state/fixed_ratio_position_metrics.json",
         "data/state/formal_discovery_current.json",
         "data/state/formal_opportunity_current.json",
         "data/state/hyperliquid_pulse_index.json",
         "data/state/hyperliquid_pulse_latest.json",
         "data/state/maintenance_health.json",
-        "data/state/notification_center.json",
         "data/state/overseas_context.json",
         "data/state/overseas_context_previous.json",
         "data/state/overseas_runtime_health.json",
-        "data/state/query_context.json",
         "data/state/runtime_health.json",
-        "data/state/self_healing_status.json",
         "data/state/system_consistency.json"
       ],
       "FORMAL_FACT_MUTATION": [
         "ETF当前状态_DASHBOARD.md"
       ],
-      "REQUEST_OR_TRIGGER_FACT": [],
+      "REQUEST_OR_TRIGGER_FACT": [
+        "requests/live_snapshot/scheduled-formal-decision-20261126T142514+0800__scheduled_review_completion.json"
+      ],
       "UNKNOWN": []
     },
-    "decision": "REPLAY_REQUIRED",
-    "integration_action": "REPLAY_REQUIRED",
-    "validated_commit": "c476331349dfc7195da962622625e008e62a0a2b",
-    "current_head": "5eb5fcd804af77fa971b30c80f5a79e0807fd7d1",
+    "decision": "REVIEW_REQUIRED",
+    "integration_action": "REVIEW_MAIN_DELTA",
+    "validated_commit": "5eb5fcd804af77fa971b30c80f5a79e0807fd7d1",
+    "current_head": "69f6da4e2a5900353fcc36b56833e55669937391",
     "head_advanced": true,
     "stable_contract_freshness": "REVIEW_REQUIRED",
     "runtime_fact_freshness": "CURRENT"
   },
-  "status": "FAIL",
-  "hard_error_count": 1,
+  "status": "PASS",
+  "hard_error_count": 0,
   "warning_count": 0,
   "checks": [
     {
       "name": "tests:market_risk_formal_review_override",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 1 test in 0.001s OK; duration_seconds=0.257"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 1 test in 0.003s OK; duration_seconds=0.314"
     },
     {
       "name": "tests:market_risk_dashboard_no_fallback",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 1 test in 0.004s OK; duration_seconds=0.298"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 1 test in 0.001s OK; duration_seconds=0.27"
     },
     {
       "name": "tests:market_risk_fresh_reconstruction",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 1 test in 0.004s OK; duration_seconds=0.27"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 1 test in 0.004s OK; duration_seconds=0.197"
     },
     {
       "name": "tests:market_risk_e2e_stale",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 1 test in 0.001s OK; duration_seconds=0.267"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 1 test in 0.003s OK; duration_seconds=0.269"
     },
     {
       "name": "tests:market_risk_historical_degraded",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 1 test in 0.001s OK; duration_seconds=0.253"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 1 test in 0.002s OK; duration_seconds=0.171"
     },
     {
       "name": "tests:market_risk_close_degraded",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 1 test in 0.004s OK; duration_seconds=0.27"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 1 test in 0.001s OK; duration_seconds=0.28"
     },
     {
       "name": "tests:market_risk_e2e_blocked",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 1 test in 0.004s OK; duration_seconds=0.249"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 1 test in 0.003s OK; duration_seconds=0.309"
     },
     {
       "name": "tests:market_risk_new_market_day",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 1 test in 0.001s OK; duration_seconds=0.192"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 1 test in 0.001s OK; duration_seconds=0.278"
     },
     {
       "name": "tests:market_risk_live_context_contract",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 1 test in 80.110s OK; duration_seconds=80.307"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 1 test in 80.803s OK; duration_seconds=80.971"
     },
     {
       "name": "tests:market_file_test_market_561980_component_lead",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 5 tests in 0.033s OK; duration_seconds=0.374"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 5 tests in 0.023s OK; duration_seconds=0.295"
     },
     {
       "name": "tests:market_file_test_market_ancestral_capital_evidence",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 5 tests in 0.001s OK; duration_seconds=0.338"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 5 tests in 0.000s OK; duration_seconds=0.252"
     },
     {
       "name": "tests:market_file_test_market_apac_late_update_guard",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 6 tests in 0.000s OK; duration_seconds=0.187"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 6 tests in 0.001s OK; duration_seconds=0.227"
     },
     {
       "name": "tests:market_file_test_market_async_context_freshness",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 5 tests in 0.000s OK; duration_seconds=0.102"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 5 tests in 0.004s OK; duration_seconds=0.237"
     },
     {
       "name": "tests:market_file_test_market_case_mapping_terminal",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 1 test in 0.007s OK; duration_seconds=0.151"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 1 test in 0.004s OK; duration_seconds=0.233"
     },
     {
       "name": "tests:market_file_test_market_close_recovery",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 7 tests in 0.104s OK; duration_seconds=0.355"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 7 tests in 0.050s OK; duration_seconds=0.167"
     },
     {
       "name": "tests:market_file_test_market_confirmed_trade_fee_overlay",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 6 tests in 0.012s OK; duration_seconds=0.172"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 6 tests in 0.018s OK; duration_seconds=0.201"
     },
     {
       "name": "tests:market_file_test_market_data_guard",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 3 tests in 0.000s OK; duration_seconds=0.048"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 3 tests in 0.000s OK; duration_seconds=0.201"
     },
     {
       "name": "tests:market_file_test_market_divergence_presentation",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 3 tests in 0.016s OK; duration_seconds=0.204"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 3 tests in 0.009s OK; duration_seconds=0.115"
     },
     {
       "name": "tests:market_file_test_market_etf_t_swing",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 30 tests in 0.175s OK; duration_seconds=0.393"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 30 tests in 0.193s OK; duration_seconds=0.467"
     },
     {
       "name": "tests:market_file_test_market_formal_dynamic_research_evidence",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 6 tests in 0.007s OK; duration_seconds=0.139"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 6 tests in 0.015s OK; duration_seconds=0.231"
     },
     {
       "name": "tests:market_file_test_market_formal_file_sync",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 6 tests in 0.001s OK; duration_seconds=0.164"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 6 tests in 0.003s OK; duration_seconds=0.279"
     },
     {
       "name": "tests:market_file_test_market_governance_review_closure_contract",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 2 tests in 0.001s OK; duration_seconds=0.055"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 2 tests in 0.001s OK; duration_seconds=0.206"
     },
     {
       "name": "tests:market_file_test_market_historical_intraday",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 2 tests in 0.016s OK; duration_seconds=0.281"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 2 tests in 0.022s OK; duration_seconds=0.315"
     },
     {
       "name": "tests:market_file_test_market_if_ic_basis_registration",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 2 tests in 0.002s OK; duration_seconds=0.1"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 2 tests in 0.002s OK; duration_seconds=0.094"
     },
     {
       "name": "tests:market_file_test_market_if_ic_fast_fail",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 3 tests in 0.007s OK; duration_seconds=0.385"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 3 tests in 0.005s OK; duration_seconds=0.321"
     },
     {
       "name": "tests:market_file_test_market_intraday_response_contract",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 3 tests in 0.003s OK; duration_seconds=0.16"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 3 tests in 0.001s OK; duration_seconds=0.047"
     },
     {
       "name": "tests:market_file_test_market_kospi_previous_close",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 3 tests in 0.000s OK; duration_seconds=0.344"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 3 tests in 0.003s OK; duration_seconds=0.221"
     },
     {
       "name": "tests:market_file_test_market_level_and_refresh_contract",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 4 tests in 0.004s OK; duration_seconds=0.166"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 4 tests in 0.001s OK; duration_seconds=0.114"
     },
     {
       "name": "tests:market_file_test_market_master_index_contract",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 2 tests in 0.002s OK; duration_seconds=0.05"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 2 tests in 0.002s OK; duration_seconds=0.054"
     },
     {
       "name": "tests:market_file_test_market_master_nonmechanical_risk_active_return",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 5 tests in 0.001s OK; duration_seconds=0.051"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 5 tests in 0.004s OK; duration_seconds=0.161"
     },
     {
       "name": "tests:market_file_test_market_minute_context_formal",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 3 tests in 0.010s OK; duration_seconds=0.412"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 3 tests in 0.001s OK; duration_seconds=0.103"
     },
     {
       "name": "tests:market_file_test_market_minute_path",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 5 tests in 0.011s OK; duration_seconds=0.537"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 5 tests in 0.008s OK; duration_seconds=0.418"
     },
     {
       "name": "tests:market_file_test_market_minute_shadow_complexity_contract",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 1 test in 0.003s OK; duration_seconds=0.09"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 1 test in 0.003s OK; duration_seconds=0.096"
     },
     {
       "name": "tests:market_file_test_market_monitor",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 3 tests in 0.000s; duration_seconds=0.05"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 3 tests in 0.000s; duration_seconds=0.047"
     },
     {
       "name": "tests:market_file_test_market_notification_canonical_owner",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 3 tests in 0.000s OK; duration_seconds=0.083"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 3 tests in 0.000s OK; duration_seconds=0.275"
     },
     {
       "name": "tests:market_file_test_market_notification_materiality_guard",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 83 tests in 0.342s OK; duration_seconds=0.761"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 83 tests in 0.233s OK; duration_seconds=0.591"
     },
     {
       "name": "tests:market_file_test_market_phase4_no_mechanical_hard_gates",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 7 tests in 0.005s OK; duration_seconds=0.14"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 7 tests in 0.004s OK; duration_seconds=0.141"
     },
     {
       "name": "tests:market_file_test_market_production_health_coverage",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 10 tests in 0.005s OK; duration_seconds=0.072"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 10 tests in 0.020s OK; duration_seconds=0.227"
     },
     {
       "name": "tests:market_file_test_market_provider_display_sync",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 11 tests in 0.124s OK; duration_seconds=0.377"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 11 tests in 0.034s OK; duration_seconds=0.133"
     },
     {
       "name": "tests:market_file_test_market_query_object",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 4 tests in 0.014s OK; duration_seconds=0.292"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 4 tests in 0.012s OK; duration_seconds=0.261"
     },
     {
       "name": "tests:market_file_test_market_query_routing_authority",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 1 test in 0.004s OK; duration_seconds=0.092"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 1 test in 0.000s OK; duration_seconds=0.047"
     },
     {
       "name": "tests:market_file_test_market_query_time_refresh",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 15 tests in 0.083s OK; duration_seconds=0.268"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 15 tests in 0.052s OK; duration_seconds=0.207"
     },
     {
       "name": "tests:market_file_test_market_quote_router",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 6 tests in 0.000s OK; duration_seconds=0.136"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 6 tests in 0.000s OK; duration_seconds=0.051"
     },
     {
       "name": "tests:market_file_test_market_replay_fee_coherence",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 2 tests in 0.018s OK; duration_seconds=0.315"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 2 tests in 0.009s OK; duration_seconds=0.273"
     },
     {
       "name": "tests:market_file_test_market_report_transport_retry",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 7 tests in 0.006s OK; duration_seconds=0.133"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 7 tests in 0.006s OK; duration_seconds=0.117"
     },
     {
       "name": "tests:market_file_test_market_research_production_economics_rule",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 2 tests in 0.001s OK; duration_seconds=0.173"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 2 tests in 0.001s OK; duration_seconds=0.157"
     },
     {
       "name": "tests:market_file_test_market_rules_version_contract",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 12 tests in 0.007s OK; duration_seconds=0.104"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 12 tests in 0.009s OK; duration_seconds=0.137"
     },
     {
       "name": "tests:market_file_test_market_runtime_recovery_consistency_gate",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 9 tests in 0.114s OK; duration_seconds=0.338"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 9 tests in 0.095s OK; duration_seconds=0.332"
     },
     {
       "name": "tests:market_file_test_market_scheduled_formal_decision_wait_contract_v2",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 2 tests in 0.004s OK; duration_seconds=0.136"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 2 tests in 0.004s OK; duration_seconds=0.131"
     },
     {
       "name": "tests:market_file_test_market_snapshot_ingress_filter",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 1 test in 0.000s OK; duration_seconds=0.047"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 1 test in 0.000s OK; duration_seconds=0.045"
     },
     {
       "name": "tests:market_file_test_market_state_consistency",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 11 tests in 0.074s OK; duration_seconds=0.188"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 11 tests in 0.021s OK; duration_seconds=0.066"
     },
     {
       "name": "tests:market_file_test_market_stock_minute_overlay",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 3 tests in 0.001s OK; duration_seconds=0.107"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 3 tests in 0.004s OK; duration_seconds=0.28"
     },
     {
       "name": "tests:market_file_test_market_structure_c2_evidence",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 4 tests in 0.018s OK; duration_seconds=0.287"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 4 tests in 0.026s OK; duration_seconds=0.294"
     },
     {
       "name": "tests:market_file_test_market_us_pulse_schedule_backstop",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 1 test in 0.002s OK; duration_seconds=0.108"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 1 test in 0.000s OK; duration_seconds=0.043"
     },
     {
       "name": "tests:market_file_test_market_validation_acceptance_control_plane",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 11 tests in 0.065s OK; duration_seconds=0.265"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 11 tests in 0.086s OK; duration_seconds=0.361"
     },
     {
       "name": "tests:market_file_test_market_workflow_failure_guard_pr_head",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 2 tests in 0.000s OK; duration_seconds=0.049"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 2 tests in 0.000s OK; duration_seconds=0.087"
     },
     {
       "name": "tests:market_file_test_market_zz_formal_dynamic_evidence_observability",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 1 test in 0.001s OK; duration_seconds=0.141"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 1 test in 0.001s OK; duration_seconds=0.054"
     },
     {
       "name": "tests:opening_current_self_healing",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 29 tests in 0.705s OK; duration_seconds=0.904"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 29 tests in 0.685s OK; duration_seconds=0.828"
     },
     {
       "name": "tests:semantic_latest_main",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 8 tests in 0.650s OK; duration_seconds=0.713"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 8 tests in 0.473s OK; duration_seconds=0.579"
     },
     {
       "name": "tests:research_artifact_contract",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 7 tests in 1.182s OK; duration_seconds=1.251"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 7 tests in 1.201s OK; duration_seconds=1.254"
     },
     {
       "name": "tests:research_historical_stop_gate",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 5 tests in 0.003s OK; duration_seconds=0.137"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 5 tests in 0.004s OK; duration_seconds=0.175"
     },
     {
       "name": "tests:lifecycle_state",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 21 tests in 0.084s OK; duration_seconds=0.224"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 21 tests in 0.100s OK; duration_seconds=0.273"
     },
     {
       "name": "tests:historical_market_fact_recovery",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 7 tests in 0.004s OK; duration_seconds=0.155"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 7 tests in 0.004s OK; duration_seconds=0.178"
     },
     {
       "name": "tests:executed_trade_case_lifecycle",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 15 tests in 0.053s OK; duration_seconds=0.303"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 15 tests in 0.065s OK; duration_seconds=0.359"
     },
     {
       "name": "tests:settlement_obligations",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 12 tests in 0.003s OK; duration_seconds=0.19"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 12 tests in 0.008s OK; duration_seconds=0.275"
     },
     {
       "name": "tests:formal_file_mutation_gateway",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 12 tests in 0.016s OK; duration_seconds=0.139"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 12 tests in 0.013s OK; duration_seconds=0.192"
     },
     {
       "name": "tests:review_prerequisite_lifecycle",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 7 tests in 0.002s OK; duration_seconds=0.125"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 7 tests in 0.003s OK; duration_seconds=0.131"
     },
     {
       "name": "tests:production_reliability",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 41 tests in 0.060s OK; duration_seconds=0.278"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 41 tests in 0.041s OK; duration_seconds=0.184"
     },
     {
       "name": "tests:workflow_sha_snapshot",
       "status": "PASS",
-      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 5 tests in 0.000s OK; duration_seconds=0.162"
+      "detail": "environment=NON_PRODUCTION; consumable_by_business_tasks=false; Ran 5 tests in 0.003s OK; duration_seconds=0.141"
     },
     {
       "name": "tests:runtime_modules_compile",
@@ -705,17 +691,17 @@
     {
       "name": "git:head_commit",
       "status": "PASS",
-      "detail": "HEAD=5eb5fcd804af77fa971b30c80f5a79e0807fd7d1"
+      "detail": "HEAD=69f6da4e2a5900353fcc36b56833e55669937391"
     },
     {
       "name": "git:semantic_latest_main",
       "status": "PASS",
-      "detail": "{\"base\": \"c476331349dfc7195da962622625e008e62a0a2b\", \"head\": \"5eb5fcd804af77fa971b30c80f5a79e0807fd7d1\", \"changed_paths\": [\"ETF当前状态_DASHBOARD.md\", \"data/market/snapshots/2026-11-26_133804.json\", \"data/market/snapshots/2026-11-26_134507.json\", \"data/market/snapshots/2026-11-26_135409.json\", \"data/state/CURRENT.json\", \"data/state/dashboard_update_candidate.json\", \"data/state/decision_context.json\", \"data/state/discovery_pulse_index.json\", \"data/state/discovery_pulse_latest.json\", \"data/state/e2e_status.json\", \"data/state/fixed_ratio_position_metrics.json\", \"data/state/formal_discovery_current.json\", \"data/state/formal_opportunity_current.json\", \"data/state/hyperliquid_pulse_index.json\", \"data/state/hyperliquid_pulse_latest.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/overseas_context.json\", \"data/state/overseas_context_previous.json\", \"data/state/overseas_runtime_health.json\", \"data/state/query_context.json\", \"data/state/runtime_health.json\", \"data/state/self_healing_status.json\", \"data/state/system_consistency.json\", \"scripts/sync_formal_files.py\", \"tests/test_dashboard_projection.py\"], \"categories\": {\"STABLE_PRODUCTION_CHANGE\": [\"scripts/sync_formal_files.py\", \"tests/test_dashboard_projection.py\"], \"DYNAMIC_RUNTIME_FACT\": [\"data/market/snapshots/2026-11-26_133804.json\", \"data/market/snapshots/2026-11-26_134507.json\", \"data/market/snapshots/2026-11-26_135409.json\", \"data/state/CURRENT.json\", \"data/state/dashboard_update_candidate.json\", \"data/state/decision_context.json\", \"data/state/discovery_pulse_index.json\", \"data/state/discovery_pulse_latest.json\", \"data/state/e2e_status.json\", \"data/state/fixed_ratio_position_metrics.json\", \"data/state/formal_discovery_current.json\", \"data/state/formal_opportunity_current.json\", \"data/state/hyperliquid_pulse_index.json\", \"data/state/hyperliquid_pulse_latest.json\", \"data/state/maintenance_health.json\", \"data/state/notification_center.json\", \"data/state/overseas_context.json\", \"data/state/overseas_context_previous.json\", \"data/state/overseas_runtime_health.json\", \"data/state/query_context.json\", \"data/state/runtime_health.json\", \"data/state/self_healing_status.json\", \"data/state/system_consistency.json\"], \"FORMAL_FACT_MUTATION\": [\"ETF当前状态_DASHBOARD.md\"], \"REQUEST_OR_TRIGGER_FACT\": [], \"UNKNOWN\": []}, \"decision\": \"REPLAY_REQUIRED\", \"integration_action\": \"REPLAY_REQUIRED\"}"
+      "detail": "{\"base\": \"5eb5fcd804af77fa971b30c80f5a79e0807fd7d1\", \"head\": \"69f6da4e2a5900353fcc36b56833e55669937391\", \"changed_paths\": [\"ETF当前状态_DASHBOARD.md\", \"data/market/snapshots/2026-11-26_141055.json\", \"data/state/CURRENT.json\", \"data/state/dashboard_update_candidate.json\", \"data/state/decision_context.json\", \"data/state/discovery_pulse_index.json\", \"data/state/discovery_pulse_latest.json\", \"data/state/fixed_ratio_position_metrics.json\", \"data/state/formal_discovery_current.json\", \"data/state/formal_opportunity_current.json\", \"data/state/hyperliquid_pulse_index.json\", \"data/state/hyperliquid_pulse_latest.json\", \"data/state/maintenance_health.json\", \"data/state/overseas_context.json\", \"data/state/overseas_context_previous.json\", \"data/state/overseas_runtime_health.json\", \"data/state/runtime_health.json\", \"data/state/system_consistency.json\", \"requests/live_snapshot/scheduled-formal-decision-20261126T142514+0800__scheduled_review_completion.json\"], \"categories\": {\"STABLE_PRODUCTION_CHANGE\": [], \"DYNAMIC_RUNTIME_FACT\": [\"data/market/snapshots/2026-11-26_141055.json\", \"data/state/CURRENT.json\", \"data/state/dashboard_update_candidate.json\", \"data/state/decision_context.json\", \"data/state/discovery_pulse_index.json\", \"data/state/discovery_pulse_latest.json\", \"data/state/fixed_ratio_position_metrics.json\", \"data/state/formal_discovery_current.json\", \"data/state/formal_opportunity_current.json\", \"data/state/hyperliquid_pulse_index.json\", \"data/state/hyperliquid_pulse_latest.json\", \"data/state/maintenance_health.json\", \"data/state/overseas_context.json\", \"data/state/overseas_context_previous.json\", \"data/state/overseas_runtime_health.json\", \"data/state/runtime_health.json\", \"data/state/system_consistency.json\"], \"FORMAL_FACT_MUTATION\": [\"ETF当前状态_DASHBOARD.md\"], \"REQUEST_OR_TRIGGER_FACT\": [\"requests/live_snapshot/scheduled-formal-decision-20261126T142514+0800__scheduled_review_completion.json\"], \"UNKNOWN\": []}, \"decision\": \"REVIEW_REQUIRED\", \"integration_action\": \"REVIEW_MAIN_DELTA\"}"
     },
     {
       "name": "git:workflow_sha_matches_head",
       "status": "PASS",
-      "detail": "HEAD=5eb5fcd804af77fa971b30c80f5a79e0807fd7d1 GITHUB_SHA=5eb5fcd804af77fa971b30c80f5a79e0807fd7d1"
+      "detail": "HEAD=69f6da4e2a5900353fcc36b56833e55669937391 GITHUB_SHA=69f6da4e2a5900353fcc36b56833e55669937391"
     },
     {
       "name": "git:critical_files_tracked",
@@ -1290,7 +1276,7 @@
     {
       "name": "dynamic_freshness:decision_recalculated",
       "status": "PASS",
-      "detail": "declared=FRESH expected=FRESH age_seconds=29"
+      "detail": "declared=FRESH expected=FRESH age_seconds=33"
     },
     {
       "name": "dynamic_freshness:query_decision_aligned",
@@ -1325,27 +1311,27 @@
     {
       "name": "decision:query_decision_current_aligned",
       "status": "PASS",
-      "detail": "query=data/market/snapshots/2026-11-26_132825.json decision=data/market/snapshots/2026-11-26_135409.json same_day_monotonic_snapshot_rollforward=true"
+      "detail": "query=data/market/snapshots/2026-11-26_132825.json decision=data/market/snapshots/2026-11-26_141055.json same_day_monotonic_snapshot_rollforward=true"
     },
     {
       "name": "formal_layers:opportunity_bound_to_current_discovery",
       "status": "PASS",
-      "detail": "discovery_generation=2026-11-26T13:54:26+08:00 opportunity_source_generation=2026-11-26T13:54:26+08:00 snapshot=data/market/snapshots/2026-11-26_135409.json source_snapshot=data/market/snapshots/2026-11-26_135409.json"
+      "detail": "discovery_generation=2026-11-26T14:11:16+08:00 opportunity_source_generation=2026-11-26T14:11:16+08:00 snapshot=data/market/snapshots/2026-11-26_141055.json source_snapshot=data/market/snapshots/2026-11-26_141055.json"
     },
     {
       "name": "formal_layers:opportunity_same_discovery_batch",
       "status": "PASS",
-      "detail": "discovery_generation=2026-11-26T13:54:26+08:00 opportunity_source_generation=2026-11-26T13:54:26+08:00"
+      "detail": "discovery_generation=2026-11-26T14:11:16+08:00 opportunity_source_generation=2026-11-26T14:11:16+08:00"
     },
     {
       "name": "formal_layers:review_context_aligned",
       "status": "PASS",
-      "detail": "review_discovery_generation=2026-11-13T15:06:48+08:00 review_opportunity_source_generation=2026-11-13T15:06:48+08:00 review_snapshot=data/market/snapshots/2026-11-13_150611.json review_opportunity_snapshot=data/market/snapshots/2026-11-13_150611.json current_discovery_snapshot=data/market/snapshots/2026-11-26_135409.json"
+      "detail": "review_discovery_generation=2026-11-13T15:06:48+08:00 review_opportunity_source_generation=2026-11-13T15:06:48+08:00 review_snapshot=data/market/snapshots/2026-11-13_150611.json review_opportunity_snapshot=data/market/snapshots/2026-11-13_150611.json current_discovery_snapshot=data/market/snapshots/2026-11-26_141055.json"
     },
     {
       "name": "point_in_time:context_not_before_market",
       "status": "PASS",
-      "detail": "context=2026-11-26T05:54:38Z market=2026-11-26T13:54:09+08:00"
+      "detail": "context=2026-11-26T06:11:28Z market=2026-11-26T14:10:55+08:00"
     },
     {
       "name": "point_in_time:account_time_separate",
@@ -1575,12 +1561,12 @@
     {
       "name": "runtime_health:pass_requires_snapshot",
       "status": "PASS",
-      "detail": "runtime_snapshot=data/market/snapshots/2026-11-26_135409.json current_snapshot=data/market/snapshots/2026-11-26_135409.json"
+      "detail": "runtime_snapshot=data/market/snapshots/2026-11-26_141055.json current_snapshot=data/market/snapshots/2026-11-26_141055.json"
     },
     {
       "name": "a_share_runtime:live_state_available",
       "status": "PASS",
-      "detail": "runtime_status=PASS current_snapshot=data/market/snapshots/2026-11-26_135409.json"
+      "detail": "runtime_status=PASS current_snapshot=data/market/snapshots/2026-11-26_141055.json"
     },
     {
       "name": "a_share_runtime:current_ready",
@@ -1590,7 +1576,7 @@
     {
       "name": "a_share_runtime:snapshot_exists",
       "status": "PASS",
-      "detail": "path=data/market/snapshots/2026-11-26_135409.json"
+      "detail": "path=data/market/snapshots/2026-11-26_141055.json"
     },
     {
       "name": "a_share_runtime:snapshot_count",
@@ -1615,7 +1601,7 @@
     {
       "name": "a_share_runtime:beijing_capture",
       "status": "PASS",
-      "detail": "captured_at_beijing=2026-11-26T13:54:09+08:00 timezone=Asia/Shanghai"
+      "detail": "captured_at_beijing=2026-11-26T14:10:55+08:00 timezone=Asia/Shanghai"
     },
     {
       "name": "state_coherence:current_account_mirror",
@@ -1660,12 +1646,12 @@
     {
       "name": "overseas_runtime:N225:same_day_bar",
       "status": "PASS",
-      "detail": "quality=PASS as_of_beijing=2026-11-26T14:00:31+08:00"
+      "detail": "quality=PASS as_of_beijing=2026-11-26T14:25:12+08:00"
     },
     {
       "name": "overseas_runtime:KOSPI:same_day_bar",
       "status": "PASS",
-      "detail": "quality=PASS as_of_beijing=2026-11-26T14:01:01+08:00"
+      "detail": "quality=PASS as_of_beijing=2026-11-26T14:25:54+08:00"
     },
     {
       "name": "account_fact:current_availability",
@@ -1674,8 +1660,8 @@
     },
     {
       "name": "risk:formal_precedence",
-      "status": "FAIL",
-      "detail": "formal=-32.5913 source=data/state/etf_strategy_equity.json::summary.current_strategy_return_pct_gross dashboard=-32.5268"
+      "status": "PASS",
+      "detail": "formal=-32.5913 source=data/state/etf_strategy_equity.json::summary.current_strategy_return_pct_gross dashboard/e2e aligned e2e_state=READY"
     },
     {
       "name": "formal_files:executed_trade_event_sync",
@@ -2503,9 +2489,7 @@
       "detail": "account_batch=acctsnap-53c47c4b0bcda7befbf2 same_day_etf_buys=0 active_lifecycle_codes=['159206', '159253', '159265', '159307', '510230', '511380', '512690'] invalid_lifecycle=[]; trade_provenance_checked=0 mismatches=[]"
     }
   ],
-  "errors": [
-    "risk:formal_precedence:dashboard=-32.5268"
-  ],
+  "errors": [],
   "warnings": [],
   "principle": "一致性检查覆盖文本口径、配置、运行链、关键状态文件、Git跟踪/HEAD提交、workflow接线、数据时点字段、美股扩展时段链和自动验收结果；硬冲突不得进入生产。",
   "production_mutation_protocol": {
@@ -2528,5 +2512,5 @@
       "最新main上的正式源文件 > 旧分支生成的动态状态"
     ]
   },
-  "persisted_at_beijing": "2026-11-26T14:23:43.886636+08:00"
+  "persisted_at_beijing": "2026-11-26T14:30:51.805779+08:00"
 }
