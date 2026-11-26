@@ -34,6 +34,9 @@ MIN_HISTORY = 65
 MIN_BROAD_ETF_UNIVERSE_COUNT = 100
 RELATIVE_DIVERGENCE_PCT = 1.5
 SHORT_HISTORY_MIN = 20
+VOLUME_TREND_MIN_HISTORY = 20
+VOLUME_TREND_MIN_VALID_RATIO = 0.8
+VOLUME_EXPANSION_RATIO = 1.2
 
 
 def _num(value: Any) -> float | None:
@@ -512,6 +515,60 @@ def load_validated_history(root: Path, code: str, required_history_end_date: str
     return rows[-limit:] if len(rows) >= MIN_HISTORY else None
 
 
+def _volume_amount_trend(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    """Return descriptive volume/amount trend evidence without creating a hard gate.
+
+    Ratios are computed within one history dataset, so provider unit scale does not
+    affect the comparison. Missing or sparse fields remain explicitly unconfirmed.
+    """
+    result: dict[str, Any] = {}
+    for field, label in (("volume", "volume"), ("amount", "amount")):
+        values = [_num(row.get(field)) for row in rows]
+        valid = [float(value) for value in values if value is not None and value > 0]
+        coverage = len(valid) / len(rows) if rows else 0.0
+        item: dict[str, Any] = {
+            "status": "UNCONFIRMED",
+            "field": field,
+            "sample_count": len(rows),
+            "valid_count": len(valid),
+            "coverage": round(coverage, 4),
+        }
+        if len(rows) < VOLUME_TREND_MIN_HISTORY or len(valid) < VOLUME_TREND_MIN_HISTORY or coverage < VOLUME_TREND_MIN_VALID_RATIO:
+            item["reason"] = "INSUFFICIENT_VALID_HISTORY"
+            result[label] = item
+            continue
+        recent = valid[-5:]
+        baseline = valid[-20:]
+        recent_avg = sum(recent) / len(recent)
+        baseline_avg = sum(baseline) / len(baseline)
+        ratio = recent_avg / baseline_avg if baseline_avg > 0 else None
+        item.update({
+            "status": "CONFIRMED" if ratio is not None else "UNCONFIRMED",
+            "recent_5_avg": round(recent_avg, 6),
+            "baseline_20_avg": round(baseline_avg, 6),
+            "recent_vs_20d_ratio": round(ratio, 6) if ratio is not None else None,
+            "trend": (
+                "EXPANDING" if ratio is not None and ratio >= VOLUME_EXPANSION_RATIO
+                else "CONTRACTING" if ratio is not None and ratio < 1 / VOLUME_EXPANSION_RATIO
+                else "STABLE" if ratio is not None
+                else "UNCONFIRMED"
+            ),
+            "unit_comparison": "WITHIN_SAME_PROVIDER_HISTORY_ONLY",
+        })
+        result[label] = item
+    volume_trend = result["volume"].get("trend")
+    amount_trend = result["amount"].get("trend")
+    if volume_trend == "EXPANDING" and amount_trend == "EXPANDING":
+        result["combined_signal"] = "VOLUME_AND_AMOUNT_EXPANDING"
+    elif volume_trend == "CONTRACTING" and amount_trend == "CONTRACTING":
+        result["combined_signal"] = "VOLUME_AND_AMOUNT_CONTRACTING"
+    elif volume_trend == "UNCONFIRMED" or amount_trend == "UNCONFIRMED":
+        result["combined_signal"] = "PARTIAL_OR_UNCONFIRMED"
+    else:
+        result["combined_signal"] = "MIXED_OR_STABLE"
+    return result
+
+
 def _ret(closes: list[float], sessions: int) -> float | None:
     if len(closes) <= sessions or closes[-sessions - 1] <= 0:
         return None
@@ -863,6 +920,7 @@ def _candidate(row: dict[str, Any], history: list[dict[str, Any]], required_hist
                 "status": "SHORT_HISTORY_LIMITED", "as_of": completed[-1]["date"] if completed else None,
                 "sample_count": len(completed), "listing_date": row.get("listing_date"),
                 "avg_amount_20": round(avg_amount, 2),
+                "volume_amount_trend": _volume_amount_trend(completed),
                 "limitation": "不足65个已完成交易日；不得推导完整历史趋势状态。",
             },
             "comparison_basis": ["当前相对结构", "有限历史", "成交与可执行性", "风险收益", "资本效率"],
@@ -899,6 +957,7 @@ def _candidate(row: dict[str, Any], history: list[dict[str, Any]], required_hist
         "historical_context": {
             "status": "READY", "as_of": completed[-1]["date"], "sample_count": len(completed),
             "avg_amount_20": round(avg_amount, 2),
+            "volume_amount_trend": _volume_amount_trend(completed),
         },
         "comparison_basis": ["历史趋势/状态变化", "当前相对结构", "成交与可执行性", "风险收益", "资本效率"],
         "decision_boundary": "默认按买入建议起点进入正式判断；只有明确反证才降级或否决。该建议不自动产生Trial/Confirm、金额或交易动作。",
