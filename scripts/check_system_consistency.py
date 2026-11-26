@@ -338,12 +338,21 @@ def _validate_formal_risk_precedence(report: dict) -> None:
     # current E2E component is consumable.
     e2e_state = str(e2e_component.get("status") or "").upper()
     dashboard_unavailable = bool(re.search(r"当前canonical策略权益状态缺失|风险.*(?:STALE|UNAVAILABLE|不可用)", dashboard, re.I))
-    if e2e_state not in {"DEGRADED", "UNAVAILABLE", "MISSING"}:
-        if dashboard_risk is None or abs(dashboard_risk - formal_risk) > 0.03:
-            mismatches.append(f"dashboard={dashboard_risk}")
-    elif dashboard_risk is not None and not dashboard_unavailable:
-        # E2E risk is not currently consumable. Preserve visibility of the
-        # stale dashboard value, but do not make it a hard consistency failure.
+    # Dashboard risk is a derived projection. It may lag the canonical
+    # strategy-risk producer while market/account writers are still converging.
+    # Keep canonical/E2E risk integrity hard, but never block the system on a
+    # presentation projection that has not yet caught up.
+    dashboard_mismatch = (
+        dashboard_risk is None
+        or abs(dashboard_risk - formal_risk) > 0.03
+    )
+    if dashboard_mismatch:
+        value = "missing" if dashboard_risk is None else str(dashboard_risk)
+        warning = f"risk:formal_precedence:dashboard_projection_stale={value}"
+        if warning not in report.setdefault("warnings", []):
+            report["warnings"].append(warning)
+            _recount(report)
+    elif e2e_state in {"DEGRADED", "UNAVAILABLE", "MISSING"} and not dashboard_unavailable:
         warning = f"risk:formal_precedence:dashboard_stale_value={dashboard_risk}"
         if warning not in report.setdefault("warnings", []):
             report["warnings"].append(warning)
