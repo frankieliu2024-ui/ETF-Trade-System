@@ -213,6 +213,37 @@ class DashboardProjectionTests(unittest.TestCase):
             self.assertNotIn("中证银行（159253）、金融ETF（510230）、酒ETF（512690）、100红利（159307）、香港消费ETF鹏华（159265）", result.split("|")[2])
             self.assertIn("|未说明|", result)
 
+    def test_same_day_index_uses_final_management_actions_not_opportunity_candidate(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "events" / "decisions").mkdir(parents=True)
+            (root / "data" / "state").mkdir(parents=True)
+            (root / "data" / "state" / "CURRENT.json").write_text(json.dumps({
+                "generated_at_beijing": "2026-11-26T14:30:00+08:00"
+            }), encoding="utf-8")
+            (root / "events" / "decisions" / "formal.json").write_text(json.dumps({
+                "event_type": "FORMAL_DECISION",
+                "decision_id": "fd-1425",
+                "decision_time_beijing": "2026-11-26T14:25:00+08:00",
+                "formal_decision": {
+                    "main_candidate": "恒生中国企业ETF易方达（510900）",
+                    "risk_permission": "允许Trial",
+                },
+                "presentation_binding": {
+                    "full_content": """【机会ETF】
+机会ETF数量1个：恒生中国企业ETF易方达（510900）。
+
+【最终管理动作】
+1. 卫星ETF（159206）：建议全部卖出4900份，资金回现金；实际释放尚未确认。
+2. 恒生中国企业ETF易方达（510900）：Trial上限5000元，实际新增部署0元，须人工确认。"""
+                },
+            }, ensure_ascii=False), encoding="utf-8")
+            result = render_same_day_formal_decision_index(root, {})
+            row = next(line for line in result.splitlines() if line.startswith("|14:25|"))
+            self.assertIn("恒生中国企业ETF易方达（510900）", row.split("|")[3])
+            self.assertIn("卫星ETF（159206）：建议全部卖出4900份", row.split("|")[5])
+            self.assertNotEqual(row.split("|")[5], row.split("|")[3])
+
     def test_trade_correction_writer_has_no_dashboard_destination(self):
         source = (ROOT / "scripts/apply_trade_fact_correction.py").read_text(encoding="utf-8")
         self.assertNotIn("upsert_formal_line(ROOT, DASHBOARD", source)
