@@ -33,7 +33,7 @@ class HyperliquidLayeredMappingReplayTests(unittest.TestCase):
         self.assertEqual(by_asset["xyz:CXMT"]["mapping_scope"], "CONTEXT_ONLY")
 
         self.assertIn("588200", by_asset["xyz:DRAM"].get("mapped_assets", []))
-        self.assertIn("588710", by_asset["xyz:CXMT"].get("mapped_assets", []))
+        self.assertIn("588000", by_asset["xyz:CXMT"].get("mapped_assets", []))
         self.assertTrue(by_asset["xyz:DRAM"].get("mapped_assets"))
         self.assertTrue(by_asset["xyz:CXMT"].get("mapped_assets"))
 
