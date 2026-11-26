@@ -5,25 +5,25 @@
   "latest_market_date": "2026-11-26",
   "latest": {
     "kind": "DISCOVERY",
-    "identity": "DISCOVERY:2026-11-26:auction:data/state/formal_discovery_current.json",
+    "identity": "DISCOVERY:2026-11-26:live:data/state/formal_discovery_current.json",
     "context_id": "",
-    "formed_at_beijing": "2026-11-26T09:28:11+08:00",
-    "fact_time_beijing": "auction",
+    "formed_at_beijing": "2026-11-26T09:40:48+08:00",
+    "fact_time_beijing": "live",
     "source_path": "data/state/formal_discovery_current.json",
-    "status": "DEGRADED",
-    "quality_status": "DEGRADED",
-    "coverage_status": "PARTIAL",
-    "candidate_count": 9,
+    "status": "READY",
+    "quality_status": "READY",
+    "coverage_status": "COMPLETE",
+    "candidate_count": 8,
     "observation_count": null,
-    "latest_snapshot": "data/market/snapshots/2026-11-26_092811.json",
-    "source_snapshot_identity": "b1aeafd6498527096bb5d44b88dd7fde4c8938bfd6df43f884e28a1bf1d5a2b6",
-    "source_snapshot_as_of_beijing": "2026-11-26T09:28:11+08:00",
+    "latest_snapshot": "data/market/snapshots/2026-11-26_094048.json",
+    "source_snapshot_identity": "9372b5fd843eeacf56a68c22ab7dde5c268b496b1f86c564e9020865b690c508",
+    "source_snapshot_as_of_beijing": "2026-11-26T09:40:48+08:00",
     "node_evidence_binding": {
-      "binding_id": "2026-11-26:auction:b1aeafd6498527096bb5d44b88dd7fde4c8938bfd6df43f884e28a1bf1d5a2b6",
-      "a_share_snapshot_identity": "b1aeafd6498527096bb5d44b88dd7fde4c8938bfd6df43f884e28a1bf1d5a2b6",
-      "a_share_snapshot_as_of_beijing": "2026-11-26T09:28:11+08:00",
-      "hyperliquid_collection_time_beijing": "2026-11-26T09:22:36+08:00",
-      "hyperliquid_context_id": "hl-2ca375aac8f372e1",
+      "binding_id": "2026-11-26:live:9372b5fd843eeacf56a68c22ab7dde5c268b496b1f86c564e9020865b690c508",
+      "a_share_snapshot_identity": "9372b5fd843eeacf56a68c22ab7dde5c268b496b1f86c564e9020865b690c508",
+      "a_share_snapshot_as_of_beijing": "2026-11-26T09:40:48+08:00",
+      "hyperliquid_collection_time_beijing": "2026-11-26T09:32:37+08:00",
+      "hyperliquid_context_id": "hl-646bd23e033a8bfa",
       "hyperliquid_quality_status": "PASS",
       "hyperliquid_observation_count": 26
     },
@@ -32,34 +32,50 @@
     "etf_bindings": null,
     "binding_candidates": null,
     "binding_status": "BOUND_TO_SAME_A_SHARE_SNAPSHOT",
-    "binding_generated_at_beijing": "2026-11-26T09:28:11+08:00",
-    "binding_source_discovery_generated_at_beijing": "2026-11-26T09:28:11+08:00",
+    "binding_generated_at_beijing": "2026-11-26T09:40:48+08:00",
+    "binding_source_discovery_generated_at_beijing": "2026-11-26T09:40:48+08:00",
     "candidates": [
       {
-        "candidate_signature": "159792::OBSERVATION_EVALUATION_INPUT:OBSERVATION_FULL_EVALUATION",
-        "code": "159792",
-        "name": "港股通互联网ETF富国",
-        "display_name": "港股通互联网ETF富国（159792）",
-        "surfaced_states": [],
+        "candidate_signature": "159207::OBSERVATION_EVALUATION_INPUT:OBSERVATION_FULL_EVALUATION",
+        "code": "159207",
+        "name": "高股息ETF广发",
+        "display_name": "高股息ETF广发（159207）",
+        "surfaced_states": [
+          {
+            "state": "PERSISTENT_TREND",
+            "evidence": {
+              "window_returns": {
+                "5": -0.035045,
+                "20": 0.026886,
+                "40": 0.044092,
+                "60": 0.027778
+              },
+              "positive_windows": [
+                20,
+                40,
+                60
+              ],
+              "max_drawdown_60": 0.038917
+            }
+          }
+        ],
         "discovery_spot": {
-          "price": 0.451,
-          "change_pct": 2.036199095022617,
-          "amount": 18970000.0,
-          "amplitude_pct": null,
-          "turnover_pct": null,
-          "volume_ratio": null,
-          "high": 0.451,
-          "low": 0.451,
-          "open": 0.451,
-          "prev_close": 0.442,
-          "return_60d_pct": null,
-          "return_ytd_pct": null,
-          "provider_timestamp": 1795656450000
+          "price": 1.181,
+          "change_pct": -0.25,
+          "amount": 19730739.0,
+          "amplitude_pct": 0.68,
+          "turnover_pct": 0.75,
+          "volume_ratio": 2.53,
+          "high": 1.185,
+          "low": 1.177,
+          "open": 1.182,
+          "prev_close": 1.184,
+          "return_60d_pct": 2.16,
+          "return_ytd_pct": 8.25,
+          "provider_timestamp": 1795657248
         },
         "information_classes": [
-          "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE",
-          "SHORT_HISTORY_CURRENT_CHANGE"
+          "PERSISTENT_STRUCTURE"
         ],
         "comparison_basis": [
           "历史趋势/状态变化",
@@ -70,30 +86,47 @@
         ]
       },
       {
-        "candidate_signature": "159949::OBSERVATION_EVALUATION_INPUT:OBSERVATION_FULL_EVALUATION",
-        "code": "159949",
-        "name": "创业板50ETF华安",
-        "display_name": "创业板50ETF华安（159949）",
-        "surfaced_states": [],
+        "candidate_signature": "159307::OBSERVATION_EVALUATION_INPUT:OBSERVATION_FULL_EVALUATION",
+        "code": "159307",
+        "name": "红利低波100ETF博时",
+        "display_name": "红利低波100ETF博时（159307）",
+        "surfaced_states": [
+          {
+            "state": "PERSISTENT_TREND",
+            "evidence": {
+              "window_returns": {
+                "5": -0.016744,
+                "20": 0.025218,
+                "40": 0.050696,
+                "60": 0.039331
+              },
+              "positive_windows": [
+                20,
+                40,
+                60
+              ],
+              "max_drawdown_60": 0.027698
+            }
+          }
+        ],
         "discovery_spot": {
-          "price": 0.994,
-          "change_pct": 1.6359918200409052,
-          "amount": 21320000.0,
-          "amplitude_pct": null,
-          "turnover_pct": null,
-          "volume_ratio": null,
-          "high": 0.994,
-          "low": 0.994,
-          "open": 0.994,
-          "prev_close": 0.978,
-          "return_60d_pct": null,
-          "return_ytd_pct": null,
-          "provider_timestamp": 1795656471000
+          "price": 1.058,
+          "change_pct": 0.09460737937561081,
+          "amount": 12570000.0,
+          "amplitude_pct": 0.47,
+          "turnover_pct": 0.21,
+          "volume_ratio": 2.92,
+          "high": 1.059,
+          "low": 1.054,
+          "open": 1.056,
+          "prev_close": 1.057,
+          "return_60d_pct": 3.52,
+          "return_ytd_pct": 3.32,
+          "provider_timestamp": 1795657248
         },
         "information_classes": [
-          "NEW_RELATIVE_DIVERGENCE",
           "STRUCTURAL_CHANGE",
-          "SHORT_HISTORY_CURRENT_CHANGE"
+          "PERSISTENT_STRUCTURE"
         ],
         "comparison_basis": [
           "历史趋势/状态变化",
@@ -104,30 +137,46 @@
         ]
       },
       {
-        "candidate_signature": "513050::OBSERVATION_EVALUATION_INPUT:OBSERVATION_FULL_EVALUATION",
-        "code": "513050",
-        "name": "中概互联网ETF易方达",
-        "display_name": "中概互联网ETF易方达（513050）",
-        "surfaced_states": [],
+        "candidate_signature": "159529::OBSERVATION_EVALUATION_INPUT:OBSERVATION_FULL_EVALUATION",
+        "code": "159529",
+        "name": "标普消费ETF景顺",
+        "display_name": "标普消费ETF景顺（159529）",
+        "surfaced_states": [
+          {
+            "state": "PERSISTENT_TREND",
+            "evidence": {
+              "window_returns": {
+                "5": -0.027818,
+                "20": -0.02924,
+                "40": 0.03669,
+                "60": 0.005299
+              },
+              "positive_windows": [
+                40,
+                60
+              ],
+              "max_drawdown_60": 0.079577
+            }
+          }
+        ],
         "discovery_spot": {
-          "price": 0.867,
-          "change_pct": 2.4822695035461084,
-          "amount": 25780000.0,
-          "amplitude_pct": null,
-          "turnover_pct": null,
-          "volume_ratio": null,
-          "high": 0.867,
-          "low": 0.867,
-          "open": 0.867,
-          "prev_close": 0.846,
-          "return_60d_pct": null,
-          "return_ytd_pct": null,
-          "provider_timestamp": 1795656495000
+          "price": 1.335,
+          "change_pct": 0.53,
+          "amount": 23032303.008,
+          "amplitude_pct": 0.53,
+          "turnover_pct": 2.12,
+          "volume_ratio": 1.79,
+          "high": 1.34,
+          "low": 1.333,
+          "open": 1.336,
+          "prev_close": 1.328,
+          "return_60d_pct": 1.29,
+          "return_ytd_pct": -2.7,
+          "provider_timestamp": 1795657248
         },
         "information_classes": [
-          "NEW_RELATIVE_DIVERGENCE",
           "STRUCTURAL_CHANGE",
-          "SHORT_HISTORY_CURRENT_CHANGE"
+          "PERSISTENT_STRUCTURE"
         ],
         "comparison_basis": [
           "历史趋势/状态变化",
@@ -138,30 +187,29 @@
         ]
       },
       {
-        "candidate_signature": "513120::OBSERVATION_EVALUATION_INPUT:OBSERVATION_FULL_EVALUATION",
-        "code": "513120",
-        "name": "港股创新药ETF广发",
-        "display_name": "港股创新药ETF广发（513120）",
+        "candidate_signature": "159866::OBSERVATION_EVALUATION_INPUT:OBSERVATION_FULL_EVALUATION",
+        "code": "159866",
+        "name": "日经ETF工银",
+        "display_name": "日经ETF工银（159866）",
         "surfaced_states": [],
         "discovery_spot": {
-          "price": 1.113,
-          "change_pct": 1.6438356164383494,
-          "amount": 33450000.0,
-          "amplitude_pct": null,
-          "turnover_pct": null,
-          "volume_ratio": null,
-          "high": 1.113,
-          "low": 1.113,
-          "open": 1.113,
-          "prev_close": 1.095,
-          "return_60d_pct": null,
-          "return_ytd_pct": null,
-          "provider_timestamp": 1795656496000
+          "price": 1.457,
+          "change_pct": 1.96,
+          "amount": 41079897.4,
+          "amplitude_pct": 0.49,
+          "turnover_pct": 2.23,
+          "volume_ratio": 3.0,
+          "high": 1.464,
+          "low": 1.457,
+          "open": 1.462,
+          "prev_close": 1.429,
+          "return_60d_pct": -13.27,
+          "return_ytd_pct": 8.65,
+          "provider_timestamp": 1795657248
         },
         "information_classes": [
           "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE",
-          "SHORT_HISTORY_CURRENT_CHANGE"
+          "STRUCTURAL_CHANGE"
         ],
         "comparison_basis": [
           "历史趋势/状态变化",
@@ -172,30 +220,29 @@
         ]
       },
       {
-        "candidate_signature": "513130::OBSERVATION_EVALUATION_INPUT:OBSERVATION_FULL_EVALUATION",
-        "code": "513130",
-        "name": "恒生科技ETF华泰柏瑞",
-        "display_name": "恒生科技ETF华泰柏瑞（513130）",
+        "candidate_signature": "510900::OBSERVATION_EVALUATION_INPUT:OBSERVATION_FULL_EVALUATION",
+        "code": "510900",
+        "name": "恒生中国企业ETF易方达",
+        "display_name": "恒生中国企业ETF易方达（510900）",
         "surfaced_states": [],
         "discovery_spot": {
-          "price": 0.426,
-          "change_pct": 1.670644391408116,
-          "amount": 23680000.0,
-          "amplitude_pct": null,
-          "turnover_pct": null,
-          "volume_ratio": null,
-          "high": 0.426,
-          "low": 0.426,
-          "open": 0.426,
-          "prev_close": 0.419,
-          "return_60d_pct": null,
-          "return_ytd_pct": null,
-          "provider_timestamp": 1795656498000
+          "price": 0.922,
+          "change_pct": 1.65,
+          "amount": 12935076.0,
+          "amplitude_pct": 0.66,
+          "turnover_pct": 0.45,
+          "volume_ratio": 2.62,
+          "high": 0.922,
+          "low": 0.916,
+          "open": 0.917,
+          "prev_close": 0.907,
+          "return_60d_pct": -12.61,
+          "return_ytd_pct": -19.05,
+          "provider_timestamp": 1795657247
         },
         "information_classes": [
           "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE",
-          "SHORT_HISTORY_CURRENT_CHANGE"
+          "STRUCTURAL_CHANGE"
         ],
         "comparison_basis": [
           "历史趋势/状态变化",
@@ -206,30 +253,29 @@
         ]
       },
       {
-        "candidate_signature": "513310::OBSERVATION_EVALUATION_INPUT:OBSERVATION_FULL_EVALUATION",
-        "code": "513310",
-        "name": "中韩半导体ETF华泰柏瑞",
-        "display_name": "中韩半导体ETF华泰柏瑞（513310）",
+        "candidate_signature": "513000::OBSERVATION_EVALUATION_INPUT:OBSERVATION_FULL_EVALUATION",
+        "code": "513000",
+        "name": "日经225ETF易方达",
+        "display_name": "日经225ETF易方达（513000）",
         "surfaced_states": [],
         "discovery_spot": {
-          "price": 3.318,
-          "change_pct": 2.8518288902665834,
-          "amount": 69350000.0,
-          "amplitude_pct": null,
-          "turnover_pct": null,
-          "volume_ratio": null,
-          "high": 3.318,
-          "low": 3.318,
-          "open": 3.318,
-          "prev_close": 3.226,
-          "return_60d_pct": null,
-          "return_ytd_pct": null,
-          "provider_timestamp": 1795656474000
+          "price": 1.958,
+          "change_pct": 1.77,
+          "amount": 25372826.0,
+          "amplitude_pct": 0.42,
+          "turnover_pct": 1.18,
+          "volume_ratio": 3.0,
+          "high": 1.965,
+          "low": 1.957,
+          "open": 1.963,
+          "prev_close": 1.924,
+          "return_60d_pct": -14.54,
+          "return_ytd_pct": 8.78,
+          "provider_timestamp": 1795657251
         },
         "information_classes": [
           "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE",
-          "SHORT_HISTORY_CURRENT_CHANGE"
+          "STRUCTURAL_CHANGE"
         ],
         "comparison_basis": [
           "历史趋势/状态变化",
@@ -240,30 +286,29 @@
         ]
       },
       {
-        "candidate_signature": "513330::OBSERVATION_EVALUATION_INPUT:OBSERVATION_FULL_EVALUATION",
-        "code": "513330",
-        "name": "恒生互联网ETF华夏",
-        "display_name": "恒生互联网ETF华夏（513330）",
+        "candidate_signature": "513200::OBSERVATION_EVALUATION_INPUT:OBSERVATION_FULL_EVALUATION",
+        "code": "513200",
+        "name": "港股通医药ETF易方达",
+        "display_name": "港股通医药ETF易方达（513200）",
         "surfaced_states": [],
         "discovery_spot": {
-          "price": 0.279,
-          "change_pct": 2.19780219780219,
-          "amount": 27300000.0,
-          "amplitude_pct": null,
-          "turnover_pct": null,
-          "volume_ratio": null,
-          "high": 0.279,
-          "low": 0.279,
-          "open": 0.279,
-          "prev_close": 0.273,
-          "return_60d_pct": null,
-          "return_ytd_pct": null,
-          "provider_timestamp": 1795656474000
+          "price": 0.934,
+          "change_pct": 1.63,
+          "amount": 13441091.0,
+          "amplitude_pct": 0.87,
+          "turnover_pct": 1.79,
+          "volume_ratio": 2.24,
+          "high": 0.938,
+          "low": 0.93,
+          "open": 0.93,
+          "prev_close": 0.919,
+          "return_60d_pct": -16.16,
+          "return_ytd_pct": -9.41,
+          "provider_timestamp": 1795657249
         },
         "information_classes": [
           "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE",
-          "SHORT_HISTORY_CURRENT_CHANGE"
+          "STRUCTURAL_CHANGE"
         ],
         "comparison_basis": [
           "历史趋势/状态变化",
@@ -274,64 +319,29 @@
         ]
       },
       {
-        "candidate_signature": "515880::OBSERVATION_EVALUATION_INPUT:OBSERVATION_FULL_EVALUATION",
-        "code": "515880",
-        "name": "通信ETF国泰",
-        "display_name": "通信ETF国泰（515880）",
+        "candidate_signature": "520970::OBSERVATION_EVALUATION_INPUT:OBSERVATION_FULL_EVALUATION",
+        "code": "520970",
+        "name": "港股通创新药ETF嘉实",
+        "display_name": "港股通创新药ETF嘉实（520970）",
         "surfaced_states": [],
         "discovery_spot": {
-          "price": 0.381,
-          "change_pct": 2.144772117962468,
-          "amount": 21920000.0,
-          "amplitude_pct": null,
-          "turnover_pct": null,
-          "volume_ratio": null,
-          "high": 0.381,
-          "low": 0.381,
-          "open": 0.381,
-          "prev_close": 0.373,
-          "return_60d_pct": null,
-          "return_ytd_pct": null,
-          "provider_timestamp": 1795656487000
+          "price": 0.773,
+          "change_pct": 1.71,
+          "amount": 16099859.0,
+          "amplitude_pct": 1.05,
+          "turnover_pct": 1.91,
+          "volume_ratio": 2.53,
+          "high": 0.778,
+          "low": 0.77,
+          "open": 0.77,
+          "prev_close": 0.76,
+          "return_60d_pct": -17.59,
+          "return_ytd_pct": -6.3,
+          "provider_timestamp": 1795657250
         },
         "information_classes": [
           "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE",
-          "SHORT_HISTORY_CURRENT_CHANGE"
-        ],
-        "comparison_basis": [
-          "历史趋势/状态变化",
-          "当前相对结构",
-          "成交与可执行性",
-          "风险收益",
-          "资本效率"
-        ]
-      },
-      {
-        "candidate_signature": "588170::OBSERVATION_EVALUATION_INPUT:OBSERVATION_FULL_EVALUATION",
-        "code": "588170",
-        "name": "科创半导体ETF华夏",
-        "display_name": "科创半导体ETF华夏（588170）",
-        "surfaced_states": [],
-        "discovery_spot": {
-          "price": 0.643,
-          "change_pct": 1.9017432646592836,
-          "amount": 63810000.0,
-          "amplitude_pct": null,
-          "turnover_pct": null,
-          "volume_ratio": null,
-          "high": 0.643,
-          "low": 0.643,
-          "open": 0.643,
-          "prev_close": 0.631,
-          "return_60d_pct": null,
-          "return_ytd_pct": null,
-          "provider_timestamp": 1795656499000
-        },
-        "information_classes": [
-          "NEW_RELATIVE_DIVERGENCE",
-          "STRUCTURAL_CHANGE",
-          "SHORT_HISTORY_CURRENT_CHANGE"
+          "STRUCTURAL_CHANGE"
         ],
         "comparison_basis": [
           "历史趋势/状态变化",
@@ -345,13 +355,13 @@
   },
   "continuity": {
     "status": "READY",
-    "latest_identity": "DISCOVERY:2026-11-26:auction:data/state/formal_discovery_current.json",
-    "latest_formed_at_beijing": "2026-11-26T09:28:11+08:00",
+    "latest_identity": "DISCOVERY:2026-11-26:live:data/state/formal_discovery_current.json",
+    "latest_formed_at_beijing": "2026-11-26T09:40:48+08:00",
     "latest_observation_count": 0,
-    "latest_candidate_count": 9,
+    "latest_candidate_count": 8,
     "rule": "正式判断只消费具有identity且含实际对象证据的最新合法脉冲；历史摘要只用于审计，不作为事实补齐来源。"
   },
-  "record_count": 1,
+  "record_count": 2,
   "source_index": "/home/runner/work/ETF-Trade-System/ETF-Trade-System/data/state/discovery_pulse_index.json",
   "retention_rule": "Latest valid pulse plus a 24-pulse PIT recovery window; older history is compact summary only."
 }
