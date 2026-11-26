@@ -1,23 +1,30 @@
 {
   "schema_version": "1.1",
-  "checked_at": "2026-11-26T16:28:57+08:00",
+  "checked_at": "2026-11-26T16:33:11+08:00",
   "mode": "DETERMINISTIC_MAINTENANCE_GUARD",
-  "scope": "FULL",
-  "global_health_status": "PASS",
+  "scope": "ACCOUNT_FAST",
+  "global_health_status": "NOT_EVALUATED",
   "status": "PASS",
-  "system_consistency_status": "PASS",
+  "system_consistency_status": "UNKNOWN",
   "self_healing_classification": "DERIVED_CONTEXT_IDENTITY_DRIFT",
   "runtime_health_status": "PASS",
   "current_snapshot": "data/market/snapshots/2026-11-26_150723.json",
   "reconciliation": {
     "status": "PASS",
-    "trade_count": 65,
+    "trade_count": 67,
     "fact_enrichment_only_count": 0,
     "executed_trade_event_overlay_count": 0,
     "position_ledger_basis": "CANONICAL_REPLAY_FINAL_COMPLETE_POSITION_IDENTITY",
     "position_reconciliation": {
       "status": "PASS",
       "checks": [
+        {
+          "code": "159101",
+          "ledger_quantity": 8700.0,
+          "account_quantity": 8700.0,
+          "difference": 0.0,
+          "status": "PASS"
+        },
         {
           "code": "159206",
           "ledger_quantity": 4900.0,
@@ -61,6 +68,13 @@
           "status": "PASS"
         },
         {
+          "code": "510900",
+          "ledger_quantity": 5400.0,
+          "account_quantity": 5400.0,
+          "difference": 0.0,
+          "status": "PASS"
+        },
+        {
           "code": "511380",
           "ledger_quantity": 400.0,
           "account_quantity": 400.0,
@@ -94,9 +108,9 @@
     "gross_equity_reconciliation": {
       "status": "WARNING",
       "blocking": false,
-      "strategy_cash": 85538.4,
-      "current_etf_market_value": 49279.0,
-      "reported_gross_equity": 134817.4,
+      "strategy_cash": 75563.7,
+      "current_etf_market_value": 59196.0,
+      "reported_gross_equity": 134759.7,
       "difference": 0.0,
       "series_row_difference": 0.0,
       "canonical_replay_complete": false
