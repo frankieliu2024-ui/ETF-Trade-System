@@ -144,6 +144,8 @@ def build_event() -> dict | None:
     if not selected:
         return None
     tech, semi, tech_label, semi_label, direct = selected
+    vix = context.get("objects", {}).get("VIX") or {}
+    vix_for_summary = vix if vix.get("quality_status") in {"PASS", "FRESH"} else None
     phase = str(tech.get("current_market_phase") or "")
     if phase != str(semi.get("current_market_phase") or ""):
         return None
@@ -181,6 +183,7 @@ def build_event() -> dict | None:
         semi_label=semi_label,
         direct=direct,
         node=node,
+        vix=vix_for_summary,
     )
     if node == "OPEN":
         title = _open_title(tech_label, semi_label, tech_gap, semi_gap, tech, semi)
@@ -242,14 +245,17 @@ def build_event() -> dict | None:
             "direction": "UP" if min(tech_change, semi_change) >= 0 else ("DOWN" if max(tech_change, semi_change) <= 0 else "MIXED"),
             "event_category": "OPEN_SIGNAL" if node == "OPEN" else "CLOSE_SUMMARY",
             "fact_family": "US_SESSION_STRUCTURE",
-            "object_codes": ["NDX", "SOX"],
-            "source_fact_ids": [f"{tech_date}:NDX:{as_of}", f"{tech_date}:SOX:{as_of}"],
+            "object_codes": ["NDX", "SOX"] + (["VIX"] if vix_for_summary else []),
+            "source_fact_ids": [f"{tech_date}:NDX:{as_of}", f"{tech_date}:SOX:{as_of}"] + ([f"{tech_date}:VIX:{as_of}"] if vix_for_summary else []),
             "session_node": node,
             "direct_cash_indices_used": direct,
             "tech_open_gap_pct": tech_gap,
             "semi_open_gap_pct": semi_gap,
             "tech_change_pct": tech_change,
             "semi_change_pct": semi_change,
+            "vix_change_pct": number(vix_for_summary.get("regular_session_change_vs_previous_close_pct")) if vix_for_summary else None,
+            "vix_close": number(vix_for_summary.get("regular_session_close_reference")) if vix_for_summary else None,
+            "vix_coverage_status": "CONFIRMED" if vix_for_summary else "UNAVAILABLE_OR_INVALID",
             "market_as_of_beijing": as_of,
             "cash_close_as_of_beijing": _regular_cash_close_beijing(tech_date) if node == "CLOSE" else "",
             "generated_at_beijing": now().strftime("%Y-%m-%d %H:%M:%S"),
