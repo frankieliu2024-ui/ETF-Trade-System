@@ -73,7 +73,7 @@ def _implication_lines(tone: str) -> str:
     )
 
 
-def us_session_structure(*, tech: dict, semi: dict, tech_label: str, semi_label: str, direct: bool, node: str) -> tuple[list[str], list[str], str, str, str]:
+def us_session_structure(*, tech: dict, semi: dict, tech_label: str, semi_label: str, direct: bool, node: str, vix: dict | None = None) -> tuple[list[str], list[str], str, str, str]:
     tech_change = number(tech.get("regular_session_change_vs_previous_close_pct"))
     semi_change = number(semi.get("regular_session_change_vs_previous_close_pct"))
     tone = _us_tone(tech_change, semi_change)
@@ -92,6 +92,14 @@ def us_session_structure(*, tech: dict, semi: dict, tech_label: str, semi_label:
     headline = [f"- **外部结构**：{structure}。"]
     headline.append(f"- **宽科技**：{tech_label}{pct(tech_change)}。")
     headline.append(f"- **半导体**：{semi_label}{pct(semi_change)}。")
+    if vix:
+        vix_change = number(vix.get("regular_session_change_vs_previous_close_pct"))
+        vix_close = number(vix.get("regular_session_close_reference"))
+        if vix_close is not None:
+            vix_text = f"{vix_close:.2f}"
+            if vix_change is not None:
+                vix_text += f"（较前收{pct(vix_change)}）"
+            headline.append(f"- **风险背景｜VIX**：{vix_text}，作为波动率风险背景参考。")
     if spread is not None and abs(spread) >= 0.75:
         headline.append(f"- **结构差**：两者相差约{abs(spread):.2f}个百分点。")
     headline.append(f"- **数据口径**：{basis}。")
