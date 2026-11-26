@@ -32,6 +32,12 @@ BASE_CASH_INDICES = {
     "SOX": {"name": "费城半导体指数", "role": "FORMAL_US_CASH_INDEX", "symbol": "^SOX"},
 }
 
+# VIX is a formal US risk-context index. It supplements the NDX/SOX
+# structure gate and must not independently create an A-share trading action.
+BASE_RISK_INDICES = {
+    "VIX": {"name": "芝加哥期权交易所波动率指数", "role": "FORMAL_US_RISK_INDEX", "symbol": "^VIX"},
+}
+
 
 def request_chart(symbol: str) -> dict:
     encoded = urllib.parse.quote(symbol, safe="")
@@ -180,7 +186,7 @@ def build_symbol(symbol: str, name: str, role: str, conditional: bool) -> dict:
     # completed REGULAR value as a session reference outside cash hours instead
     # of incorrectly degrading the whole US context. During REGULAR they remain
     # subject to the same freshness gate as every live object.
-    if role == "FORMAL_US_CASH_INDEX" and current_phase != "REGULAR" and latest.get("session") == "REGULAR":
+    if role in {"FORMAL_US_CASH_INDEX", "FORMAL_US_RISK_INDEX"} and current_phase != "REGULAR" and latest.get("session") == "REGULAR":
         latest_et = datetime.fromtimestamp(int(latest["timestamp"]), timezone.utc).astimezone(NEW_YORK)
         quality_status = "PASS"
         freshness_status = "SESSION_REFERENCE" if latest_et.date() == current_et.date() else "PREVIOUS_SESSION_REFERENCE"
@@ -222,6 +228,9 @@ def build() -> dict:
     specs.update({
         key: (spec["name"], spec["role"], False, spec["symbol"]) for key, spec in BASE_CASH_INDICES.items()
     })
+    specs.update({
+        key: (spec["name"], spec["role"], False, spec["symbol"]) for key, spec in BASE_RISK_INDICES.items()
+    })
     for symbol in requested:
         if symbol not in specs:
             specs[symbol] = (symbol, "CONDITIONAL_US_INDUSTRY_STOCK", True, symbol)
@@ -258,6 +267,7 @@ def build() -> dict:
         ),
         "base_proxies": list(BASE_PROXIES.keys()),
         "base_cash_indices": list(BASE_CASH_INDICES.keys()),
+        "base_risk_indices": list(BASE_RISK_INDICES.keys()),
         "conditional_symbols": requested,
         "objects": objects,
         "session_definition": {
@@ -272,7 +282,7 @@ def build() -> dict:
             "下一美股交易日PRE_MARKET通常在北京时间A股收盘后才开始，因此不得把美国盘前误称为当天A股上午的同步领先信号。"
         ),
         "decision_boundary": (
-            "REGULAR优先使用纳斯达克100指数（NDX）和费城半导体指数（SOX）直接指数数据；"
+            "REGULAR优先使用纳斯达克100指数（NDX）和费城半导体指数（SOX）直接指数数据，并同步记录VIX作为风险背景；"
             "PRE_MARKET/POST_MARKET使用QQQ/SOXX及条件美股个股作为前置信号；直接指数不可用时代理必须明确标注。"
             "任何美股证据都必须继续经过A股本地传导与目标ETF自身反馈后才可进入机会判断。"
         ),
