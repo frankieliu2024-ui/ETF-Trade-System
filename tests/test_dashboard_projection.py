@@ -69,12 +69,30 @@ class DashboardProjectionTests(unittest.TestCase):
                 "event_type": "FORMAL_DECISION_REPORT",
                 "reviewed_at_beijing": "2026-10-27T14:55:57+08:00",
                 "presentation_binding": {
-                    "full_content": ("【当前正式判断】\\n"
-                                      "1. 中证银行（159253）、金融ETF（510230）、酒ETF（512690）、100红利（159307）、香港消费ETF鹏华（159265）：继续观察但不追加，逾期Trial不升级Confirm。\\n"
-                                      "2. 机会ETF数量1个：港股通恒生科技ETF华安（520840），建议小额Trial上限5000元。\\n\\n"
-                                      "【最终管理动作】\\n"
-                                      "1. 中证银行（159253）、金融ETF（510230）、酒ETF（512690）、100红利（159307）、香港消费ETF鹏华（159265）：继续观察但不追加。\\n"
-                                      "2. 港股通恒生科技ETF华安（520840）：Trial上限5000元。")
+                    "full_content": "风险许可为保留现金、管理既有仓位、暂不新增。候选中仅将银行ETF富国（159887）评为机会ETF。建议新增部署0元，实际释放0份。"
+                }
+            }, ensure_ascii=False), encoding="utf-8")
+            (root / "data" / "state" / "account_fact.json").write_text(json.dumps({
+                "updated_at": "2026-10-27T15:36:44+08:00",
+                "positions": []
+            }), encoding="utf-8")
+            decision = latest_canonical_formal_decision(root)
+            self.assertEqual(decision["risk_permission"], "保留现金、管理既有仓位、暂不新增")
+            self.assertIn("银行ETF富国", decision["main_candidate"])
+            self.assertIn("新增部署0元", decision["amount_action"])
+
+    def test_latest_dashboard_decision_ignores_stage_review(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            path = root / "events/decisions"
+            path.mkdir(parents=True)
+            (path / "formal.json").write_text(json.dumps({
+                "event_type": "FORMAL_DECISION",
+                "decision_time_beijing": "2026-09-14T11:20:00+08:00",
+                "formal_decision": {
+                    "risk_permission": "禁止新增",
+                    "main_candidate": "现金｜无机会",
+                    "data_as_of_beijing": "2026-09-14T11:20:00+08:00",
                 },
             }, ensure_ascii=False), encoding="utf-8")
             self.assertEqual(latest_canonical_formal_decision(root)["risk_permission"], "禁止新增")
@@ -187,6 +205,60 @@ class DashboardProjectionTests(unittest.TestCase):
 【最终管理动作】
 1. 中证银行（159253）、金融ETF（510230）、酒ETF（512690）、100红利（159307）、香港消费ETF鹏华（159265）：继续观察但不追加。
 2. 港股通恒生科技ETF华安（520840）：Trial上限5000元。"""
+                },
+            }, ensure_ascii=False), encoding="utf-8")
+            result = render_same_day_formal_decision_index(root, {})
+            self.assertIn("|机会ETF|与上一机会关系|", result)
+            self.assertIn("港股通恒生科技ETF华安（520840）", result)
+            self.assertNotIn("中证银行（159253）、金融ETF（510230）、酒ETF（512690）、100红利（159307）、香港消费ETF鹏华（159265）", result.split("|")[2])
+            self.assertIn("|未说明|", result)
+
+    def test_trade_correction_writer_has_no_dashboard_destination(self):
+        source = (ROOT / "scripts/apply_trade_fact_correction.py").read_text(encoding="utf-8")
+        self.assertNotIn("upsert_formal_line(ROOT, DASHBOARD", source)
+
+
+    def test_legacy_literal_newlines_are_recovered_as_real_markdown(self):
+        legacy = "# ETF当前状态_DASHBOARD\\n\\n## 云端实时状态（自动同步）\\n\\n|标的|数量|\\n|-|-|\\n|黄金ETF（518880）|500|\\n\\n## 当前状态使用边界\\n\\n### 下一关键节点\\n- 下一A股交易日：2026-09-04"
+        result = normalize_dashboard_projection(legacy, Path("."), {"updated_at": "2026-09-03T11:21:20+08:00"})
+        self.assertGreater(len(result.splitlines()), 1)
+        self.assertNotIn("\\n", result)
+        self.assertEqual(result.splitlines()[0], "# ETF当前状态_DASHBOARD")
+        self.assertIn("## 云端实时状态（自动同步）", result.splitlines())
+        self.assertIn("|标的|数量|", result.splitlines())
+        self.assertIn("## 当前状态使用边界", result.splitlines())
+
+    def test_dashboard_newline_normalization_is_idempotent(self):
+        legacy = "# ETF当前状态_DASHBOARD\\n\\n## 云端实时状态（自动同步）\\n\\n### 当前持仓事实"
+        once = normalize_dashboard_projection(legacy, Path("."), {"updated_at": "2026-09-03T11:21:20+08:00"})
+        twice = normalize_dashboard_projection(once, Path("."), {"updated_at": "2026-09-03T11:21:20+08:00"})
+        self.assertEqual(once, twice)
+        self.assertNotIn("\\n", twice)
+
+    def test_current_dashboard_is_real_multiline_markdown(self):
+        dashboard = (ROOT / "ETF当前状态_DASHBOARD.md").read_text(encoding="utf-8")
+        self.assertGreater(len(dashboard.splitlines()), 1)
+        self.assertNotIn("\\\\n", dashboard)
+        self.assertIn("# ETF当前状态_DASHBOARD", dashboard.splitlines())
+        self.assertIn("## 云端实时状态（自动同步）", dashboard.splitlines())
+
+    def test_old_decision_is_historical_when_account_positions_changed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            decision_dir = root / "events/decisions"
+            state_dir = root / "data/state"
+            decision_dir.mkdir(parents=True)
+            state_dir.mkdir(parents=True)
+            (decision_dir / "formal.json").write_text(json.dumps({
+                "event_type": "FORMAL_DECISION",
+                "decision_time_beijing": "2026-10-13T07:59:54+08:00",
+                "formal_decision": {
+                    "risk_permission": "禁止新增",
+                    "lifecycle": {
+                        "宁德时代（300750）": "持有管理",
+                        "纳指ETF（159941）": "持有管理",
+                    },
+                    "data_as_of_beijing": "2026-10-13T07:59:54+08:00",
                 },
             }, ensure_ascii=False), encoding="utf-8")
             (state_dir / "account_fact.json").write_text(json.dumps({
