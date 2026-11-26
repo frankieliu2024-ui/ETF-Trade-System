@@ -198,12 +198,12 @@ class DashboardProjectionTests(unittest.TestCase):
                     "amount_action": "Trial上限5000元",
                 },
                 "presentation_binding": {
-                    "full_content": "机会ETF保留1个：港股通恒生科技ETF华安（520840），建议小额Trial上限5000元。"
-                },
+                    "full_content": "【当前正式判断】\n1. 中证银行（159253）、金融ETF（510230）、酒ETF（512690）、100红利（159307）、香港消费ETF鹏华（159265）：继续观察但不追加，逾期Trial不升级Confirm。\n2. 机会ETF数量1个：港股通恒生科技ETF华安（520840），建议小额Trial上限5000元。\n\n【最终管理动作】\n1. 中证银行（159253）、金融ETF（510230）、酒ETF（512690）、100红利（159307）、香港消费ETF鹏华（159265）：继续观察但不追加。\n2. 港股通恒生科技ETF华安（520840）：Trial上限5000元。"\n                },
             }, ensure_ascii=False), encoding="utf-8")
             result = render_same_day_formal_decision_index(root, {})
             self.assertIn("|机会ETF|与上一机会关系|", result)
             self.assertIn("港股通恒生科技ETF华安（520840）", result)
+            self.assertNotIn("中证银行（159253）、金融ETF（510230）、酒ETF（512690）、100红利（159307）、香港消费ETF鹏华（159265）", result.split("|")[2])
             self.assertIn("|未说明|", result)
 
     def test_trade_correction_writer_has_no_dashboard_destination(self):
