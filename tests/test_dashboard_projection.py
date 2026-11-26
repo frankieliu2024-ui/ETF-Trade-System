@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from sync_formal_files import normalize_dashboard_projection, latest_canonical_formal_decision, format_position_pnl, build_dashboard_block, render_decision_projection
+from sync_formal_files import normalize_dashboard_projection, latest_canonical_formal_decision, format_position_pnl, build_dashboard_block, render_decision_projection, render_same_day_formal_decision_index
 from process_state_sync_request import latest_formal_review_decision
 
 
@@ -179,6 +179,32 @@ class DashboardProjectionTests(unittest.TestCase):
             self.assertIn("### 当日正式决策索引", result)
             self.assertNotIn("### 最近一次正式决策", result)
             self.assertNotIn("{'risk_permission'", result)
+
+    def test_same_day_index_projects_opportunity_separately(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "events" / "decisions").mkdir(parents=True)
+            (root / "data" / "state").mkdir(parents=True)
+            (root / "data" / "state" / "CURRENT.json").write_text(json.dumps({
+                "generated_at_beijing": "2026-11-26T11:00:00+08:00"
+            }), encoding="utf-8")
+            (root / "events" / "decisions" / "formal.json").write_text(json.dumps({
+                "event_type": "FORMAL_DECISION",
+                "decision_id": "fd-1",
+                "decision_time_beijing": "2026-11-26T10:58:00+08:00",
+                "formal_decision": {
+                    "risk_permission": "允许Trial",
+                    "main_candidate": "港股通恒生科技ETF华安（520840）",
+                    "amount_action": "Trial上限5000元",
+                },
+                "presentation_binding": {
+                    "full_content": "机会ETF保留1个：港股通恒生科技ETF华安（520840），建议小额Trial上限5000元。"
+                },
+            }, ensure_ascii=False), encoding="utf-8")
+            result = render_same_day_formal_decision_index(root, {})
+            self.assertIn("|机会ETF|与上一机会关系|", result)
+            self.assertIn("港股通恒生科技ETF华安（520840）", result)
+            self.assertIn("|未说明|", result)
 
     def test_trade_correction_writer_has_no_dashboard_destination(self):
         source = (ROOT / "scripts/apply_trade_fact_correction.py").read_text(encoding="utf-8")

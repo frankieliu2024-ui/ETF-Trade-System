@@ -450,10 +450,30 @@ def _formal_decision_index_records(root: Path, market_date: str) -> list[dict]:
                 amount = "新增部署" + found.group(1).strip() if found else "未提供"
             if new_amount not in (None, ""):
                 amount = f"{amount}；{float(new_amount):,.2f}元"
+            # Project the node-level opportunity ETF separately from the
+            # action summary. Only explicit formal text is accepted here;
+            # Dashboard must not infer a holding or a trade.
+            opportunity = ""
+            for pattern in (
+                r"新增机会ETF(?:保留|为|是)\s*\d*个?[：:]\s*([^，。；\n]+)",
+                r"机会ETF(?:保留|为|是)\s*\d*个?[：:]\s*([^，。；\n]+)",
+                r"机会ETF[：:]\s*([^，。；\n]+)",
+            ):
+                found = re.search(pattern, content)
+                if found:
+                    opportunity = found.group(1).strip()
+                    break
+            if not opportunity and candidate:
+                found = re.search(r"([^；。\n]*?\d{6}[^；。\n]*)", str(candidate))
+                opportunity = found.group(1).strip() if found else ""
+            relation = "未说明"
+            found = re.search(r"(?:机会关系|与上一机会关系|关系)[：:]\s*([^，。；\n]+)", content)
+            if found:
+                relation = found.group(1).strip()
             judgment_kind = str(event.get("judgment_kind") or event.get("decision_status") or event.get("assessment_status") or "").strip()
             if not judgment_kind:
                 judgment_kind = "超时判断" if "超时判断" in content else ("降级判断" if "降级判断" in content else "正式判断")
-            records.append({"stamp": parsed, "judgment_kind": judgment_kind, "candidate": candidate or "未结构化摘要", "risk": risk or "未结构化", "amount": amount or "未提供", "release": release, "identity": identity})
+            records.append({"stamp": parsed, "judgment_kind": judgment_kind, "candidate": candidate or "未结构化摘要", "opportunity": opportunity or "未形成/未结构化", "opportunity_relation": relation, "risk": risk or "未结构化", "amount": amount or "未提供", "release": release, "identity": identity})
     records.sort(key=lambda item: (item["stamp"], item["identity"]))
     for index, item in enumerate(records):
         item["status"] = "当前判断" if index == len(records) - 1 else "已被后续判断覆盖"
@@ -480,8 +500,8 @@ def render_same_day_formal_decision_index(root: Path, account: dict) -> str:
     lines += [
         "仅列当日【ETF正式决策】的紧凑摘要；正式判断、降级判断和超时判断均保留，重试不重复计数。",
         "",
-        "|时间|类型|主要对象/动作|Trial/Confirm|金额/释放|当日成交关联|状态|",
-        "|-|-|-|-|-|-|-|",
+        "|时间|类型|机会ETF|与上一机会关系|主要对象/动作|Trial/Confirm|金额/释放|当日成交关联|状态|",
+        "|-|-|-|-|-|-|-|-|-|",
     ]
     trades = account.get("trades") or []
     canonical_trade_events = []
@@ -520,7 +540,7 @@ def render_same_day_formal_decision_index(root: Path, account: dict) -> str:
             execution = "同日成交、对象匹配；归因未确认"
         else:
             execution = "未确认"
-        lines.append(f"|{item['stamp'].strftime('%H:%M')}|{item['judgment_kind']}|{item['candidate']}|{item['risk']}|{item['amount']}；释放{item['release']}|{execution}|{item['status']}|")
+        lines.append(f"|{item['stamp'].strftime('%H:%M')}|{item['judgment_kind']}|{item['opportunity']}|{item['opportunity_relation']}|{item['candidate']}|{item['risk']}|{item['amount']}；释放{item['release']}|{execution}|{item['status']}|")
     return "\n".join(lines)
 
 
