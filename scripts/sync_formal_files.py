@@ -454,18 +454,20 @@ def _formal_decision_index_records(root: Path, market_date: str) -> list[dict]:
             # action summary. Only explicit formal text is accepted here;
             # Dashboard must not infer a holding or a trade.
             opportunity = ""
+            # Opportunity ETF is a node-level role. Parse it only from an
+            # explicit opportunity statement; never fall back to the main
+            # candidate or numbered management actions, because those may be
+            # holdings/observation/lifecycle actions rather than opportunities.
             for pattern in (
                 r"新增机会ETF(?:保留|为|是)\s*\d*个?[：:]\s*([^，。；\n]+)",
-                r"机会ETF(?:保留|为|是)\s*\d*个?[：:]\s*([^，。；\n]+)",
+                r"机会ETF数量\s*\d+个?[：:]\s*([^，。；\n]+)",
+                r"机会ETF(?:继续保留|保留|为|是)\s*(?:\d+个?[：:]\s*)?([^，。；\n]+)",
                 r"机会ETF[：:]\s*([^，。；\n]+)",
             ):
                 found = re.search(pattern, content)
                 if found:
                     opportunity = found.group(1).strip()
                     break
-            if not opportunity and candidate:
-                found = re.search(r"([^；。\n]*?\d{6}[^；。\n]*)", str(candidate))
-                opportunity = found.group(1).strip() if found else ""
             relation = "未说明"
             found = re.search(r"(?:机会关系|与上一机会关系|关系)[：:]\s*([^，。；\n]+)", content)
             if found:
