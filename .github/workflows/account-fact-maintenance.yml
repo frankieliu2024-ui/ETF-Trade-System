@@ -217,13 +217,45 @@ jobs:
           # The owner may generate derived files while applying the canonical fact.
           # Keep them out of the rebase workspace so latest-main retry is clean.
           git stash push --include-untracked -m "account-fact-maintenance-derived" >/dev/null || true
+          request_id="$(python - "$REQUEST_PATH" <<PY
+          import json, sys
+          from pathlib import Path
+          print(json.loads(Path(sys.argv[1]).read_text(encoding="utf-8")).get("request_id", ""))
+          PY
+          )"
+          test -n "$request_id"
+          request_already_published() {
+            python - "$request_id" <<PY || exit 1
+          import json, sys
+          try:
+              account = json.load(sys.stdin)
+          except json.JSONDecodeError:
+              raise SystemExit(1)
+          request_id = sys.argv[1]
+          published = (
+              account.get("account_snapshot_source_request_id")
+              or account.get("account_sync_request_id")
+              or account.get("source_request_id")
+          )
+          raise SystemExit(0 if published == request_id else 1)
+          PY
+          }
           for attempt in 1 2 3; do
             git fetch origin main
+            if git show origin/main:data/state/account_fact.json | request_already_published; then
+              echo "Canonical account request $request_id is already published on origin/main; treating duplicate publish as idempotent success."
+              exit 0
+            fi
             if git rebase origin/main; then
               if git push origin HEAD:main; then
                 exit 0
               fi
             else
+              if git show origin/main:data/state/account_fact.json | request_already_published; then
+                git rebase --abort || true
+                echo "Canonical account request $request_id was published concurrently; treating the failed duplicate rebase as idempotent success."
+                exit 0
+              fi
               # maintenance_health.json is a deterministic projection produced
               # from this same account fact. If another maintenance lane updated
               # only this derived file while we were running, keep this run's
