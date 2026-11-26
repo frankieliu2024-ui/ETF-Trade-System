@@ -225,7 +225,7 @@ jobs:
           )"
           test -n "$request_id"
           request_already_published() {
-            python - "$request_id" <<PY || exit 1
+            python -c '
           import json, sys
           try:
               account = json.load(sys.stdin)
@@ -238,7 +238,7 @@ jobs:
               or account.get("source_request_id")
           )
           raise SystemExit(0 if published == request_id else 1)
-          PY
+          ' "$request_id"
           }
           for attempt in 1 2 3; do
             git fetch origin main
