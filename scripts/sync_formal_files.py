@@ -472,10 +472,28 @@ def _formal_decision_index_records(root: Path, market_date: str) -> list[dict]:
             found = re.search(r"(?:机会关系|与上一机会关系|关系)[：:]\s*([^，。；\n]+)", content)
             if found:
                 relation = found.group(1).strip()
+            # Keep the action column independent from the opportunity/main
+            # candidate field.  The formal report's final-management section
+            # is the canonical human-readable action source.
+            action_summary = ""
+            action_section = re.search(
+                r"【最终管理动作】\s*(.*?)(?=\n【|\Z)",
+                content,
+                re.S,
+            )
+            if action_section:
+                action_lines = [
+                    line.strip()
+                    for line in action_section.group(1).splitlines()
+                    if re.match(r"^\s*\d+[）.)、]", line.strip())
+                ]
+                action_summary = "；".join(action_lines)
+            if not action_summary:
+                action_summary = "未结构化动作"
             judgment_kind = str(event.get("judgment_kind") or event.get("decision_status") or event.get("assessment_status") or "").strip()
             if not judgment_kind:
                 judgment_kind = "超时判断" if "超时判断" in content else ("降级判断" if "降级判断" in content else "正式判断")
-            records.append({"stamp": parsed, "judgment_kind": judgment_kind, "candidate": candidate or "未结构化摘要", "opportunity": opportunity or "未形成/未结构化", "opportunity_relation": relation, "risk": risk or "未结构化", "amount": amount or "未提供", "release": release, "identity": identity})
+            records.append({"stamp": parsed, "judgment_kind": judgment_kind, "candidate": candidate or "未结构化摘要", "opportunity": opportunity or "未形成/未结构化", "opportunity_relation": relation, "action_summary": action_summary, "risk": risk or "未结构化", "amount": amount or "未提供", "release": release, "identity": identity})
     records.sort(key=lambda item: (item["stamp"], item["identity"]))
     for index, item in enumerate(records):
         item["status"] = "当前判断" if index == len(records) - 1 else "已被后续判断覆盖"
@@ -523,7 +541,7 @@ def render_same_day_formal_decision_index(root: Path, account: dict) -> str:
             if any(decision_stamp in str(label) for label in (trade.get("linked_formal_decisions") or []))
         ]
         linked += [event for event in canonical_trade_events if str((event.get("execution_attribution") or {}).get("decision_id") or event.get("linked_decision_id") or "") == item["identity"] and str(event.get("execution_date") or event.get("confirmed_at_beijing") or "")[:10] == market_date]
-        decision_text = f"{item['candidate']} {item['release']}"
+        decision_text = f"{item['action_summary']} {item['release']}"
         same_day_object = [
             trade for trade in trades
             if str(trade.get("trade_time") or "")[:10] == market_date
@@ -542,7 +560,7 @@ def render_same_day_formal_decision_index(root: Path, account: dict) -> str:
             execution = "同日成交、对象匹配；归因未确认"
         else:
             execution = "未确认"
-        lines.append(f"|{item['stamp'].strftime('%H:%M')}|{item['judgment_kind']}|{item['opportunity']}|{item['opportunity_relation']}|{item['candidate']}|{item['risk']}|{item['amount']}；释放{item['release']}|{execution}|{item['status']}|")
+        lines.append(f"|{item['stamp'].strftime('%H:%M')}|{item['judgment_kind']}|{item['opportunity']}|{item['opportunity_relation']}|{item['action_summary']}|{item['risk']}|{item['amount']}；释放{item['release']}|{execution}|{item['status']}|")
     return "\n".join(lines)
 
 
