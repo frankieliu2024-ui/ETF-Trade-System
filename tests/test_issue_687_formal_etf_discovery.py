@@ -103,7 +103,7 @@ class FormalEtfOpportunityDiscoveryTest(unittest.TestCase):
         out = state_manager._extend_capital_comparison_with_discovery(base, formal)
         self.assertEqual(out["comparison_universe"], base["comparison_universe"])
         self.assertEqual(out["observation_eligibility_inputs"][0]["code"], "588080")
-        self.assertEqual(out["formal_discovery_ingress_status"], "ELIGIBILITY_ONLY")
+        self.assertEqual(out["formal_discovery_ingress_status"], "FORMAL_EVALUATION_INPUT")
 
     def test_existing_managed_object_is_not_duplicated_in_capital_comparison(self) -> None:
         base = {
@@ -126,8 +126,8 @@ class FormalEtfOpportunityDiscoveryTest(unittest.TestCase):
         }
         out = state_manager._extend_capital_comparison_with_discovery(base, formal)
         self.assertEqual(out["comparison_universe"], base["comparison_universe"])
-        self.assertFalse(out["formal_discovery_included"])
-        self.assertEqual(out["formal_discovery_ingress_status"], "ELIGIBILITY_ONLY")
+        self.assertTrue(out["formal_discovery_included"])
+        self.assertEqual(out["formal_discovery_ingress_status"], "FORMAL_EVALUATION_INPUT")
 
 
 if __name__ == "__main__":

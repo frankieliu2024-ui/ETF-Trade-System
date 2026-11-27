@@ -625,9 +625,15 @@ def _extend_capital_comparison_with_discovery(base: dict[str, Any], formal_disco
         "source_discovery_latest_snapshot": str(discovery.get("latest_snapshot") or ""),
         "source_discovery_market_date": str(discovery.get("market_date") or ""),
         "source_discovery_latest_valid_node": str(discovery.get("latest_valid_node") or ""),
-        "formal_discovery_included": False,
+        # A legal Discovery batch is a formal-decision input even though it
+        # does not itself grant trading authority or enter the final ranking.
+        # Keeping this false caused the consumer to treat the current batch as
+        # absent and fall back to an older Discovery result.
+        "formal_discovery_included": bool(eligibility_inputs),
         "formal_discovery_candidate_count": len(eligibility_inputs),
-        "formal_discovery_ingress_status": "ELIGIBILITY_ONLY",
+        "formal_discovery_ingress_status": (
+            "FORMAL_EVALUATION_INPUT" if eligibility_inputs else "NOT_REQUESTED"
+        ),
         "formal_discovery_coverage_status": discovery.get("coverage_status") or "NOT_REQUESTED",
         "observation_eligibility_inputs": eligibility_inputs,
         "next_unit_capital_use": "由ChatGPT按MASTER对现金、全部持仓、已完成本节点机会资格判断的Discovery/观察机会、可释放资本及其他合法资本状态完成最终比较；Discovery本身不直接形成交易动作或最终排名。",
