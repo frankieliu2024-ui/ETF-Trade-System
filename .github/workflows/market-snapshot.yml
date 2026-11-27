@@ -297,6 +297,7 @@ jobs:
           path = Path(os.environ.get('ETF_HEALTH_PATH', 'data/state/runtime_health.json'))
           written = False
           reason = 'runtime_health_missing'
+          data = {}
           if path.exists():
               data = json.loads(path.read_text(encoding='utf-8'))
               status = data.get('status', '')
