@@ -297,6 +297,7 @@ jobs:
           path = Path(os.environ.get('ETF_HEALTH_PATH', 'data/state/runtime_health.json'))
           written = False
           reason = 'runtime_health_missing'
+          data = {}
           if path.exists():
               data = json.loads(path.read_text(encoding='utf-8'))
               status = data.get('status', '')
@@ -306,6 +307,7 @@ jobs:
           with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as f:
               f.write(f"snapshot_written={'true' if written else 'false'}\n")
               f.write(f"reason={reason}\n")
+              f.write(f"latest_snapshot={data.get('latest_snapshot', '')}\n")
           print(json.dumps({'snapshot_written': written, 'reason': reason}, ensure_ascii=False))
           PY
       - name: Refresh fixed-ratio metrics from this snapshot
@@ -346,6 +348,8 @@ jobs:
         id: current_discovery
         # The canonical Discovery producer is invoked once after a verified A-share pulse.
         if: ${{ (steps.snapshot_result.outputs.snapshot_written == 'true' && github.event_name != 'push' && github.event.inputs.probe_only != 'true') }}
+        env:
+          DISCOVERY_SNAPSHOT_PATH: ${{ steps.snapshot_result.outputs.latest_snapshot }}
         shell: bash
         run: |
           set -euo pipefail
