@@ -201,6 +201,8 @@ jobs:
           python scripts/maintenance_guard.py --scope account-fast
 
       - name: Commit account fact maintenance
+        env:
+          REQUEST_PATH: ${{ steps.request.outputs.request_path }}
         shell: bash
         run: |
           set -euo pipefail
