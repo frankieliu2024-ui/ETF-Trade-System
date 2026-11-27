@@ -5,7 +5,7 @@
 
 > 账户事实更新时间：2026-11-27T15:19:50+08:00  
 > 账户事实来源：CHATGPT_USER_BROKER_SCREENSHOT  
-> 账户快照批次：acctsnap-e209c89e7c056a9a32fd  
+> 账户快照批次：acctsnap-e3f9b5384ac9765f9ea1  
 > 场景：账户事实维护  
 > 账户事实与ETF策略风险使用各自canonical provenance；本区块不推导交易权限或下单。
 
