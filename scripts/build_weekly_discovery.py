@@ -39,10 +39,12 @@ def load_json(path: Path, default):
 
 def build() -> dict:
     current = load_json(ROOT / "data/state/CURRENT.json", {})
-    market_date = str(current.get("market_date") or "").strip()
-    node = str(current.get("latest_valid_node") or "").strip().lower()
-    node_status = str(current.get("node_status") or "").strip().upper()
-    snapshot = load_json(ROOT / str(current.get("latest_snapshot") or ""), {})
+    explicit_snapshot = str(os.environ.get("DISCOVERY_SNAPSHOT_PATH") or "").strip()
+    snapshot_path = explicit_snapshot or str(current.get("latest_snapshot") or "")
+    snapshot = load_json(ROOT / snapshot_path, {})
+    market_date = str(snapshot.get("market_date") or current.get("market_date") or "").strip()
+    node = str(snapshot.get("node") or current.get("latest_valid_node") or "").strip().lower()
+    node_status = str(snapshot.get("quality_status") or current.get("node_status") or "").strip().upper()
     # Keep the explicit node-set contract visible to the existing acceptance
     # test; 1130 is the canonical midday alias used by current snapshots.
     # node not in {"auction", "open", "midday", "close"} is the legacy
@@ -125,7 +127,7 @@ def build() -> dict:
         "status": str(discovery.get("status") or "DEGRADED").upper(),
         "market_date": market_date,
         "latest_valid_node": node,
-        "latest_snapshot": current.get("latest_snapshot"),
+        "latest_snapshot": snapshot_path,
         "generated_at_beijing": generated,
         "formation_rule": "EVERY_VERIFIED_A_SHARE_PULSE",
         "generation_identity": f"DISCOVERY:{market_date}:{node}:{snapshot_identity}:{generated}",
