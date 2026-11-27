@@ -186,7 +186,7 @@ def _same_node_persisted_formal_discovery(root: Path, current: dict, universe_id
     )
     current_delta = _discovery_delta_identity(root)
     for discovery in sources:
-        if str(discovery.get("status") or "").upper() != "READY":
+        if str(discovery.get("status") or "").upper() not in {"READY", "COMPLETE", "DEGRADED"}:
             continue
         if str(discovery.get("market_date") or "") != current_market_date:
             continue
