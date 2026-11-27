@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "checked_at": "2026-11-27T09:50:17+08:00",
+  "checked_at": "2026-11-27T10:26:10+08:00",
   "mode": "DETERMINISTIC_RUNTIME_SELF_HEALING",
   "enabled": true,
   "classification": "DERIVED_CONTEXT_IDENTITY_DRIFT",
@@ -10,17 +10,20 @@
   "watch_window_active": true,
   "same_day_current_required": true,
   "same_day_current_missing": false,
-  "current_capture_at": "2026-11-27T09:41:45+08:00",
-  "current_capture_age_seconds": 512,
-  "expected_pulse_at": null,
-  "expected_pulse_missing": false,
+  "current_capture_at": "2026-11-27T10:09:15+08:00",
+  "current_capture_age_seconds": 1015,
+  "expected_pulse_at": "2026-11-27T10:19:00+08:00",
+  "expected_pulse_missing": true,
   "runtime_health_status": "PASS",
-  "system_consistency_status": "WARNING",
+  "system_consistency_status": "FAIL",
   "market_recovery_consistency_gate": {
-    "global_status": "WARNING",
-    "blocks_market_recovery": false,
-    "classification": "NO_GLOBAL_HARD_FAIL",
-    "errors": []
+    "global_status": "FAIL",
+    "blocks_market_recovery": true,
+    "classification": "GLOBAL_FAIL_BLOCKS_MARKET_RECOVERY_FAIL_SAFE",
+    "errors": [
+      "formal_trade_sync:broker-buy-20261126-159101-8700-0.573:formal_case_mapping_count=0",
+      "historical_trade_case_mapping:2026-11-26 10:05:51:159101:case_count=0"
+    ]
   },
   "master_rules_version": "V2.2.34",
   "current_rules_version": "V2.2.34",
