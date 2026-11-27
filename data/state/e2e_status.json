@@ -1,20 +1,20 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-11-27T13:44:24+08:00",
+  "generated_at": "2026-11-27T14:29:50+08:00",
   "projection_identity": {
     "account_updated_at": "2026-11-26T16:16:00+08:00",
     "risk_as_of_transaction_date": "2026-11-26",
-    "market_snapshot": "data/market/snapshots/2026-11-27_131850.json"
+    "market_snapshot": "data/market/snapshots/2026-11-27_141046.json"
   },
-  "status": "BLOCKED",
+  "status": "DEGRADED",
   "purpose": "TOP_LEVEL_SYSTEM_USABILITY_ONLY_NOT_A_TRADING_PERMISSION",
   "decision_rule": "READY=all critical components usable; DEGRADED=analysis possible with explicit caveat; BLOCKED=missing critical fact prevents formal amount/share decision",
   "components": {
     "market": {
       "status": "READY",
       "reason": "latest market snapshot is valid",
-      "snapshot": "data/market/snapshots/2026-11-27_131850.json",
-      "captured_at": "2026-11-27T13:18:50+08:00",
+      "snapshot": "data/market/snapshots/2026-11-27_141046.json",
+      "captured_at": "2026-11-27T14:10:46+08:00",
       "market_phase": "CONTINUOUS_AFTERNOON"
     },
     "account": {
@@ -46,17 +46,19 @@
       "reason": "no formal close review is currently required"
     },
     "decision_context": {
-      "status": "BLOCKED",
-      "reason": "canonical request-bound query context is empty, invalid, or missing a consumable fact pack",
-      "query_context": false,
+      "status": "READY",
+      "reason": "current-main fixed facts are directly consumable; no request-bound Formal Decision context is applicable",
+      "query_context": true,
       "decision_context": true,
+      "request_bound": false,
       "formal_reply_gate": null,
+      "direct_current_main": true,
       "context_read_contract": {
         "query_context": {
           "status": "READ_OK",
           "path": "data/state/query_context.json",
-          "byte_count": 8333829,
-          "sha256": "426f4533deb323e88fd6c19c391d777f82f94bd6d1ac8c14a279fc6349712491",
+          "byte_count": 7824389,
+          "sha256": "fbe0584d5e2715e8c12ab8dec64f6aa81678e34e79a81f6233ca6ddfeb9d2f5b",
           "parsed_object": true,
           "retry_attempts": 1,
           "retry_required": false
@@ -64,8 +66,8 @@
         "decision_context": {
           "status": "READ_OK",
           "path": "data/state/decision_context.json",
-          "byte_count": 798873,
-          "sha256": "ee7252f771bee40836ff0c168389d18720b2c88d6b3f4dbb2ebcef5b36e03b0c",
+          "byte_count": 801175,
+          "sha256": "067dd0f3faac4574cea0a20908d26316662f78c2856e9e4a9331f2ccaab0bfda",
           "parsed_object": true,
           "retry_attempts": 1,
           "retry_required": false
@@ -83,17 +85,14 @@
       "source": "formal decision + executed trade facts"
     },
     "maintenance": {
-      "status": "DEGRADED",
-      "reason": "maintenance-only block; formal analysis capability remains separately evaluated",
-      "checked_at": "2026-11-27T13:38:12+08:00"
+      "status": "READY",
+      "reason": "maintenance guard passed",
+      "checked_at": "2026-11-27T14:13:11+08:00"
     }
   },
-  "blockers": [
-    "decision_context"
-  ],
+  "blockers": [],
   "degradations": [
-    "risk",
-    "maintenance"
+    "risk"
   ],
   "task_continuation": {
     "status": "CONTINUE",
@@ -112,8 +111,8 @@
     "query_context": {
       "status": "READ_OK",
       "path": "data/state/query_context.json",
-      "byte_count": 8333829,
-      "sha256": "426f4533deb323e88fd6c19c391d777f82f94bd6d1ac8c14a279fc6349712491",
+      "byte_count": 7824389,
+      "sha256": "fbe0584d5e2715e8c12ab8dec64f6aa81678e34e79a81f6233ca6ddfeb9d2f5b",
       "parsed_object": true,
       "retry_attempts": 1,
       "retry_required": false
@@ -121,8 +120,8 @@
     "decision_context": {
       "status": "READ_OK",
       "path": "data/state/decision_context.json",
-      "byte_count": 798873,
-      "sha256": "ee7252f771bee40836ff0c168389d18720b2c88d6b3f4dbb2ebcef5b36e03b0c",
+      "byte_count": 801175,
+      "sha256": "067dd0f3faac4574cea0a20908d26316662f78c2856e9e4a9331f2ccaab0bfda",
       "parsed_object": true,
       "retry_attempts": 1,
       "retry_required": false
